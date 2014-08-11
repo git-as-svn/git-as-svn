@@ -16,18 +16,25 @@ import java.util.List;
  * <p>
  * http://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
  *
-   * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnServerParser {
   private static final int DEFAULT_BUFFER_SIZE = 1024;
+  // Buffer size limit for out-of-memory prevention.
+  private static final int MAX_BUFFER_SIZE = 10 * 1024 * 1024;
   @NotNull
-  private byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+  private final byte[] buffer;
   @NotNull
   private final InputStream stream;
   private int position;
 
-  public SvnServerParser(@NotNull InputStream stream) {
+  public SvnServerParser(@NotNull InputStream stream, int bufferSize) {
     this.stream = stream;
+    this.buffer = new byte[Math.max(1, bufferSize)];
+  }
+
+  public SvnServerParser(@NotNull InputStream stream) {
+    this(stream, DEFAULT_BUFFER_SIZE);
   }
 
   public int readNumber() throws IOException {
@@ -136,19 +143,28 @@ public class SvnServerParser {
   @NotNull
   private StringToken readString(int length) throws IOException {
     int need = length;
+    byte[] localBuffer = buffer;
     while (need > 0) {
       // Если буфер мал - увеличиваем.
-      if (buffer.length == position) {
-        buffer = Arrays.copyOf(buffer, buffer.length * 2);
+      if (localBuffer.length == position) {
+        localBuffer = enlargeBuffer(localBuffer);
       }
       // Читаем.
-      final int readed = stream.read(buffer, position, Math.min(need, buffer.length - position));
+      final int readed = stream.read(localBuffer, position, Math.min(need, localBuffer.length - position));
       if (readed < 0) {
         throw new IOException("Unexpected end of stream");
       }
       need -= readed;
+      position += readed;
     }
-    return new StringToken(Arrays.copyOf(buffer, length));
+    return new StringToken(Arrays.copyOf(localBuffer, length));
+  }
+
+  private static byte[] enlargeBuffer(byte[] buffer) throws IOException {
+    if (buffer.length >= MAX_BUFFER_SIZE) {
+      throw new IOException("Data is too long. Buffer overflow: " + buffer.length);
+    }
+    return Arrays.copyOf(buffer, Math.min(MAX_BUFFER_SIZE, buffer.length * 2));
   }
 
   private static boolean isAlpha(int data) {
@@ -158,7 +174,8 @@ public class SvnServerParser {
 
   @NotNull
   private WordToken readWord(int first) throws IOException {
-    buffer[position] = (byte) first;
+    byte[] localBuffer = buffer;
+    localBuffer[position] = (byte) first;
     position++;
     while (true) {
       final int read = stream.read();
@@ -166,12 +183,15 @@ public class SvnServerParser {
         throw new IOException("Unexpected end of stream");
       }
       if (isSpace(read)) {
-        return new WordToken(new String(buffer, 0, position, StandardCharsets.US_ASCII));
+        return new WordToken(new String(localBuffer, 0, position, StandardCharsets.US_ASCII));
       }
       if (!(isAlpha(read) || isDigit(read) || (read == '-'))) {
         throw new IOException("Unexpected character in stream: " + read + " (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')");
       }
-      buffer[position] = (byte) read;
+      if (localBuffer.length == position) {
+        localBuffer = enlargeBuffer(localBuffer);
+      }
+      localBuffer[position] = (byte) read;
       position++;
     }
   }
