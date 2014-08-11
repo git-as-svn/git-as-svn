@@ -2,7 +2,9 @@ package svnserver.parser;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.testng.internal.junit.ArrayAsserts;
 import svnserver.parser.token.*;
+import svnserver.server.msg.AuthInfoReq;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -56,6 +58,45 @@ public class SvnServerParserTest {
     }
   }
 
+  @Test
+  public void testMessageParse() throws IOException {
+    try (InputStream stream = new ByteArrayInputStream("( 2 ( edit-pipeline svndiff1 absent-entries depth mergeinfo log-revprops ) 15:svn://localhost 31:SVN/1.8.8 (x86_64-pc-linux-gnu) ( ) ) test ".getBytes(StandardCharsets.UTF_8))) {
+      final SvnServerParser parser = new SvnServerParser(stream);
+      AuthInfoReq req = MessageParser.parse(AuthInfoReq.class, parser);
+      Assert.assertEquals(req.getProtocolVersion(), 2);
+      Assert.assertEquals(req.getUrl(), "svn://localhost");
+      Assert.assertEquals(req.getClientInfo(), "SVN/1.8.8 (x86_64-pc-linux-gnu)");
+      ArrayAsserts.assertArrayEquals(new String[]{
+          "edit-pipeline",
+          "svndiff1",
+          "absent-entries",
+          "depth",
+          "mergeinfo",
+          "log-revprops"
+      }, req.getCapabilities());
+      Assert.assertEquals(parser.readText(), "test");
+    }
+  }
+
+  @Test
+  public void testMessageParse2() throws IOException {
+    try (InputStream stream = new ByteArrayInputStream("( 2 ( edit-pipeline svndiff1 absent-entries depth mergeinfo log-revprops ) 15:svn://localhost ) test ".getBytes(StandardCharsets.UTF_8))) {
+      final SvnServerParser parser = new SvnServerParser(stream);
+      AuthInfoReq req = MessageParser.parse(AuthInfoReq.class, parser);
+      Assert.assertEquals(req.getProtocolVersion(), 2);
+      Assert.assertEquals(req.getUrl(), "svn://localhost");
+      Assert.assertEquals(req.getClientInfo(), "");
+      ArrayAsserts.assertArrayEquals(new String[]{
+          "edit-pipeline",
+          "svndiff1",
+          "absent-entries",
+          "depth",
+          "mergeinfo",
+          "log-revprops"
+      }, req.getCapabilities());
+      Assert.assertEquals(parser.readText(), "test");
+    }
+  }
   @Test
   public void testBinaryData() throws IOException {
     @SuppressWarnings("MagicNumber") final byte[] data = new byte[0x100];

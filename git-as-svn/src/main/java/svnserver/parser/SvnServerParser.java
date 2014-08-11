@@ -27,6 +27,7 @@ public class SvnServerParser {
   @NotNull
   private final InputStream stream;
   private int position;
+  private int depth = 0;
 
   public SvnServerParser(@NotNull InputStream stream, int bufferSize) {
     this.stream = stream;
@@ -44,6 +45,10 @@ public class SvnServerParser {
   @NotNull
   public String readText() throws IOException {
     return readToken(TextToken.class).getText();
+  }
+
+  public int getDepth() {
+    return depth;
   }
 
   /**
@@ -101,9 +106,14 @@ public class SvnServerParser {
       }
     } while (isSpace(read));
     if (read == '(') {
+      depth++;
       return ListBeginToken.instance;
     }
     if (read == ')') {
+      depth--;
+      if (depth < 0) {
+        throw new IOException("Unexpect end of list token.");
+      }
       return ListEndToken.instance;
     }
     // Чтение чисел и строк.

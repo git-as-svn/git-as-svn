@@ -1,14 +1,22 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
+import svnserver.parser.token.ListEndToken;
 import svnserver.parser.token.StringToken;
+import svnserver.server.command.BaseCommand;
+import svnserver.server.command.GetLatestRev;
+import svnserver.server.command.Log;
+import svnserver.server.command.Reparent;
 import svnserver.server.error.AuthException;
 import svnserver.server.error.ClientErrorException;
 import svnserver.server.error.SvnServerException;
+import svnserver.server.msg.AuthInfoReq;
+import svnserver.server.msg.AuthReq;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -17,6 +25,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
@@ -67,13 +77,9 @@ public class SvnServer {
         .listEnd()
         .listEnd();
     // Читаем информацию о клиенте.
-    parser.readToken(ListBeginToken.class);
-    int protocolVersion = parser.readNumber();
-    String[] clientCaps = parser.readStringList();
-    String url = parser.readText();
-    parser.skipItems();
-    if (protocolVersion != 2) {
-      throw new ClientErrorException("Unsupported protocol version: " + protocolVersion + " (expected: 2)");
+    final AuthInfoReq authInfoReq = MessageParser.parse(AuthInfoReq.class, parser);
+    if (authInfoReq.getProtocolVersion() != 2) {
+      throw new ClientErrorException("Unsupported protocol version: " + authInfoReq.getProtocolVersion() + " (expected: 2)");
     }
     // Отправляем запрос на авторизацию.
     writer
@@ -88,9 +94,10 @@ public class SvnServer {
         .listEnd();
 
     // Читаем выбранный вариант авторизации.
-    parser.readToken(ListBeginToken.class);
-    String authType = parser.readText();
-    parser.skipItems();
+    final AuthReq authReq = MessageParser.parse(AuthReq.class, parser);
+    if (!authReq.getMech().equals("CRAM-MD5")) {
+      throw new AuthException("Unsupported authentication mechanism: " + authReq.getMech());
+    }
 
     // Выполняем авторизацию.
     String msgId = "blablabla";
@@ -128,12 +135,30 @@ public class SvnServer {
         .listEnd()
         .listEnd();
 
+    final Map<String, BaseCommand<?>> commands = new HashMap<>();
+    commands.put("get-latest-rev", new GetLatestRev());
+    commands.put("reparent", new Reparent());
+    commands.put("log", new Log());
+
     while (true) {
-      final SvnServerToken token = parser.readToken();
+      SvnServerToken token = parser.readToken();
       if (token == null) {
         break;
       }
-      System.out.println(token);
+      if (token != ListBeginToken.instance) {
+        throw new IOException("Unexpected token: " + token);
+      }
+      String cmd = parser.readText();
+      BaseCommand command = commands.get(cmd);
+      if (command != null) {
+        Object param = MessageParser.parse(command.getArguments(), parser);
+        parser.readToken(ListEndToken.class);
+        //noinspection unchecked
+        command.process(writer, param);
+      } else {
+        // todo:
+        parser.skipItems();
+      }
     }
   }
 

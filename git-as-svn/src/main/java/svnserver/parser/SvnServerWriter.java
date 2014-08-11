@@ -60,6 +60,11 @@ public class SvnServerWriter {
   }
 
   @NotNull
+  public SvnServerWriter bool(boolean value) throws IOException {
+    return word(value ? "true" : "false");
+  }
+
+  @NotNull
   public SvnServerWriter write(@NotNull SvnServerToken token) throws IOException {
     token.write(stream);
     if (token.equals(ListBeginToken.instance)) {
