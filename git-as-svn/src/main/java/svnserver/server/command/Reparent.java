@@ -9,9 +9,9 @@ import java.io.IOException;
  * Change current path in repository.
  * <p>
  * <pre>
- *   reparent
- *   params:   ( url:string )
- *   response: ( )
+ * reparent
+ *    params:   ( url:string )
+ *    response: ( )
  * </pre>
  *
  * @author a.navrotskiy

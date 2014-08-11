@@ -8,9 +8,9 @@ import java.io.IOException;
 /**
  * Change current path in repository.
  * <p><pre>
- *   get-latest-rev
- *   params:   ( )
- *   response: ( rev:number )
+ * get-latest-rev
+ *    params:   ( )
+ *    response: ( rev:number )
  * </pre>
  *
  * @author a.navrotskiy

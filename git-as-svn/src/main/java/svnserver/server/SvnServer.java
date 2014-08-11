@@ -8,10 +8,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.parser.token.StringToken;
-import svnserver.server.command.BaseCommand;
-import svnserver.server.command.GetLatestRev;
-import svnserver.server.command.Log;
-import svnserver.server.command.Reparent;
+import svnserver.server.command.*;
 import svnserver.server.error.AuthException;
 import svnserver.server.error.ClientErrorException;
 import svnserver.server.error.SvnServerException;
@@ -137,8 +134,9 @@ public class SvnServer {
 
     final Map<String, BaseCommand<?>> commands = new HashMap<>();
     commands.put("get-latest-rev", new GetLatestRev());
-    commands.put("reparent", new Reparent());
     commands.put("log", new Log());
+    commands.put("reparent", new Reparent());
+    commands.put("stat", new Stat());
 
     while (true) {
       SvnServerToken token = parser.readToken();
@@ -156,7 +154,18 @@ public class SvnServer {
         //noinspection unchecked
         command.process(writer, param);
       } else {
-        // todo:
+        writer
+            .listBegin()
+            .word("failure")
+            .listBegin()
+            .listBegin()
+            .number(210001)
+            .string("Unsupported command: " + cmd)
+            .string("...")
+            .number(0)
+            .listEnd()
+            .listEnd()
+            .listEnd();
         parser.skipItems();
       }
     }

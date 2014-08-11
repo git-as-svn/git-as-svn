@@ -10,26 +10,26 @@ import java.io.IOException;
  * Change current path in repository.
  * <p>
  * <pre>
- *   log
- *   params:   ( ( target-path:string ... ) [ start-rev:number ]
- *               [ end-rev:number ] changed-paths:bool strict-node:bool
- *               ? limit:number
- *               ? include-merged-revisions:bool
- *               all-revprops | revprops ( revprop:string ... ) )
- *   Before sending response, server sends log entries, ending with "done".
- *   If a client does not want to specify a limit, it should send 0 as the
- *   limit parameter.  rev-props excludes author, date, and log; they are
- *   sent separately for backwards-compatibility.
- *   log-entry: ( ( change:changed-path-entry ... ) rev:number
- *                [ author:string ] [ date:string ] [ message:string ]
- *                ? has-children:bool invalid-revnum:bool
- *                revprop-count:number rev-props:proplist
- *                ? subtractive-merge:bool )
- *            | done
- *   changed-path-entry: ( path:string A|D|R|M
- *                         ? ( ? copy-path:string copy-rev:number )
- *                         ? ( ? node-kind:string ? text-mods:bool prop-mods:bool ) )
- *   response: ( )
+ * log
+ *    params:   ( ( target-path:string ... ) [ start-rev:number ]
+ *                [ end-rev:number ] changed-paths:bool strict-node:bool
+ *                ? limit:number
+ *                ? include-merged-revisions:bool
+ *                all-revprops | revprops ( revprop:string ... ) )
+ *    Before sending response, server sends log entries, ending with "done".
+ *    If a client does not want to specify a limit, it should send 0 as the
+ *    limit parameter.  rev-props excludes author, date, and log; they are
+ *    sent separately for backwards-compatibility.
+ *    log-entry: ( ( change:changed-path-entry ... ) rev:number
+ *                 [ author:string ] [ date:string ] [ message:string ]
+ *                 ? has-children:bool invalid-revnum:bool
+ *                 revprop-count:number rev-props:proplist
+ *                 ? subtractive-merge:bool )
+ *             | done
+ *    changed-path-entry: ( path:string A|D|R|M
+ *                          ? ( ? copy-path:string copy-rev:number )
+ *                          ? ( ? node-kind:string ? text-mods:bool prop-mods:bool ) )
+ *    response: ( )
  * </pre>
  *
  * @author a.navrotskiy
