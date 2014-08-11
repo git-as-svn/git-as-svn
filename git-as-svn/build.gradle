@@ -1,0 +1,38 @@
+task wrapper(type: Wrapper) {
+  gradleVersion = "2.0"
+}
+
+repositories {
+  mavenCentral()
+}
+
+apply plugin: "idea"
+apply plugin: "java"
+apply plugin: "project-report"
+
+dependencies {
+  compile "org.jetbrains:annotations:13.0"
+  testCompile "org.testng:testng:6.8.8"
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+
+idea {
+  project {
+    jdkName = sourceCompatibility.name
+    languageLevel = sourceCompatibility.name
+  }
+  module {
+    jdkName = sourceCompatibility.name
+    downloadJavadoc = true
+    downloadSources = true
+  }
+}
+
+tasks.withType(JavaCompile) {
+  options.encoding = "UTF-8"
+}
+
+test {
+  useTestNG()
+}
