@@ -1,10 +1,7 @@
 package svnserver.repository.git;
 
 import org.eclipse.jgit.internal.storage.file.FileRepository;
-import org.eclipse.jgit.lib.FileMode;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
@@ -231,20 +228,22 @@ public class GitRepository implements Repository {
 
     @Override
     public boolean isDirectory() throws IOException {
-      return ((fileMode.getBits() & FileMode.TYPE_TREE) != 0);
+      return getKind().equals(SvnConstants.KIND_DIR);
     }
 
     @NotNull
     @Override
     public String getKind() throws IOException {
-      int mode = fileMode.getBits();
-      if (isDirectory()) {
-        return SvnConstants.KIND_DIR;
+      final int objType = fileMode.getObjectType();
+
+      switch (objType) {
+        case Constants.OBJ_TREE:
+          return SvnConstants.KIND_DIR;
+        case Constants.OBJ_BLOB:
+          return SvnConstants.KIND_FILE;
+        default:
+          throw new IllegalStateException("Unknown obj type: " + objType);
       }
-      if ((mode & FileMode.TYPE_FILE) != 0) {
-        return SvnConstants.KIND_FILE;
-      }
-      throw new IllegalStateException("Unknown file mode: " + fileMode);
     }
 
     private ObjectLoader getObjectLoader() throws IOException {
