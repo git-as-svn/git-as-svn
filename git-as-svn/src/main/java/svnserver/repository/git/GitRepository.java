@@ -172,6 +172,9 @@ public class GitRepository implements Repository {
     @Nullable
     @Override
     public FileInfo getFile(@NotNull String fullPath) throws IOException {
+      if (fullPath.length() == 1) {
+        return new GitFileInfo(commit.getTree(), FileMode.TREE, "", this);
+      }
       final TreeWalk treeWalk = TreeWalk.forPath(repository, fullPath.substring(1), commit.getTree());
       if (treeWalk == null) {
         return null;
