@@ -3,6 +3,7 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.Repository;
 import svnserver.server.step.Step;
 
 import java.util.ArrayDeque;
@@ -18,9 +19,17 @@ public class SessionContext {
   private final SvnServerWriter writer;
   @NotNull
   private final Deque<Step> stepStack = new ArrayDeque<>();
+  @NotNull
+  private final Repository repository;
 
-  public SessionContext(@NotNull SvnServerWriter writer) {
+  public SessionContext(@NotNull SvnServerWriter writer, @NotNull Repository repository) {
     this.writer = writer;
+    this.repository = repository;
+  }
+
+  @NotNull
+  public Repository getRepository() {
+    return repository;
   }
 
   @NotNull

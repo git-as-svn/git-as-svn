@@ -2,12 +2,14 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.StringHelper;
+import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.error.AuthException;
 import svnserver.server.error.ClientErrorException;
@@ -56,7 +58,7 @@ public class SvnServer {
   public void serveClient(@NotNull Socket socket) throws IOException, SvnServerException {
     final SvnServerWriter writer = new SvnServerWriter(socket.getOutputStream());
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
-    final SessionContext context = new SessionContext(writer);
+    final SessionContext context = new SessionContext(writer, new GitRepository());
     // Анонсируем поддерживаемые функции.
     writer
         .listBegin()
@@ -79,7 +81,7 @@ public class SvnServer {
     // Читаем информацию о клиенте.
     final AuthInfoReq authInfoReq = MessageParser.parse(AuthInfoReq.class, parser);
     if (authInfoReq.getProtocolVersion() != 2) {
-      throw new ClientErrorException("Unsupported protocol version: " + authInfoReq.getProtocolVersion() + " (expected: 2)");
+      throw new ClientErrorException(0, "Unsupported protocol version: " + authInfoReq.getProtocolVersion() + " (expected: 2)");
     }
     // Отправляем запрос на авторизацию.
     writer
@@ -147,7 +149,22 @@ public class SvnServer {
     while (true) {
       Step step = context.poll();
       if (step != null) {
-        step.process(context);
+        try {
+          step.process(context);
+        } catch (ClientErrorException e) {
+          writer
+              .listBegin()
+              .word("failure")
+              .listBegin()
+              .listBegin()
+              .number(e.getCode())
+              .string(e.getMessage())
+              .string("...")
+              .number(0)
+              .listEnd()
+              .listEnd()
+              .listEnd();
+        }
         continue;
       }
 
@@ -171,7 +188,7 @@ public class SvnServer {
             .word("failure")
             .listBegin()
             .listBegin()
-            .number(210001)
+            .number(SvnConstants.ERROR_UNIMPLEMENTED)
             .string("Unsupported command: " + cmd)
             .string("...")
             .number(0)

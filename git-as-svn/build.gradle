@@ -12,6 +12,7 @@ apply plugin: "project-report"
 
 dependencies {
   compile "org.jetbrains:annotations:13.0"
+  compile "org.eclipse.jgit:org.eclipse.jgit:3.4.0.201406110918-r"
   testCompile "org.testng:testng:6.8.8"
 }
 

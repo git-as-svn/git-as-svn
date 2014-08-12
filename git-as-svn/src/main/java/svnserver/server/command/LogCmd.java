@@ -1,9 +1,11 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import svnserver.SvnConstants;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -66,16 +68,6 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
       this.revpropsMode = revpropsMode;
       this.revprops = revprops;
     }
-
-    @Nullable
-    public Integer getStartRev() {
-      return startRev.length < 1 ? null : startRev[0];
-    }
-
-    @Nullable
-    public Integer getEndRev() {
-      return endRev.length < 1 ? null : endRev[0];
-    }
   }
 
   @NotNull
@@ -85,28 +77,21 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
     final SvnServerWriter writer = context.getWriter();
-    for (int rev = 42; rev > 40; rev--) {
+    final int head = context.getRepository().getLatestRevision();
+    int startRev = getRevision(args.startRev, 1, head);
+    int endRev = getRevision(args.endRev, head, head);
+    int step = startRev < endRev ? 1 : -1;
+    for (int rev = startRev; rev != endRev; rev += step) {
+      final RevisionInfo revisionInfo = context.getRepository().getRevisionInfo(rev);
       writer
           .listBegin()
           .listBegin().listEnd()
           .number(rev);
-      for (String revprop : args.revprops) {
-        writer.listBegin();
-        switch (revprop) {
-          case "svn:author":
-            writer.string("bozaro");
-            break;
-          case "svn:date":
-            writer.string("2014-08-11T11:57:36.023610Z");
-            break;
-          case "svn:log":
-            writer.string("Комментарий");
-            break;
-        }
-        writer.listEnd();
-      }
+      writeProperty(writer, revisionInfo, SvnConstants.PROP_AUTHOR);
+      writeProperty(writer, revisionInfo, SvnConstants.PROP_DATE);
+      writeProperty(writer, revisionInfo, SvnConstants.PROP_LOG);
       writer
           .bool(false)
           .bool(false)
@@ -123,5 +108,20 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
         .listBegin()
         .listEnd()
         .listEnd();
+  }
+
+  private void writeProperty(@NotNull SvnServerWriter writer, @NotNull RevisionInfo revisionInfo, @NotNull String propName) throws IOException {
+    writer.listBegin();
+    String propValue = revisionInfo.getProperties().get(propName);
+    if (propValue != null) writer.string(propValue);
+    writer.listEnd();
+  }
+
+  private int getRevision(int[] rev, int defaultRevision, int lastRevision) throws ClientErrorException {
+    int revision = rev.length > 0 ? rev[0] : defaultRevision;
+    if (revision > lastRevision) {
+      throw new ClientErrorException(SvnConstants.ERROR_NO_REVISION, "No such revision " + revision);
+    }
+    return revision;
   }
 }
