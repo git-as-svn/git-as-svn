@@ -122,6 +122,8 @@ public class SvnServerParser {
       int number = read - (int) '0';
       while (true) {
         read = stream.read();
+        if (read == -1)
+          throw new EOFException();
         if (!isDigit(read)) {
           break;
         }
@@ -163,7 +165,7 @@ public class SvnServerParser {
       // Читаем.
       final int readed = stream.read(localBuffer, position, Math.min(need, localBuffer.length - position));
       if (readed < 0) {
-        throw new IOException("Unexpected end of stream");
+        throw new EOFException();
       }
       need -= readed;
       position += readed;
@@ -191,7 +193,7 @@ public class SvnServerParser {
     while (true) {
       final int read = stream.read();
       if (read < 0) {
-        throw new IOException("Unexpected end of stream");
+        throw new EOFException();
       }
       if (isSpace(read)) {
         return new WordToken(new String(localBuffer, 0, position, StandardCharsets.US_ASCII));
