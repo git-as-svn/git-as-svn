@@ -18,6 +18,16 @@ public final class SvnConstants {
   public static final String PROP_EXEC = "svn:executable";
   @NotNull
   public static final String PROP_GIT = "git:sha1";
+  @NotNull
+  public static final String PROP_SPECIAL = "svn:special";
+  @NotNull
+  public static final String PROP_ENTRY_UUID = "svn:entry:uuid";
+  @NotNull
+  public static final String PROP_ENTRY_REV = "svn:entry:committed-rev";
+  @NotNull
+  public static final String PROP_ENTRY_DATE = "svn:entry:committed-date";
+  @NotNull
+  public static final String PROP_ENTRY_AUTHOR = "svn:entry:last-author";
 
   @NotNull
   public final static String KIND_FILE = "file";

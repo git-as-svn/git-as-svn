@@ -11,6 +11,14 @@ import java.io.IOException;
  */
 public interface Repository {
   /**
+   * Repository identificator.
+   *
+   * @return Repository identificator.
+   */
+  @NotNull
+  String getUuid();
+
+  /**
    * Get latest revision number.
    *
    * @return Latest revision number.

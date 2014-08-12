@@ -3,13 +3,14 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.StringHelper;
+import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.Repository;
 import svnserver.server.error.ClientErrorException;
+import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.*;
 
 /**
  * SVN client session context.
@@ -17,6 +18,8 @@ import java.util.Deque;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SessionContext {
+  @NotNull
+  private final SvnServerParser parser;
   @NotNull
   private final SvnServerWriter writer;
   @NotNull
@@ -26,13 +29,21 @@ public class SessionContext {
   @NotNull
   private final String baseUrl;
   @NotNull
+  private final Set<String> capabilities;
+  @NotNull
   private String parent;
 
-  public SessionContext(@NotNull SvnServerWriter writer, @NotNull Repository repository, @NotNull String baseUrl, @NotNull String parentUrl) {
+  public SessionContext(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull Repository repository, @NotNull String baseUrl, @NotNull ClientInfo clientInfo) {
+    this.parser = parser;
     this.writer = writer;
     this.repository = repository;
     this.baseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
-    setParent(parentUrl);
+    this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
+    setParent(clientInfo.getUrl());
+  }
+
+  public boolean hasCapability(@NotNull String capability) {
+    return capabilities.contains(capability);
   }
 
   public void setParent(@NotNull String parent) {
@@ -50,6 +61,11 @@ public class SessionContext {
   @NotNull
   public Repository getRepository() {
     return repository;
+  }
+
+  @NotNull
+  public SvnServerParser getParser() {
+    return parser;
   }
 
   @NotNull

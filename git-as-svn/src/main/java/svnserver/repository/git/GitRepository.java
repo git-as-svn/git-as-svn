@@ -37,11 +37,14 @@ public class GitRepository implements Repository {
   @NotNull
   private final List<RevCommit> revisions;
   @NotNull
+  private final String uuid;
+  @NotNull
   private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
 
-  public GitRepository() throws IOException {
-    repository = new FileRepository(findGitPath());
-    revisions = loadRevisions(repository);
+  public GitRepository(@NotNull String uuid) throws IOException {
+    this.uuid = uuid;
+    this.repository = new FileRepository(findGitPath());
+    this.revisions = loadRevisions(repository);
   }
 
   private static List<RevCommit> loadRevisions(@NotNull FileRepository repository) throws IOException {
@@ -77,6 +80,12 @@ public class GitRepository implements Repository {
   @Override
   public int getLatestRevision() throws IOException {
     return revisions.size() - 1;
+  }
+
+  @NotNull
+  @Override
+  public String getUuid() {
+    return uuid;
   }
 
   @NotNull
@@ -225,10 +234,18 @@ public class GitRepository implements Repository {
 
     @NotNull
     @Override
-    public Map<String, String> getProperties() {
+    public Map<String, String> getProperties(boolean includeInternalProps) {
       final Map<String, String> props = new HashMap<>();
       if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
         props.put(SvnConstants.PROP_EXEC, "*");
+      } else if (fileMode.equals(FileMode.SYMLINK)) {
+        props.put(SvnConstants.PROP_SPECIAL, "*");
+      }
+      if (includeInternalProps) {
+        props.put(SvnConstants.PROP_ENTRY_UUID, uuid);
+        props.put(SvnConstants.PROP_ENTRY_REV, String.valueOf(lastChange.getId()));
+        props.put(SvnConstants.PROP_ENTRY_DATE, lastChange.getDate());
+        props.put(SvnConstants.PROP_ENTRY_AUTHOR, lastChange.getAuthor());
       }
       return props;
     }
@@ -278,6 +295,12 @@ public class GitRepository implements Repository {
 
     @NotNull
     @Override
+    public InputStream openStream() throws IOException {
+      return getObjectLoader().openStream();
+    }
+
+    @NotNull
+    @Override
     public Iterable<FileInfo> getEntries() throws IOException {
       final CanonicalTreeParser treeParser = new CanonicalTreeParser(emptyBytes, repository.newObjectReader(), objectId);
       return () -> new Iterator<FileInfo>() {
@@ -299,6 +322,24 @@ public class GitRepository implements Repository {
     @Override
     public RevisionInfo getLastChange() {
       return lastChange;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GitFileInfo that = (GitFileInfo) o;
+      return fileMode.equals(that.fileMode)
+          && fileName.equals(that.fileName)
+          && objectId.equals(that.objectId);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = objectId.hashCode();
+      result = 31 * result + fileMode.hashCode();
+      result = 31 * result + fileName.hashCode();
+      return result;
     }
   }
 }

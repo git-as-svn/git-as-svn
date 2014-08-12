@@ -77,7 +77,7 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
         .listBegin()
         .listBegin().string(fileInfo.getMd5()).listEnd() // md5
         .number(info.getId()) // revision id
-        .writeMap(args.wantProps ? fileInfo.getProperties() : Collections.emptyMap())
+        .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap())
         .listEnd()
         .listEnd();
     if (args.wantContents) {

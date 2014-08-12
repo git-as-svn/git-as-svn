@@ -1,6 +1,8 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
@@ -37,7 +39,8 @@ import java.util.UUID;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnServer {
-
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   @NotNull
   private final Map<String, String> users = new HashMap<>();
   @NotNull
@@ -57,8 +60,9 @@ public class SvnServer {
     commands.put("rev-prop", new RevPropCmd());
     commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
+    commands.put("update", new UpdateCmd());
 
-    repository = new GitRepository();
+    repository = new GitRepository("4f0c5325-dd55-4330-b24c-0e9e40eb504b");
   }
 
   public static void main(String[] args) throws IOException {
@@ -84,53 +88,45 @@ public class SvnServer {
   }
 
   public void serveClient(@NotNull Socket socket) throws IOException, SvnServerException {
+    log.info("New connection from: {}", socket.getRemoteSocketAddress());
     socket.setTcpNoDelay(true);
     final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
     final String username = authenticate(parser, writer);
+    log.info("User: {}", username);
 
     final String basePath = getBasePath(clientInfo.getUrl());
-    final SessionContext context = new SessionContext(writer, repository, basePath, clientInfo.getUrl());
+    final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo);
     sendAnnounce(writer, basePath);
+    try {
+      while (true) {
+        Step step = context.poll();
+        if (step != null) {
+          step.process(context);
+          continue;
+        }
 
-    while (true) {
-      Step step = context.poll();
-      if (step != null) {
-        step.process(context);
-        continue;
+        final SvnServerToken token = parser.readToken();
+        if (token != ListBeginToken.instance) {
+          throw new IOException("Unexpected token: " + token);
+        }
+        final String cmd = parser.readText();
+        log.info("Receive command: {}", cmd);
+        BaseCmd command = commands.get(cmd);
+        if (command != null) {
+          Object param = MessageParser.parse(command.getArguments(), parser);
+          parser.readToken(ListEndToken.class);
+          //noinspection unchecked
+          command.process(context, param);
+        } else {
+          BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
+          parser.skipItems();
+        }
       }
-
-      SvnServerToken token = parser.readToken();
-      if (token == null) {
-        break;
-      }
-      if (token != ListBeginToken.instance) {
-        throw new IOException("Unexpected token: " + token);
-      }
-      String cmd = parser.readText();
-      BaseCmd command = commands.get(cmd);
-      if (command != null) {
-        Object param = MessageParser.parse(command.getArguments(), parser);
-        parser.readToken(ListEndToken.class);
-        //noinspection unchecked
-        command.process(context, param);
-      } else {
-        writer
-            .listBegin()
-            .word("failure")
-            .listBegin()
-            .listBegin()
-            .number(SvnConstants.ERROR_UNIMPLEMENTED)
-            .string("Unsupported command: " + cmd)
-            .string("...")
-            .number(0)
-            .listEnd()
-            .listEnd()
-            .listEnd();
-        parser.skipItems();
-      }
+    } finally {
+      log.info("Connection closed");
     }
   }
 
@@ -238,7 +234,7 @@ public class SvnServer {
         .listBegin()
         .word("success")
         .listBegin()
-        .string("4f0c5325-dd55-4330-b24c-0e9e40eb504b")
+        .string(repository.getUuid())
         .string(baseUrl)
         .listBegin()
             //.word("mergeinfo")

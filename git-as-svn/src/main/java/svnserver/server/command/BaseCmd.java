@@ -23,7 +23,7 @@ public abstract class BaseCmd<T> {
   @NotNull
   public abstract Class<T> getArguments();
 
-  public final void process(@NotNull SessionContext context, @NotNull T args) throws IOException {
+  public void process(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
     context.push(new CheckPermissionStep(sessionContext -> processCommand(sessionContext, args)));
   }
 

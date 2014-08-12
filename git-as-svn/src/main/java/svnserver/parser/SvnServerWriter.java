@@ -48,7 +48,12 @@ public class SvnServerWriter {
 
   @NotNull
   public SvnServerWriter binary(@NotNull byte[] data) throws IOException {
-    StringToken.write(stream, data);
+    return binary(data, 0, data.length);
+  }
+
+  @NotNull
+  public SvnServerWriter binary(@NotNull byte[] data, int offset, int length) throws IOException {
+    StringToken.write(stream, data, offset, length);
     if (depth == 0) stream.flush();
     return this;
   }

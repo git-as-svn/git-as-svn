@@ -8,9 +8,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Интерфейс для чтения токенов из потока.
@@ -37,10 +35,6 @@ public class SvnServerParser {
 
   public SvnServerParser(@NotNull InputStream stream) {
     this(stream, DEFAULT_BUFFER_SIZE);
-  }
-
-  public int readNumber() throws IOException {
-    return readToken(NumberToken.class).getNumber();
   }
 
   @NotNull
@@ -95,7 +89,7 @@ public class SvnServerParser {
    * @return Возвращает элемент из потока. Если элемента нет - возвращает null.
    */
   @SuppressWarnings("OverlyComplexMethod")
-  @Nullable
+  @NotNull
   public SvnServerToken readToken() throws IOException {
     position = 0;
     int read;
@@ -207,20 +201,6 @@ public class SvnServerParser {
       localBuffer[position] = (byte) read;
       position++;
     }
-  }
-
-  @NotNull
-  public String[] readStringList() throws IOException {
-    final List<String> result = new ArrayList<>();
-    readToken(ListBeginToken.class);
-    while (true) {
-      final TextToken token = readItem(TextToken.class);
-      if (token == null) {
-        break;
-      }
-      result.add(token.getText());
-    }
-    return result.toArray(new String[result.size()]);
   }
 
   public void skipItems() throws IOException {

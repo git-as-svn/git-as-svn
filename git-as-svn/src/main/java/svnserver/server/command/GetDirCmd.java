@@ -69,7 +69,7 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .word("success")
         .listBegin()
         .number(info.getId()) // rev
-        .writeMap(args.wantProps ? fileInfo.getProperties() : Collections.emptyMap()) // props
+        .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap()) // props
         .listBegin();
     if (args.wantContents) {
       for (FileInfo item : fileInfo.getEntries()) {
@@ -78,7 +78,7 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
             .string(item.getFileName()) // name
             .word(item.getKind()) // node-kind
             .number(item.getSize()) // size
-            .bool(!item.getProperties().isEmpty()) // has-props
+            .bool(!item.getProperties(false).isEmpty()) // has-props
             .number(item.getLastChange().getId()) // created-rev
             .listBegin().string(item.getLastChange().getDate()).listEnd() // created-date
             .listBegin().listEnd() // last-author

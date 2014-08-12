@@ -27,11 +27,6 @@ public final class StringToken implements TextToken {
     this.data = text.getBytes(StandardCharsets.UTF_8);
   }
 
-  @NotNull
-  public byte[] getData() {
-    return data;
-  }
-
   @Override
   @NotNull
   public String getText() {
@@ -40,13 +35,13 @@ public final class StringToken implements TextToken {
 
   @Override
   public void write(@NotNull OutputStream stream) throws IOException {
-    write(stream, data);
+    write(stream, data, 0, data.length);
   }
 
-  public static void write(@NotNull OutputStream stream, @NotNull byte[] data) throws IOException {
-    stream.write(Long.toString(data.length, 10).getBytes(StandardCharsets.ISO_8859_1));
+  public static void write(@NotNull OutputStream stream, @NotNull byte[] data, int offset, int length) throws IOException {
+    stream.write(Long.toString(length, 10).getBytes(StandardCharsets.ISO_8859_1));
     stream.write(':');
-    stream.write(data);
+    stream.write(data, offset, length);
     stream.write(' ');
   }
 

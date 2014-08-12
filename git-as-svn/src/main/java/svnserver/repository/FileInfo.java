@@ -3,6 +3,7 @@ package svnserver.repository;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
@@ -16,7 +17,7 @@ public interface FileInfo {
   String getFileName();
 
   @NotNull
-  Map<String, String> getProperties();
+  Map<String, String> getProperties(boolean includeInternalProps);
 
   @NotNull
   String getMd5() throws IOException;
@@ -24,6 +25,9 @@ public interface FileInfo {
   long getSize() throws IOException;
 
   void copyTo(@NotNull OutputStream stream) throws IOException;
+
+  @NotNull
+  InputStream openStream() throws IOException;
 
   boolean isDirectory() throws IOException;
 
