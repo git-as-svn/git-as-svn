@@ -1,13 +1,13 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.StringHelper;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.parser.token.StringToken;
 import svnserver.server.command.*;
 import svnserver.server.error.AuthException;
 import svnserver.server.error.ClientErrorException;
@@ -134,11 +134,12 @@ public class SvnServer {
         .listEnd()
         .listEnd();
 
-    final Map<String, BaseCommand<?>> commands = new HashMap<>();
-    commands.put("get-latest-rev", new GetLatestRev());
-    commands.put("log", new Log());
-    commands.put("reparent", new Reparent());
-    commands.put("stat", new Stat());
+    final Map<String, BaseCmd<?>> commands = new HashMap<>();
+    commands.put("get-latest-rev", new GetLatestRevCmd());
+    commands.put("get-file", new GetFileCmd());
+    commands.put("log", new LogCmd());
+    commands.put("reparent", new ReparentCmd());
+    commands.put("stat", new StatCmd());
 
     while (true) {
       Step step = context.poll();
@@ -155,7 +156,7 @@ public class SvnServer {
         throw new IOException("Unexpected token: " + token);
       }
       String cmd = parser.readText();
-      BaseCommand command = commands.get(cmd);
+      BaseCmd command = commands.get(cmd);
       if (command != null) {
         Object param = MessageParser.parse(command.getArguments(), parser);
         parser.readToken(ListEndToken.class);
@@ -185,7 +186,7 @@ public class SvnServer {
       final SecretKeySpec keySpec = new SecretKeySpec(password.getBytes(), "HmacMD5");
       final Mac mac = Mac.getInstance("HmacMD5");
       mac.init(keySpec);
-      return StringToken.toHex(mac.doFinal(sessionKey.getBytes(StandardCharsets.UTF_8)));
+      return StringHelper.toHex(mac.doFinal(sessionKey.getBytes(StandardCharsets.UTF_8)));
     } catch (GeneralSecurityException e) {
       throw new IllegalStateException(e);
     }

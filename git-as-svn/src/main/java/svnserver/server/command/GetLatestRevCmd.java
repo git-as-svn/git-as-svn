@@ -16,7 +16,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class GetLatestRev extends BaseCommand<GetLatestRev.Params> {
+public class GetLatestRevCmd extends BaseCmd<GetLatestRevCmd.Params> {
   public static class Params {
   }
 

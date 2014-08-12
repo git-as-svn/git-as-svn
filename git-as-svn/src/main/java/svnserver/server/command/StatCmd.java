@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
-import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
@@ -23,7 +22,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class Stat extends BaseCommand<Stat.Params> {
+public class StatCmd extends BaseCmd<StatCmd.Params> {
   public static class Params {
     @NotNull
     private final String path;

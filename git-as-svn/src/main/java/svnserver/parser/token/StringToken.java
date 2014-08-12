@@ -1,6 +1,7 @@
 package svnserver.parser.token;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.StringHelper;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,8 +16,6 @@ import java.util.Arrays;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class StringToken implements TextToken {
-  @NotNull
-  private static final char[] DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
   @NotNull
   private final byte[] data;
 
@@ -70,7 +69,7 @@ public final class StringToken implements TextToken {
     if (isUtf(data)) {
       value = '\"' + new String(data, StandardCharsets.UTF_8) + '\"';
     } else {
-      value = "0x" + toHex(data);
+      value = "0x" + StringHelper.toHex(data);
     }
     return "String{" + value + '}';
   }
@@ -102,15 +101,5 @@ public final class StringToken implements TextToken {
         return false;
     }
     return true;
-  }
-
-  @SuppressWarnings("MagicNumber")
-  public static String toHex(byte[] data) {
-    final StringBuilder result = new StringBuilder();
-    for (byte i : data) {
-      result.append(DIGITS[(i >> 4) & 0x0F]);
-      result.append(DIGITS[i & 0x0F]);
-    }
-    return result.toString();
   }
 }

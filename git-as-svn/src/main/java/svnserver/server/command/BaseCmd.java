@@ -12,7 +12,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public abstract class BaseCommand<T> {
+public abstract class BaseCmd<T> {
   /**
    * Arguments class.
    *

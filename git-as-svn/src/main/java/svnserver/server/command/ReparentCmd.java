@@ -3,7 +3,6 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
-import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
@@ -18,7 +17,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class Reparent extends BaseCommand<Reparent.Params> {
+public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
   public static class Params {
     private final String url;
 

@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
-import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
@@ -36,7 +35,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class Log extends BaseCommand<Log.Params> {
+public class LogCmd extends BaseCmd<LogCmd.Params> {
   @SuppressWarnings("UnusedDeclaration")
   public static class Params {
     @NotNull
