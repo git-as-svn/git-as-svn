@@ -88,6 +88,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
       return;
     }
 
+    int logLimit = args.limit;
     for (int rev = startRev; rev != endRev; rev += step) {
       final RevisionInfo revisionInfo = context.getRepository().getRevisionInfo(rev);
       writer
@@ -104,6 +105,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
           .listBegin()
           .listEnd()
           .listEnd();
+      if (--logLimit == 0) break;
     }
     writer
         .word("done");
