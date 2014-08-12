@@ -138,6 +138,7 @@ public class SvnServer {
     final Map<String, BaseCmd<?>> commands = new HashMap<>();
     commands.put("get-latest-rev", new GetLatestRevCmd());
     commands.put("get-file", new GetFileCmd());
+    commands.put("get-dir", new GetDirCmd());
     commands.put("log", new LogCmd());
     commands.put("reparent", new ReparentCmd());
     commands.put("check-path", new CheckPathCmd());
