@@ -55,6 +55,7 @@ public class GitRepository implements Repository {
       if (commit.getParentCount() == 0) break;
       objectId = commit.getParent(0);
     }
+    revisions.addFirst(getEmptyCommit(repository));
     return new ArrayList<>(revisions);
   }
 
@@ -75,7 +76,7 @@ public class GitRepository implements Repository {
 
   @Override
   public int getLatestRevision() throws IOException {
-    return revisions.size();
+    return revisions.size() - 1;
   }
 
   @NotNull
@@ -120,7 +121,24 @@ public class GitRepository implements Repository {
 
   @NotNull
   private RevCommit getRevision(int revision) {
-    return revisions.get(revision - 1);
+    return revisions.get(revision);
+  }
+
+  @NotNull
+  private static RevCommit getEmptyCommit(@NotNull FileRepository repository) throws IOException {
+    final ObjectInserter inserter = repository.newObjectInserter();
+    final TreeFormatter treeBuilder = new TreeFormatter();
+    final ObjectId treeId = inserter.insert(treeBuilder);
+
+    final CommitBuilder commitBuilder = new CommitBuilder();
+    commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
+    commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
+    commitBuilder.setMessage("");
+    commitBuilder.setTreeId(treeId);
+    final ObjectId commitId = inserter.insert(commitBuilder);
+    final RevWalk revWalk = new RevWalk(repository);
+
+    return revWalk.parseCommit(commitId);
   }
 
   private class GitRevisionInfo implements RevisionInfo {
