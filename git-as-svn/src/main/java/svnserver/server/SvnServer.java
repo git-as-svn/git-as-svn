@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
@@ -99,7 +100,7 @@ public class SvnServer {
     }
 
     // Выполняем авторизацию.
-    String msgId = "blablabla";
+    String msgId = UUID.randomUUID().toString();
     writer
         .listBegin()
         .word("step")
