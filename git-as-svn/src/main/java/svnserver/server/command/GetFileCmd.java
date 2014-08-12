@@ -1,19 +1,16 @@
 package svnserver.server.command;
 
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.jetbrains.annotations.NotNull;
-import svnserver.StringHelper;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.FileInfo;
 import svnserver.repository.Repository;
 import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
 import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 
 /**
  * Get file content.
@@ -65,35 +62,25 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     }
     final Repository repository = context.getRepository();
     final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
-
-    final byte[] buffer = new byte[64 * 1024];
-    final MessageDigest md5 = getMd5();
-    final ObjectLoader file = info.getFile(fullPath);
-    if (file == null) {
+    final FileInfo fileInfo = info.getFile(fullPath);
+    if (fileInfo == null) {
       sendError(writer, 200009, "File not found");
       return;
-    }
-    try (InputStream stream = file.openStream()) {
-      while (true) {
-        int size = stream.read(buffer);
-        if (size < 0) break;
-        md5.update(buffer, 0, size);
-      }
     }
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .listBegin().string(StringHelper.toHex(md5.digest())).listEnd() // md5
+        .listBegin().string(fileInfo.getMd5()).listEnd() // md5
         .number(info.getId()) // revision id
-        .listBegin().listEnd() // props
+        .writeMap(args.wantProps ? fileInfo.getProperties() : Collections.emptyMap())
         .listEnd()
         .listEnd();
     if (args.wantContents) {
       final OutputStream stream = writer.getStream();
-      stream.write(String.valueOf(file.getSize()).getBytes());
+      stream.write(String.valueOf(fileInfo.getSize()).getBytes());
       stream.write(':');
-      file.copyTo(stream);
+      fileInfo.copyTo(stream);
       stream.write(' ');
 
       writer.string("");
@@ -106,11 +93,4 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     }
   }
 
-  private static MessageDigest getMd5() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-  }
 }

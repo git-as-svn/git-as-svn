@@ -7,6 +7,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * Интерфейс для записи данных в поток.
@@ -76,6 +77,19 @@ public class SvnServerWriter {
       }
     }
     if (depth == 0) stream.flush();
+    return this;
+  }
+
+  @NotNull
+  public SvnServerWriter writeMap(Map<String, String> properties) throws IOException {
+    listBegin();
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      listBegin();
+      string(entry.getKey());
+      string(entry.getValue());
+      listEnd();
+    }
+    listEnd();
     return this;
   }
 

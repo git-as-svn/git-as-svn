@@ -1,6 +1,5 @@
 package svnserver.repository;
 
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,5 +18,5 @@ public interface RevisionInfo {
   Map<String, String> getProperties();
 
   @Nullable
-  ObjectLoader getFile(@NotNull String fullPath) throws IOException;
+  FileInfo getFile(@NotNull String fullPath) throws IOException;
 }

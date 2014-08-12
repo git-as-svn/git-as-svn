@@ -15,6 +15,8 @@ public final class SvnConstants {
   @NotNull
   public static final String PROP_LOG = "svn:log";
   @NotNull
+  public static final String PROP_EXEC = "svn:executable";
+  @NotNull
   public static final String PROP_GIT = "git:sha1";
 
   @NotNull

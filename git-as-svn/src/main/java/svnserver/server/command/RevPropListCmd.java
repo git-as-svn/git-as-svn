@@ -6,7 +6,6 @@ import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Get revision property list.
@@ -46,16 +45,7 @@ public class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
         .listBegin()
         .word("success")
         .listBegin()
-        .listBegin();
-    for (Map.Entry<String, String> entry : revision.getProperties().entrySet()) {
-      writer
-          .listBegin()
-          .string(entry.getKey())
-          .string(entry.getValue())
-          .listEnd();
-    }
-    writer
-        .listEnd()
+        .writeMap(revision.getProperties())
         .listEnd()
         .listEnd();
   }

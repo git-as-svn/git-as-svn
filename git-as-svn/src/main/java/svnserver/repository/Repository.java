@@ -1,5 +1,7 @@
 package svnserver.repository;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 
 /**
@@ -21,6 +23,6 @@ public interface Repository {
    * @param revision Revision number.
    * @return Revision info.
    */
+  @NotNull
   RevisionInfo getRevisionInfo(int revision) throws IOException;
-
 }
