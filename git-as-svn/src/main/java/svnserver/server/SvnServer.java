@@ -92,7 +92,7 @@ public class SvnServer {
     final String username = authenticate(parser, writer);
 
     final String basePath = getBasePath(clientInfo.getUrl());
-    final SessionContext context = new SessionContext(writer, repository, basePath);
+    final SessionContext context = new SessionContext(writer, repository, basePath, clientInfo.getUrl());
     sendAnnounce(writer, basePath);
 
     while (true) {

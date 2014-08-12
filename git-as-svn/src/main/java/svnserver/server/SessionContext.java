@@ -28,11 +28,11 @@ public class SessionContext {
   @NotNull
   private String parent;
 
-  public SessionContext(@NotNull SvnServerWriter writer, @NotNull Repository repository, @NotNull String baseUrl) {
+  public SessionContext(@NotNull SvnServerWriter writer, @NotNull Repository repository, @NotNull String baseUrl, @NotNull String parentUrl) {
     this.writer = writer;
     this.repository = repository;
     this.baseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
-    this.parent = this.baseUrl;
+    setParent(parentUrl);
   }
 
   public void setParent(@NotNull String parent) {
