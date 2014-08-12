@@ -139,6 +139,7 @@ public class SvnServer {
     commands.put("get-file", new GetFileCmd());
     commands.put("log", new LogCmd());
     commands.put("reparent", new ReparentCmd());
+    commands.put("check-path", new CheckPathCmd());
     commands.put("stat", new StatCmd());
 
     while (true) {
