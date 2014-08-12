@@ -63,7 +63,7 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     final Repository repository = context.getRepository();
     final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
     final FileInfo fileInfo = info.getFile(fullPath);
-    if (fileInfo == null) {
+    if (fileInfo == null || fileInfo.isDirectory()) {
       sendError(writer, 200009, "File not found");
       return;
     }

@@ -157,28 +157,27 @@ public class GitRepository implements Repository {
       if (treeWalk == null) {
         return null;
       }
-      if (treeWalk.getFileMode(0).equals(FileMode.TREE)) {
-        return null;
-      }
-      //return treeWalk;
-      return new GitFileInfo(treeWalk);
+      return new GitFileInfo(treeWalk, 0);
     }
   }
 
   private class GitFileInfo implements FileInfo {
+    @NotNull
     private final TreeWalk treeWalk;
+    private final int index;
     @Nullable
     private ObjectLoader objectLoader;
 
-    public GitFileInfo(TreeWalk treeWalk) {
+    public GitFileInfo(@NotNull TreeWalk treeWalk, int index) {
       this.treeWalk = treeWalk;
+      this.index = index;
     }
 
     @NotNull
     @Override
     public Map<String, String> getProperties() {
       final Map<String, String> props = new HashMap<>();
-      if (treeWalk.getFileMode(0).equals(FileMode.EXECUTABLE_FILE)) {
+      if (treeWalk.getFileMode(index).equals(FileMode.EXECUTABLE_FILE)) {
         props.put(SvnConstants.PROP_EXEC, "*");
       }
       return props;
@@ -187,7 +186,7 @@ public class GitRepository implements Repository {
     @NotNull
     @Override
     public String getMd5() throws IOException {
-      return getObjectMD5(treeWalk.getObjectId(0));
+      return getObjectMD5(treeWalk.getObjectId(index));
     }
 
     @Override
@@ -195,9 +194,27 @@ public class GitRepository implements Repository {
       return getObjectLoader().getSize();
     }
 
+    @Override
+    public boolean isDirectory() throws IOException {
+      return ((treeWalk.getFileMode(index).getBits() & FileMode.TYPE_TREE) != 0);
+    }
+
+    @NotNull
+    @Override
+    public String getKind() throws IOException {
+      int fileMode = treeWalk.getFileMode(index).getBits();
+      if (isDirectory()) {
+        return SvnConstants.KIND_DIR;
+      }
+      if ((fileMode & FileMode.TYPE_FILE) != 0) {
+        return SvnConstants.KIND_FILE;
+      }
+      throw new IllegalStateException("Unknown file mode: " + treeWalk.getFileMode(index));
+    }
+
     private ObjectLoader getObjectLoader() throws IOException {
       if (objectLoader == null) {
-        objectLoader = openObject(treeWalk.getObjectId(0));
+        objectLoader = openObject(treeWalk.getObjectId(index));
       }
       return objectLoader;
     }

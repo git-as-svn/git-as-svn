@@ -20,6 +20,13 @@ public final class SvnConstants {
   public static final String PROP_GIT = "git:sha1";
 
   @NotNull
+  public final static String KIND_FILE = "file";
+  @NotNull
+  public final static String KIND_NONE = "none";
+  @NotNull
+  public final static String KIND_DIR = "dir";
+
+  @NotNull
   public static final String URL_PREFIX = "svn://";
 
   public static final int ERROR_UNIMPLEMENTED = 210001;

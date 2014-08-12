@@ -2,8 +2,13 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.SvnConstants;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.FileInfo;
+import svnserver.repository.Repository;
+import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -44,13 +49,23 @@ public class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
+    String fullPath = context.getRepositoryPath(args.path);
+    final Repository repository = context.getRepository();
+    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    FileInfo fileInfo = info.getFile(fullPath);
+    final String kind;
+    if (fileInfo != null) {
+      kind = fileInfo.getKind();
+    } else {
+      kind = SvnConstants.KIND_NONE;
+    }
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .word("dir") // kind
+        .word(kind) // kind
         .listEnd()
         .listEnd();
   }

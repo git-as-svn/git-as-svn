@@ -21,4 +21,9 @@ public interface FileInfo {
   long getSize() throws IOException;
 
   void copyTo(@NotNull OutputStream stream) throws IOException;
+
+  boolean isDirectory() throws IOException;
+
+  @NotNull
+  String getKind() throws IOException;
 }
