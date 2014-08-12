@@ -2,6 +2,8 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
+import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
@@ -23,10 +25,6 @@ public class Reparent extends BaseCommand<Reparent.Params> {
     public Params(String url) {
       this.url = url;
     }
-
-    public String getUrl() {
-      return url;
-    }
   }
 
   @NotNull
@@ -36,16 +34,8 @@ public class Reparent extends BaseCommand<Reparent.Params> {
   }
 
   @Override
-  public void process(@NotNull SvnServerWriter writer, @NotNull Params args) throws IOException {
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .listBegin()
-        .listEnd()
-        .string("")
-        .listEnd()
-        .listEnd();
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+    final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
         .word("success")

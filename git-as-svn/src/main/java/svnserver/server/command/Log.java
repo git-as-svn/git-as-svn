@@ -3,6 +3,8 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
+import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
@@ -35,6 +37,7 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public class Log extends BaseCommand<Log.Params> {
+  @SuppressWarnings("UnusedDeclaration")
   public static class Params {
     @NotNull
     private final String[] targetPath;
@@ -65,11 +68,6 @@ public class Log extends BaseCommand<Log.Params> {
       this.revprops = revprops;
     }
 
-    @NotNull
-    public String[] getTargetPath() {
-      return targetPath;
-    }
-
     @Nullable
     public Integer getStartRev() {
       return startRev.length < 1 ? null : startRev[0];
@@ -78,32 +76,6 @@ public class Log extends BaseCommand<Log.Params> {
     @Nullable
     public Integer getEndRev() {
       return endRev.length < 1 ? null : endRev[0];
-    }
-
-    public boolean isChangedPaths() {
-      return changedPaths;
-    }
-
-    public boolean isStrictNode() {
-      return strictNode;
-    }
-
-    public int getLimit() {
-      return limit;
-    }
-
-    public boolean isIncludeMergedRevisions() {
-      return includeMergedRevisions;
-    }
-
-    @NotNull
-    public String getRevpropsMode() {
-      return revpropsMode;
-    }
-
-    @NotNull
-    public String[] getRevprops() {
-      return revprops;
     }
   }
 
@@ -114,16 +86,8 @@ public class Log extends BaseCommand<Log.Params> {
   }
 
   @Override
-  public void process(@NotNull SvnServerWriter writer, @NotNull Params args) throws IOException {
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .listBegin()
-        .listEnd()
-        .string("")
-        .listEnd()
-        .listEnd();
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+    final SvnServerWriter writer = context.getWriter();
     for (int rev = 42; rev > 40; rev--) {
       writer
           .listBegin()

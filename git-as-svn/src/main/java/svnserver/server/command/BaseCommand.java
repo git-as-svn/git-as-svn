@@ -1,12 +1,14 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
+import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
 /**
- * Simple code.
+ * SVN client command base class.
+ * Must be stateless and thread-safe.
  *
  * @author a.navrotskiy
  */
@@ -19,11 +21,15 @@ public abstract class BaseCommand<T> {
   @NotNull
   public abstract Class<T> getArguments();
 
+  public final void process(@NotNull SessionContext context, @NotNull T args) throws IOException {
+    context.push(new CheckPermissionStep(sessionContext -> processCommand(sessionContext, args)));
+  }
+
   /**
    * Process command.
    *
-   * @param args   Command arguments.
-   * @param writer Writer.
+   * @param context Session context.
+   * @param args    Command arguments.
    */
-  public abstract void process(@NotNull SvnServerWriter writer, @NotNull T args) throws IOException;
+  protected abstract void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException;
 }

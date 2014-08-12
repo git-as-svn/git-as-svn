@@ -14,6 +14,7 @@ import svnserver.server.error.ClientErrorException;
 import svnserver.server.error.SvnServerException;
 import svnserver.server.msg.AuthInfoReq;
 import svnserver.server.msg.AuthReq;
+import svnserver.server.step.Step;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -54,6 +55,7 @@ public class SvnServer {
   public void serveClient(@NotNull Socket socket) throws IOException, SvnServerException {
     final SvnServerWriter writer = new SvnServerWriter(socket.getOutputStream());
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
+    final SessionContext context = new SessionContext(writer);
     // Анонсируем поддерживаемые функции.
     writer
         .listBegin()
@@ -139,6 +141,12 @@ public class SvnServer {
     commands.put("stat", new Stat());
 
     while (true) {
+      Step step = context.poll();
+      if (step != null) {
+        step.process(context);
+        continue;
+      }
+
       SvnServerToken token = parser.readToken();
       if (token == null) {
         break;
@@ -152,7 +160,7 @@ public class SvnServer {
         Object param = MessageParser.parse(command.getArguments(), parser);
         parser.readToken(ListEndToken.class);
         //noinspection unchecked
-        command.process(writer, param);
+        command.process(context, param);
       } else {
         writer
             .listBegin()

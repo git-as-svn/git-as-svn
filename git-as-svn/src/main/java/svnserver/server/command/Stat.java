@@ -3,6 +3,8 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
+import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
 
@@ -33,11 +35,6 @@ public class Stat extends BaseCommand<Stat.Params> {
       this.rev = rev;
     }
 
-    @NotNull
-    public String getPath() {
-      return path;
-    }
-
     @Nullable
     public Integer getRev() {
       return rev.length < 1 ? null : rev[0];
@@ -51,16 +48,8 @@ public class Stat extends BaseCommand<Stat.Params> {
   }
 
   @Override
-  public void process(@NotNull SvnServerWriter writer, @NotNull Params args) throws IOException {
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .listBegin()
-        .listEnd()
-        .string("")
-        .listEnd()
-        .listEnd();
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+    final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
         .word("success")
