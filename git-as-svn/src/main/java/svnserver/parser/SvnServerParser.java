@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.parser.token.*;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -102,7 +103,7 @@ public class SvnServerParser {
       read = stream.read();
       // Конец потока.
       if (read < 0) {
-        return null;
+        throw new EOFException();
       }
     } while (isSpace(read));
     if (read == '(') {
