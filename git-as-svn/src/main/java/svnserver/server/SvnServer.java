@@ -2,6 +2,7 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.StringHelper;
+import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
@@ -47,6 +48,8 @@ public class SvnServer {
     commands.put("log", new LogCmd());
     commands.put("reparent", new ReparentCmd());
     commands.put("check-path", new CheckPathCmd());
+    commands.put("rev-prop", new RevPropCmd());
+    commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
   }
 
@@ -109,7 +112,7 @@ public class SvnServer {
             .word("failure")
             .listBegin()
             .listBegin()
-            .number(210001)
+            .number(SvnConstants.ERROR_UNIMPLEMENTED)
             .string("Unsupported command: " + cmd)
             .string("...")
             .number(0)

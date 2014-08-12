@@ -1,0 +1,62 @@
+package svnserver.server.command;
+
+import org.jetbrains.annotations.NotNull;
+import svnserver.parser.SvnServerWriter;
+import svnserver.repository.RevisionInfo;
+import svnserver.server.SessionContext;
+
+import java.io.IOException;
+import java.util.Map;
+
+/**
+ * Get revision property list.
+ * <p>
+ * <pre>
+ * rev-proplist
+ *    params:   ( rev:number )
+ *    response: ( props:proplist )
+ * </pre>
+ *
+ * @author a.navrotskiy
+ */
+public class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
+  @SuppressWarnings("UnusedDeclaration")
+  public static class Params {
+    private final int revision;
+    @NotNull
+    private final String propName;
+
+    public Params(int revision, @NotNull String propName) {
+      this.revision = revision;
+      this.propName = propName;
+    }
+  }
+
+  @NotNull
+  @Override
+  public Class<Params> getArguments() {
+    return Params.class;
+  }
+
+  @Override
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+    final SvnServerWriter writer = context.getWriter();
+    final RevisionInfo revision = context.getRepository().getRevisionInfo(args.revision);
+    writer
+        .listBegin()
+        .word("success")
+        .listBegin()
+        .listBegin();
+    for (Map.Entry<String, String> entry : revision.getProperties().entrySet()) {
+      writer
+          .listBegin()
+          .string(entry.getKey())
+          .string(entry.getValue())
+          .listEnd();
+    }
+    writer
+        .listEnd()
+        .listEnd()
+        .listEnd();
+  }
+}
