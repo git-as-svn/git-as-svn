@@ -7,6 +7,7 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,8 @@ import java.util.concurrent.TimeUnit;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitRepository implements Repository {
+  @NotNull
+  public static final byte[] emptyBytes = new byte[0];
   @NotNull
   private final FileRepository repository;
   @NotNull
@@ -157,27 +160,37 @@ public class GitRepository implements Repository {
       if (treeWalk == null) {
         return null;
       }
-      return new GitFileInfo(treeWalk, 0);
+      return new GitFileInfo(treeWalk.getObjectId(0), treeWalk.getFileMode(0), treeWalk.getNameString());
     }
   }
 
   private class GitFileInfo implements FileInfo {
     @NotNull
-    private final TreeWalk treeWalk;
-    private final int index;
+    private final ObjectId objectId;
+    @NotNull
+    private final FileMode fileMode;
+    @NotNull
+    private final String fileName;
     @Nullable
     private ObjectLoader objectLoader;
 
-    public GitFileInfo(@NotNull TreeWalk treeWalk, int index) {
-      this.treeWalk = treeWalk;
-      this.index = index;
+    public GitFileInfo(@NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fileName) {
+      this.objectId = objectId;
+      this.fileMode = fileMode;
+      this.fileName = fileName;
+    }
+
+    @NotNull
+    @Override
+    public String getFileName() {
+      return fileName;
     }
 
     @NotNull
     @Override
     public Map<String, String> getProperties() {
       final Map<String, String> props = new HashMap<>();
-      if (treeWalk.getFileMode(index).equals(FileMode.EXECUTABLE_FILE)) {
+      if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
         props.put(SvnConstants.PROP_EXEC, "*");
       }
       return props;
@@ -186,7 +199,7 @@ public class GitRepository implements Repository {
     @NotNull
     @Override
     public String getMd5() throws IOException {
-      return getObjectMD5(treeWalk.getObjectId(index));
+      return getObjectMD5(objectId);
     }
 
     @Override
@@ -196,25 +209,25 @@ public class GitRepository implements Repository {
 
     @Override
     public boolean isDirectory() throws IOException {
-      return ((treeWalk.getFileMode(index).getBits() & FileMode.TYPE_TREE) != 0);
+      return ((fileMode.getBits() & FileMode.TYPE_TREE) != 0);
     }
 
     @NotNull
     @Override
     public String getKind() throws IOException {
-      int fileMode = treeWalk.getFileMode(index).getBits();
+      int mode = fileMode.getBits();
       if (isDirectory()) {
         return SvnConstants.KIND_DIR;
       }
-      if ((fileMode & FileMode.TYPE_FILE) != 0) {
+      if ((mode & FileMode.TYPE_FILE) != 0) {
         return SvnConstants.KIND_FILE;
       }
-      throw new IllegalStateException("Unknown file mode: " + treeWalk.getFileMode(index));
+      throw new IllegalStateException("Unknown file mode: " + fileMode);
     }
 
     private ObjectLoader getObjectLoader() throws IOException {
       if (objectLoader == null) {
-        objectLoader = openObject(treeWalk.getObjectId(index));
+        objectLoader = openObject(objectId);
       }
       return objectLoader;
     }
@@ -222,6 +235,26 @@ public class GitRepository implements Repository {
     @Override
     public void copyTo(@NotNull OutputStream stream) throws IOException {
       getObjectLoader().copyTo(stream);
+    }
+
+    @NotNull
+    @Override
+    public Iterable<FileInfo> getEntries() throws IOException {
+      final CanonicalTreeParser treeParser = new CanonicalTreeParser(emptyBytes, repository.newObjectReader(), objectId);
+      return () -> new Iterator<FileInfo>() {
+        @Override
+        public boolean hasNext() {
+          return !treeParser.eof();
+        }
+
+        @Override
+        public FileInfo next() {
+          final GitFileInfo fileInfo = new GitFileInfo(treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), treeParser.getEntryPathString());
+          treeParser.next();
+          return fileInfo;
+        }
+      };
+
     }
   }
 }

@@ -63,8 +63,12 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     final Repository repository = context.getRepository();
     final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
     final FileInfo fileInfo = info.getFile(fullPath);
-    if (fileInfo == null || fileInfo.isDirectory()) {
+    if (fileInfo == null) {
       sendError(writer, 200009, "File not found");
+      return;
+    }
+    if (fileInfo.isDirectory()) {
+      sendError(writer, 200009, "Could not cat all targets because some targets are directories");
       return;
     }
     writer

@@ -2,12 +2,14 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.FileInfo;
+import svnserver.repository.Repository;
+import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 
 /**
  * Get file content.
@@ -51,26 +53,32 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
     SvnServerWriter writer = context.getWriter();
-    byte[] fileContent = "File content\n".getBytes(StandardCharsets.UTF_8);
-    MessageDigest md5 = getMd5();
-    md5.update(fileContent);
+    final String fullPath = context.getRepositoryPath(args.path);
+    final Repository repository = context.getRepository();
+    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    final FileInfo fileInfo = info.getFile(fullPath);
+    if (fileInfo == null || (!fileInfo.isDirectory())) {
+      sendError(writer, 200009, "Directory not found");
+      return;
+    }
+
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .number(42) // rev
-        .listBegin().listEnd() // props
+        .number(info.getId()) // rev
+        .writeMap(args.wantProps ? fileInfo.getProperties() : Collections.emptyMap()) // props
         .listBegin();
     if (args.wantContents) {
-      for (int i = 0; i < 3; ++i) {
+      for (FileInfo item : fileInfo.getEntries()) {
         writer
             .listBegin()
-            .string("file" + i + ".txt") // name
-            .word("file") // node-kind
-            .number(40) // size
-            .bool(false) // has-props
+            .string(item.getFileName()) // name
+            .word(item.getKind()) // node-kind
+            .number(item.getSize()) // size
+            .bool(!item.getProperties().isEmpty()) // has-props
             .number(42) // created-rev
             .listBegin().string("1970-01-01T00:00:00.000000Z").listEnd() // created-date
             .listBegin().listEnd() // last-author
@@ -81,13 +89,5 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
-  }
-
-  private static MessageDigest getMd5() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
   }
 }

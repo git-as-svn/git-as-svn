@@ -13,6 +13,9 @@ import java.util.Map;
  */
 public interface FileInfo {
   @NotNull
+  String getFileName();
+
+  @NotNull
   Map<String, String> getProperties();
 
   @NotNull
@@ -26,4 +29,7 @@ public interface FileInfo {
 
   @NotNull
   String getKind() throws IOException;
+
+  @NotNull
+  Iterable<FileInfo> getEntries() throws IOException;
 }
