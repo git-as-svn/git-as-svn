@@ -3,26 +3,26 @@ package svnserver.server.msg;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Запрос на аутентификацию.
+ * Информация о подключенном клиенте.
  * <p>
  * response: ( version:number ( cap:word ... ) url:string ? ra-client:string ( ? client:string ) )
  *
  * @author a.navrotskiy
  */
-public class AuthInfoReq {
+public class ClientInfo {
   private final int protocolVersion;
   @NotNull
   private final String[] capabilities;
   @NotNull
   private final String url;
   @NotNull
-  private final String clientInfo;
+  private final String userAgent;
 
-  public AuthInfoReq(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String clientInfo) {
+  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String userAgent) {
     this.protocolVersion = protocolVersion;
     this.capabilities = capabilities;
     this.url = url;
-    this.clientInfo = clientInfo;
+    this.userAgent = userAgent;
   }
 
   public int getProtocolVersion() {
@@ -40,7 +40,7 @@ public class AuthInfoReq {
   }
 
   @NotNull
-  public String getClientInfo() {
-    return clientInfo;
+  public String getUserAgent() {
+    return userAgent;
   }
 }
