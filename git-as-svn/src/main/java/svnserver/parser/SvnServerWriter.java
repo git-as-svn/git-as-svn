@@ -78,4 +78,9 @@ public class SvnServerWriter {
     if (depth == 0) stream.flush();
     return this;
   }
+
+  @NotNull
+  public OutputStream getStream() {
+    return stream;
+  }
 }

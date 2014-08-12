@@ -1,6 +1,7 @@
 package svnserver;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,5 +33,16 @@ public final class StringHelper {
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     df.setTimeZone(UTC);
     return df.format(new Date(time));
+  }
+
+  @NotNull
+  public static String joinPath(@NotNull String path, @Nullable String localPath) {
+    if (localPath == null || localPath.isEmpty()) {
+      return path;
+    }
+    if (localPath.startsWith("/")) {
+      return localPath;
+    }
+    return path.substring(0, path.lastIndexOf('/') + 1) + localPath;
   }
 }

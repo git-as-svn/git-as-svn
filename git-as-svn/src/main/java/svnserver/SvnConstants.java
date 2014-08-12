@@ -17,6 +17,9 @@ public final class SvnConstants {
   @NotNull
   public static final String PROP_GIT = "git:sha1";
 
+  @NotNull
+  public static final String URL_PREFIX = "svn://";
+
   public static final int ERROR_UNIMPLEMENTED = 210001;
   public static final int ERROR_NO_REVISION = 160006;
 }

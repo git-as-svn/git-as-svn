@@ -35,6 +35,10 @@ public abstract class BaseCmd<T> {
    */
   protected abstract void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException;
 
+  protected int getRevision(int[] rev, int defaultRevision) {
+    return rev.length > 0 ? rev[0] : defaultRevision;
+  }
+
   public static void sendError(SvnServerWriter writer, int code, String msg) throws IOException {
     writer
         .listBegin()

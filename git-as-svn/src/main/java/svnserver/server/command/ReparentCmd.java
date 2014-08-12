@@ -34,6 +34,7 @@ public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+    context.setParent(args.url);
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()

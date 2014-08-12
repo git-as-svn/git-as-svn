@@ -123,8 +123,4 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
     if (propValue != null) writer.string(propValue);
     writer.listEnd();
   }
-
-  private int getRevision(int[] rev, int defaultRevision) {
-    return rev.length > 0 ? rev[0] : defaultRevision;
-  }
 }

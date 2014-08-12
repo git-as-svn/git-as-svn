@@ -9,6 +9,7 @@ import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.Repository;
 import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.error.ClientErrorException;
@@ -19,6 +20,7 @@ import svnserver.server.step.Step;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -38,12 +40,16 @@ public class SvnServer {
 
   @NotNull
   private final Map<String, String> users = new HashMap<>();
+  @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
+  @NotNull
+  private final Repository repository;
 
-  public SvnServer() {
+  public SvnServer() throws IOException {
     users.put("bozaro", "password");
 
     commands.put("get-latest-rev", new GetLatestRevCmd());
+    commands.put("get-dir", new GetDirCmd());
     commands.put("get-file", new GetFileCmd());
     commands.put("log", new LogCmd());
     commands.put("reparent", new ReparentCmd());
@@ -51,6 +57,8 @@ public class SvnServer {
     commands.put("rev-prop", new RevPropCmd());
     commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
+
+    repository = new GitRepository();
   }
 
   public static void main(String[] args) throws IOException {
@@ -76,14 +84,16 @@ public class SvnServer {
   }
 
   public void serveClient(@NotNull Socket socket) throws IOException, SvnServerException {
-    final SvnServerWriter writer = new SvnServerWriter(socket.getOutputStream());
+    socket.setTcpNoDelay(true);
+    final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
     final String username = authenticate(parser, writer);
-    sendAnnounce(writer);
 
-    final SessionContext context = new SessionContext(writer, new GitRepository());
+    final String basePath = getBasePath(clientInfo.getUrl());
+    final SessionContext context = new SessionContext(writer, repository, basePath);
+    sendAnnounce(writer, basePath);
 
     while (true) {
       Step step = context.poll();
@@ -122,6 +132,18 @@ public class SvnServer {
         parser.skipItems();
       }
     }
+  }
+
+  @NotNull
+  private String getBasePath(@NotNull String url) throws ClientErrorException {
+    if (!url.startsWith(SvnConstants.URL_PREFIX)) {
+      throw new ClientErrorException(0, "Invalid repository URL: " + url);
+    }
+    int index = url.indexOf('/', SvnConstants.URL_PREFIX.length());
+    if (index < 0) {
+      index = url.length();
+    }
+    return url.substring(0, index) + '/';
   }
 
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, ClientErrorException {
@@ -211,13 +233,13 @@ public class SvnServer {
     }
   }
 
-  private void sendAnnounce(SvnServerWriter writer) throws IOException {
+  private void sendAnnounce(SvnServerWriter writer, @NotNull String baseUrl) throws IOException {
     writer
         .listBegin()
         .word("success")
         .listBegin()
         .string("4f0c5325-dd55-4330-b24c-0e9e40eb504b")
-        .string("svn://localhost")
+        .string(baseUrl)
         .listBegin()
             //.word("mergeinfo")
         .listEnd()

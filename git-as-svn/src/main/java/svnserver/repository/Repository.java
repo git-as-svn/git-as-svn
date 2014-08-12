@@ -18,7 +18,7 @@ public interface Repository {
   /**
    * Get revision info.
    *
-   * @param revision
+   * @param revision Revision number.
    * @return Revision info.
    */
   RevisionInfo getRevisionInfo(int revision) throws IOException;

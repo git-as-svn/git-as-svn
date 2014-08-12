@@ -1,12 +1,17 @@
 package svnserver.server.command;
 
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.jetbrains.annotations.NotNull;
 import svnserver.StringHelper;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.Repository;
+import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -51,22 +56,46 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
     SvnServerWriter writer = context.getWriter();
-    byte[] fileContent = "File content\n".getBytes(StandardCharsets.UTF_8);
-    MessageDigest md5 = getMd5();
-    md5.update(fileContent);
+    String fullPath = context.getRepositoryPath(args.path);
+    if (fullPath.endsWith("/")) {
+      sendError(writer, 200009, "Could not cat all targets because some targets are directories");
+      return;
+    }
+    final Repository repository = context.getRepository();
+    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+
+    final byte[] buffer = new byte[64 * 1024];
+    final MessageDigest md5 = getMd5();
+    final ObjectLoader file = info.getFile(fullPath);
+    if (file == null) {
+      sendError(writer, 200009, "File not found");
+      return;
+    }
+    try (InputStream stream = file.openStream()) {
+      while (true) {
+        int size = stream.read(buffer);
+        if (size < 0) break;
+        md5.update(buffer, 0, size);
+      }
+    }
     writer
         .listBegin()
         .word("success")
         .listBegin()
         .listBegin().string(StringHelper.toHex(md5.digest())).listEnd() // md5
-        .number(42) // rev
+        .number(info.getId()) // revision id
         .listBegin().listEnd() // props
         .listEnd()
         .listEnd();
     if (args.wantContents) {
-      writer.binary(fileContent);
+      final OutputStream stream = writer.getStream();
+      stream.write(String.valueOf(file.getSize()).getBytes());
+      stream.write(':');
+      file.copyTo(stream);
+      stream.write(' ');
+
       writer.string("");
       writer
           .listBegin()
