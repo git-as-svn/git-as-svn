@@ -1,9 +1,12 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.FileInfo;
+import svnserver.repository.Repository;
+import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -33,11 +36,6 @@ public class StatCmd extends BaseCmd<StatCmd.Params> {
       this.path = path;
       this.rev = rev;
     }
-
-    @Nullable
-    public Integer getRev() {
-      return rev.length < 1 ? null : rev[0];
-    }
   }
 
   @NotNull
@@ -47,20 +45,28 @@ public class StatCmd extends BaseCmd<StatCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
     final SvnServerWriter writer = context.getWriter();
+    final String fullPath = context.getRepositoryPath(args.path);
+    final Repository repository = context.getRepository();
+    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    final FileInfo fileInfo = info.getFile(fullPath);
+    if (fileInfo == null) {
+      sendError(writer, 200009, "File not found");
+      return;
+    }
     writer
         .listBegin()
         .word("success")
         .listBegin()
         .listBegin()
         .listBegin()
-        .word("dir") // kind
-        .number(100500) // size
-        .bool(false) // has properties
-        .number(42) // last change revision
-        .listBegin().string("2014-08-11T11:57:36.023610Z").listEnd() // last change date
-        .listBegin().string("bozaro").listEnd() // last change author
+        .word(fileInfo.getKind()) // kind
+        .number(fileInfo.getSize()) // size
+        .bool(!fileInfo.getProperties().isEmpty()) // has properties
+        .number(fileInfo.getLastChange().getId()) // last change revision
+        .listBegin().string(fileInfo.getLastChange().getDate()).listEnd() // last change date
+        .listBegin().string(fileInfo.getLastChange().getAuthor()).listEnd() // last change author
         .listEnd()
         .listEnd()
         .listEnd()

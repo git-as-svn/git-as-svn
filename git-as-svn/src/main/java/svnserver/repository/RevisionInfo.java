@@ -17,6 +17,15 @@ public interface RevisionInfo {
   @NotNull
   Map<String, String> getProperties();
 
+  @NotNull
+  String getDate();
+
+  @NotNull
+  String getAuthor();
+
+  @NotNull
+  String getLog();
+
   @Nullable
   FileInfo getFile(@NotNull String fullPath) throws IOException;
 }

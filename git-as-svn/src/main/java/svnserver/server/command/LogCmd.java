@@ -94,11 +94,10 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
       writer
           .listBegin()
           .listBegin().listEnd()
-          .number(rev);
-      writeProperty(writer, revisionInfo, SvnConstants.PROP_AUTHOR);
-      writeProperty(writer, revisionInfo, SvnConstants.PROP_DATE);
-      writeProperty(writer, revisionInfo, SvnConstants.PROP_LOG);
-      writer
+          .number(rev)
+          .listBegin().string(revisionInfo.getAuthor()).listEnd()
+          .listBegin().string(revisionInfo.getDate()).listEnd()
+          .listBegin().string(revisionInfo.getLog()).listEnd()
           .bool(false)
           .bool(false)
           .number(0)
@@ -115,12 +114,5 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
         .listBegin()
         .listEnd()
         .listEnd();
-  }
-
-  private void writeProperty(@NotNull SvnServerWriter writer, @NotNull RevisionInfo revisionInfo, @NotNull String propName) throws IOException {
-    writer.listBegin();
-    String propValue = revisionInfo.getProperties().get(propName);
-    if (propValue != null) writer.string(propValue);
-    writer.listEnd();
   }
 }

@@ -79,8 +79,8 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
             .word(item.getKind()) // node-kind
             .number(item.getSize()) // size
             .bool(!item.getProperties().isEmpty()) // has-props
-            .number(42) // created-rev
-            .listBegin().string("1970-01-01T00:00:00.000000Z").listEnd() // created-date
+            .number(item.getLastChange().getId()) // created-rev
+            .listBegin().string(item.getLastChange().getDate()).listEnd() // created-date
             .listBegin().listEnd() // last-author
             .listEnd();
       }

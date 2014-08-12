@@ -32,4 +32,7 @@ public interface FileInfo {
 
   @NotNull
   Iterable<FileInfo> getEntries() throws IOException;
+
+  @NotNull
+  RevisionInfo getLastChange();
 }

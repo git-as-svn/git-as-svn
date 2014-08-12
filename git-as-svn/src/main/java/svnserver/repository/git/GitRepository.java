@@ -110,12 +110,7 @@ public class GitRepository implements Repository {
   @Override
   public RevisionInfo getRevisionInfo(int revision) throws IOException {
     final RevCommit commit = getRevision(revision);
-    Map<String, String> props = new HashMap<>();
-    props.put(SvnConstants.PROP_AUTHOR, commit.getCommitterIdent().getName());
-    props.put(SvnConstants.PROP_LOG, commit.getFullMessage().trim());
-    props.put(SvnConstants.PROP_DATE, StringHelper.formatDate(TimeUnit.SECONDS.toMillis(commit.getCommitTime())));
-    props.put(SvnConstants.PROP_GIT, commit.name());
-    return new GitRevisionInfo(revision, props, commit);
+    return new GitRevisionInfo(revision, commit);
   }
 
   private static MessageDigest getMd5() {
@@ -133,12 +128,10 @@ public class GitRepository implements Repository {
 
   private class GitRevisionInfo implements RevisionInfo {
     private final int revision;
-    private final Map<String, String> props;
     private final RevCommit commit;
 
-    public GitRevisionInfo(int revision, Map<String, String> props, RevCommit commit) {
+    public GitRevisionInfo(int revision, RevCommit commit) {
       this.revision = revision;
-      this.props = props;
       this.commit = commit;
     }
 
@@ -150,7 +143,30 @@ public class GitRepository implements Repository {
     @NotNull
     @Override
     public Map<String, String> getProperties() {
+      final Map<String, String> props = new HashMap<>();
+      props.put(SvnConstants.PROP_AUTHOR, getAuthor());
+      props.put(SvnConstants.PROP_LOG, getLog());
+      props.put(SvnConstants.PROP_DATE, getDate());
+      props.put(SvnConstants.PROP_GIT, commit.name());
       return props;
+    }
+
+    @NotNull
+    @Override
+    public String getDate() {
+      return StringHelper.formatDate(TimeUnit.SECONDS.toMillis(commit.getCommitTime()));
+    }
+
+    @NotNull
+    @Override
+    public String getAuthor() {
+      return commit.getCommitterIdent().getName();
+    }
+
+    @NotNull
+    @Override
+    public String getLog() {
+      return commit.getFullMessage().trim();
     }
 
     @Nullable
@@ -160,7 +176,7 @@ public class GitRepository implements Repository {
       if (treeWalk == null) {
         return null;
       }
-      return new GitFileInfo(treeWalk.getObjectId(0), treeWalk.getFileMode(0), treeWalk.getNameString());
+      return new GitFileInfo(treeWalk.getObjectId(0), treeWalk.getFileMode(0), treeWalk.getNameString(), this);
     }
   }
 
@@ -171,13 +187,16 @@ public class GitRepository implements Repository {
     private final FileMode fileMode;
     @NotNull
     private final String fileName;
+    @NotNull
+    private final RevisionInfo lastChange;
     @Nullable
     private ObjectLoader objectLoader;
 
-    public GitFileInfo(@NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fileName) {
+    public GitFileInfo(@NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fileName, @NotNull RevisionInfo lastChange) {
       this.objectId = objectId;
       this.fileMode = fileMode;
       this.fileName = fileName;
+      this.lastChange = lastChange;
     }
 
     @NotNull
@@ -249,12 +268,17 @@ public class GitRepository implements Repository {
 
         @Override
         public FileInfo next() {
-          final GitFileInfo fileInfo = new GitFileInfo(treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), treeParser.getEntryPathString());
+          final GitFileInfo fileInfo = new GitFileInfo(treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), treeParser.getEntryPathString(), lastChange);
           treeParser.next();
           return fileInfo;
         }
       };
+    }
 
+    @NotNull
+    @Override
+    public RevisionInfo getLastChange() {
+      return lastChange;
     }
   }
 }
