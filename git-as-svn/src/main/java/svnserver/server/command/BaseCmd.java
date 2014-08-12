@@ -1,7 +1,9 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
@@ -31,5 +33,20 @@ public abstract class BaseCmd<T> {
    * @param context Session context.
    * @param args    Command arguments.
    */
-  protected abstract void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException;
+  protected abstract void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException;
+
+  public static void sendError(SvnServerWriter writer, int code, String msg) throws IOException {
+    writer
+        .listBegin()
+        .word("failure")
+        .listBegin()
+        .listBegin()
+        .number(code)
+        .string(msg)
+        .string("...")
+        .number(0)
+        .listEnd()
+        .listEnd()
+        .listEnd();
+  }
 }

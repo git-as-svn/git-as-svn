@@ -2,6 +2,7 @@ package svnserver.server.step;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -17,5 +18,5 @@ public interface Step {
    *
    * @param context Process step.
    */
-  void process(@NotNull SessionContext context) throws IOException;
+  void process(@NotNull SessionContext context) throws IOException, ClientErrorException;
 }

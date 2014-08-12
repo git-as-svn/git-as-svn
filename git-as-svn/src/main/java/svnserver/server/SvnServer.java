@@ -8,6 +8,7 @@ import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.error.ClientErrorException;
 import svnserver.server.error.SvnServerException;
@@ -79,7 +80,7 @@ public class SvnServer {
     final String username = authenticate(parser, writer);
     sendAnnounce(writer);
 
-    final SessionContext context = new SessionContext(writer);
+    final SessionContext context = new SessionContext(writer, new GitRepository());
 
     while (true) {
       Step step = context.poll();
@@ -144,7 +145,7 @@ public class SvnServer {
     // Читаем информацию о клиенте.
     final ClientInfo clientInfo = MessageParser.parse(ClientInfo.class, parser);
     if (clientInfo.getProtocolVersion() != 2) {
-      throw new ClientErrorException("Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)");
+      throw new ClientErrorException(0, "Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)");
     }
     return clientInfo;
   }

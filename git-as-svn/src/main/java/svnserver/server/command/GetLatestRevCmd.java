@@ -33,7 +33,7 @@ public class GetLatestRevCmd extends BaseCmd<GetLatestRevCmd.Params> {
         .listBegin()
         .word("success")
         .listBegin()
-        .number(42)
+        .number(context.getRepository().getLatestRevision())
         .listEnd()
         .listEnd();
   }
