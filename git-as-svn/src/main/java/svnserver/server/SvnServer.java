@@ -18,6 +18,7 @@ import svnserver.server.step.Step;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -44,6 +45,8 @@ public class SvnServer {
       new Thread(() -> {
         try (Socket client = socket) {
           serveClient(client);
+        } catch (EOFException ignore) {
+          // client disconnect is not a error
         } catch (IOException e) {
           e.printStackTrace();
         } catch (SvnServerException e) {
