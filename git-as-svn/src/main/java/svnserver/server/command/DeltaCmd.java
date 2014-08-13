@@ -1,6 +1,5 @@
 package svnserver.server.command;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -298,7 +297,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
             @Override
             public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-              try (ByteOutputStream stream = new ByteOutputStream()) {
+              try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
                 diffWindow.writeTo(stream, header, compress);
                 header = false;
                 writer
@@ -306,7 +305,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
                     .word("textdelta-chunk")
                     .listBegin()
                     .string(tokenId)
-                    .binary(stream.getBytes(), 0, stream.getCount())
+                    .binary(stream.toByteArray())
                     .listEnd()
                     .listEnd();
                 return null;

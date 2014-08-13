@@ -6,10 +6,7 @@ import org.testng.internal.junit.ArrayAsserts;
 import svnserver.parser.token.*;
 import svnserver.server.msg.ClientInfo;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -33,8 +30,11 @@ public class SvnServerParserTest {
       Assert.assertEquals(parser.readToken(), new WordToken("sublist"));
       Assert.assertEquals(parser.readToken(), ListEndToken.instance);
       Assert.assertEquals(parser.readToken(), ListEndToken.instance);
-      Assert.assertNull(parser.readToken());
-      Assert.assertNull(parser.readToken());
+      try {
+        parser.readToken();
+        Assert.fail();
+      } catch (EOFException ignored) {
+      }
     }
   }
 
@@ -53,8 +53,12 @@ public class SvnServerParserTest {
       Assert.assertEquals(parser.readToken(), new WordToken("sublist"));
       Assert.assertEquals(parser.readToken(), ListEndToken.instance);
       Assert.assertEquals(parser.readToken(), ListEndToken.instance);
-      Assert.assertNull(parser.readToken());
-      Assert.assertNull(parser.readToken());
+      try {
+        parser.readToken();
+        Assert.fail();
+      } catch (EOFException ignored) {
+      }
+
     }
   }
 
