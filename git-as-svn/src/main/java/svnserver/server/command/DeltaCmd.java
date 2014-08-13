@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Delta commands.
@@ -84,8 +83,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
-  @NotNull
-  private static final AtomicInteger lastTokenId = new AtomicInteger(0);
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
@@ -95,6 +92,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
   }
 
   public static class ReportPipeline {
+    private int lastTokenId;
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
     @NotNull
@@ -153,7 +151,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     private String createTokenId() {
-      return "t" + String.valueOf(lastTokenId.incrementAndGet());
+      return "t" + String.valueOf(++lastTokenId);
     }
 
     //  private void updateDir(@NotNull String path,int rev, want, entry, Object parentToken=None) throws IOException {
