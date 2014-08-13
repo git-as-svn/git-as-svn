@@ -21,10 +21,7 @@ import svnserver.server.SessionContext;
 import svnserver.server.error.ClientErrorException;
 import svnserver.server.step.CheckPermissionStep;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -195,9 +192,15 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       final SvnServerParser parser = context.getParser();
       parser.readToken(ListBeginToken.class);
       if (!"success".equals(parser.readText())) {
+        parser.readToken(ListBeginToken.class);
+        parser.readToken(ListBeginToken.class);
+        final int errorCode = parser.readNumber();
+        final String errorMessage = parser.readText();
         parser.skipItems();
-        // self.link.send_msg(gen.tuple('abort-edit'))
-        // self.link.send_msg(gen.error(errno, errmsg))
+        parser.readToken(ListEndToken.class);
+        parser.readToken(ListEndToken.class);
+        log.error("Received client error: {} {}", errorCode, errorMessage);
+        throw new EOFException(errorMessage);
       } else {
         parser.skipItems();
         writer

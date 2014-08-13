@@ -42,6 +42,10 @@ public class SvnServerParser {
     return readToken(TextToken.class).getText();
   }
 
+  public int readNumber() throws IOException {
+    return readToken(NumberToken.class).getNumber();
+  }
+
   public int getDepth() {
     return depth;
   }
