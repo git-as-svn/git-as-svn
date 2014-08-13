@@ -81,7 +81,10 @@ public class SvnServerWriter {
         throw new IllegalStateException("Too many closed lists.");
       }
     }
-    if (depth == 0) stream.flush();
+    if (depth == 0) {
+      stream.write('\n');
+      stream.flush();
+    }
     return this;
   }
 

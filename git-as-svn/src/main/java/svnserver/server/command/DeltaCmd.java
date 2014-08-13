@@ -128,7 +128,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listBegin().number(rev).listEnd()
           .listEnd();
       FileInfo file = context.getRepository().getRevisionInfo(rev).getFile(path);
-      updateDir(context, null, file, null);
+      updateDir(context, "", null, file, null);
       writer
           .listBegin()
           .word("close-edit")
@@ -155,9 +155,10 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     //  private void updateDir(@NotNull String path,int rev, want, entry, Object parentToken=None) throws IOException {
-    private void updateDir(@NotNull SessionContext context, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @Nullable String parentTokenId) throws IOException, ClientErrorException {
+    private void updateDir(@NotNull SessionContext context, @NotNull String prefix, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @Nullable String parentTokenId) throws IOException, ClientErrorException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
+      final String fullPath = parentTokenId == null ? "" : joinPath(prefix, newFile.getFileName());
       if (parentTokenId == null) {
         writer
             .listBegin()
@@ -170,10 +171,11 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
             .listEnd()
             .listEnd();
       } else if (oldFile == null) {
-        sendStartEntry(writer, "add-dir", newFile.getFileName(), parentTokenId, tokenId, null);
+        sendStartEntry(writer, "add-dir", fullPath, parentTokenId, tokenId, null);
       } else {
-        sendStartEntry(writer, "open-dir", newFile.getFileName(), parentTokenId, tokenId, newFile.getLastChange().getId());
+        sendStartEntry(writer, "open-dir", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
       }
+      updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
       final Map<String, FileInfo> newEntries = new HashMap<>();
       for (FileInfo entry : newFile.getEntries()) {
         newEntries.put(entry.getFileName(), entry);
@@ -186,19 +188,18 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
             continue;
           }
           if (newEntry == null) {
-            removeEntry(context, entry, tokenId);
+            removeEntry(context, fullPath, entry, tokenId);
           } else if (!newEntry.getKind().equals(entry.getKind())) {
-            removeEntry(context, entry, tokenId);
-            updateEntry(context, null, newEntry, tokenId);
+            removeEntry(context, fullPath, entry, tokenId);
+            updateEntry(context, fullPath, null, newEntry, tokenId);
           } else {
-            updateEntry(context, entry, newEntry, tokenId);
+            updateEntry(context, fullPath, entry, newEntry, tokenId);
           }
         }
       }
       for (FileInfo entry : newEntries.values()) {
-        updateEntry(context, null, entry, tokenId);
+        updateEntry(context, fullPath, null, entry, tokenId);
       }
-      updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
       writer
           .listBegin()
           .word("close-dir")
@@ -220,13 +221,13 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
+    private void updateFile(@NotNull SessionContext context, @NotNull String prefix, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
       if (oldFile == null) {
-        sendStartEntry(writer, "add-file", newFile.getFileName(), parentTokenId, tokenId, null);
+        sendStartEntry(writer, "add-file", joinPath(prefix, newFile.getFileName()), parentTokenId, tokenId, null);
       } else {
-        sendStartEntry(writer, "open-file", newFile.getFileName(), parentTokenId, tokenId, newFile.getLastChange().getId());
+        sendStartEntry(writer, "open-file", joinPath(prefix, newFile.getFileName()), parentTokenId, tokenId, newFile.getLastChange().getId());
       }
       writer
           .listBegin()
@@ -306,21 +307,21 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 
-    private void updateEntry(@NotNull SessionContext context, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
+    private void updateEntry(@NotNull SessionContext context, @NotNull String prefix, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
       if (newFile.isDirectory()) {
-        updateDir(context, oldFile, newFile, parentTokenId);
+        updateDir(context, prefix, oldFile, newFile, parentTokenId);
       } else {
-        updateFile(context, oldFile, newFile, parentTokenId);
+        updateFile(context, prefix, oldFile, newFile, parentTokenId);
       }
     }
 
-    private void removeEntry(@NotNull SessionContext context, @NotNull FileInfo entry, @NotNull String parentTokenId) throws IOException {
+    private void removeEntry(@NotNull SessionContext context, @NotNull String prefix, @NotNull FileInfo entry, @NotNull String parentTokenId) throws IOException {
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
           .word("delete-entry")
           .listBegin()
-          .string(entry.getFileName())
+          .string(joinPath(prefix, entry.getFileName()))
           .listBegin()
           .number(entry.getLastChange().getId()) // todo: ???
           .listEnd()
@@ -363,6 +364,10 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listEnd()
           .listEnd()
           .listEnd();
+    }
+
+    private String joinPath(@NotNull String prefix, @NotNull String name) {
+      return prefix.isEmpty() ? name : (prefix + "/" + name);
     }
 
     private void abortReport(@NotNull SessionContext context, @NotNull NoParams args) throws ClientErrorException {
