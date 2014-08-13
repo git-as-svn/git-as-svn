@@ -267,9 +267,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
-      if (newFile.equals(oldFile)) {
-        return;
-      }
       if (oldFile == null) {
         sendStartEntry(writer, "add-file", fullPath, parentTokenId, tokenId, null);
       } else {
