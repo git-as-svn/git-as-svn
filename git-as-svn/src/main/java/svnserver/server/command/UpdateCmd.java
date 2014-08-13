@@ -21,7 +21,6 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
-  @SuppressWarnings("UnusedDeclaration")
   public static class Params implements DeltaParams {
     private final int[] rev;
     @NotNull

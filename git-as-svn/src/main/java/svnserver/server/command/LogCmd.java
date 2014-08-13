@@ -5,6 +5,7 @@ import svnserver.SvnConstants;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -76,7 +77,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
     final SvnServerWriter writer = context.getWriter();
     final int head = context.getRepository().getLatestRevision();
     int startRev = getRevision(args.startRev, 1);

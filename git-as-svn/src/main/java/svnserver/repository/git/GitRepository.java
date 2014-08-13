@@ -13,6 +13,7 @@ import svnserver.SvnConstants;
 import svnserver.repository.FileInfo;
 import svnserver.repository.Repository;
 import svnserver.repository.RevisionInfo;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class GitRepository implements Repository {
 
   @NotNull
   @Override
-  public RevisionInfo getRevisionInfo(int revision) throws IOException {
+  public RevisionInfo getRevisionInfo(int revision) throws IOException, ClientErrorException {
     final RevCommit commit = getRevision(revision);
     return new GitRevisionInfo(revision, commit);
   }
@@ -129,7 +130,9 @@ public class GitRepository implements Repository {
   }
 
   @NotNull
-  private RevCommit getRevision(int revision) {
+  private RevCommit getRevision(int revision) throws ClientErrorException {
+    if (revision >= revisions.size())
+      throw new ClientErrorException(SvnConstants.ERROR_NO_REVISION, "No such revision " + revision);
     return revisions.get(revision);
   }
 

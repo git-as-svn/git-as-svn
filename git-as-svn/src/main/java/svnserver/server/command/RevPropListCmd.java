@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
+import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -38,7 +39,7 @@ public class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
     final SvnServerWriter writer = context.getWriter();
     final RevisionInfo revision = context.getRepository().getRevisionInfo(args.revision);
     writer

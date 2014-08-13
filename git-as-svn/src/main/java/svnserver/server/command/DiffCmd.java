@@ -18,10 +18,11 @@ import java.io.IOException;
  *    response: ( )
  * </pre>
  *
+ * todo: Need support for diff like: svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
+ *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
-  @SuppressWarnings("UnusedDeclaration")
   public static class Params implements DeltaParams {
     private final int[] rev;
     @NotNull
