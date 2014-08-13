@@ -2,10 +2,7 @@ package svnserver.parser;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.parser.token.ListBeginToken;
-import svnserver.parser.token.NumberToken;
-import svnserver.parser.token.TextToken;
-import svnserver.parser.token.WordToken;
+import svnserver.parser.token.*;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -21,13 +18,15 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class MessageParser {
-  private interface Parser<T> {
+  private interface Parser {
     @NotNull
     Object parse(@Nullable SvnServerParser tokenParser) throws IOException;
   }
 
   @NotNull
   private static final String[] emptyStrings = {};
+  @NotNull
+  private static final byte[] emptyBytes = {};
   @NotNull
   private static final int[] emptyInts = {};
   @NotNull
@@ -37,6 +36,7 @@ public final class MessageParser {
     parsers = new HashMap<>();
     parsers.put(String.class, MessageParser::parseString);
     parsers.put(String[].class, MessageParser::parseStrings);
+    parsers.put(byte[].class, MessageParser::parseBinary);
     parsers.put(int.class, MessageParser::parseInt);
     parsers.put(int[].class, MessageParser::parseInts);
     parsers.put(boolean.class, MessageParser::parseBool);
@@ -85,6 +85,15 @@ public final class MessageParser {
     }
     final TextToken token = tokenParser.readItem(TextToken.class);
     return token != null ? token.getText() : "";
+  }
+
+  @NotNull
+  private static byte[] parseBinary(@Nullable SvnServerParser tokenParser) throws IOException {
+    if (tokenParser == null) {
+      return emptyBytes;
+    }
+    final StringToken token = tokenParser.readItem(StringToken.class);
+    return token != null ? token.getData() : emptyBytes;
   }
 
   @NotNull

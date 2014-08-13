@@ -33,6 +33,11 @@ public final class StringToken implements TextToken {
     return new String(data, StandardCharsets.UTF_8);
   }
 
+  @NotNull
+  public byte[] getData() {
+    return data;
+  }
+
   @Override
   public void write(@NotNull OutputStream stream) throws IOException {
     write(stream, data, 0, data.length);

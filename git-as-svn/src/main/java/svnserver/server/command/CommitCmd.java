@@ -3,6 +3,11 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
@@ -10,10 +15,13 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.FileInfo;
 import svnserver.server.SessionContext;
 import svnserver.server.error.ClientErrorException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,6 +61,69 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   public static class NoParams {
   }
 
+  public static class OpenRootParams {
+    @NotNull
+    private final int rev[];
+    @NotNull
+    private final String token;
+
+    public OpenRootParams(@NotNull int[] rev, @NotNull String token) {
+      this.rev = rev;
+      this.token = token;
+    }
+  }
+
+  public static class OpenParams {
+    @NotNull
+    private final String name;
+    @NotNull
+    private final String parentToken;
+    @NotNull
+    private final String token;
+    @NotNull
+    private final int rev[];
+
+    public OpenParams(@NotNull String name, @NotNull String parentToken, @NotNull String token, @NotNull int[] rev) {
+      this.name = name;
+      this.parentToken = parentToken;
+      this.token = token;
+      this.rev = rev;
+    }
+  }
+
+  public static class TokenParams {
+    @NotNull
+    private final String token;
+
+    public TokenParams(@NotNull String token) {
+      this.token = token;
+    }
+  }
+
+  public static class DeltaApplyParams {
+    @NotNull
+    private final String token;
+    @NotNull
+    private final String[] checksum;
+
+    public DeltaApplyParams(@NotNull String token, @NotNull String[] checksum) {
+      this.token = token;
+      this.checksum = checksum;
+    }
+  }
+
+  public static class DeltaChunkParams {
+    @NotNull
+    private final String token;
+    @NotNull
+    private final byte[] chunk;
+
+    public DeltaChunkParams(@NotNull String token, @NotNull byte[] chunk) {
+      this.token = token;
+      this.chunk = chunk;
+    }
+  }
+
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
 
@@ -76,20 +147,132 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     pipeline.editorCommand(context);
   }
 
+  public static class CommitFile {
+    @NotNull
+    private final FileInfo fileInfo;
+    @NotNull
+    private final SVNDeltaProcessor window = new SVNDeltaProcessor();
+    @NotNull
+    private final SVNDeltaReader reader = new SVNDeltaReader();
+    @NotNull
+    private final ByteArrayOutputStream memory = new ByteArrayOutputStream();
+
+    public CommitFile(@NotNull FileInfo fileInfo) {
+      this.fileInfo = fileInfo;
+    }
+  }
+
   public static class EditorPipeline {
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
+    @NotNull
+    private final String message;
+    @NotNull
+    private final Map<String, String> paths;
+    @NotNull
+    private final Map<String, CommitFile> files;
 
     public EditorPipeline(@NotNull CommitParams params) {
+      this.message = params.message;
+      paths = new HashMap<>();
+      files = new HashMap<>();
       commands = new HashMap<>();
-      commands.put("open-root", new LambdaCmd<>(NoParams.class, this::fake));
-      commands.put("open-file", new LambdaCmd<>(NoParams.class, this::fake));
-      commands.put("close-dir", new LambdaCmd<>(NoParams.class, this::fake));
+      commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
+      commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
+      commands.put("open-file", new LambdaCmd<>(OpenParams.class, this::openFile));
+      commands.put("close-dir", new LambdaCmd<>(TokenParams.class, this::closeDir));
       commands.put("close-file", new LambdaCmd<>(NoParams.class, this::fake));
-      commands.put("textdelta-chunk", new LambdaCmd<>(NoParams.class, this::fake));
-      commands.put("textdelta-end", new LambdaCmd<>(NoParams.class, this::fake));
-      commands.put("apply-textdelta", new LambdaCmd<>(NoParams.class, this::fake));
+      commands.put("textdelta-chunk", new LambdaCmd<>(DeltaChunkParams.class, this::deltaChunk));
+      commands.put("textdelta-end", new LambdaCmd<>(TokenParams.class, this::deltaEnd));
+      commands.put("apply-textdelta", new LambdaCmd<>(DeltaApplyParams.class, this::deltaApply));
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
+    }
+
+    private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws ClientErrorException {
+      context.push(this::editorCommand);
+      paths.put(args.token, context.getRepositoryPath(""));
+    }
+
+    private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws ClientErrorException {
+      context.push(this::editorCommand);
+      paths.put(args.token, getPath(args.parentToken, args.name));
+    }
+
+    private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws ClientErrorException, IOException {
+      context.push(this::editorCommand);
+      final String path = getPath(args.parentToken, args.name);
+      if (args.rev.length == 0) {
+        throw new ClientErrorException(0, "File revision is not defined: " + path);
+      }
+      final int rev = args.rev[0];
+      log.info("Modify file: {} (rev: {})", path, rev);
+      final FileInfo fileInfo = context.getRepository().getRevisionInfo(rev).getFile(path);
+      if (fileInfo == null) {
+        throw new ClientErrorException(0, "File not found in revision: " + path + " (rev: " + rev + ")");
+      }
+      files.put(args.token, new CommitFile(fileInfo));
+    }
+
+    private void deltaApply(@NotNull SessionContext context, @NotNull DeltaApplyParams args) throws ClientErrorException, IOException {
+      context.push(this::editorCommand);
+      final CommitFile commitFile = getFile(args.token);
+      SVNDeltaProcessor window = commitFile.window;
+      window.applyTextDelta(commitFile.fileInfo.openStream(), commitFile.memory, true);
+    }
+
+    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws ClientErrorException, IOException {
+      context.push(this::editorCommand);
+      final CommitFile commitFile = getFile(args.token);
+      try {
+        commitFile.reader.nextWindow(args.chunk, 0, args.chunk.length, "", new ISVNDeltaConsumer() {
+          @Override
+          public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+
+          }
+
+          @Override
+          public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+            commitFile.window.textDeltaChunk(diffWindow);
+            return null;
+          }
+
+          @Override
+          public void textDeltaEnd(String path) throws SVNException {
+          }
+        });
+      } catch (SVNException e) {
+        e.printStackTrace();
+      }
+    }
+
+    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws ClientErrorException, IOException {
+      context.push(this::editorCommand);
+      final CommitFile commitFile = getFile(args.token);
+      String md5 = commitFile.window.textDeltaEnd();
+      log.info("Delta end: {}, {}", md5, commitFile.memory.toByteArray());
+    }
+
+    @NotNull
+    private CommitFile getFile(@NotNull String token) throws ClientErrorException {
+      final CommitFile file = files.get(token);
+      if (file == null) {
+        throw new ClientErrorException(0, "Invalid file token: " + token);
+      }
+      return file;
+    }
+
+    @NotNull
+    private String getPath(@NotNull String parentToken, @NotNull String name) throws ClientErrorException {
+      final String path = paths.get(parentToken);
+      if (path == null) {
+        throw new ClientErrorException(0, "Invalid path token: " + parentToken);
+      }
+      return StringHelper.joinPath(path, name);
+    }
+
+    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws ClientErrorException {
+      context.push(this::editorCommand);
+      paths.remove(args.token);
     }
 
     @Deprecated
