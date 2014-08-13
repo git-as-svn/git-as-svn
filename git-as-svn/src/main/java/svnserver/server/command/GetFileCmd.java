@@ -1,12 +1,12 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.FileInfo;
 import svnserver.repository.Repository;
 import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,7 +53,7 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     SvnServerWriter writer = context.getWriter();
     String fullPath = context.getRepositoryPath(args.path);
     if (fullPath.endsWith("/")) {

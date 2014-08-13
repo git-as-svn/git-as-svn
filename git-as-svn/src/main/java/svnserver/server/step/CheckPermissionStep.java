@@ -1,8 +1,8 @@
 package svnserver.server.step;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -20,7 +20,7 @@ public class CheckPermissionStep implements Step {
   }
 
   @Override
-  public void process(@NotNull SessionContext context) throws IOException, ClientErrorException {
+  public void process(@NotNull SessionContext context) throws IOException, SVNException {
     context.getWriter()
         .listBegin()
         .word("success")

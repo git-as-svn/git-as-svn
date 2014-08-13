@@ -1,8 +1,8 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ import java.io.IOException;
 public final class LambdaCmd<T> extends BaseCmd<T> {
   @FunctionalInterface
   public interface Callback<T> {
-    void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException;
+    void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException;
   }
 
   @NotNull
@@ -35,11 +35,11 @@ public final class LambdaCmd<T> extends BaseCmd<T> {
   }
 
   @Override
-  public void process(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
+  public void process(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
     callback.processCommand(context, args);
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
   }
 }

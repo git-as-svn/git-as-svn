@@ -3,6 +3,9 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
@@ -14,8 +17,6 @@ import svnserver.parser.token.ListEndToken;
 import svnserver.repository.Repository;
 import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
-import svnserver.server.error.ClientErrorException;
-import svnserver.server.error.SvnServerException;
 import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
@@ -83,7 +84,7 @@ public class SvnServer {
           // client disconnect is not a error
         } catch (IOException e) {
           e.printStackTrace();
-        } catch (SvnServerException e) {
+        } catch (SVNException e) {
           e.printStackTrace();
         } finally {
           log.info("Connection from {} closed", socket.getRemoteSocketAddress());
@@ -92,7 +93,7 @@ public class SvnServer {
     }
   }
 
-  public void serveClient(@NotNull Socket socket) throws IOException, SvnServerException {
+  public void serveClient(@NotNull Socket socket) throws IOException, SVNException {
     socket.setTcpNoDelay(true);
     final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
@@ -129,16 +130,16 @@ public class SvnServer {
           BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
           parser.skipItems();
         }
-      } catch (ClientErrorException e) {
-        BaseCmd.sendError(writer, e.getCode(), e.getMessage());
+      } catch (SVNException e) {
+        BaseCmd.sendError(writer, e.getErrorMessage());
       }
     }
   }
 
   @NotNull
-  private String getBasePath(@NotNull String url) throws ClientErrorException {
+  private String getBasePath(@NotNull String url) throws SVNException {
     if (!url.startsWith(SvnConstants.URL_PREFIX)) {
-      throw new ClientErrorException(0, "Invalid repository URL: " + url);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL));
     }
     int index = url.indexOf('/', SvnConstants.URL_PREFIX.length());
     if (index < 0) {
@@ -147,7 +148,7 @@ public class SvnServer {
     return url.substring(0, index) + '/';
   }
 
-  private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, ClientErrorException {
+  private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
     // Анонсируем поддерживаемые функции.
     writer
         .listBegin()
@@ -171,7 +172,7 @@ public class SvnServer {
     // Читаем информацию о клиенте.
     final ClientInfo clientInfo = MessageParser.parse(ClientInfo.class, parser);
     if (clientInfo.getProtocolVersion() != 2) {
-      throw new ClientErrorException(0, "Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)");
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.VERSION_MISMATCH, "Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)"));
     }
     return clientInfo;
   }

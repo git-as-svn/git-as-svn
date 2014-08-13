@@ -8,12 +8,14 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.FileInfo;
 import svnserver.repository.Repository;
 import svnserver.repository.RevisionInfo;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,7 +118,7 @@ public class GitRepository implements Repository {
 
   @NotNull
   @Override
-  public RevisionInfo getRevisionInfo(int revision) throws IOException, ClientErrorException {
+  public RevisionInfo getRevisionInfo(int revision) throws IOException, SVNException {
     final RevCommit commit = getRevision(revision);
     return new GitRevisionInfo(revision, commit);
   }
@@ -130,9 +132,9 @@ public class GitRepository implements Repository {
   }
 
   @NotNull
-  private RevCommit getRevision(int revision) throws ClientErrorException {
+  private RevCommit getRevision(int revision) throws SVNException {
     if (revision >= revisions.size())
-      throw new ClientErrorException(SvnConstants.ERROR_NO_REVISION, "No such revision " + revision);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
     return revisions.get(revision);
   }
 

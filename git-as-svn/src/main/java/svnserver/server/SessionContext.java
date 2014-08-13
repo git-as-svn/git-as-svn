@@ -2,11 +2,13 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.Repository;
-import svnserver.server.error.ClientErrorException;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
@@ -51,9 +53,9 @@ public class SessionContext {
   }
 
   @NotNull
-  public String getRepositoryPath(@Nullable String localPath) throws ClientErrorException {
+  public String getRepositoryPath(@Nullable String localPath) throws SVNException {
     if (!parent.startsWith(baseUrl)) {
-      throw new ClientErrorException(0, "Invalid current path prefix: " + parent + " (base: " + baseUrl + ")");
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid current path prefix: " + parent + " (base: " + baseUrl + ")"));
     }
     return StringHelper.joinPath(parent.substring(baseUrl.length() - 1), localPath);
   }

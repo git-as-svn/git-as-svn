@@ -3,6 +3,8 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
@@ -17,7 +19,6 @@ import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.FileInfo;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -134,7 +135,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, ClientErrorException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
@@ -188,39 +189,39 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
     }
 
-    private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws ClientErrorException {
+    private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws SVNException {
       context.push(this::editorCommand);
       paths.put(args.token, context.getRepositoryPath(""));
     }
 
-    private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws ClientErrorException {
+    private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException {
       context.push(this::editorCommand);
       paths.put(args.token, getPath(args.parentToken, args.name));
     }
 
-    private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws ClientErrorException, IOException {
+    private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final String path = getPath(args.parentToken, args.name);
       if (args.rev.length == 0) {
-        throw new ClientErrorException(0, "File revision is not defined: " + path);
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
       }
       final int rev = args.rev[0];
       log.info("Modify file: {} (rev: {})", path, rev);
       final FileInfo fileInfo = context.getRepository().getRevisionInfo(rev).getFile(path);
       if (fileInfo == null) {
-        throw new ClientErrorException(0, "File not found in revision: " + path + " (rev: " + rev + ")");
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found in revision: " + path + " (rev: " + rev + ")"));
       }
       files.put(args.token, new CommitFile(fileInfo));
     }
 
-    private void deltaApply(@NotNull SessionContext context, @NotNull DeltaApplyParams args) throws ClientErrorException, IOException {
+    private void deltaApply(@NotNull SessionContext context, @NotNull DeltaApplyParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final CommitFile commitFile = getFile(args.token);
       SVNDeltaProcessor window = commitFile.window;
       window.applyTextDelta(commitFile.fileInfo.openStream(), commitFile.memory, true);
     }
 
-    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws ClientErrorException, IOException {
+    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final CommitFile commitFile = getFile(args.token);
       try {
@@ -245,7 +246,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
     }
 
-    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws ClientErrorException, IOException {
+    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final CommitFile commitFile = getFile(args.token);
       String md5 = commitFile.window.textDeltaEnd();
@@ -253,24 +254,24 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private CommitFile getFile(@NotNull String token) throws ClientErrorException {
+    private CommitFile getFile(@NotNull String token) throws SVNException {
       final CommitFile file = files.get(token);
       if (file == null) {
-        throw new ClientErrorException(0, "Invalid file token: " + token);
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
       }
       return file;
     }
 
     @NotNull
-    private String getPath(@NotNull String parentToken, @NotNull String name) throws ClientErrorException {
+    private String getPath(@NotNull String parentToken, @NotNull String name) throws SVNException {
       final String path = paths.get(parentToken);
       if (path == null) {
-        throw new ClientErrorException(0, "Invalid path token: " + parentToken);
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
       }
       return StringHelper.joinPath(path, name);
     }
 
-    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws ClientErrorException {
+    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
       context.push(this::editorCommand);
       paths.remove(args.token);
     }
@@ -303,7 +304,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listEnd();
     }
 
-    private void editorCommand(@NotNull SessionContext context) throws IOException, ClientErrorException {
+    private void editorCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
       final SvnServerWriter writer = context.getWriter();
       parser.readToken(ListBeginToken.class);

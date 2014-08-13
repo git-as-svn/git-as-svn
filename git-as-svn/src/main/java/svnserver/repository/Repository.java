@@ -1,7 +1,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.server.error.ClientErrorException;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
 
@@ -33,5 +33,5 @@ public interface Repository {
    * @return Revision info.
    */
   @NotNull
-  RevisionInfo getRevisionInfo(int revision) throws IOException, ClientErrorException;
+  RevisionInfo getRevisionInfo(int revision) throws IOException, SVNException;
 }

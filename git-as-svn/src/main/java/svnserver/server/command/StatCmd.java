@@ -1,12 +1,12 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.FileInfo;
 import svnserver.repository.Repository;
 import svnserver.repository.RevisionInfo;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -45,7 +45,7 @@ public class StatCmd extends BaseCmd<StatCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, ClientErrorException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
     final Repository repository = context.getRepository();

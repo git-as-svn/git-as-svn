@@ -5,12 +5,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
@@ -18,7 +18,6 @@ import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.FileInfo;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 import svnserver.server.step.CheckPermissionStep;
 
 import java.io.*;
@@ -92,7 +91,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
     log.info("Enter report mode");
     ReportPipeline pipeline = new ReportPipeline(args);
     pipeline.reportCommand(context);
@@ -116,7 +115,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       forcedPaths.add("");
       commands = new HashMap<>();
       commands.put("delete-path", new LambdaCmd<>(DeleteParams.class, this::deletePath));
-      commands.put("abort-report", new LambdaCmd<>(NoParams.class, this::abortReport));
       commands.put("set-path", new LambdaCmd<>(SetPathParams.class, this::setPathReport));
       commands.put("finish-report", new LambdaCmd<>(NoParams.class, this::finishReport));
     }
@@ -149,11 +147,11 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void complete(@NotNull SessionContext context) throws IOException, ClientErrorException {
+    private void complete(@NotNull SessionContext context) throws IOException, SVNException {
       sendResponse(context, params.getPath(), params.getRev(context));
     }
 
-    protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, ClientErrorException {
+    protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
       //contents = repo.get_files(url, rev)
       //updateDir("", rev, path, contents)
       final SvnServerWriter writer = context.getWriter();
@@ -214,7 +212,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     //  private void updateDir(@NotNull String path,int rev, want, entry, Object parentToken=None) throws IOException {
-    private void updateDir(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, ClientErrorException {
+    private void updateDir(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId;
       if (rootDir) {
@@ -267,7 +265,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
+    private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
       if (oldFile == null) {
@@ -321,8 +319,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
             public void textDeltaEnd(String path) throws SVNException {
             }
           }, true);
-        } catch (SVNException e) {
-          throw new ClientErrorException(e.getErrorMessage().getErrorCode().getCode(), e.getMessage());
         }
         writer
             .listBegin()
@@ -353,7 +349,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     @Nullable
-    private FileInfo getPrevFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile) throws IOException, ClientErrorException {
+    private FileInfo getPrevFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile) throws IOException, SVNException {
       if (deletedPaths.contains(fullPath)) {
         return null;
       }
@@ -368,7 +364,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       return context.getRepository().getRevisionInfo(pathParams.rev).getFile(repositoryPath);
     }
 
-    private void updateEntry(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @Nullable FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, ClientErrorException {
+    private void updateEntry(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @Nullable FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
       if (newFile == null) {
         if (oldFile != null) {
           removeEntry(context, fullPath, oldFile.getLastChange().getId(), parentTokenId);
@@ -442,11 +438,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       return prefix.isEmpty() ? name : (prefix + "/" + name);
     }
 
-    private void abortReport(@NotNull SessionContext context, @NotNull NoParams args) throws ClientErrorException {
-      throw new ClientErrorException(SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported report command: finish-report");
-    }
-
-    private void reportCommand(@NotNull SessionContext context) throws IOException, ClientErrorException {
+    private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
       final SvnServerWriter writer = context.getWriter();
       parser.readToken(ListBeginToken.class);
@@ -460,7 +452,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         command.process(context, param);
       } else {
         log.error("Unsupported command: {}", cmd);
-        BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
+        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
         parser.skipItems();
       }
     }
