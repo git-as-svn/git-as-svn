@@ -167,13 +167,15 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .word("target-rev")
           .listBegin().number(rev).listEnd()
           .listEnd();
+
       final String tokenId = createTokenId();
+      final SetPathParams rootParams = paths.get(path);
       writer
           .listBegin()
           .word("open-root")
           .listBegin()
           .listBegin()
-          .number(rev)
+          .number(rootParams == null ? rev : rootParams.rev)
           .listEnd()
           .string(tokenId)
           .listEnd()
@@ -221,7 +223,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         if (oldFile == null) {
           sendStartEntry(writer, "add-dir", fullPath, parentTokenId, tokenId, null);
         } else {
-          sendStartEntry(writer, "open-dir", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
+          sendStartEntry(writer, "open-dir", fullPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
         }
       }
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
@@ -270,7 +272,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       if (oldFile == null) {
         sendStartEntry(writer, "add-file", fullPath, parentTokenId, tokenId, null);
       } else {
-        sendStartEntry(writer, "open-file", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
+        sendStartEntry(writer, "open-file", fullPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
       }
       final String md5;
       if (!newFile.equals(oldFile)) {
@@ -362,7 +364,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         return null;
       }
       String repositoryPath = context.getRepositoryPath(fullPath);
-      log.warn("{} -> {} ({})", fullPath, repositoryPath, oldFile);
       return context.getRepository().getRevisionInfo(pathParams.rev).getFile(repositoryPath);
     }
 

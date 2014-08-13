@@ -51,6 +51,7 @@ public class SvnServer {
   public SvnServer() throws IOException {
     users.put("bozaro", "password");
 
+    commands.put("diff", new DiffCmd());
     commands.put("get-latest-rev", new GetLatestRevCmd());
     commands.put("get-dir", new GetDirCmd());
     commands.put("get-file", new GetFileCmd());
