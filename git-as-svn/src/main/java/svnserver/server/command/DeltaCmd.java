@@ -110,13 +110,15 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     @NotNull
     private final DeltaParams params;
     @NotNull
+    private final Set<String> forcedPaths = new HashSet<>();
+    @NotNull
     private final Set<String> deletedPaths = new HashSet<>();
     @NotNull
     private final Map<String, SetPathParams> paths = new HashMap<>();
 
     public ReportPipeline(@NotNull DeltaParams params) {
       this.params = params;
-      paths.put("", new SetPathParams("", 0, true, emptyStrings, ""));
+      forcedPaths.add("");
       commands = new HashMap<>();
       commands.put("delete-path", new LambdaCmd<>(DeleteParams.class, this::deletePath));
       commands.put("abort-report", new LambdaCmd<>(NoParams.class, this::abortReport));
@@ -130,12 +132,26 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
     private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
       context.push(this::reportCommand);
-      paths.put(joinPath(params.getPath(), args.path), args);
+      final String fullPath = joinPath(params.getPath(), args.path);
+      forcePath(fullPath);
+      paths.put(fullPath, args);
     }
 
     private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) {
       context.push(this::reportCommand);
-      deletedPaths.add(joinPath(params.getPath(), args.path));
+      final String fullPath = joinPath(params.getPath(), args.path);
+      forcePath(fullPath);
+      deletedPaths.add(fullPath);
+    }
+
+    private void forcePath(@NotNull String fullPath) {
+      int index = fullPath.length();
+      while (index > 0) {
+        if (!forcedPaths.add(fullPath.substring(0, index))) {
+          break;
+        }
+        index = fullPath.lastIndexOf('/', index - 1);
+      }
     }
 
     private void complete(@NotNull SessionContext context) throws IOException, ClientErrorException {
@@ -216,12 +232,13 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         }
       }
       for (FileInfo newEntry : newFile.getEntries()) {
-        FileInfo oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
-        if (newEntry.equals(oldEntry)) {
+        final FileInfo oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
+        final String entryPath = joinPath(fullPath, newEntry.getFileName());
+        if (newEntry.equals(oldEntry) && (!forcedPaths.contains(entryPath))) {
           // Same entry.
           continue;
         }
-        updateEntry(context, joinPath(fullPath, newEntry.getFileName()), oldEntry, newEntry, tokenId, false);
+        updateEntry(context, entryPath, oldEntry, newEntry, tokenId, false);
       }
       for (FileInfo entry : oldEntries.values()) {
         removeEntry(context, joinPath(fullPath, entry.getFileName()), entry.getLastChange().getId(), tokenId);
