@@ -272,61 +272,65 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       } else {
         sendStartEntry(writer, "open-file", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
       }
-      writer
-          .listBegin()
-          .word("apply-textdelta")
-          .listBegin()
-          .string(tokenId)
-          .listBegin()
-          .listEnd()
-          .listEnd()
-          .listEnd();
-
-      SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
       final String md5;
-      try (InputStream source = openStream(oldFile);
-           InputStream target = newFile.openStream()) {
-        final boolean compress = context.hasCapability("svndiff1");
-        md5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
-          private boolean header = true;
+      if (!newFile.equals(oldFile)) {
+        writer
+            .listBegin()
+            .word("apply-textdelta")
+            .listBegin()
+            .string(tokenId)
+            .listBegin()
+            .listEnd()
+            .listEnd()
+            .listEnd();
 
-          @Override
-          public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-          }
+        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+        try (InputStream source = openStream(oldFile);
+             InputStream target = newFile.openStream()) {
+          final boolean compress = context.hasCapability("svndiff1");
+          md5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
+            private boolean header = true;
 
-          @Override
-          public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-            try (ByteOutputStream stream = new ByteOutputStream()) {
-              diffWindow.writeTo(stream, header, compress);
-              header = false;
-              writer
-                  .listBegin()
-                  .word("textdelta-chunk")
-                  .listBegin()
-                  .string(tokenId)
-                  .binary(stream.getBytes(), 0, stream.getCount())
-                  .listEnd()
-                  .listEnd();
-              return null;
-            } catch (IOException e) {
-              throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
+            @Override
+            public void applyTextDelta(String path, String baseChecksum) throws SVNException {
             }
-          }
 
-          @Override
-          public void textDeltaEnd(String path) throws SVNException {
-          }
-        }, true);
-      } catch (SVNException e) {
-        throw new ClientErrorException(e.getErrorMessage().getErrorCode().getCode(), e.getMessage());
+            @Override
+            public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+              try (ByteOutputStream stream = new ByteOutputStream()) {
+                diffWindow.writeTo(stream, header, compress);
+                header = false;
+                writer
+                    .listBegin()
+                    .word("textdelta-chunk")
+                    .listBegin()
+                    .string(tokenId)
+                    .binary(stream.getBytes(), 0, stream.getCount())
+                    .listEnd()
+                    .listEnd();
+                return null;
+              } catch (IOException e) {
+                throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
+              }
+            }
+
+            @Override
+            public void textDeltaEnd(String path) throws SVNException {
+            }
+          }, true);
+        } catch (SVNException e) {
+          throw new ClientErrorException(e.getErrorMessage().getErrorCode().getCode(), e.getMessage());
+        }
+        writer
+            .listBegin()
+            .word("textdelta-end")
+            .listBegin()
+            .string(tokenId)
+            .listEnd()
+            .listEnd();
+      } else {
+        md5 = newFile.getMd5();
       }
-      writer
-          .listBegin()
-          .word("textdelta-end")
-          .listBegin()
-          .string(tokenId)
-          .listEnd()
-          .listEnd();
       updateProps(writer, "change-file-prop", tokenId, oldFile, newFile);
       writer
           .listBegin()
