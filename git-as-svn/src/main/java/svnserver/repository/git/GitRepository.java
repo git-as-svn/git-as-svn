@@ -341,5 +341,13 @@ public class GitRepository implements Repository {
       result = 31 * result + fileName.hashCode();
       return result;
     }
+
+    @Override
+    public String toString() {
+      return "GitFileInfo{" +
+          "fileName='" + fileName + '\'' +
+          ", objectId=" + objectId +
+          '}';
+    }
   }
 }

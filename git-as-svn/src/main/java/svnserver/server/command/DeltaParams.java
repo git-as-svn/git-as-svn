@@ -2,7 +2,6 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -13,7 +12,7 @@ import java.io.IOException;
  */
 public interface DeltaParams {
   @NotNull
-  String getPath(@NotNull SessionContext context) throws ClientErrorException;
+  String getPath();
 
   int getRev(@NotNull SessionContext context) throws IOException;
 }

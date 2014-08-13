@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Delta commands.
@@ -61,7 +63,15 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
   public static class NoParams {
   }
 
-  @SuppressWarnings("UnusedDeclaration")
+  public static class DeleteParams {
+    @NotNull
+    private final String path;
+
+    public DeleteParams(@NotNull String path) {
+      this.path = path;
+    }
+  }
+
   public static class SetPathParams {
     @NotNull
     private final String path;
@@ -83,6 +93,8 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
+  @NotNull
+  private static final String[] emptyStrings = new String[0];
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
@@ -97,10 +109,16 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     private final Map<String, BaseCmd<?>> commands;
     @NotNull
     private final DeltaParams params;
+    @NotNull
+    private final Set<String> deletedPaths = new HashSet<>();
+    @NotNull
+    private final Map<String, SetPathParams> paths = new HashMap<>();
 
     public ReportPipeline(@NotNull DeltaParams params) {
       this.params = params;
+      paths.put("", new SetPathParams("", 0, true, emptyStrings, ""));
       commands = new HashMap<>();
+      commands.put("delete-path", new LambdaCmd<>(DeleteParams.class, this::deletePath));
       commands.put("abort-report", new LambdaCmd<>(NoParams.class, this::abortReport));
       commands.put("set-path", new LambdaCmd<>(SetPathParams.class, this::setPathReport));
       commands.put("finish-report", new LambdaCmd<>(NoParams.class, this::finishReport));
@@ -112,10 +130,16 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
     private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
       context.push(this::reportCommand);
+      paths.put(joinPath(params.getPath(), args.path), args);
+    }
+
+    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) {
+      context.push(this::reportCommand);
+      deletedPaths.add(joinPath(params.getPath(), args.path));
     }
 
     private void complete(@NotNull SessionContext context) throws IOException, ClientErrorException {
-      sendResponse(context, params.getPath(context), params.getRev(context));
+      sendResponse(context, params.getPath(), params.getRev(context));
     }
 
     protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, ClientErrorException {
@@ -127,8 +151,24 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .word("target-rev")
           .listBegin().number(rev).listEnd()
           .listEnd();
-      FileInfo file = context.getRepository().getRevisionInfo(rev).getFile(path);
-      updateDir(context, "", null, file, null);
+      final String tokenId = createTokenId();
+      writer
+          .listBegin()
+          .word("open-root")
+          .listBegin()
+          .listBegin()
+          .number(rev)
+          .listEnd()
+          .string(tokenId)
+          .listEnd()
+          .listEnd();
+      FileInfo file = context.getRepository().getRevisionInfo(rev).getFile(context.getRepositoryPath(path));
+      updateEntry(context, path, getPrevFile(context, path, file), file, tokenId, path.isEmpty());
+      writer
+          .listBegin()
+          .word("close-dir")
+          .listBegin().string(tokenId).listEnd()
+          .listEnd();
       writer
           .listBegin()
           .word("close-edit")
@@ -155,79 +195,65 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     //  private void updateDir(@NotNull String path,int rev, want, entry, Object parentToken=None) throws IOException {
-    private void updateDir(@NotNull SessionContext context, @NotNull String prefix, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @Nullable String parentTokenId) throws IOException, ClientErrorException {
+    private void updateDir(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, ClientErrorException {
       final SvnServerWriter writer = context.getWriter();
-      final String tokenId = createTokenId();
-      final String fullPath = parentTokenId == null ? "" : joinPath(prefix, newFile.getFileName());
-      if (parentTokenId == null) {
-        writer
-            .listBegin()
-            .word("open-root")
-            .listBegin()
-            .listBegin()
-            .number(newFile.getLastChange().getId())
-            .listEnd()
-            .string(tokenId)
-            .listEnd()
-            .listEnd();
-      } else if (oldFile == null) {
-        sendStartEntry(writer, "add-dir", fullPath, parentTokenId, tokenId, null);
+      final String tokenId;
+      if (rootDir) {
+        tokenId = parentTokenId;
       } else {
-        sendStartEntry(writer, "open-dir", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
-      }
-      updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
-      final Map<String, FileInfo> newEntries = new HashMap<>();
-      for (FileInfo entry : newFile.getEntries()) {
-        newEntries.put(entry.getFileName(), entry);
-      }
-      if (oldFile != null) {
-        for (FileInfo entry : oldFile.getEntries()) {
-          FileInfo newEntry = newEntries.remove(entry.getFileName());
-          if (entry.equals(newEntry)) {
-            // Same entry.
-            continue;
-          }
-          if (newEntry == null) {
-            removeEntry(context, fullPath, entry, tokenId);
-          } else if (!newEntry.getKind().equals(entry.getKind())) {
-            removeEntry(context, fullPath, entry, tokenId);
-            updateEntry(context, fullPath, null, newEntry, tokenId);
-          } else {
-            updateEntry(context, fullPath, entry, newEntry, tokenId);
-          }
+        tokenId = createTokenId();
+        if (oldFile == null) {
+          sendStartEntry(writer, "add-dir", fullPath, parentTokenId, tokenId, null);
+        } else {
+          sendStartEntry(writer, "open-dir", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
         }
       }
-      for (FileInfo entry : newEntries.values()) {
-        updateEntry(context, fullPath, null, entry, tokenId);
+      updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
+      final Map<String, FileInfo> oldEntries = new HashMap<>();
+      if (oldFile != null) {
+        for (FileInfo entry : oldFile.getEntries()) {
+          oldEntries.put(entry.getFileName(), entry);
+        }
       }
-      writer
-          .listBegin()
-          .word("close-dir")
-          .listBegin().string(tokenId).listEnd()
-          .listEnd();
+      for (FileInfo newEntry : newFile.getEntries()) {
+        FileInfo oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
+        if (newEntry.equals(oldEntry)) {
+          // Same entry.
+          continue;
+        }
+        updateEntry(context, joinPath(fullPath, newEntry.getFileName()), oldEntry, newEntry, tokenId, false);
+      }
+      for (FileInfo entry : oldEntries.values()) {
+        removeEntry(context, joinPath(fullPath, entry.getFileName()), entry.getLastChange().getId(), tokenId);
+      }
+      if (!rootDir) {
+        writer
+            .listBegin()
+            .word("close-dir")
+            .listBegin().string(tokenId).listEnd()
+            .listEnd();
+      }
     }
 
     private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable FileInfo oldFile, @NotNull FileInfo newFile) throws IOException {
-      final Map<String, String> properties = newFile.getProperties(true);
-      for (Map.Entry<String, String> entry : properties.entrySet()) {
-        changeProp(writer, command, tokenId, entry.getKey(), entry.getValue());
-      }
-      if (oldFile != null) {
-        for (String propName : oldFile.getProperties(true).keySet()) {
-          if (!properties.containsKey(propName)) {
-            changeProp(writer, command, tokenId, propName, null);
-          }
+      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(true) : new HashMap<>();
+      for (Map.Entry<String, String> entry : newFile.getProperties(true).entrySet()) {
+        if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
+          changeProp(writer, command, tokenId, entry.getKey(), entry.getValue());
         }
+      }
+      for (String propName : oldProps.keySet()) {
+        changeProp(writer, command, tokenId, propName, null);
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @NotNull String prefix, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
+    private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
       if (oldFile == null) {
-        sendStartEntry(writer, "add-file", joinPath(prefix, newFile.getFileName()), parentTokenId, tokenId, null);
+        sendStartEntry(writer, "add-file", fullPath, parentTokenId, tokenId, null);
       } else {
-        sendStartEntry(writer, "open-file", joinPath(prefix, newFile.getFileName()), parentTokenId, tokenId, newFile.getLastChange().getId());
+        sendStartEntry(writer, "open-file", fullPath, parentTokenId, tokenId, newFile.getLastChange().getId());
       }
       writer
           .listBegin()
@@ -249,7 +275,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
           @Override
           public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-
           }
 
           @Override
@@ -286,20 +311,16 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listEnd()
           .listEnd();
       updateProps(writer, "change-file-prop", tokenId, oldFile, newFile);
-      // todo:
       writer
           .listBegin()
           .word("close-file")
           .listBegin()
           .string(tokenId)
           .listBegin()
-          .string(newFile.getMd5())
+          .string(md5)
           .listEnd()
           .listEnd()
           .listEnd();
-      if (newFile.getMd5().equals(md5)) {
-        // todo:
-      }
     }
 
     @NotNull
@@ -307,23 +328,50 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 
-    private void updateEntry(@NotNull SessionContext context, @NotNull String prefix, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, ClientErrorException {
-      if (newFile.isDirectory()) {
-        updateDir(context, prefix, oldFile, newFile, parentTokenId);
+    @Nullable
+    private FileInfo getPrevFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile) throws IOException, ClientErrorException {
+      if (deletedPaths.contains(fullPath)) {
+        return null;
+      }
+      final SetPathParams pathParams = paths.get(fullPath);
+      if (pathParams == null) {
+        return oldFile;
+      }
+      if (pathParams.startEmpty) {
+        return null;
+      }
+      String repositoryPath = context.getRepositoryPath(fullPath);
+      log.warn("{} -> {} ({})", fullPath, repositoryPath, oldFile);
+      return context.getRepository().getRevisionInfo(pathParams.rev).getFile(repositoryPath);
+    }
+
+    private void updateEntry(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @Nullable FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, ClientErrorException {
+      if (newFile == null) {
+        if (oldFile != null) {
+          removeEntry(context, fullPath, oldFile.getLastChange().getId(), parentTokenId);
+        }
+      } else if ((oldFile != null) && (!newFile.getKind().equals(oldFile.getKind()))) {
+        removeEntry(context, fullPath, oldFile.getLastChange().getId(), parentTokenId);
+        updateEntry(context, fullPath, null, newFile, parentTokenId, rootDir);
+      } else if (newFile.isDirectory()) {
+        updateDir(context, fullPath, oldFile, newFile, parentTokenId, rootDir);
       } else {
-        updateFile(context, prefix, oldFile, newFile, parentTokenId);
+        updateFile(context, fullPath, oldFile, newFile, parentTokenId);
       }
     }
 
-    private void removeEntry(@NotNull SessionContext context, @NotNull String prefix, @NotNull FileInfo entry, @NotNull String parentTokenId) throws IOException {
+    private void removeEntry(@NotNull SessionContext context, @NotNull String fullPath, int rev, @NotNull String parentTokenId) throws IOException {
+      if (deletedPaths.contains(fullPath)) {
+        return;
+      }
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
           .word("delete-entry")
           .listBegin()
-          .string(joinPath(prefix, entry.getFileName()))
+          .string(fullPath)
           .listBegin()
-          .number(entry.getLastChange().getId()) // todo: ???
+          .number(rev) // todo: ???
           .listEnd()
           .string(parentTokenId)
           .listEnd()
@@ -367,6 +415,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     private String joinPath(@NotNull String prefix, @NotNull String name) {
+      if (name.isEmpty()) return prefix;
       return prefix.isEmpty() ? name : (prefix + "/" + name);
     }
 

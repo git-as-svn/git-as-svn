@@ -2,7 +2,6 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.server.SessionContext;
-import svnserver.server.error.ClientErrorException;
 
 import java.io.IOException;
 
@@ -40,8 +39,8 @@ public class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
 
     @NotNull
     @Override
-    public String getPath(@NotNull SessionContext context) throws ClientErrorException {
-      return context.getRepositoryPath(target);
+    public String getPath() {
+      return target;
     }
 
     @Override
