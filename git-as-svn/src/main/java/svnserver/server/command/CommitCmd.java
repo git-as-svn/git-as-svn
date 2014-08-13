@@ -1,5 +1,6 @@
 package svnserver.server.command;
 
+import org.eclipse.jgit.lib.PersonIdent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -270,7 +271,14 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       //context.push(new CheckPermissionStep(this::complete));
     }
 
-    private void complete(@NotNull SessionContext context) throws IOException {
+    private void complete(@NotNull SessionContext context) throws IOException, SVNException {
+      final PersonIdent author = context.getUser().createIdent();
+
+      if (author == null)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous users cannot create commits"));
+
+      // TODO: create commit
+
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
