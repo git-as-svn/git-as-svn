@@ -90,8 +90,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
-  @NotNull
-  private static final String[] emptyStrings = new String[0];
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, ClientErrorException {
@@ -461,6 +459,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         //noinspection unchecked
         command.process(context, param);
       } else {
+        log.error("Unsupported command: {}", cmd);
         BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
         parser.skipItems();
       }
