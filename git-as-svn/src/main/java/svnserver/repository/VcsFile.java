@@ -1,6 +1,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNNodeKind;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +13,7 @@ import java.util.Map;
  *
  * @author a.navrotskiy
  */
-public interface FileInfo {
+public interface VcsFile {
   @NotNull
   String getFileName();
 
@@ -32,11 +33,11 @@ public interface FileInfo {
   boolean isDirectory() throws IOException;
 
   @NotNull
-  String getKind() throws IOException;
+  SVNNodeKind getKind() throws IOException;
 
   @NotNull
-  Iterable<FileInfo> getEntries() throws IOException;
+  Iterable<VcsFile> getEntries() throws IOException;
 
   @NotNull
-  RevisionInfo getLastChange();
+  VcsRevision getLastChange();
 }

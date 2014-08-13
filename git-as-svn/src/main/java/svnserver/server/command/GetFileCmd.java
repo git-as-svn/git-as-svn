@@ -3,9 +3,9 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.FileInfo;
-import svnserver.repository.Repository;
-import svnserver.repository.RevisionInfo;
+import svnserver.repository.VcsFile;
+import svnserver.repository.VcsRepository;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -60,9 +60,9 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
       sendError(writer, 200009, "Could not cat all targets because some targets are directories");
       return;
     }
-    final Repository repository = context.getRepository();
-    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
-    final FileInfo fileInfo = info.getFile(fullPath);
+    final VcsRepository repository = context.getRepository();
+    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    final VcsFile fileInfo = info.getFile(fullPath);
     if (fileInfo == null) {
       sendError(writer, 200009, "File not found");
       return;

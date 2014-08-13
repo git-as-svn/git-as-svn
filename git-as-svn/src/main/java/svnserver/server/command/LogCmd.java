@@ -1,10 +1,11 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.SvnConstants;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.RevisionInfo;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -85,13 +86,14 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
     int step = startRev < endRev ? 1 : -1;
     if ((startRev > head) || (endRev > head)) {
       writer.word("done");
-      sendError(writer, SvnConstants.ERROR_NO_REVISION, "No such revision " + Math.max(startRev, endRev));
+
+      sendError(writer, SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + Math.max(startRev, endRev)));
       return;
     }
 
     int logLimit = args.limit;
     for (int rev = startRev; rev != endRev; rev += step) {
-      final RevisionInfo revisionInfo = context.getRepository().getRevisionInfo(rev);
+      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
       writer
           .listBegin()
           .listBegin().listEnd()

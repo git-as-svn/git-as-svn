@@ -52,7 +52,7 @@ public abstract class BaseCmd<T> {
         .listBegin()
         .number(code)
         .string(msg)
-        .string("...")
+        .string("")
         .number(0)
         .listEnd()
         .listEnd()

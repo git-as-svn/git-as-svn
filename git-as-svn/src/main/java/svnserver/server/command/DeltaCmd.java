@@ -16,7 +16,7 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.repository.FileInfo;
+import svnserver.repository.VcsFile;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
@@ -173,7 +173,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .string(tokenId)
           .listEnd()
           .listEnd();
-      FileInfo file = context.getRepository().getRevisionInfo(rev).getFile(context.getRepositoryPath(path));
+      VcsFile file = context.getRepository().getRevisionInfo(rev).getFile(context.getRepositoryPath(path));
       updateEntry(context, path, getPrevFile(context, path, file), file, tokenId, path.isEmpty());
       writer
           .listBegin()
@@ -212,7 +212,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     //  private void updateDir(@NotNull String path,int rev, want, entry, Object parentToken=None) throws IOException {
-    private void updateDir(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
+    private void updateDir(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId;
       if (rootDir) {
@@ -226,14 +226,14 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         }
       }
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
-      final Map<String, FileInfo> oldEntries = new HashMap<>();
+      final Map<String, VcsFile> oldEntries = new HashMap<>();
       if (oldFile != null) {
-        for (FileInfo entry : oldFile.getEntries()) {
+        for (VcsFile entry : oldFile.getEntries()) {
           oldEntries.put(entry.getFileName(), entry);
         }
       }
-      for (FileInfo newEntry : newFile.getEntries()) {
-        final FileInfo oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
+      for (VcsFile newEntry : newFile.getEntries()) {
+        final VcsFile oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
         final String entryPath = joinPath(fullPath, newEntry.getFileName());
         if (newEntry.equals(oldEntry) && (!forcedPaths.contains(entryPath))) {
           // Same entry.
@@ -241,7 +241,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         }
         updateEntry(context, entryPath, oldEntry, newEntry, tokenId, false);
       }
-      for (FileInfo entry : oldEntries.values()) {
+      for (VcsFile entry : oldEntries.values()) {
         removeEntry(context, joinPath(fullPath, entry.getFileName()), entry.getLastChange().getId(), tokenId);
       }
       if (!rootDir) {
@@ -253,7 +253,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable FileInfo oldFile, @NotNull FileInfo newFile) throws IOException {
+    private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException {
       final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(true) : new HashMap<>();
       for (Map.Entry<String, String> entry : newFile.getProperties(true).entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
@@ -265,7 +265,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @NotNull FileInfo newFile, @NotNull String parentTokenId) throws IOException, SVNException {
+    private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
       if (oldFile == null) {
@@ -344,12 +344,12 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     @NotNull
-    private InputStream openStream(@Nullable FileInfo file) throws IOException {
+    private InputStream openStream(@Nullable VcsFile file) throws IOException {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 
     @Nullable
-    private FileInfo getPrevFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile) throws IOException, SVNException {
+    private VcsFile getPrevFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile) throws IOException, SVNException {
       if (deletedPaths.contains(fullPath)) {
         return null;
       }
@@ -364,7 +364,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       return context.getRepository().getRevisionInfo(pathParams.rev).getFile(repositoryPath);
     }
 
-    private void updateEntry(@NotNull SessionContext context, @NotNull String fullPath, @Nullable FileInfo oldFile, @Nullable FileInfo newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
+    private void updateEntry(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile, @Nullable VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
       if (newFile == null) {
         if (oldFile != null) {
           removeEntry(context, fullPath, oldFile.getLastChange().getId(), parentTokenId);

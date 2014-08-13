@@ -3,7 +3,7 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.RevisionInfo;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class RevPropCmd extends BaseCmd<RevPropCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final RevisionInfo revision = context.getRepository().getRevisionInfo(args.revision);
+    final VcsRevision revision = context.getRepository().getRevisionInfo(args.revision);
     writer
         .listBegin()
         .word("success")

@@ -3,9 +3,9 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.FileInfo;
-import svnserver.repository.Repository;
-import svnserver.repository.RevisionInfo;
+import svnserver.repository.VcsFile;
+import svnserver.repository.VcsRepository;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -48,9 +48,9 @@ public class StatCmd extends BaseCmd<StatCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
-    final Repository repository = context.getRepository();
-    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
-    final FileInfo fileInfo = info.getFile(fullPath);
+    final VcsRepository repository = context.getRepository();
+    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    final VcsFile fileInfo = info.getFile(fullPath);
     if (fileInfo == null) {
       sendError(writer, 200009, "File not found");
       return;
@@ -61,7 +61,7 @@ public class StatCmd extends BaseCmd<StatCmd.Params> {
         .listBegin()
         .listBegin()
         .listBegin()
-        .word(fileInfo.getKind()) // kind
+        .word(fileInfo.getKind().toString()) // kind
         .number(fileInfo.getSize()) // size
         .bool(!fileInfo.getProperties(false).isEmpty()) // has properties
         .number(fileInfo.getLastChange().getId()) // last change revision

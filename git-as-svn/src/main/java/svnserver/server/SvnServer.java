@@ -14,7 +14,7 @@ import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.repository.Repository;
+import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
@@ -47,7 +47,7 @@ public class SvnServer {
   @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
-  private final Repository repository;
+  private final VcsRepository repository;
 
   public SvnServer() throws IOException {
     users.put("bozaro", "password");
@@ -127,7 +127,7 @@ public class SvnServer {
           //noinspection unchecked
           command.process(context, param);
         } else {
-          BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
+          BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
           parser.skipItems();
         }
       } catch (SVNException e) {

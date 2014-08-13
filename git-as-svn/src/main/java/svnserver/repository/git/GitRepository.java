@@ -4,35 +4,36 @@ import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.StringHelper;
-import svnserver.SvnConstants;
-import svnserver.repository.FileInfo;
-import svnserver.repository.Repository;
-import svnserver.repository.RevisionInfo;
+import svnserver.repository.VcsRepository;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation for Git repository.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitRepository implements Repository {
+public class GitRepository implements VcsRepository {
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
   @NotNull
   public static final byte[] emptyBytes = new byte[0];
   @NotNull
@@ -92,7 +93,12 @@ public class GitRepository implements Repository {
   }
 
   @NotNull
-  private String getObjectMD5(@NotNull ObjectId objectId) throws IOException {
+  public FileRepository getRepository() {
+    return repository;
+  }
+
+  @NotNull
+  public String getObjectMD5(@NotNull ObjectId objectId) throws IOException {
     //repository.newObjectReader().open(
     String result = cacheMd5.get(objectId.name());
     if (result == null) {
@@ -112,15 +118,15 @@ public class GitRepository implements Repository {
   }
 
   @NotNull
-  private ObjectLoader openObject(@NotNull ObjectId objectId) throws IOException {
+  public ObjectLoader openObject(@NotNull ObjectId objectId) throws IOException {
     return repository.newObjectReader().open(objectId);
   }
 
   @NotNull
   @Override
-  public RevisionInfo getRevisionInfo(int revision) throws IOException, SVNException {
+  public GitRevision getRevisionInfo(int revision) throws IOException, SVNException {
     final RevCommit commit = getRevision(revision);
-    return new GitRevisionInfo(revision, commit);
+    return new GitRevision(this, revision, commit);
   }
 
   private static MessageDigest getMd5() {
@@ -155,204 +161,82 @@ public class GitRepository implements Repository {
     return revWalk.parseCommit(commitId);
   }
 
-  private class GitRevisionInfo implements RevisionInfo {
-    private final int revision;
-    private final RevCommit commit;
-
-    public GitRevisionInfo(int revision, RevCommit commit) {
-      this.revision = revision;
-      this.commit = commit;
+  @NotNull
+  @Override
+  public ISVNDeltaConsumer createFile(@NotNull String fullPath) throws IOException, SVNException {
+    // todo: Check revision for prevent change override.
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file != null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-
-    @Override
-    public int getId() {
-      return revision;
-    }
-
-    @NotNull
-    @Override
-    public Map<String, String> getProperties() {
-      final Map<String, String> props = new HashMap<>();
-      props.put(SvnConstants.PROP_AUTHOR, getAuthor());
-      props.put(SvnConstants.PROP_LOG, getLog());
-      props.put(SvnConstants.PROP_DATE, getDate());
-      props.put(SvnConstants.PROP_GIT, commit.name());
-      return props;
-    }
-
-    @NotNull
-    @Override
-    public String getDate() {
-      return StringHelper.formatDate(TimeUnit.SECONDS.toMillis(commit.getCommitTime()));
-    }
-
-    @NotNull
-    @Override
-    public String getAuthor() {
-      return commit.getCommitterIdent().getName();
-    }
-
-    @NotNull
-    @Override
-    public String getLog() {
-      return commit.getFullMessage().trim();
-    }
-
-    @Nullable
-    @Override
-    public FileInfo getFile(@NotNull String fullPath) throws IOException {
-      if (fullPath.length() == 1) {
-        return new GitFileInfo(commit.getTree(), FileMode.TREE, "", this);
-      }
-      final TreeWalk treeWalk = TreeWalk.forPath(repository, fullPath.substring(1), commit.getTree());
-      if (treeWalk == null) {
-        return null;
-      }
-      return new GitFileInfo(treeWalk.getObjectId(0), treeWalk.getFileMode(0), treeWalk.getNameString(), this);
-    }
+    return new GitDeltaConsumer(null, fullPath);
   }
 
-  private class GitFileInfo implements FileInfo {
-    @NotNull
-    private final ObjectId objectId;
-    @NotNull
-    private final FileMode fileMode;
-    @NotNull
-    private final String fileName;
-    @NotNull
-    private final RevisionInfo lastChange;
+  @NotNull
+  @Override
+  public ISVNDeltaConsumer modifyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
+    // todo: Check revision for prevent change override.
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+    }
+    if (file.getLastChange().getId() > revision) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
+    }
+    return new GitDeltaConsumer(file, fullPath);
+  }
+
+  private class GitDeltaConsumer implements ISVNDeltaConsumer {
     @Nullable
-    private ObjectLoader objectLoader;
-
-    public GitFileInfo(@NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fileName, @NotNull RevisionInfo lastChange) {
-      this.objectId = objectId;
-      this.fileMode = fileMode;
-      this.fileName = fileName;
-      this.lastChange = lastChange;
-    }
-
+    private final GitFile file;
+    private final String fullPath;
+    @Nullable
+    private SVNDeltaProcessor window;
+    @Nullable
+    private ObjectId objectId;
+    // todo: Wrap output stream for saving big blob to temporary files.
     @NotNull
-    @Override
-    public String getFileName() {
-      return fileName;
-    }
+    private ByteArrayOutputStream memory;
 
-    @NotNull
-    @Override
-    public Map<String, String> getProperties(boolean includeInternalProps) {
-      final Map<String, String> props = new HashMap<>();
-      if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
-        props.put(SvnConstants.PROP_EXEC, "*");
-      } else if (fileMode.equals(FileMode.SYMLINK)) {
-        props.put(SvnConstants.PROP_SPECIAL, "*");
-      }
-      if (includeInternalProps) {
-        props.put(SvnConstants.PROP_ENTRY_UUID, uuid);
-        props.put(SvnConstants.PROP_ENTRY_REV, String.valueOf(lastChange.getId()));
-        props.put(SvnConstants.PROP_ENTRY_DATE, lastChange.getDate());
-        props.put(SvnConstants.PROP_ENTRY_AUTHOR, lastChange.getAuthor());
-      }
-      return props;
-    }
-
-    @NotNull
-    @Override
-    public String getMd5() throws IOException {
-      return getObjectMD5(objectId);
+    public GitDeltaConsumer(@Nullable GitFile file, String fullPath) {
+      this.file = file;
+      this.fullPath = fullPath;
+      objectId = file != null ? file.getObjectId() : null;
+      memory = new ByteArrayOutputStream();
     }
 
     @Override
-    public long getSize() throws IOException {
-      return getObjectLoader().getSize();
-    }
-
-    @Override
-    public boolean isDirectory() throws IOException {
-      return getKind().equals(SvnConstants.KIND_DIR);
-    }
-
-    @NotNull
-    @Override
-    public String getKind() throws IOException {
-      final int objType = fileMode.getObjectType();
-
-      switch (objType) {
-        case Constants.OBJ_TREE:
-          return SvnConstants.KIND_DIR;
-        case Constants.OBJ_BLOB:
-          return SvnConstants.KIND_FILE;
-        default:
-          throw new IllegalStateException("Unknown obj type: " + objType);
-      }
-    }
-
-    private ObjectLoader getObjectLoader() throws IOException {
-      if (objectLoader == null) {
-        objectLoader = openObject(objectId);
-      }
-      return objectLoader;
-    }
-
-    @Override
-    public void copyTo(@NotNull OutputStream stream) throws IOException {
-      getObjectLoader().copyTo(stream);
-    }
-
-    @NotNull
-    @Override
-    public InputStream openStream() throws IOException {
-      return getObjectLoader().openStream();
-    }
-
-    @NotNull
-    @Override
-    public Iterable<FileInfo> getEntries() throws IOException {
-      final CanonicalTreeParser treeParser = new CanonicalTreeParser(emptyBytes, repository.newObjectReader(), objectId);
-      return () -> new Iterator<FileInfo>() {
-        @Override
-        public boolean hasNext() {
-          return !treeParser.eof();
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+      try {
+        if (window != null) {
+          throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
         }
+        window = new SVNDeltaProcessor();
+        window.applyTextDelta(file != null ? file.openStream() : new ByteArrayInputStream(emptyBytes), memory, true);
+      } catch (IOException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      }
+    }
 
-        @Override
-        public FileInfo next() {
-          final GitFileInfo fileInfo = new GitFileInfo(treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), treeParser.getEntryPathString(), lastChange);
-          treeParser.next();
-          return fileInfo;
+    @Override
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+      if (window == null) {
+        throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
+      }
+      return window.textDeltaChunk(diffWindow);
+    }
+
+    @Override
+    public void textDeltaEnd(String path) throws SVNException {
+      try {
+        if (window == null) {
+          throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
         }
-      };
-    }
-
-    @NotNull
-    @Override
-    public RevisionInfo getLastChange() {
-      return lastChange;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      GitFileInfo that = (GitFileInfo) o;
-      return fileMode.equals(that.fileMode)
-          && fileName.equals(that.fileName)
-          && objectId.equals(that.objectId);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = objectId.hashCode();
-      result = 31 * result + fileMode.hashCode();
-      result = 31 * result + fileName.hashCode();
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "GitFileInfo{" +
-          "fileName='" + fileName + '\'' +
-          ", objectId=" + objectId +
-          '}';
+        objectId = repository.newObjectInserter().insert(Constants.OBJ_BLOB, memory.toByteArray());
+        log.info("Created blob {} for file: {}", objectId.getName(), fullPath);
+      } catch (IOException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      }
     }
   }
 }

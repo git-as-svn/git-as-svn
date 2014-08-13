@@ -8,21 +8,15 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.StringHelper;
-import svnserver.SvnConstants;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.repository.FileInfo;
 import svnserver.server.SessionContext;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -150,16 +144,12 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
   public static class CommitFile {
     @NotNull
-    private final FileInfo fileInfo;
-    @NotNull
-    private final SVNDeltaProcessor window = new SVNDeltaProcessor();
+    private final ISVNDeltaConsumer deltaConsumer;
     @NotNull
     private final SVNDeltaReader reader = new SVNDeltaReader();
-    @NotNull
-    private final ByteArrayOutputStream memory = new ByteArrayOutputStream();
 
-    public CommitFile(@NotNull FileInfo fileInfo) {
-      this.fileInfo = fileInfo;
+    public CommitFile(@NotNull ISVNDeltaConsumer deltaConsumer) {
+      this.deltaConsumer = deltaConsumer;
     }
   }
 
@@ -178,6 +168,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       paths = new HashMap<>();
       files = new HashMap<>();
       commands = new HashMap<>();
+      commands.put("add-file", new LambdaCmd<>(OpenParams.class, this::addFile));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
       commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
       commands.put("open-file", new LambdaCmd<>(OpenParams.class, this::openFile));
@@ -196,61 +187,42 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException {
       context.push(this::editorCommand);
-      paths.put(args.token, getPath(args.parentToken, args.name));
+      paths.put(args.token, getPath(context, args.parentToken, args.name));
+    }
+
+    private void addFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
+      context.push(this::editorCommand);
+      final String path = getPath(context, args.parentToken, args.name);
+      log.info("Modify file: {} (rev: {})", path);
+      final ISVNDeltaConsumer deltaConsumer = context.getRepository().createFile(path);
+      files.put(args.token, new CommitFile(deltaConsumer));
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String path = getPath(args.parentToken, args.name);
+      final String path = getPath(context, args.parentToken, args.name);
       if (args.rev.length == 0) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
       }
       final int rev = args.rev[0];
       log.info("Modify file: {} (rev: {})", path, rev);
-      final FileInfo fileInfo = context.getRepository().getRevisionInfo(rev).getFile(path);
-      if (fileInfo == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found in revision: " + path + " (rev: " + rev + ")"));
-      }
-      files.put(args.token, new CommitFile(fileInfo));
+      final ISVNDeltaConsumer deltaConsumer = context.getRepository().modifyFile(path, rev);
+      files.put(args.token, new CommitFile(deltaConsumer));
     }
 
     private void deltaApply(@NotNull SessionContext context, @NotNull DeltaApplyParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final CommitFile commitFile = getFile(args.token);
-      SVNDeltaProcessor window = commitFile.window;
-      window.applyTextDelta(commitFile.fileInfo.openStream(), commitFile.memory, true);
+      getFile(args.token).deltaConsumer.applyTextDelta(null, args.checksum.length == 0 ? null : args.checksum[0]);
     }
 
     private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final CommitFile commitFile = getFile(args.token);
-      try {
-        commitFile.reader.nextWindow(args.chunk, 0, args.chunk.length, "", new ISVNDeltaConsumer() {
-          @Override
-          public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-
-          }
-
-          @Override
-          public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-            commitFile.window.textDeltaChunk(diffWindow);
-            return null;
-          }
-
-          @Override
-          public void textDeltaEnd(String path) throws SVNException {
-          }
-        });
-      } catch (SVNException e) {
-        e.printStackTrace();
-      }
+      getFile(args.token).reader.nextWindow(args.chunk, 0, args.chunk.length, "", getFile(args.token).deltaConsumer);
     }
 
     private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final CommitFile commitFile = getFile(args.token);
-      String md5 = commitFile.window.textDeltaEnd();
-      log.info("Delta end: {}, {}", md5, commitFile.memory.toByteArray());
+      getFile(args.token).deltaConsumer.textDeltaEnd(null);
     }
 
     @NotNull
@@ -263,12 +235,17 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private String getPath(@NotNull String parentToken, @NotNull String name) throws SVNException {
+    private String getPath(@NotNull SessionContext context, @NotNull String parentToken, @NotNull String name) throws SVNException {
       final String path = paths.get(parentToken);
       if (path == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
       }
-      return StringHelper.joinPath(path, name);
+      final String fullPath = context.getRepositoryPath(name);
+      final String checkPath = StringHelper.joinPath(path, name.substring(name.lastIndexOf('/') + 1));
+      if (!checkPath.equals(fullPath)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid path: " + path));
+      }
+      return fullPath;
     }
 
     private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
@@ -318,7 +295,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         command.process(context, param);
       } else {
         log.error("Unsupported command: {}", cmd);
-        BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
+        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
         parser.skipItems();
       }
     }

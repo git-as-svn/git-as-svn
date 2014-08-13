@@ -8,7 +8,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.Repository;
+import svnserver.repository.VcsRepository;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
@@ -27,7 +27,7 @@ public class SessionContext {
   @NotNull
   private final Deque<Step> stepStack = new ArrayDeque<>();
   @NotNull
-  private final Repository repository;
+  private final VcsRepository repository;
   @NotNull
   private final String baseUrl;
   @NotNull
@@ -35,7 +35,7 @@ public class SessionContext {
   @NotNull
   private String parent;
 
-  public SessionContext(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull Repository repository, @NotNull String baseUrl, @NotNull ClientInfo clientInfo) {
+  public SessionContext(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull VcsRepository repository, @NotNull String baseUrl, @NotNull ClientInfo clientInfo) {
     this.parser = parser;
     this.writer = writer;
     this.repository = repository;
@@ -61,7 +61,7 @@ public class SessionContext {
   }
 
   @NotNull
-  public Repository getRepository() {
+  public VcsRepository getRepository() {
     return repository;
   }
 

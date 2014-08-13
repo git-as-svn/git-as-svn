@@ -11,7 +11,7 @@ import java.util.Map;
  *
  * @author a.navrotskiy
  */
-public interface RevisionInfo {
+public interface VcsRevision {
   int getId();
 
   @NotNull
@@ -27,5 +27,5 @@ public interface RevisionInfo {
   String getLog();
 
   @Nullable
-  FileInfo getFile(@NotNull String fullPath) throws IOException;
+  VcsFile getFile(@NotNull String fullPath) throws IOException;
 }

@@ -3,11 +3,11 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.SvnConstants;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.FileInfo;
-import svnserver.repository.Repository;
-import svnserver.repository.RevisionInfo;
+import svnserver.repository.VcsFile;
+import svnserver.repository.VcsRepository;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -51,21 +51,21 @@ public class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     String fullPath = context.getRepositoryPath(args.path);
-    final Repository repository = context.getRepository();
-    final RevisionInfo info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
-    FileInfo fileInfo = info.getFile(fullPath);
-    final String kind;
+    final VcsRepository repository = context.getRepository();
+    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    VcsFile fileInfo = info.getFile(fullPath);
+    final SVNNodeKind kind;
     if (fileInfo != null) {
       kind = fileInfo.getKind();
     } else {
-      kind = SvnConstants.KIND_NONE;
+      kind = SVNNodeKind.NONE;
     }
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .word(kind) // kind
+        .word(kind.toString()) // kind
         .listEnd()
         .listEnd();
   }
