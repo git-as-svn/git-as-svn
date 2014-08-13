@@ -74,6 +74,7 @@ public class SvnServer {
     while (true) {
       final Socket socket = serverSocket.accept();
       new Thread(() -> {
+        log.info("New connection from: {}", socket.getRemoteSocketAddress());
         try (Socket client = socket) {
           serveClient(client);
         } catch (EOFException ignore) {
@@ -82,13 +83,14 @@ public class SvnServer {
           e.printStackTrace();
         } catch (SvnServerException e) {
           e.printStackTrace();
+        } finally {
+          log.info("Connection from {} closed", socket.getRemoteSocketAddress());
         }
       }).start();
     }
   }
 
   public void serveClient(@NotNull Socket socket) throws IOException, SvnServerException {
-    log.info("New connection from: {}", socket.getRemoteSocketAddress());
     socket.setTcpNoDelay(true);
     final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
@@ -100,33 +102,30 @@ public class SvnServer {
     final String basePath = getBasePath(clientInfo.getUrl());
     final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo);
     sendAnnounce(writer, basePath);
-    try {
-      while (true) {
-        Step step = context.poll();
-        if (step != null) {
-          step.process(context);
-          continue;
-        }
 
-        final SvnServerToken token = parser.readToken();
-        if (token != ListBeginToken.instance) {
-          throw new IOException("Unexpected token: " + token);
-        }
-        final String cmd = parser.readText();
-        log.info("Receive command: {}", cmd);
-        BaseCmd command = commands.get(cmd);
-        if (command != null) {
-          Object param = MessageParser.parse(command.getArguments(), parser);
-          parser.readToken(ListEndToken.class);
-          //noinspection unchecked
-          command.process(context, param);
-        } else {
-          BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
-          parser.skipItems();
-        }
+    while (true) {
+      Step step = context.poll();
+      if (step != null) {
+        step.process(context);
+        continue;
       }
-    } finally {
-      log.info("Connection closed");
+
+      final SvnServerToken token = parser.readToken();
+      if (token != ListBeginToken.instance) {
+        throw new IOException("Unexpected token: " + token);
+      }
+      final String cmd = parser.readText();
+      log.info("Receive command: {}", cmd);
+      BaseCmd command = commands.get(cmd);
+      if (command != null) {
+        Object param = MessageParser.parse(command.getArguments(), parser);
+        parser.readToken(ListEndToken.class);
+        //noinspection unchecked
+        command.process(context, param);
+      } else {
+        BaseCmd.sendError(writer, SvnConstants.ERROR_UNIMPLEMENTED, "Unsupported command: " + cmd);
+        parser.skipItems();
+      }
     }
   }
 
