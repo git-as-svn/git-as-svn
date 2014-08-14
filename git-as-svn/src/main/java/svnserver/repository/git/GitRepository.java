@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.StringHelper;
+import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.VcsRepository;
 
 import java.io.*;
@@ -163,7 +163,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public ISVNDeltaConsumer createFile(@NotNull String fullPath) throws IOException, SVNException {
+  public VcsDeltaConsumer createFile(@NotNull String fullPath) throws IOException, SVNException {
     // todo: Check revision for prevent change override.
     final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
     if (file != null) {
@@ -174,7 +174,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public ISVNDeltaConsumer modifyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
+  public VcsDeltaConsumer modifyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
     // todo: Check revision for prevent change override.
     final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
     if (file == null) {
@@ -186,7 +186,7 @@ public class GitRepository implements VcsRepository {
     return new GitDeltaConsumer(file, fullPath);
   }
 
-  private class GitDeltaConsumer implements ISVNDeltaConsumer {
+  private class GitDeltaConsumer implements VcsDeltaConsumer {
     @Nullable
     private final GitFile file;
     private final String fullPath;
@@ -206,8 +206,13 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
-    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+    public void applyTextDelta(String path, @Nullable String baseChecksum) throws SVNException {
       try {
+        if ((file != null) && (baseChecksum != null)) {
+          if (!baseChecksum.equals(file.getMd5())) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
+          }
+        }
         if (window != null) {
           throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
         }
@@ -234,6 +239,23 @@ public class GitRepository implements VcsRepository {
         }
         objectId = repository.newObjectInserter().insert(Constants.OBJ_BLOB, memory.toByteArray());
         log.info("Created blob {} for file: {}", objectId.getName(), fullPath);
+      } catch (IOException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      }
+    }
+
+    @Override
+    public void validateChecksum(@NotNull String md5) throws SVNException {
+      try {
+        if (window != null) {
+          if (!md5.equals(window.textDeltaEnd())) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
+          }
+        } else if (file != null) {
+          if (!md5.equals(file.getMd5())) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
+          }
+        }
       } catch (IOException e) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
       }
