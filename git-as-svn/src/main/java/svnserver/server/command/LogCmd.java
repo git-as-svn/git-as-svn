@@ -121,7 +121,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
           writer
               .listBegin()
               .string(entry.getKey()) // Path
-              .word(String.valueOf(change))
+              .word(change)
               .listBegin().listEnd() // todo: copy information.
               .listBegin()
               .string(logEntry.getKind().toString())

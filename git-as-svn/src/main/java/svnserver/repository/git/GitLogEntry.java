@@ -27,9 +27,8 @@ public class GitLogEntry implements VcsLogEntry {
   public char getChange() {
     if (newEntry != null) {
       if (oldEntry == null) return SVNLogEntryPath.TYPE_ADDED;
-      if (newEntry.getFileMode() != FileMode.TREE) return SVNLogEntryPath.TYPE_MODIFIED;
-      if (oldEntry.getFileMode() != FileMode.TREE) return SVNLogEntryPath.TYPE_MODIFIED;
-      return 0;
+      if (GitHelper.getKind(newEntry.getFileMode()) != GitHelper.getKind(oldEntry.getFileMode())) return SVNLogEntryPath.TYPE_REPLACED;
+      return newEntry.getFileMode() != FileMode.TREE ? SVNLogEntryPath.TYPE_MODIFIED : 0;
     } else {
       return SVNLogEntryPath.TYPE_DELETED;
     }

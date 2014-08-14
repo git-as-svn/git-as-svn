@@ -40,6 +40,11 @@ public class SvnServerWriter {
     return this;
   }
 
+  @NotNull
+  public SvnServerWriter word(char c) throws IOException {
+    return word(String.valueOf(c));
+  }
+
   @SuppressWarnings("QuestionableName")
   @NotNull
   public SvnServerWriter string(@NotNull String text) throws IOException {
