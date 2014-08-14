@@ -70,7 +70,7 @@ public class GitRevision implements VcsRevision {
   @Nullable
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
-    if (fullPath.length() == 1) {
+    if (fullPath.isEmpty()) {
       return new GitFile(repo, commit.getTree(), FileMode.TREE, "", this);
     }
     final TreeWalk treeWalk = TreeWalk.forPath(repo.getRepository(), fullPath.substring(1), commit.getTree());
