@@ -66,6 +66,12 @@ public class SvnServerWriter {
   }
 
   @NotNull
+  public SvnServerWriter separator() throws IOException {
+    stream.write('\n');
+    return this;
+  }
+
+  @NotNull
   public SvnServerWriter bool(boolean value) throws IOException {
     return word(value ? "true" : "false");
   }
@@ -82,7 +88,7 @@ public class SvnServerWriter {
       }
     }
     if (depth == 0) {
-      stream.write('\n');
+      separator();
       stream.flush();
     }
     return this;

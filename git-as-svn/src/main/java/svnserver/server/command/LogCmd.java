@@ -113,6 +113,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
           .listBegin()
           .listBegin();
       if (args.changedPaths) {
+        writer.separator();
         for (Map.Entry<String, VcsLogEntry> entry : changes.entrySet()) {
           final VcsLogEntry logEntry = entry.getValue();
           final char change = logEntry.getChange();
@@ -127,7 +128,8 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
               .bool(true) // text-mods (?)
               .bool(false) // prop-mods (?)
               .listEnd()
-              .listEnd();
+              .listEnd()
+              .separator();
         }
       }
       writer.listEnd()
@@ -140,7 +142,8 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
           .number(0)
           .listBegin()
           .listEnd()
-          .listEnd();
+          .listEnd()
+          .separator();
       if (--logLimit == 0) break;
     }
     writer
