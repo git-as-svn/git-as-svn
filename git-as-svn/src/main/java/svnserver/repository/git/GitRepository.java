@@ -41,7 +41,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final FileRepository repository;
   @NotNull
-  private final List<RevCommit> revisions;
+  private final List<GitRevision> revisions;
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   @NotNull
@@ -55,7 +55,9 @@ public class GitRepository implements VcsRepository {
     this.uuid = uuid;
     this.repository = new FileRepository(findGitPath());
     this.branch = repository.getRef(branch).getName();
-    this.revisions = new ArrayList<>(Arrays.asList(getEmptyCommit(repository)));
+    this.revisions = new ArrayList<>(Arrays.asList(
+        new GitRevision(this, 0, getEmptyCommit(repository))
+    ));
     updateRevisions();
   }
 
@@ -64,7 +66,7 @@ public class GitRepository implements VcsRepository {
     // Fast check.
     lock.readLock().lock();
     try {
-      final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
+      final ObjectId lastCommitId = revisions.get(revisions.size() - 1).getCommit();
       final Ref master = repository.getRef(branch);
       if (master.getObjectId().equals(lastCommitId)) {
         return;
@@ -75,7 +77,7 @@ public class GitRepository implements VcsRepository {
     // Real update.
     lock.writeLock().lock();
     try {
-      final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
+      final ObjectId lastCommitId = revisions.get(revisions.size() - 1).getCommit();
       final Ref master = repository.getRef(branch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
@@ -90,7 +92,7 @@ public class GitRepository implements VcsRepository {
         objectId = commit.getParent(0);
       }
       for (int i = newRevs.size() - 1; i >= 0; i--) {
-        revisions.add(newRevs.get(i));
+        revisions.add(new GitRevision(this, revisions.size(), newRevs.get(i)));
       }
     } finally {
       lock.writeLock().unlock();
@@ -161,8 +163,14 @@ public class GitRepository implements VcsRepository {
   @NotNull
   @Override
   public GitRevision getRevisionInfo(int revision) throws IOException, SVNException {
-    final RevCommit commit = getRevision(revision);
-    return new GitRevision(this, revision, commit);
+    lock.readLock().lock();
+    try {
+      if (revision >= revisions.size())
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
+      return revisions.get(revision);
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   private static MessageDigest getMd5() {
@@ -178,24 +186,12 @@ public class GitRepository implements VcsRepository {
     lock.readLock().lock();
     try {
       for (int i = revisions.size() - 1; i >= 0; i--) {
-        RevCommit revision = revisions.get(i);
-        if (revision.equals(revisionId)) {
-          return new GitRevision(this, i, revision);
+        GitRevision revision = revisions.get(i);
+        if (revision.getCommit().equals(revisionId)) {
+          return revision;
         }
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revisionId.name()));
-    } finally {
-      lock.readLock().unlock();
-    }
-  }
-
-  @NotNull
-  private RevCommit getRevision(int revision) throws SVNException {
-    lock.readLock().lock();
-    try {
-      if (revision >= revisions.size())
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
-      return revisions.get(revision);
     } finally {
       lock.readLock().unlock();
     }

@@ -39,6 +39,11 @@ public class GitRevision implements VcsRevision {
   }
 
   @NotNull
+  public RevCommit getCommit() {
+    return commit;
+  }
+
+  @NotNull
   @Override
   public Map<String, String> getProperties() {
     final Map<String, String> props = new HashMap<>();
