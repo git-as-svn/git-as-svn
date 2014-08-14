@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
+import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsRepository;
@@ -19,7 +20,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SessionContext {
+public final class SessionContext {
   @NotNull
   private final SvnServerParser parser;
   @NotNull
@@ -33,12 +34,20 @@ public class SessionContext {
   @NotNull
   private final Set<String> capabilities;
   @NotNull
+  private final User user;
+  @NotNull
   private String parent;
 
-  public SessionContext(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull VcsRepository repository, @NotNull String baseUrl, @NotNull ClientInfo clientInfo) {
+  public SessionContext(@NotNull SvnServerParser parser,
+                        @NotNull SvnServerWriter writer,
+                        @NotNull VcsRepository repository,
+                        @NotNull String baseUrl,
+                        @NotNull ClientInfo clientInfo,
+                        @NotNull User user) {
     this.parser = parser;
     this.writer = writer;
     this.repository = repository;
+    this.user = user;
     this.baseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
     setParent(clientInfo.getUrl());
@@ -58,6 +67,11 @@ public class SessionContext {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid current path prefix: " + parent + " (base: " + baseUrl + ")"));
     }
     return StringHelper.joinPath(parent.substring(baseUrl.length() - 1), localPath);
+  }
+
+  @NotNull
+  public User getUser() {
+    return user;
   }
 
   @NotNull

@@ -6,8 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.StringHelper;
 import svnserver.SvnConstants;
+import svnserver.auth.Authenticator;
+import svnserver.auth.LocalUserDB;
+import svnserver.auth.User;
+import svnserver.auth.UserDB;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
@@ -21,18 +24,15 @@ import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
@@ -43,14 +43,13 @@ public class SvnServer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   @NotNull
-  private final Map<String, String> users = new HashMap<>();
+  private final UserDB userDB = new LocalUserDB();
   @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
   private final VcsRepository repository;
 
   public SvnServer() throws IOException {
-    users.put("bozaro", "password");
 
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DiffCmd());
@@ -99,11 +98,11 @@ public class SvnServer {
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
-    final String username = authenticate(parser, writer);
-    log.info("User: {}", username);
+    final User user = authenticate(parser, writer);
+    log.info("User: {}", user);
 
     final String basePath = getBasePath(clientInfo.getUrl());
-    final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo);
+    final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo, user);
     sendAnnounce(writer, basePath);
 
     while (true) {
@@ -177,14 +176,16 @@ public class SvnServer {
     return clientInfo;
   }
 
-  private String authenticate(SvnServerParser parser, SvnServerWriter writer) throws IOException {
+  @NotNull
+  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer) throws IOException {
     // Отправляем запрос на авторизацию.
+    final Collection<Authenticator> authenticators = userDB.authenticators();
     writer
         .listBegin()
         .word("success")
         .listBegin()
         .listBegin()
-        .word("CRAM-MD5")
+        .word(String.join(" ", authenticators.stream().map(Authenticator::getMethodName).toArray(String[]::new)))
         .listEnd()
         .string("Realm name")
         .listEnd()
@@ -193,34 +194,15 @@ public class SvnServer {
     while (true) {
       // Читаем выбранный вариант авторизации.
       final AuthReq authReq = MessageParser.parse(AuthReq.class, parser);
-      if (!authReq.getMech().equals("CRAM-MD5")) {
+      final Optional<Authenticator> authenticator = authenticators.stream().filter(o -> o.getMethodName().equals(authReq.getMech())).findAny();
+      if (!authenticator.isPresent()) {
         sendError(writer, "unknown auth type: " + authReq.getMech());
         continue;
       }
 
-      // Выполняем авторизацию.
-      String msgId = UUID.randomUUID().toString();
-      writer
-          .listBegin()
-          .word("step")
-          .listBegin()
-          .string(msgId)
-          .listEnd()
-          .listEnd();
-
-      // Читаем логин и пароль.
-      final String[] authData = parser.readText().split(" ", 2);
-      final String username = authData[0];
-
-      final String password = users.get(username);
-      if (password == null) {
-        sendError(writer, "unknown user");
-        continue;
-      }
-
-      final String authRequire = hmac(msgId, password);
-      if (!authData[1].equals(authRequire)) {
-        sendError(writer, "incorrect password");
+      final User user = authenticator.get().authenticate(parser, writer);
+      if (user == null) {
+        sendError(writer, "incorrect credentials");
         continue;
       }
 
@@ -231,7 +213,7 @@ public class SvnServer {
           .listEnd()
           .listEnd();
 
-      return username;
+      return user;
     }
   }
 
@@ -257,17 +239,5 @@ public class SvnServer {
         .string(msg)
         .listEnd()
         .listEnd();
-  }
-
-  private static String hmac(@NotNull String sessionKey, @NotNull String password) {
-    //noinspection OverlyBroadCatchBlock
-    try {
-      final SecretKeySpec keySpec = new SecretKeySpec(password.getBytes(), "HmacMD5");
-      final Mac mac = Mac.getInstance("HmacMD5");
-      mac.init(keySpec);
-      return StringHelper.toHex(mac.doFinal(sessionKey.getBytes(StandardCharsets.UTF_8)));
-    } catch (GeneralSecurityException e) {
-      throw new IllegalStateException(e);
-    }
   }
 }
