@@ -11,6 +11,7 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -18,9 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.repository.VcsCommitBuilder;
-import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,9 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final FileRepository repository;
   @NotNull
-  private final List<RevCommit> revisions;
+  private final List<GitRevision> revisions = new ArrayList<>();
+  @NotNull
+  private final Map<String, int[]> lastUpdates = new ConcurrentHashMap<>();
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   @NotNull
@@ -59,7 +60,7 @@ public class GitRepository implements VcsRepository {
     this.uuid = uuid;
     this.repository = new FileRepository(findGitPath());
     this.branch = repository.getRef(branch).getName();
-    this.revisions = new ArrayList<>(Arrays.asList(getEmptyCommit(repository)));
+    addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
   }
 
@@ -68,7 +69,7 @@ public class GitRepository implements VcsRepository {
     // Fast check.
     lock.readLock().lock();
     try {
-      final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
+      final ObjectId lastCommitId = revisions.get(revisions.size() - 1).getCommit();
       final Ref master = repository.getRef(branch);
       if (master.getObjectId().equals(lastCommitId)) {
         return;
@@ -79,7 +80,7 @@ public class GitRepository implements VcsRepository {
     // Real update.
     lock.writeLock().lock();
     try {
-      final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
+      final ObjectId lastCommitId = revisions.get(revisions.size() - 1).getCommit();
       final Ref master = repository.getRef(branch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
@@ -94,10 +95,44 @@ public class GitRepository implements VcsRepository {
         objectId = commit.getParent(0);
       }
       for (int i = newRevs.size() - 1; i >= 0; i--) {
-        revisions.add(newRevs.get(i));
+        addRevisionInfo(newRevs.get(i));
       }
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
+    final int revisionId = revisions.size();
+    final ObjectId oldTree = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit().getTree();
+    final ObjectId newTree = commit.getTree();
+    final TreeMap<String, GitLogEntry> changes = new TreeMap<>();
+    collectChanges(changes, "", oldTree, newTree);
+    for (String path : changes.keySet()) {
+      int[] oldRevisions = lastUpdates.get(path);
+      int[] newRevisions = oldRevisions == null ? new int[1] : Arrays.copyOf(oldRevisions, oldRevisions.length + 1);
+      newRevisions[newRevisions.length - 1] = revisionId;
+      lastUpdates.put(path, newRevisions);
+    }
+    revisions.add(new GitRevision(this, revisionId, changes, commit));
+  }
+
+  private void collectChanges(@NotNull Map<String, GitLogEntry> changes, @NotNull String path, @Nullable ObjectId oldTree, @NotNull ObjectId newTree) throws IOException {
+    final Map<String, GitTreeEntry> oldEntries = loadTree(oldTree);
+    for (Map.Entry<String, GitTreeEntry> entry : loadTree(newTree).entrySet()) {
+      final String name = entry.getKey();
+      final GitTreeEntry newEntry = entry.getValue();
+      final GitTreeEntry oldEntry = oldEntries.remove(name);
+      if (!newEntry.equals(oldEntry)) {
+        final String fullPath = StringHelper.joinPath(path, name);
+        changes.put(fullPath, new GitLogEntry(oldEntry, newEntry));
+        if (newEntry.getFileMode() == FileMode.TREE) {
+          collectChanges(changes, fullPath, oldEntry == null ? null : oldEntry.getObjectId(), newEntry.getObjectId());
+        }
+      }
+    }
+    for (Map.Entry<String, GitTreeEntry> entry : oldEntries.entrySet()) {
+      changes.put(StringHelper.joinPath(path, entry.getKey()), new GitLogEntry(entry.getValue(), null));
     }
   }
 
@@ -139,7 +174,6 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   public String getObjectMD5(@NotNull ObjectId objectId) throws IOException {
-    //repository.newObjectReader().open(
     String result = cacheMd5.get(objectId.name());
     if (result == null) {
       final byte[] buffer = new byte[64 * 1024];
@@ -165,8 +199,14 @@ public class GitRepository implements VcsRepository {
   @NotNull
   @Override
   public GitRevision getRevisionInfo(int revision) throws IOException, SVNException {
-    final RevCommit commit = getRevision(revision);
-    return new GitRevision(this, revision, commit);
+    lock.readLock().lock();
+    try {
+      if (revision >= revisions.size())
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
+      return revisions.get(revision);
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   private static MessageDigest getMd5() {
@@ -182,24 +222,12 @@ public class GitRepository implements VcsRepository {
     lock.readLock().lock();
     try {
       for (int i = revisions.size() - 1; i >= 0; i--) {
-        RevCommit revision = revisions.get(i);
-        if (revision.equals(revisionId)) {
-          return new GitRevision(this, i, revision);
+        GitRevision revision = revisions.get(i);
+        if (revision.getCommit().equals(revisionId)) {
+          return revision;
         }
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revisionId.name()));
-    } finally {
-      lock.readLock().unlock();
-    }
-  }
-
-  @NotNull
-  private RevCommit getRevision(int revision) throws SVNException {
-    lock.readLock().lock();
-    try {
-      if (revision >= revisions.size())
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
-      return revisions.get(revision);
     } finally {
       lock.readLock().unlock();
     }
@@ -247,44 +275,74 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
+  public VcsFile deleteEntry(@NotNull String fullPath, int revision) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+    }
+    if (file.getLastChange().getId() > revision) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
+    }
+    return file;
+  }
+
+  public int getLastChange(@NotNull String nodePath, int revision) {
+    if (nodePath.isEmpty()) return revision;
+    int[] revs = this.lastUpdates.get(nodePath);
+    if (revs != null) {
+      for (int i = revs.length - 1; i >= 0; --i) {
+        if (revs[i] <= revision) {
+          return revs[i];
+        }
+      }
+    }
+    throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + nodePath + "@" + revision);
+  }
+
+  @NotNull
+  @Override
   public VcsCommitBuilder createCommitBuilder() throws IOException {
     final Ref branchRef = repository.getRef(branch);
     final ObjectId objectId = branchRef.getObjectId();
     final RevWalk revWalk = new RevWalk(repository);
-    final ObjectReader reader = revWalk.getObjectReader();
     final ObjectInserter inserter = repository.newObjectInserter();
     final RevCommit commit = revWalk.parseCommit(objectId);
 
     final Deque<GitTreeUpdate> treeStack = new ArrayDeque<>();
-    treeStack.push(new GitTreeUpdate("", reader, commit.getTree()));
+    treeStack.push(new GitTreeUpdate("", loadTree(commit.getTree())));
 
     return new VcsCommitBuilder() {
       @Override
       public void addDir(@NotNull String name) throws IOException, SVNException {
         final GitTreeUpdate current = treeStack.element();
-        if (current.entries.containsKey(name)) {
+        if (current.getEntries().containsKey(name)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
         }
+        treeStack.push(new GitTreeUpdate(name, loadTree(null)));
       }
 
       @Override
       public void openDir(@NotNull String name) throws SVNException, IOException {
         final GitTreeUpdate current = treeStack.element();
-        final GitTreeEntry originalDir = current.entries.remove(name);
-        if ((originalDir == null) || (!originalDir.fileMode.equals(FileMode.TREE))) {
+        final GitTreeEntry originalDir = current.getEntries().remove(name);
+        if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
         }
-        treeStack.push(new GitTreeUpdate(name, reader, originalDir.objectId));
+        treeStack.push(new GitTreeUpdate(name, loadTree(originalDir.getObjectId())));
       }
 
       @Override
       public void closeDir() throws SVNException, IOException {
         final GitTreeUpdate last = treeStack.pop();
         final GitTreeUpdate current = treeStack.element();
+        final String fullPath = getFullPath(last.getName());
+        if (last.getEntries().isEmpty()) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories is not supported: " + fullPath));
+        }
         final ObjectId subtreeId = last.buildTree(inserter);
-        log.info("Create tree {} for dir: {}", subtreeId.name(), getFullPath(last.name));
-        if (current.entries.put(last.name, new GitTreeEntry(FileMode.TREE, subtreeId)) != null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(last.name)));
+        log.info("Create tree {} for dir: {}", subtreeId.name(), fullPath);
+        if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, subtreeId)) != null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
         }
       }
 
@@ -292,11 +350,11 @@ public class GitRepository implements VcsRepository {
       public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException {
         final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
         final GitTreeUpdate current = treeStack.element();
-        final GitTreeEntry entry = current.entries.get(name);
+        final GitTreeEntry entry = current.getEntries().get(name);
         final ObjectId originalId = gitDeltaConsumer.getOriginalId();
         if ((originalId != null) && (entry == null)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-        } else if ((originalId != null) && (!entry.objectId.equals(originalId))) {
+        } else if ((originalId != null) && (!entry.getObjectId().equals(originalId))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
         } else if ((originalId == null) && (entry != null)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
@@ -309,7 +367,20 @@ public class GitRepository implements VcsRepository {
           }
           return;
         }
-        current.entries.put(name, new GitTreeEntry(gitDeltaConsumer.getFileMode(), objectId));
+        current.getEntries().put(name, new GitTreeEntry(gitDeltaConsumer.getFileMode(), objectId));
+      }
+
+      @Override
+      public void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException {
+        final GitTreeUpdate current = treeStack.element();
+        final GitFile gitFile = (GitFile) file;
+        final GitTreeEntry entry = current.getEntries().remove(name);
+        if (entry == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+        }
+        if (!gitFile.getObjectId().equals(entry.getObjectId())) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
+        }
       }
 
       @Override
@@ -369,7 +440,7 @@ public class GitRepository implements VcsRepository {
         final StringBuilder fullPath = new StringBuilder();
         final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
         while (iter.hasNext()) {
-          fullPath.append(iter.next().name).append('/');
+          fullPath.append(iter.next().getName()).append('/');
         }
         fullPath.append(name);
         return fullPath.toString();
@@ -377,49 +448,19 @@ public class GitRepository implements VcsRepository {
     };
   }
 
-  public static class GitTreeUpdate {
-    @NotNull
-    private final String name;
-    @NotNull
-    private final Map<String, GitTreeEntry> entries = new TreeMap<>();
-
-    public GitTreeUpdate(@NotNull String name) throws IOException {
-      this.name = name;
-    }
-
-    public GitTreeUpdate(@NotNull String name, @NotNull ObjectReader reader, @NotNull ObjectId originalTreeId) throws IOException {
-      this.name = name;
-      CanonicalTreeParser treeParser = new CanonicalTreeParser(emptyBytes, reader, originalTreeId);
+  @NotNull
+  public Map<String, GitTreeEntry> loadTree(@Nullable ObjectId treeId) throws IOException {
+    Map<String, GitTreeEntry> result = new TreeMap<>();
+    if (treeId != null) {
+      CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), treeId);
       while (!treeParser.eof()) {
-        entries.put(treeParser.getEntryPathString(), new GitTreeEntry(
+        result.put(treeParser.getEntryPathString(), new GitTreeEntry(
             treeParser.getEntryFileMode(),
             treeParser.getEntryObjectId()
         ));
         treeParser.next();
       }
     }
-
-    @NotNull
-    public ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException {
-      final TreeFormatter treeBuilder = new TreeFormatter();
-      for (Map.Entry<String, GitTreeEntry> entry : entries.entrySet()) {
-        final String name = entry.getKey();
-        final GitTreeEntry value = entry.getValue();
-        treeBuilder.append(name, value.fileMode, value.objectId);
-      }
-      return inserter.insert(treeBuilder);
-    }
-  }
-
-  public static class GitTreeEntry {
-    @NotNull
-    private final FileMode fileMode;
-    @NotNull
-    private final ObjectId objectId;
-
-    public GitTreeEntry(@NotNull FileMode fileMode, @NotNull ObjectId objectId) {
-      this.fileMode = fileMode;
-      this.objectId = objectId;
-    }
+    return result;
   }
 }

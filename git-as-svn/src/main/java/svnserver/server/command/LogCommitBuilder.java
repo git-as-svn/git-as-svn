@@ -5,9 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
-import svnserver.repository.VcsCommitBuilder;
-import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.*;
 
 import java.io.IOException;
 
@@ -32,6 +30,11 @@ public class LogCommitBuilder implements VcsCommitBuilder {
   public void openDir(@NotNull String name) {
     log.info(indent() + "{} (modify dir)", name);
     depth++;
+  }
+
+  @Override
+  public void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException {
+    log.info(indent() + "{} (delete)", name);
   }
 
   @Override

@@ -1,14 +1,15 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.StringHelper;
 import svnserver.repository.VcsFile;
 
 import java.io.IOException;
@@ -31,24 +32,28 @@ public class GitFile implements VcsFile {
   @NotNull
   private final FileMode fileMode;
   @NotNull
-  private final String fileName;
-  @NotNull
-  private final GitRevision lastChange;
+  private final String fullPath;
+  private final int lastChange;
   @Nullable
   private ObjectLoader objectLoader;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fileName, @NotNull GitRevision lastChange) {
+  public GitFile(@NotNull GitRepository repo, @NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fullPath, int revision) {
     this.repo = repo;
     this.objectId = objectId;
     this.fileMode = fileMode;
-    this.fileName = fileName;
-    this.lastChange = lastChange;
+    this.fullPath = fullPath;
+    this.lastChange = repo.getLastChange(fullPath, revision);
   }
 
   @NotNull
   @Override
   public String getFileName() {
-    return fileName;
+    return StringHelper.baseName(fullPath);
+  }
+
+  @NotNull
+  public String getFullPath() {
+    return fullPath;
   }
 
   @NotNull
@@ -63,7 +68,7 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Map<String, String> getProperties(boolean includeInternalProps) {
+  public Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException {
     final Map<String, String> props = new HashMap<>();
     if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
       props.put(SVNProperty.EXECUTABLE, "*");
@@ -71,10 +76,11 @@ public class GitFile implements VcsFile {
       props.put(SVNProperty.SPECIAL, "*");
     }
     if (includeInternalProps) {
+      final GitRevision last = getLastChange();
       props.put(SVNProperty.UUID, repo.getUuid());
-      props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(lastChange.getId()));
-      props.put(SVNProperty.COMMITTED_DATE, lastChange.getDate());
-      props.put(SVNProperty.LAST_AUTHOR, lastChange.getAuthor());
+      props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
+      props.put(SVNProperty.COMMITTED_DATE, last.getDate());
+      props.put(SVNProperty.LAST_AUTHOR, last.getAuthor());
     }
     return props;
   }
@@ -97,17 +103,8 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public SVNNodeKind getKind() throws IOException {
-    final int objType = fileMode.getObjectType();
-
-    switch (objType) {
-      case Constants.OBJ_TREE:
-        return SVNNodeKind.DIR;
-      case Constants.OBJ_BLOB:
-        return SVNNodeKind.FILE;
-      default:
-        throw new IllegalStateException("Unknown obj type: " + objType);
-    }
+  public SVNNodeKind getKind() {
+    return GitHelper.getKind(fileMode);
   }
 
   private ObjectLoader getObjectLoader() throws IOException {
@@ -140,7 +137,8 @@ public class GitFile implements VcsFile {
 
       @Override
       public VcsFile next() {
-        final GitFile fileInfo = new GitFile(repo, treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), treeParser.getEntryPathString(), lastChange);
+        final String nodePath = StringHelper.joinPath(fullPath, treeParser.getEntryPathString());
+        final GitFile fileInfo = new GitFile(repo, treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), nodePath, lastChange);
         treeParser.next();
         return fileInfo;
       }
@@ -149,8 +147,8 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public GitRevision getLastChange() {
-    return lastChange;
+  public GitRevision getLastChange() throws IOException, SVNException {
+    return repo.getRevisionInfo(lastChange);
   }
 
   @Override
@@ -159,22 +157,23 @@ public class GitFile implements VcsFile {
     if (o == null || getClass() != o.getClass()) return false;
     GitFile that = (GitFile) o;
     return fileMode.equals(that.fileMode)
-        && fileName.equals(that.fileName)
-        && objectId.equals(that.objectId);
+        && fullPath.equals(that.fullPath)
+        && (lastChange == that.lastChange);
   }
 
   @Override
   public int hashCode() {
     int result = objectId.hashCode();
     result = 31 * result + fileMode.hashCode();
-    result = 31 * result + fileName.hashCode();
+    result = 31 * result + fullPath.hashCode();
+    result = 31 * result + lastChange;
     return result;
   }
 
   @Override
   public String toString() {
     return "GitFileInfo{" +
-        "fileName='" + fileName + '\'' +
+        "fullPath='" + fullPath + '\'' +
         ", objectId=" + objectId +
         '}';
   }

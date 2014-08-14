@@ -70,7 +70,8 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .listBegin()
         .number(info.getId()) // rev
         .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap()) // props
-        .listBegin();
+        .listBegin()
+        .separator();
     if (args.wantContents) {
       for (VcsFile item : fileInfo.getEntries()) {
         writer
@@ -81,8 +82,9 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
             .bool(!item.getProperties(false).isEmpty()) // has-props
             .number(item.getLastChange().getId()) // created-rev
             .listBegin().string(item.getLastChange().getDate()).listEnd() // created-date
-            .listBegin().listEnd() // last-author
-            .listEnd();
+            .listBegin().string(item.getLastChange().getAuthor()).listEnd() // last-author
+            .listEnd()
+            .separator();
       }
     }
     writer

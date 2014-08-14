@@ -40,6 +40,11 @@ public class SvnServerWriter {
     return this;
   }
 
+  @NotNull
+  public SvnServerWriter word(char c) throws IOException {
+    return word(String.valueOf(c));
+  }
+
   @SuppressWarnings("QuestionableName")
   @NotNull
   public SvnServerWriter string(@NotNull String text) throws IOException {
@@ -66,6 +71,12 @@ public class SvnServerWriter {
   }
 
   @NotNull
+  public SvnServerWriter separator() throws IOException {
+    stream.write('\n');
+    return this;
+  }
+
+  @NotNull
   public SvnServerWriter bool(boolean value) throws IOException {
     return word(value ? "true" : "false");
   }
@@ -82,7 +93,7 @@ public class SvnServerWriter {
       }
     }
     if (depth == 0) {
-      stream.write('\n');
+      separator();
       stream.flush();
     }
     return this;

@@ -1,6 +1,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public interface VcsFile {
   String getFileName();
 
   @NotNull
-  Map<String, String> getProperties(boolean includeInternalProps);
+  Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException;
 
   @NotNull
   String getMd5() throws IOException;
@@ -39,5 +40,5 @@ public interface VcsFile {
   Iterable<VcsFile> getEntries() throws IOException;
 
   @NotNull
-  VcsRevision getLastChange();
+  VcsRevision getLastChange() throws IOException, SVNException;
 }

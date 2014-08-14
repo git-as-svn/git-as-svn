@@ -15,6 +15,7 @@ import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
+import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
@@ -87,6 +88,21 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       this.parentToken = parentToken;
       this.token = token;
       this.rev = rev;
+    }
+  }
+
+  public static class DeleteParams {
+    @NotNull
+    private final String name;
+    @NotNull
+    private final int rev[];
+    @NotNull
+    private final String parentToken;
+
+    public DeleteParams(@NotNull String name, @NotNull int[] rev, @NotNull String parentToken) {
+      this.name = name;
+      this.rev = rev;
+      this.parentToken = parentToken;
     }
   }
 
@@ -184,7 +200,9 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       files = new HashMap<>();
       changes = new HashMap<>();
       commands = new HashMap<>();
+      commands.put("add-dir", new LambdaCmd<>(OpenParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(OpenParams.class, this::addFile));
+      commands.put("delete-entry", new LambdaCmd<>(DeleteParams.class, this::deleteEntry));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
       commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
       commands.put("open-file", new LambdaCmd<>(OpenParams.class, this::openFile));
@@ -243,11 +261,35 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       return treeBuilder;
     }
 
+    private void addDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
+      context.push(this::editorCommand);
+      final String path = getPath(context, args.parentToken, args.name);
+      log.info("Add dir: {} (rev: {})", path);
+      getChanges(paths.get(args.parentToken)).add(treeBuilder -> {
+        treeBuilder.addDir(StringHelper.baseName(path));
+        updateDir(treeBuilder, path);
+        treeBuilder.closeDir();
+      });
+      paths.put(args.token, path);
+    }
+
     private void addFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
       log.info("Add file: {} (rev: {})", path);
       files.put(args.token, new CommitFile(path, context.getRepository().createFile(path)));
+    }
+
+    private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
+      context.push(this::editorCommand);
+      final String path = getPath(context, args.parentToken, args.name);
+      if (args.rev.length == 0) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
+      }
+      final int rev = args.rev[0];
+      final VcsFile file = context.getRepository().deleteEntry(path, rev);
+      log.info("Delete entry: {} (rev: {})", path, rev);
+      getChanges(paths.get(args.parentToken)).add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(path), file));
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
@@ -268,9 +310,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
       CommitFile file = getFile(args.token);
       file.deltaConsumer.validateChecksum(args.checksum[0]);
-      getChanges(StringHelper.parentDir(file.fullPath)).add(treeBuilder -> {
-        treeBuilder.saveFile(StringHelper.baseName(file.fullPath), file.deltaConsumer);
-      });
+      getChanges(StringHelper.parentDir(file.fullPath)).add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(file.fullPath), file.deltaConsumer));
     }
 
     private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -316,12 +356,17 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       paths.remove(args.token);
     }
 
-    @Deprecated
-    private void fake(@NotNull SessionContext context, @NotNull NoParams args) {
-      context.push(this::editorCommand);
-    }
-
     private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
+      for (int pass = 0; ; ++pass) {
+        if (pass >= MAX_PASS_COUNT) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
+        }
+        final VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUser(), message);
+        if (revision != null) {
+          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
+          break;
+        }
+      }
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -329,14 +374,6 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
-      for (int pass = 0; pass < MAX_PASS_COUNT; ++pass) {
-        VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUser(), message);
-        if (revision != null) {
-          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
-          return;
-        }
-      }
-      sendError(writer, SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
     }
 
     private void complete(@NotNull SessionContext context, @NotNull VcsRevision revision) throws IOException, SVNException {
