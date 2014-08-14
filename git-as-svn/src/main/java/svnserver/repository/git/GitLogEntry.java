@@ -41,4 +41,16 @@ public class GitLogEntry implements VcsLogEntry {
     if (oldEntry != null) return GitHelper.getKind(oldEntry.getFileMode());
     throw new IllegalStateException();
   }
+
+  @Override
+  public boolean isContentModified() {
+    return (newEntry == null) || (oldEntry == null)
+        || (!newEntry.getObjectId().equals(oldEntry.getObjectId()));
+  }
+
+  @Override
+  public boolean isPropertyModified() {
+    return (newEntry != null) && (oldEntry != null)
+        && (newEntry.getFileMode().equals(oldEntry.getFileMode()));
+  }
 }

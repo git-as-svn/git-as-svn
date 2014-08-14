@@ -13,4 +13,8 @@ public interface VcsLogEntry {
 
   @NotNull
   SVNNodeKind getKind();
+
+  boolean isContentModified();
+
+  boolean isPropertyModified();
 }

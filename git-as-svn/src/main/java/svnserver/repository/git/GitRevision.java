@@ -51,11 +51,6 @@ public class GitRevision implements VcsRevision {
   }
 
   @NotNull
-  public Map<String, GitLogEntry> getChanges() {
-    return changes;
-  }
-
-  @NotNull
   @Override
   public Map<String, VcsLogEntry> getChanges(@NotNull Set<String> targetPaths) {
     final Map<String, VcsLogEntry> result = new TreeMap<>();
@@ -103,12 +98,12 @@ public class GitRevision implements VcsRevision {
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
     if (fullPath.isEmpty()) {
-      return new GitFile(repo, commit.getTree(), FileMode.TREE, "", this);
+      return new GitFile(repo, commit.getTree(), FileMode.TREE, fullPath, revision);
     }
     final TreeWalk treeWalk = TreeWalk.forPath(repo.getRepository(), fullPath.substring(1), commit.getTree());
     if (treeWalk == null) {
       return null;
     }
-    return new GitFile(repo, treeWalk.getObjectId(0), treeWalk.getFileMode(0), treeWalk.getNameString(), this);
+    return new GitFile(repo, treeWalk.getObjectId(0), treeWalk.getFileMode(0), fullPath, revision);
   }
 }

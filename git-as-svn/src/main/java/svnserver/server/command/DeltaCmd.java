@@ -252,7 +252,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException {
+    private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
       final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(true) : new HashMap<>();
       for (Map.Entry<String, String> entry : newFile.getProperties(true).entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {

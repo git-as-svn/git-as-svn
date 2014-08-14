@@ -125,8 +125,8 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
               .listBegin().listEnd() // todo: copy information.
               .listBegin()
               .string(logEntry.getKind().toString())
-              .bool(true) // text-mods (?)
-              .bool(false) // prop-mods (?)
+              .bool(logEntry.isContentModified()) // text-mods
+              .bool(logEntry.isPropertyModified()) // prop-mods
               .listEnd()
               .listEnd()
               .separator();

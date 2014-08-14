@@ -43,7 +43,9 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final FileRepository repository;
   @NotNull
-  private final List<GitRevision> revisions;
+  private final List<GitRevision> revisions = new ArrayList<>();
+  @NotNull
+  private final Map<String, int[]> lastUpdates = new ConcurrentHashMap<>();
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   @NotNull
@@ -57,7 +59,6 @@ public class GitRepository implements VcsRepository {
     this.uuid = uuid;
     this.repository = new FileRepository(findGitPath());
     this.branch = repository.getRef(branch).getName();
-    this.revisions = new ArrayList<>();
     addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
   }
@@ -101,12 +102,18 @@ public class GitRepository implements VcsRepository {
   }
 
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
-    final int size = revisions.size();
-    final ObjectId oldTree = revisions.isEmpty() ? null : revisions.get(size - 1).getCommit().getTree();
+    final int revisionId = revisions.size();
+    final ObjectId oldTree = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit().getTree();
     final ObjectId newTree = commit.getTree();
     final TreeMap<String, GitLogEntry> changes = new TreeMap<>();
     collectChanges(changes, "", oldTree, newTree);
-    revisions.add(new GitRevision(this, size, changes, commit));
+    for (String path : changes.keySet()) {
+      int[] oldRevisions = lastUpdates.get(path);
+      int[] newRevisions = oldRevisions == null ? new int[1] : Arrays.copyOf(oldRevisions, oldRevisions.length + 1);
+      newRevisions[newRevisions.length - 1] = revisionId;
+      lastUpdates.put(path, newRevisions);
+    }
+    revisions.add(new GitRevision(this, revisionId, changes, commit));
   }
 
   private void collectChanges(@NotNull Map<String, GitLogEntry> changes, @NotNull String path, @Nullable ObjectId oldTree, @NotNull ObjectId newTree) throws IOException {
@@ -276,6 +283,19 @@ public class GitRepository implements VcsRepository {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
     return file;
+  }
+
+  public int getLastChange(@NotNull String nodePath, int revision) {
+    if (nodePath.isEmpty()) return revision;
+    int[] revs = this.lastUpdates.get(nodePath);
+    if (revs != null) {
+      for (int i = revs.length - 1; i >= 0; --i) {
+        if (revs[i] <= revision) {
+          return revs[i];
+        }
+      }
+    }
+    throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + nodePath + "@" + revision);
   }
 
   @NotNull
