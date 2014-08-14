@@ -8,17 +8,26 @@ import org.jetbrains.annotations.NotNull;
  * auth-response: ( mech:word [ token:string ] )
  *
  * @author a.navrotskiy
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class AuthReq {
+public final class AuthReq {
   @NotNull
   private final String mech;
+  @NotNull
+  private final String[] token;
 
-  public AuthReq(@NotNull String mech) {
+  public AuthReq(@NotNull String mech, @NotNull String[] token) {
     this.mech = mech;
+    this.token = token;
   }
 
   @NotNull
   public String getMech() {
     return mech;
+  }
+
+  @NotNull
+  public String getToken() {
+    return token.length < 1 ? "" : token[0];
   }
 }

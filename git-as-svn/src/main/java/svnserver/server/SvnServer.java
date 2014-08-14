@@ -177,7 +177,7 @@ public class SvnServer {
   }
 
   @NotNull
-  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer) throws IOException {
+  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
     final Collection<Authenticator> authenticators = userDB.authenticators();
     writer
@@ -200,7 +200,7 @@ public class SvnServer {
         continue;
       }
 
-      final User user = authenticator.get().authenticate(parser, writer);
+      final User user = authenticator.get().authenticate(parser, writer, authReq.getToken());
       if (user == null) {
         sendError(writer, "incorrect credentials");
         continue;

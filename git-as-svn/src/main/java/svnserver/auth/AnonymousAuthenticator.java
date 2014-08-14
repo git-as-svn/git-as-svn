@@ -25,7 +25,7 @@ final class AnonymousAuthenticator implements Authenticator {
 
   @Nullable
   @Override
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer) throws IOException {
+  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException {
     return anonymous;
   }
 }
