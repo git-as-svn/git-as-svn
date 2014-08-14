@@ -287,14 +287,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
       }
       final int rev = args.rev[0];
-      final VcsFile file = context.getRepository().getRevisionInfo(rev).getFile(path);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, path));
-      }
-      if (file.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + path));
-      }
-      log.info("Delete entry: {} (rev: {})", path);
+      final VcsFile file = context.getRepository().deleteEntry(path, rev);
+      log.info("Delete entry: {} (rev: {})", path, rev);
       getChanges(paths.get(args.parentToken)).add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(path), file));
     }
 

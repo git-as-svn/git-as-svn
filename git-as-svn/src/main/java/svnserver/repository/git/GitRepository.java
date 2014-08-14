@@ -244,6 +244,19 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
+  public VcsFile deleteEntry(@NotNull String fullPath, int revision) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+    }
+    if (file.getLastChange().getId() > revision) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
+    }
+    return file;
+  }
+
+  @NotNull
+  @Override
   public VcsCommitBuilder createCommitBuilder() throws IOException {
     final Ref branchRef = repository.getRef(branch);
     final ObjectId objectId = branchRef.getObjectId();
