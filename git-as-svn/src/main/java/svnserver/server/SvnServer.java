@@ -14,6 +14,7 @@ import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.UserInfo;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
@@ -103,7 +104,7 @@ public class SvnServer {
     log.info("User: {}", username);
 
     final String basePath = getBasePath(clientInfo.getUrl());
-    final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo);
+    final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo, new UserInfoImpl(username));
     sendAnnounce(writer, basePath);
 
     while (true) {
@@ -268,6 +269,27 @@ public class SvnServer {
       return StringHelper.toHex(mac.doFinal(sessionKey.getBytes(StandardCharsets.UTF_8)));
     } catch (GeneralSecurityException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  private static class UserInfoImpl implements UserInfo {
+    @NotNull
+    private final String username;
+
+    public UserInfoImpl(@NotNull String username) {
+      this.username = username;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return username;
+    }
+
+    @NotNull
+    @Override
+    public String getMail() {
+      return username + "@nomail";
     }
   }
 }

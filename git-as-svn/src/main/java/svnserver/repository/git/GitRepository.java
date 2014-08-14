@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
+import svnserver.repository.UserInfo;
 import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.VcsRepository;
@@ -28,6 +29,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implementation for Git repository.
@@ -44,6 +47,8 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final List<RevCommit> revisions;
   @NotNull
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  @NotNull
   private final String uuid;
   @NotNull
   private final String branch;
@@ -52,24 +57,35 @@ public class GitRepository implements VcsRepository {
 
   public GitRepository(@NotNull String uuid, @NotNull String branch) throws IOException {
     this.uuid = uuid;
-    this.branch = branch;
     this.repository = new FileRepository(findGitPath());
-    this.revisions = loadRevisions(repository, branch);
+    this.branch = repository.getRef(branch).getName();
+    this.revisions = new ArrayList<>(Arrays.asList(getEmptyCommit(repository)));
+    loadRevisions();
   }
 
-  private static List<RevCommit> loadRevisions(@NotNull FileRepository repository, @NotNull String branch) throws IOException {
-    final Ref master = repository.getRef(branch);
-    final LinkedList<RevCommit> revisions = new LinkedList<>();
-    final RevWalk revWalk = new RevWalk(repository);
-    ObjectId objectId = master.getObjectId();
-    while (true) {
-      final RevCommit commit = revWalk.parseCommit(objectId);
-      revisions.addFirst(commit);
-      if (commit.getParentCount() == 0) break;
-      objectId = commit.getParent(0);
+  private void loadRevisions() throws IOException {
+    lock.writeLock().lock();
+    try {
+      final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
+      final Ref master = repository.getRef(branch);
+      final List<RevCommit> newRevs = new ArrayList<>();
+      final RevWalk revWalk = new RevWalk(repository);
+      ObjectId objectId = master.getObjectId();
+      while (true) {
+        if (lastCommitId.equals(objectId)) {
+          break;
+        }
+        final RevCommit commit = revWalk.parseCommit(objectId);
+        newRevs.add(commit);
+        if (commit.getParentCount() == 0) break;
+        objectId = commit.getParent(0);
+      }
+      for (int i = newRevs.size() - 1; i >= 0; i--) {
+        revisions.add(newRevs.get(i));
+      }
+    } finally {
+      lock.writeLock().unlock();
     }
-    revisions.addFirst(getEmptyCommit(repository));
-    return new ArrayList<>(revisions);
   }
 
   private File findGitPath() {
@@ -89,7 +105,12 @@ public class GitRepository implements VcsRepository {
 
   @Override
   public int getLatestRevision() throws IOException {
-    return revisions.size() - 1;
+    lock.readLock().lock();
+    try {
+      return revisions.size() - 1;
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   @NotNull
@@ -144,10 +165,31 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
+  private GitRevision getRevision(ObjectId revisionId) throws SVNException {
+    lock.readLock().lock();
+    try {
+      for (int i = revisions.size() - 1; i >= 0; i--) {
+        RevCommit revision = revisions.get(i);
+        if (revision.equals(revisionId)) {
+          return new GitRevision(this, i, revision);
+        }
+      }
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revisionId.name()));
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  @NotNull
   private RevCommit getRevision(int revision) throws SVNException {
-    if (revision >= revisions.size())
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
-    return revisions.get(revision);
+    lock.readLock().lock();
+    try {
+      if (revision >= revisions.size())
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
+      return revisions.get(revision);
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   @NotNull
@@ -258,14 +300,14 @@ public class GitRepository implements VcsRepository {
       }
 
       @Override
-      public void commit(@NotNull String message) throws SVNException, IOException {
+      public GitRevision commit(@NotNull UserInfo userInfo, @NotNull String message) throws SVNException, IOException {
         final GitTreeUpdate root = treeStack.element();
         final ObjectId treeId = root.buildTree(inserter);
         log.info("Create tree {} for commit.", treeId.name());
 
         final CommitBuilder commitBuilder = new CommitBuilder();
-        commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
-        commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
+        commitBuilder.setAuthor(new PersonIdent(userInfo.getName(), userInfo.getMail()));
+        commitBuilder.setCommitter(new PersonIdent(userInfo.getName(), userInfo.getMail()));
         commitBuilder.setMessage(message);
         commitBuilder.setParentId(commit.getId());
         commitBuilder.setTreeId(treeId);
@@ -285,7 +327,7 @@ public class GitRepository implements VcsRepository {
               switch (remoteUpdate.getStatus()) {
                 case REJECTED_NONFASTFORWARD:
                   log.info("Non fast forward push rejected");
-                  return;
+                  return null;
                 case OK:
                   break;
                 default:
@@ -298,6 +340,8 @@ public class GitRepository implements VcsRepository {
         } catch (GitAPIException e) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
         }
+        loadRevisions();
+        return getRevision(commitId);
       }
 
       @NotNull

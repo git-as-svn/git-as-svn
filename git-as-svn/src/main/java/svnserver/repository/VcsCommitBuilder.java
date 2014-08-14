@@ -1,6 +1,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
@@ -41,9 +42,12 @@ public interface VcsCommitBuilder {
   /**
    * Create real commit.
    *
-   * @param message Commit message.
+   * @param userInfo User information.
+   * @param message  Commit message.
+   * @return Returns commitetd revision. If returns null then you need to reattempt to commit data.
    * @throws SVNException
    * @throws IOException
    */
-  void commit(@NotNull String message) throws SVNException, IOException;
+  @Nullable
+  VcsRevision commit(@NotNull UserInfo userInfo, @NotNull String message) throws SVNException, IOException;
 }

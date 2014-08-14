@@ -15,10 +15,15 @@ import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
+import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Commit client changes.
@@ -118,6 +123,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
+  private static final int MAX_PASS_COUNT = 10;
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
 
@@ -323,19 +329,23 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
-      updateDir(new LogCommitBuilder(), "");
-      updateDir(context.getRepository().createCommitBuilder(), "").commit(message);
-      sendError(writer, 0, "test");
-      //context.push(new CheckPermissionStep(this::complete));
+      for (int pass = 0; pass < MAX_PASS_COUNT; ++pass) {
+        VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUserInfo(), message);
+        if (revision != null) {
+          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
+          return;
+        }
+      }
+      sendError(writer, SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
     }
 
-    private void complete(@NotNull SessionContext context) throws IOException {
+    private void complete(@NotNull SessionContext context, @NotNull VcsRevision revision) throws IOException {
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
-          .number(42) // rev number
-          .listBegin().string(StringHelper.formatDate(new Date().getTime())).listEnd() // date
-          .listBegin().string("commit author").listEnd()
+          .number(revision.getId()) // rev number
+          .listBegin().string(revision.getDate()).listEnd() // date
+          .listBegin().string(revision.getAuthor()).listEnd()
           .listBegin().listEnd()
           .listEnd();
     }

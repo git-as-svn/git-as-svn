@@ -4,8 +4,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.repository.UserInfo;
 import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
+import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
 
@@ -43,8 +45,9 @@ public class LogCommitBuilder implements VcsCommitBuilder {
   }
 
   @Override
-  public void commit(@NotNull String message) throws SVNException, IOException {
+  public VcsRevision commit(UserInfo userInfo, @NotNull String message) throws SVNException, IOException {
     log.info(indent() + "Commit: {}", message);
+    return null;
   }
 
   @NotNull
