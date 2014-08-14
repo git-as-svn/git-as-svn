@@ -5,10 +5,14 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Change current path in repository.
@@ -81,6 +85,10 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     final int head = context.getRepository().getLatestRevision();
+    final Set<String> targetPaths = new HashSet<>();
+    for (String target : args.targetPath) {
+      targetPaths.add(context.getRepositoryPath(target));
+    }
     int startRev = getRevision(args.startRev, 1);
     int endRev = getRevision(args.endRev, head);
     int step = startRev < endRev ? 1 : -1;
@@ -93,7 +101,14 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
 
     int logLimit = args.limit;
     for (int rev = startRev; rev != endRev; rev += step) {
+      if (targetPaths.isEmpty()) {
+        break;
+      }
       final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
+      Map<String, VcsLogEntry> changes = revisionInfo.getChanges(targetPaths);
+      if (changes.isEmpty()) {
+        continue;
+      }
       writer
           .listBegin()
           .listBegin().listEnd()

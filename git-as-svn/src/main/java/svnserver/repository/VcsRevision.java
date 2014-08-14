@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Revision info.
@@ -28,4 +29,7 @@ public interface VcsRevision {
 
   @Nullable
   VcsFile getFile(@NotNull String fullPath) throws IOException;
+
+  @NotNull
+  Map<String, VcsLogEntry> getChanges(@NotNull Set<String> targetPaths);
 }

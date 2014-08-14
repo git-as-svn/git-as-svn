@@ -8,11 +8,14 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
+import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,11 +28,15 @@ public class GitRevision implements VcsRevision {
   private final GitRepository repo;
   @NotNull
   private final RevCommit commit;
+  @NotNull
+  private final TreeMap<String, GitLogEntry> changes;
+
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull RevCommit commit) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull TreeMap<String, GitLogEntry> changes, @NotNull RevCommit commit) {
     this.repo = repo;
     this.revision = revision;
+    this.changes = changes;
     this.commit = commit;
   }
 
@@ -41,6 +48,26 @@ public class GitRevision implements VcsRevision {
   @NotNull
   public RevCommit getCommit() {
     return commit;
+  }
+
+  @NotNull
+  public Map<String, GitLogEntry> getChanges() {
+    return changes;
+  }
+
+  @NotNull
+  @Override
+  public Map<String, VcsLogEntry> getChanges(@NotNull Set<String> targetPaths) {
+    final Map<String, VcsLogEntry> result = new TreeMap<>();
+    for (String targetPath : targetPaths) {
+      for (Map.Entry<String, GitLogEntry> entry : changes.tailMap(targetPath, true).entrySet()) {
+        if (!entry.getKey().startsWith(targetPath)) {
+          break;
+        }
+        result.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return result;
   }
 
   @NotNull

@@ -9,7 +9,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -55,9 +57,8 @@ public class GitRepository implements VcsRepository {
     this.uuid = uuid;
     this.repository = new FileRepository(findGitPath());
     this.branch = repository.getRef(branch).getName();
-    this.revisions = new ArrayList<>(Arrays.asList(
-        new GitRevision(this, 0, getEmptyCommit(repository))
-    ));
+    this.revisions = new ArrayList<>();
+    addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
   }
 
@@ -92,10 +93,38 @@ public class GitRepository implements VcsRepository {
         objectId = commit.getParent(0);
       }
       for (int i = newRevs.size() - 1; i >= 0; i--) {
-        revisions.add(new GitRevision(this, revisions.size(), newRevs.get(i)));
+        addRevisionInfo(newRevs.get(i));
       }
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
+    final int size = revisions.size();
+    final ObjectId oldTree = revisions.isEmpty() ? null : revisions.get(size - 1).getCommit().getTree();
+    final ObjectId newTree = commit.getTree();
+    final TreeMap<String, GitLogEntry> changes = new TreeMap<>();
+    collectChanges(changes, "", oldTree, newTree);
+    revisions.add(new GitRevision(this, size, changes, commit));
+  }
+
+  private void collectChanges(@NotNull Map<String, GitLogEntry> changes, @NotNull String path, @Nullable ObjectId oldTree, @NotNull ObjectId newTree) throws IOException {
+    final Map<String, GitTreeEntry> oldEntries = loadTree(oldTree);
+    for (Map.Entry<String, GitTreeEntry> entry : loadTree(newTree).entrySet()) {
+      final String name = entry.getKey();
+      final GitTreeEntry newEntry = entry.getValue();
+      final GitTreeEntry oldEntry = oldEntries.remove(name);
+      if (!newEntry.equals(oldEntry)) {
+        final String fullPath = StringHelper.joinPath(path, name);
+        changes.put(fullPath, new GitLogEntry(oldEntry, newEntry));
+        if (newEntry.getFileMode() == FileMode.TREE) {
+          collectChanges(changes, fullPath, oldEntry == null ? null : oldEntry.getObjectId(), newEntry.getObjectId());
+        }
+      }
+    }
+    for (Map.Entry<String, GitTreeEntry> entry : oldEntries.entrySet()) {
+      changes.put(StringHelper.joinPath(path, entry.getKey()), new GitLogEntry(entry.getValue(), null));
     }
   }
 
@@ -137,7 +166,6 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   public String getObjectMD5(@NotNull ObjectId objectId) throws IOException {
-    //repository.newObjectReader().open(
     String result = cacheMd5.get(objectId.name());
     if (result == null) {
       final byte[] buffer = new byte[64 * 1024];
@@ -256,12 +284,11 @@ public class GitRepository implements VcsRepository {
     final Ref branchRef = repository.getRef(branch);
     final ObjectId objectId = branchRef.getObjectId();
     final RevWalk revWalk = new RevWalk(repository);
-    final ObjectReader reader = revWalk.getObjectReader();
     final ObjectInserter inserter = repository.newObjectInserter();
     final RevCommit commit = revWalk.parseCommit(objectId);
 
     final Deque<GitTreeUpdate> treeStack = new ArrayDeque<>();
-    treeStack.push(new GitTreeUpdate("", reader, commit.getTree()));
+    treeStack.push(new GitTreeUpdate("", loadTree(commit.getTree())));
 
     return new VcsCommitBuilder() {
       @Override
@@ -270,7 +297,7 @@ public class GitRepository implements VcsRepository {
         if (current.getEntries().containsKey(name)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
         }
-        treeStack.push(new GitTreeUpdate(name));
+        treeStack.push(new GitTreeUpdate(name, loadTree(null)));
       }
 
       @Override
@@ -280,7 +307,7 @@ public class GitRepository implements VcsRepository {
         if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
         }
-        treeStack.push(new GitTreeUpdate(name, reader, originalDir.getObjectId()));
+        treeStack.push(new GitTreeUpdate(name, loadTree(originalDir.getObjectId())));
       }
 
       @Override
@@ -393,4 +420,19 @@ public class GitRepository implements VcsRepository {
     };
   }
 
+  @NotNull
+  public Map<String, GitTreeEntry> loadTree(@Nullable ObjectId treeId) throws IOException {
+    Map<String, GitTreeEntry> result = new TreeMap<>();
+    if (treeId != null) {
+      CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), treeId);
+      while (!treeParser.eof()) {
+        result.put(treeParser.getEntryPathString(), new GitTreeEntry(
+            treeParser.getEntryFileMode(),
+            treeParser.getEntryObjectId()
+        ));
+        treeParser.next();
+      }
+    }
+    return result;
+  }
 }
