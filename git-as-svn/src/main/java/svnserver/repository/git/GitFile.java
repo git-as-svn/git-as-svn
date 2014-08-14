@@ -1,6 +1,5 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -97,17 +96,8 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public SVNNodeKind getKind() throws IOException {
-    final int objType = fileMode.getObjectType();
-
-    switch (objType) {
-      case Constants.OBJ_TREE:
-        return SVNNodeKind.DIR;
-      case Constants.OBJ_BLOB:
-        return SVNNodeKind.FILE;
-      default:
-        throw new IllegalStateException("Unknown obj type: " + objType);
-    }
+  public SVNNodeKind getKind() {
+    return GitHelper.getKind(fileMode);
   }
 
   private ObjectLoader getObjectLoader() throws IOException {

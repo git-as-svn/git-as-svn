@@ -111,7 +111,26 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
       }
       writer
           .listBegin()
-          .listBegin().listEnd()
+          .listBegin();
+      if (args.changedPaths) {
+        for (Map.Entry<String, VcsLogEntry> entry : changes.entrySet()) {
+          final VcsLogEntry logEntry = entry.getValue();
+          final char change = logEntry.getChange();
+          if (change == 0) continue;
+          writer
+              .listBegin()
+              .string(entry.getKey()) // Path
+              .word(String.valueOf(change))
+              .listBegin().listEnd() // todo: copy information.
+              .listBegin()
+              .string(logEntry.getKind().toString())
+              .bool(true) // text-mods (?)
+              .bool(false) // prop-mods (?)
+              .listEnd()
+              .listEnd();
+        }
+      }
+      writer.listEnd()
           .number(rev)
           .listBegin().string(revisionInfo.getAuthor()).listEnd()
           .listBegin().string(revisionInfo.getDate()).listEnd()
