@@ -356,7 +356,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       if (pathParams == null) {
         return oldFile;
       }
-      if (pathParams.startEmpty) {
+      if (pathParams.startEmpty || (pathParams.rev == 0)) {
         return null;
       }
       String repositoryPath = context.getRepositoryPath(fullPath);
