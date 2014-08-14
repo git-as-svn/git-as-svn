@@ -265,6 +265,7 @@ public class GitRepository implements VcsRepository {
         if (current.entries.containsKey(name)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
         }
+        treeStack.push(new GitTreeUpdate(name));
       }
 
       @Override
@@ -281,10 +282,14 @@ public class GitRepository implements VcsRepository {
       public void closeDir() throws SVNException, IOException {
         final GitTreeUpdate last = treeStack.pop();
         final GitTreeUpdate current = treeStack.element();
+        final String fullPath = getFullPath(last.name);
+        if (last.entries.isEmpty()) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories is not supported: " + fullPath));
+        }
         final ObjectId subtreeId = last.buildTree(inserter);
-        log.info("Create tree {} for dir: {}", subtreeId.name(), getFullPath(last.name));
+        log.info("Create tree {} for dir: {}", subtreeId.name(), fullPath);
         if (current.entries.put(last.name, new GitTreeEntry(FileMode.TREE, subtreeId)) != null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(last.name)));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
         }
       }
 
@@ -393,7 +398,7 @@ public class GitRepository implements VcsRepository {
     }
 
     @NotNull
-    public ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException {
+    public ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException, SVNException {
       final TreeFormatter treeBuilder = new TreeFormatter();
       for (Map.Entry<String, GitTreeEntry> entry : entries.entrySet()) {
         final String name = entry.getKey();

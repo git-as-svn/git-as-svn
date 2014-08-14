@@ -184,6 +184,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       files = new HashMap<>();
       changes = new HashMap<>();
       commands = new HashMap<>();
+      commands.put("add-dir", new LambdaCmd<>(OpenParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(OpenParams.class, this::addFile));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
       commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
@@ -241,6 +242,18 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         consumer.accept(treeBuilder);
       }
       return treeBuilder;
+    }
+
+    private void addDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
+      context.push(this::editorCommand);
+      final String fullPath = getPath(context, args.parentToken, args.name);
+      log.info("Add dir: {} (rev: {})", fullPath);
+      getChanges(paths.get(args.parentToken)).add(treeBuilder -> {
+        treeBuilder.addDir(StringHelper.baseName(fullPath));
+        updateDir(treeBuilder, fullPath);
+        treeBuilder.closeDir();
+      });
+      paths.put(args.token, fullPath);
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
@@ -322,6 +335,16 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
+      for (int pass = 0; ; ++pass) {
+        if (pass >= MAX_PASS_COUNT) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
+        }
+        VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUserInfo(), message);
+        if (revision != null) {
+          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
+          break;
+        }
+      }
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -329,14 +352,6 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
-      for (int pass = 0; pass < MAX_PASS_COUNT; ++pass) {
-        VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUserInfo(), message);
-        if (revision != null) {
-          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
-          return;
-        }
-      }
-      sendError(writer, SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
     }
 
     private void complete(@NotNull SessionContext context, @NotNull VcsRevision revision) throws IOException {
