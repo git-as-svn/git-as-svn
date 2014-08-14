@@ -27,6 +27,13 @@ public interface VcsRepository {
   int getLatestRevision() throws IOException;
 
   /**
+   * Update revision information.
+   *
+   * @throws IOException
+   */
+  void updateRevisions() throws IOException;
+
+  /**
    * Get revision info.
    *
    * @param revision Revision number.

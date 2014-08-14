@@ -105,6 +105,7 @@ public class SvnServer {
 
     final String basePath = getBasePath(clientInfo.getUrl());
     final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo, new UserInfoImpl(username));
+    repository.updateRevisions();
     sendAnnounce(writer, basePath);
 
     while (true) {

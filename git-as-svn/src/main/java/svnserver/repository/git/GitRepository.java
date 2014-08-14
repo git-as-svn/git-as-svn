@@ -60,10 +60,23 @@ public class GitRepository implements VcsRepository {
     this.repository = new FileRepository(findGitPath());
     this.branch = repository.getRef(branch).getName();
     this.revisions = new ArrayList<>(Arrays.asList(getEmptyCommit(repository)));
-    loadRevisions();
+    updateRevisions();
   }
 
-  private void loadRevisions() throws IOException {
+  @Override
+  public void updateRevisions() throws IOException {
+    // Fast check.
+    lock.readLock().lock();
+    try {
+      final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
+      final Ref master = repository.getRef(branch);
+      if (master.getObjectId().equals(lastCommitId)) {
+        return;
+      }
+    } finally {
+      lock.readLock().unlock();
+    }
+    // Real update.
     lock.writeLock().lock();
     try {
       final ObjectId lastCommitId = revisions.get(revisions.size() - 1);
@@ -340,7 +353,7 @@ public class GitRepository implements VcsRepository {
         } catch (GitAPIException e) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
         }
-        loadRevisions();
+        updateRevisions();
         return getRevision(commitId);
       }
 
