@@ -38,11 +38,32 @@ public final class StringHelper {
   @NotNull
   public static String joinPath(@NotNull String path, @Nullable String localPath) {
     if (localPath == null || localPath.isEmpty()) {
-      return path;
+      return normalize(path);
     }
     if (localPath.startsWith("/")) {
-      return localPath;
+      return normalize(localPath);
     }
-    return path + (path.endsWith("/") ? "" : "/") + localPath;
+    return normalize(path + (path.endsWith("/") ? "" : "/") + localPath);
+  }
+
+  @NotNull
+  private static String normalize(@NotNull String path) {
+    if (path.isEmpty()) return "";
+    String result = path;
+    if (!result.startsWith("/")) {
+      result = "/" + result;
+    }
+    return result.endsWith("/") ? result.substring(0, result.length() - 1) : result;
+  }
+
+  @NotNull
+  public static String parentDir(@NotNull String fullPath) {
+    int index = fullPath.lastIndexOf('/');
+    return index >= 0 ? fullPath.substring(0, index) : "";
+  }
+
+  @NotNull
+  public static String baseName(@NotNull String fullPath) {
+    return fullPath.substring(fullPath.lastIndexOf('/') + 1);
   }
 }

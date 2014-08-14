@@ -25,7 +25,7 @@ public final class LocalUserDB implements UserDB {
   }
 
   private void add(@NotNull UserWithPassword userWithPassword) {
-    users.put(userWithPassword.getUser().getUsername(), userWithPassword);
+    users.put(userWithPassword.getUser().getUserName(), userWithPassword);
   }
 
   @NotNull

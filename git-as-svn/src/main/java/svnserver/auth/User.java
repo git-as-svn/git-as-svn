@@ -1,6 +1,5 @@
 package svnserver.auth;
 
-import org.eclipse.jgit.lib.PersonIdent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,30 +10,39 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class User {
   @NotNull
-  private final String username;
+  private final String userName;
   @NotNull
   private final String realName;
   @Nullable
   private final String email;
 
-  public User(@NotNull String username, @NotNull String realName, @Nullable String email) {
-    this.username = username;
+  public User(@NotNull String userName, @NotNull String realName, @Nullable String email) {
+    this.userName = userName;
     this.realName = realName;
     this.email = email;
   }
 
   @NotNull
-  public String getUsername() {
-    return username;
+  public String getUserName() {
+    return userName;
+  }
+
+  @NotNull
+  public String getRealName() {
+    return realName;
   }
 
   @Nullable
-  public PersonIdent createIdent() {
-    return email == null ? null : new PersonIdent(realName, email);
+  public String getEmail() {
+    return email;
+  }
+
+  public boolean isAnonymous() {
+    return email == null;
   }
 
   @Override
   public String toString() {
-    return username;
+    return userName;
   }
 }

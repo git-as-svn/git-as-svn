@@ -2,7 +2,6 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 
 import java.io.IOException;
 
@@ -28,6 +27,13 @@ public interface VcsRepository {
   int getLatestRevision() throws IOException;
 
   /**
+   * Update revision information.
+   *
+   * @throws IOException
+   */
+  void updateRevisions() throws IOException;
+
+  /**
    * Get revision info.
    *
    * @param revision Revision number.
@@ -43,7 +49,7 @@ public interface VcsRepository {
    * @return File updater.
    */
   @NotNull
-  ISVNDeltaConsumer createFile(@NotNull String path) throws IOException, SVNException;
+  VcsDeltaConsumer createFile(@NotNull String path) throws IOException, SVNException;
 
   /**
    * Modification of the existing file.
@@ -53,5 +59,13 @@ public interface VcsRepository {
    * @return File updater.
    */
   @NotNull
-  ISVNDeltaConsumer modifyFile(@NotNull String path, int revision) throws IOException, SVNException;
+  VcsDeltaConsumer modifyFile(@NotNull String path, int revision) throws IOException, SVNException;
+
+  /**
+   * Create tree for commit.
+   *
+   * @return Commit build.
+   */
+  @NotNull
+  VcsCommitBuilder createCommitBuilder() throws IOException;
 }

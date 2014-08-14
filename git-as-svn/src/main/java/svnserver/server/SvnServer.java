@@ -64,7 +64,7 @@ public class SvnServer {
     commands.put("stat", new StatCmd());
     commands.put("update", new UpdateCmd());
 
-    repository = new GitRepository("4f0c5325-dd55-4330-b24c-0e9e40eb504b");
+    repository = new GitRepository("4f0c5325-dd55-4330-b24c-0e9e40eb504b", "local");
   }
 
   public static void main(String[] args) throws IOException {

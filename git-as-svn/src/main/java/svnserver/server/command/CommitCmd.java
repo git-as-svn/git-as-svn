@@ -1,6 +1,5 @@
 package svnserver.server.command;
 
-import org.eclipse.jgit.lib.PersonIdent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,18 +7,22 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import svnserver.StringHelper;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.VcsCommitBuilder;
+import svnserver.repository.VcsDeltaConsumer;
+import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
+import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -96,13 +99,13 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
-  public static class DeltaApplyParams {
+  public static class ChecksumParams {
     @NotNull
     private final String token;
     @NotNull
     private final String[] checksum;
 
-    public DeltaApplyParams(@NotNull String token, @NotNull String[] checksum) {
+    public ChecksumParams(@NotNull String token, @NotNull String[] checksum) {
       this.token = token;
       this.checksum = checksum;
     }
@@ -120,6 +123,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
+  private static final int MAX_PASS_COUNT = 10;
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
 
@@ -145,13 +149,21 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
   public static class CommitFile {
     @NotNull
-    private final ISVNDeltaConsumer deltaConsumer;
+    private final String fullPath;
+    @NotNull
+    private final VcsDeltaConsumer deltaConsumer;
     @NotNull
     private final SVNDeltaReader reader = new SVNDeltaReader();
 
-    public CommitFile(@NotNull ISVNDeltaConsumer deltaConsumer) {
+    public CommitFile(@NotNull String fullPath, @NotNull VcsDeltaConsumer deltaConsumer) {
+      this.fullPath = fullPath;
       this.deltaConsumer = deltaConsumer;
     }
+  }
+
+  @FunctionalInterface
+  private static interface VcsCommitConsumer {
+    void accept(@NotNull VcsCommitBuilder commitBuilder) throws SVNException, IOException;
   }
 
   public static class EditorPipeline {
@@ -163,40 +175,79 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final Map<String, String> paths;
     @NotNull
     private final Map<String, CommitFile> files;
+    @NotNull
+    private final Map<String, List<VcsCommitConsumer>> changes;
 
     public EditorPipeline(@NotNull CommitParams params) {
       this.message = params.message;
       paths = new HashMap<>();
       files = new HashMap<>();
+      changes = new HashMap<>();
       commands = new HashMap<>();
       commands.put("add-file", new LambdaCmd<>(OpenParams.class, this::addFile));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
       commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
       commands.put("open-file", new LambdaCmd<>(OpenParams.class, this::openFile));
       commands.put("close-dir", new LambdaCmd<>(TokenParams.class, this::closeDir));
-      commands.put("close-file", new LambdaCmd<>(NoParams.class, this::fake));
+      commands.put("close-file", new LambdaCmd<>(ChecksumParams.class, this::closeFile));
       commands.put("textdelta-chunk", new LambdaCmd<>(DeltaChunkParams.class, this::deltaChunk));
       commands.put("textdelta-end", new LambdaCmd<>(TokenParams.class, this::deltaEnd));
-      commands.put("apply-textdelta", new LambdaCmd<>(DeltaApplyParams.class, this::deltaApply));
+      commands.put("apply-textdelta", new LambdaCmd<>(ChecksumParams.class, this::deltaApply));
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
     }
 
     private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws SVNException {
       context.push(this::editorCommand);
-      paths.put(args.token, context.getRepositoryPath(""));
+      String rootPath = context.getRepositoryPath("");
+      String lastPath = rootPath;
+      for (int i = rootPath.lastIndexOf('/'); i >= 0; i = rootPath.lastIndexOf('/', i - 1)) {
+        final String itemPath = rootPath.substring(0, i);
+        final String itemName = lastPath.substring(i + 1);
+        final String childPath = lastPath;
+        getChanges(itemPath).add(treeBuilder -> {
+          treeBuilder.openDir(itemName);
+          updateDir(treeBuilder, childPath);
+          treeBuilder.closeDir();
+        });
+        lastPath = itemPath;
+      }
+      paths.put(args.token, rootPath);
+    }
+
+    @NotNull
+    private List<VcsCommitConsumer> getChanges(@NotNull String path) {
+      List<VcsCommitConsumer> result = changes.get(path);
+      if (result == null) {
+        result = new ArrayList<>();
+        changes.put(path, result);
+      }
+      return result;
     }
 
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException {
       context.push(this::editorCommand);
-      paths.put(args.token, getPath(context, args.parentToken, args.name));
+      final String fullPath = getPath(context, args.parentToken, args.name);
+      getChanges(paths.get(args.parentToken)).add(treeBuilder -> {
+        treeBuilder.openDir(StringHelper.baseName(fullPath));
+        updateDir(treeBuilder, fullPath);
+        treeBuilder.closeDir();
+      });
+      paths.put(args.token, fullPath);
+    }
+
+    @NotNull
+    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull String fullPath) throws IOException, SVNException {
+      for (VcsCommitConsumer consumer : getChanges(fullPath)) {
+        consumer.accept(treeBuilder);
+      }
+      return treeBuilder;
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
-      log.info("Modify file: {} (rev: {})", path);
-      final ISVNDeltaConsumer deltaConsumer = context.getRepository().createFile(path);
-      files.put(args.token, new CommitFile(deltaConsumer));
+      log.info("Add file: {} (rev: {})", path);
+      files.put(args.token, new CommitFile(path, context.getRepository().createFile(path)));
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
@@ -207,11 +258,22 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
       final int rev = args.rev[0];
       log.info("Modify file: {} (rev: {})", path, rev);
-      final ISVNDeltaConsumer deltaConsumer = context.getRepository().modifyFile(path, rev);
-      files.put(args.token, new CommitFile(deltaConsumer));
+      files.put(args.token, new CommitFile(path, context.getRepository().modifyFile(path, rev)));
     }
 
-    private void deltaApply(@NotNull SessionContext context, @NotNull DeltaApplyParams args) throws SVNException, IOException {
+    private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
+      context.push(this::editorCommand);
+      if (args.checksum.length == 0) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.DELTA_MD5_CHECKSUM_ABSENT));
+      }
+      CommitFile file = getFile(args.token);
+      file.deltaConsumer.validateChecksum(args.checksum[0]);
+      getChanges(StringHelper.parentDir(file.fullPath)).add(treeBuilder -> {
+        treeBuilder.saveFile(StringHelper.baseName(file.fullPath), file.deltaConsumer);
+      });
+    }
+
+    private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       getFile(args.token).deltaConsumer.applyTextDelta(null, args.checksum.length == 0 ? null : args.checksum[0]);
     }
@@ -242,7 +304,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
       }
       final String fullPath = context.getRepositoryPath(name);
-      final String checkPath = StringHelper.joinPath(path, name.substring(name.lastIndexOf('/') + 1));
+      final String checkPath = StringHelper.joinPath(path, StringHelper.baseName(name));
       if (!checkPath.equals(fullPath)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid path: " + path));
       }
@@ -259,7 +321,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       context.push(this::editorCommand);
     }
 
-    private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
+    private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -267,24 +329,26 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
-      sendError(writer, 0, "test");
-      //context.push(new CheckPermissionStep(this::complete));
+      for (int pass = 0; pass < MAX_PASS_COUNT; ++pass) {
+        VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUser(), message);
+        if (revision != null) {
+          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
+          return;
+        }
+      }
+      sendError(writer, SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
     }
 
-    private void complete(@NotNull SessionContext context) throws IOException, SVNException {
-      final PersonIdent author = context.getUser().createIdent();
-
-      if (author == null)
+    private void complete(@NotNull SessionContext context, @NotNull VcsRevision revision) throws IOException, SVNException {
+      if (context.getUser().isAnonymous())
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous users cannot create commits"));
-
-      // TODO: create commit
 
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
-          .number(42) // rev number
-          .listBegin().string(StringHelper.formatDate(new Date().getTime())).listEnd() // date
-          .listBegin().string("commit author").listEnd()
+          .number(revision.getId()) // rev number
+          .listBegin().string(revision.getDate()).listEnd() // date
+          .listBegin().string(revision.getAuthor()).listEnd()
           .listBegin().listEnd()
           .listEnd();
     }
@@ -307,5 +371,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         parser.skipItems();
       }
     }
+
   }
+
 }
