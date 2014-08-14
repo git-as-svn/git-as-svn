@@ -1,9 +1,14 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -188,8 +193,8 @@ public class GitRepository implements VcsRepository {
   @NotNull
   @Override
   public VcsCommitBuilder createCommitBuilder() throws IOException {
-    final Ref master = repository.getRef(branch);
-    final ObjectId objectId = master.getObjectId();
+    final Ref branchRef = repository.getRef(branch);
+    final ObjectId objectId = branchRef.getObjectId();
     final RevWalk revWalk = new RevWalk(repository);
     final ObjectReader reader = revWalk.getObjectReader();
     final ObjectInserter inserter = repository.newObjectInserter();
@@ -267,6 +272,32 @@ public class GitRepository implements VcsRepository {
         final ObjectId commitId = inserter.insert(commitBuilder);
 
         log.info("Create commit {}: {}", commitId.name(), message);
+
+        try {
+          log.info("Try to push commit in branch: {}", branchRef);
+          Iterable<PushResult> results = new Git(repository)
+              .push()
+              .setRemote(".")
+              .setRefSpecs(new RefSpec(commitId.name() + ":" + branchRef.getName()))
+              .call();
+          for (PushResult result : results) {
+            for (RemoteRefUpdate remoteUpdate : result.getRemoteUpdates()) {
+              switch (remoteUpdate.getStatus()) {
+                case REJECTED_NONFASTFORWARD:
+                  log.info("Non fast forward push rejected");
+                  return;
+                case OK:
+                  break;
+                default:
+                  log.error("Unexpected push error: {}", remoteUpdate);
+                  throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, remoteUpdate.toString()));
+              }
+            }
+          }
+          log.info("Commit is pushed");
+        } catch (GitAPIException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
+        }
       }
 
       @NotNull

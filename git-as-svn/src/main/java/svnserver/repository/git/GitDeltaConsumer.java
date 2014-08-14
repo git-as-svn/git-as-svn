@@ -120,6 +120,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     }
   }
 
+  @NotNull
   public FileMode getFileMode() {
     return fileMode;
   }
