@@ -40,6 +40,14 @@ public interface VcsCommitBuilder {
   void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException;
 
   /**
+   * Delete directory or file.
+   *
+   * @param name Directory/file name.
+   * @param file File entry for out-of-date validation.
+   */
+  void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException;
+
+  /**
    * Create real commit.
    *
    * @param userInfo User information.

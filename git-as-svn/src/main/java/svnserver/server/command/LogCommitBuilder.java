@@ -4,10 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.UserInfo;
-import svnserver.repository.VcsCommitBuilder;
-import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.*;
 
 import java.io.IOException;
 
@@ -35,6 +32,11 @@ public class LogCommitBuilder implements VcsCommitBuilder {
   }
 
   @Override
+  public void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException {
+    log.info(indent() + "{} (delete)", name);
+  }
+
+  @Override
   public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) {
     log.info(indent() + name);
   }
@@ -45,7 +47,7 @@ public class LogCommitBuilder implements VcsCommitBuilder {
   }
 
   @Override
-  public VcsRevision commit(UserInfo userInfo, @NotNull String message) throws SVNException, IOException {
+  public VcsRevision commit(@NotNull UserInfo userInfo, @NotNull String message) throws SVNException, IOException {
     log.info(indent() + "Commit: {}", message);
     return null;
   }

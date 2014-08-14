@@ -17,10 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
-import svnserver.repository.UserInfo;
-import svnserver.repository.VcsCommitBuilder;
-import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -315,6 +312,19 @@ public class GitRepository implements VcsRepository {
           return;
         }
         current.entries.put(name, new GitTreeEntry(gitDeltaConsumer.getFileMode(), objectId));
+      }
+
+      @Override
+      public void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException {
+        final GitTreeUpdate current = treeStack.element();
+        final GitFile gitFile = (GitFile) file;
+        final GitTreeEntry entry = current.entries.remove(name);
+        if (entry == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+        }
+        if (!gitFile.getObjectId().equals(entry.objectId)) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
+        }
       }
 
       @Override
