@@ -13,13 +13,12 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsTreeBuilder;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Commit client changes.
@@ -156,6 +155,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
+  @FunctionalInterface
+  private static interface VcsCommitConsumer {
+    void accept(@NotNull VcsCommitBuilder commitBuilder) throws SVNException, IOException;
+  }
+
   public static class EditorPipeline {
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
@@ -166,7 +170,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final Map<String, CommitFile> files;
     @NotNull
-    private final Map<String, List<Consumer<VcsTreeBuilder>>> changes;
+    private final Map<String, List<VcsCommitConsumer>> changes;
 
     public EditorPipeline(@NotNull CommitParams params) {
       this.message = params.message;
@@ -205,8 +209,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private List<Consumer<VcsTreeBuilder>> getChanges(@NotNull String path) {
-      List<Consumer<VcsTreeBuilder>> result = changes.get(path);
+    private List<VcsCommitConsumer> getChanges(@NotNull String path) {
+      List<VcsCommitConsumer> result = changes.get(path);
       if (result == null) {
         result = new ArrayList<>();
         changes.put(path, result);
@@ -225,16 +229,18 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       paths.put(args.token, fullPath);
     }
 
-    private void updateDir(@NotNull VcsTreeBuilder treeBuilder, @NotNull String fullPath) {
-      for (Consumer<VcsTreeBuilder> consumer : getChanges(fullPath)) {
+    @NotNull
+    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull String fullPath) throws IOException, SVNException {
+      for (VcsCommitConsumer consumer : getChanges(fullPath)) {
         consumer.accept(treeBuilder);
       }
+      return treeBuilder;
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
-      log.info("Modify file: {} (rev: {})", path);
+      log.info("Add file: {} (rev: {})", path);
       files.put(args.token, new CommitFile(path, context.getRepository().createFile(path)));
     }
 
@@ -256,7 +262,9 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
       CommitFile file = getFile(args.token);
       file.deltaConsumer.validateChecksum(args.checksum[0]);
-      getChanges(StringHelper.parentDir(file.fullPath)); // todo
+      getChanges(StringHelper.parentDir(file.fullPath)).add(treeBuilder -> {
+        treeBuilder.saveFile(StringHelper.baseName(file.fullPath), file.deltaConsumer);
+      });
     }
 
     private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -307,7 +315,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       context.push(this::editorCommand);
     }
 
-    private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
+    private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -315,33 +323,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
-      updateDir(new VcsTreeBuilder() {
-        private int depth = 0;
-
-        @Override
-        public void addDir(@NotNull String name) {
-          log.info(indent() + "{} (create dir)", name);
-          depth++;
-        }
-
-        @Override
-        public void openDir(@NotNull String name) {
-          log.info(indent() + "{} (modify dir)", name);
-          depth++;
-        }
-
-        @Override
-        public void closeDir() {
-          depth--;
-        }
-
-        @NotNull
-        private String indent() {
-          final StringBuilder sb = new StringBuilder();
-          for (int i = 0; i < depth * 2; ++i) sb.append(' ');
-          return sb.toString();
-        }
-      }, "");
+      updateDir(new LogCommitBuilder(), "");
+      updateDir(context.getRepository().createCommitBuilder(), "").commit(message);
       sendError(writer, 0, "test");
       //context.push(new CheckPermissionStep(this::complete));
     }
@@ -375,5 +358,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         parser.skipItems();
       }
     }
+
   }
+
 }

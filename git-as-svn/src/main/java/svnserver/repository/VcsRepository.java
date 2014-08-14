@@ -53,4 +53,12 @@ public interface VcsRepository {
    */
   @NotNull
   VcsDeltaConsumer modifyFile(@NotNull String path, int revision) throws IOException, SVNException;
+
+  /**
+   * Create tree for commit.
+   *
+   * @return Commit build.
+   */
+  @NotNull
+  VcsCommitBuilder createCommitBuilder() throws IOException;
 }

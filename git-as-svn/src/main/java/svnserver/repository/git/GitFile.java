@@ -52,6 +52,11 @@ public class GitFile implements VcsFile {
   }
 
   @NotNull
+  public FileMode getFileMode() {
+    return fileMode;
+  }
+
+  @NotNull
   public ObjectId getObjectId() {
     return objectId;
   }
