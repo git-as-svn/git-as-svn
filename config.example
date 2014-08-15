@@ -4,7 +4,7 @@ realm: Example Realm
 
 repository:
   branch: local
-  path: ../.git
+  path: .git
 
 userDB: !!svnserver.config.LocalUserDBConfig {}
 #userDB: !!svnserver.config.LDAPUserDBConfig
