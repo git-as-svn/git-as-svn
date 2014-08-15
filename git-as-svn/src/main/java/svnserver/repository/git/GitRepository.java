@@ -21,6 +21,7 @@ import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -60,8 +61,11 @@ public class GitRepository implements VcsRepository {
   private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
 
   public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
-    this.repository = new FileRepository(new File(config.getPath()).getAbsolutePath());
+    this.repository = new FileRepository(new File(config.getPath()).getAbsoluteFile());
     log.info("Repository path: {}", repository.getDirectory());
+    if (!repository.getDirectory().exists()) {
+      throw new FileNotFoundException(repository.getDirectory().getPath());
+    }
     final Ref branchRef = repository.getRef(config.getBranch());
     if (branchRef == null) {
       throw new IOException("Branch not found: " + config.getBranch());
@@ -141,21 +145,6 @@ public class GitRepository implements VcsRepository {
     }
     for (Map.Entry<String, GitTreeEntry> entry : oldEntries.entrySet()) {
       changes.put(StringHelper.joinPath(path, entry.getKey()), new GitLogEntry(entry.getValue(), null));
-    }
-  }
-
-  private File findGitPath() {
-    final File root = new File(".").getAbsoluteFile();
-    File path = root;
-    while (true) {
-      final File repo = new File(path, ".git");
-      if (repo.exists()) {
-        return repo;
-      }
-      path = path.getParentFile();
-      if (path == null) {
-        throw new IllegalStateException("Repository not found from directiry: " + root.getAbsolutePath());
-      }
     }
   }
 
