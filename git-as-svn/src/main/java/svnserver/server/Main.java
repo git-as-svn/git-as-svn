@@ -49,7 +49,7 @@ public class Main {
     @NotNull
     private File configuration;
 
-    @Parameter(names = {"--show-config"}, description = "Show actual configuration on start")
+    @Parameter(names = {"-s", "--show-config"}, description = "Show actual configuration on start")
     private boolean showConfig = false;
 
     @Parameter(names = {"-h", "--help"}, description = "Show help", help = true)
