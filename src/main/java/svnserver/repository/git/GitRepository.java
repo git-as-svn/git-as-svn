@@ -74,6 +74,7 @@ public class GitRepository implements VcsRepository {
     addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
     this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + branch).getBytes(StandardCharsets.UTF_8)).toString();
+    log.info("Repository ready");
   }
 
   @Override
@@ -130,8 +131,8 @@ public class GitRepository implements VcsRepository {
   }
 
   private void collectChanges(@NotNull Map<String, GitLogEntry> changes, @NotNull String path, @Nullable ObjectId oldTree, @NotNull ObjectId newTree) throws IOException {
-    final Map<String, GitTreeEntry> oldEntries = loadTree(oldTree);
-    for (Map.Entry<String, GitTreeEntry> entry : loadTree(newTree).entrySet()) {
+    final Map<String, GitTreeEntry> oldEntries = loadTree(oldTree, true);
+    for (Map.Entry<String, GitTreeEntry> entry : loadTree(newTree, true).entrySet()) {
       final String name = entry.getKey();
       final GitTreeEntry newEntry = entry.getValue();
       final GitTreeEntry oldEntry = oldEntries.remove(name);
@@ -306,7 +307,7 @@ public class GitRepository implements VcsRepository {
     final RevCommit commit = revWalk.parseCommit(objectId);
 
     final Deque<GitTreeUpdate> treeStack = new ArrayDeque<>();
-    treeStack.push(new GitTreeUpdate("", loadTree(commit.getTree())));
+    treeStack.push(new GitTreeUpdate("", loadTree(commit.getTree(), false)));
 
     return new VcsCommitBuilder() {
       @Override
@@ -315,7 +316,7 @@ public class GitRepository implements VcsRepository {
         if (current.getEntries().containsKey(name)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
         }
-        treeStack.push(new GitTreeUpdate(name, loadTree(null)));
+        treeStack.push(new GitTreeUpdate(name, loadTree(null, false)));
       }
 
       @Override
@@ -325,7 +326,7 @@ public class GitRepository implements VcsRepository {
         if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
         }
-        treeStack.push(new GitTreeUpdate(name, loadTree(originalDir.getObjectId())));
+        treeStack.push(new GitTreeUpdate(name, loadTree(originalDir.getObjectId(), false)));
       }
 
       @Override
@@ -429,16 +430,20 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public Map<String, GitTreeEntry> loadTree(@Nullable ObjectId treeId) throws IOException {
+  public Map<String, GitTreeEntry> loadTree(@Nullable ObjectId treeId, boolean skipUnsupported) throws IOException {
     Map<String, GitTreeEntry> result = new TreeMap<>();
     if (treeId != null) {
       CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), treeId);
       while (!treeParser.eof()) {
-        result.put(treeParser.getEntryPathString(), new GitTreeEntry(
+        final GitTreeEntry treeEntry = new GitTreeEntry(
             treeParser.getEntryFileMode(),
             treeParser.getEntryObjectId()
-        ));
+        );
+        String treePath = treeParser.getEntryPathString();
         treeParser.next();
+
+        if (skipUnsupported && treeEntry.isSvnHidden()) continue;
+        result.put(treePath, treeEntry);
       }
     }
     return result;

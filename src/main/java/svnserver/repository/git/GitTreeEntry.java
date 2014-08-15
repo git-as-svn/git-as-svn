@@ -48,4 +48,8 @@ public final class GitTreeEntry {
     result = 31 * result + objectId.hashCode();
     return result;
   }
+
+  public boolean isSvnHidden() {
+    return fileMode == FileMode.GITLINK;
+  }
 }

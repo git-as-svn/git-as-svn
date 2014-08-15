@@ -3,7 +3,6 @@ package svnserver.repository.git;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -16,8 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Git file.
@@ -128,21 +127,10 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public Iterable<VcsFile> getEntries() throws IOException {
-    final CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, repo.getRepository().newObjectReader(), objectId);
-    return () -> new Iterator<VcsFile>() {
-      @Override
-      public boolean hasNext() {
-        return !treeParser.eof();
-      }
-
-      @Override
-      public VcsFile next() {
-        final String nodePath = StringHelper.joinPath(fullPath, treeParser.getEntryPathString());
-        final GitFile fileInfo = new GitFile(repo, treeParser.getEntryObjectId(), treeParser.getEntryFileMode(), nodePath, lastChange);
-        treeParser.next();
-        return fileInfo;
-      }
-    };
+    return repo.loadTree(objectId, true).entrySet()
+        .stream()
+        .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), lastChange))
+        .collect(Collectors.toList());
   }
 
   @NotNull

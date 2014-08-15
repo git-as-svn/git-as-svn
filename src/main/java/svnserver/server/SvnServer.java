@@ -74,6 +74,7 @@ public class SvnServer {
 
   public void start() throws IOException {
     final ServerSocket serverSocket = new ServerSocket(config.getPort());
+    log.info("Server is ready on port: {}", serverSocket.getLocalPort());
     while (true) {
       final Socket socket = serverSocket.accept();
       new Thread(() -> {
