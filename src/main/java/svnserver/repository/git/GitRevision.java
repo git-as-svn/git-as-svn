@@ -56,7 +56,7 @@ public class GitRevision implements VcsRevision {
     final Map<String, VcsLogEntry> result = new TreeMap<>();
     for (String targetPath : targetPaths) {
       for (Map.Entry<String, GitLogEntry> entry : changes.tailMap(targetPath, true).entrySet()) {
-        if (!entry.getKey().startsWith(targetPath)) {
+        if (!StringHelper.isParentPath(targetPath, entry.getKey())) {
           break;
         }
         result.put(entry.getKey(), entry.getValue());

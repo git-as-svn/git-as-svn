@@ -66,4 +66,16 @@ public final class StringHelper {
   public static String baseName(@NotNull String fullPath) {
     return fullPath.substring(fullPath.lastIndexOf('/') + 1);
   }
+
+  /**
+   * Returns true, if parentPath is base path of childPath.
+   *
+   * @param parentPath Parent path.
+   * @param childPath  Child path.
+   * @return Returns true, if parentPath is base path of childPath.
+   */
+  public static boolean isParentPath(@NotNull String parentPath, @NotNull String childPath) {
+    return childPath.equals(parentPath)
+        || childPath.startsWith(parentPath) && (childPath.charAt(parentPath.length()) == '/');
+  }
 }
