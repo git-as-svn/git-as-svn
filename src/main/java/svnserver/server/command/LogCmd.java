@@ -99,7 +99,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
     }
 
     int logLimit = args.limit;
-    for (int rev = startRev; rev != endRev; rev += step) {
+    for (int rev = startRev; rev != endRev + step; rev += step) {
       if (targetPaths.isEmpty()) {
         break;
       }
