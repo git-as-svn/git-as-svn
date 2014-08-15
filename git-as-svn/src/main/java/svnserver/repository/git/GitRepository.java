@@ -1,14 +1,9 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.PushResult;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +14,10 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.repository.*;
+import svnserver.repository.VcsCommitBuilder;
+import svnserver.repository.VcsDeltaConsumer;
+import svnserver.repository.VcsFile;
+import svnserver.repository.VcsRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +47,9 @@ public class GitRepository implements VcsRepository {
   private final Map<String, int[]> lastUpdates = new ConcurrentHashMap<>();
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  // Lock for prevent concurrent pushes.
+  @NotNull
+  private final Object pushLock = new Object();
   @NotNull
   private final String uuid;
   @NotNull
@@ -385,48 +386,31 @@ public class GitRepository implements VcsRepository {
 
       @Override
       public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
-        final GitTreeUpdate root = treeStack.element();
-        final ObjectId treeId = root.buildTree(inserter);
-        log.info("Create tree {} for commit.", treeId.name());
+        synchronized (pushLock) {
+          final GitTreeUpdate root = treeStack.element();
+          final ObjectId treeId = root.buildTree(inserter);
+          log.info("Create tree {} for commit.", treeId.name());
 
-        final CommitBuilder commitBuilder = new CommitBuilder();
-        final PersonIdent ident = createIdent(userInfo);
-        commitBuilder.setAuthor(ident);
-        commitBuilder.setCommitter(ident);
-        commitBuilder.setMessage(message);
-        commitBuilder.setParentId(commit.getId());
-        commitBuilder.setTreeId(treeId);
-        final ObjectId commitId = inserter.insert(commitBuilder);
+          final CommitBuilder commitBuilder = new CommitBuilder();
+          final PersonIdent ident = createIdent(userInfo);
+          commitBuilder.setAuthor(ident);
+          commitBuilder.setCommitter(ident);
+          commitBuilder.setMessage(message);
+          commitBuilder.setParentId(commit.getId());
+          commitBuilder.setTreeId(treeId);
+          final ObjectId commitId = inserter.insert(commitBuilder);
 
-        log.info("Create commit {}: {}", commitId.name(), message);
-
-        try {
-          log.info("Try to push commit in branch: {}", branchRef);
-          Iterable<PushResult> results = new Git(repository)
-              .push()
-              .setRemote(".")
-              .setRefSpecs(new RefSpec(commitId.name() + ":" + branchRef.getName()))
-              .call();
-          for (PushResult result : results) {
-            for (RemoteRefUpdate remoteUpdate : result.getRemoteUpdates()) {
-              switch (remoteUpdate.getStatus()) {
-                case REJECTED_NONFASTFORWARD:
-                  log.info("Non fast forward push rejected");
-                  return null;
-                case OK:
-                  break;
-                default:
-                  log.error("Unexpected push error: {}", remoteUpdate);
-                  throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, remoteUpdate.toString()));
-              }
-            }
+          log.info("Create commit {}: {}", commitId.name(), message);
+          log.info("Try to push commit in branch: {}", branchRef.getName());
+          if (!GitHelper.pushNative(repository, commitId, branchRef)) {
+            log.info("Non fast forward push rejected");
+            return null;
           }
           log.info("Commit is pushed");
-        } catch (GitAPIException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
+
+          updateRevisions();
+          return getRevision(commitId);
         }
-        updateRevisions();
-        return getRevision(commitId);
       }
 
       private PersonIdent createIdent(User userInfo) {

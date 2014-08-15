@@ -357,12 +357,16 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
+      if (context.getUser().isAnonymous()) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous users cannot create commits"));
+      }
       for (int pass = 0; ; ++pass) {
         if (pass >= MAX_PASS_COUNT) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
         }
         final VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUser(), message);
         if (revision != null) {
+          // todo: CheckPermissionStep must be before commit
           context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
           break;
         }
@@ -377,9 +381,6 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void complete(@NotNull SessionContext context, @NotNull VcsRevision revision) throws IOException, SVNException {
-      if (context.getUser().isAnonymous())
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous users cannot create commits"));
-
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
