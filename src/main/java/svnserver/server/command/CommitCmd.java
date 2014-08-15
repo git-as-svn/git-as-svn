@@ -91,6 +91,35 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
+  public static class CopyParams {
+    @NotNull
+    private final String copyFrom;
+    private final int rev;
+
+    public CopyParams(@NotNull String copyFrom, int rev) {
+      this.copyFrom = copyFrom;
+      this.rev = rev;
+    }
+  }
+
+  public static class AddParams {
+    @NotNull
+    private final String name;
+    @NotNull
+    private final String parentToken;
+    @NotNull
+    private final String token;
+    @NotNull
+    private final CopyParams copyParams;
+
+    public AddParams(@NotNull String name, @NotNull String parentToken, @NotNull String token, @NotNull CopyParams copyParams) {
+      this.name = name;
+      this.parentToken = parentToken;
+      this.token = token;
+      this.copyParams = copyParams;
+    }
+  }
+
   public static class DeleteParams {
     @NotNull
     private final String name;
@@ -200,8 +229,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       files = new HashMap<>();
       changes = new HashMap<>();
       commands = new HashMap<>();
-      commands.put("add-dir", new LambdaCmd<>(OpenParams.class, this::addDir));
-      commands.put("add-file", new LambdaCmd<>(OpenParams.class, this::addFile));
+      commands.put("add-dir", new LambdaCmd<>(AddParams.class, this::addDir));
+      commands.put("add-file", new LambdaCmd<>(AddParams.class, this::addFile));
       commands.put("delete-entry", new LambdaCmd<>(DeleteParams.class, this::deleteEntry));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
       commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
@@ -261,7 +290,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       return treeBuilder;
     }
 
-    private void addDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
+    private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
+      // TODO: copying
+      if (args.copyParams.rev != 0)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Copying is not supported: " + args.name));
+
       context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
       log.info("Add dir: {} (rev: {})", path);
@@ -273,7 +306,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       paths.put(args.token, path);
     }
 
-    private void addFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
+    private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
+      // TODO: copying
+      if (args.copyParams.rev != 0)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Copying is not supported: " + args.name));
+
       context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
       log.info("Add file: {} (rev: {})", path);
