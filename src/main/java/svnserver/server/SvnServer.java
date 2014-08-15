@@ -27,19 +27,22 @@ import svnserver.server.step.Step;
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnServer {
+public class SvnServer extends Thread {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   @NotNull
@@ -50,8 +53,14 @@ public class SvnServer {
   private final VcsRepository repository;
   @NotNull
   private final Config config;
+  @NotNull
+  private final ServerSocket serverSocket;
+  @NotNull
+  private final ExecutorService poolExecutor;
+  private volatile boolean stopped = false;
 
   public SvnServer(@NotNull Config config) throws IOException, SVNException {
+    setDaemon(true);
     this.config = config;
 
     userDB = config.getUserDB().create();
@@ -70,27 +79,44 @@ public class SvnServer {
     commands.put("update", new UpdateCmd());
 
     repository = new GitRepository(config.getRepository());
+    serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
+
+    poolExecutor = Executors.newCachedThreadPool();
+    log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
   }
 
-  public void start() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(config.getPort());
+  public int getPort() {
+    return serverSocket.getLocalPort();
+  }
+
+  @Override
+  public void run() {
     log.info("Server is ready on port: {}", serverSocket.getLocalPort());
-    while (true) {
-      final Socket socket = serverSocket.accept();
-      new Thread(() -> {
-        log.info("New connection from: {}", socket.getRemoteSocketAddress());
-        try (Socket client = socket) {
+    while (!stopped) {
+      final Socket client;
+      try {
+        client = this.serverSocket.accept();
+      } catch (IOException e) {
+        if (stopped) {
+          log.info("Server Stopped");
+          break;
+        }
+        log.error("Error accepting client connection", e);
+        continue;
+      }
+      log.info("New connection from: {}", client.getRemoteSocketAddress());
+      poolExecutor.execute(() -> {
+        log.info("Accept connection from: {}", client.getRemoteSocketAddress());
+        try {
           serveClient(client);
         } catch (EOFException ignore) {
           // client disconnect is not a error
-        } catch (IOException e) {
-          e.printStackTrace();
-        } catch (SVNException e) {
-          e.printStackTrace();
+        } catch (SVNException | IOException e) {
+          log.info("Client error:", e);
         } finally {
-          log.info("Connection from {} closed", socket.getRemoteSocketAddress());
+          log.info("Connection from {} closed", client.getRemoteSocketAddress());
         }
-      }).start();
+      });
     }
   }
 
@@ -107,7 +133,7 @@ public class SvnServer {
     final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo, user);
     sendAnnounce(writer, basePath);
 
-    while (true) {
+    while (!stopped) {
       try {
         Step step = context.poll();
         if (step != null) {
@@ -241,5 +267,17 @@ public class SvnServer {
         .string(msg)
         .listEnd()
         .listEnd();
+  }
+
+  public void shutdown() throws InterruptedException, IOException {
+    shutdown(0);
+  }
+
+  public void shutdown(int millis) throws InterruptedException, IOException {
+    log.info("Shutdown server");
+    stopped = true;
+    serverSocket.close();
+    join(millis);
+    log.info("Server shutdowned");
   }
 }

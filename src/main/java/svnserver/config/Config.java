@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class Config {
   private int port = 3690;
-
+  @NotNull
+  private String host = "0.0.0.0";
   @NotNull
   private String realm = "";
 
@@ -25,6 +26,15 @@ public final class Config {
 
   public int getPort() {
     return port;
+  }
+
+  @NotNull
+  public String getHost() {
+    return host;
+  }
+
+  public void setHost(@NotNull String host) {
+    this.host = host;
   }
 
   @NotNull

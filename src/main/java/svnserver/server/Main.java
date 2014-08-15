@@ -21,7 +21,7 @@ public class Main {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
 
-  public static void main(@NotNull String[] args) throws IOException, SVNException {
+  public static void main(@NotNull String[] args) throws IOException, SVNException, InterruptedException {
     final CmdArgs cmd = new CmdArgs();
     final JCommander jc = new JCommander(cmd);
     jc.parse(args);
@@ -41,7 +41,9 @@ public class Main {
     if (cmd.showConfig) {
       log.info("Actual config:\n{}", yaml.dump(config));
     }
-    new SvnServer(config).start();
+    final SvnServer server = new SvnServer(config);
+    server.start();
+    server.join();
   }
 
   public static class CmdArgs {
