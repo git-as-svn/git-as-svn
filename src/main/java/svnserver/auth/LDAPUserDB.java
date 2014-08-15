@@ -59,12 +59,21 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
       final SearchControls searchControls = new SearchControls();
       searchControls.setSearchScope(config.isUserSubtree() ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
       searchControls.setReturningAttributes(new String[]{config.getNameAttribute(), config.getEmailAttribute()});
+      searchControls.setCountLimit(2);
 
       final NamingEnumeration<SearchResult> search = context.search("", MessageFormat.format(config.getUserSearch(), username), searchControls);
-      if (!search.hasMore())
+      if (!search.hasMore()) {
+        log.debug("Failed to find LDAP entry for {}", username);
         return null;
+      }
 
       final Attributes attributes = search.next().getAttributes();
+
+      if (search.hasMore()) {
+        log.error("Multiple LDAP entries found for {}", username);
+        return null;
+      }
+
       final String realName = String.valueOf(attributes.get(config.getNameAttribute()).get());
       final String email = String.valueOf(attributes.get(config.getEmailAttribute()).get());
 
