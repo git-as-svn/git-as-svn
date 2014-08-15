@@ -5,6 +5,8 @@ import org.testng.annotations.Test;
 import org.testng.internal.junit.ArrayAsserts;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -22,8 +24,17 @@ import java.io.File;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnUpdateTest {
+  /**
+   * Check file copy.
+   * <pre>
+   * svn checkout
+   * svn copy README.md@45 README.copy
+   * </pre>
+   *
+   * @throws Exception
+   */
   @Test(timeOut = 60 * 1000)
-  public void copyTest() throws Exception {
+  public void copyFileFromRevisionTest() throws Exception {
     try (SvnTestServer server = new SvnTestServer("master")) {
       final SvnOperationFactory factory = new SvnOperationFactory();
       factory.setAuthenticationManager(server.getAuthenticator());
@@ -53,12 +64,81 @@ public class SvnUpdateTest {
       // cat destination file
       final ByteArrayOutputStream dstBuffer = new ByteArrayOutputStream();
       final SvnCat dstCat = factory.createCat();
-      dstCat.setRevision(srcRev);
+      final SVNRevision dstRev = SVNRevision.create(commitInfo.getNewRevision());
+      dstCat.setRevision(dstRev);
       dstCat.setSingleTarget(SvnTarget.fromFile(dstFile, SVNRevision.create(commitInfo.getNewRevision())));
       dstCat.setOutput(dstBuffer);
       dstCat.run();
       // compare result
       ArrayAsserts.assertArrayEquals(srcBuffer.toByteArray(), dstBuffer.toByteArray());
+    }
+  }
+
+  /**
+   * Check commit out-of-date.
+   *
+   * @throws Exception
+   */
+  @Test(timeOut = 60 * 1000)
+  public void commitFileOufOfDateTest() throws Exception {
+    try (SvnTestServer server = new SvnTestServer("master")) {
+      final SvnOperationFactory factory = new SvnOperationFactory();
+      factory.setAuthenticationManager(server.getAuthenticator());
+      final SVNClientManager client = SVNClientManager.newInstance(factory);
+      // copy file (rev 45 - bed28fa0793378b98912063bca5ad44e4c049df8)
+      final SVNRevision srcRev = SVNRevision.create(45);
+      // checkout
+      final SvnCheckout checkout = factory.createCheckout();
+      checkout.setSource(SvnTarget.fromURL(server.getUrl()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setRevision(srcRev);
+      checkout.run();
+      // modify file
+      final File file = new File(server.getTempDirectory(), "README.md");
+      TestHelper.saveFile(file, "New content");
+      // commit new file
+      try {
+        client.getCommitClient().doCommit(new File[]{file}, false, "Modify out-of-date commit", null, null, false, false, SVNDepth.INFINITY);
+        Assert.fail();
+      } catch (SVNException e) {
+        Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.WC_NOT_UP_TO_DATE);
+      }
+    }
+  }
+
+  /**
+   * Check commit up-to-date.
+   *
+   * @throws Exception
+   */
+  @Test(timeOut = 60 * 1000)
+  public void commitFileUpToDateTest() throws Exception {
+    try (SvnTestServer server = new SvnTestServer("master")) {
+      final SvnOperationFactory factory = new SvnOperationFactory();
+      factory.setAuthenticationManager(server.getAuthenticator());
+      final SVNClientManager client = SVNClientManager.newInstance(factory);
+      // checkout
+      final SvnCheckout checkout = factory.createCheckout();
+      checkout.setSource(SvnTarget.fromURL(server.getUrl()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setRevision(SVNRevision.HEAD);
+      checkout.run();
+      {
+        // modify file
+        final File file = new File(server.getTempDirectory(), "README.md");
+        Assert.assertTrue(file.exists());
+        TestHelper.saveFile(file, "New content");
+        // commit new file
+        client.getCommitClient().doCommit(new File[]{file}, false, "Modify up-to-date commit", null, null, false, false, SVNDepth.INFINITY);
+      }
+      {
+        // modify file
+        final File file = new File(server.getTempDirectory(), "build.gradle");
+        Assert.assertTrue(file.exists());
+        TestHelper.saveFile(file, "New content");
+        // commit new file
+        client.getCommitClient().doCommit(new File[]{file}, false, "Modify up-to-date commit", null, null, false, false, SVNDepth.INFINITY);
+      }
     }
   }
 
@@ -96,7 +176,7 @@ public class SvnUpdateTest {
       final long revision = checkout.run();
       // create file
       File newFile = new File(server.getTempDirectory(), "somefile.txt");
-      TestHelper.createFile(newFile, "Bla Bla Bla");
+      TestHelper.saveFile(newFile, "Bla Bla Bla");
       // add file
       client.getWCClient().doAdd(newFile, false, false, false, SVNDepth.INFINITY, false, true);
       // commit new file

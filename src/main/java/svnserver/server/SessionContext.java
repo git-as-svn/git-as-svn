@@ -63,6 +63,9 @@ public final class SessionContext {
 
   @NotNull
   public String getRepositoryPath(@Nullable String localPath) throws SVNException {
+    if ((localPath != null) && localPath.startsWith(baseUrl)) {
+      return localPath.substring(baseUrl.length() - 1);
+    }
     if (!parent.startsWith(baseUrl)) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid current path prefix: " + parent + " (base: " + baseUrl + ")"));
     }

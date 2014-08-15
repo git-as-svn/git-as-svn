@@ -158,6 +158,7 @@ public class SvnServer extends Thread {
           parser.skipItems();
         }
       } catch (SVNException e) {
+        log.error("Command execution error", e);
         BaseCmd.sendError(writer, e.getErrorMessage());
       }
     }

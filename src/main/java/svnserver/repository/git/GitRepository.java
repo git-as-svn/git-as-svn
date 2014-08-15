@@ -255,7 +255,7 @@ public class GitRepository implements VcsRepository {
     if (file != null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-    return new GitDeltaConsumer(this, null, fullPath);
+    return new GitDeltaConsumer(this, null, fullPath, false);
   }
 
   @NotNull
@@ -268,7 +268,17 @@ public class GitRepository implements VcsRepository {
     if (file.getLastChange().getId() > revision) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-    return new GitDeltaConsumer(this, file, fullPath);
+    return new GitDeltaConsumer(this, file, fullPath, true);
+  }
+
+  @NotNull
+  @Override
+  public VcsDeltaConsumer copyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(revision).getFile(fullPath);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+    }
+    return new GitDeltaConsumer(this, file, fullPath, false);
   }
 
   @NotNull
@@ -350,11 +360,11 @@ public class GitRepository implements VcsRepository {
         final GitTreeUpdate current = treeStack.element();
         final GitTreeEntry entry = current.getEntries().get(name);
         final ObjectId originalId = gitDeltaConsumer.getOriginalId();
-        if ((originalId != null) && (entry == null)) {
+        if ((gitDeltaConsumer.isUpdate()) && (entry == null)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-        } else if ((originalId != null) && (!entry.getObjectId().equals(originalId))) {
+        } else if ((gitDeltaConsumer.isUpdate()) && (!entry.getObjectId().equals(originalId))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
-        } else if ((originalId == null) && (entry != null)) {
+        } else if ((!gitDeltaConsumer.isUpdate()) && (entry != null)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
         }
         final ObjectId objectId = gitDeltaConsumer.getObjectId();

@@ -27,10 +27,12 @@ import java.io.OutputStream;
 public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
+  @NotNull
   private GitRepository gitRepository;
   @Deprecated
   @Nullable
   private final GitFile file;
+  @NotNull
   private final String fullPath;
   @Nullable
   private SVNDeltaProcessor window;
@@ -44,11 +46,14 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private FileMode fileMode;
 
-  public GitDeltaConsumer(GitRepository gitRepository, @Nullable GitFile file, String fullPath) {
+  private final boolean update;
+
+  public GitDeltaConsumer(GitRepository gitRepository, @Nullable GitFile file, String fullPath, boolean update) {
     this.gitRepository = gitRepository;
     this.file = file;
     this.fullPath = fullPath;
     this.fileMode = file != null ? file.getFileMode() : FileMode.REGULAR_FILE;
+    this.update = update;
     originalId = file != null ? file.getObjectId() : null;
     objectId = originalId;
     memory = new ByteArrayOutputStream();
@@ -123,5 +128,9 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   public FileMode getFileMode() {
     return fileMode;
+  }
+
+  public boolean isUpdate() {
+    return update;
   }
 }

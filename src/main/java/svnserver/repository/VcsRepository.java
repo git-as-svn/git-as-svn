@@ -62,6 +62,16 @@ public interface VcsRepository {
   VcsDeltaConsumer modifyFile(@NotNull String path, int revision) throws IOException, SVNException;
 
   /**
+   * Copy existing file.
+   *
+   * @param revision File revision (for need update check).
+   * @param path     File path in repository.
+   * @return File updater.
+   */
+  @NotNull
+  VcsDeltaConsumer copyFile(@NotNull String path, int revision) throws IOException, SVNException;
+
+  /**
    * Get information for deleting file.
    *
    * @param revision File revision (for need update check).

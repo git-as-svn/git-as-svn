@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class TestHelper {
-  public static void createFile(@NotNull File file, @NotNull String content) throws IOException {
+  public static void saveFile(@NotNull File file, @NotNull String content) throws IOException {
     try (OutputStream stream = new FileOutputStream(file)) {
       stream.write(content.getBytes(StandardCharsets.UTF_8));
     }

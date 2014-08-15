@@ -307,14 +307,17 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
-      // TODO: copying
-      if (args.copyParams.rev != 0)
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Copying is not supported: " + args.name));
-
-      context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
-      log.info("Add file: {} (rev: {})", path);
-      files.put(args.token, new CommitFile(path, context.getRepository().createFile(path)));
+      final CommitFile file;
+      if (args.copyParams.rev != 0) {
+        log.info("Copy file: {} (rev: {}) from {} (rev: {})", path, args.copyParams.copyFrom, args.copyParams.rev);
+        file = new CommitFile(path, context.getRepository().copyFile(context.getRepositoryPath(args.copyParams.copyFrom), args.copyParams.rev));
+      } else {
+        log.info("Add file: {} (rev: {})", path);
+        file = new CommitFile(path, context.getRepository().createFile(path));
+      }
+      files.put(args.token, file);
+      context.push(this::editorCommand);
     }
 
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
@@ -342,11 +345,10 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      if (args.checksum.length == 0) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.DELTA_MD5_CHECKSUM_ABSENT));
-      }
       CommitFile file = getFile(args.token);
-      file.deltaConsumer.validateChecksum(args.checksum[0]);
+      if (args.checksum.length != 0) {
+        file.deltaConsumer.validateChecksum(args.checksum[0]);
+      }
       getChanges(StringHelper.parentDir(file.fullPath)).add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(file.fullPath), file.deltaConsumer));
     }
 
