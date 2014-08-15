@@ -58,6 +58,7 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
 
       final SearchControls searchControls = new SearchControls();
       searchControls.setSearchScope(config.isUserSubtree() ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
+      searchControls.setReturningAttributes(new String[]{config.getNameAttribute(), config.getEmailAttribute()});
 
       final NamingEnumeration<SearchResult> search = context.search("", MessageFormat.format(config.getUserSearch(), username), searchControls);
       if (!search.hasMore())
