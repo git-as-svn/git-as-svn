@@ -29,9 +29,6 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
   @NotNull
   private GitRepository gitRepository;
-  @Deprecated
-  @Nullable
-  private final GitFile file;
   @NotNull
   private final String fullPath;
   @Nullable
@@ -39,20 +36,23 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   private final ObjectId originalId;
   @Nullable
+  private final String originalMd5;
+  @NotNull
+  private final FileMode fileMode;
+
+  @Nullable
   private ObjectId objectId;
   // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private ByteArrayOutputStream memory;
-  @NotNull
-  private FileMode fileMode;
 
   private final boolean update;
 
-  public GitDeltaConsumer(GitRepository gitRepository, @Nullable GitFile file, String fullPath, boolean update) {
+  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file, @NotNull String fullPath, boolean update) throws IOException {
     this.gitRepository = gitRepository;
-    this.file = file;
     this.fullPath = fullPath;
     this.fileMode = file != null ? file.getFileMode() : FileMode.REGULAR_FILE;
+    this.originalMd5 = file != null ? file.getMd5() : null;
     this.update = update;
     originalId = file != null ? file.getObjectId() : null;
     objectId = originalId;
@@ -72,8 +72,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Override
   public void applyTextDelta(String path, @Nullable String baseChecksum) throws SVNException {
     try {
-      if ((file != null) && (baseChecksum != null)) {
-        if (!baseChecksum.equals(file.getMd5())) {
+      if ((originalMd5 != null) && (baseChecksum != null)) {
+        if (!baseChecksum.equals(originalMd5)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
         }
       }
@@ -110,18 +110,14 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
   @Override
   public void validateChecksum(@NotNull String md5) throws SVNException {
-    try {
-      if (window != null) {
-        if (!md5.equals(window.textDeltaEnd())) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
-        }
-      } else if (file != null) {
-        if (!md5.equals(file.getMd5())) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
-        }
+    if (window != null) {
+      if (!md5.equals(window.textDeltaEnd())) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
       }
-    } catch (IOException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+    } else if (originalMd5 != null) {
+      if (!originalMd5.equals(md5)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
+      }
     }
   }
 
