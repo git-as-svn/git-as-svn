@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.auth.User;
+import svnserver.config.RepositoryConfig;
 import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.VcsFile;
@@ -22,6 +23,7 @@ import svnserver.repository.VcsRepository;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -57,12 +59,16 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
 
-  public GitRepository(@NotNull String uuid, @NotNull String branch) throws IOException {
-    this.uuid = uuid;
-    this.repository = new FileRepository(findGitPath());
-    this.branch = repository.getRef(branch).getName();
+  public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
+    this.repository = new FileRepository(new File(config.getPath()).getAbsolutePath());
+    final Ref branchRef = repository.getRef(config.getBranch());
+    if (branchRef == null) {
+      throw new IOException("Branch not found: " + config.getBranch());
+    }
+    this.branch = branchRef.getName();
     addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
+    this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + branch).getBytes(StandardCharsets.UTF_8)).toString();
   }
 
   @Override

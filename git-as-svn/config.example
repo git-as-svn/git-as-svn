@@ -1,0 +1,5 @@
+!!svnserver.config.Config:
+port: 3690
+repository:
+  branch: local
+  path: ../.git

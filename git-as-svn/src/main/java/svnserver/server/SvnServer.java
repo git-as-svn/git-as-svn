@@ -11,6 +11,7 @@ import svnserver.auth.Authenticator;
 import svnserver.auth.LocalUserDB;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
+import svnserver.config.Config;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
@@ -48,8 +49,11 @@ public class SvnServer {
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
   private final VcsRepository repository;
+  @NotNull
+  private final Config config;
 
-  public SvnServer() throws IOException {
+  public SvnServer(@NotNull Config config) throws IOException, SVNException {
+    this.config = config;
 
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DiffCmd());
@@ -64,15 +68,11 @@ public class SvnServer {
     commands.put("stat", new StatCmd());
     commands.put("update", new UpdateCmd());
 
-    repository = new GitRepository("4f0c5325-dd55-4330-b24c-0e9e40eb504b", "local");
+    repository = new GitRepository(config.getRepository());
   }
 
-  public static void main(String[] args) throws IOException {
-    new SvnServer().server(3690);
-  }
-
-  private void server(int port) throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(port);
+  public void start() throws IOException {
+    final ServerSocket serverSocket = new ServerSocket(config.getPort());
     while (true) {
       final Socket socket = serverSocket.accept();
       new Thread(() -> {
