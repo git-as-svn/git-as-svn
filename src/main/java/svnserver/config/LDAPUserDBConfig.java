@@ -13,8 +13,6 @@ public final class LDAPUserDBConfig implements UserDBConfig {
    * This is a URL whose format is defined by the JNDI provider.
    * It is usually an LDAP URL that specifies the domain name of the directory server to connect to,
    * and optionally the port number and distinguished name (DN) of the required root naming context.
-   * <p>
-   * Example:
    */
   @NotNull
   private String connectionUrl = "ldap://localhost:389/ou=groups,dc=mycompany,dc=com";
@@ -31,7 +29,9 @@ public final class LDAPUserDBConfig implements UserDBConfig {
   @NotNull
   private String authentication = "DIGEST-MD5";
   /**
-   * The search scope. Set to <code>true</code> if you wish to search the entire subtree rooted at the <code>userBase</code> entry. The default value of <code>false</code> requests a single-level search including only the top level.
+   * The search scope. Set to <code>true</code> if you wish to search the entire subtree rooted at the
+   * <code>userBase</code> entry. The default value of <code>false</code> requests a single-level search
+   * including only the top level.
    */
   private boolean userSubtree;
   /**

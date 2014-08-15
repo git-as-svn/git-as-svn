@@ -23,7 +23,8 @@ import java.util.Collections;
 import java.util.Hashtable;
 
 /**
- * Authenticates a user by binding to the directory with the DN of the entry for that user and the password presented by the user. If this simple bind succeeds the user is considered to be authenticated.
+ * Authenticates a user by binding to the directory with the DN of the entry for that user and the password
+ * presented by the user. If this simple bind succeeds the user is considered to be authenticated.
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
