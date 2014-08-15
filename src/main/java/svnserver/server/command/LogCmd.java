@@ -100,9 +100,12 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
 
     int logLimit = args.limit;
     for (int rev = startRev; rev != endRev + step; rev += step) {
-      if (targetPaths.isEmpty()) {
+      if (targetPaths.isEmpty())
         break;
-      }
+
+      if (rev == 0)
+        continue;
+
       final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
       final Map<String, VcsLogEntry> changes = revisionInfo.getChanges();
       if (!hasTargets(changes, targetPaths)) continue;
