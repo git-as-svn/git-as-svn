@@ -35,6 +35,7 @@ public final class Config {
   public void setRealm(@NotNull String realm) {
     this.realm = realm;
   }
+
   public void setRepository(@NotNull RepositoryConfig repository) {
     this.repository = repository;
   }

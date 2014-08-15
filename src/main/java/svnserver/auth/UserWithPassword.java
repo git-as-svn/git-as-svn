@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-final class UserWithPassword {
+public final class UserWithPassword {
 
   @NotNull
   private final User user;

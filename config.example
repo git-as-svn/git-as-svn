@@ -6,7 +6,18 @@ repository:
   branch: local
   path: .git
 
-userDB: !!svnserver.config.LocalUserDBConfig {}
+userDB: !!svnserver.config.LocalUserDBConfig
+  users:
+    - username: bozaro
+      password: password
+      email: bozaro@users.noreply.github.com
+      realName: Artem V. Navrotskiy
+
+    - username: slonopotamus
+      password: password
+      email: marat@slonopotamus.org
+      realName: Marat Radchenko
+
 
 # Authenticates a user by binding to the directory with the DN of the entry for that user and the password
 # presented by the user. If this simple bind succeeds the user is considered to be authenticated.

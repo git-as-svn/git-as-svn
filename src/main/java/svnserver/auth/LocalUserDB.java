@@ -21,11 +21,9 @@ public final class LocalUserDB implements UserDB, PasswordChecker {
   private final Collection<Authenticator> authenticators = Collections.singleton(new CramMD5Authenticator(users::get));
 
   public LocalUserDB() {
-    // TODO: read users from file
-    add(new UserWithPassword(new User("bozaro", "Artem V. Navrotskiy", "bozaro@users.noreply.github.com"), "password"));
   }
 
-  private void add(@NotNull UserWithPassword userWithPassword) {
+  public void add(@NotNull UserWithPassword userWithPassword) {
     users.put(userWithPassword.getUser().getUserName(), userWithPassword);
   }
 
