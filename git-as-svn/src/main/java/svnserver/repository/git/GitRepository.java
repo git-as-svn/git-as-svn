@@ -61,6 +61,7 @@ public class GitRepository implements VcsRepository {
 
   public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
     this.repository = new FileRepository(new File(config.getPath()).getAbsolutePath());
+    log.info("Repository path: {}", repository.getDirectory());
     final Ref branchRef = repository.getRef(config.getBranch());
     if (branchRef == null) {
       throw new IOException("Branch not found: " + config.getBranch());

@@ -41,3 +41,33 @@ tasks.withType(JavaCompile) {
 test {
   useTestNG()
 }
+
+jar {
+  manifest {
+    attributes(
+        "Main-Class": "svnserver.server.Main",
+        "Class-Path": "${-> createLauncherClassPath()}"
+    )
+  }
+}
+
+task deployJars(dependsOn: jar) << {
+  def projectArtifacts = configurations.archives.artifacts*.file
+  def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
+  copy {
+    from fullArtifacts.intersect(projectArtifacts)
+    from "config.example"
+    into "${project.buildDir}/deploy"
+  }
+  copy {
+    from fullArtifacts.minus(projectArtifacts)
+    into "${project.buildDir}/deploy/vendors"
+  }
+}
+
+def createLauncherClassPath() {
+  def projectArtifacts = configurations.archives.artifacts*.file
+  def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
+  def vendorJars = fullArtifacts.minus(projectArtifacts).collect { "vendors/${it.name}" }
+  return vendorJars.join(" ")
+}
