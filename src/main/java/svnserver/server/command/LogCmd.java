@@ -43,7 +43,6 @@ import java.util.Set;
  * @author a.navrotskiy
  */
 public class LogCmd extends BaseCmd<LogCmd.Params> {
-  @SuppressWarnings("UnusedDeclaration")
   public static class Params {
     @NotNull
     private final String[] targetPath;
@@ -105,10 +104,8 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
         break;
       }
       final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
-      Map<String, VcsLogEntry> changes = revisionInfo.getChanges(targetPaths);
-      if (changes.isEmpty()) {
-        continue;
-      }
+      final Map<String, VcsLogEntry> changes = revisionInfo.getChanges();
+      if (!hasTargets(changes, targetPaths)) continue;
       writer
           .listBegin()
           .listBegin();
@@ -154,5 +151,12 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
         .listBegin()
         .listEnd()
         .listEnd();
+  }
+
+  private static boolean hasTargets(Map<String, VcsLogEntry> changes, Set<String> targetPaths) {
+    for (String targetPath : targetPaths) {
+      if (changes.containsKey(targetPath)) return true;
+    }
+    return false;
   }
 }

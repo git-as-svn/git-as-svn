@@ -12,10 +12,7 @@ import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,17 +49,8 @@ public class GitRevision implements VcsRevision {
 
   @NotNull
   @Override
-  public Map<String, VcsLogEntry> getChanges(@NotNull Set<String> targetPaths) {
-    final Map<String, VcsLogEntry> result = new TreeMap<>();
-    for (String targetPath : targetPaths) {
-      for (Map.Entry<String, GitLogEntry> entry : changes.tailMap(targetPath, true).entrySet()) {
-        if (!StringHelper.isParentPath(targetPath, entry.getKey())) {
-          break;
-        }
-        result.put(entry.getKey(), entry.getValue());
-      }
-    }
-    return result;
+  public Map<String, VcsLogEntry> getChanges() {
+    return new TreeMap<>(changes);
   }
 
   @NotNull

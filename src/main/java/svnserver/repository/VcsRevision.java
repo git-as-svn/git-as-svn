@@ -31,5 +31,5 @@ public interface VcsRevision {
   VcsFile getFile(@NotNull String fullPath) throws IOException;
 
   @NotNull
-  Map<String, VcsLogEntry> getChanges(@NotNull Set<String> targetPaths);
+  Map<String, VcsLogEntry> getChanges();
 }
