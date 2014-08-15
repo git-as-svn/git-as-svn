@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import svnserver.StringHelper;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
@@ -20,10 +21,7 @@ import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Delta commands.
@@ -103,7 +101,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     @NotNull
     private final DeltaParams params;
     @NotNull
-    private final Set<String> forcedPaths = new HashSet<>();
+    private final Map<String, Set<String>> forcedPaths = new HashMap<>();
     @NotNull
     private final Set<String> deletedPaths = new HashSet<>();
     @NotNull
@@ -111,7 +109,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
     public ReportPipeline(@NotNull DeltaParams params) {
       this.params = params;
-      forcedPaths.add("");
       commands = new HashMap<>();
       commands.put("delete-path", new LambdaCmd<>(DeleteParams.class, this::deletePath));
       commands.put("set-path", new LambdaCmd<>(SetPathParams.class, this::setPathReport));
@@ -137,12 +134,18 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     private void forcePath(@NotNull String fullPath) {
-      int index = fullPath.length();
-      while (index > 0) {
-        if (!forcedPaths.add(fullPath.substring(0, index))) {
+      String path = fullPath;
+      while (!path.isEmpty()) {
+        final String parent = StringHelper.parentDir(path);
+        Set<String> items = forcedPaths.get(parent);
+        if (items == null) {
+          items = new HashSet<>();
+          forcedPaths.put(parent, items);
+        }
+        if (!items.add(StringHelper.baseName(path))) {
           break;
         }
-        index = fullPath.lastIndexOf('/', index - 1);
+        path = parent;
       }
     }
 
@@ -151,8 +154,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
     }
 
     protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
-      //contents = repo.get_files(url, rev)
-      //updateDir("", rev, path, contents)
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -231,17 +232,22 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           oldEntries.put(entry.getFileName(), entry);
         }
       }
+      final Set<String> forced = new HashSet<>(forcedPaths.getOrDefault(fullPath, Collections.emptySet()));
       for (VcsFile newEntry : newFile.getEntries()) {
         final VcsFile oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
         final String entryPath = joinPath(fullPath, newEntry.getFileName());
-        if (newEntry.equals(oldEntry) && (!forcedPaths.contains(entryPath))) {
+        if (newEntry.equals(oldEntry) && (!forced.remove(newEntry.getFileName()))) {
           // Same entry.
           continue;
         }
         updateEntry(context, entryPath, oldEntry, newEntry, tokenId, false);
       }
       for (VcsFile entry : oldEntries.values()) {
+        forced.remove(entry.getFileName());
         removeEntry(context, joinPath(fullPath, entry.getFileName()), entry.getLastChange().getId(), tokenId);
+      }
+      for (String removed : forced) {
+        removeEntry(context, joinPath(fullPath, removed), newFile.getLastChange().getId(), tokenId);
       }
       if (!rootDir) {
         writer
