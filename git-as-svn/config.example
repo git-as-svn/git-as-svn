@@ -1,5 +1,17 @@
 !!svnserver.config.Config:
 port: 3690
+realm: Example Realm
+
 repository:
   branch: local
   path: ../.git
+
+userDB: !!svnserver.config.LocalUserDBConfig {}
+#userDB: !!svnserver.config.LDAPUserDBConfig
+#  authentication: DIGEST-MD5
+#  connectionUrl: ldap://localhost:389/ou=groups,dc=mycompany,dc=com
+#  contextFactory: com.sun.jndi.ldap.LdapCtxFactory
+#  emailAttribute: mail
+#  nameAttribute: name
+#  userSearch: (mail={0})
+#  userSubtree: false

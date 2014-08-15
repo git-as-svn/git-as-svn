@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.LDAPUserDBConfig;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
@@ -34,60 +35,20 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
 
-  /**
-   * This is a URL whose format is defined by the JNDI provider.
-   * It is usually an LDAP URL that specifies the domain name of the directory server to connect to,
-   * and optionally the port number and distinguished name (DN) of the required root naming context.
-   * <p>
-   * Example:
-   */
   @NotNull
-  private String connectionUrl = "ldap://localhost:389/ou=groups,dc=mycompany,dc=com";
-  /**
-   * The JNDI context factory used to acquire our InitialContext. By
-   * default, assumes use of an LDAP server using the standard JNDI LDAP
-   * provider.
-   */
-  @NotNull
-  private final String contextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
-  /**
-   * The type of authentication to use.
-   */
-  @NotNull
-  private String authentication = "DIGEST-MD5";
-  /**
-   * The search scope. Set to <code>true</code> if you wish to search the entire subtree rooted at the <code>userBase</code> entry. The default value of <code>false</code> requests a single-level search including only the top level.
-   */
-  private boolean userSubtree;
-  /**
-   * Pattern specifying the LDAP search filter to use after substitution of the username.
-   */
-  @NotNull
-  private String userSearch = "(mail={0})";
-  /**
-   * LDAP attribute, containing user name.
-   */
-  @NotNull
-  private String nameAttribute = "name";
-  /**
-   * LDAP attribute, containing user email.
-   */
-  @NotNull
-  private String emailAttribute = "mail";
+  private final LDAPUserDBConfig config;
 
-  public LDAPUserDB(@NotNull String connectionUrl, @NotNull String userSearch, boolean userSubtree) {
-    this.userSearch = userSearch;
-    this.userSubtree = userSubtree;
-    this.connectionUrl = connectionUrl;
+  public LDAPUserDB(@NotNull LDAPUserDBConfig config) {
+    this.config = config;
   }
 
   @Nullable
   @Override
   public User check(@NotNull String username, @NotNull String password) throws SVNException {
     final Hashtable<String, Object> env = new Hashtable<>();
-    env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
-    env.put(Context.PROVIDER_URL, connectionUrl);
-    env.put(Context.SECURITY_AUTHENTICATION, authentication);
+    env.put(Context.INITIAL_CONTEXT_FACTORY, config.getContextFactory());
+    env.put(Context.PROVIDER_URL, config.getConnectionUrl());
+    env.put(Context.SECURITY_AUTHENTICATION, config.getAuthentication());
     env.put(Context.SECURITY_PRINCIPAL, username);
     env.put(Context.SECURITY_CREDENTIALS, password);
 
@@ -96,15 +57,15 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
       context = new InitialDirContext(env);
 
       final SearchControls searchControls = new SearchControls();
-      searchControls.setSearchScope(userSubtree ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
+      searchControls.setSearchScope(config.isUserSubtree() ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
 
-      final NamingEnumeration<SearchResult> search = context.search("", MessageFormat.format(userSearch, username), searchControls);
+      final NamingEnumeration<SearchResult> search = context.search("", MessageFormat.format(config.getUserSearch(), username), searchControls);
       if (!search.hasMore())
         return null;
 
       final Attributes attributes = search.next().getAttributes();
-      final String realName = String.valueOf(attributes.get(nameAttribute).get());
-      final String email = String.valueOf(attributes.get(emailAttribute).get());
+      final String realName = String.valueOf(attributes.get(config.getNameAttribute()).get());
+      final String email = String.valueOf(attributes.get(config.getEmailAttribute()).get());
 
       return new User(username, realName, email);
     } catch (AuthenticationException e) {

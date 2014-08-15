@@ -8,7 +8,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.SvnConstants;
 import svnserver.auth.Authenticator;
-import svnserver.auth.LocalUserDB;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.config.Config;
@@ -44,7 +43,7 @@ public class SvnServer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   @NotNull
-  private final UserDB userDB = new LocalUserDB();
+  private final UserDB userDB;
   @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
@@ -54,6 +53,8 @@ public class SvnServer {
 
   public SvnServer(@NotNull Config config) throws IOException, SVNException {
     this.config = config;
+
+    userDB = config.getUserDB().create();
 
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DiffCmd());
@@ -187,7 +188,7 @@ public class SvnServer {
         .listBegin()
         .word(String.join(" ", authenticators.stream().map(Authenticator::getMethodName).toArray(String[]::new)))
         .listEnd()
-        .string("Realm name")
+        .string(config.getRealm())
         .listEnd()
         .listEnd();
 
