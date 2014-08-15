@@ -155,7 +155,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
 
   private static boolean hasTargets(Map<String, VcsLogEntry> changes, Set<String> targetPaths) {
     for (String targetPath : targetPaths) {
-      if (changes.containsKey(targetPath)) return true;
+      if (changes.containsKey(targetPath) || targetPath.isEmpty()) return true;
     }
     return false;
   }
