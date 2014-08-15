@@ -74,7 +74,7 @@ public class GitRepository implements VcsRepository {
     addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
     this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + branch).getBytes(StandardCharsets.UTF_8)).toString();
-    log.info("Repository ready");
+    log.info("Repository ready (branch: {})", branch);
   }
 
   @Override

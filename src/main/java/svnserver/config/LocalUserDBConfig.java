@@ -14,6 +14,13 @@ public final class LocalUserDBConfig implements UserDBConfig {
   @NotNull
   private UserEntry[] users = UserEntry.emptyArray;
 
+  public LocalUserDBConfig() {
+  }
+
+  public LocalUserDBConfig(@NotNull UserEntry[] users) {
+    this.users = users;
+  }
+
   @NotNull
   public UserEntry[] getUsers() {
     return users;
@@ -48,6 +55,16 @@ public final class LocalUserDBConfig implements UserDBConfig {
 
     @NotNull
     private String password = "";
+
+    public UserEntry() {
+    }
+
+    public UserEntry(@NotNull String username, @NotNull String realName, @NotNull String email, @NotNull String password) {
+      this.username = username;
+      this.realName = realName;
+      this.email = email;
+      this.password = password;
+    }
 
     @NotNull
     public String getUsername() {
