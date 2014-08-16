@@ -19,10 +19,13 @@ repository:
   branch: local
   path: .git
 
+# Simple in-memory user database
 userDB: !!svnserver.config.LocalUserDBConfig
   users:
     - username: bozaro
+      # Clear-text password is required to perform CRAM-MD5 authentication
       password: password
+      # Email and real name are used to create Git commits
       email: bozaro@users.noreply.github.com
       realName: Artem V. Navrotskiy
 
@@ -35,7 +38,7 @@ userDB: !!svnserver.config.LocalUserDBConfig
 # Authenticates a user by binding to the directory with the DN of the entry for that user and the password
 # presented by the user. If this simple bind succeeds the user is considered to be authenticated.
 #
-# userDB: !!svnserver.config.LDAPUserDBConfig
+#userDB: !!svnserver.config.LDAPUserDBConfig
 
 # The type of authentication to use.
 #
