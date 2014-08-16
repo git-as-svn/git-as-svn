@@ -104,9 +104,8 @@ public class SvnServer extends Thread {
         log.error("Error accepting client connection", e);
         continue;
       }
-      log.info("New connection from: {}", client.getRemoteSocketAddress());
       poolExecutor.execute(() -> {
-        log.info("Accept connection from: {}", client.getRemoteSocketAddress());
+        log.info("New connection from: {}", client.getRemoteSocketAddress());
         try {
           serveClient(client);
         } catch (EOFException ignore) {
