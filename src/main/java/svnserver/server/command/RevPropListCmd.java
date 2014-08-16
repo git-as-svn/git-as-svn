@@ -20,15 +20,12 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
-  @SuppressWarnings("UnusedDeclaration")
+
   public static class Params {
     private final int revision;
-    @NotNull
-    private final String propName;
 
-    public Params(int revision, @NotNull String propName) {
+    public Params(int revision) {
       this.revision = revision;
-      this.propName = propName;
     }
   }
 
