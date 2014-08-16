@@ -19,8 +19,8 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class RevPropCmd extends BaseCmd<RevPropCmd.Params> {
-  @SuppressWarnings("UnusedDeclaration")
+public final class RevPropCmd extends BaseCmd<RevPropCmd.Params> {
+
   public static class Params {
     private final int revision;
     @NotNull
