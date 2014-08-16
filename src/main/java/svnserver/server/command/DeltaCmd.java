@@ -53,9 +53,6 @@ import java.util.*;
  */
 public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
-  public static class NoParams {
-  }
-
   public static class DeleteParams {
     @NotNull
     private final String path;

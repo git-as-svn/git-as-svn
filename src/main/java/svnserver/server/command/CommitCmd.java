@@ -58,9 +58,6 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
-  public static class NoParams {
-  }
-
   public static class OpenRootParams {
     @NotNull
     private final int rev[];

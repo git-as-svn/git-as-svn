@@ -16,18 +16,16 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class GetLatestRevCmd extends BaseCmd<GetLatestRevCmd.Params> {
-  public static class Params {
-  }
+public final class GetLatestRevCmd extends BaseCmd<NoParams> {
 
   @NotNull
   @Override
-  public Class<Params> getArguments() {
-    return Params.class;
+  public Class<NoParams> getArguments() {
+    return NoParams.class;
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
