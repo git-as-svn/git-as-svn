@@ -19,9 +19,10 @@ import java.io.IOException;
  */
 public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
   public static class Params {
+    @NotNull
     private final String url;
 
-    public Params(String url) {
+    public Params(@NotNull String url) {
       this.url = url;
     }
   }
