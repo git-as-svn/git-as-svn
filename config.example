@@ -8,7 +8,12 @@
 #
 # port: 3690
 
-realm: Example Realm
+# Sets  the  authentication  realm  of the repository.  If two repositories have the same password database,
+# they should have the same realm, and vice versa; this association allows
+# clients to use a single cached password for several repositories.
+# The default realm value is the repository's uuid.
+#
+# realm: Example realm
 
 repository:
   branch: local

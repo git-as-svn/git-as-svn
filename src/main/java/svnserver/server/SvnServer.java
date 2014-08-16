@@ -217,7 +217,7 @@ public class SvnServer extends Thread {
         .listBegin()
         .word(String.join(" ", authenticators.stream().map(Authenticator::getMethodName).toArray(String[]::new)))
         .listEnd()
-        .string(config.getRealm())
+        .string(config.getRealm().isEmpty() ? repository.getUuid() : config.getRealm())
         .listEnd()
         .listEnd();
 

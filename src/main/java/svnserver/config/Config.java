@@ -43,7 +43,7 @@ public final class Config {
   }
 
   public void setRealm(@NotNull String realm) {
-    this.realm = realm;
+    this.realm = realm.trim();
   }
 
   public void setRepository(@NotNull RepositoryConfig repository) {
