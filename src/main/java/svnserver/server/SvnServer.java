@@ -131,6 +131,7 @@ public class SvnServer extends Thread {
 
     final String basePath = getBasePath(clientInfo.getUrl());
     final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo, user);
+    repository.updateRevisions();
     sendAnnounce(writer, basePath);
 
     while (!stopped) {
