@@ -147,14 +147,15 @@ public class SvnServer extends Thread {
           throw new IOException("Unexpected token: " + token);
         }
         final String cmd = parser.readText();
-        log.info("Receive command: {}", cmd);
         BaseCmd command = commands.get(cmd);
         if (command != null) {
+          log.info("Receive command: {}", cmd);
           Object param = MessageParser.parse(command.getArguments(), parser);
           parser.readToken(ListEndToken.class);
           //noinspection unchecked
           command.process(context, param);
         } else {
+          log.warn("Unsupported command: {}", cmd);
           BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
           parser.skipItems();
         }
