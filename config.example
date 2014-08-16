@@ -1,5 +1,13 @@
 !!svnserver.config.Config:
-port: 3690
+
+# Specifies IP to listen to for client connections
+#
+# host: 0.0.0.0
+
+# Specifies a port number to listen to for client connections
+#
+# port: 3690
+
 realm: Example Realm
 
 repository:
