@@ -33,12 +33,14 @@ import java.util.Collections;
  */
 public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
   public static class Params {
+    @NotNull
     private final String path;
+    @NotNull
     private final int[] rev;
     private final boolean wantProps;
     private final boolean wantContents;
 
-    public Params(String path, int[] rev, boolean wantProps, boolean wantContents) {
+    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents) {
       this.path = path;
       this.rev = rev;
       this.wantProps = wantProps;
