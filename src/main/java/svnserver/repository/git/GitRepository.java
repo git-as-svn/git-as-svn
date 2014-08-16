@@ -321,12 +321,22 @@ public class GitRepository implements VcsRepository {
 
     return new VcsCommitBuilder() {
       @Override
-      public void addDir(@NotNull String name) throws IOException, SVNException {
+      public void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException {
         final GitTreeUpdate current = treeStack.element();
         if (current.getEntries().containsKey(name)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
         }
-        treeStack.push(new GitTreeUpdate(name, loadTree(null, false)));
+        final ObjectId srcId;
+        if (originalName == null) {
+          srcId = null;
+        } else {
+          final GitFile file = getRevisionInfo(originalRev).getFile(originalName);
+          if ((file == null) || (!file.isDirectory())) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, originalName));
+          }
+          srcId = file.getObjectId();
+        }
+        treeStack.push(new GitTreeUpdate(name, loadTree(srcId, false)));
       }
 
       @Override

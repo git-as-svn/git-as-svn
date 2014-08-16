@@ -14,9 +14,12 @@ import java.io.IOException;
  */
 public interface VcsCommitBuilder {
   /**
-   * Add new directory and enter into it.
+   * Add/copy directory and enter into it.
+   * @param name New directory name.
+   *             @param originalName Original directroy name (for copy).
+   *                                 @param originalRev Original directory rev (for copy).
    */
-  void addDir(@NotNull String name) throws SVNException, IOException;
+  void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException;
 
   /**
    * Enter into directory.

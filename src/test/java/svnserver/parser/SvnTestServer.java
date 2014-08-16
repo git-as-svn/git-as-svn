@@ -3,6 +3,7 @@ package svnserver.parser;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -46,9 +47,8 @@ public final class SvnTestServer implements AutoCloseable {
   private final String testBranch;
   @NotNull
   private final SvnServer server;
-  private ISVNAuthenticationManager authenticator;
 
-  public SvnTestServer(@NotNull String branch) throws Exception {
+  public SvnTestServer(@Nullable String branch) throws Exception {
     repository = new FileRepository(findGitPath());
     testBranch = "test_" + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
 
@@ -56,10 +56,11 @@ public final class SvnTestServer implements AutoCloseable {
     tempDirectory.delete();
     tempDirectory.mkdir();
 
+    final String srcBranch = branch == null ? repository.getBranch() : branch;
     new Git(repository)
         .branchCreate()
         .setName(testBranch)
-        .setStartPoint(branch)
+        .setStartPoint(srcBranch)
         .call();
 
     final Config config = new Config();
@@ -76,7 +77,7 @@ public final class SvnTestServer implements AutoCloseable {
 
     server = new SvnServer(config);
     server.start();
-    log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), branch, testBranch);
+    log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);
     log.info("Temporary directory: {}", tempDirectory);
   }
 
@@ -103,9 +104,11 @@ public final class SvnTestServer implements AutoCloseable {
 
   private void deleteDirectory(@NotNull File file) throws IOException {
     if (file.isDirectory()) {
-      for (File entry : file.listFiles()) {
+      final File[] files = file.listFiles();
+      if (files!=null){
+      for (File entry : files) {
         deleteDirectory(entry);
-      }
+      }}
     }
     if (!file.delete()) {
       throw new FileNotFoundException("Failed to delete file: " + file);

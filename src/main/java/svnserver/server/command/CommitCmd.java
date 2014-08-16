@@ -291,15 +291,12 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
-      // TODO: copying
-      if (args.copyParams.rev != 0)
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Copying is not supported: " + args.name));
-
       context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
       log.info("Add dir: {} (rev: {})", path);
       getChanges(paths.get(args.parentToken)).add(treeBuilder -> {
-        treeBuilder.addDir(StringHelper.baseName(path));
+        final String srcPath = args.copyParams.copyFrom.isEmpty() ? null : context.getRepositoryPath(args.copyParams.copyFrom);
+        treeBuilder.addDir(StringHelper.baseName(path), srcPath, args.copyParams.rev);
         updateDir(treeBuilder, path);
         treeBuilder.closeDir();
       });
