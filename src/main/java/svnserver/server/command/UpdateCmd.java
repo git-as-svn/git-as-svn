@@ -20,12 +20,23 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
+public final class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
+
   public static class Params implements DeltaParams {
+
     private final int[] rev;
+
     @NotNull
     private final String target;
+
+    /**
+     * TODO: issue #25.
+     */
     private final boolean recurse;
+
+    /**
+     * TODO: issue #25.
+     */
     @NotNull
     private final String depth;
 
