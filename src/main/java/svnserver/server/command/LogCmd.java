@@ -51,11 +51,23 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
     @NotNull
     private final int[] endRev;
     private final boolean changedPaths;
+    /**
+     * TODO: issue #26.
+     */
     private final boolean strictNode;
     private final int limit;
+    /**
+     * TODO: issue #26.
+     */
     private final boolean includeMergedRevisions;
+    /**
+     * TODO: issue #26.
+     */
     @NotNull
     private final String revpropsMode;
+    /**
+     * TODO: issue #26.
+     */
     @NotNull
     private final String[] revprops;
 
