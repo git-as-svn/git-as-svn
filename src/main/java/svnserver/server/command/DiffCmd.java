@@ -18,24 +18,40 @@ import java.io.IOException;
  *    response: ( )
  * </pre>
  *
- * todo: Need support for diff like: svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
- *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
   public static class Params implements DeltaParams {
+    @NotNull
     private final int[] rev;
     @NotNull
     private final String target;
+    /**
+     * TODO: issue #28.
+     */
     private final boolean recurse;
+    /**
+     * TODO: issue #28.
+     */
     private final boolean ignoreAncestry;
+    /**
+     * TODO: issue #28.
+     * <p>
+     * svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
+     */
     @NotNull
     private final String url;
+    /**
+     * TODO: issue #28.
+     */
     private final boolean textDeltas;
+    /**
+     * TODO: issue #28.
+     */
     @NotNull
     private final String depth;
 
-    public Params(int[] rev, @NotNull String target, boolean recurse, boolean ignoreAncestry, @NotNull String url, boolean textDeltas, @NotNull String depth) {
+    public Params(@NotNull int[] rev, @NotNull String target, boolean recurse, boolean ignoreAncestry, @NotNull String url, boolean textDeltas, @NotNull String depth) {
       this.rev = rev;
       this.target = target;
       this.recurse = recurse;
