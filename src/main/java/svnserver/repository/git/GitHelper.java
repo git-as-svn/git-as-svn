@@ -39,6 +39,7 @@ public final class GitHelper {
     final int objType = fileMode.getObjectType();
     switch (objType) {
       case Constants.OBJ_TREE:
+      case Constants.OBJ_COMMIT:
         return SVNNodeKind.DIR;
       case Constants.OBJ_BLOB:
         return SVNNodeKind.FILE;

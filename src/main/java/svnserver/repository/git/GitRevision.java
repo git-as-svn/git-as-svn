@@ -2,7 +2,6 @@ package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -12,7 +11,9 @@ import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -85,13 +86,16 @@ public class GitRevision implements VcsRevision {
   @Nullable
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
-    if (fullPath.isEmpty()) {
-      return new GitFile(repo, commit.getTree(), FileMode.TREE, fullPath, revision);
+    GitTreeEntry entry = new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), commit.getTree()));
+    for (String pathItem : fullPath.split("/")) {
+      if (pathItem.isEmpty()) {
+        continue;
+      }
+      entry = GitRepository.loadTree(entry.getTreeId(repo)).get(pathItem);
+      if (entry == null) {
+        return null;
+      }
     }
-    final TreeWalk treeWalk = TreeWalk.forPath(repo.getRepository(), fullPath.substring(1), commit.getTree());
-    if (treeWalk == null) {
-      return null;
-    }
-    return new GitFile(repo, treeWalk.getObjectId(0), treeWalk.getFileMode(0), fullPath, revision);
+    return new GitFile(repo, entry.getObjectId(), entry.getFileMode(), fullPath, revision);
   }
 }

@@ -2,8 +2,11 @@ package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * Git tree entry.
@@ -14,9 +17,9 @@ public final class GitTreeEntry {
   @NotNull
   private final FileMode fileMode;
   @NotNull
-  private final ObjectId objectId;
+  private final GitObject<ObjectId> objectId;
 
-  public GitTreeEntry(@NotNull FileMode fileMode, @NotNull ObjectId objectId) {
+  public GitTreeEntry(@NotNull FileMode fileMode, @NotNull GitObject<ObjectId> objectId) {
     this.fileMode = fileMode;
     this.objectId = objectId;
   }
@@ -27,7 +30,7 @@ public final class GitTreeEntry {
   }
 
   @NotNull
-  public ObjectId getObjectId() {
+  public GitObject<ObjectId> getObjectId() {
     return objectId;
   }
 
@@ -49,7 +52,12 @@ public final class GitTreeEntry {
     return result;
   }
 
-  public boolean isSvnHidden() {
-    return fileMode == FileMode.GITLINK;
+  public GitObject<ObjectId> getTreeId(@NotNull GitRepository repository) throws IOException {
+    if (fileMode == FileMode.TREE) return objectId;
+    if (fileMode == FileMode.GITLINK) {
+      GitObject<RevCommit> linked = repository.loadLinkedCommit(objectId.getObject());
+      return new GitObject<>(linked.getRepo(), linked.getObject().getTree());
+    }
+    return null;
   }
 }

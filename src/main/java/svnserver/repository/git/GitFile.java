@@ -1,8 +1,10 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -27,7 +29,7 @@ public class GitFile implements VcsFile {
   @NotNull
   private final GitRepository repo;
   @NotNull
-  private final ObjectId objectId;
+  private final GitObject<ObjectId> objectId;
   @NotNull
   private final FileMode fileMode;
   @NotNull
@@ -36,7 +38,7 @@ public class GitFile implements VcsFile {
   @Nullable
   private ObjectLoader objectLoader;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull ObjectId objectId, @NotNull FileMode fileMode, @NotNull String fullPath, int revision) {
+  public GitFile(@NotNull GitRepository repo, @NotNull GitObject<ObjectId> objectId, @NotNull FileMode fileMode, @NotNull String fullPath, int revision) {
     this.repo = repo;
     this.objectId = objectId;
     this.fileMode = fileMode;
@@ -61,7 +63,7 @@ public class GitFile implements VcsFile {
   }
 
   @NotNull
-  public ObjectId getObjectId() {
+  public GitObject<ObjectId> getObjectId() {
     return objectId;
   }
 
@@ -92,7 +94,7 @@ public class GitFile implements VcsFile {
 
   @Override
   public long getSize() throws IOException {
-    return getObjectLoader().getSize();
+    return ((fileMode.getBits() & Constants.OBJ_BLOB) != 0) ? getObjectLoader().getSize() : 0;
   }
 
   @Override
@@ -127,7 +129,18 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public Iterable<VcsFile> getEntries() throws IOException {
-    return repo.loadTree(objectId, true).entrySet()
+    if (fileMode.equals(FileMode.TREE)) {
+      return getEntries(GitRepository.loadTree(objectId));
+    }
+    if (fileMode.equals(FileMode.GITLINK)) {
+      GitObject<RevCommit> linkedCommit = repo.loadLinkedCommit(objectId.getObject());
+      return getEntries(GitRepository.loadTree(new GitObject<>(linkedCommit.getRepo(), linkedCommit.getObject().getTree())));
+    }
+    throw new IOException("Unsupported operation for: " + fullPath + " (mode: " + fileMode + ")");
+  }
+
+  private Iterable<VcsFile> getEntries(@NotNull Map<String, GitTreeEntry> treeEntries) {
+    return treeEntries.entrySet()
         .stream()
         .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), lastChange))
         .collect(Collectors.toList());

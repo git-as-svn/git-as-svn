@@ -12,6 +12,7 @@ public class RepositoryConfig {
   private String branch = "master";
   @NotNull
   private String path = ".git";
+  private String[] linked = {};
 
   @NotNull
   public String getBranch() {
@@ -29,5 +30,13 @@ public class RepositoryConfig {
 
   public void setPath(@NotNull String path) {
     this.path = path;
+  }
+
+  public void setLinked(String[] linked) {
+    this.linked = linked;
+  }
+
+  public String[] getLinked() {
+    return linked;
   }
 }
