@@ -15,6 +15,7 @@ import svnserver.repository.VcsFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -93,7 +94,7 @@ public class GitFile implements VcsFile {
 
   @Override
   public long getSize() throws IOException {
-    return ((fileMode.getBits() & FileMode.TYPE_FILE) != 0) ? getObjectLoader().getSize() : 0;
+    return ((fileMode.getBits() & (FileMode.TYPE_FILE | FileMode.TYPE_GITLINK)) == FileMode.TYPE_FILE) ? getObjectLoader().getSize() : 0;
   }
 
   @Override
@@ -133,6 +134,9 @@ public class GitFile implements VcsFile {
     }
     if (fileMode.equals(FileMode.GITLINK)) {
       GitObject<RevCommit> linkedCommit = repo.loadLinkedCommit(objectId.getObject());
+      if (linkedCommit == null) {
+        return Collections.emptyList();
+      }
       return getEntries(GitRepository.loadTree(new GitObject<>(linkedCommit.getRepo(), linkedCommit.getObject().getTree())));
     }
     throw new IOException("Unsupported operation for: " + fullPath + " (mode: " + fileMode + ")");

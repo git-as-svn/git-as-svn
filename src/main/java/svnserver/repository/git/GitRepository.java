@@ -147,8 +147,9 @@ public class GitRepository implements VcsRepository {
       if (!newEntry.equals(oldEntry)) {
         final String fullPath = StringHelper.joinPath(path, name);
         changes.put(fullPath, new GitLogEntry(oldEntry, newEntry));
-        if ((newEntry.getFileMode() == FileMode.TREE) || (newEntry.getFileMode() == FileMode.GITLINK)) {
-          collectChanges(changes, fullPath, oldEntry == null ? null : oldEntry.getTreeId(this), newEntry.getTreeId(this));
+        final GitObject<ObjectId> newTreeId = newEntry.getTreeId(this);
+        if (newTreeId != null) {
+          collectChanges(changes, fullPath, oldEntry == null ? null : oldEntry.getTreeId(this), newTreeId);
         }
       }
     }
@@ -475,7 +476,7 @@ public class GitRepository implements VcsRepository {
     return result;
   }
 
-  @NotNull
+  @Nullable
   public GitObject<RevCommit> loadLinkedCommit(@NotNull ObjectId objectId) throws IOException {
     for (Repository repo : linkedRepositories) {
       if (repo.hasObject(objectId)) {
@@ -484,6 +485,6 @@ public class GitRepository implements VcsRepository {
 
       }
     }
-    throw new FileNotFoundException("Can't find object: " + objectId.getName());
+    return null;
   }
 }

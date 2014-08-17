@@ -52,11 +52,14 @@ public final class GitTreeEntry {
     return result;
   }
 
+  @Nullable
   public GitObject<ObjectId> getTreeId(@NotNull GitRepository repository) throws IOException {
     if (fileMode == FileMode.TREE) return objectId;
     if (fileMode == FileMode.GITLINK) {
       GitObject<RevCommit> linked = repository.loadLinkedCommit(objectId.getObject());
-      return new GitObject<>(linked.getRepo(), linked.getObject().getTree());
+      if (linked != null) {
+        return new GitObject<>(linked.getRepo(), linked.getObject().getTree());
+      }
     }
     return null;
   }
