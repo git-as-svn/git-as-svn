@@ -12,7 +12,9 @@ import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -86,12 +88,13 @@ public class GitRevision implements VcsRevision {
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
     if (fullPath.isEmpty()) {
-      return new GitFile(repo, commit.getTree(), FileMode.TREE, fullPath, revision);
+      return new GitFile(repo, new GitObject<>(repo.getRepository(), commit.getTree()), FileMode.TREE, fullPath, revision);
     }
     final TreeWalk treeWalk = TreeWalk.forPath(repo.getRepository(), fullPath.substring(1), commit.getTree());
     if (treeWalk == null) {
       return null;
     }
-    return new GitFile(repo, treeWalk.getObjectId(0), treeWalk.getFileMode(0), fullPath, revision);
+    // todo: Remove TreeWalk
+    return new GitFile(repo, new GitObject<>(repo.getRepository(), treeWalk.getObjectId(0)), treeWalk.getFileMode(0), fullPath, revision);
   }
 }

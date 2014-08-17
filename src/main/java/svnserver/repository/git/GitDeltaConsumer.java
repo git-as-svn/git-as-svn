@@ -1,5 +1,6 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -34,14 +35,14 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   private SVNDeltaProcessor window;
   @Nullable
-  private final ObjectId originalId;
+  private final GitObject<ObjectId> originalId;
   @Nullable
   private final String originalMd5;
   @NotNull
   private final FileMode fileMode;
 
   @Nullable
-  private ObjectId objectId;
+  private GitObject<ObjectId> objectId;
   // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private ByteArrayOutputStream memory;
@@ -60,12 +61,12 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   }
 
   @Nullable
-  public ObjectId getOriginalId() {
+  public GitObject<ObjectId> getOriginalId() {
     return originalId;
   }
 
   @Nullable
-  public ObjectId getObjectId() {
+  public GitObject<ObjectId> getObjectId() {
     return objectId;
   }
 
@@ -101,8 +102,9 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window == null) {
         throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
       }
-      objectId = gitRepository.getRepository().newObjectInserter().insert(Constants.OBJ_BLOB, memory.toByteArray());
-      log.info("Created blob {} for file: {}", objectId.getName(), fullPath);
+      final FileRepository repo = gitRepository.getRepository();
+      objectId = new GitObject<>(repo, repo.newObjectInserter().insert(Constants.OBJ_BLOB, memory.toByteArray()));
+      log.info("Created blob {} for file: {}", objectId.getObject().getName(), fullPath);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }

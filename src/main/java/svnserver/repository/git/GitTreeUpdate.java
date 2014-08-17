@@ -41,7 +41,7 @@ public class GitTreeUpdate {
     for (Map.Entry<String, GitTreeEntry> entry : entries.entrySet()) {
       final String name = entry.getKey();
       final GitTreeEntry value = entry.getValue();
-      treeBuilder.append(name, value.getFileMode(), value.getObjectId());
+      treeBuilder.append(name, value.getFileMode(), value.getObjectId().getObject());
     }
     return inserter.insert(treeBuilder);
   }
