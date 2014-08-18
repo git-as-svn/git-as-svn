@@ -5,6 +5,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
   @NotNull
-  private final Map<String, int[]> lastUpdates = new ConcurrentHashMap<>();
+  private final Map<String, IntList> lastUpdates = new ConcurrentHashMap<>();
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   // Lock for prevent concurrent pushes.
@@ -128,10 +129,7 @@ public class GitRepository implements VcsRepository {
     final TreeMap<String, GitLogEntry> changes = new TreeMap<>();
     collectChanges(changes, "", oldTree != null ? new GitObject<>(repository, oldTree) : null, new GitObject<>(repository, newTree));
     for (String path : changes.keySet()) {
-      int[] oldRevisions = lastUpdates.get(path);
-      int[] newRevisions = oldRevisions == null ? new int[1] : Arrays.copyOf(oldRevisions, oldRevisions.length + 1);
-      newRevisions[newRevisions.length - 1] = revisionId;
-      lastUpdates.put(path, newRevisions);
+      lastUpdates.computeIfAbsent(path, s -> new IntList()).add(revisionId);
     }
     revisions.add(new GitRevision(this, revisionId, changes, commit));
   }
@@ -303,17 +301,18 @@ public class GitRepository implements VcsRepository {
     return file;
   }
 
-  public int getLastChange(@NotNull String nodePath, int revision) {
-    if (nodePath.isEmpty()) return revision;
-    int[] revs = this.lastUpdates.get(nodePath);
+  public int getLastChange(@NotNull String nodePath, int beforeRevision) {
+    if (nodePath.isEmpty()) return beforeRevision;
+    final IntList revs = this.lastUpdates.get(nodePath);
     if (revs != null) {
-      for (int i = revs.length - 1; i >= 0; --i) {
-        if (revs[i] <= revision) {
-          return revs[i];
+      for (int i = revs.size() - 1; i >= 0; --i) {
+        final int rev = revs.get(i);
+        if (rev <= beforeRevision) {
+          return rev;
         }
       }
     }
-    throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + nodePath + "@" + revision);
+    throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + nodePath + "@" + beforeRevision);
   }
 
   @NotNull
