@@ -14,7 +14,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 public class SvnCheckoutTest {
   @Test(timeOut = 60 * 1000)
   public void checkoutRootRevision() throws Exception {
-    try (SvnTestServer server = new SvnTestServer("master")) {
+    try (SvnTestServer server = new SvnTestServer(null)) {
       final SvnOperationFactory factory = new SvnOperationFactory();
       factory.setAuthenticationManager(server.getAuthenticator());
       final SvnCheckout checkout = factory.createCheckout();

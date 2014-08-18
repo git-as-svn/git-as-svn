@@ -39,7 +39,7 @@ public class SvnUpdateTest {
    */
   @Test(timeOut = 60 * 1000)
   public void addAndUpdate() throws Exception {
-    try (SvnTestServer server = new SvnTestServer("master")) {
+    try (SvnTestServer server = new SvnTestServer(null)) {
       final SvnOperationFactory factory = new SvnOperationFactory();
       factory.setAuthenticationManager(server.getAuthenticator());
       final SVNClientManager client = SVNClientManager.newInstance(factory);

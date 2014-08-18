@@ -37,7 +37,7 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void copyFileFromRevisionTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer("master")) {
+    try (SvnTestServer server = new SvnTestServer(null)) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
@@ -74,7 +74,7 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void copyDirFromRevisionTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer("master")) {
+    try (SvnTestServer server = new SvnTestServer(null)) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
@@ -116,7 +116,7 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void commitFileOufOfDateTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer("master")) {
+    try (SvnTestServer server = new SvnTestServer(null)) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
@@ -138,7 +138,7 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void commitFileUpToDateTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer("master")) {
+    try (SvnTestServer server = new SvnTestServer(null)) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
