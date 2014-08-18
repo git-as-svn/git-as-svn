@@ -9,7 +9,7 @@ import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.util.Collections;
 
 /**
@@ -81,14 +81,10 @@ public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
         .listEnd()
         .listEnd();
     if (args.wantContents) {
-      final OutputStream stream = writer.getStream();
-      stream.write(String.valueOf(fileInfo.getSize()).getBytes());
-      stream.write(':');
-      fileInfo.copyTo(stream);
-      stream.write(' ');
-
-      writer.string("");
-      writer
+      try (InputStream stream = fileInfo.openStream()) {
+        writer.binary(fileInfo.getSize(), stream);
+      }
+      writer.string("")
           .listBegin()
           .word("success")
           .listBegin()

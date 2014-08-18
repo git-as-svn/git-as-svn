@@ -39,6 +39,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitRepository implements VcsRepository {
+  public interface StreamFactory {
+    InputStream openStream() throws IOException;
+  }
+
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
   @NotNull
@@ -178,12 +182,13 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public String getObjectMD5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
-    String result = cacheMd5.get(objectId.getObject().name());
+  public String getObjectMD5(@NotNull GitObject<? extends ObjectId> objectId, char type, @NotNull StreamFactory streamFactory) throws IOException {
+    final String key = type + objectId.getObject().name();
+    String result = cacheMd5.get(key);
     if (result == null) {
       final byte[] buffer = new byte[64 * 1024];
       final MessageDigest md5 = getMd5();
-      try (InputStream stream = openObject(objectId).openStream()) {
+      try (InputStream stream = streamFactory.openStream()) {
         while (true) {
           int size = stream.read(buffer);
           if (size < 0) break;
@@ -191,7 +196,7 @@ public class GitRepository implements VcsRepository {
         }
       }
       result = StringHelper.toHex(md5.digest());
-      cacheMd5.putIfAbsent(objectId.getObject().name(), result);
+      cacheMd5.putIfAbsent(key, result);
     }
     return result;
   }

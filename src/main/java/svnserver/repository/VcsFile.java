@@ -6,7 +6,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -25,8 +24,6 @@ public interface VcsFile {
   String getMd5() throws IOException;
 
   long getSize() throws IOException;
-
-  void copyTo(@NotNull OutputStream stream) throws IOException;
 
   @NotNull
   InputStream openStream() throws IOException;

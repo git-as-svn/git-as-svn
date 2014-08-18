@@ -10,12 +10,16 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.StreamHelper;
 import svnserver.StringHelper;
+import svnserver.SvnConstants;
 import svnserver.repository.VcsFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,11 +94,14 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public String getMd5() throws IOException {
-    return repo.getObjectMD5(objectId);
+    return repo.getObjectMD5(objectId, fileMode == FileMode.SYMLINK ? 'l' : 'f', this::openStream);
   }
 
   @Override
   public long getSize() throws IOException {
+    if (fileMode == FileMode.SYMLINK) {
+      return SvnConstants.LINK_PREFIX.length() + getObjectLoader().getSize();
+    }
     return fileMode.getObjectType() == Constants.OBJ_BLOB ? getObjectLoader().getSize() : 0;
   }
 
@@ -116,14 +123,19 @@ public class GitFile implements VcsFile {
     return objectLoader;
   }
 
-  @Override
-  public void copyTo(@NotNull OutputStream stream) throws IOException {
-    getObjectLoader().copyTo(stream);
-  }
-
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
+    if (fileMode == FileMode.SYMLINK) {
+      try (
+          ByteArrayOutputStream outputStream = new ByteArrayOutputStream(SvnConstants.LINK_PREFIX.length() + (int) getObjectLoader().getSize());
+          InputStream inputStream = getObjectLoader().openStream()
+      ) {
+        outputStream.write(SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.ISO_8859_1));
+        StreamHelper.copyTo(inputStream, outputStream);
+        return new ByteArrayInputStream(outputStream.toByteArray());
+      }
+    }
     return getObjectLoader().openStream();
   }
 
