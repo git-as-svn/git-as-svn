@@ -19,6 +19,20 @@ repository:
   branch: local
   path: .git
 
+acl:
+  groups:
+    - name: developers
+      users:
+        - bozaro
+        - slonopotamus
+
+  access:
+    - path: /
+      # Use 'asterisk' (*) to allow access for all users
+      # use 'at' (@) for groups
+      allowed:
+        - '@developers'
+
 # Simple in-memory user database
 userDB: !!svnserver.config.LocalUserDBConfig
   users:

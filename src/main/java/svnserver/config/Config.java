@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
  * Top configuration object.
  *
  * @author a.navrotskiy
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class Config {
   private int port = 3690;
@@ -19,6 +20,9 @@ public final class Config {
 
   @NotNull
   private UserDBConfig userDB = new LocalUserDBConfig();
+
+  @NotNull
+  private AclConfig acl = new AclConfig();
 
   public void setPort(int port) {
     this.port = port;
@@ -62,5 +66,14 @@ public final class Config {
   @NotNull
   public UserDBConfig getUserDB() {
     return userDB;
+  }
+
+  @NotNull
+  public AclConfig getAcl() {
+    return acl;
+  }
+
+  public void setAcl(@NotNull AclConfig acl) {
+    this.acl = acl;
   }
 }

@@ -38,6 +38,8 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
      * TODO: issue #28.
      * <p>
      * svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
+     * <p>
+     * WARNING! Check ACL!
      */
     @NotNull
     private final String url;

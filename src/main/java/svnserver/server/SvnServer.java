@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.SvnConstants;
+import svnserver.auth.ACL;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
@@ -57,6 +58,8 @@ public class SvnServer extends Thread {
   private final ServerSocket serverSocket;
   @NotNull
   private final ExecutorService poolExecutor;
+  @NotNull
+  private final ACL acl;
   private volatile boolean stopped = false;
 
   public SvnServer(@NotNull Config config) throws IOException, SVNException {
@@ -79,6 +82,7 @@ public class SvnServer extends Thread {
     commands.put("update", new UpdateCmd());
 
     repository = new GitRepository(config.getRepository());
+    acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
 
     poolExecutor = Executors.newCachedThreadPool();
@@ -129,7 +133,7 @@ public class SvnServer extends Thread {
     log.info("User: {}", user);
 
     final String basePath = getBasePath(clientInfo.getUrl());
-    final SessionContext context = new SessionContext(parser, writer, repository, basePath, clientInfo, user);
+    final SessionContext context = new SessionContext(parser, writer, this, basePath, clientInfo, user);
     repository.updateRevisions();
     sendAnnounce(writer, basePath);
 
@@ -163,6 +167,16 @@ public class SvnServer extends Thread {
         BaseCmd.sendError(writer, e.getErrorMessage());
       }
     }
+  }
+
+  @NotNull
+  public ACL getAcl() {
+    return acl;
+  }
+
+  @NotNull
+  public VcsRepository getRepository() {
+    return repository;
   }
 
   @NotNull

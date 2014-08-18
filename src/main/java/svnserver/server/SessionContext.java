@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
+import svnserver.auth.ACL;
 import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
@@ -28,7 +29,7 @@ public final class SessionContext {
   @NotNull
   private final Deque<Step> stepStack = new ArrayDeque<>();
   @NotNull
-  private final VcsRepository repository;
+  private final SvnServer server;
   @NotNull
   private final String baseUrl;
   @NotNull
@@ -40,13 +41,13 @@ public final class SessionContext {
 
   public SessionContext(@NotNull SvnServerParser parser,
                         @NotNull SvnServerWriter writer,
-                        @NotNull VcsRepository repository,
+                        @NotNull SvnServer server,
                         @NotNull String baseUrl,
                         @NotNull ClientInfo clientInfo,
                         @NotNull User user) {
     this.parser = parser;
     this.writer = writer;
-    this.repository = repository;
+    this.server = server;
     this.user = user;
     this.baseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
@@ -79,7 +80,12 @@ public final class SessionContext {
 
   @NotNull
   public VcsRepository getRepository() {
-    return repository;
+    return server.getRepository();
+  }
+
+  @NotNull
+  public ACL getAcl() {
+    return server.getAcl();
   }
 
   @NotNull
