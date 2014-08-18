@@ -96,21 +96,26 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     final int head = context.getRepository().getLatestRevision();
-    final Set<String> targetPaths = new HashSet<>();
-    for (String target : args.targetPath) {
-      targetPaths.add(context.getRepositoryPath(target));
-    }
-    int startRev = getRevision(args.startRev, 1);
     int endRev = getRevision(args.endRev, head);
-    int step = startRev < endRev ? 1 : -1;
+    int startRev = getRevision(args.startRev, 1);
     if ((startRev > head) || (endRev > head)) {
       writer.word("done");
-
       sendError(writer, SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + Math.max(startRev, endRev)));
       return;
     }
 
+    final Set<String> targetPaths = new HashSet<>();
+    for (String target : args.targetPath) {
+      String fullTargetPath = context.getRepositoryPath(target);
+      if (context.getRepository().getRevisionInfo(startRev).getFile(fullTargetPath) == null) {
+        writer.word("done");
+        sendError(writer, SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision " + startRev + ", path: " + fullTargetPath));
+      }
+      targetPaths.add(fullTargetPath);
+    }
+
     int logLimit = args.limit;
+    int step = startRev < endRev ? 1 : -1;
     for (int rev = startRev; rev != endRev + step; rev += step) {
       if (targetPaths.isEmpty())
         break;
