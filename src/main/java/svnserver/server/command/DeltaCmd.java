@@ -233,9 +233,11 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       for (VcsFile newEntry : newFile.getEntries()) {
         final VcsFile oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
         final String entryPath = joinPath(fullPath, newEntry.getFileName());
-        if (newEntry.equals(oldEntry) && (!forced.remove(newEntry.getFileName()))) {
-          // Same entry.
-          continue;
+        if (!forced.remove(newEntry.getFileName())) {
+          if (newEntry.equals(oldEntry)) {
+            // Same entry.
+            continue;
+          }
         }
         updateEntry(context, entryPath, oldEntry, newEntry, tokenId, false);
       }
