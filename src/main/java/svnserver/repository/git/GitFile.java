@@ -1,5 +1,6 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -94,7 +95,7 @@ public class GitFile implements VcsFile {
 
   @Override
   public long getSize() throws IOException {
-    return ((fileMode.getBits() & (FileMode.TYPE_FILE | FileMode.TYPE_GITLINK)) == FileMode.TYPE_FILE) ? getObjectLoader().getSize() : 0;
+    return fileMode.getObjectType() == Constants.OBJ_BLOB ? getObjectLoader().getSize() : 0;
   }
 
   @Override
