@@ -66,6 +66,8 @@ public class GitRepository implements VcsRepository {
   private final String branch;
   @NotNull
   private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
+  @NotNull
+  private final Map<String, Map<String, String>> cacheProperties = new ConcurrentHashMap<>();
 
   public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
     this.repository = new FileRepository(new File(config.getPath()).getAbsoluteFile());
@@ -146,10 +148,15 @@ public class GitRepository implements VcsRepository {
       final String name = entry.getKey();
       final GitTreeEntry newEntry = entry.getValue();
       final GitTreeEntry oldEntry = oldEntries.remove(name);
+      final GitObject<ObjectId> newTreeId = newEntry.getTreeId(this);
+      if (name.equals(".gitignore") || name.equals(".gitattributes")) {
+        cacheProperties
+            .computeIfAbsent(newTree.getObject().getName(), s -> new HashMap<>())
+            .put(name, loadContent(newEntry.getObjectId()));
+      }
       if (!newEntry.equals(oldEntry)) {
         final String fullPath = StringHelper.joinPath(path, name);
         changes.put(fullPath, new GitLogEntry(oldEntry, newEntry));
-        final GitObject<ObjectId> newTreeId = newEntry.getTreeId(this);
         if (newTreeId != null) {
           collectChanges(changes, fullPath, oldEntry == null ? null : oldEntry.getTreeId(this), newTreeId);
         }
@@ -460,6 +467,12 @@ public class GitRepository implements VcsRepository {
         return fullPath.toString();
       }
     };
+  }
+
+  @NotNull
+  public static String loadContent(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
+    final byte[] bytes = objectId.getRepo().newObjectReader().open(objectId.getObject()).getBytes();
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   @NotNull

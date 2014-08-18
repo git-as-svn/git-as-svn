@@ -208,6 +208,7 @@ public class SvnServer extends Thread {
             //.word("commit-revprops") // We don't currently have _any_ revprop support
             //.word("mergeinfo")       // Nope, not yet
             //.word("depth")           // Nope, not yet
+        .word("inherited-props")       // Need for .gitattributes and .gitignore
         .listEnd()
         .listEnd()
         .listEnd();
