@@ -33,7 +33,7 @@ public class GitAttributesTest {
             "*.java = svn:eol-style=native\n" +
             "*.properties = svn:eol-style=native\n" +
             "*.py = svn:eol-style=native\n" +
-            "*.sh = svn:eol-style=lf\n"
+            "*.sh = svn:eol-style=LF\n"
     );
   }
 }

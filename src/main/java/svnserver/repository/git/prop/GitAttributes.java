@@ -38,7 +38,7 @@ public class GitAttributes implements GitProperty {
     for (String line : content.split("(?:#[^\n]*)?\n")) {
       final String[] tokens = line.trim().split("\\s+");
       final String eol = getEol(tokens);
-      if ((eol != null) && (eol.equals(SVNProperty.EOL_STYLE_CRLF) || eol.equals(SVNProperty.EOL_STYLE_LF) || eol.equals(SVNProperty.EOL_STYLE_NATIVE))) {
+      if (eol != null) {
         parsedRules.add(new Rule(tokens[0], eol));
       }
     }
@@ -51,7 +51,16 @@ public class GitAttributes implements GitProperty {
     for (int i = 1; i < tokens.length; ++i) {
       final String token = tokens[i];
       if (token.startsWith(EOL_PREFIX)) {
-        return token.substring(EOL_PREFIX.length());
+        switch (token.substring(EOL_PREFIX.length())) {
+          case "lf":
+            return SVNProperty.EOL_STYLE_LF;
+          case "native":
+            return SVNProperty.EOL_STYLE_NATIVE;
+          case "cr":
+            return SVNProperty.EOL_STYLE_CR;
+          case "crlf":
+            return SVNProperty.EOL_STYLE_CRLF;
+        }
       }
     }
     return null;
