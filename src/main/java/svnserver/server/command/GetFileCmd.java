@@ -31,18 +31,25 @@ import java.util.Collections;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
+public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
   public static class Params {
+    @NotNull
     private final String path;
+    @NotNull
     private final int[] rev;
     private final boolean wantProps;
     private final boolean wantContents;
+    /**
+     * TODO: issue #30.
+     */
+    private final boolean wantIProps;
 
-    public Params(String path, int[] rev, boolean wantProps, boolean wantContents) {
+    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents, boolean wantIProps) {
       this.path = path;
       this.rev = rev;
       this.wantProps = wantProps;
       this.wantContents = wantContents;
+      this.wantIProps = wantIProps;
     }
   }
 

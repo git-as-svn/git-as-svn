@@ -31,7 +31,7 @@ import java.util.Collections;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
+public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
   public static class Params {
     @NotNull
     private final String path;
@@ -39,12 +39,23 @@ public class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
     private final int[] rev;
     private final boolean wantProps;
     private final boolean wantContents;
+    /**
+     * TODO: how to handle this?
+     */
+    @NotNull
+    private final String[] fields;
+    /**
+     * TODO: issue #30.
+     */
+    private final boolean wantIProps;
 
-    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents) {
+    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents, @NotNull String[] fields, boolean wantIProps) {
       this.path = path;
       this.rev = rev;
       this.wantProps = wantProps;
       this.wantContents = wantContents;
+      this.fields = fields;
+      this.wantIProps = wantIProps;
     }
   }
 
