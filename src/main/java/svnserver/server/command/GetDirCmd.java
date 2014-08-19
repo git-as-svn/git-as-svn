@@ -40,8 +40,15 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
     private final boolean wantProps;
     private final boolean wantContents;
     /**
-     * TODO: how to handle this?
+     * This is a broken-minded SVN feature we are unlikely to support ever.
+     * Client can declare what fields it wants to be sent for child nodes (wantContents=true).
+     * However, 1) fields are not optional, so we still have fill them with junk values
+     * 2) They're trivial to calculate.
+     * 3) For additional lulz, see the email thread on dev@svn, 2012-03-28, subject
+     * "buildbot failure in ASF Buildbot on svn-slik-w2k3-x64-ra",
+     * <http://svn.haxx.se/dev/archive-2012-03/0655.shtml>.
      */
+    @SuppressWarnings("UnusedDeclaration")
     @NotNull
     private final String[] fields;
     /**
@@ -87,15 +94,16 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .separator();
     if (args.wantContents) {
       for (VcsFile item : fileInfo.getEntries()) {
+        final VcsRevision lastChange = item.getLastChange();
         writer
             .listBegin()
             .string(item.getFileName()) // name
             .word(item.getKind().toString()) // node-kind
             .number(item.getSize()) // size
             .bool(!item.getProperties(false).isEmpty()) // has-props
-            .number(item.getLastChange().getId()) // created-rev
-            .listBegin().string(item.getLastChange().getDate()).listEnd() // created-date
-            .listBegin().string(item.getLastChange().getAuthor()).listEnd() // last-author
+            .number(lastChange.getId()) // created-rev
+            .listBegin().string(lastChange.getDate()).listEnd() // created-date
+            .listBegin().string(lastChange.getAuthor()).listEnd() // last-author
             .listEnd()
             .separator();
       }
