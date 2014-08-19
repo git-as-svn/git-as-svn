@@ -1,5 +1,6 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.TreeFormatter;
@@ -7,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +42,13 @@ public class GitTreeUpdate {
   @NotNull
   public ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException, SVNException {
     final TreeFormatter treeBuilder = new TreeFormatter();
-    for (Map.Entry<String, GitTreeEntry> entry : entries.entrySet()) {
+    final List<Map.Entry<String, GitTreeEntry>> sortedEntries = new ArrayList<>(entries.entrySet());
+    Collections.sort(sortedEntries, (o1, o2) -> {
+      final String name1 = o1.getKey() + (o1.getValue().getFileMode() == FileMode.TREE ? "/" : "");
+      final String name2 = o2.getKey() + (o2.getValue().getFileMode() == FileMode.TREE ? "/" : "");
+      return name1.compareTo(name2);
+    });
+    for (Map.Entry<String, GitTreeEntry> entry : sortedEntries) {
       final String name = entry.getKey();
       final GitTreeEntry value = entry.getValue();
       treeBuilder.append(name, value.getFileMode(), value.getObjectId().getObject());
