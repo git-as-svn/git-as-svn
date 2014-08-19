@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,20 +36,24 @@ public class GitFile implements VcsFile {
   @NotNull
   private final GitRepository repo;
   @NotNull
+  private final GitProperty[] parentProp;
+  @NotNull
   private final GitObject<ObjectId> objectId;
   @NotNull
   private final FileMode fileMode;
   @NotNull
   private final String fullPath;
-  private final int lastChange;
   @Nullable
   private ObjectLoader objectLoader;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull GitObject<ObjectId> objectId, @NotNull FileMode fileMode, @NotNull String fullPath, int revision) {
+  private final int lastChange;
+
+  public GitFile(@NotNull GitRepository repo, @NotNull GitObject<ObjectId> objectId, @NotNull FileMode fileMode, @NotNull String fullPath, @NotNull GitProperty[] parentProp, int revision) {
     this.repo = repo;
     this.objectId = objectId;
     this.fileMode = fileMode;
     this.fullPath = fullPath;
+    this.parentProp = parentProp;
     this.lastChange = repo.getLastChange(fullPath, revision);
   }
 
@@ -77,6 +82,12 @@ public class GitFile implements VcsFile {
   @Override
   public Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException {
     final Map<String, String> props = new HashMap<>();
+    for (GitProperty prop : parentProp) {
+      prop.applyOnChild(fullPath, props);
+    }
+    for (GitProperty prop : repo.getProperties(objectId.getObject())) {
+      prop.apply(props);
+    }
     if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
       props.put(SVNProperty.EXECUTABLE, "*");
     } else if (fileMode.equals(FileMode.SYMLINK)) {
@@ -88,9 +99,6 @@ public class GitFile implements VcsFile {
       props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
       props.put(SVNProperty.COMMITTED_DATE, last.getDate());
       props.put(SVNProperty.LAST_AUTHOR, last.getAuthor());
-    }
-    for (final GitProperty prop : repo.getProperties(objectId.getObject())) {
-      prop.apply(props);
     }
     return props;
   }
@@ -160,10 +168,20 @@ public class GitFile implements VcsFile {
   }
 
   private Iterable<VcsFile> getEntries(@NotNull Map<String, GitTreeEntry> treeEntries) {
+    final GitProperty[] allProp = joinProperties(parentProp, repo.getProperties(objectId.getObject()));
     return treeEntries.entrySet()
         .stream()
-        .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), lastChange))
+        .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), allProp, lastChange))
         .collect(Collectors.toList());
+  }
+
+  @NotNull
+  private GitProperty[] joinProperties(@NotNull GitProperty[] parent, @NotNull GitProperty[] local) {
+    if (parent.length == 0) return local;
+    if (local.length == 0) return parent;
+    final GitProperty[] joined = Arrays.copyOf(parent, parent.length + local.length);
+    System.arraycopy(local, 0, joined, parent.length, local.length);
+    return joined;
   }
 
   @NotNull

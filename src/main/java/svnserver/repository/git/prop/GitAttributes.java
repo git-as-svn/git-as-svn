@@ -66,6 +66,11 @@ public class GitAttributes implements GitProperty {
     }
   }
 
+  @Override
+  public void applyOnChild(@NotNull String path, @NotNull Map<String, String> props) {
+    // todo:
+  }
+
   private final static class Rule {
     @NotNull
     private final String mask;

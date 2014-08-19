@@ -13,4 +13,6 @@ public interface GitProperty {
   static final GitProperty[] emptyArray = {};
 
   void apply(@NotNull Map<String, String> props);
+
+  void applyOnChild(@NotNull String path, @NotNull Map<String, String> props);
 }
