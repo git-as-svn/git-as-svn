@@ -20,6 +20,8 @@ import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
+import svnserver.repository.git.prop.GitAttributes;
+import svnserver.repository.git.prop.GitProperty;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -67,7 +69,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
   @NotNull
-  private final Map<String, Map<String, String>> cacheProperties = new ConcurrentHashMap<>();
+  private final Map<String, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
 
   public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
     this.repository = new FileRepository(new File(config.getPath()).getAbsoluteFile());
@@ -149,11 +151,16 @@ public class GitRepository implements VcsRepository {
       final GitTreeEntry newEntry = entry.getValue();
       final GitTreeEntry oldEntry = oldEntries.remove(name);
       final GitObject<ObjectId> newTreeId = newEntry.getTreeId(this);
-      if (name.equals(".gitignore") || name.equals(".gitattributes")) {
-        cacheProperties
-            .computeIfAbsent(newTree.getObject().getName(), s -> new HashMap<>())
-            .put(name, loadContent(newEntry.getObjectId()));
+
+      final GitProperty property = parseGitProperty(name, newEntry.getObjectId());
+      if (property != null) {
+        cacheProperties.compute(newTree.getObject().getName(), (key, oldProps) -> {
+          GitProperty[] newProps = oldProps == null ? new GitProperty[1] : Arrays.copyOf(oldProps, oldProps.length + 1);
+          newProps[0] = property;
+          return newProps;
+        });
       }
+
       if (!newEntry.equals(oldEntry)) {
         final String fullPath = StringHelper.joinPath(path, name);
         changes.put(fullPath, new GitLogEntry(oldEntry, newEntry));
@@ -164,6 +171,19 @@ public class GitRepository implements VcsRepository {
     }
     for (Map.Entry<String, GitTreeEntry> entry : oldEntries.entrySet()) {
       changes.put(StringHelper.joinPath(path, entry.getKey()), new GitLogEntry(entry.getValue(), null));
+    }
+  }
+
+  @Nullable
+  private GitProperty parseGitProperty(String fileName, GitObject<ObjectId> objectId) throws IOException {
+    switch (fileName) {
+      case ".gitattributes":
+        return new GitAttributes(loadContent(objectId));
+      case ".gitignore":
+        // todo: .gitignore
+        return null;
+      default:
+        return null;
     }
   }
 
@@ -206,6 +226,11 @@ public class GitRepository implements VcsRepository {
       cacheMd5.putIfAbsent(key, result);
     }
     return result;
+  }
+
+  @NotNull
+  public GitProperty[] getProperties(@NotNull ObjectId objectId) {
+    return cacheProperties.getOrDefault(objectId.name(), GitProperty.emptyArray);
   }
 
   @NotNull

@@ -14,6 +14,7 @@ import svnserver.StreamHelper;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsFile;
+import svnserver.repository.git.prop.GitProperty;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -87,6 +88,9 @@ public class GitFile implements VcsFile {
       props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
       props.put(SVNProperty.COMMITTED_DATE, last.getDate());
       props.put(SVNProperty.LAST_AUTHOR, last.getAuthor());
+    }
+    for (final GitProperty prop : repo.getProperties(objectId.getObject())) {
+      prop.apply(props);
     }
     return props;
   }

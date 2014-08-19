@@ -13,7 +13,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitAttributes {
+public class GitAttributes implements GitProperty {
   @NotNull
   private final static String EOL_PREFIX = "eol=";
   @NotNull
@@ -55,7 +55,8 @@ public class GitAttributes {
     return null;
   }
 
-  public void modify(@NotNull Map<String, String> props) {
+  @Override
+  public void apply(@NotNull Map<String, String> props) {
     if (rules.length > 0) {
       final StringBuilder sb = new StringBuilder();
       for (Rule rule : rules) {

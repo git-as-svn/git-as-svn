@@ -15,7 +15,7 @@ import java.util.Map;
 public class GitAttributesTest {
   @Test
   public void testParseAttributes() {
-    final GitAttributes attr = new GitAttributes(
+    final GitProperty attr = new GitAttributes(
         "# Gradle\n" +
             "*.gradle\t\ttext eol=native" +
             "\n" +
@@ -26,7 +26,7 @@ public class GitAttributesTest {
             "*.sh\t\t\ttext eol=lf"
     );
     final Map<String, String> props = new HashMap<>();
-    attr.modify(props);
+    attr.apply(props);
     Assert.assertEquals(props.size(), 1);
     Assert.assertEquals(props.get(SVNProperty.INHERITABLE_AUTO_PROPS),
         "*.gradle = svn:eol-style=native\n" +
