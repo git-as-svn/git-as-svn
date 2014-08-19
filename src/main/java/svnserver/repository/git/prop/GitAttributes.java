@@ -1,5 +1,7 @@
 package svnserver.repository.git.prop;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -36,7 +38,7 @@ public class GitAttributes implements GitProperty {
     for (String line : content.split("(?:#[^\n]*)?\n")) {
       final String[] tokens = line.trim().split("\\s+");
       final String eol = getEol(tokens);
-      if (eol != null) {
+      if ((eol != null) && (eol.equals(SVNProperty.EOL_STYLE_CRLF) || eol.equals(SVNProperty.EOL_STYLE_LF) || eol.equals(SVNProperty.EOL_STYLE_NATIVE))) {
         parsedRules.add(new Rule(tokens[0], eol));
       }
     }
@@ -68,7 +70,11 @@ public class GitAttributes implements GitProperty {
 
   @Override
   public void applyOnChild(@NotNull String path, @NotNull Map<String, String> props) {
-    // todo:
+    for (Rule rule : rules) {
+      if (FilenameUtils.wildcardMatch(path, rule.mask, IOCase.SENSITIVE)) {
+        props.put(SVNProperty.EOL_STYLE, rule.eol);
+      }
+    }
   }
 
   private final static class Rule {
