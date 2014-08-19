@@ -18,6 +18,9 @@ public interface VcsFile {
   String getFileName();
 
   @NotNull
+  String getFullPath();
+
+  @NotNull
   Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException;
 
   @NotNull

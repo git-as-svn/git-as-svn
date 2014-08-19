@@ -73,6 +73,7 @@ public class SvnServer extends Thread {
     commands.put("get-latest-rev", new GetLatestRevCmd());
     commands.put("get-dir", new GetDirCmd());
     commands.put("get-file", new GetFileCmd());
+    commands.put("get-iprops", new GetIPropsCmd());
     commands.put("log", new LogCmd());
     commands.put("reparent", new ReparentCmd());
     commands.put("check-path", new CheckPathCmd());
