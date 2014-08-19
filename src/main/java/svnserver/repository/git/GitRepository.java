@@ -21,6 +21,7 @@ import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.prop.GitAttributes;
+import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.File;
@@ -156,7 +157,7 @@ public class GitRepository implements VcsRepository {
       if (property != null) {
         cacheProperties.compute(newTree.getObject().getName(), (key, oldProps) -> {
           GitProperty[] newProps = oldProps == null ? new GitProperty[1] : Arrays.copyOf(oldProps, oldProps.length + 1);
-          newProps[0] = property;
+          newProps[newProps.length - 1] = property;
           return newProps;
         });
       }
@@ -180,8 +181,7 @@ public class GitRepository implements VcsRepository {
       case ".gitattributes":
         return new GitAttributes(loadContent(objectId));
       case ".gitignore":
-        // todo: .gitignore
-        return null;
+        return new GitIgnore(loadContent(objectId));
       default:
         return null;
     }
