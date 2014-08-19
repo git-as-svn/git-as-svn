@@ -40,6 +40,9 @@ public final class ACL {
         user2groups.computeIfAbsent(user, s -> new HashSet<>()).add(name);
     }
 
+    if (config.getAccess().length == 0)
+      throw new IllegalArgumentException("Empty ACL");
+
     for (AccessConfig access : config.getAccess()) {
       final String path = access.getPath();
 
