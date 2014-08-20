@@ -1,5 +1,6 @@
 package svnserver.repository.git.prop;
 
+import org.eclipse.jgit.lib.FileMode;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitTortoise implements GitProperty {
+public final class GitTortoise implements GitProperty {
   @NotNull
   private final Map<String, String> tortoiseProps;
 
@@ -48,7 +49,21 @@ public class GitTortoise implements GitProperty {
 
   @Nullable
   @Override
-  public GitProperty createForChild(@NotNull String path) {
+  public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final GitTortoise that = (GitTortoise) o;
+    return tortoiseProps.equals(that.tortoiseProps);
+  }
+
+  @Override
+  public int hashCode() {
+    return tortoiseProps.hashCode();
   }
 }

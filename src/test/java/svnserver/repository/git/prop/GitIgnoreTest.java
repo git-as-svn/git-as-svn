@@ -1,5 +1,6 @@
 package svnserver.repository.git.prop;
 
+import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -52,7 +53,7 @@ public class GitIgnoreTest {
   private void checkProps(@NotNull GitProperty gitProperty, @Nullable String local, @Nullable String global, @NotNull String... path) {
     GitProperty prop = gitProperty;
     for (String name : path) {
-      prop = prop.createForChild(name);
+      prop = prop.createForChild(name, FileMode.TREE);
       if (prop == null && local == null && global == null) {
         return;
       }

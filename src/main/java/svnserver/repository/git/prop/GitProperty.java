@@ -1,5 +1,6 @@
 package svnserver.repository.git.prop;
 
+import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,21 +25,22 @@ public interface GitProperty {
   /**
    * Create GitProperty for child element.
    *
-   * @param path Child node.
+   * @param name  Child node name.
+   * @param mode Child node type.
    * @return Child property modifier or null, if this property is not affected for childs.
    */
   @Nullable
-  GitProperty createForChild(@NotNull String path);
+  GitProperty createForChild(@NotNull String name, @NotNull FileMode mode);
 
   @NotNull
-  static GitProperty[] joinProperties(@NotNull GitProperty[] parentProps, @NotNull String entryName, @NotNull GitProperty[] entryProps) {
+  static GitProperty[] joinProperties(@NotNull GitProperty[] parentProps, @NotNull String entryName, @NotNull FileMode fileMode, @NotNull GitProperty[] entryProps) {
     if (parentProps.length == 0) {
       return entryProps;
     }
     final GitProperty[] joined = new GitProperty[parentProps.length + entryProps.length];
     int index = 0;
     for (GitProperty parentProp : parentProps) {
-      final GitProperty prop = parentProp.createForChild(entryName);
+      final GitProperty prop = parentProp.createForChild(entryName, fileMode);
       if (prop != null) {
         joined[index] = prop;
         index++;

@@ -4,10 +4,8 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.StreamHelper;
@@ -21,10 +19,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 /**
  * Git file.
@@ -32,28 +30,33 @@ import java.util.stream.Collectors;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitFile implements VcsFile {
+  @FunctionalInterface
+  public interface PropertyResolver {
+    public GitProperty[] getProperties(@NotNull GitTreeEntry object) throws IOException;
+  }
+
   @NotNull
   private final GitRepository repo;
   @NotNull
+  private final PropertyResolver resolver;
+  @NotNull
   private final GitProperty[] props;
   @NotNull
-  private final GitObject<ObjectId> objectId;
-  @NotNull
-  private final FileMode fileMode;
+  private final GitTreeEntry treeEntry;
   @NotNull
   private final String fullPath;
   @Nullable
   private ObjectLoader objectLoader;
 
-  private final int lastChange;
+  private final int revision;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull GitObject<ObjectId> objectId, @NotNull FileMode fileMode, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) {
+  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision, @NotNull PropertyResolver resolver) throws IOException {
     this.repo = repo;
-    this.objectId = objectId;
-    this.fileMode = fileMode;
+    this.treeEntry = treeEntry;
     this.fullPath = fullPath;
-    this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), repo.getProperties(objectId.getObject()));
-    this.lastChange = repo.getLastChange(fullPath, revision);
+    this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), treeEntry.getFileMode(), resolver.getProperties(treeEntry));
+    this.resolver = resolver;
+    this.revision = revision;
   }
 
   @NotNull
@@ -68,22 +71,28 @@ public class GitFile implements VcsFile {
   }
 
   @NotNull
+  public GitTreeEntry getTreeEntry() {
+    return treeEntry;
+  }
+
+  @NotNull
   public FileMode getFileMode() {
-    return fileMode;
+    return treeEntry.getFileMode();
   }
 
   @NotNull
   public GitObject<ObjectId> getObjectId() {
-    return objectId;
+    return treeEntry.getObjectId();
   }
 
   @NotNull
   @Override
-  public Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException {
+  public Map<String, String> getProperties(boolean includeInternalProps) throws IOException {
     final Map<String, String> props = new HashMap<>();
     for (GitProperty prop : this.props) {
       prop.apply(props);
     }
+    final FileMode fileMode = treeEntry.getFileMode();
     if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
       props.put(SVNProperty.EXECUTABLE, "*");
     } else if (fileMode.equals(FileMode.SYMLINK)) {
@@ -102,11 +111,12 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public String getMd5() throws IOException {
-    return repo.getObjectMD5(objectId, fileMode == FileMode.SYMLINK ? 'l' : 'f', this::openStream);
+    return repo.getObjectMD5(treeEntry.getObjectId(), treeEntry.getFileMode() == FileMode.SYMLINK ? 'l' : 'f', this::openStream);
   }
 
   @Override
   public long getSize() throws IOException {
+    final FileMode fileMode = treeEntry.getFileMode();
     if (fileMode == FileMode.SYMLINK) {
       return SvnConstants.LINK_PREFIX.length() + getObjectLoader().getSize();
     }
@@ -121,12 +131,12 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public SVNNodeKind getKind() {
-    return GitHelper.getKind(fileMode);
+    return GitHelper.getKind(treeEntry.getFileMode());
   }
 
   private ObjectLoader getObjectLoader() throws IOException {
     if (objectLoader == null) {
-      objectLoader = repo.openObject(objectId);
+      objectLoader = GitRepository.openObject(treeEntry.getObjectId());
     }
     return objectLoader;
   }
@@ -134,7 +144,7 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    if (fileMode == FileMode.SYMLINK) {
+    if (treeEntry.getFileMode() == FileMode.SYMLINK) {
       try (
           ByteArrayOutputStream outputStream = new ByteArrayOutputStream(SvnConstants.LINK_PREFIX.length() + (int) getObjectLoader().getSize());
           InputStream inputStream = getObjectLoader().openStream()
@@ -149,31 +159,22 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Iterable<VcsFile> getEntries() throws IOException {
-    if (fileMode.equals(FileMode.TREE)) {
-      return getEntries(GitRepository.loadTree(objectId));
-    }
-    if (fileMode.equals(FileMode.GITLINK)) {
-      GitObject<RevCommit> linkedCommit = repo.loadLinkedCommit(objectId.getObject());
-      if (linkedCommit == null) {
-        return Collections.emptyList();
-      }
-      return getEntries(GitRepository.loadTree(new GitObject<>(linkedCommit.getRepo(), linkedCommit.getObject().getTree())));
-    }
-    throw new IOException("Unsupported operation for: " + fullPath + " (mode: " + fileMode + ")");
+  public Map<String, VcsFile> getEntries() throws IOException {
+    return getEntries(repo.loadTree(treeEntry));
   }
 
-  private Iterable<VcsFile> getEntries(@NotNull Map<String, GitTreeEntry> treeEntries) {
-    return treeEntries.entrySet()
-        .stream()
-        .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), props, lastChange))
-        .collect(Collectors.toList());
+  public Map<String, VcsFile> getEntries(@NotNull Map<String, GitTreeEntry> treeEntries) throws IOException {
+    final Map<String, VcsFile> result = new TreeMap<>();
+    for (Map.Entry<String, GitTreeEntry> entry : treeEntries.entrySet()) {
+      result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision, resolver));
+    }
+    return result;
   }
 
   @NotNull
   @Override
-  public GitRevision getLastChange() throws IOException, SVNException {
-    return repo.getRevisionInfo(lastChange);
+  public GitRevision getLastChange() throws IOException {
+    return repo.sureRevisionInfo(repo.getLastChange(fullPath, revision));
   }
 
   @Override
@@ -181,17 +182,15 @@ public class GitFile implements VcsFile {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     GitFile that = (GitFile) o;
-    return fileMode.equals(that.fileMode)
+    return treeEntry.equals(that.treeEntry)
         && fullPath.equals(that.fullPath)
-        && (lastChange == that.lastChange);
+        && Arrays.equals(props, that.props);
   }
 
   @Override
   public int hashCode() {
-    int result = objectId.hashCode();
-    result = 31 * result + fileMode.hashCode();
+    int result = treeEntry.hashCode();
     result = 31 * result + fullPath.hashCode();
-    result = 31 * result + lastChange;
     return result;
   }
 
@@ -199,7 +198,7 @@ public class GitFile implements VcsFile {
   public String toString() {
     return "GitFileInfo{" +
         "fullPath='" + fullPath + '\'' +
-        ", objectId=" + objectId +
+        ", objectId=" + treeEntry.getId() +
         '}';
   }
 }

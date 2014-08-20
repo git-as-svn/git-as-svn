@@ -93,12 +93,12 @@ public class GitRevision implements VcsRevision {
       if (pathItem.isEmpty()) {
         continue;
       }
-      props = GitProperty.joinProperties(props, pathItem, repo.getProperties(entry.getObjectId().getObject()));
-      entry = GitRepository.loadTree(entry.getTreeId(repo)).get(pathItem);
+      props = GitProperty.joinProperties(props, pathItem, entry.getFileMode(), repo.getProperties(entry));
+      entry = repo.loadTree(entry).get(pathItem);
       if (entry == null) {
         return null;
       }
     }
-    return new GitFile(repo, entry.getObjectId(), entry.getFileMode(), fullPath, props, revision);
+    return new GitFile(repo, entry, fullPath, props, revision, repo::getProperties);
   }
 }

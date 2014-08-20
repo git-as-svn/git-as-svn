@@ -1,7 +1,10 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+
+import java.io.IOException;
 
 /**
  * File modification information.
@@ -9,12 +12,12 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface VcsLogEntry {
-  char getChange();
+  char getChange() throws IOException;
 
   @NotNull
   SVNNodeKind getKind();
 
-  boolean isContentModified();
+  boolean isContentModified() throws IOException;
 
-  boolean isPropertyModified();
+  boolean isPropertyModified() throws IOException, SVNException;
 }

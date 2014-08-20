@@ -2,6 +2,7 @@ package svnserver.repository.git.prop;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
+import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -13,7 +14,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitIgnore implements GitProperty {
+public final class GitIgnore implements GitProperty {
   @NotNull
   private final List<Rule> rules;
   // svn:global-ignores
@@ -147,7 +148,7 @@ public class GitIgnore implements GitProperty {
 
   @Nullable
   @Override
-  public GitProperty createForChild(@NotNull String path) {
+  public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
     if (rules.isEmpty()) {
       return null;
     }
@@ -158,15 +159,35 @@ public class GitIgnore implements GitProperty {
       if (rule.mask.equals("**")) {
         childRules.add(rule);
         final int index = rule.rule.indexOf('/', 1);
-        if (rule.rule.substring(1, index).equals(path)) {
+        if (rule.rule.substring(1, index).equals(name)) {
           processLine(localList, globalList, childRules, rule.rule.substring(index));
         }
       }
-      if (FilenameUtils.wildcardMatch(path, rule.mask, IOCase.SENSITIVE)) {
+      if (FilenameUtils.wildcardMatch(name, rule.mask, IOCase.SENSITIVE)) {
         processLine(localList, globalList, childRules, rule.rule);
       }
     }
     return new GitIgnore(localList, globalList, childRules);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GitIgnore gitIgnore = (GitIgnore) o;
+
+    return Arrays.equals(global, gitIgnore.global)
+        && Arrays.equals(local, gitIgnore.local)
+        && rules.equals(gitIgnore.rules);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = rules.hashCode();
+    result = 31 * result + Arrays.hashCode(global);
+    result = 31 * result + Arrays.hashCode(local);
+    return result;
   }
 
   private final static class Rule {
@@ -178,6 +199,23 @@ public class GitIgnore implements GitProperty {
     private Rule(@NotNull String mask, @NotNull String rule) {
       this.mask = mask;
       this.rule = rule;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Rule rule1 = (Rule) o;
+      return mask.equals(rule1.mask)
+          && rule.equals(rule1.rule);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = mask.hashCode();
+      result = 31 * result + rule.hashCode();
+      return result;
     }
   }
 }

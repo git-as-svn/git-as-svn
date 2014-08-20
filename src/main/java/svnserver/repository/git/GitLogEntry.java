@@ -1,11 +1,13 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.repository.VcsLogEntry;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Git modification type.
@@ -14,21 +16,21 @@ import svnserver.repository.VcsLogEntry;
  */
 public class GitLogEntry implements VcsLogEntry {
   @Nullable
-  private final GitTreeEntry oldEntry;
+  private final GitFile oldEntry;
   @Nullable
-  private final GitTreeEntry newEntry;
+  private final GitFile newEntry;
 
-  public GitLogEntry(@Nullable GitTreeEntry oldEntry, @Nullable GitTreeEntry newEntry) {
+  public GitLogEntry(@Nullable GitFile oldEntry, @Nullable GitFile newEntry) {
     this.oldEntry = oldEntry;
     this.newEntry = newEntry;
   }
 
   @Override
-  public char getChange() {
+  public char getChange() throws IOException {
     if (newEntry != null) {
       if (oldEntry == null) return SVNLogEntryPath.TYPE_ADDED;
       if (GitHelper.getKind(newEntry.getFileMode()) != GitHelper.getKind(oldEntry.getFileMode())) return SVNLogEntryPath.TYPE_REPLACED;
-      return newEntry.getFileMode() != FileMode.TREE ? SVNLogEntryPath.TYPE_MODIFIED : 0;
+      return (isContentModified() || isPropertyModified()) ? SVNLogEntryPath.TYPE_MODIFIED : 0;
     } else {
       return SVNLogEntryPath.TYPE_DELETED;
     }
@@ -43,14 +45,17 @@ public class GitLogEntry implements VcsLogEntry {
   }
 
   @Override
-  public boolean isContentModified() {
-    return (newEntry == null) || (oldEntry == null)
-        || (!newEntry.getObjectId().equals(oldEntry.getObjectId()));
+  public boolean isContentModified() throws IOException {
+    return (newEntry != null) && (!newEntry.isDirectory())
+        && (oldEntry != null) && (!oldEntry.isDirectory())
+        && (!newEntry.getMd5().equals(oldEntry.getMd5()));
   }
 
   @Override
-  public boolean isPropertyModified() {
-    return (newEntry != null) && (oldEntry != null)
-        && (newEntry.getFileMode().equals(oldEntry.getFileMode()));
+  public boolean isPropertyModified() throws IOException {
+    if ((newEntry == null) || (oldEntry == null)) return false;
+    final Map<String, String> newProps = newEntry.getProperties(false);
+    final Map<String, String> oldProps = oldEntry.getProperties(false);
+    return (!newProps.equals(oldProps));
   }
 }
