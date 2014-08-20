@@ -2,6 +2,7 @@ package svnserver.repository.git.prop;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,7 +150,7 @@ public final class GitIgnore implements GitProperty {
   @Nullable
   @Override
   public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
-    if (rules.isEmpty()) {
+    if (rules.isEmpty() || (fileMode.getObjectType() == Constants.OBJ_BLOB)) {
       return null;
     }
     final List<String> localList = new ArrayList<>();
@@ -166,6 +167,9 @@ public final class GitIgnore implements GitProperty {
       if (FilenameUtils.wildcardMatch(name, rule.mask, IOCase.SENSITIVE)) {
         processLine(localList, globalList, childRules, rule.rule);
       }
+    }
+    if (localList.isEmpty() && globalList.isEmpty() && childRules.isEmpty()) {
+      return null;
     }
     return new GitIgnore(localList, globalList, childRules);
   }
