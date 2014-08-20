@@ -77,13 +77,25 @@ public class GitAttributes implements GitProperty {
     }
   }
 
+  @Nullable
   @Override
-  public void applyOnChild(@NotNull String path, @NotNull Map<String, String> props) {
-    for (Rule rule : rules) {
-      if (FilenameUtils.wildcardMatch(path, rule.mask, IOCase.SENSITIVE)) {
-        props.put(SVNProperty.EOL_STYLE, rule.eol);
+  public GitProperty createForChild(@NotNull String path) {
+    return new GitProperty() {
+      @Override
+      public void apply(@NotNull Map<String, String> props) {
+        for (Rule rule : rules) {
+          if (FilenameUtils.wildcardMatch(path, rule.mask, IOCase.SENSITIVE)) {
+            props.put(SVNProperty.EOL_STYLE, rule.eol);
+          }
+        }
       }
-    }
+
+      @Nullable
+      @Override
+      public GitProperty createForChild(@NotNull String path) {
+        return this;
+      }
+    };
   }
 
   private final static class Rule {

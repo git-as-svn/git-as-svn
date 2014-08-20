@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +35,7 @@ public class GitFile implements VcsFile {
   @NotNull
   private final GitRepository repo;
   @NotNull
-  private final GitProperty[] parentProp;
+  private final GitProperty[] props;
   @NotNull
   private final GitObject<ObjectId> objectId;
   @NotNull
@@ -48,12 +47,12 @@ public class GitFile implements VcsFile {
 
   private final int lastChange;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull GitObject<ObjectId> objectId, @NotNull FileMode fileMode, @NotNull String fullPath, @NotNull GitProperty[] parentProp, int revision) {
+  public GitFile(@NotNull GitRepository repo, @NotNull GitObject<ObjectId> objectId, @NotNull FileMode fileMode, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) {
     this.repo = repo;
     this.objectId = objectId;
     this.fileMode = fileMode;
     this.fullPath = fullPath;
-    this.parentProp = parentProp;
+    this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), repo.getProperties(objectId.getObject()));
     this.lastChange = repo.getLastChange(fullPath, revision);
   }
 
@@ -82,10 +81,7 @@ public class GitFile implements VcsFile {
   @Override
   public Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException {
     final Map<String, String> props = new HashMap<>();
-    for (GitProperty prop : parentProp) {
-      prop.applyOnChild(fullPath, props);
-    }
-    for (GitProperty prop : repo.getProperties(objectId.getObject())) {
+    for (GitProperty prop : this.props) {
       prop.apply(props);
     }
     if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
@@ -168,20 +164,10 @@ public class GitFile implements VcsFile {
   }
 
   private Iterable<VcsFile> getEntries(@NotNull Map<String, GitTreeEntry> treeEntries) {
-    final GitProperty[] allProp = joinProperties(parentProp, repo.getProperties(objectId.getObject()));
     return treeEntries.entrySet()
         .stream()
-        .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), allProp, lastChange))
+        .map(entry -> new GitFile(repo, entry.getValue().getObjectId(), entry.getValue().getFileMode(), StringHelper.joinPath(fullPath, entry.getKey()), props, lastChange))
         .collect(Collectors.toList());
-  }
-
-  @NotNull
-  private GitProperty[] joinProperties(@NotNull GitProperty[] parent, @NotNull GitProperty[] local) {
-    if (parent.length == 0) return local;
-    if (local.length == 0) return parent;
-    final GitProperty[] joined = Arrays.copyOf(parent, parent.length + local.length);
-    System.arraycopy(local, 0, joined, parent.length, local.length);
-    return joined;
   }
 
   @NotNull

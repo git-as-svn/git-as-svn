@@ -3,6 +3,7 @@ package svnserver.repository.git.prop;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -45,7 +46,9 @@ public class GitTortoise implements GitProperty {
     props.putAll(tortoiseProps);
   }
 
+  @Nullable
   @Override
-  public void applyOnChild(@NotNull String path, @NotNull Map<String, String> props) {
+  public GitProperty createForChild(@NotNull String path) {
+    return null;
   }
 }

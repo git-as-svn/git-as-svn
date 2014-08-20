@@ -1,6 +1,7 @@
 package svnserver.repository.git.prop;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNProperty;
 
 import java.util.Map;
@@ -11,8 +12,6 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitIgnore implements GitProperty {
-  @NotNull
-  private final static String EOL_PREFIX = "eol=";
   @NotNull
   private final String content;
 
@@ -32,7 +31,9 @@ public class GitIgnore implements GitProperty {
     }
   }
 
+  @Nullable
   @Override
-  public void applyOnChild(@NotNull String path, @NotNull Map<String, String> props) {
+  public GitProperty createForChild(@NotNull String path) {
+    return null;
   }
 }
