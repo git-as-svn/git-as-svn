@@ -18,6 +18,7 @@ dependencies {
   compile "org.slf4j:slf4j-simple:1.7.7"
   compile "com.beust:jcommander:1.35"
   compile "commons-io:commons-io:2.4"
+  compile "org.ini4j:ini4j:0.5.2"
   testCompile "org.testng:testng:6.8.8"
 }
 

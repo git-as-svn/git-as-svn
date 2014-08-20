@@ -23,6 +23,7 @@ import svnserver.repository.VcsRepository;
 import svnserver.repository.git.prop.GitAttributes;
 import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
+import svnserver.repository.git.prop.GitTortoise;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -178,6 +179,8 @@ public class GitRepository implements VcsRepository {
   @Nullable
   private GitProperty parseGitProperty(String fileName, GitObject<ObjectId> objectId) throws IOException {
     switch (fileName) {
+      case ".tgitconfig":
+        return new GitTortoise(loadContent(objectId));
       case ".gitattributes":
         return new GitAttributes(loadContent(objectId));
       case ".gitignore":
