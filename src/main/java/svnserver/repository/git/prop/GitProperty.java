@@ -32,8 +32,10 @@ public interface GitProperty {
 
   @NotNull
   static GitProperty[] joinProperties(@NotNull GitProperty[] parentProps, @NotNull String entryName, @NotNull GitProperty[] entryProps) {
-    if (parentProps.length == 0) return entryProps;
-    final GitProperty[] joined = Arrays.copyOf(parentProps, parentProps.length + entryProps.length);
+    if (parentProps.length == 0) {
+      return entryProps;
+    }
+    final GitProperty[] joined = new GitProperty[parentProps.length + entryProps.length];
     int index = 0;
     for (GitProperty parentProp : parentProps) {
       final GitProperty prop = parentProp.createForChild(entryName);

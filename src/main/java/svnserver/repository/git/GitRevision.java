@@ -12,7 +12,9 @@ import svnserver.repository.VcsRevision;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -86,20 +88,17 @@ public class GitRevision implements VcsRevision {
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
     GitTreeEntry entry = new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), commit.getTree()));
-    final List<GitProperty> props = new ArrayList<>();
+    GitProperty[] props = GitProperty.emptyArray;
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;
       }
-      final GitProperty[] parentProps = repo.getProperties(entry.getObjectId().getObject());
-      if (parentProps.length > 0) {
-        props.addAll(Arrays.asList(parentProps));
-      }
+      props = GitProperty.joinProperties(props, pathItem, repo.getProperties(entry.getObjectId().getObject()));
       entry = GitRepository.loadTree(entry.getTreeId(repo)).get(pathItem);
       if (entry == null) {
         return null;
       }
     }
-    return new GitFile(repo, entry.getObjectId(), entry.getFileMode(), fullPath, props.toArray(new GitProperty[props.size()]), revision);
+    return new GitFile(repo, entry.getObjectId(), entry.getFileMode(), fullPath, props, revision);
   }
 }
