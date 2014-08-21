@@ -232,6 +232,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands = new HashMap<>();
       commands.put("add-dir", new LambdaCmd<>(AddParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(AddParams.class, this::addFile));
+      commands.put("change-dir-prop", new LambdaCmd<>(ChangePropParams.class, this::changeDirProp));
       commands.put("change-file-prop", new LambdaCmd<>(ChangePropParams.class, this::changeFileProp));
       commands.put("delete-entry", new LambdaCmd<>(DeleteParams.class, this::deleteEntry));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
@@ -243,6 +244,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands.put("textdelta-end", new LambdaCmd<>(TokenParams.class, this::deltaEnd));
       commands.put("apply-textdelta", new LambdaCmd<>(ChecksumParams.class, this::deltaApply));
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
+    }
+
+    private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
+      context.push(this::editorCommand);
+      // todo:
     }
 
     private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {

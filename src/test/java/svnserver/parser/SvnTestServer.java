@@ -2,6 +2,8 @@ package svnserver.parser;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -12,12 +14,15 @@ import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import svnserver.config.Config;
 import svnserver.config.LocalUserDBConfig;
-import svnserver.config.RepositoryConfig;
+import svnserver.repository.git.GitPushMode;
+import svnserver.repository.git.GitRepositoryConfig;
 import svnserver.server.SvnServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -42,34 +47,38 @@ public final class SvnTestServer implements AutoCloseable {
   @NotNull
   private final File tempDirectory;
   @NotNull
-  private final FileRepository repository;
+  private final Repository repository;
   @NotNull
   private final String testBranch;
   @NotNull
   private final SvnServer server;
+  private final boolean safeBranch;
 
   public SvnTestServer(@Nullable String branch) throws Exception {
-    repository = new FileRepository(findGitPath());
-    testBranch = "test_" + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
+    this(new FileRepository(findGitPath()), branch, true);
+  }
 
-    tempDirectory = File.createTempFile("git-as-svn", "");
-    tempDirectory.delete();
-    tempDirectory.mkdir();
-
+  public SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch) throws Exception {
+    this.repository = repository;
+    this.safeBranch = safeBranch;
+    tempDirectory = TestHelper.createTempDir("git-as-svn");
     final String srcBranch = branch == null ? repository.getBranch() : branch;
-    new Git(repository)
-        .branchCreate()
-        .setName(testBranch)
-        .setStartPoint(srcBranch)
-        .call();
+    if (safeBranch) {
+      testBranch = "test_" + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
+      new Git(repository)
+          .branchCreate()
+          .setName(testBranch)
+          .setStartPoint(srcBranch)
+          .call();
+    } else {
+      testBranch = srcBranch;
+    }
 
     final Config config = new Config();
     config.setPort(0);
     config.setHost(BIND_HOST);
 
-    final RepositoryConfig configRepository = config.getRepository();
-    configRepository.setPath(repository.getDirectory().getPath());
-    configRepository.setBranch(testBranch);
+    config.setRepository(new TestRepositoryConfig(repository));
 
     config.setUserDB(new LocalUserDBConfig(new LocalUserDBConfig.UserEntry[]{
         new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
@@ -79,6 +88,12 @@ public final class SvnTestServer implements AutoCloseable {
     server.start();
     log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);
     log.info("Temporary directory: {}", tempDirectory);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty() throws Exception {
+    final String branch = "master";
+    return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false);
   }
 
   public SVNURL getUrl() throws SVNException {
@@ -93,11 +108,13 @@ public final class SvnTestServer implements AutoCloseable {
   @Override
   public void close() throws Exception {
     server.shutdown();
-    new Git(repository)
-        .branchDelete()
-        .setBranchNames(testBranch)
-        .setForce(true)
-        .call();
+    if (safeBranch) {
+      new Git(repository)
+          .branchDelete()
+          .setBranchNames(testBranch)
+          .setForce(true)
+          .call();
+    }
     repository.close();
     deleteDirectory(tempDirectory);
   }
@@ -105,17 +122,18 @@ public final class SvnTestServer implements AutoCloseable {
   private void deleteDirectory(@NotNull File file) throws IOException {
     if (file.isDirectory()) {
       final File[] files = file.listFiles();
-      if (files!=null){
-      for (File entry : files) {
-        deleteDirectory(entry);
-      }}
+      if (files != null) {
+        for (File entry : files) {
+          deleteDirectory(entry);
+        }
+      }
     }
     if (!file.delete()) {
       throw new FileNotFoundException("Failed to delete file: " + file);
     }
   }
 
-  private File findGitPath() {
+  private static File findGitPath() {
     final File root = new File(".").getAbsoluteFile();
     File path = root;
     while (true) {
@@ -132,5 +150,38 @@ public final class SvnTestServer implements AutoCloseable {
 
   public ISVNAuthenticationManager getAuthenticator() {
     return new BasicAuthenticationManager(USER_NAME, PASSWORD);
+  }
+
+  private class TestRepositoryConfig implements GitRepositoryConfig {
+
+    private final Repository repository;
+
+    public TestRepositoryConfig(Repository repository) {
+      this.repository = repository;
+    }
+
+    @NotNull
+    @Override
+    public String getBranch() {
+      return testBranch;
+    }
+
+    @NotNull
+    @Override
+    public Repository createRepository() throws IOException {
+      return repository;
+    }
+
+    @NotNull
+    @Override
+    public GitPushMode getPushMode() {
+      return GitPushMode.SIMPLE;
+    }
+
+    @NotNull
+    @Override
+    public List<Repository> createLinkedRepositories() throws IOException {
+      return Collections.emptyList();
+    }
   }
 }

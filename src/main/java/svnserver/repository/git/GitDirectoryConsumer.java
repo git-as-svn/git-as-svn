@@ -18,7 +18,7 @@ public class GitDirectoryConsumer implements VcsDirectoryConsumer {
   private final String path;
   @NotNull
   private final Map<String, String> props;
-  @NotNull
+  @Nullable
   private final GitTreeEntry source;
   private final boolean update;
 
@@ -40,7 +40,7 @@ public class GitDirectoryConsumer implements VcsDirectoryConsumer {
     return path;
   }
 
-  @NotNull
+  @Nullable
   public GitTreeEntry getSource() {
     return source;
   }

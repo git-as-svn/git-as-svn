@@ -1,6 +1,5 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -15,15 +14,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.config.RepositoryConfig;
 import svnserver.repository.*;
 import svnserver.repository.git.prop.GitAttributes;
 import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitTortoise;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +37,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitRepository implements VcsRepository {
   public interface StreamFactory {
+
     InputStream openStream() throws IOException;
   }
 
@@ -48,12 +45,15 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
+
   @NotNull
   public static final byte[] emptyBytes = new byte[0];
   @NotNull
-  private final FileRepository repository;
+  private final Repository repository;
   @NotNull
-  private final List<FileRepository> linkedRepositories = new ArrayList<>();
+  private final List<Repository> linkedRepositories;
+  @NotNull
+  private final GitPushMode pushMode;
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
   @NotNull
@@ -72,16 +72,10 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
 
-  public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
-    this.repository = new FileRepository(new File(config.getPath()).getAbsoluteFile());
-    log.info("Repository path: {}", repository.getDirectory());
-    if (!repository.getDirectory().exists()) {
-      throw new FileNotFoundException(repository.getDirectory().getPath());
-    }
-    for (String linkedPath : config.getLinked()) {
-      FileRepository linkedRepository = new FileRepository(new File(linkedPath));
-      linkedRepositories.add(linkedRepository);
-    }
+  public GitRepository(@NotNull GitRepositoryConfig config) throws IOException, SVNException {
+    this.repository = config.createRepository();
+    this.pushMode = config.getPushMode();
+    linkedRepositories = config.createLinkedRepositories();
     final Ref branchRef = repository.getRef(config.getBranch());
     if (branchRef == null) {
       throw new IOException("Branch not found: " + config.getBranch());
@@ -243,7 +237,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public FileRepository getRepository() {
+  public Repository getRepository() {
     return repository;
   }
 
@@ -328,7 +322,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private static RevCommit getEmptyCommit(@NotNull FileRepository repository) throws IOException {
+  private static RevCommit getEmptyCommit(@NotNull Repository repository) throws IOException {
     final ObjectInserter inserter = repository.newObjectInserter();
     final TreeFormatter treeBuilder = new TreeFormatter();
     final ObjectId treeId = inserter.insert(treeBuilder);
@@ -339,8 +333,9 @@ public class GitRepository implements VcsRepository {
     commitBuilder.setMessage("");
     commitBuilder.setTreeId(treeId);
     final ObjectId commitId = inserter.insert(commitBuilder);
-    final RevWalk revWalk = new RevWalk(repository);
+    inserter.flush();
 
+    final RevWalk revWalk = new RevWalk(repository);
     return revWalk.parseCommit(commitId);
   }
 
@@ -670,10 +665,11 @@ public class GitRepository implements VcsRepository {
         commitBuilder.setParentId(commit.getId());
         commitBuilder.setTreeId(treeId);
         final ObjectId commitId = inserter.insert(commitBuilder);
+        inserter.flush();
 
         log.info("Create commit {}: {}", commitId.name(), message);
         log.info("Try to push commit in branch: {}", branchRef.getName());
-        if (!GitHelper.pushNative(repository, commitId, branchRef)) {
+        if (!pushMode.push(repository, commitId, branchRef)) {
           log.info("Non fast forward push rejected");
           return null;
         }
