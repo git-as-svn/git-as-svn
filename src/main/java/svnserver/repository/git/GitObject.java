@@ -1,8 +1,11 @@
 package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 /**
  * Git object with repository information.
@@ -38,6 +41,11 @@ public class GitObject<T extends ObjectId> {
     GitObject gitObject = (GitObject) o;
 
     return object.equals(gitObject.object);
+  }
+
+  @NotNull
+  public ObjectLoader openObject() throws IOException {
+    return repo.newObjectReader().open(object);
   }
 
   @Override

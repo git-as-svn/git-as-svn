@@ -16,10 +16,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.config.RepositoryConfig;
-import svnserver.repository.VcsCommitBuilder;
-import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.*;
 import svnserver.repository.git.prop.GitAttributes;
 import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
@@ -159,7 +156,11 @@ public class GitRepository implements VcsRepository {
     final GitFile newTree = new GitFile(this, new GitTreeEntry(repository, FileMode.TREE, commit.getTree()), "", GitProperty.emptyArray, revisionId, this::collectProperties);
     collectChanges(changes, "", oldTree, newTree);
     for (String path : changes.keySet()) {
-      lastUpdates.computeIfAbsent(path, s -> new IntList()).add(revisionId);
+      lastUpdates.compute(path, (key, list) -> {
+        final IntList result = list == null ? new IntList() : list;
+        result.add(revisionId);
+        return result;
+      });
     }
     revisions.add(new GitRevision(this, revisionId, changes, commit));
   }
@@ -269,11 +270,6 @@ public class GitRepository implements VcsRepository {
   @NotNull
   public GitProperty[] getProperties(@NotNull GitTreeEntry treeEntry) throws IOException {
     return cacheProperties.getOrDefault(treeEntry.getId(), GitProperty.emptyArray);
-  }
-
-  @NotNull
-  public static ObjectLoader openObject(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
-    return objectId.getRepo().newObjectReader().open(objectId.getObject());
   }
 
   @NotNull
@@ -411,143 +407,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   @Override
   public VcsCommitBuilder createCommitBuilder() throws IOException {
-    final Ref branchRef = repository.getRef(branch);
-    final ObjectId objectId = branchRef.getObjectId();
-    final RevWalk revWalk = new RevWalk(repository);
-    final ObjectInserter inserter = repository.newObjectInserter();
-    final RevCommit commit = revWalk.parseCommit(objectId);
-
-    final Deque<GitTreeUpdate> treeStack = new ArrayDeque<>();
-    treeStack.push(new GitTreeUpdate("", loadTree(new GitTreeEntry(repository, FileMode.TREE, commit.getTree()))));
-
-    return new VcsCommitBuilder() {
-      @Override
-      public void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException {
-        final GitTreeUpdate current = treeStack.element();
-        if (current.getEntries().containsKey(name)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
-        }
-        final GitTreeEntry source;
-        if (originalName == null) {
-          source = null;
-        } else {
-          final GitFile file = getRevisionInfo(originalRev).getFile(originalName);
-          if ((file == null) || (!file.isDirectory())) {
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, originalName));
-          }
-          source = file.getTreeEntry();
-        }
-        treeStack.push(new GitTreeUpdate(name, loadTree(source)));
-      }
-
-      @Override
-      public void openDir(@NotNull String name) throws SVNException, IOException {
-        final GitTreeUpdate current = treeStack.element();
-        final GitTreeEntry originalDir = current.getEntries().remove(name);
-        if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-        }
-        treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
-      }
-
-      @Override
-      public void closeDir() throws SVNException, IOException {
-        final GitTreeUpdate last = treeStack.pop();
-        final GitTreeUpdate current = treeStack.element();
-        final String fullPath = getFullPath(last.getName());
-        if (last.getEntries().isEmpty()) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories is not supported: " + fullPath));
-        }
-        final ObjectId subtreeId = last.buildTree(inserter);
-        log.info("Create tree {} for dir: {}", subtreeId.name(), fullPath);
-        if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(repository, subtreeId))) != null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
-        }
-      }
-
-      @Override
-      public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException {
-        final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
-        final GitTreeUpdate current = treeStack.element();
-        final GitTreeEntry entry = current.getEntries().get(name);
-        final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
-        if ((gitDeltaConsumer.isUpdate()) && (entry == null)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-        } else if ((gitDeltaConsumer.isUpdate()) && (!entry.getObjectId().equals(originalId))) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
-        } else if ((!gitDeltaConsumer.isUpdate()) && (entry != null)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
-        }
-        final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
-        if (objectId == null) {
-          // Content not updated.
-          if (originalId == null) {
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, getFullPath(name)));
-          }
-          return;
-        }
-        current.getEntries().put(name, new GitTreeEntry(gitDeltaConsumer.getFileMode(), objectId));
-      }
-
-      @Override
-      public void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException {
-        final GitTreeUpdate current = treeStack.element();
-        final GitFile gitFile = (GitFile) file;
-        final GitTreeEntry entry = current.getEntries().remove(name);
-        if (entry == null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-        }
-        if (!gitFile.getObjectId().equals(entry.getObjectId())) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
-        }
-      }
-
-      @Override
-      public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
-        synchronized (pushLock) {
-          final GitTreeUpdate root = treeStack.element();
-          final ObjectId treeId = root.buildTree(inserter);
-          log.info("Create tree {} for commit.", treeId.name());
-
-          final CommitBuilder commitBuilder = new CommitBuilder();
-          final PersonIdent ident = createIdent(userInfo);
-          commitBuilder.setAuthor(ident);
-          commitBuilder.setCommitter(ident);
-          commitBuilder.setMessage(message);
-          commitBuilder.setParentId(commit.getId());
-          commitBuilder.setTreeId(treeId);
-          final ObjectId commitId = inserter.insert(commitBuilder);
-
-          log.info("Create commit {}: {}", commitId.name(), message);
-          log.info("Try to push commit in branch: {}", branchRef.getName());
-          if (!GitHelper.pushNative(repository, commitId, branchRef)) {
-            log.info("Non fast forward push rejected");
-            return null;
-          }
-          log.info("Commit is pushed");
-
-          updateRevisions();
-          return getRevision(commitId);
-        }
-      }
-
-      private PersonIdent createIdent(User userInfo) {
-        final String realName = userInfo.getRealName();
-        final String email = userInfo.getEmail();
-        return new PersonIdent(realName, email == null ? "" : email);
-      }
-
-      @NotNull
-      private String getFullPath(String name) {
-        final StringBuilder fullPath = new StringBuilder();
-        final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
-        while (iter.hasNext()) {
-          fullPath.append(iter.next().getName()).append('/');
-        }
-        fullPath.append(name);
-        return fullPath.toString();
-      }
-    };
+    return new GitCommitBuilder(repository.getRef(branch));
   }
 
   @NotNull
@@ -607,5 +467,212 @@ public class GitRepository implements VcsRepository {
       }
     }
     return null;
+  }
+
+  private class GitPropertyValidator {
+    @NotNull
+    private final Deque<GitFile> treeStack;
+
+    public GitPropertyValidator(@NotNull GitFile root) {
+      this.treeStack = new ArrayDeque<>();
+      this.treeStack.push(root);
+    }
+
+    public void openDir(@NotNull String name) throws IOException {
+      final Map<String, VcsFile> entries = treeStack.element().getEntries();
+      final GitFile file = (GitFile) entries.get(name);
+      if (file == null) {
+        throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
+      }
+      treeStack.push(file);
+    }
+
+    public void checkProperties(@NotNull String name, @NotNull Map<String, String> properties) throws IOException, SVNException {
+      final Map<String, VcsFile> entries = treeStack.element().getEntries();
+      final GitFile file = (GitFile) entries.get(name);
+      if (file == null) {
+        throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
+      }
+      final Map<String, String> expected = file.getProperties(false);
+      if (!properties.equals(expected)) {
+        final StringBuilder message = new StringBuilder();
+        message.append("Can't commit entry: ").append(file.getFullPath()).append("\nInvalid svn properties found.\n");
+        message.append("Expected:\n");
+        for (Map.Entry<String, String> entry : expected.entrySet()) {
+          message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
+        }
+        message.append("Actual:\n");
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+          message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
+        }
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
+      }
+    }
+
+    public void closeDir() {
+      treeStack.pop();
+    }
+  }
+
+  private class GitCommitBuilder implements VcsCommitBuilder {
+    @NotNull
+    private final Deque<GitTreeUpdate> treeStack;
+    @NotNull
+    private final ObjectInserter inserter;
+    @NotNull
+    private final RevCommit commit;
+    @NotNull
+    private final Ref branchRef;
+    @NotNull
+    private final List<VcsConsumer<GitPropertyValidator>> validateActions = new ArrayList<>();
+
+    public GitCommitBuilder(@NotNull Ref branchRef) throws IOException {
+      this.inserter = repository.newObjectInserter();
+      this.branchRef = branchRef;
+      this.commit = new RevWalk(repository).parseCommit(branchRef.getObjectId());
+      this.treeStack = new ArrayDeque<>();
+      this.treeStack.push(new GitTreeUpdate("", loadTree(new GitTreeEntry(repository, FileMode.TREE, commit.getTree()))));
+    }
+
+    @Override
+    public void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException {
+      final GitTreeUpdate current = treeStack.element();
+      if (current.getEntries().containsKey(name)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
+      }
+      final GitTreeEntry source;
+      if (originalName == null) {
+        source = null;
+      } else {
+        final GitFile file = getRevisionInfo(originalRev).getFile(originalName);
+        if ((file == null) || (!file.isDirectory())) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, originalName));
+        }
+        source = file.getTreeEntry();
+      }
+      validateActions.add(validator -> validator.openDir(name));
+      treeStack.push(new GitTreeUpdate(name, loadTree(source)));
+    }
+
+    @Override
+    public void openDir(@NotNull String name) throws SVNException, IOException {
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry originalDir = current.getEntries().remove(name);
+      if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+      }
+      validateActions.add(validator -> validator.openDir(name));
+      treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
+    }
+
+    @Override
+    public void closeDir() throws SVNException, IOException {
+      final GitTreeUpdate last = treeStack.pop();
+      final GitTreeUpdate current = treeStack.element();
+      final String fullPath = getFullPath(last.getName());
+      if (last.getEntries().isEmpty()) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories is not supported: " + fullPath));
+      }
+      final ObjectId subtreeId = last.buildTree(inserter);
+      log.info("Create tree {} for dir: {}", subtreeId.name(), fullPath);
+      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(repository, subtreeId))) != null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
+      }
+      validateActions.add(GitPropertyValidator::closeDir);
+    }
+
+    @Override
+    public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException {
+      final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry entry = current.getEntries().get(name);
+      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
+      if ((gitDeltaConsumer.isUpdate()) && (entry == null)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+      } else if ((gitDeltaConsumer.isUpdate()) && (!entry.getObjectId().equals(originalId))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
+      } else if ((!gitDeltaConsumer.isUpdate()) && (entry != null)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
+      }
+      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
+      if (objectId == null) {
+        // Content not updated.
+        if (originalId == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, getFullPath(name)));
+        }
+        return;
+      }
+      current.getEntries().put(name, new GitTreeEntry(gitDeltaConsumer.getFileMode(), objectId));
+      validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties()));
+    }
+
+    @Override
+    public void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException {
+      final GitTreeUpdate current = treeStack.element();
+      final GitFile gitFile = (GitFile) file;
+      final GitTreeEntry entry = current.getEntries().remove(name);
+      if (entry == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+      }
+      if (!gitFile.getObjectId().equals(entry.getObjectId())) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, getFullPath(name)));
+      }
+    }
+
+    @Override
+    public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
+      synchronized (pushLock) {
+        final GitTreeUpdate root = treeStack.element();
+        final ObjectId treeId = root.buildTree(inserter);
+        log.info("Create tree {} for commit.", treeId.name());
+        validateProperties(treeId);
+
+        final CommitBuilder commitBuilder = new CommitBuilder();
+        final PersonIdent ident = createIdent(userInfo);
+        commitBuilder.setAuthor(ident);
+        commitBuilder.setCommitter(ident);
+        commitBuilder.setMessage(message);
+        commitBuilder.setParentId(commit.getId());
+        commitBuilder.setTreeId(treeId);
+        final ObjectId commitId = inserter.insert(commitBuilder);
+
+        log.info("Create commit {}: {}", commitId.name(), message);
+        log.info("Try to push commit in branch: {}", branchRef.getName());
+        if (!GitHelper.pushNative(repository, commitId, branchRef)) {
+          log.info("Non fast forward push rejected");
+          return null;
+        }
+        log.info("Commit is pushed");
+
+        updateRevisions();
+        return getRevision(commitId);
+      }
+    }
+
+    private void validateProperties(@NotNull ObjectId commitTreeId) throws IOException, SVNException {
+      final GitRepository repo = GitRepository.this;
+      final GitFile root = new GitFile(repo, new GitTreeEntry(repository, FileMode.TREE, commitTreeId), "", GitProperty.emptyArray, 0, repo::collectProperties);
+      final GitPropertyValidator validator = new GitPropertyValidator(root);
+      for (VcsConsumer<GitPropertyValidator> validateAction : validateActions) {
+        validateAction.accept(validator);
+      }
+    }
+
+    private PersonIdent createIdent(User userInfo) {
+      final String realName = userInfo.getRealName();
+      final String email = userInfo.getEmail();
+      return new PersonIdent(realName, email == null ? "" : email);
+    }
+
+    @NotNull
+    private String getFullPath(String name) {
+      final StringBuilder fullPath = new StringBuilder();
+      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
+      while (iter.hasNext()) {
+        fullPath.append(iter.next().getName()).append('/');
+      }
+      fullPath.append(name);
+      return fullPath.toString();
+    }
   }
 }

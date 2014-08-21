@@ -87,6 +87,7 @@ public interface VcsRepository {
    * Create tree for commit.
    *
    * @return Commit build.
+   * @throws IOException
    */
   @NotNull
   VcsCommitBuilder createCommitBuilder() throws IOException;

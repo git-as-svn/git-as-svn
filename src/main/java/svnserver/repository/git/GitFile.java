@@ -45,10 +45,14 @@ public class GitFile implements VcsFile {
   private final GitTreeEntry treeEntry;
   @NotNull
   private final String fullPath;
-  @Nullable
-  private ObjectLoader objectLoader;
 
   private final int revision;
+
+  // Cache
+  @Nullable
+  private ObjectLoader objectLoader;
+  @Nullable
+  private Map<String, VcsFile> cacheEntries;
 
   public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision, @NotNull PropertyResolver resolver) throws IOException {
     this.repo = repo;
@@ -136,7 +140,7 @@ public class GitFile implements VcsFile {
 
   private ObjectLoader getObjectLoader() throws IOException {
     if (objectLoader == null) {
-      objectLoader = GitRepository.openObject(treeEntry.getObjectId());
+      objectLoader = treeEntry.getObjectId().openObject();
     }
     return objectLoader;
   }
@@ -160,15 +164,14 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public Map<String, VcsFile> getEntries() throws IOException {
-    return getEntries(repo.loadTree(treeEntry));
-  }
-
-  public Map<String, VcsFile> getEntries(@NotNull Map<String, GitTreeEntry> treeEntries) throws IOException {
-    final Map<String, VcsFile> result = new TreeMap<>();
-    for (Map.Entry<String, GitTreeEntry> entry : treeEntries.entrySet()) {
-      result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision, resolver));
+    if (cacheEntries == null) {
+      final Map<String, VcsFile> result = new TreeMap<>();
+      for (Map.Entry<String, GitTreeEntry> entry : repo.loadTree(treeEntry).entrySet()) {
+        result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision, resolver));
+      }
+      cacheEntries = result;
     }
-    return result;
+    return cacheEntries;
   }
 
   @NotNull

@@ -13,10 +13,7 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.repository.VcsCommitBuilder;
-import svnserver.repository.VcsDeltaConsumer;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.*;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
@@ -141,6 +138,21 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
+  public static class ChangePropParams {
+    @NotNull
+    private final String token;
+    @NotNull
+    private final String name;
+    @NotNull
+    private final String[] value;
+
+    public ChangePropParams(@NotNull String token, @NotNull String name, @NotNull String[] value) {
+      this.token = token;
+      this.name = name;
+      this.value = value;
+    }
+  }
+
   public static class ChecksumParams {
     @NotNull
     private final String token;
@@ -203,11 +215,6 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
-  @FunctionalInterface
-  private static interface VcsCommitConsumer {
-    void accept(@NotNull VcsCommitBuilder commitBuilder) throws SVNException, IOException;
-  }
-
   public static class EditorPipeline {
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
@@ -218,7 +225,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final Map<String, CommitFile> files;
     @NotNull
-    private final Map<String, List<VcsCommitConsumer>> changes;
+    private final Map<String, List<VcsConsumer<VcsCommitBuilder>>> changes;
 
     public EditorPipeline(@NotNull CommitParams params) {
       this.message = params.message;
@@ -228,7 +235,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands = new HashMap<>();
       commands.put("add-dir", new LambdaCmd<>(AddParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(AddParams.class, this::addFile));
-      commands.put("change-file-prop", new LambdaCmd<>(TokenParams.class, this::ignore));
+      commands.put("change-file-prop", new LambdaCmd<>(ChangePropParams.class, this::changeFileProp));
       commands.put("delete-entry", new LambdaCmd<>(DeleteParams.class, this::deleteEntry));
       commands.put("open-root", new LambdaCmd<>(OpenRootParams.class, this::openRoot));
       commands.put("open-dir", new LambdaCmd<>(OpenParams.class, this::openDir));
@@ -241,9 +248,15 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
     }
 
-    private void ignore(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
+    private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
       context.push(this::editorCommand);
-      // todo: need support change-file-prop
+      final CommitFile file = getFile(args.token);
+      final Map<String, String> props = file.deltaConsumer.getProperties();
+      if (args.value.length > 0) {
+        props.put(args.name, args.value[0]);
+      } else {
+        props.remove(args.name);
+      }
     }
 
     private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws SVNException {
@@ -265,13 +278,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private List<VcsCommitConsumer> getChanges(@NotNull String path) {
-      List<VcsCommitConsumer> result = changes.get(path);
-      if (result == null) {
-        result = new ArrayList<>();
-        changes.put(path, result);
-      }
-      return result;
+    private List<VcsConsumer<VcsCommitBuilder>> getChanges(@NotNull String path) {
+      return changes.computeIfAbsent(path, s -> new ArrayList<>());
     }
 
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException {
@@ -287,7 +295,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     @NotNull
     private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull String fullPath) throws IOException, SVNException {
-      for (VcsCommitConsumer consumer : getChanges(fullPath)) {
+      for (VcsConsumer<VcsCommitBuilder> consumer : getChanges(fullPath)) {
         consumer.accept(treeBuilder);
       }
       return treeBuilder;
@@ -345,7 +353,10 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      CommitFile file = getFile(args.token);
+      final CommitFile file = files.remove(args.token);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + args.token));
+      }
       if (args.checksum.length != 0) {
         file.deltaConsumer.validateChecksum(args.checksum[0]);
       }
@@ -398,6 +409,12 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
       if (context.getUser().isAnonymous()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous users cannot create commits"));
+      }
+      if (!paths.isEmpty()) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed directory token: " + paths.keySet().iterator().next()));
+      }
+      if (!files.isEmpty()) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file token: " + paths.keySet().iterator().next()));
       }
       for (int pass = 0; ; ++pass) {
         if (pass >= MAX_PASS_COUNT) {

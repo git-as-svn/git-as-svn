@@ -19,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Delta consumer for applying svn diff on git blob.
@@ -28,6 +30,8 @@ import java.io.OutputStream;
 public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
+  @NotNull
+  private final Map<String, String> props;
   @NotNull
   private GitRepository gitRepository;
   @NotNull
@@ -52,12 +56,26 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file, @NotNull String fullPath, boolean update) throws IOException {
     this.gitRepository = gitRepository;
     this.fullPath = fullPath;
-    this.fileMode = file != null ? file.getFileMode() : FileMode.REGULAR_FILE;
-    this.originalMd5 = file != null ? file.getMd5() : null;
+    if (file != null) {
+      this.fileMode = file.getFileMode();
+      this.originalMd5 = file.getMd5();
+      this.originalId = file.getObjectId();
+      this.props = new HashMap<>(file.getProperties(false));
+    } else {
+      this.fileMode = FileMode.REGULAR_FILE;
+      this.originalMd5 = null;
+      this.originalId = null;
+      this.props = new HashMap<>();
+    }
     this.update = update;
-    originalId = file != null ? file.getObjectId() : null;
-    objectId = originalId;
-    memory = new ByteArrayOutputStream();
+    this.objectId = originalId;
+    this.memory = new ByteArrayOutputStream();
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> getProperties() {
+    return props;
   }
 
   @Nullable
@@ -82,7 +100,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
         throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
       }
       window = new SVNDeltaProcessor();
-      window.applyTextDelta(objectId != null ? gitRepository.openObject(objectId).openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), memory, true);
+      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), memory, true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }

@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 
+import java.util.Map;
+
 /**
  * VcsDeltaConsumer.
  *
@@ -11,4 +13,12 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
  */
 public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
   void validateChecksum(@NotNull String md5) throws SVNException;
+
+  /**
+   * Properties of copying/modifing node.
+   *
+   * @return Properties.
+   */
+  @NotNull
+  Map<String, String> getProperties();
 }
