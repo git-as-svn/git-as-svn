@@ -346,12 +346,50 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
+  public VcsDirectoryConsumer createDir(@NotNull String fullPath) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file != null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Directory is not up-to-date: " + fullPath));
+    }
+    return new GitDirectoryConsumer(fullPath, null, false);
+  }
+
+  @NotNull
+  @Override
+  public VcsDirectoryConsumer modifyDir(@NotNull String fullPath, int revision) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+    }
+    if (revision >= 0) {
+      if (file.getLastChange().getId() > revision) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Directory is not up-to-date: " + fullPath));
+      }
+      return new GitDirectoryConsumer(fullPath, file, true);
+    } else {
+      return new GitDirectoryConsumer(fullPath, null, true);
+    }
+  }
+
+  @NotNull
+  @Override
+  public VcsDirectoryConsumer copyDir(@NotNull String fullPath, @NotNull String source, int revision) throws IOException, SVNException {
+    final GitRevision revisionInfo = getRevisionInfo(revision);
+    final GitFile file = revisionInfo.getFile(source);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, source));
+    }
+    return new GitDirectoryConsumer(fullPath, file, false);
+  }
+
+  @NotNull
+  @Override
   public VcsDeltaConsumer createFile(@NotNull String fullPath) throws IOException, SVNException {
     final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
     if (file != null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-    return new GitDeltaConsumer(this, null, fullPath, false);
+    return new GitDeltaConsumer(this, fullPath, null, false);
   }
 
   @NotNull
@@ -364,17 +402,18 @@ public class GitRepository implements VcsRepository {
     if (file.getLastChange().getId() > revision) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-    return new GitDeltaConsumer(this, file, fullPath, true);
+    return new GitDeltaConsumer(this, fullPath, file, true);
   }
 
   @NotNull
   @Override
-  public VcsDeltaConsumer copyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
-    final GitFile file = getRevisionInfo(revision).getFile(fullPath);
+  public VcsDeltaConsumer copyFile(@NotNull String fullPath, @NotNull String source, int revision) throws IOException, SVNException {
+    final GitRevision revisionInfo = getRevisionInfo(revision);
+    final GitFile file = revisionInfo.getFile(source);
     if (file == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, source));
     }
-    return new GitDeltaConsumer(this, file, fullPath, false);
+    return new GitDeltaConsumer(this, fullPath, file, false);
   }
 
   @NotNull
@@ -535,32 +574,27 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
-    public void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException {
+    public void addDir(@NotNull String name, @NotNull VcsDirectoryConsumer dir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       if (current.getEntries().containsKey(name)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
-      final GitTreeEntry source;
-      if (originalName == null) {
-        source = null;
-      } else {
-        final GitFile file = getRevisionInfo(originalRev).getFile(originalName);
-        if ((file == null) || (!file.isDirectory())) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, originalName));
-        }
-        source = file.getTreeEntry();
-      }
+      final GitDirectoryConsumer gitDir = (GitDirectoryConsumer) dir;
+      validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, loadTree(source)));
+      treeStack.push(new GitTreeUpdate(name, loadTree(gitDir.getSource())));
     }
 
     @Override
-    public void openDir(@NotNull String name) throws SVNException, IOException {
+    public void openDir(@NotNull VcsDirectoryConsumer dir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
+      final String name = StringHelper.baseName(dir.getPath());
+      // todo: ???
       final GitTreeEntry originalDir = current.getEntries().remove(name);
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
+      validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
     }
@@ -582,8 +616,9 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
-    public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException {
+    public void saveFile(@NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException {
       final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
+      final String name = StringHelper.baseName(gitDeltaConsumer.getPath());
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry entry = current.getEntries().get(name);
       final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();

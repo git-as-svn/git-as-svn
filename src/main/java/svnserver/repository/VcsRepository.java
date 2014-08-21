@@ -49,6 +49,35 @@ public interface VcsRepository {
    * @return File updater.
    */
   @NotNull
+  VcsDirectoryConsumer createDir(@NotNull String path) throws IOException, SVNException;
+
+  /**
+   * Modification of the existing file.
+   *
+   * @param revision File revision (for need update check).
+   * @param path     File path in repository.
+   * @return Directory entry.
+   */
+  @NotNull
+  VcsDirectoryConsumer modifyDir(@NotNull String path, int revision) throws IOException, SVNException;
+
+  /**
+   * Copy existing file.
+   *
+   * @param revision  File revision.
+   * @param sourceDir File path in repository.
+   * @return File updater.
+   */
+  @NotNull
+  VcsDirectoryConsumer copyDir(@NotNull String path, @NotNull String sourceDir, int revision) throws IOException, SVNException;
+
+  /**
+   * Create new file in repository.
+   *
+   * @param path File path in repository.
+   * @return File updater.
+   */
+  @NotNull
   VcsDeltaConsumer createFile(@NotNull String path) throws IOException, SVNException;
 
   /**
@@ -64,12 +93,12 @@ public interface VcsRepository {
   /**
    * Copy existing file.
    *
-   * @param revision File revision (for need update check).
-   * @param path     File path in repository.
+   * @param revision File revision.
+   * @param source   File path in repository.
    * @return File updater.
    */
   @NotNull
-  VcsDeltaConsumer copyFile(@NotNull String path, int revision) throws IOException, SVNException;
+  VcsDeltaConsumer copyFile(@NotNull String path, @NotNull String source, int revision) throws IOException, SVNException;
 
   /**
    * Get information for deleting file.

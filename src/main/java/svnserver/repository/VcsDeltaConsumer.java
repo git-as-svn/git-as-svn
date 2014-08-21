@@ -12,7 +12,8 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
-  void validateChecksum(@NotNull String md5) throws SVNException;
+  @NotNull
+  String getPath();
 
   /**
    * Properties of copying/modifing node.
@@ -21,4 +22,6 @@ public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
    */
   @NotNull
   Map<String, String> getProperties();
+
+  void validateChecksum(@NotNull String md5) throws SVNException;
 }
