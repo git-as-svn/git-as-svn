@@ -262,9 +262,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       String lastPath = rootPath;
       for (int i = rootPath.lastIndexOf('/'); i >= 0; i = rootPath.lastIndexOf('/', i - 1)) {
         final String itemPath = rootPath.substring(0, i);
-        final String itemName = lastPath.substring(i + 1);
         final String childPath = lastPath;
-        final VcsDirectoryConsumer dir = context.getRepository().modifyDir(itemPath, -1);
+        final VcsDirectoryConsumer dir = context.getRepository().modifyDir(lastPath, -1);
         getChanges(itemPath).add(treeBuilder -> {
           treeBuilder.openDir(dir);
           updateDir(treeBuilder, childPath);
