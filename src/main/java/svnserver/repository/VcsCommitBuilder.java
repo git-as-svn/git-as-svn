@@ -15,18 +15,18 @@ import java.io.IOException;
 public interface VcsCommitBuilder {
   /**
    * Add/copy directory and enter into it.
-   * @param name New directory name.
-   *             @param originalName Original directroy name (for copy).
-   *                                 @param originalRev Original directory rev (for copy).
+   *
+   * @param name    New directory name.
+   * @param dirInfo Directory information.
    */
-  void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException;
+  void addDir(@NotNull String name, @NotNull VcsDirectoryConsumer dirInfo) throws SVNException, IOException;
 
   /**
    * Enter into directory.
    *
-   * @param name Directory name.
+   * @param dir Directory consumer from the same repository.
    */
-  void openDir(@NotNull String name) throws SVNException, IOException;
+  void openDir(@NotNull VcsDirectoryConsumer dir) throws SVNException, IOException;
 
   /**
    * Leave back from directory.
@@ -36,12 +36,11 @@ public interface VcsCommitBuilder {
   /**
    * Save file (add or update).
    *
-   * @param name          File name.
    * @param deltaConsumer Delta consumer from the same repository.
    * @see svnserver.repository.VcsRepository#createFile(java.lang.String)
    * @see svnserver.repository.VcsRepository#modifyFile(String, int)
    */
-  void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException;
+  void saveFile(@NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException;
 
   /**
    * Delete directory or file.

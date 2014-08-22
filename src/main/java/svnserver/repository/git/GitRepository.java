@@ -1,6 +1,5 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -15,15 +14,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.config.RepositoryConfig;
 import svnserver.repository.*;
 import svnserver.repository.git.prop.GitAttributes;
 import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitTortoise;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +37,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitRepository implements VcsRepository {
   public interface StreamFactory {
+
     InputStream openStream() throws IOException;
   }
 
@@ -48,12 +45,15 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
+
   @NotNull
   public static final byte[] emptyBytes = new byte[0];
   @NotNull
-  private final FileRepository repository;
+  private final Repository repository;
   @NotNull
-  private final List<FileRepository> linkedRepositories = new ArrayList<>();
+  private final List<Repository> linkedRepositories;
+  @NotNull
+  private final GitPushMode pushMode;
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
   @NotNull
@@ -72,25 +72,20 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
 
-  public GitRepository(@NotNull RepositoryConfig config) throws IOException, SVNException {
-    this.repository = new FileRepository(new File(config.getPath()).getAbsoluteFile());
-    log.info("Repository path: {}", repository.getDirectory());
-    if (!repository.getDirectory().exists()) {
-      throw new FileNotFoundException(repository.getDirectory().getPath());
-    }
-    for (String linkedPath : config.getLinked()) {
-      FileRepository linkedRepository = new FileRepository(new File(linkedPath));
-      linkedRepositories.add(linkedRepository);
-    }
-    final Ref branchRef = repository.getRef(config.getBranch());
+  public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
+                       @NotNull GitPushMode pushMode, @NotNull String branch) throws IOException, SVNException {
+    this.repository = repository;
+    this.pushMode = pushMode;
+    linkedRepositories = new ArrayList<>(linked);
+    final Ref branchRef = repository.getRef(branch);
     if (branchRef == null) {
-      throw new IOException("Branch not found: " + config.getBranch());
+      throw new IOException("Branch not found: " + branch);
     }
     this.branch = branchRef.getName();
     addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
-    this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + branch).getBytes(StandardCharsets.UTF_8)).toString();
-    log.info("Repository ready (branch: {})", branch);
+    this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
+    log.info("Repository ready (branch: {})", this.branch);
   }
 
   @Override
@@ -243,7 +238,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public FileRepository getRepository() {
+  public Repository getRepository() {
     return repository;
   }
 
@@ -328,7 +323,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private static RevCommit getEmptyCommit(@NotNull FileRepository repository) throws IOException {
+  private static RevCommit getEmptyCommit(@NotNull Repository repository) throws IOException {
     final ObjectInserter inserter = repository.newObjectInserter();
     final TreeFormatter treeBuilder = new TreeFormatter();
     final ObjectId treeId = inserter.insert(treeBuilder);
@@ -339,9 +334,48 @@ public class GitRepository implements VcsRepository {
     commitBuilder.setMessage("");
     commitBuilder.setTreeId(treeId);
     final ObjectId commitId = inserter.insert(commitBuilder);
-    final RevWalk revWalk = new RevWalk(repository);
+    inserter.flush();
 
+    final RevWalk revWalk = new RevWalk(repository);
     return revWalk.parseCommit(commitId);
+  }
+
+  @NotNull
+  @Override
+  public VcsDirectoryConsumer createDir(@NotNull String fullPath) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file != null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Directory is not up-to-date: " + fullPath));
+    }
+    return new GitDirectoryConsumer(fullPath, null, false);
+  }
+
+  @NotNull
+  @Override
+  public VcsDirectoryConsumer modifyDir(@NotNull String fullPath, int revision) throws IOException, SVNException {
+    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+    }
+    if (revision >= 0) {
+      if (file.getLastChange().getId() > revision) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Directory is not up-to-date: " + fullPath));
+      }
+      return new GitDirectoryConsumer(fullPath, file, true);
+    } else {
+      return new GitDirectoryConsumer(fullPath, null, true);
+    }
+  }
+
+  @NotNull
+  @Override
+  public VcsDirectoryConsumer copyDir(@NotNull String fullPath, @NotNull String source, int revision) throws IOException, SVNException {
+    final GitRevision revisionInfo = getRevisionInfo(revision);
+    final GitFile file = revisionInfo.getFile(source);
+    if (file == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, source));
+    }
+    return new GitDirectoryConsumer(fullPath, file, false);
   }
 
   @NotNull
@@ -351,7 +385,7 @@ public class GitRepository implements VcsRepository {
     if (file != null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-    return new GitDeltaConsumer(this, null, fullPath, false);
+    return new GitDeltaConsumer(this, fullPath, null, false);
   }
 
   @NotNull
@@ -364,17 +398,18 @@ public class GitRepository implements VcsRepository {
     if (file.getLastChange().getId() > revision) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
     }
-    return new GitDeltaConsumer(this, file, fullPath, true);
+    return new GitDeltaConsumer(this, fullPath, file, true);
   }
 
   @NotNull
   @Override
-  public VcsDeltaConsumer copyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
-    final GitFile file = getRevisionInfo(revision).getFile(fullPath);
+  public VcsDeltaConsumer copyFile(@NotNull String fullPath, @NotNull String source, int revision) throws IOException, SVNException {
+    final GitRevision revisionInfo = getRevisionInfo(revision);
+    final GitFile file = revisionInfo.getFile(source);
     if (file == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, source));
     }
-    return new GitDeltaConsumer(this, file, fullPath, false);
+    return new GitDeltaConsumer(this, fullPath, file, false);
   }
 
   @NotNull
@@ -535,32 +570,27 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
-    public void addDir(@NotNull String name, @Nullable String originalName, int originalRev) throws SVNException, IOException {
+    public void addDir(@NotNull String name, @NotNull VcsDirectoryConsumer dir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       if (current.getEntries().containsKey(name)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
-      final GitTreeEntry source;
-      if (originalName == null) {
-        source = null;
-      } else {
-        final GitFile file = getRevisionInfo(originalRev).getFile(originalName);
-        if ((file == null) || (!file.isDirectory())) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, originalName));
-        }
-        source = file.getTreeEntry();
-      }
+      final GitDirectoryConsumer gitDir = (GitDirectoryConsumer) dir;
+      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, loadTree(source)));
+      treeStack.push(new GitTreeUpdate(name, loadTree(gitDir.getSource())));
     }
 
     @Override
-    public void openDir(@NotNull String name) throws SVNException, IOException {
+    public void openDir(@NotNull VcsDirectoryConsumer dir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
+      final String name = StringHelper.baseName(dir.getPath());
+      // todo: ???
       final GitTreeEntry originalDir = current.getEntries().remove(name);
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
+      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
     }
@@ -582,8 +612,9 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
-    public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer) throws SVNException {
+    public void saveFile(@NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException {
       final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
+      final String name = StringHelper.baseName(gitDeltaConsumer.getPath());
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry entry = current.getEntries().get(name);
       final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
@@ -625,6 +656,7 @@ public class GitRepository implements VcsRepository {
         final GitTreeUpdate root = treeStack.element();
         final ObjectId treeId = root.buildTree(inserter);
         log.info("Create tree {} for commit.", treeId.name());
+        inserter.flush();
         validateProperties(treeId);
 
         final CommitBuilder commitBuilder = new CommitBuilder();
@@ -635,10 +667,11 @@ public class GitRepository implements VcsRepository {
         commitBuilder.setParentId(commit.getId());
         commitBuilder.setTreeId(treeId);
         final ObjectId commitId = inserter.insert(commitBuilder);
+        inserter.flush();
 
         log.info("Create commit {}: {}", commitId.name(), message);
         log.info("Try to push commit in branch: {}", branchRef.getName());
-        if (!GitHelper.pushNative(repository, commitId, branchRef)) {
+        if (!pushMode.push(repository, commitId, branchRef)) {
           log.info("Non fast forward push rejected");
           return null;
         }

@@ -1,9 +1,6 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.internal.storage.file.FileRepository;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.FileMode;
-import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -34,8 +31,6 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private final Map<String, String> props;
   @NotNull
   private GitRepository gitRepository;
-  @NotNull
-  private final String fullPath;
   @Nullable
   private SVNDeltaProcessor window;
   @Nullable
@@ -44,18 +39,19 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private final String originalMd5;
   @NotNull
   private final FileMode fileMode;
+  @NotNull
+  private final String path;
 
   @Nullable
   private GitObject<ObjectId> objectId;
+
   // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private ByteArrayOutputStream memory;
-
   private final boolean update;
 
-  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file, @NotNull String fullPath, boolean update) throws IOException {
+  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @NotNull String path, @Nullable GitFile file, boolean update) throws IOException {
     this.gitRepository = gitRepository;
-    this.fullPath = fullPath;
     if (file != null) {
       this.fileMode = file.getFileMode();
       this.originalMd5 = file.getMd5();
@@ -67,9 +63,16 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       this.originalId = null;
       this.props = new HashMap<>();
     }
+    this.path = path;
     this.update = update;
     this.objectId = originalId;
     this.memory = new ByteArrayOutputStream();
+  }
+
+  @NotNull
+  @Override
+  public String getPath() {
+    return path;
   }
 
   @NotNull
@@ -120,9 +123,11 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window == null) {
         throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
       }
-      final FileRepository repo = gitRepository.getRepository();
-      objectId = new GitObject<>(repo, repo.newObjectInserter().insert(Constants.OBJ_BLOB, memory.toByteArray()));
-      log.info("Created blob {} for file: {}", objectId.getObject().getName(), fullPath);
+      final Repository repo = gitRepository.getRepository();
+      final ObjectInserter inserter = repo.newObjectInserter();
+      objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, memory.toByteArray()));
+      inserter.flush();
+      log.info("Created blob {} for file: {}", objectId.getObject().getName(), path);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }

@@ -1,0 +1,65 @@
+id: 4-3.0-5.r5/0
+type: file
+pred: 4-3.0.r4/266
+count: 2
+text: 4 42 18 15 68c13f81c207c9261b14b74ccf2084ac d869bfed562b6789ed0dc0af1308f45165e67490 3-4/_4
+cpath: /foo/bar/file.copy
+copyfrom: 4 /foo/bar/file.txt
+
+PLAIN
+K 9
+file.copy
+V 17
+file 4-3.0-5.r5/0
+K 8
+file.txt
+V 17
+file 4-3.0.r4/266
+END
+ENDREP
+id: 2-3.0.r5/301
+type: dir
+pred: 2-3.0.r4/512
+count: 2
+text: 5 211 77 0 70a1bfdc90e79d3146e5d565c1dbfb86
+cpath: /foo/bar
+copyroot: 0 /
+
+PLAIN
+K 3
+bar
+V 16
+dir 2-3.0.r5/301
+END
+ENDREP
+id: 0-3.0.r5/484
+type: dir
+pred: 0-3.0.r4/695
+count: 2
+text: 5 437 34 0 05057c055b96d131f32c5028c1fe5739
+cpath: /foo
+copyroot: 0 /
+
+PLAIN
+K 9
+README.md
+V 16
+file 0-2.0.r4/80
+K 3
+foo
+V 16
+dir 0-3.0.r5/484
+END
+ENDREP
+id: 0.0.r5/699
+type: dir
+pred: 0.0.r4/910
+count: 5
+text: 5 616 70 0 7ed6c0812c410d94b31f89036831d45c
+cpath: /
+copyroot: 0 /
+
+4-3._0.t4-5 add-file false false /foo/bar/file.copy
+4 /foo/bar/file.txt
+
+699 824

@@ -15,7 +15,7 @@
 #
 # realm: Example realm
 
-repository:
+repository: !!svnserver.config.GitRepositoryConfig
   branch: local
   path: .git
 

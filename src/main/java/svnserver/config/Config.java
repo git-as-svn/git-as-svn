@@ -16,7 +16,7 @@ public final class Config {
   private String realm = "";
 
   @NotNull
-  private RepositoryConfig repository = new RepositoryConfig();
+  private RepositoryConfig repository = new GitRepositoryConfig();
 
   @NotNull
   private UserDBConfig userDB = new LocalUserDBConfig();

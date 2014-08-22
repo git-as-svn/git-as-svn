@@ -19,7 +19,6 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.VcsRepository;
-import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
@@ -82,7 +81,7 @@ public class SvnServer extends Thread {
     commands.put("stat", new StatCmd());
     commands.put("update", new UpdateCmd());
 
-    repository = new GitRepository(config.getRepository());
+    repository = config.getRepository().create();
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
 

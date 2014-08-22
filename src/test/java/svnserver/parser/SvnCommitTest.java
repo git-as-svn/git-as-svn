@@ -154,7 +154,7 @@ public class SvnCommitTest {
     repo.getFile(filePath, fileRev, null, oldData);
 
     final ISVNEditor editor = repo.getCommitEditor(logMessage, null, false, null);
-    editor.openRoot(fileRev);
+    editor.openRoot(-1);
     editor.openFile(filePath, fileRev);
     editor.applyTextDelta(filePath, null);
     SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
