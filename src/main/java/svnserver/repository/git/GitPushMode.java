@@ -1,13 +1,9 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.PushResult;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,29 +77,18 @@ public enum GitPushMode {
   },
   SIMPLE {
     @Override
-    public boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull Ref branch) throws SVNException {
-      try {
-        final Iterable<PushResult> results = new Git(repository)
-            .push()
-            .setRemote(".")
-            .setRefSpecs(new RefSpec(commitId.name() + ":" + branch.getName()))
-            .call();
-        for (PushResult result : results) {
-          for (RemoteRefUpdate remoteUpdate : result.getRemoteUpdates()) {
-            switch (remoteUpdate.getStatus()) {
-              case REJECTED_NONFASTFORWARD:
-                return false;
-              case OK:
-                break;
-              default:
-                log.error("Unexpected push error: {}", remoteUpdate);
-                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, remoteUpdate.toString()));
-            }
-          }
-        }
-        return true;
-      } catch (GitAPIException e) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
+    public boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull Ref branch) throws SVNException, IOException {
+      final RefUpdate refUpdate = repository.updateRef(branch.getName());
+      refUpdate.setNewObjectId(commitId);
+      final RefUpdate.Result result = refUpdate.update();
+      switch (result) {
+        case REJECTED:
+          return false;
+        case FAST_FORWARD:
+          return true;
+        default:
+          log.error("Unexpected push error: {}", result);
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, result.name()));
       }
     }
   };

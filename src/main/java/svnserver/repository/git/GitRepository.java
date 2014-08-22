@@ -656,6 +656,7 @@ public class GitRepository implements VcsRepository {
         final GitTreeUpdate root = treeStack.element();
         final ObjectId treeId = root.buildTree(inserter);
         log.info("Create tree {} for commit.", treeId.name());
+        inserter.flush();
         validateProperties(treeId);
 
         final CommitBuilder commitBuilder = new CommitBuilder();

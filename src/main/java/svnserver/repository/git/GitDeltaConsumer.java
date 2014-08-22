@@ -1,10 +1,6 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.internal.storage.file.FileRepository;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.FileMode;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -128,7 +124,9 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
         throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
       }
       final Repository repo = gitRepository.getRepository();
-      objectId = new GitObject<>(repo, repo.newObjectInserter().insert(Constants.OBJ_BLOB, memory.toByteArray()));
+      final ObjectInserter inserter = repo.newObjectInserter();
+      objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, memory.toByteArray()));
+      inserter.flush();
       log.info("Created blob {} for file: {}", objectId.getObject().getName(), path);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);

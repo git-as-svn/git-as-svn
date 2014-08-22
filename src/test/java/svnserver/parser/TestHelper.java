@@ -1,6 +1,7 @@
 package svnserver.parser;
 
-import org.eclipse.jgit.internal.storage.file.FileRepository;
+import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
+import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +32,7 @@ public class TestHelper {
   }
 
   public static Repository emptyRepository(@NotNull String branch) throws IOException {
-    // todo: final Repository repository = new InMemoryRepository(new DfsRepositoryDescription(null));
-    final Repository repository = new FileRepository(createTempDir("git-empty"));
+    final Repository repository = new InMemoryRepository(new DfsRepositoryDescription(null));
     repository.create();
     // Create empty commit.
     final ObjectInserter inserter = repository.newObjectInserter();
