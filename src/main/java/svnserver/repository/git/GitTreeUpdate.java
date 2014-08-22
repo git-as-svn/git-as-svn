@@ -8,10 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Git tree updater.
@@ -26,7 +23,7 @@ public class GitTreeUpdate {
 
   public GitTreeUpdate(@NotNull String name, @NotNull Map<String, GitTreeEntry> entries) {
     this.name = name;
-    this.entries = entries;
+    this.entries = new HashMap<>(entries);
   }
 
   @NotNull
