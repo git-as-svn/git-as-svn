@@ -51,10 +51,12 @@ public class ReplayTest {
   private void replayRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
     final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
     final ISVNEditor editor = dstRepo.getCommitEditor(message.getString(), null);
-    srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
+    srcRepo.replay(revision - 1, revision, true, new FilterSVNEditor(editor, revision - 1));
+    editor.closeEdit();
+    /*srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, revision - 1, SVNDepth.INFINITY, false);
       reporter.finishReport();
-    }, new FilterSVNEditor(editor));
+    }, new FilterSVNEditor(editor));*/
   }
 
   private void compareRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
@@ -62,13 +64,13 @@ public class ReplayTest {
     srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
-    }, new FilterSVNEditor(srcExport));
+    }, new FilterSVNEditor(srcExport, -1));
 
     final ExportSVNEditor dstExport = new ExportSVNEditor();
     dstRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
-    }, new FilterSVNEditor(dstExport));
+    }, new FilterSVNEditor(dstExport, -1));
 
     Assert.assertEquals(srcExport.toString(), dstExport.toString());
   }
