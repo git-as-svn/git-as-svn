@@ -347,7 +347,7 @@ public class GitRepository implements VcsRepository {
     if (file != null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Directory is not up-to-date: " + fullPath));
     }
-    return new GitDirectoryConsumer(fullPath, null, false);
+    return new GitDirectoryConsumer(fullPath, null, GitDirectoryConsumer.Mode.Create);
   }
 
   @NotNull
@@ -361,9 +361,9 @@ public class GitRepository implements VcsRepository {
       if (file.getLastChange().getId() > revision) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Directory is not up-to-date: " + fullPath));
       }
-      return new GitDirectoryConsumer(fullPath, file, true);
+      return new GitDirectoryConsumer(fullPath, file, GitDirectoryConsumer.Mode.Modify);
     } else {
-      return new GitDirectoryConsumer(fullPath, null, true);
+      return new GitDirectoryConsumer(fullPath, null, GitDirectoryConsumer.Mode.Open);
     }
   }
 
@@ -375,7 +375,7 @@ public class GitRepository implements VcsRepository {
     if (file == null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, source));
     }
-    return new GitDirectoryConsumer(fullPath, file, false);
+    return new GitDirectoryConsumer(fullPath, file, GitDirectoryConsumer.Mode.Create);
   }
 
   @NotNull
@@ -576,7 +576,7 @@ public class GitRepository implements VcsRepository {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
       final GitDirectoryConsumer gitDir = (GitDirectoryConsumer) dir;
-      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
+      validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(gitDir.getSource())));
     }
@@ -590,7 +590,10 @@ public class GitRepository implements VcsRepository {
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
-      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
+      final GitDirectoryConsumer gitDir = (GitDirectoryConsumer) dir;
+      if (gitDir.getMode() != GitDirectoryConsumer.Mode.Open) {
+        validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
+      }
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
     }
