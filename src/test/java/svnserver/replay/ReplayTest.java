@@ -53,10 +53,6 @@ public class ReplayTest {
     final ISVNEditor editor = dstRepo.getCommitEditor(message.getString(), null);
     srcRepo.replay(revision - 1, revision, true, new FilterSVNEditor(editor, revision - 1));
     editor.closeEdit();
-    /*srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
-      reporter.setPath("", null, revision - 1, SVNDepth.INFINITY, false);
-      reporter.finishReport();
-    }, new FilterSVNEditor(editor));*/
   }
 
   private void compareRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {

@@ -576,7 +576,7 @@ public class GitRepository implements VcsRepository {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
       final GitDirectoryConsumer gitDir = (GitDirectoryConsumer) dir;
-      validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
+      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(gitDir.getSource())));
     }
@@ -590,7 +590,7 @@ public class GitRepository implements VcsRepository {
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
-      validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
+      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
     }
