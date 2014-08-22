@@ -2,7 +2,6 @@ package svnserver.parser;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,15 +13,16 @@ import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import svnserver.config.Config;
 import svnserver.config.LocalUserDBConfig;
+import svnserver.config.RepositoryConfig;
+import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitPushMode;
-import svnserver.repository.git.GitRepositoryConfig;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.SvnServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -78,7 +78,7 @@ public final class SvnTestServer implements AutoCloseable {
     config.setPort(0);
     config.setHost(BIND_HOST);
 
-    config.setRepository(new TestRepositoryConfig(repository));
+    config.setRepository(new TestRepositoryConfig(repository, testBranch));
 
     config.setUserDB(new LocalUserDBConfig(new LocalUserDBConfig.UserEntry[]{
         new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
@@ -152,36 +152,21 @@ public final class SvnTestServer implements AutoCloseable {
     return new BasicAuthenticationManager(USER_NAME, PASSWORD);
   }
 
-  private class TestRepositoryConfig implements GitRepositoryConfig {
-
+  private static class TestRepositoryConfig implements RepositoryConfig {
+    @NotNull
     private final Repository repository;
+    @NotNull
+    private final String branch;
 
-    public TestRepositoryConfig(Repository repository) {
+    public TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch) {
       this.repository = repository;
+      this.branch = branch;
     }
 
     @NotNull
     @Override
-    public String getBranch() {
-      return testBranch;
-    }
-
-    @NotNull
-    @Override
-    public Repository createRepository() throws IOException {
-      return repository;
-    }
-
-    @NotNull
-    @Override
-    public GitPushMode getPushMode() {
-      return GitPushMode.SIMPLE;
-    }
-
-    @NotNull
-    @Override
-    public List<Repository> createLinkedRepositories() throws IOException {
-      return Collections.emptyList();
+    public VcsRepository create() throws IOException, SVNException {
+      return new GitRepository(repository, Collections.emptyList(), GitPushMode.SIMPLE, branch);
     }
   }
 }

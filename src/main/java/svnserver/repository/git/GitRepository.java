@@ -72,19 +72,20 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
 
-  public GitRepository(@NotNull GitRepositoryConfig config) throws IOException, SVNException {
-    this.repository = config.createRepository();
-    this.pushMode = config.getPushMode();
-    linkedRepositories = config.createLinkedRepositories();
-    final Ref branchRef = repository.getRef(config.getBranch());
+  public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
+                       @NotNull GitPushMode pushMode, @NotNull String branch) throws IOException, SVNException {
+    this.repository = repository;
+    this.pushMode = pushMode;
+    linkedRepositories = new ArrayList<>(linked);
+    final Ref branchRef = repository.getRef(branch);
     if (branchRef == null) {
-      throw new IOException("Branch not found: " + config.getBranch());
+      throw new IOException("Branch not found: " + branch);
     }
     this.branch = branchRef.getName();
     addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
-    this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + branch).getBytes(StandardCharsets.UTF_8)).toString();
-    log.info("Repository ready (branch: {})", branch);
+    this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
+    log.info("Repository ready (branch: {})", this.branch);
   }
 
   @Override

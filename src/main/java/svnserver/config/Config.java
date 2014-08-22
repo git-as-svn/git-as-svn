@@ -1,7 +1,6 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.repository.git.GitRepositoryConfig;
 
 /**
  * Top configuration object.
@@ -17,7 +16,7 @@ public final class Config {
   private String realm = "";
 
   @NotNull
-  private GitRepositoryConfig repository = new RepositoryConfig();
+  private RepositoryConfig repository = new GitRepositoryConfig();
 
   @NotNull
   private UserDBConfig userDB = new LocalUserDBConfig();
@@ -51,12 +50,12 @@ public final class Config {
     this.realm = realm.trim();
   }
 
-  public void setRepository(@NotNull GitRepositoryConfig repository) {
+  public void setRepository(@NotNull RepositoryConfig repository) {
     this.repository = repository;
   }
 
   @NotNull
-  public GitRepositoryConfig getRepository() {
+  public RepositoryConfig getRepository() {
     return repository;
   }
 
