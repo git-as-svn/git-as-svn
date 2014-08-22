@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SvnConstants {
   @NotNull
-  public static final String PROP_GIT = "git:sha1";
+  public static final String PROP_GIT = "git-commit";
   @NotNull
   public static final String LINK_PREFIX = "link ";
   @NotNull
