@@ -291,6 +291,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
+    private List<VcsConsumer<VcsCommitBuilder>> rootChanges() {
+      return getChanges("");
+    }
+
+    @NotNull
     private List<VcsConsumer<VcsCommitBuilder>> getChanges(@NotNull String path) {
       return changes.computeIfAbsent(path, s -> new ArrayList<>());
     }
@@ -372,6 +377,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final int rev = args.rev[0];
       log.info("Modify file: {} (rev: {})", path, rev);
       files.put(args.token, new CommitFile(context.getRepository().modifyFile(path, rev)));
+      rootChanges().add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
     }
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {

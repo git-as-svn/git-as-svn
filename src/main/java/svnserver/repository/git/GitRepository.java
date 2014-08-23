@@ -570,6 +570,11 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
+    public void checkUpToDate(String path, int rev) throws SVNException, IOException {
+      // todo: check up-to-date
+    }
+
+    @Override
     public void addDir(@NotNull String name, @NotNull VcsDirectoryConsumer dir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       if (current.getEntries().containsKey(name)) {

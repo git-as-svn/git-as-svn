@@ -61,4 +61,12 @@ public interface VcsCommitBuilder {
    */
   @Nullable
   VcsRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException;
+
+  /**
+   * Check last modification revision of path.
+   *
+   * @param path Full path.
+   * @param rev  Revision.
+   */
+  void checkUpToDate(String path, int rev) throws SVNException, IOException;
 }
