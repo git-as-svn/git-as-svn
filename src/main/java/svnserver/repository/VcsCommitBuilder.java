@@ -36,11 +36,13 @@ public interface VcsCommitBuilder {
   /**
    * Save file (add or update).
    *
+   * @param name          File name.
    * @param deltaConsumer Delta consumer from the same repository.
-   * @see svnserver.repository.VcsRepository#createFile(java.lang.String)
+   * @param modify        Modification flag (true - entry modification, false - new entry).
+   * @see svnserver.repository.VcsRepository#createFile()
    * @see svnserver.repository.VcsRepository#modifyFile(String, int)
    */
-  void saveFile(@NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException;
+  void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException;
 
   /**
    * Delete directory or file.

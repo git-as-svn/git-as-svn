@@ -380,36 +380,18 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsDeltaConsumer createFile(@NotNull String fullPath) throws IOException, SVNException {
-    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
-    if (file != null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
-    }
-    return new GitDeltaConsumer(this, fullPath, null, false);
+  public VcsDeltaConsumer createFile() throws IOException, SVNException {
+    return new GitDeltaConsumer(this, null);
   }
 
   @NotNull
   @Override
   public VcsDeltaConsumer modifyFile(@NotNull String fullPath, int revision) throws IOException, SVNException {
-    final GitFile file = getRevisionInfo(getLatestRevision()).getFile(fullPath);
+    final GitFile file = getRevisionInfo(revision).getFile(fullPath);
     if (file == null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, fullPath));
     }
-    if (file.getLastChange().getId() > revision) {
-      //throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "File is not up-to-date: " + fullPath));
-    }
-    return new GitDeltaConsumer(this, fullPath, file, true);
-  }
-
-  @NotNull
-  @Override
-  public VcsDeltaConsumer copyFile(@NotNull String fullPath, @NotNull String source, int revision) throws IOException, SVNException {
-    final GitRevision revisionInfo = getRevisionInfo(revision);
-    final GitFile file = revisionInfo.getFile(source);
-    if (file == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, source));
-    }
-    return new GitDeltaConsumer(this, fullPath, file, false);
+    return new GitDeltaConsumer(this, file);
   }
 
   public int getLastChange(@NotNull String nodePath, int beforeRevision) {
@@ -612,14 +594,13 @@ public class GitRepository implements VcsRepository {
     }
 
     @Override
-    public void saveFile(@NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException {
+    public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
       final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
-      final String name = StringHelper.baseName(gitDeltaConsumer.getPath());
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry entry = current.getEntries().get(name);
       final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
-      if ((!gitDeltaConsumer.isUpdate()) && (entry != null)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
+      if (modify ^ (entry != null)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, getFullPath(name)));
       }
       final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
       if (objectId == null) {

@@ -201,13 +201,13 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     pipeline.editorCommand(context);
   }
 
-  public static class CommitFile {
+  public static class FileUpdater {
     @NotNull
     private final VcsDeltaConsumer deltaConsumer;
     @NotNull
     private final SVNDeltaReader reader = new SVNDeltaReader();
 
-    public CommitFile(@NotNull VcsDeltaConsumer deltaConsumer) {
+    public FileUpdater(@NotNull VcsDeltaConsumer deltaConsumer) {
       this.deltaConsumer = deltaConsumer;
     }
   }
@@ -220,7 +220,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final Map<String, VcsDirectoryConsumer> paths;
     @NotNull
-    private final Map<String, CommitFile> files;
+    private final Map<String, FileUpdater> files;
     @NotNull
     private final Map<String, List<VcsConsumer<VcsCommitBuilder>>> changes;
 
@@ -262,7 +262,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
       context.push(this::editorCommand);
-      final CommitFile file = getFile(args.token);
+      final FileUpdater file = getFile(args.token);
       final Map<String, String> props = file.deltaConsumer.getProperties();
       if (args.value.length > 0) {
         props.put(args.name, args.value[0]);
@@ -343,17 +343,18 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
+      context.push(this::editorCommand);
       final String path = getPath(context, args.parentToken, args.name);
-      final CommitFile file;
+      final VcsDeltaConsumer deltaConsumer;
       if (args.copyParams.rev != 0) {
         log.info("Copy file: {} (rev: {}) from {} (rev: {})", path, args.copyParams.copyFrom, args.copyParams.rev);
-        file = new CommitFile(context.getRepository().copyFile(path, context.getRepositoryPath(args.copyParams.copyFrom), args.copyParams.rev));
+        deltaConsumer = context.getRepository().modifyFile(context.getRepositoryPath(args.copyParams.copyFrom), args.copyParams.rev);
       } else {
         log.info("Add file: {} (rev: {})", path);
-        file = new CommitFile(context.getRepository().createFile(path));
+        deltaConsumer = context.getRepository().createFile();
       }
-      files.put(args.token, file);
-      context.push(this::editorCommand);
+      files.put(args.token, new FileUpdater(deltaConsumer));
+      getChanges(StringHelper.parentDir(path)).add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(path), deltaConsumer, false));
     }
 
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
@@ -376,21 +377,21 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
       final int rev = args.rev[0];
       log.info("Modify file: {} (rev: {})", path, rev);
-      files.put(args.token, new CommitFile(context.getRepository().modifyFile(path, rev)));
+      final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(path, rev);
+      files.put(args.token, new FileUpdater(deltaConsumer));
       rootChanges().add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
+      getChanges(StringHelper.parentDir(path)).add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(path), deltaConsumer, true));
     }
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final CommitFile file = files.remove(args.token);
+      final FileUpdater file = files.remove(args.token);
       if (file == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + args.token));
       }
       if (args.checksum.length != 0) {
         file.deltaConsumer.validateChecksum(args.checksum[0]);
       }
-      final String path = file.deltaConsumer.getPath();
-      getChanges(StringHelper.parentDir(path)).add(treeBuilder -> treeBuilder.saveFile(file.deltaConsumer));
     }
 
     private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -409,8 +410,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private CommitFile getFile(@NotNull String token) throws SVNException {
-      final CommitFile file = files.get(token);
+    private FileUpdater getFile(@NotNull String token) throws SVNException {
+      final FileUpdater file = files.get(token);
       if (file == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
       }

@@ -74,11 +74,10 @@ public interface VcsRepository {
   /**
    * Create new file in repository.
    *
-   * @param path File path in repository.
    * @return File updater.
    */
   @NotNull
-  VcsDeltaConsumer createFile(@NotNull String path) throws IOException, SVNException;
+  VcsDeltaConsumer createFile() throws IOException, SVNException;
 
   /**
    * Modification of the existing file.
@@ -89,16 +88,6 @@ public interface VcsRepository {
    */
   @NotNull
   VcsDeltaConsumer modifyFile(@NotNull String path, int revision) throws IOException, SVNException;
-
-  /**
-   * Copy existing file.
-   *
-   * @param revision File revision.
-   * @param source   File path in repository.
-   * @return File updater.
-   */
-  @NotNull
-  VcsDeltaConsumer copyFile(@NotNull String path, @NotNull String source, int revision) throws IOException, SVNException;
 
   /**
    * Create tree for commit.

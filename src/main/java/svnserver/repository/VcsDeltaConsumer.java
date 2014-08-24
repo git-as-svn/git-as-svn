@@ -12,10 +12,6 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
-  @Deprecated
-  @NotNull
-  String getPath();
-
   /**
    * Properties of copying/modifing node.
    *
