@@ -24,7 +24,8 @@ public interface VcsRepository {
    *
    * @return Latest revision number.
    */
-  int getLatestRevision() throws IOException;
+  @NotNull
+  VcsRevision getLatestRevision() throws IOException;
 
   /**
    * Update revision information.
@@ -45,35 +46,6 @@ public interface VcsRepository {
   /**
    * Create new file in repository.
    *
-   * @param path File path in repository.
-   * @return File updater.
-   */
-  @NotNull
-  VcsDirectoryConsumer createDir(@NotNull String path) throws IOException, SVNException;
-
-  /**
-   * Modification of the existing file.
-   *
-   * @param revision File revision (for need update check).
-   * @param path     File path in repository.
-   * @return Directory entry.
-   */
-  @NotNull
-  VcsDirectoryConsumer modifyDir(@NotNull String path, int revision) throws IOException, SVNException;
-
-  /**
-   * Copy existing file.
-   *
-   * @param revision  File revision.
-   * @param sourceDir File path in repository.
-   * @return File updater.
-   */
-  @NotNull
-  VcsDirectoryConsumer copyDir(@NotNull String path, @NotNull String sourceDir, int revision) throws IOException, SVNException;
-
-  /**
-   * Create new file in repository.
-   *
    * @return File updater.
    */
   @NotNull
@@ -82,12 +54,11 @@ public interface VcsRepository {
   /**
    * Modification of the existing file.
    *
-   * @param revision File revision (for need update check).
-   * @param path     File path in repository.
+   * @param file File for modification.
    * @return File updater.
    */
   @NotNull
-  VcsDeltaConsumer modifyFile(@NotNull String path, int revision) throws IOException, SVNException;
+  VcsDeltaConsumer modifyFile(@NotNull VcsFile file) throws IOException, SVNException;
 
   /**
    * Create tree for commit.

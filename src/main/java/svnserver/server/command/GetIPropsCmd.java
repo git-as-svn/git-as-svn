@@ -48,7 +48,7 @@ public class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
     String fullPath = context.getRepositoryPath(args.path);
 
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision()));
+    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
     final List<VcsFile> files = new ArrayList<>();
     int index = -1;
     while (true) {

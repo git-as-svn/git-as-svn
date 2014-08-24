@@ -1,6 +1,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -197,11 +198,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         .listEnd()
         .listEnd();
     log.info("Enter editor mode");
-    EditorPipeline pipeline = new EditorPipeline(args);
+    EditorPipeline pipeline = new EditorPipeline(context.getRepository(), args);
     pipeline.editorCommand(context);
   }
 
-  public static class FileUpdater {
+  private static class FileUpdater {
     @NotNull
     private final VcsDeltaConsumer deltaConsumer;
     @NotNull
@@ -212,23 +213,41 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
-  public static class EditorPipeline {
+  private static class EntryUpdater {
+    @Nullable
+    private final VcsFile source;
+    @NotNull
+    private final Map<String, String> props;
+    @NotNull
+    private final List<VcsConsumer<VcsCommitBuilder>> changes = new ArrayList<>();
+
+    private EntryUpdater(@Nullable VcsFile source) throws IOException, SVNException {
+      this.source = source;
+      this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties(false));
+    }
+
+    public Map<String, String> getProperties() {
+      return props;
+    }
+  }
+
+  private static class EditorPipeline {
+    @NotNull
+    private final EntryUpdater rootEntry;
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
     @NotNull
     private final String message;
     @NotNull
-    private final Map<String, VcsDirectoryConsumer> paths;
+    private final Map<String, EntryUpdater> paths;
     @NotNull
     private final Map<String, FileUpdater> files;
-    @NotNull
-    private final Map<String, List<VcsConsumer<VcsCommitBuilder>>> changes;
 
-    public EditorPipeline(@NotNull CommitParams params) {
+    public EditorPipeline(@NotNull VcsRepository repository, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
+      this.rootEntry = new EntryUpdater(repository.getLatestRevision().getFile(""));
       paths = new HashMap<>();
       files = new HashMap<>();
-      changes = new HashMap<>();
       commands = new HashMap<>();
       commands.put("add-dir", new LambdaCmd<>(AddParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(AddParams.class, this::addFile));
@@ -246,18 +265,14 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
     }
 
-    private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
+    @NotNull
+    private EntryUpdater changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
       context.push(this::editorCommand);
-      final VcsDirectoryConsumer dir = paths.get(args.token);
+      final EntryUpdater dir = paths.get(args.token);
       if (dir == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + args.token));
       }
-      Map<String, String> props = dir.getProperties();
-      if (args.value.length > 0) {
-        props.put(args.name, args.value[0]);
-      } else {
-        props.remove(args.name);
-      }
+      return dir;
     }
 
     private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
@@ -275,48 +290,35 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       context.push(this::editorCommand);
       String rootPath = context.getRepositoryPath("");
       String lastPath = rootPath;
+      EntryUpdater updater = rootEntry;
       for (int i = rootPath.lastIndexOf('/'); i >= 0; i = rootPath.lastIndexOf('/', i - 1)) {
         final String itemPath = rootPath.substring(0, i);
-        final String childPath = lastPath;
-        final VcsDirectoryConsumer dir = context.getRepository().modifyDir(lastPath, -1);
-        getChanges(itemPath).add(treeBuilder -> {
-          treeBuilder.openDir(dir);
-          updateDir(treeBuilder, childPath);
-          treeBuilder.closeDir();
-        });
+        String name = StringHelper.baseName(lastPath);
+        updater = new EntryUpdater(updater.source.getEntries().get(name));
         lastPath = itemPath;
       }
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      paths.put(args.token, context.getRepository().modifyDir(rootPath, rev));
-    }
-
-    @NotNull
-    private List<VcsConsumer<VcsCommitBuilder>> rootChanges() {
-      return getChanges("");
-    }
-
-    @NotNull
-    private List<VcsConsumer<VcsCommitBuilder>> getChanges(@NotNull String path) {
-      return changes.computeIfAbsent(path, s -> new ArrayList<>());
+      paths.put(args.token, updater);
     }
 
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String path = getPath(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      log.info("Modify file: {} (rev: {})", path, rev);
-      final VcsDirectoryConsumer dir = context.getRepository().modifyDir(path, rev);
+      log.info("Modify file: {} (rev: {})", args.name, rev);
+      VcsFile sourceDir = parent.source.getEntries().get(StringHelper.baseName(args.name));
+      final EntryUpdater dir = new EntryUpdater(sourceDir);
       paths.put(args.token, dir);
-      getChanges(paths.get(args.parentToken).getPath()).add(treeBuilder -> {
-        treeBuilder.openDir(dir);
-        updateDir(treeBuilder, path);
+      parent.changes.add(treeBuilder -> {
+        treeBuilder.openDir(StringHelper.baseName(args.name));
+        updateDir(treeBuilder, dir);
         treeBuilder.closeDir();
       });
     }
 
     @NotNull
-    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull String fullPath) throws IOException, SVNException {
-      for (VcsConsumer<VcsCommitBuilder> consumer : getChanges(fullPath)) {
+    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
+      for (VcsConsumer<VcsCommitBuilder> consumer : updater.changes) {
         consumer.accept(treeBuilder);
       }
       return treeBuilder;
@@ -324,63 +326,66 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String path = getPath(context, args.parentToken, args.name);
-      final VcsDirectoryConsumer dir;
+      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
+      final VcsFile source;
       if (args.copyParams.rev != 0) {
-        log.info("Copy dir: {} (rev: {}) from {} (rev: {})", path, args.copyParams.copyFrom, args.copyParams.rev);
-        dir = context.getRepository().copyDir(path, context.getRepositoryPath(args.copyParams.copyFrom), args.copyParams.rev);
+        log.info("Copy dir: {} (rev: {}) from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
+        source = context.getRepository().getRevisionInfo(args.copyParams.rev).getFile(context.getRepositoryPath(args.copyParams.copyFrom));
       } else {
-        log.info("Add dir: {} (rev: {})", path);
-        dir = context.getRepository().createDir(path);
+        log.info("Add dir: {} (rev: {})", args.name);
+        source = null;
       }
-      log.info("Add dir: {} (rev: {})", path);
-      getChanges(paths.get(args.parentToken).getPath()).add(treeBuilder -> {
-        treeBuilder.addDir(StringHelper.baseName(path), dir);
-        updateDir(treeBuilder, path);
+      log.info("Add dir: {} (rev: {})", args.name);
+      final EntryUpdater updater = new EntryUpdater(source);
+      paths.put(args.token, updater);
+      parent.changes.add(treeBuilder -> {
+        treeBuilder.addDir(StringHelper.baseName(args.name), source);
+        updateDir(treeBuilder, updater);
         treeBuilder.closeDir();
       });
-      paths.put(args.token, dir);
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String path = getPath(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
       final VcsDeltaConsumer deltaConsumer;
       if (args.copyParams.rev != 0) {
-        log.info("Copy file: {} (rev: {}) from {} (rev: {})", path, args.copyParams.copyFrom, args.copyParams.rev);
-        deltaConsumer = context.getRepository().modifyFile(context.getRepositoryPath(args.copyParams.copyFrom), args.copyParams.rev);
+        log.info("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
+        final VcsFile file = context.getRepository().getRevisionInfo(args.copyParams.rev).getFile(context.getRepositoryPath(args.copyParams.copyFrom));
+        deltaConsumer = context.getRepository().modifyFile(file);
       } else {
-        log.info("Add file: {} (rev: {})", path);
+        log.info("Add file: {} (rev: {})", parent);
         deltaConsumer = context.getRepository().createFile();
       }
       files.put(args.token, new FileUpdater(deltaConsumer));
-      getChanges(StringHelper.parentDir(path)).add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(path), deltaConsumer, false));
+      parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, false));
     }
 
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String path = getPath(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
       if (args.rev.length == 0) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + args.name));
       }
       final int rev = args.rev[0];
-      log.info("Delete entry: {} (rev: {})", path, rev);
-      rootChanges().add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
-      getChanges(paths.get(args.parentToken).getPath()).add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(path)));
+      log.info("Delete entry: {} (rev: {})", args.name, rev);
+      // todo: rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
+      parent.changes.add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(args.name)));
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String path = getPath(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
       if (args.rev.length == 0) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + parent));
       }
       final int rev = args.rev[0];
-      log.info("Modify file: {} (rev: {})", path, rev);
-      final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(path, rev);
+      log.info("Modify file: {} (rev: {})", parent, rev);
+      VcsFile vcsFile = parent.source.getEntries().get(StringHelper.baseName(args.name));
+      final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
-      rootChanges().add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
-      getChanges(StringHelper.parentDir(path)).add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(path), deltaConsumer, true));
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), vcsFile.getLastChange().getId()));
+      parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -419,17 +424,12 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private String getPath(@NotNull SessionContext context, @NotNull String parentToken, @NotNull String name) throws SVNException {
-      final VcsDirectoryConsumer dir = paths.get(parentToken);
-      if (dir == null) {
+    private EntryUpdater getParent(@NotNull SessionContext context, @NotNull String parentToken, @NotNull String name) throws SVNException {
+      final EntryUpdater parent = paths.get(parentToken);
+      if (parent == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
       }
-      final String fullPath = context.getRepositoryPath(name);
-      final String checkPath = StringHelper.joinPath(dir.getPath(), StringHelper.baseName(name));
-      if (!checkPath.equals(fullPath)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid path: " + dir.getPath()));
-      }
-      return fullPath;
+      return parent;
     }
 
     private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
@@ -451,7 +451,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         if (pass >= MAX_PASS_COUNT) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
         }
-        final VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), "").commit(context.getUser(), message);
+        final VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), rootEntry).commit(context.getUser(), message);
         if (revision != null) {
           // todo: CheckPermissionStep must be before commit
           context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));

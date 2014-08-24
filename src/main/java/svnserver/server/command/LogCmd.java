@@ -95,7 +95,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final int head = context.getRepository().getLatestRevision();
+    final int head = context.getRepository().getLatestRevision().getId();
     int endRev = getRevision(args.endRev, head);
     int startRev = getRevision(args.startRev, 1);
     if ((startRev > head) || (endRev > head)) {

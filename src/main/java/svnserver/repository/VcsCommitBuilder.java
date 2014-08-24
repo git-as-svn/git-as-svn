@@ -16,17 +16,17 @@ public interface VcsCommitBuilder {
   /**
    * Add/copy directory and enter into it.
    *
-   * @param name    New directory name.
-   * @param dirInfo Directory information.
+   * @param name      New directory name.
+   * @param sourceDir Directory information.
    */
-  void addDir(@NotNull String name, @NotNull VcsDirectoryConsumer dirInfo) throws SVNException, IOException;
+  void addDir(@NotNull String name, @Nullable VcsFile sourceDir) throws SVNException, IOException;
 
   /**
    * Enter into directory.
    *
-   * @param dir Directory consumer from the same repository.
+   * @param name Directory name.
    */
-  void openDir(@NotNull VcsDirectoryConsumer dir) throws SVNException, IOException;
+  void openDir(@NotNull String name) throws SVNException, IOException;
 
   /**
    * Leave back from directory.
@@ -40,7 +40,7 @@ public interface VcsCommitBuilder {
    * @param deltaConsumer Delta consumer from the same repository.
    * @param modify        Modification flag (true - entry modification, false - new entry).
    * @see svnserver.repository.VcsRepository#createFile()
-   * @see svnserver.repository.VcsRepository#modifyFile(String, int)
+   * @see svnserver.repository.VcsRepository#modifyFile(VcsFile)
    */
   void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException;
 
