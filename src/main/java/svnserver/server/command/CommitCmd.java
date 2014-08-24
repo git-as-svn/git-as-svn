@@ -363,9 +363,9 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + path));
       }
       final int rev = args.rev[0];
-      final VcsFile file = context.getRepository().deleteEntry(path, rev);
       log.info("Delete entry: {} (rev: {})", path, rev);
-      getChanges(paths.get(args.parentToken).getPath()).add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(path), file));
+      rootChanges().add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
+      getChanges(paths.get(args.parentToken).getPath()).add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(path)));
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {

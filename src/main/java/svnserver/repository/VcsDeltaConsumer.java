@@ -12,6 +12,7 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
+  @Deprecated
   @NotNull
   String getPath();
 
@@ -20,6 +21,7 @@ public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
    *
    * @return Properties.
    */
+  @Deprecated
   @NotNull
   Map<String, String> getProperties();
 

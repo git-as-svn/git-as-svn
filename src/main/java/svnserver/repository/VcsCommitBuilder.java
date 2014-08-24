@@ -46,9 +46,8 @@ public interface VcsCommitBuilder {
    * Delete directory or file.
    *
    * @param name Directory/file name.
-   * @param file File entry for out-of-date validation.
    */
-  void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException;
+  void delete(@NotNull String name) throws SVNException, IOException;
 
   /**
    * Create real commit.

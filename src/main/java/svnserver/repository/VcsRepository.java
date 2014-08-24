@@ -101,23 +101,11 @@ public interface VcsRepository {
   VcsDeltaConsumer copyFile(@NotNull String path, @NotNull String source, int revision) throws IOException, SVNException;
 
   /**
-   * Get information for deleting file.
-   *
-   * @param revision File revision (for need update check).
-   * @param path     File path in repository.
-   * @return Removing file info.
-   * @throws IOException
-   * @throws SVNException
-   */
-  @NotNull
-  VcsFile deleteEntry(@NotNull String path, int revision) throws IOException, SVNException;
-
-  /**
    * Create tree for commit.
    *
    * @return Commit build.
    * @throws IOException
    */
   @NotNull
-  VcsCommitBuilder createCommitBuilder() throws IOException;
+  VcsCommitBuilder createCommitBuilder() throws IOException, SVNException;
 }
