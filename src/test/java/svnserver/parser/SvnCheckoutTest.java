@@ -60,7 +60,7 @@ public class SvnCheckoutTest {
       checkout.setRevision(SVNRevision.HEAD);
       checkout.run();
 
-      final File file = new File(server.getTempDirectory(), "src/someFile.txt");
+      final File file = new File(server.getTempDirectory(), "src/main/someFile.txt");
       final SVNClientManager client = SVNClientManager.newInstance(factory);
       // create file
       final SVNCommitInfo commit;
