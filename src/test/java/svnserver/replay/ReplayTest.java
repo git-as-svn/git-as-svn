@@ -5,11 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import svnserver.parser.SvnTestServer;
@@ -49,10 +47,17 @@ public class ReplayTest {
   }
 
   private void replayRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
-    final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
-    final ISVNEditor editor = dstRepo.getCommitEditor(message.getString(), null);
-    srcRepo.replay(revision - 1, revision, true, new FilterSVNEditor(editor, revision - 1));
-    editor.closeEdit();
+    srcRepo.replayRange(revision, revision, -1, true, new ISVNReplayHandler() {
+      @Override
+      public ISVNEditor handleStartRevision(long revision, SVNProperties revisionProperties) throws SVNException {
+        return dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null);
+      }
+
+      @Override
+      public void handleEndRevision(long revision, SVNProperties revisionProperties, ISVNEditor editor) throws SVNException {
+        editor.closeEdit();
+      }
+    });
   }
 
   private void compareRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
@@ -60,13 +65,13 @@ public class ReplayTest {
     srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
-    }, new FilterSVNEditor(srcExport, -1));
+    }, new FilterSVNEditor(srcExport));
 
     final ExportSVNEditor dstExport = new ExportSVNEditor();
     dstRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
-    }, new FilterSVNEditor(dstExport, -1));
+    }, new FilterSVNEditor(dstExport));
 
     Assert.assertEquals(srcExport.toString(), dstExport.toString());
   }

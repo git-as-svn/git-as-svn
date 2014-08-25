@@ -382,11 +382,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final EntryUpdater parent = getParent(context, args.parentToken, args.name);
-      if (args.rev.length == 0) {
+      /*todo: if (args.rev.length == 0) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + args.name));
       }
       final int rev = args.rev[0];
-      log.info("Delete entry: {} (rev: {})", args.name, rev);
+      log.info("Delete entry: {} (rev: {})", args.name, rev);*/
       // todo: rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
       parent.changes.add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(args.name)));
     }
@@ -394,15 +394,15 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final EntryUpdater parent = getParent(context, args.parentToken, args.name);
-      if (args.rev.length == 0) {
+     /* todo: if (args.rev.length == 0) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + parent));
       }
       final int rev = args.rev[0];
-      log.info("Modify file: {} (rev: {})", parent, rev);
+      log.info("Modify file: {} (rev: {})", parent, rev);*/
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
       final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
-      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev));
+      //todo: rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev));
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
