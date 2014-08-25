@@ -220,9 +220,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final Map<String, String> props;
     @NotNull
     private final List<VcsConsumer<VcsCommitBuilder>> changes = new ArrayList<>();
+    private final boolean head;
 
-    private EntryUpdater(@Nullable VcsFile source) throws IOException, SVNException {
+    private EntryUpdater(@Nullable VcsFile source, boolean head) throws IOException, SVNException {
       this.source = source;
+      this.head = head;
       this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties(false));
     }
 
@@ -257,7 +259,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     public EditorPipeline(@NotNull VcsRepository repository, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
-      this.rootEntry = new EntryUpdater(repository.getLatestRevision().getFile(""));
+      this.rootEntry = new EntryUpdater(repository.getLatestRevision().getFile(""), true);
       paths = new HashMap<>();
       files = new HashMap<>();
       commands = new HashMap<>();
@@ -304,7 +306,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       EntryUpdater lastUpdater = rootEntry;
       for (int i = 1; i < rootPath.length; ++i) {
         String name = rootPath[i];
-        final EntryUpdater updater = new EntryUpdater(lastUpdater.getEntry(name));
+        final EntryUpdater updater = new EntryUpdater(lastUpdater.getEntry(name), true);
         lastUpdater.changes.add(treeBuilder -> {
           treeBuilder.openDir(name);
           updateDir(treeBuilder, updater);
@@ -322,7 +324,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Modify file: {} (rev: {})", args.name, rev);
       VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
-      final EntryUpdater dir = new EntryUpdater(sourceDir);
+      final EntryUpdater dir = new EntryUpdater(sourceDir, parent.head);
       paths.put(args.token, dir);
       parent.changes.add(treeBuilder -> {
         treeBuilder.openDir(StringHelper.baseName(args.name));
@@ -351,7 +353,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         source = null;
       }
       log.info("Add dir: {} (rev: {})", args.name);
-      final EntryUpdater updater = new EntryUpdater(source);
+      final EntryUpdater updater = new EntryUpdater(source, false);
       paths.put(args.token, updater);
       parent.changes.add(treeBuilder -> {
         treeBuilder.addDir(StringHelper.baseName(args.name), source);
@@ -382,27 +384,25 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final EntryUpdater parent = getParent(context, args.parentToken, args.name);
-      /*todo: if (args.rev.length == 0) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + args.name));
+      final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      log.info("Delete entry: {} (rev: {})", args.name, rev);
+      if (parent.head && (rev >= 0) && (parent.source != null)) {
+        rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(parent.source.getFullPath(), rev));
       }
-      final int rev = args.rev[0];
-      log.info("Delete entry: {} (rev: {})", args.name, rev);*/
-      // todo: rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(path, rev));
       parent.changes.add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(args.name)));
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
       final EntryUpdater parent = getParent(context, args.parentToken, args.name);
-     /* todo: if (args.rev.length == 0) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "File revision is not defined: " + parent));
-      }
-      final int rev = args.rev[0];
-      log.info("Modify file: {} (rev: {})", parent, rev);*/
+      final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      log.info("Modify file: {} (rev: {})", parent, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
       final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
-      //todo: rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev));
+      if (parent.head && (rev >= 0)) {
+        rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev));
+      }
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
