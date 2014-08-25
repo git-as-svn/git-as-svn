@@ -66,8 +66,48 @@ public class SvnFilePropertyTest {
       createFile(repo, "Create new file", "with-props.txt", "", SVNProperty.EOL_STYLE_NATIVE);
       try {
         createFile(repo, "Create new file", "none-props.txt", "", null);
+        Assert.fail();
       } catch (SVNException e) {
         Assert.assertTrue(e.getMessage().contains(SVNProperty.EOL_STYLE));
+      }
+    }
+  }
+
+  /**
+   * Check commit .gitattributes with some files.
+   *
+   * @throws Exception
+   */
+  @Test(timeOut = 60 * 1000)
+  public void commitWithFileProperties() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
+      repo.setAuthenticationManager(server.getAuthenticator());
+
+      createFile(repo, "Create new file", "sample.txt", "", null);
+      {
+        SVNProperties props = new SVNProperties();
+        repo.getFile("/sample.txt", repo.getLatestRevision(), props, null);
+        Assert.assertEquals(props.getStringValue(SVNProperty.EOL_STYLE), null);
+      }
+      try {
+        final ISVNEditor editor = repo.getCommitEditor("Create .gitattributes", null, false, null);
+        editor.openRoot(-1);
+        createFile(editor, ".gitattributes", "*.txt\t\t\ttext eol=native\n", null);
+        createFile(editor, "none-props.txt", "", null);
+        editor.closeDir();
+        editor.closeEdit();
+        Assert.fail();
+      } catch (SVNException e) {
+        Assert.assertTrue(e.getMessage().contains(SVNProperty.EOL_STYLE));
+      }
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Create .gitattributes", null, false, null);
+        editor.openRoot(-1);
+        createFile(editor, ".gitattributes", "*.txt\t\t\ttext eol=native\n", null);
+        createFile(editor, "with-props.txt", "", SVNProperty.EOL_STYLE_NATIVE);
+        editor.closeDir();
+        editor.closeEdit();
       }
     }
   }
@@ -76,6 +116,12 @@ public class SvnFilePropertyTest {
   private SVNCommitInfo createFile(@NotNull SVNRepository repo, @NotNull String logMessage, @NotNull String filePath, @NotNull String content, @Nullable String eolStyle) throws SVNException {
     final ISVNEditor editor = repo.getCommitEditor(logMessage, null, false, null);
     editor.openRoot(-1);
+    createFile(editor, filePath, content, eolStyle);
+    editor.closeDir();
+    return editor.closeEdit();
+  }
+
+  private void createFile(@NotNull ISVNEditor editor, @NotNull String filePath, @NotNull String content, @Nullable String eolStyle) throws SVNException {
     editor.addFile(filePath, null, -1);
     if (eolStyle != null) {
       editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(eolStyle));
@@ -84,7 +130,5 @@ public class SvnFilePropertyTest {
     SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
     String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(new byte[0]), 0, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)), editor, true);
     editor.closeFile(filePath, checksum);
-    editor.closeDir();
-    return editor.closeEdit();
   }
 }
