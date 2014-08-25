@@ -9,6 +9,7 @@ import java.util.Map;
  *
  * @author a.navrotskiy
  */
+@Deprecated
 public interface VcsDirectoryConsumer {
   @NotNull
   String getPath();

@@ -14,17 +14,23 @@ import java.util.Map;
  * @author a.navrotskiy
  */
 public class GitDirectoryConsumer implements VcsDirectoryConsumer {
+  public enum Mode {
+    Open,
+    Create,
+    Modify
+  }
   @NotNull
   private final String path;
   @NotNull
   private final Map<String, String> props;
   @Nullable
   private final GitTreeEntry source;
-  private final boolean update;
+  @NotNull
+  private final Mode mode;
 
-  public GitDirectoryConsumer(@NotNull String path, @Nullable GitFile file, boolean update) throws IOException {
+  public GitDirectoryConsumer(@NotNull String path, @Nullable GitFile file, @NotNull Mode mode) throws IOException {
     this.path = path;
-    this.update = update;
+    this.mode = mode;
     if (file != null) {
       this.props = new HashMap<>(file.getProperties(false));
       this.source = file.getTreeEntry();
@@ -49,5 +55,10 @@ public class GitDirectoryConsumer implements VcsDirectoryConsumer {
   @Override
   public Map<String, String> getProperties() {
     return props;
+  }
+
+  @NotNull
+  public Mode getMode() {
+    return mode;
   }
 }

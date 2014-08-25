@@ -18,11 +18,9 @@ import java.io.OutputStream;
 public class FilterSVNEditor implements ISVNEditor {
   @NotNull
   private final ISVNEditor editor;
-  private final long prevRev;
 
-  public FilterSVNEditor(@NotNull ISVNEditor editor, long prevRev) {
+  public FilterSVNEditor(@NotNull ISVNEditor editor) {
     this.editor = editor;
-    this.prevRev = prevRev;
   }
 
   @Override
@@ -32,12 +30,12 @@ public class FilterSVNEditor implements ISVNEditor {
 
   @Override
   public void openRoot(long revision) throws SVNException {
-    editor.openRoot(revision < 0 ? prevRev : revision);
+    editor.openRoot(revision);
   }
 
   @Override
   public void deleteEntry(String path, long revision) throws SVNException {
-    editor.deleteEntry(path, revision < 0 ? prevRev : revision);
+    editor.deleteEntry(path, revision);
   }
 
   @Override
@@ -57,7 +55,7 @@ public class FilterSVNEditor implements ISVNEditor {
 
   @Override
   public void openDir(String path, long revision) throws SVNException {
-    editor.openDir(path, revision < 0 ? prevRev : revision);
+    editor.openDir(path, revision);
   }
 
   @Override
@@ -79,7 +77,7 @@ public class FilterSVNEditor implements ISVNEditor {
 
   @Override
   public void openFile(String path, long revision) throws SVNException {
-    editor.openFile(path, revision < 0 ? prevRev : revision);
+    editor.openFile(path, revision);
   }
 
   @Override

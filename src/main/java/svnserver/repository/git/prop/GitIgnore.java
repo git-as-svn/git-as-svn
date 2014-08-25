@@ -140,8 +140,7 @@ public final class GitIgnore implements GitProperty {
     }
     for (String ignore : ignores) {
       if (contains.add(ignore)) {
-        if (result.length() > 0) result.append('\n');
-        result.append(ignore);
+        result.append(ignore).append('\n');
       }
     }
     return result.toString();

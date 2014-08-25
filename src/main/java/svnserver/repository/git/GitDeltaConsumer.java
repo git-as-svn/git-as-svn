@@ -39,8 +39,6 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private final String originalMd5;
   @NotNull
   private final FileMode fileMode;
-  @NotNull
-  private final String path;
 
   @Nullable
   private GitObject<ObjectId> objectId;
@@ -48,9 +46,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private ByteArrayOutputStream memory;
-  private final boolean update;
 
-  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @NotNull String path, @Nullable GitFile file, boolean update) throws IOException {
+  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file) throws IOException {
     this.gitRepository = gitRepository;
     if (file != null) {
       this.fileMode = file.getFileMode();
@@ -63,16 +60,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       this.originalId = null;
       this.props = new HashMap<>();
     }
-    this.path = path;
-    this.update = update;
     this.objectId = originalId;
     this.memory = new ByteArrayOutputStream();
-  }
-
-  @NotNull
-  @Override
-  public String getPath() {
-    return path;
   }
 
   @NotNull
@@ -149,9 +138,5 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   public FileMode getFileMode() {
     return fileMode;
-  }
-
-  public boolean isUpdate() {
-    return update;
   }
 }

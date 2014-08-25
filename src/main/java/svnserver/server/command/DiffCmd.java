@@ -71,7 +71,7 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
 
     @Override
     public int getRev(@NotNull SessionContext context) throws IOException {
-      return rev.length > 0 ? rev[0] : context.getRepository().getLatestRevision();
+      return rev.length > 0 ? rev[0] : context.getRepository().getLatestRevision().getId();
     }
   }
 

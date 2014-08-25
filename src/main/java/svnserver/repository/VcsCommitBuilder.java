@@ -16,17 +16,17 @@ public interface VcsCommitBuilder {
   /**
    * Add/copy directory and enter into it.
    *
-   * @param name    New directory name.
-   * @param dirInfo Directory information.
+   * @param name      New directory name.
+   * @param sourceDir Directory information.
    */
-  void addDir(@NotNull String name, @NotNull VcsDirectoryConsumer dirInfo) throws SVNException, IOException;
+  void addDir(@NotNull String name, @Nullable VcsFile sourceDir) throws SVNException, IOException;
 
   /**
    * Enter into directory.
    *
-   * @param dir Directory consumer from the same repository.
+   * @param name Directory name.
    */
-  void openDir(@NotNull VcsDirectoryConsumer dir) throws SVNException, IOException;
+  void openDir(@NotNull String name) throws SVNException, IOException;
 
   /**
    * Leave back from directory.
@@ -36,19 +36,20 @@ public interface VcsCommitBuilder {
   /**
    * Save file (add or update).
    *
+   * @param name          File name.
    * @param deltaConsumer Delta consumer from the same repository.
-   * @see svnserver.repository.VcsRepository#createFile(java.lang.String)
-   * @see svnserver.repository.VcsRepository#modifyFile(String, int)
+   * @param modify        Modification flag (true - entry modification, false - new entry).
+   * @see svnserver.repository.VcsRepository#createFile()
+   * @see svnserver.repository.VcsRepository#modifyFile(VcsFile)
    */
-  void saveFile(@NotNull VcsDeltaConsumer deltaConsumer) throws SVNException, IOException;
+  void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException;
 
   /**
    * Delete directory or file.
    *
    * @param name Directory/file name.
-   * @param file File entry for out-of-date validation.
    */
-  void delete(@NotNull String name, @NotNull VcsFile file) throws SVNException, IOException;
+  void delete(@NotNull String name) throws SVNException, IOException;
 
   /**
    * Create real commit.
@@ -61,4 +62,12 @@ public interface VcsCommitBuilder {
    */
   @Nullable
   VcsRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException;
+
+  /**
+   * Check last modification revision of path.
+   *
+   * @param path Full path.
+   * @param rev  Revision.
+   */
+  void checkUpToDate(String path, int rev) throws SVNException, IOException;
 }
