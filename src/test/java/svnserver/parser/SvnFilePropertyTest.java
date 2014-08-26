@@ -99,6 +99,7 @@ public class SvnFilePropertyTest {
       checkFileContent(repo, "/non-link", content);
       checkFileContent(repo, "/link", content);
 
+      final String content2 = "link bar/foo.txt";
       {
         final long latestRevision = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Change symlink property", null, false, null);
@@ -106,11 +107,11 @@ public class SvnFilePropertyTest {
 
         editor.openFile("/non-link", latestRevision);
         editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"));
-        sendDeltaAndClose(editor, "/non-link", content, content);
+        sendDeltaAndClose(editor, "/non-link", content, content2);
 
         editor.openFile("/link", latestRevision);
         editor.changeFileProperty("/link", SVNProperty.SPECIAL, null);
-        sendDeltaAndClose(editor, "/link", content, content);
+        sendDeltaAndClose(editor, "/link", content, content2);
 
         editor.closeDir();
         editor.closeEdit();
@@ -119,8 +120,8 @@ public class SvnFilePropertyTest {
       checkFileProp(repo, "/non-link", propsSymlink);
       checkFileProp(repo, "/link", null);
 
-      checkFileContent(repo, "/non-link", content);
-      checkFileContent(repo, "/link", content);
+      checkFileContent(repo, "/non-link", content2);
+      checkFileContent(repo, "/link", content2);
 
       {
         final long latestRevision = repo.getLatestRevision();
@@ -142,8 +143,8 @@ public class SvnFilePropertyTest {
       checkFileProp(repo, "/non-link", null);
       checkFileProp(repo, "/link", propsSymlink);
 
-      checkFileContent(repo, "/non-link", content);
-      checkFileContent(repo, "/link", content);
+      checkFileContent(repo, "/non-link", content2);
+      checkFileContent(repo, "/link", content2);
     }
   }
 
