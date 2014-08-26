@@ -228,10 +228,6 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties(false));
     }
 
-    public Map<String, String> getProperties() {
-      return props;
-    }
-
     @NotNull
     public VcsFile getEntry(@NotNull String name) throws IOException, SVNException {
       if (source == null) {
@@ -279,20 +275,21 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       commands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
     }
 
-    @NotNull
-    private EntryUpdater changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
+    private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
       context.push(this::editorCommand);
       final EntryUpdater dir = paths.get(args.token);
       if (dir == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + args.token));
       }
-      return dir;
+      chanageProp(dir.props, args);
     }
 
     private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
       context.push(this::editorCommand);
-      final FileUpdater file = getFile(args.token);
-      final Map<String, String> props = file.deltaConsumer.getProperties();
+      chanageProp(getFile(args.token).deltaConsumer.getProperties(), args);
+    }
+
+    private void chanageProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
       if (args.value.length > 0) {
         props.put(args.name, args.value[0]);
       } else {
@@ -302,7 +299,8 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws SVNException, IOException {
       context.push(this::editorCommand);
-      final String[] rootPath = context.getRepositoryPath("").split("/");
+      final String fullPath = context.getRepositoryPath("");
+      final String[] rootPath = fullPath.split("/");
       EntryUpdater lastUpdater = rootEntry;
       for (int i = 1; i < rootPath.length; ++i) {
         String name = rootPath[i];
@@ -315,6 +313,11 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         lastUpdater = updater;
       }
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      if (rev >= 0) {
+        rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(fullPath, rev));
+        final Map<String, String> props = lastUpdater.props;
+        lastUpdater.changes.add(treeBuilder -> treeBuilder.checkDirProperties(props));
+      }
       paths.put(args.token, lastUpdater);
     }
 
@@ -325,10 +328,16 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       log.info("Modify file: {} (rev: {})", args.name, rev);
       VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
       final EntryUpdater dir = new EntryUpdater(sourceDir, parent.head);
+      if ((rev >= 0) && (parent.head)) {
+        rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(sourceDir.getFullPath(), rev));
+      }
       paths.put(args.token, dir);
       parent.changes.add(treeBuilder -> {
         treeBuilder.openDir(StringHelper.baseName(args.name));
         updateDir(treeBuilder, dir);
+        if (rev >= 0) {
+          treeBuilder.checkDirProperties(dir.props);
+        }
         treeBuilder.closeDir();
       });
     }
@@ -358,6 +367,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       parent.changes.add(treeBuilder -> {
         treeBuilder.addDir(StringHelper.baseName(args.name), source);
         updateDir(treeBuilder, updater);
+        treeBuilder.checkDirProperties(updater.props);
         treeBuilder.closeDir();
       });
     }
