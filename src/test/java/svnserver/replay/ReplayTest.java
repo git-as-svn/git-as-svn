@@ -1,5 +1,9 @@
 package svnserver.replay;
 
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +14,11 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import svnserver.SvnConstants;
 import svnserver.parser.SvnTestServer;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 
 /**
@@ -54,6 +60,8 @@ public class ReplayTest {
     ) {
       final SVNRepository srcRepo = SVNRepositoryFactory.create(src.getUrl());
       final SVNRepository dstRepo = SVNRepositoryFactory.create(dst.getUrl());
+      final Repository srcGit = src.getRepository();
+      final Repository dstGit = dst.getRepository();
       srcRepo.setAuthenticationManager(src.getAuthenticator());
       dstRepo.setAuthenticationManager(dst.getAuthenticator());
 
@@ -61,13 +69,27 @@ public class ReplayTest {
       log.info("Start replay");
       for (long revision = 1; revision <= lastRevision; revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
-        log.info("  replay commit #{}: {}", revision, message.getString());
+        final SVNPropertyValue srcHash = srcRepo.getRevisionPropertyValue(revision, SvnConstants.PROP_GIT);
+        log.info("  replay commit #{} {}: {}", revision, new String(srcHash.getBytes()), message.getString());
         updateRevision(srcRepo, dstRepo, revision);
         log.info("  compare revisions #{}: {}", revision, message.getString());
-        compareRevision(srcRepo, revision, dstRepo, dstRepo.getLatestRevision());
+        compareRevision(srcRepo, revision, dstRepo, revision);
+        final SVNPropertyValue dstHash = dstRepo.getRevisionPropertyValue(revision, SvnConstants.PROP_GIT);
+        compareGitRevision(srcGit, srcHash, dstGit, dstHash);
       }
       log.info("End replay");
     }
+  }
+
+  private void compareGitRevision(@NotNull Repository srcGit, @NotNull SVNPropertyValue srcHash, @NotNull Repository dstGit, @NotNull SVNPropertyValue dstHash) throws IOException {
+    final RevCommit srcCommit = getCommit(srcGit, srcHash);
+    final RevCommit dstCommit = getCommit(dstGit, dstHash);
+    Assert.assertEquals(srcCommit.getTree().getName(), dstCommit.getTree().getName());
+  }
+
+  @NotNull
+  private RevCommit getCommit(@NotNull Repository git, @NotNull SVNPropertyValue hash) throws IOException {
+    return new RevWalk(git).parseCommit(ObjectId.fromString(new String(hash.getBytes())));
   }
 
   private void replayRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
