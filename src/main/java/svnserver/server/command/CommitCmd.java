@@ -281,18 +281,15 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (dir == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + args.token));
       }
-      final Map<String, String> props = dir.props;
-      if (args.value.length > 0) {
-        props.put(args.name, args.value[0]);
-      } else {
-        props.remove(args.name);
-      }
+      chanageProp(dir.props, args);
     }
 
     private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
       context.push(this::editorCommand);
-      final FileUpdater file = getFile(args.token);
-      final Map<String, String> props = file.deltaConsumer.getProperties();
+      chanageProp(getFile(args.token).deltaConsumer.getProperties(), args);
+    }
+
+    private void chanageProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
       if (args.value.length > 0) {
         props.put(args.name, args.value[0]);
       } else {
