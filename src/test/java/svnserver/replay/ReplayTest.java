@@ -25,7 +25,7 @@ public class ReplayTest {
   private static final Logger log = LoggerFactory.getLogger(ReplayTest.class);
 
   @Test
-  public void testReplay() throws Exception {
+  public void testReplayFileModification() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final URL repoMark = ReplayTest.class.getResource("repo/format");
       final SVNURL url = SVNURL.fromFile(new File(repoMark.getPath()).getParentFile());
@@ -35,12 +35,36 @@ public class ReplayTest {
 
       long lastRevision = srcRepo.getLatestRevision();
       log.info("Start replay");
-      for (long revision = 2; revision <= lastRevision; revision++) {
+      for (long revision = 1; revision <= lastRevision; revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
         log.info("  replay commit #{}: {}", revision, message.getString());
         replayRevision(srcRepo, dstRepo, revision);
         log.info("  compare revisions #{}: {}", revision, message.getString());
-        compareRevision(srcRepo, dstRepo, revision);
+        compareRevision(srcRepo, revision, dstRepo, dstRepo.getLatestRevision());
+      }
+      log.info("End replay");
+    }
+  }
+
+  @Test
+  public void testReplaySelf() throws Exception {
+    try (
+        SvnTestServer dst = SvnTestServer.createEmpty();
+        SvnTestServer src = new SvnTestServer(null)
+    ) {
+      final SVNRepository srcRepo = SVNRepositoryFactory.create(src.getUrl());
+      final SVNRepository dstRepo = SVNRepositoryFactory.create(dst.getUrl());
+      srcRepo.setAuthenticationManager(src.getAuthenticator());
+      dstRepo.setAuthenticationManager(dst.getAuthenticator());
+
+      long lastRevision = srcRepo.getLatestRevision();
+      log.info("Start replay");
+      for (long revision = 1; revision <= lastRevision; revision++) {
+        final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
+        log.info("  replay commit #{}: {}", revision, message.getString());
+        updateRevision(srcRepo, dstRepo, revision);
+        log.info("  compare revisions #{}: {}", revision, message.getString());
+        compareRevision(srcRepo, revision, dstRepo, dstRepo.getLatestRevision());
       }
       log.info("End replay");
     }
@@ -60,15 +84,24 @@ public class ReplayTest {
     });
   }
 
-  private void compareRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
-    final ExportSVNEditor srcExport = new ExportSVNEditor();
+  private void updateRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
+    final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
+    final ISVNEditor editor = dstRepo.getCommitEditor(message.getString(), null);
     srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
+      reporter.setPath("", null, revision - 1, SVNDepth.INFINITY, false);
+      reporter.finishReport();
+    }, new FilterSVNEditor(editor));
+  }
+
+  private void compareRevision(@NotNull SVNRepository srcRepo, long srcRev, @NotNull SVNRepository dstRepo, long dstRev) throws SVNException {
+    final ExportSVNEditor srcExport = new ExportSVNEditor();
+    srcRepo.diff(srcRepo.getLocation(), srcRev, srcRev - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
     }, new FilterSVNEditor(srcExport));
 
     final ExportSVNEditor dstExport = new ExportSVNEditor();
-    dstRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
+    dstRepo.diff(srcRepo.getLocation(), dstRev, dstRev - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
     }, new FilterSVNEditor(dstExport));

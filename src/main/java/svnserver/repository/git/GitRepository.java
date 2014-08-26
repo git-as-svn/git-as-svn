@@ -2,6 +2,7 @@ package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.util.IntList;
@@ -83,10 +84,21 @@ public class GitRepository implements VcsRepository {
       throw new IOException("Branch not found: " + branch);
     }
     this.branch = branchRef.getName();
-    addRevisionInfo(getEmptyCommit(repository));
+    //addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
-    this.uuid = UUID.nameUUIDFromBytes((getRevisionInfo(1).getCommit().getName() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
+    this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
     log.info("Repository ready (branch: {})", this.branch);
+  }
+
+  @NotNull
+  private String getRepositoryId() {
+    if (revisions.size() > 1) {
+      RevCommit commit = revisions.get(1).getCommit();
+      if (commit.getParentCount() == 0) {
+        return commit.getName();
+      }
+    }
+    return revisions.get(0).getCommit().getName();
   }
 
   @Override
@@ -94,10 +106,13 @@ public class GitRepository implements VcsRepository {
     // Fast check.
     lock.readLock().lock();
     try {
-      final ObjectId lastCommitId = revisions.get(revisions.size() - 1).getCommit();
-      final Ref master = repository.getRef(branch);
-      if (master.getObjectId().equals(lastCommitId)) {
-        return;
+      final int lastRevision = revisions.size() - 1;
+      if (lastRevision >= 0) {
+        final ObjectId lastCommitId = revisions.get(lastRevision).getCommit();
+        final Ref master = repository.getRef(branch);
+        if (master.getObjectId().equals(lastCommitId)) {
+          return;
+        }
       }
     } finally {
       lock.readLock().unlock();
@@ -105,13 +120,14 @@ public class GitRepository implements VcsRepository {
     // Real update.
     lock.writeLock().lock();
     try {
-      final ObjectId lastCommitId = revisions.get(revisions.size() - 1).getCommit();
+      final int lastRevision = revisions.size() - 1;
+      final ObjectId lastCommitId = lastRevision < 0 ? null : revisions.get(lastRevision).getCommit();
       final Ref master = repository.getRef(branch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
       ObjectId objectId = master.getObjectId();
       while (true) {
-        if (lastCommitId.equals(objectId)) {
+        if (objectId.equals(lastCommitId)) {
           break;
         }
         final RevCommit commit = revWalk.parseCommit(objectId);
@@ -120,6 +136,12 @@ public class GitRepository implements VcsRepository {
         objectId = commit.getParent(0);
       }
       if (!newRevs.isEmpty()) {
+        if (lastRevision < 0) {
+          final RevCommit firstCommit = newRevs.get(newRevs.size() - 1);
+          if (!isTreeEmpty(firstCommit.getTree())) {
+            newRevs.add(getEmptyCommit(repository));
+          }
+        }
         final long beginTime = System.currentTimeMillis();
         long reportTime = beginTime;
         log.info("Loading revision changes: {} revision", newRevs.size());
@@ -138,6 +160,10 @@ public class GitRepository implements VcsRepository {
     } finally {
       lock.writeLock().unlock();
     }
+  }
+
+  private boolean isTreeEmpty(RevTree tree) throws IOException {
+    return new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), tree).eof();
   }
 
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
