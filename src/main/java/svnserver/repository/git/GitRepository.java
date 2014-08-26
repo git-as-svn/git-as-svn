@@ -580,8 +580,8 @@ public class GitRepository implements VcsRepository {
     }
 
     private FileMode getFileMode(@NotNull Map<String, String> props) {
-      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
       if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
+      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
       return FileMode.REGULAR_FILE;
     }
 

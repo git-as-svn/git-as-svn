@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -32,6 +33,10 @@ public class SvnFilePropertyTest {
     put(SVNProperty.EXECUTABLE, "*");
   }};
   @NotNull
+  private final static Map<String, String> propsSymlink = new HashMap<String, String>() {{
+    put(SVNProperty.SPECIAL, "*");
+  }};
+  @NotNull
   private final static Map<String, String> propsAutoProps = new HashMap<String, String>() {{
     put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n");
   }};
@@ -42,7 +47,7 @@ public class SvnFilePropertyTest {
    * @throws Exception
    */
   @Test(timeOut = 60 * 1000)
-  public void testExecutable() throws Exception {
+  public void executable() throws Exception {
     //Map<String, String> props = new HashMap<>()["key":""];
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
@@ -59,17 +64,86 @@ public class SvnFilePropertyTest {
 
         editor.openFile("/non-exec.txt", latestRevision);
         editor.changeFileProperty("/non-exec.txt", SVNProperty.EXECUTABLE, SVNPropertyValue.create("*"));
-        sendDeltaAndClose(editor, "/non-exec.txt", null, null);
+        editor.closeFile("/non-exec.txt", null);
 
         editor.openFile("/exec.txt", latestRevision);
         editor.changeFileProperty("/exec.txt", SVNProperty.EXECUTABLE, null);
-        sendDeltaAndClose(editor, "/exec.txt", null, null);
+        editor.closeFile("/exec.txt", null);
 
         editor.closeDir();
         editor.closeEdit();
       }
       checkFileProp(repo, "/non-exec.txt", propsExecutable);
       checkFileProp(repo, "/exec.txt", null);
+    }
+  }
+
+  /**
+   * Check commit .gitattributes.
+   *
+   * @throws Exception
+   */
+  @Test(timeOut = 60 * 1000)
+  public void symlink() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
+      repo.setAuthenticationManager(server.getAuthenticator());
+
+      final String content = "link foo/bar.txt";
+      createFile(repo, "/non-link", content, null);
+      createFile(repo, "/link", content, propsSymlink);
+
+      checkFileProp(repo, "/non-link", null);
+      checkFileProp(repo, "/link", propsSymlink);
+
+      checkFileContent(repo, "/non-link", content);
+      checkFileContent(repo, "/link", content);
+
+      {
+        final long latestRevision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Change symlink property", null, false, null);
+        editor.openRoot(-1);
+
+        editor.openFile("/non-link", latestRevision);
+        editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"));
+        sendDeltaAndClose(editor, "/non-link", content, content);
+
+        editor.openFile("/link", latestRevision);
+        editor.changeFileProperty("/link", SVNProperty.SPECIAL, null);
+        sendDeltaAndClose(editor, "/link", content, content);
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+
+      checkFileProp(repo, "/non-link", propsSymlink);
+      checkFileProp(repo, "/link", null);
+
+      checkFileContent(repo, "/non-link", content);
+      checkFileContent(repo, "/link", content);
+
+      {
+        final long latestRevision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Change symlink property", null, false, null);
+        editor.openRoot(-1);
+
+        editor.openFile("/non-link", latestRevision);
+        editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, null);
+        editor.closeFile("/non-link", null);
+
+        editor.openFile("/link", latestRevision);
+        editor.changeFileProperty("/link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"));
+        editor.closeFile("/link", null);
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+
+      checkFileProp(repo, "/non-link", null);
+      checkFileProp(repo, "/link", propsSymlink);
+
+      checkFileContent(repo, "/non-link", content);
+      checkFileContent(repo, "/link", content);
     }
   }
 
@@ -169,7 +243,7 @@ public class SvnFilePropertyTest {
       // Empty file.
       final String filePath = "/foo/.gitattributes";
       editor.addFile(filePath, null, -1);
-      sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n".getBytes(StandardCharsets.UTF_8));
+      sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n");
       // Close dir
       editor.closeDir();
       editor.closeDir();
@@ -195,7 +269,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.addFile(filePath, null, -1);
-        sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n".getBytes(StandardCharsets.UTF_8));
+        sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -224,7 +298,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.addFile(filePath, null, -1);
-        sendDeltaAndClose(editor, filePath, null, emptyBytes);
+        sendDeltaAndClose(editor, filePath, null, "");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -239,7 +313,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, emptyBytes, "*.txt\t\t\ttext eol=native\n".getBytes(StandardCharsets.UTF_8));
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -265,7 +339,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.addFile(filePath, null, -1);
-        sendDeltaAndClose(editor, filePath, null, emptyBytes);
+        sendDeltaAndClose(editor, filePath, null, "");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -279,7 +353,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, emptyBytes, "*.txt\t\t\ttext eol=native\n".getBytes(StandardCharsets.UTF_8));
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -311,7 +385,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, emptyBytes, "*.txt\t\t\ttext eol=native\n".getBytes(StandardCharsets.UTF_8));
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
         // Close dir
         editor.closeDir();
         editor.closeEdit();
@@ -338,7 +412,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, emptyBytes, "*.txt\t\t\ttext eol=native\n".getBytes(StandardCharsets.UTF_8));
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
         // Close dir
         editor.closeDir();
         editor.closeEdit();
@@ -417,7 +491,7 @@ public class SvnFilePropertyTest {
         editor.changeFileProperty(filePath, entry.getKey(), SVNPropertyValue.create(entry.getValue()));
       }
     }
-    sendDeltaAndClose(editor, filePath, null, content.getBytes(StandardCharsets.UTF_8));
+    sendDeltaAndClose(editor, filePath, null, content);
     for (int i = 0; i < depth; ++i) {
       editor.closeDir();
     }
@@ -425,15 +499,22 @@ public class SvnFilePropertyTest {
     return editor.closeEdit();
   }
 
-  private void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable byte[] oldData, @Nullable byte[] newData) throws SVNException, IOException {
+  private void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable String oldData, @Nullable String newData) throws SVNException, IOException {
     try (
-        ByteArrayInputStream oldStream = new ByteArrayInputStream(oldData == null ? emptyBytes : oldData);
-        ByteArrayInputStream newStream = new ByteArrayInputStream(newData == null ? emptyBytes : newData)
+        ByteArrayInputStream oldStream = new ByteArrayInputStream(oldData == null ? emptyBytes : oldData.getBytes(StandardCharsets.UTF_8));
+        ByteArrayInputStream newStream = new ByteArrayInputStream(newData == null ? emptyBytes : newData.getBytes(StandardCharsets.UTF_8))
     ) {
       editor.applyTextDelta(filePath, null);
       SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
       String checksum = deltaGenerator.sendDelta(filePath, oldStream, 0, newStream, editor, true);
       editor.closeFile(filePath, checksum);
+    }
+  }
+
+  private void checkFileContent(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content) throws IOException, SVNException {
+    try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+      repo.getFile(filePath, repo.getLatestRevision(), null, stream);
+      Assert.assertEquals(new String(stream.toByteArray(), StandardCharsets.UTF_8), content);
     }
   }
 }
