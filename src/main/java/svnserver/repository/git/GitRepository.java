@@ -456,16 +456,16 @@ public class GitRepository implements VcsRepository {
       treeStack.push(file);
     }
 
-    public void checkProperties(@NotNull String name, @NotNull Map<String, String> properties) throws IOException, SVNException {
-      final Map<String, VcsFile> entries = treeStack.element().getEntries();
-      final GitFile file = (GitFile) entries.get(name);
-      if (file == null) {
-        throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties) throws IOException, SVNException {
+      final GitFile dir = treeStack.element();
+      final GitFile node = name == null ? dir : (GitFile) dir.getEntries().get(name);
+      if (node == null) {
+        throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
       }
-      final Map<String, String> expected = file.getProperties(false);
+      final Map<String, String> expected = node.getProperties(false);
       if (!properties.equals(expected)) {
         final StringBuilder message = new StringBuilder();
-        message.append("Can't commit entry: ").append(file.getFullPath()).append("\nInvalid svn properties found.\n");
+        message.append("Can't commit entry: ").append(node.getFullPath()).append("\nInvalid svn properties found.\n");
         message.append("Expected:\n");
         for (Map.Entry<String, String> entry : expected.entrySet()) {
           message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
@@ -520,7 +520,6 @@ public class GitRepository implements VcsRepository {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
       final GitFile source = (GitFile) sourceDir;
-      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(source == null ? null : source.getTreeEntry())));
     }
@@ -533,9 +532,13 @@ public class GitRepository implements VcsRepository {
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
-      // todo: validateActions.add(validator -> validator.checkProperties(name, dir.getProperties()));
       validateActions.add(validator -> validator.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
+    }
+
+    @Override
+    public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
+      validateActions.add(validator -> validator.checkProperties(null, props));
     }
 
     @Override

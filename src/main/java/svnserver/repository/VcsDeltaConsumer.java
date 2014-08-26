@@ -17,7 +17,6 @@ public interface VcsDeltaConsumer extends ISVNDeltaConsumer {
    *
    * @return Properties.
    */
-  @Deprecated
   @NotNull
   Map<String, String> getProperties();
 
