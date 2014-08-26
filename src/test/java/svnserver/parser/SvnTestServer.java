@@ -101,6 +101,11 @@ public final class SvnTestServer implements AutoCloseable {
   }
 
   @NotNull
+  public Repository getRepository() {
+    return repository;
+  }
+
+  @NotNull
   public File getTempDirectory() {
     return tempDirectory;
   }

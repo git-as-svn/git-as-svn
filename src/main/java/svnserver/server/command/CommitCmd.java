@@ -396,10 +396,13 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final EntryUpdater parent = getParent(context, args.parentToken, args.name);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Delete entry: {} (rev: {})", args.name, rev);
+      final VcsFile entry = parent.getEntry(StringHelper.baseName(args.name));
       if (parent.head && (rev >= 0) && (parent.source != null)) {
-        rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(parent.source.getFullPath(), rev));
+        rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(entry.getFullPath(), rev));
       }
-      parent.changes.add(treeBuilder -> treeBuilder.delete(StringHelper.baseName(args.name)));
+      parent.changes.add(treeBuilder -> {
+        treeBuilder.delete(entry.getFileName());
+      });
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
