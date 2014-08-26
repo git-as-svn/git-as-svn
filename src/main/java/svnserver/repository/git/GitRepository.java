@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.repository.*;
@@ -574,8 +575,14 @@ public class GitRepository implements VcsRepository {
         }
         return;
       }
-      current.getEntries().put(name, new GitTreeEntry(gitDeltaConsumer.getFileMode(), objectId));
+      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId));
       validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties()));
+    }
+
+    private FileMode getFileMode(@NotNull Map<String, String> props) {
+      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
+      if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
+      return FileMode.REGULAR_FILE;
     }
 
     @Override
