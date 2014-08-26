@@ -165,6 +165,12 @@ public class GitRepository implements VcsRepository {
                               @NotNull GitFile newTree) throws IOException {
     final Map<String, VcsFile> oldEntries = oldTree != null ? oldTree.getEntries() : Collections.emptyMap();
     final Map<String, VcsFile> newEntries = newTree.getEntries();
+    if (path.isEmpty()) {
+      final GitLogEntry logEntry = new GitLogEntry(oldTree, newTree);
+      if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
+        changes.put("/", logEntry);
+      }
+    }
     for (Map.Entry<String, VcsFile> entry : newEntries.entrySet()) {
       final String name = entry.getKey();
       final GitFile newEntry = (GitFile) entry.getValue();
