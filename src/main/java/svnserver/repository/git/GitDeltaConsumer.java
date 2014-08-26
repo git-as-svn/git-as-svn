@@ -1,6 +1,9 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
+import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -37,9 +40,6 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private final GitObject<ObjectId> originalId;
   @Nullable
   private final String originalMd5;
-  @NotNull
-  private final FileMode fileMode;
-
   @Nullable
   private GitObject<ObjectId> objectId;
 
@@ -50,12 +50,10 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file) throws IOException {
     this.gitRepository = gitRepository;
     if (file != null) {
-      this.fileMode = file.getFileMode();
       this.originalMd5 = file.getMd5();
       this.originalId = file.getObjectId();
       this.props = new HashMap<>(file.getProperties(false));
     } else {
-      this.fileMode = FileMode.REGULAR_FILE;
       this.originalMd5 = null;
       this.originalId = null;
       this.props = new HashMap<>();
@@ -133,10 +131,5 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
       }
     }
-  }
-
-  @NotNull
-  public FileMode getFileMode() {
-    return fileMode;
   }
 }
