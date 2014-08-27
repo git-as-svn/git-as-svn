@@ -358,13 +358,15 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final EntryUpdater parent = getParent(context, args.parentToken, args.name);
       final VcsFile source;
       if (args.copyParams.rev != 0) {
-        log.info("Copy dir: {} (rev: {}) from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
+        log.info("Copy dir: {} from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
         source = context.getRepository().getRevisionInfo(args.copyParams.rev).getFile(context.getRepositoryPath(args.copyParams.copyFrom));
+        if (source == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Directroy not found: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
+        }
       } else {
-        log.info("Add dir: {} (rev: {})", args.name);
+        log.info("Add dir: {}", args.name);
         source = null;
       }
-      log.info("Add dir: {} (rev: {})", args.name);
       final EntryUpdater updater = new EntryUpdater(source, false);
       paths.put(args.token, updater);
       parent.changes.add(treeBuilder -> {
