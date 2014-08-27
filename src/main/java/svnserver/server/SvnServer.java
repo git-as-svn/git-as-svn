@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -110,9 +111,9 @@ public class SvnServer extends Thread {
       }
       poolExecutor.execute(() -> {
         log.info("New connection from: {}", client.getRemoteSocketAddress());
-        try {
-          serveClient(client);
-        } catch (EOFException ignore) {
+        try (Socket clientSocket = client) {
+          serveClient(clientSocket);
+        } catch (EOFException | SocketException ignore) {
           // client disconnect is not a error
         } catch (SVNException | IOException e) {
           log.info("Client error:", e);
@@ -124,7 +125,6 @@ public class SvnServer extends Thread {
   }
 
   public void serveClient(@NotNull Socket socket) throws IOException, SVNException {
-    try {
       socket.setTcpNoDelay(true);
       final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
       final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
@@ -168,9 +168,6 @@ public class SvnServer extends Thread {
           BaseCmd.sendError(writer, e.getErrorMessage());
         }
       }
-    } finally {
-      socket.close();
-    }
   }
 
   @NotNull

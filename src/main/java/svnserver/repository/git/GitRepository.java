@@ -536,7 +536,7 @@ public class GitRepository implements VcsRepository {
       if (file == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
       } else if (file.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, path));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
       }
     }
 
@@ -591,13 +591,13 @@ public class GitRepository implements VcsRepository {
       final GitTreeEntry entry = current.getEntries().get(name);
       final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
       if (modify ^ (entry != null)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, getFullPath(name)));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
       }
       final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
       if (objectId == null) {
         // Content not updated.
         if (originalId == null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, getFullPath(name)));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
         }
         return;
       }

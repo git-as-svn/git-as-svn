@@ -55,8 +55,8 @@ public class ReplayTest {
   @Test
   public void testReplaySelf() throws Exception {
     try (
-        SvnTestServer dst = SvnTestServer.createEmpty();
-        SvnTestServer src = new SvnTestServer(null)
+        SvnTestServer src = new SvnTestServer(null);
+        SvnTestServer dst = SvnTestServer.createEmpty()
     ) {
       final SVNRepository srcRepo = SVNRepositoryFactory.create(src.getUrl());
       final SVNRepository dstRepo = SVNRepositoryFactory.create(dst.getUrl());
