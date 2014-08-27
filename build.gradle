@@ -59,16 +59,13 @@ task deployJars(dependsOn: jar) << {
   copy {
     from fullArtifacts.intersect(projectArtifacts)
     from "config.example"
+    from "README.md"
     into "${project.buildDir}/deploy"
   }
   copy {
     from fullArtifacts.minus(projectArtifacts)
     into "${project.buildDir}/deploy/vendors"
   }
-/*  zip {
-    from "${project.buildDir}/deploy"
-    into "${project.buildDir}/${project.name}.zip"
-  }*/
 }
 
 task deployZip(type: Zip, dependsOn: deployJars) {
