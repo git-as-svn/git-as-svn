@@ -65,6 +65,14 @@ task deployJars(dependsOn: jar) << {
     from fullArtifacts.minus(projectArtifacts)
     into "${project.buildDir}/deploy/vendors"
   }
+/*  zip {
+    from "${project.buildDir}/deploy"
+    into "${project.buildDir}/${project.name}.zip"
+  }*/
+}
+
+task deployZip(type: Zip, dependsOn: deployJars) {
+  from "build/deploy"
 }
 
 def createLauncherClassPath() {
