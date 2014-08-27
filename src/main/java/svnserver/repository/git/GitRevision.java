@@ -14,7 +14,6 @@ import svnserver.repository.git.prop.GitProperty;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,11 +27,11 @@ public class GitRevision implements VcsRevision {
   @NotNull
   private final RevCommit commit;
   @NotNull
-  private final TreeMap<String, GitLogEntry> changes;
+  private final Map<String, VcsLogEntry> changes;
 
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull TreeMap<String, GitLogEntry> changes, @NotNull RevCommit commit) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, VcsLogEntry> changes, @NotNull RevCommit commit) {
     this.repo = repo;
     this.revision = revision;
     this.changes = changes;
@@ -52,7 +51,7 @@ public class GitRevision implements VcsRevision {
   @NotNull
   @Override
   public Map<String, VcsLogEntry> getChanges() {
-    return new TreeMap<>(changes);
+    return changes;
   }
 
   @NotNull

@@ -168,7 +168,7 @@ public class GitRepository implements VcsRepository {
 
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
     final int revisionId = revisions.size();
-    final TreeMap<String, GitLogEntry> changes = new TreeMap<>();
+    final Map<String, VcsLogEntry> changes = new TreeMap<>();
     final GitFile oldTree;
     if (revisions.isEmpty()) {
       oldTree = null;
@@ -187,7 +187,7 @@ public class GitRepository implements VcsRepository {
     revisions.add(new GitRevision(this, revisionId, changes, commit));
   }
 
-  private void collectChanges(@NotNull Map<String, GitLogEntry> changes, @NotNull String path,
+  private void collectChanges(@NotNull Map<String, VcsLogEntry> changes, @NotNull String path,
                               @Nullable GitFile oldTree,
                               @NotNull GitFile newTree) throws IOException {
     final Map<String, VcsFile> oldEntries = oldTree != null ? oldTree.getEntries() : Collections.emptyMap();
