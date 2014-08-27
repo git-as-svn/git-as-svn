@@ -3,23 +3,19 @@ package svnserver.parser;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.testng.internal.junit.ArrayAsserts;
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import static svnserver.parser.SvnTestHelper.*;
 
 /**
  * Simple update tests.
@@ -37,30 +33,28 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void copyFileFromRevisionTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer(null)) {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
-      final long lastRevision = repo.getLatestRevision();
-      final String srcFile = "README.md";
-      final String dstFile = "README.copy";
-      final int srcRev = 45;
+      final String srcFile = "/README.md";
+      final String dstFile = "/README.copy";
+      final String expectedContent = "New content 2";
+
+      createFile(repo, srcFile, "Old content 1", null);
+      modifyFile(repo, srcFile, expectedContent, repo.getLatestRevision());
+      final long srcRev = repo.getLatestRevision();
+      modifyFile(repo, srcFile, "New content 3", repo.getLatestRevision());
 
       final ISVNEditor editor = repo.getCommitEditor("Copy file commit", null, false, null);
-      editor.openRoot(lastRevision);
+      editor.openRoot(-1);
       editor.addFile(dstFile, srcFile, srcRev);
       editor.closeFile(dstFile, null);
       editor.closeDir();
-      final SVNCommitInfo commitInfo = editor.closeEdit();
+      editor.closeEdit();
 
       // compare content
-      final ByteArrayOutputStream srcBuffer = new ByteArrayOutputStream();
-      repo.getFile(srcFile, srcRev, null, srcBuffer);
-
-      final ByteArrayOutputStream dstBuffer = new ByteArrayOutputStream();
-      repo.getFile(dstFile, commitInfo.getNewRevision(), null, dstBuffer);
-
-      ArrayAsserts.assertArrayEquals(srcBuffer.toByteArray(), dstBuffer.toByteArray());
+      checkFileContent(repo, dstFile, expectedContent);
     }
   }
 
@@ -74,26 +68,45 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void copyDirFromRevisionTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer(null)) {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir("/src", null, -1);
+        editor.addDir("/src/main", null, -1);
+        editor.addFile("/src/main/source.txt", null, -1);
+        sendDeltaAndClose(editor, "/src/main/source.txt", null, "Source content");
+        editor.closeDir();
+        editor.addDir("/src/test", null, -1);
+        editor.addFile("/src/test/test.txt", null, -1);
+        sendDeltaAndClose(editor, "/src/test/test.txt", null, "Test content");
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      createFile(repo, "/src/main/copy-a.txt", "A content", null);
 
-      final long lastRevision = repo.getLatestRevision();
-      final String srcDir = "git-as-svn";
-      final String dstDir = "git-as-svn.copy";
-      final int srcRev = 45;
+      final String srcDir = "/src/main";
+      final String dstDir = "/copy";
+      final long srcRev = repo.getLatestRevision();
 
-      final ISVNEditor editor = repo.getCommitEditor("Copy dir commit", null, false, null);
-      editor.openRoot(lastRevision);
-      editor.addDir(dstDir, srcDir, srcRev);
-      editor.closeDir();
-      editor.closeDir();
-
-      final SVNCommitInfo commitInfo = editor.closeEdit();
+      createFile(repo, "/src/main/copy-b.txt", "B content", null);
+      modifyFile(repo, "/src/main/source.txt", "Updated content", repo.getLatestRevision());
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Copy dir commit", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir(dstDir, srcDir, srcRev);
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeEdit();
+      }
 
       // compare content
       final Collection<SVNDirEntry> srcList = repo.getDir(srcDir, srcRev, null, 0, new ArrayList());
-      final Collection<SVNDirEntry> dstList = repo.getDir(dstDir, commitInfo.getNewRevision(), null, 0, new ArrayList());
+      final Collection<SVNDirEntry> dstList = repo.getDir(dstDir, repo.getLatestRevision(), null, 0, new ArrayList());
       checkEquals(srcList, dstList);
     }
   }
@@ -116,14 +129,17 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void commitFileOufOfDateTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer(null)) {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
+      createFile(repo, "/README.md", "Old content", null);
+
       final long lastRevision = repo.getLatestRevision();
-      modifyFile(repo, "Modify up-to-date commit", "README.md", "New content 1", lastRevision);
+
+      modifyFile(repo, "/README.md", "New content 1", lastRevision);
       try {
-        modifyFile(repo, "Modify out-of-date commit", "README.md", "New content 2", lastRevision);
+        modifyFile(repo, "/README.md", "New content 2", lastRevision);
         Assert.fail();
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.WC_NOT_UP_TO_DATE);
@@ -138,29 +154,16 @@ public class SvnCommitTest {
    */
   @Test(timeOut = 60 * 1000)
   public void commitFileUpToDateTest() throws Exception {
-    try (SvnTestServer server = new SvnTestServer(null)) {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
       repo.setAuthenticationManager(server.getAuthenticator());
 
+      createFile(repo, "/README.md", "Old content 1", null);
+      createFile(repo, "/build.gradle", "Old content 2", null);
+
       final long lastRevision = repo.getLatestRevision();
-      modifyFile(repo, "Modify up-to-date commit", "README.md", "New content 1", lastRevision);
-      modifyFile(repo, "Modify up-to-date commit", "build.gradle", "New content 2", lastRevision);
+      modifyFile(repo, "/README.md", "New content 1", lastRevision);
+      modifyFile(repo, "/build.gradle", "New content 2", lastRevision);
     }
-  }
-
-  @NotNull
-  private SVNCommitInfo modifyFile(@NotNull SVNRepository repo, @NotNull String logMessage, @NotNull String filePath, @NotNull String newContent, long fileRev) throws SVNException {
-    final ByteArrayOutputStream oldData = new ByteArrayOutputStream();
-    repo.getFile(filePath, fileRev, null, oldData);
-
-    final ISVNEditor editor = repo.getCommitEditor(logMessage, null, false, null);
-    editor.openRoot(-1);
-    editor.openFile(filePath, fileRev);
-    editor.applyTextDelta(filePath, null);
-    SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-    String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(oldData.toByteArray()), 0, new ByteArrayInputStream(newContent.getBytes(StandardCharsets.UTF_8)), editor, true);
-    editor.closeFile(filePath, checksum);
-    editor.closeDir();
-    return editor.closeEdit();
   }
 }

@@ -54,11 +54,7 @@ public final class SvnTestServer implements AutoCloseable {
   private final SvnServer server;
   private final boolean safeBranch;
 
-  public SvnTestServer(@Nullable String branch) throws Exception {
-    this(new FileRepository(findGitPath()), branch, true);
-  }
-
-  public SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch) throws Exception {
+  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch) throws Exception {
     this.repository = repository;
     this.safeBranch = safeBranch;
     tempDirectory = TestHelper.createTempDir("git-as-svn");
@@ -94,6 +90,11 @@ public final class SvnTestServer implements AutoCloseable {
   public static SvnTestServer createEmpty() throws Exception {
     final String branch = "master";
     return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false);
+  }
+
+  @NotNull
+  public static SvnTestServer createMasterRepository() throws Exception {
+    return new SvnTestServer(new FileRepository(findGitPath()), null, true);
   }
 
   public SVNURL getUrl() throws SVNException {
