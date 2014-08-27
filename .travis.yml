@@ -2,9 +2,10 @@ language: java
 jdk:
  - oraclejdk8
 before_deploy:
- - gradle deployZip
+ - ./gradlew deployZip
 deploy:
   provider: releases
+  api-key: os.environ["DEPLOY_TOKEN"]
   file: build/distributions/git-as-svn.zip
   skip_cleanup: true
   on:
