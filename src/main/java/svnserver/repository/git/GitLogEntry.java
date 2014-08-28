@@ -28,13 +28,16 @@ public class GitLogEntry implements VcsLogEntry {
 
   @Override
   public char getChange() throws IOException, SVNException {
-    if (newEntry != null) {
-      if (oldEntry == null) return SVNLogEntryPath.TYPE_ADDED;
-      if (GitHelper.getKind(newEntry.getFileMode()) != GitHelper.getKind(oldEntry.getFileMode())) return SVNLogEntryPath.TYPE_REPLACED;
-      return (isContentModified() || isPropertyModified()) ? SVNLogEntryPath.TYPE_MODIFIED : 0;
-    } else {
+    if (newEntry == null)
       return SVNLogEntryPath.TYPE_DELETED;
-    }
+
+    if (oldEntry == null)
+      return SVNLogEntryPath.TYPE_ADDED;
+
+    if (newEntry.getKind() != oldEntry.getKind())
+      return SVNLogEntryPath.TYPE_REPLACED;
+
+    return isContentModified() || isPropertyModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
   }
 
   @Nullable
@@ -50,8 +53,12 @@ public class GitLogEntry implements VcsLogEntry {
   @NotNull
   @Override
   public SVNNodeKind getKind() {
-    if (newEntry != null) return GitHelper.getKind(newEntry.getFileMode());
-    if (oldEntry != null) return GitHelper.getKind(oldEntry.getFileMode());
+    if (newEntry != null)
+      return newEntry.getKind();
+
+    if (oldEntry != null)
+      return oldEntry.getKind();
+
     throw new IllegalStateException();
   }
 

@@ -1,7 +1,6 @@
 package svnserver.parser.token;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.parser.SvnServerToken;
 
 import java.io.IOException;
 import java.io.OutputStream;
