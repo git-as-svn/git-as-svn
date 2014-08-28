@@ -63,14 +63,16 @@ public final class GitTreeEntry implements Comparable<GitTreeEntry> {
 
     GitTreeEntry that = (GitTreeEntry) o;
 
-    return fileMode.equals(that.fileMode)
-        && objectId.equals(that.objectId);
+    return objectId.equals(that.objectId)
+        && fileMode.equals(that.fileMode)
+        && fileName.equals(that.fileName);
   }
 
   @Override
   public int hashCode() {
     int result = fileMode.hashCode();
     result = 31 * result + objectId.hashCode();
+    result = 31 * result + fileName.hashCode();
     return result;
   }
 

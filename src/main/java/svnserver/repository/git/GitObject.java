@@ -1,5 +1,6 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
@@ -39,8 +40,7 @@ public class GitObject<T extends ObjectId> {
     if (o == null || getClass() != o.getClass()) return false;
 
     GitObject gitObject = (GitObject) o;
-
-    return object.equals(gitObject.object);
+    return AnyObjectId.equals(object, gitObject.object);
   }
 
   @NotNull

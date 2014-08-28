@@ -36,7 +36,7 @@ public class GitFile implements VcsFile {
   @NotNull
   private final GitTreeEntry treeEntry;
   @NotNull
-  private final String fullPath;
+  private final String parentPath;
 
   private final int revision;
 
@@ -47,12 +47,14 @@ public class GitFile implements VcsFile {
   private Iterable<GitTreeEntry> rawEntriesCache;
   @Nullable
   private Iterable<GitFile> treeEntriesCache;
+  @Nullable
+  private String fullPathCache;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) throws IOException, SVNException {
+  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String parentPath, @NotNull GitProperty[] parentProps, int revision) throws IOException, SVNException {
     this.repo = repo;
     this.treeEntry = treeEntry;
-    this.fullPath = fullPath;
-    this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
+    this.parentPath = parentPath;
+    this.props = GitProperty.joinProperties(parentProps, treeEntry.getFileName(), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
     this.revision = revision;
   }
 
@@ -63,12 +65,15 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public String getFileName() {
-    return StringHelper.baseName(fullPath);
+    return treeEntry.getFileName();
   }
 
   @NotNull
   public String getFullPath() {
-    return fullPath;
+    if (fullPathCache == null) {
+      fullPathCache = StringHelper.joinPath(parentPath, getFileName());
+    }
+    return fullPathCache;
   }
 
   @NotNull
@@ -174,8 +179,9 @@ public class GitFile implements VcsFile {
   public Iterable<GitFile> getEntries() throws IOException, SVNException {
     if (treeEntriesCache == null) {
       final List<GitFile> result = new ArrayList<>();
+      final String fullPath = getFullPath();
       for (GitTreeEntry entry : getRawEntries()) {
-        result.add(new GitFile(repo, entry, StringHelper.joinPath(fullPath, entry.getFileName()), props, revision));
+        result.add(new GitFile(repo, entry, fullPath, props, revision));
       }
       treeEntriesCache = result;
     }
@@ -186,7 +192,7 @@ public class GitFile implements VcsFile {
   public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
     for (GitTreeEntry entry : getRawEntries()) {
       if (entry.getFileName().equals(name)) {
-        return new GitFile(repo, entry, StringHelper.joinPath(fullPath, entry.getFileName()), props, revision);
+        return new GitFile(repo, entry, getFullPath(), props, revision);
       }
     }
     return null;
@@ -195,7 +201,7 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public GitRevision getLastChange() throws IOException {
-    return repo.sureRevisionInfo(repo.getLastChange(fullPath, revision));
+    return repo.sureRevisionInfo(repo.getLastChange(getFullPath(), revision));
   }
 
   @Override
@@ -204,21 +210,18 @@ public class GitFile implements VcsFile {
     if (o == null || getClass() != o.getClass()) return false;
     GitFile that = (GitFile) o;
     return treeEntry.equals(that.treeEntry)
-        && fullPath.equals(that.fullPath)
         && Arrays.equals(props, that.props);
   }
 
   @Override
   public int hashCode() {
-    int result = treeEntry.hashCode();
-    result = 31 * result + fullPath.hashCode();
-    return result;
+    return treeEntry.hashCode();
   }
 
   @Override
   public String toString() {
     return "GitFileInfo{" +
-        "fullPath='" + fullPath + '\'' +
+        "fullPath='" + getFullPath() + '\'' +
         ", objectId=" + treeEntry.getId() +
         '}';
   }

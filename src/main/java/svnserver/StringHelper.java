@@ -50,8 +50,10 @@ public final class StringHelper {
   private static String normalize(@NotNull String path) {
     if (path.isEmpty()) return "";
     String result = path;
-    if (!result.startsWith("/")) {
+    if (result.charAt(0) != '/') {
       result = "/" + result;
+    } else if (result.length() == 1) {
+      return "";
     }
     return result.endsWith("/") ? result.substring(0, result.length() - 1) : result;
   }
