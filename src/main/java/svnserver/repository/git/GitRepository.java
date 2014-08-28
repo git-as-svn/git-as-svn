@@ -264,7 +264,7 @@ public class GitRepository implements VcsRepository {
       } else {
         props = GitProperty.emptyArray;
       }
-      directoryPropertyCache.put(ObjectId.fromString(treeEntry.getObjectId().getObject().name()), props);
+      directoryPropertyCache.put(treeEntry.getObjectId().getObject(), props);
     }
     return props;
   }
@@ -288,7 +288,7 @@ public class GitRepository implements VcsRepository {
     GitProperty property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
       property = properyParser.apply(loadContent(objectId));
-      filePropertyCache.put(ObjectId.fromString(objectId.getObject().name()), property);
+      filePropertyCache.put(objectId.getObject(), property);
     }
     return property;
   }
