@@ -115,16 +115,15 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public String getMd5() throws IOException {
-    return repo.getObjectMD5(treeEntry.getObjectId(), treeEntry.getFileMode() == FileMode.SYMLINK ? 'l' : 'f', this::openStream);
+    return repo.getObjectMD5(treeEntry.getObjectId(), isSymlink() ? 'l' : 'f', this::openStream);
   }
 
   @Override
   public long getSize() throws IOException {
-    final FileMode fileMode = treeEntry.getFileMode();
-    if (fileMode == FileMode.SYMLINK) {
+    if (isSymlink()) {
       return SvnConstants.LINK_PREFIX.length() + getObjectLoader().getSize();
     }
-    return fileMode.getObjectType() == Constants.OBJ_BLOB ? getObjectLoader().getSize() : 0;
+    return treeEntry.getFileMode().getObjectType() == Constants.OBJ_BLOB ? getObjectLoader().getSize() : 0;
   }
 
   @Override
@@ -148,7 +147,7 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    if (treeEntry.getFileMode() == FileMode.SYMLINK) {
+    if (isSymlink()) {
       try (
           ByteArrayOutputStream outputStream = new ByteArrayOutputStream(SvnConstants.LINK_PREFIX.length() + (int) getObjectLoader().getSize());
           InputStream inputStream = getObjectLoader().openStream()
@@ -159,6 +158,10 @@ public class GitFile implements VcsFile {
       }
     }
     return getObjectLoader().openStream();
+  }
+
+  public boolean isSymlink() {
+    return treeEntry.getFileMode() == FileMode.SYMLINK;
   }
 
   @NotNull

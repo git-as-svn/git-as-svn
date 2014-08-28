@@ -46,9 +46,17 @@ public class GitLogEntry implements VcsLogEntry {
 
   @Override
   public boolean isContentModified() throws IOException {
-    return (newEntry != null) && (!newEntry.isDirectory())
-        && (oldEntry != null) && (!oldEntry.isDirectory())
-        && (!newEntry.getMd5().equals(oldEntry.getMd5()));
+    if (newEntry == null || newEntry.isDirectory())
+      return false;
+
+    if (oldEntry == null || oldEntry.isDirectory())
+      return false;
+
+    if (newEntry.isSymlink() == oldEntry.isSymlink()) {
+      return !newEntry.getObjectId().equals(oldEntry.getObjectId());
+    } else {
+      return !newEntry.getMd5().equals(oldEntry.getMd5());
+    }
   }
 
   @Override
