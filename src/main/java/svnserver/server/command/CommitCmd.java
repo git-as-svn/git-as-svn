@@ -286,14 +286,14 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (dir == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + args.token));
       }
-      chanageProp(dir.props, args);
+      changeProp(dir.props, args);
     }
 
     private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
-      chanageProp(getFile(args.token).deltaConsumer.getProperties(), args);
+      changeProp(getFile(args.token).deltaConsumer.getProperties(), args);
     }
 
-    private void chanageProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
+    private void changeProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
       if (args.value.length > 0) {
         props.put(args.name, args.value[0]);
       } else {
@@ -328,7 +328,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
-      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Modify file: {} (rev: {})", args.name, rev);
       final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
@@ -356,13 +356,13 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
-      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(args.parentToken);
       final VcsFile source;
       if (args.copyParams.rev != 0) {
         log.info("Copy dir: {} from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
         source = context.getRepository().getRevisionInfo(args.copyParams.rev).getFile(context.getRepositoryPath(args.copyParams.copyFrom));
         if (source == null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Directroy not found: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Directory not found: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }
       } else {
         log.info("Add dir: {}", args.name);
@@ -379,7 +379,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
-      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(args.parentToken);
       final VcsDeltaConsumer deltaConsumer;
       if (args.copyParams.rev != 0) {
         log.info("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
@@ -397,7 +397,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
-      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Delete entry: {} (rev: {})", args.name, rev);
       final VcsFile entry = parent.getEntry(StringHelper.baseName(args.name));
@@ -408,7 +408,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
-      final EntryUpdater parent = getParent(context, args.parentToken, args.name);
+      final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Modify file: {} (rev: {})", parent, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
@@ -459,7 +459,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private EntryUpdater getParent(@NotNull SessionContext context, @NotNull String parentToken, @NotNull String name) throws SVNException {
+    private EntryUpdater getParent(@NotNull String parentToken) throws SVNException {
       final EntryUpdater parent = paths.get(parentToken);
       if (parent == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
@@ -493,7 +493,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
       for (int pass = 0; ; ++pass) {
         if (pass >= MAX_PASS_COUNT) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repositroy."));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
         }
         final VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), rootEntry).commit(context.getUser(), message);
         if (revision != null) {
