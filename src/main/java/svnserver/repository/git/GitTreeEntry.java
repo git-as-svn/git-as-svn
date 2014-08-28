@@ -11,19 +11,22 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitTreeEntry {
+public final class GitTreeEntry implements Comparable<GitTreeEntry> {
   @NotNull
   private final FileMode fileMode;
   @NotNull
   private final GitObject<ObjectId> objectId;
+  @NotNull
+  private final String fileName;
 
-  public GitTreeEntry(@NotNull FileMode fileMode, @NotNull GitObject<ObjectId> objectId) {
+  public GitTreeEntry(@NotNull FileMode fileMode, @NotNull GitObject<ObjectId> objectId, @NotNull String fileName) {
     this.fileMode = fileMode;
     this.objectId = objectId;
+    this.fileName = fileName;
   }
 
-  public GitTreeEntry(@NotNull Repository repo, @NotNull FileMode fileMode, @NotNull ObjectId objectId) {
-    this(fileMode, new GitObject<>(repo, objectId));
+  public GitTreeEntry(@NotNull Repository repo, @NotNull FileMode fileMode, @NotNull ObjectId objectId, @NotNull String fileName) {
+    this(fileMode, new GitObject<>(repo, objectId), fileName);
   }
 
   @NotNull
@@ -37,8 +40,20 @@ public final class GitTreeEntry {
   }
 
   @NotNull
+  public String getFileName() {
+    return fileName;
+  }
+
+  @NotNull
   public GitObject<ObjectId> getObjectId() {
     return objectId;
+  }
+
+  @Override
+  public int compareTo(@NotNull GitTreeEntry peer) {
+    final String name1 = this.fileName + (this.getFileMode() == FileMode.TREE ? "/" : "");
+    final String name2 = peer.fileName + (peer.getFileMode() == FileMode.TREE ? "/" : "");
+    return name1.compareTo(name2);
   }
 
   @Override
@@ -57,5 +72,14 @@ public final class GitTreeEntry {
     int result = fileMode.hashCode();
     result = 31 * result + objectId.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "GitTreeEntry{" +
+        "fileMode=" + fileMode +
+        ", objectId=" + objectId +
+        ", fileName='" + fileName + '\'' +
+        '}';
   }
 }

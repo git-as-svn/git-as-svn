@@ -37,6 +37,16 @@ public class GitLogEntry implements VcsLogEntry {
     }
   }
 
+  @Nullable
+  public GitFile getOldEntry() {
+    return oldEntry;
+  }
+
+  @Nullable
+  public GitFile getNewEntry() {
+    return newEntry;
+  }
+
   @NotNull
   @Override
   public SVNNodeKind getKind() {

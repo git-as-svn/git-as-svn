@@ -4,6 +4,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -20,9 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Git file.
@@ -45,9 +44,9 @@ public class GitFile implements VcsFile {
   @Nullable
   private ObjectLoader objectLoader;
   @Nullable
-  private Map<String, GitTreeEntry> rawEntriesCache;
+  private Iterable<GitTreeEntry> rawEntriesCache;
   @Nullable
-  private Map<String, GitFile> treeEntriesCache;
+  private Iterable<GitFile> treeEntriesCache;
 
   public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) throws IOException, SVNException {
     this.repo = repo;
@@ -55,6 +54,10 @@ public class GitFile implements VcsFile {
     this.fullPath = fullPath;
     this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
     this.revision = revision;
+  }
+
+  public GitFile(@NotNull GitRepository repo, @NotNull RevCommit commit, int revisionId) throws IOException, SVNException {
+    this(repo, new GitTreeEntry(repo.getRepository(), FileMode.TREE, commit.getTree(), ""), "", GitProperty.emptyArray, revisionId);
   }
 
   @NotNull
@@ -159,7 +162,7 @@ public class GitFile implements VcsFile {
   }
 
   @NotNull
-  private Map<String, GitTreeEntry> getRawEntries() throws IOException {
+  private Iterable<GitTreeEntry> getRawEntries() throws IOException {
     if (rawEntriesCache == null) {
       rawEntriesCache = repo.loadTree(treeEntry);
     }
@@ -168,15 +171,25 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Map<String, GitFile> getEntries() throws IOException, SVNException {
+  public Iterable<GitFile> getEntries() throws IOException, SVNException {
     if (treeEntriesCache == null) {
-      final Map<String, GitFile> result = new HashMap<>();
-      for (Map.Entry<String, GitTreeEntry> entry : getRawEntries().entrySet()) {
-        result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision));
+      final List<GitFile> result = new ArrayList<>();
+      for (GitTreeEntry entry : getRawEntries()) {
+        result.add(new GitFile(repo, entry, StringHelper.joinPath(fullPath, entry.getFileName()), props, revision));
       }
       treeEntriesCache = result;
     }
     return treeEntriesCache;
+  }
+
+  @Nullable
+  public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
+    for (GitTreeEntry entry : getRawEntries()) {
+      if (entry.getFileName().equals(name)) {
+        return new GitFile(repo, entry, StringHelper.joinPath(fullPath, entry.getFileName()), props, revision);
+      }
+    }
+    return null;
   }
 
   @NotNull
