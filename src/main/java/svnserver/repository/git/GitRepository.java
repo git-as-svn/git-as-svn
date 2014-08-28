@@ -43,7 +43,7 @@ public class GitRepository implements VcsRepository {
     InputStream openStream() throws IOException;
   }
 
-  private static final int REPORT_DELAY = 1000;
+  private static final int REPORT_DELAY = 2500;
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
@@ -143,15 +143,17 @@ public class GitRepository implements VcsRepository {
           }
         }
         final long beginTime = System.currentTimeMillis();
+        int processed = 0;
         long reportTime = beginTime;
         log.info("Loading revision changes: {} revision", newRevs.size());
         for (int i = newRevs.size() - 1; i >= 0; i--) {
           addRevisionInfo(newRevs.get(i));
+          processed++;
           long currentTime = System.currentTimeMillis();
           if (currentTime - reportTime > REPORT_DELAY) {
-            final int processed = newRevs.size() - i;
-            log.info("  processed revision: {} ({} ms/rev)", processed, (currentTime - beginTime) / processed);
+            log.info("  processed revision: {} ({} rev/sec)", newRevs.size() - i, 1000.0f * processed / (currentTime - reportTime));
             reportTime = currentTime;
+            processed = 0;
           }
         }
         final long endTime = System.currentTimeMillis();
