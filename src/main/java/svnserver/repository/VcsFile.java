@@ -1,6 +1,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 
@@ -37,7 +38,10 @@ public interface VcsFile {
   SVNNodeKind getKind() throws IOException;
 
   @NotNull
-  Map<String, ? extends VcsFile> getEntries() throws IOException;
+  Iterable<? extends VcsFile> getEntries() throws IOException;
+
+  @Nullable
+  VcsFile getEntry(@NotNull String name) throws IOException;
 
   @NotNull
   VcsRevision getLastChange() throws IOException;

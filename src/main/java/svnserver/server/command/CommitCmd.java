@@ -233,7 +233,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (source == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name));
       }
-      final VcsFile file = source.getEntries().get(name);
+      final VcsFile file = source.getEntry(name);
       if (file == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name + " in " + source.getFullPath()));
       }

@@ -1,15 +1,12 @@
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
-import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
-import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,11 +24,11 @@ public class GitRevision implements VcsRevision {
   @NotNull
   private final RevCommit commit;
   @NotNull
-  private final Map<String, VcsLogEntry> changes;
+  private final Map<String, GitLogEntry> changes;
 
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, VcsLogEntry> changes, @NotNull RevCommit commit) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, GitLogEntry> changes, @NotNull RevCommit commit) {
     this.repo = repo;
     this.revision = revision;
     this.changes = changes;
@@ -50,7 +47,7 @@ public class GitRevision implements VcsRevision {
 
   @NotNull
   @Override
-  public Map<String, VcsLogEntry> getChanges() {
+  public Map<String, GitLogEntry> getChanges() {
     return changes;
   }
 
@@ -86,13 +83,12 @@ public class GitRevision implements VcsRevision {
   @Nullable
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
-    GitTreeEntry entry = new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), commit.getTree()));
-    GitFile result = new GitFile(repo, entry, "", GitProperty.emptyArray, revision);
+    GitFile result = new GitFile(repo, commit, revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;
       }
-      result = result.getEntries().get(pathItem);
+      result = result.getEntry(pathItem);
       if (result == null) {
         return null;
       }

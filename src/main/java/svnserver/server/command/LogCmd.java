@@ -124,14 +124,14 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
         continue;
 
       final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
-      final Map<String, VcsLogEntry> changes = revisionInfo.getChanges();
+      final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
       if (!hasTargets(changes, targetPaths)) continue;
       writer
           .listBegin()
           .listBegin();
       if (args.changedPaths) {
         writer.separator();
-        for (Map.Entry<String, VcsLogEntry> entry : changes.entrySet()) {
+        for (Map.Entry<String, ? extends VcsLogEntry> entry : changes.entrySet()) {
           final VcsLogEntry logEntry = entry.getValue();
           final char change = logEntry.getChange();
           if (change == 0) continue;
@@ -173,7 +173,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
         .listEnd();
   }
 
-  private static boolean hasTargets(Map<String, VcsLogEntry> changes, Set<String> targetPaths) {
+  private static boolean hasTargets(Map<String, ? extends VcsLogEntry> changes, Set<String> targetPaths) {
     for (String targetPath : targetPaths) {
       if (changes.containsKey(targetPath) || targetPath.isEmpty()) return true;
     }

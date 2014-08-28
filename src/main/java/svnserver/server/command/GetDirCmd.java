@@ -93,7 +93,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .listBegin()
         .separator();
     if (args.wantContents) {
-      for (VcsFile item : fileInfo.getEntries().values()) {
+      for (VcsFile item : fileInfo.getEntries()) {
         final VcsRevision lastChange = item.getLastChange();
         writer
             .listBegin()
