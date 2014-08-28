@@ -51,9 +51,31 @@ public final class GitTreeEntry implements Comparable<GitTreeEntry> {
 
   @Override
   public int compareTo(@NotNull GitTreeEntry peer) {
-    final String name1 = this.fileName + (this.getFileMode() == FileMode.TREE ? "/" : "");
-    final String name2 = peer.fileName + (peer.getFileMode() == FileMode.TREE ? "/" : "");
-    return name1.compareTo(name2);
+    int length1 = this.fileName.length();
+    int length2 = peer.fileName.length();
+    final int length = Math.min(length1, length2) + 1;
+    for (int i = 0; i < length; i++) {
+      final char c1;
+      if (i < length1) {
+        c1 = this.fileName.charAt(i);
+      } else if ((i == length1) && (this.getFileMode() == FileMode.TREE)) {
+        c1 = '/';
+      } else {
+        c1 = 0;
+      }
+      final char c2;
+      if (i < length2) {
+        c2 = peer.fileName.charAt(i);
+      } else if ((i == length2) && (peer.getFileMode() == FileMode.TREE)) {
+        c2 = '/';
+      } else {
+        c2 = 0;
+      }
+      if (c1 != c2) {
+        return c1 - c2;
+      }
+    }
+    return length1 - length2;
   }
 
   @Override
