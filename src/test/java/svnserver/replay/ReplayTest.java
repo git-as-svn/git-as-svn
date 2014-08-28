@@ -36,8 +36,7 @@ public class ReplayTest {
       final URL repoMark = ReplayTest.class.getResource("repo/format");
       final SVNURL url = SVNURL.fromFile(new File(repoMark.getPath()).getParentFile());
       final SVNRepository srcRepo = SVNRepositoryFactory.create(url);
-      final SVNRepository dstRepo = SVNRepositoryFactory.create(server.getUrl());
-      dstRepo.setAuthenticationManager(server.getAuthenticator());
+      final SVNRepository dstRepo = server.openSvnRepository();
 
       long lastRevision = srcRepo.getLatestRevision();
       log.info("Start replay");
@@ -58,12 +57,10 @@ public class ReplayTest {
         SvnTestServer src = SvnTestServer.createMasterRepository();
         SvnTestServer dst = SvnTestServer.createEmpty()
     ) {
-      final SVNRepository srcRepo = SVNRepositoryFactory.create(src.getUrl());
-      final SVNRepository dstRepo = SVNRepositoryFactory.create(dst.getUrl());
+      final SVNRepository srcRepo = src.openSvnRepository();
+      final SVNRepository dstRepo = dst.openSvnRepository();
       final Repository srcGit = src.getRepository();
       final Repository dstGit = dst.getRepository();
-      srcRepo.setAuthenticationManager(src.getAuthenticator());
-      dstRepo.setAuthenticationManager(dst.getAuthenticator());
 
       long lastRevision = srcRepo.getLatestRevision();
       log.info("Start replay");

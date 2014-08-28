@@ -11,6 +11,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.Config;
 import svnserver.config.LocalUserDBConfig;
 import svnserver.config.RepositoryConfig;
@@ -154,8 +158,23 @@ public final class SvnTestServer implements AutoCloseable {
     }
   }
 
-  public ISVNAuthenticationManager getAuthenticator() {
+  private ISVNAuthenticationManager getAuthenticator() {
     return new BasicAuthenticationManager(USER_NAME, PASSWORD);
+  }
+
+  @NotNull
+  public SvnOperationFactory createOperationFactory() {
+    final SvnOperationFactory factory = new SvnOperationFactory();
+    factory.setOptions(new DefaultSVNOptions(getTempDirectory(), true));
+    factory.setAuthenticationManager(getAuthenticator());
+    return factory;
+  }
+
+  @NotNull
+  public SVNRepository openSvnRepository() throws SVNException {
+    final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
+    repo.setAuthenticationManager(getAuthenticator());
+    return repo;
   }
 
   private static class TestRepositoryConfig implements RepositoryConfig {

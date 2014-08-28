@@ -6,7 +6,6 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
@@ -27,8 +26,7 @@ public class SvnCheckoutTest {
   @Test(timeOut = 60 * 1000)
   public void checkoutRootRevision() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SvnOperationFactory factory = new SvnOperationFactory();
-      factory.setAuthenticationManager(server.getAuthenticator());
+      final SvnOperationFactory factory = server.createOperationFactory();
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));
       checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
@@ -53,8 +51,7 @@ public class SvnCheckoutTest {
   @Test(timeOut = 60 * 1000)
   public void checkoutAndUpdate() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
-      repo.setAuthenticationManager(server.getAuthenticator());
+      final SVNRepository repo = server.openSvnRepository();
       final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
       editor.openRoot(-1);
       editor.addDir("/src", null, -1);
@@ -71,8 +68,7 @@ public class SvnCheckoutTest {
       editor.closeEdit();
 
       // checkout
-      final SvnOperationFactory factory = new SvnOperationFactory();
-      factory.setAuthenticationManager(server.getAuthenticator());
+      final SvnOperationFactory factory = server.createOperationFactory();
 
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));

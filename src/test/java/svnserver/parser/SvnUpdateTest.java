@@ -40,8 +40,7 @@ public class SvnUpdateTest {
   @Test(timeOut = 60 * 1000)
   public void addAndUpdate() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SvnOperationFactory factory = new SvnOperationFactory();
-      factory.setAuthenticationManager(server.getAuthenticator());
+      final SvnOperationFactory factory = server.createOperationFactory();
       final SVNClientManager client = SVNClientManager.newInstance(factory);
       // checkout
       final SvnCheckout checkout = factory.createCheckout();

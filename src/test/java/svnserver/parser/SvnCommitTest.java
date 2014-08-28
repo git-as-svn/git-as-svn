@@ -8,7 +8,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,8 +33,7 @@ public class SvnCommitTest {
   @Test(timeOut = 60 * 1000)
   public void copyFileFromRevisionTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
-      repo.setAuthenticationManager(server.getAuthenticator());
+      final SVNRepository repo = server.openSvnRepository();
 
       final String srcFile = "/README.md";
       final String dstFile = "/README.copy";
@@ -69,8 +67,7 @@ public class SvnCommitTest {
   @Test(timeOut = 60 * 1000)
   public void copyDirFromRevisionTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
-      repo.setAuthenticationManager(server.getAuthenticator());
+      final SVNRepository repo = server.openSvnRepository();
       {
         final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
         editor.openRoot(-1);
@@ -130,8 +127,7 @@ public class SvnCommitTest {
   @Test(timeOut = 60 * 1000)
   public void commitFileOufOfDateTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
-      repo.setAuthenticationManager(server.getAuthenticator());
+      final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/README.md", "Old content", null);
 
@@ -155,8 +151,7 @@ public class SvnCommitTest {
   @Test(timeOut = 60 * 1000)
   public void commitFileUpToDateTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final SVNRepository repo = SVNRepositoryFactory.create(server.getUrl());
-      repo.setAuthenticationManager(server.getAuthenticator());
+      final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/README.md", "Old content 1", null);
       createFile(repo, "/build.gradle", "Old content 2", null);
