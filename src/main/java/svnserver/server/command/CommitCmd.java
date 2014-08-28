@@ -46,7 +46,7 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 
-public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
+public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   public static class CommitParams {
     @NotNull
     private final String message;
@@ -278,6 +278,7 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
       exitCommands = new HashMap<>();
       exitCommands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
+      exitCommands.put("abort-edit", new LambdaCmd<>(NoParams.class, this::abortEdit));
     }
 
     private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
@@ -468,6 +469,16 @@ public class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
       paths.remove(args.token);
+    }
+
+    private void abortEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
+      final SvnServerWriter writer = context.getWriter();
+      writer
+          .listBegin()
+          .word("success")
+          .listBegin()
+          .listEnd()
+          .listEnd();
     }
 
     private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
