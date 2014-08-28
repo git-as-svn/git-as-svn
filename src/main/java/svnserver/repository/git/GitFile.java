@@ -30,15 +30,8 @@ import java.util.TreeMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitFile implements VcsFile {
-  @FunctionalInterface
-  public interface PropertyResolver {
-    public GitProperty[] getProperties(@NotNull GitTreeEntry object) throws IOException;
-  }
-
   @NotNull
   private final GitRepository repo;
-  @NotNull
-  private final PropertyResolver resolver;
   @NotNull
   private final GitProperty[] props;
   @NotNull
@@ -52,14 +45,13 @@ public class GitFile implements VcsFile {
   @Nullable
   private ObjectLoader objectLoader;
   @Nullable
-  private Map<String, VcsFile> cacheEntries;
+  private Map<String, GitFile> cacheEntries;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision, @NotNull PropertyResolver resolver) throws IOException {
+  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) throws IOException {
     this.repo = repo;
     this.treeEntry = treeEntry;
     this.fullPath = fullPath;
-    this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), treeEntry.getFileMode(), resolver.getProperties(treeEntry));
-    this.resolver = resolver;
+    this.props = GitProperty.joinProperties(parentProps, StringHelper.baseName(fullPath), treeEntry.getFileMode(), repo.collectProperties(treeEntry));
     this.revision = revision;
   }
 
@@ -166,11 +158,11 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Map<String, VcsFile> getEntries() throws IOException {
+  public Map<String, GitFile> getEntries() throws IOException {
     if (cacheEntries == null) {
-      final Map<String, VcsFile> result = new TreeMap<>();
+      final Map<String, GitFile> result = new TreeMap<>();
       for (Map.Entry<String, GitTreeEntry> entry : repo.loadTree(treeEntry).entrySet()) {
-        result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision, resolver));
+        result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision));
       }
       cacheEntries = result;
     }

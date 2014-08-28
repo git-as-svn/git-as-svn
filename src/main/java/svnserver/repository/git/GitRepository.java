@@ -72,7 +72,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
   @NotNull
-  private final Map<String, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
+  private final Map<ObjectId, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
 
   public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
                        @NotNull GitPushMode pushMode, @NotNull String branch) throws IOException, SVNException {
@@ -175,9 +175,9 @@ public class GitRepository implements VcsRepository {
     if (revisions.isEmpty()) {
       oldTree = null;
     } else {
-      oldTree = new GitFile(this, new GitTreeEntry(repository, FileMode.TREE, revisions.get(revisionId - 1).getCommit().getTree()), "", GitProperty.emptyArray, revisionId - 1, this::getProperties);
+      oldTree = new GitFile(this, new GitTreeEntry(repository, FileMode.TREE, revisions.get(revisionId - 1).getCommit().getTree()), "", GitProperty.emptyArray, revisionId - 1);
     }
-    final GitFile newTree = new GitFile(this, new GitTreeEntry(repository, FileMode.TREE, commit.getTree()), "", GitProperty.emptyArray, revisionId, this::collectProperties);
+    final GitFile newTree = new GitFile(this, new GitTreeEntry(repository, FileMode.TREE, commit.getTree()), "", GitProperty.emptyArray, revisionId);
     collectChanges(changes, "", oldTree, newTree);
     for (String path : changes.keySet()) {
       lastUpdates.compute(path, (key, list) -> {
@@ -192,18 +192,18 @@ public class GitRepository implements VcsRepository {
   private void collectChanges(@NotNull Map<String, VcsLogEntry> changes, @NotNull String path,
                               @Nullable GitFile oldTree,
                               @NotNull GitFile newTree) throws IOException {
-    final Map<String, VcsFile> oldEntries = oldTree != null ? oldTree.getEntries() : Collections.emptyMap();
-    final Map<String, VcsFile> newEntries = newTree.getEntries();
+    final Map<String, GitFile> oldEntries = oldTree != null ? oldTree.getEntries() : Collections.emptyMap();
+    final Map<String, GitFile> newEntries = newTree.getEntries();
     if (path.isEmpty()) {
       final GitLogEntry logEntry = new GitLogEntry(oldTree, newTree);
       if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
         changes.put("/", logEntry);
       }
     }
-    for (Map.Entry<String, VcsFile> entry : newEntries.entrySet()) {
+    for (Map.Entry<String, GitFile> entry : newEntries.entrySet()) {
       final String name = entry.getKey();
-      final GitFile newEntry = (GitFile) entry.getValue();
-      final GitFile oldEntry = (GitFile) oldEntries.remove(name);
+      final GitFile newEntry = entry.getValue();
+      final GitFile oldEntry = oldEntries.remove(name);
       if (!newEntry.equals(oldEntry)) {
         final String fullPath = StringHelper.joinPath(path, name);
         final GitLogEntry logEntry = new GitLogEntry(oldEntry, newEntry);
@@ -215,15 +215,15 @@ public class GitRepository implements VcsRepository {
         }
       }
     }
-    for (Map.Entry<String, VcsFile> entry : oldEntries.entrySet()) {
-      final GitFile oldEntry = (GitFile) entry.getValue();
+    for (Map.Entry<String, GitFile> entry : oldEntries.entrySet()) {
+      final GitFile oldEntry = entry.getValue();
       changes.put(StringHelper.joinPath(path, entry.getKey()), new GitLogEntry(oldEntry, null));
     }
   }
 
   @NotNull
-  private GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry) throws IOException {
-    GitProperty[] props = cacheProperties.get(treeEntry.getId());
+  public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry) throws IOException {
+    GitProperty[] props = cacheProperties.get(treeEntry.getObjectId().getObject());
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
       for (Map.Entry<String, GitTreeEntry> entry : loadTree(treeEntry).entrySet()) {
@@ -234,10 +234,10 @@ public class GitRepository implements VcsRepository {
       }
       if (!propList.isEmpty()) {
         props = propList.toArray(new GitProperty[propList.size()]);
-        cacheProperties.put(treeEntry.getId(), props);
       } else {
         props = GitProperty.emptyArray;
       }
+      cacheProperties.put(ObjectId.fromString(treeEntry.getObjectId().getObject().name()), props);
     }
     return props;
   }
@@ -296,11 +296,6 @@ public class GitRepository implements VcsRepository {
       cacheMd5.putIfAbsent(key, result);
     }
     return result;
-  }
-
-  @NotNull
-  public GitProperty[] getProperties(@NotNull GitTreeEntry treeEntry) throws IOException {
-    return cacheProperties.getOrDefault(treeEntry.getId(), GitProperty.emptyArray);
   }
 
   @NotNull
@@ -477,8 +472,8 @@ public class GitRepository implements VcsRepository {
     }
 
     public void openDir(@NotNull String name) throws IOException {
-      final Map<String, VcsFile> entries = treeStack.element().getEntries();
-      final GitFile file = (GitFile) entries.get(name);
+      final Map<String, GitFile> entries = treeStack.element().getEntries();
+      final GitFile file = entries.get(name);
       if (file == null) {
         throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
       }
@@ -487,7 +482,7 @@ public class GitRepository implements VcsRepository {
 
     public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties) throws IOException, SVNException {
       final GitFile dir = treeStack.element();
-      final GitFile node = name == null ? dir : (GitFile) dir.getEntries().get(name);
+      final GitFile node = name == null ? dir : dir.getEntries().get(name);
       if (node == null) {
         throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
       }
@@ -656,7 +651,7 @@ public class GitRepository implements VcsRepository {
 
     private void validateProperties(@NotNull ObjectId commitTreeId) throws IOException, SVNException {
       final GitRepository repo = GitRepository.this;
-      final GitFile root = new GitFile(repo, new GitTreeEntry(repository, FileMode.TREE, commitTreeId), "", GitProperty.emptyArray, 0, repo::collectProperties);
+      final GitFile root = new GitFile(repo, new GitTreeEntry(repository, FileMode.TREE, commitTreeId), "", GitProperty.emptyArray, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
       for (VcsConsumer<GitPropertyValidator> validateAction : validateActions) {
         validateAction.accept(validator);

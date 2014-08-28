@@ -87,17 +87,16 @@ public class GitRevision implements VcsRevision {
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException {
     GitTreeEntry entry = new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), commit.getTree()));
-    GitProperty[] props = GitProperty.emptyArray;
+    GitFile result = new GitFile(repo, entry, "", GitProperty.emptyArray, revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;
       }
-      props = GitProperty.joinProperties(props, pathItem, entry.getFileMode(), repo.getProperties(entry));
-      entry = repo.loadTree(entry).get(pathItem);
-      if (entry == null) {
+      result = result.getEntries().get(pathItem);
+      if (result == null) {
         return null;
       }
     }
-    return new GitFile(repo, entry, fullPath, props, revision, repo::getProperties);
+    return result;
   }
 }

@@ -223,7 +223,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
         }
       }
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
-      final Map<String, VcsFile> oldEntries = oldFile != null ? oldFile.getEntries() : Collections.emptyMap();
+      final Map<String, ? extends VcsFile> oldEntries = oldFile != null ? oldFile.getEntries() : Collections.emptyMap();
       final Set<String> forced = new HashSet<>(forcedPaths.getOrDefault(fullPath, Collections.emptySet()));
       for (VcsFile newEntry : newFile.getEntries().values()) {
         final VcsFile oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));

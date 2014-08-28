@@ -37,7 +37,7 @@ public interface VcsFile {
   SVNNodeKind getKind() throws IOException;
 
   @NotNull
-  Map<String, VcsFile> getEntries() throws IOException;
+  Map<String, ? extends VcsFile> getEntries() throws IOException;
 
   @NotNull
   VcsRevision getLastChange() throws IOException;
