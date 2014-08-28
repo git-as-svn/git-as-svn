@@ -38,18 +38,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitRepository implements VcsRepository {
-  @FunctionalInterface
-  public interface StreamFactory {
-    @NotNull
-    InputStream openStream() throws IOException;
-  }
-
-  @FunctionalInterface
-  public interface TreeEntryProvider {
-    @NotNull
-    public Map<String, GitTreeEntry> getEntries() throws IOException;
-  }
-
   private static final int REPORT_DELAY = 2500;
 
   @NotNull
@@ -77,9 +65,11 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final String branch;
   @NotNull
-  private final Map<String, String> cacheMd5 = new ConcurrentHashMap<>();
+  private final Map<String, String> md5Cache = new ConcurrentHashMap<>();
   @NotNull
-  private final Map<ObjectId, GitProperty[]> cacheProperties = new ConcurrentHashMap<>();
+  private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
+  @NotNull
+  private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
 
   public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
                        @NotNull GitPushMode pushMode, @NotNull String branch) throws IOException, SVNException {
@@ -109,7 +99,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @Override
-  public void updateRevisions() throws IOException {
+  public void updateRevisions() throws IOException, SVNException {
     // Fast check.
     lock.readLock().lock();
     try {
@@ -175,7 +165,7 @@ public class GitRepository implements VcsRepository {
     return new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), tree).eof();
   }
 
-  private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
+  private void addRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
     final int revisionId = revisions.size();
     final Map<String, VcsLogEntry> changes = new HashMap<>();
     final GitFile oldTree;
@@ -197,7 +187,7 @@ public class GitRepository implements VcsRepository {
   }
 
   private void collectChanges(@NotNull Map<String, VcsLogEntry> changes, @NotNull String path,
-                              @Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException {
+                              @Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException, SVNException {
     final Map<String, GitFile> oldEntries = oldTree != null ? oldTree.getEntries() : Collections.emptyMap();
     final Map<String, GitFile> newEntries = newTree.getEntries();
     if (path.isEmpty()) {
@@ -228,14 +218,14 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull TreeEntryProvider entryProvider) throws IOException {
+  public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull VcsSupplier<Map<String, GitTreeEntry>> entryProvider) throws IOException, SVNException {
     if (treeEntry.getFileMode().getObjectType() == Constants.OBJ_BLOB)
       return GitProperty.emptyArray;
 
-    GitProperty[] props = cacheProperties.get(treeEntry.getObjectId().getObject());
+    GitProperty[] props = directoryPropertyCache.get(treeEntry.getObjectId().getObject());
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
-      for (Map.Entry<String, GitTreeEntry> entry : entryProvider.getEntries().entrySet()) {
+      for (Map.Entry<String, GitTreeEntry> entry : entryProvider.get().entrySet()) {
         final GitProperty property = parseGitProperty(entry.getKey(), entry.getValue().getObjectId());
         if (property != null) {
           propList.add(property);
@@ -246,23 +236,33 @@ public class GitRepository implements VcsRepository {
       } else {
         props = GitProperty.emptyArray;
       }
-      cacheProperties.put(ObjectId.fromString(treeEntry.getObjectId().getObject().name()), props);
+      directoryPropertyCache.put(ObjectId.fromString(treeEntry.getObjectId().getObject().name()), props);
     }
     return props;
   }
 
   @Nullable
-  private GitProperty parseGitProperty(String fileName, GitObject<ObjectId> objectId) throws IOException {
+  private GitProperty parseGitProperty(String fileName, GitObject<ObjectId> objectId) throws IOException, SVNException {
     switch (fileName) {
       case ".tgitconfig":
-        return new GitTortoise(loadContent(objectId));
+        return cachedParseGitProperty(objectId, GitTortoise::new);
       case ".gitattributes":
-        return new GitAttributes(loadContent(objectId));
+        return cachedParseGitProperty(objectId, GitAttributes::new);
       case ".gitignore":
-        return new GitIgnore(loadContent(objectId));
+        return cachedParseGitProperty(objectId, GitIgnore::new);
       default:
         return null;
     }
+  }
+
+  @Nullable
+  private GitProperty cachedParseGitProperty(GitObject<ObjectId> objectId, VcsFunction<String, GitProperty> properyParser) throws IOException, SVNException {
+    GitProperty property = filePropertyCache.get(objectId.getObject());
+    if (property == null) {
+      property = properyParser.apply(loadContent(objectId));
+      filePropertyCache.put(ObjectId.fromString(objectId.getObject().name()), property);
+    }
+    return property;
   }
 
   @NotNull
@@ -288,13 +288,13 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public String getObjectMD5(@NotNull GitObject<? extends ObjectId> objectId, char type, @NotNull StreamFactory streamFactory) throws IOException {
+  public String getObjectMD5(@NotNull GitObject<? extends ObjectId> objectId, char type, @NotNull VcsSupplier<InputStream> streamFactory) throws IOException, SVNException {
     final String key = type + objectId.getObject().name();
-    String result = cacheMd5.get(key);
+    String result = md5Cache.get(key);
     if (result == null) {
       final byte[] buffer = new byte[64 * 1024];
       final MessageDigest md5 = getMd5();
-      try (InputStream stream = streamFactory.openStream()) {
+      try (InputStream stream = streamFactory.get()) {
         while (true) {
           int size = stream.read(buffer);
           if (size < 0) break;
@@ -302,7 +302,7 @@ public class GitRepository implements VcsRepository {
         }
       }
       result = StringHelper.toHex(md5.digest());
-      cacheMd5.putIfAbsent(key, result);
+      md5Cache.putIfAbsent(key, result);
     }
     return result;
   }
@@ -480,7 +480,7 @@ public class GitRepository implements VcsRepository {
       this.treeStack.push(root);
     }
 
-    public void openDir(@NotNull String name) throws IOException {
+    public void openDir(@NotNull String name) throws IOException, SVNException {
       final Map<String, GitFile> entries = treeStack.element().getEntries();
       final GitFile file = entries.get(name);
       if (file == null) {

@@ -12,12 +12,12 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface VcsLogEntry {
-  char getChange() throws IOException;
+  char getChange() throws IOException, SVNException;
 
   @NotNull
   SVNNodeKind getKind();
 
-  boolean isContentModified() throws IOException;
+  boolean isContentModified() throws IOException, SVNException;
 
   boolean isPropertyModified() throws IOException, SVNException;
 }

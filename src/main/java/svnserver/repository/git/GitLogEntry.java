@@ -2,6 +2,7 @@ package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.repository.VcsLogEntry;
@@ -26,7 +27,7 @@ public class GitLogEntry implements VcsLogEntry {
   }
 
   @Override
-  public char getChange() throws IOException {
+  public char getChange() throws IOException, SVNException {
     if (newEntry != null) {
       if (oldEntry == null) return SVNLogEntryPath.TYPE_ADDED;
       if (GitHelper.getKind(newEntry.getFileMode()) != GitHelper.getKind(oldEntry.getFileMode())) return SVNLogEntryPath.TYPE_REPLACED;
@@ -45,7 +46,7 @@ public class GitLogEntry implements VcsLogEntry {
   }
 
   @Override
-  public boolean isContentModified() throws IOException {
+  public boolean isContentModified() throws IOException, SVNException {
     if (newEntry == null || newEntry.isDirectory())
       return false;
 

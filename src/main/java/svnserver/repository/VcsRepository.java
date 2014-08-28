@@ -32,7 +32,7 @@ public interface VcsRepository {
    *
    * @throws IOException
    */
-  void updateRevisions() throws IOException;
+  void updateRevisions() throws IOException, SVNException;
 
   /**
    * Get revision info.

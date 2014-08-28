@@ -4,6 +4,7 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
@@ -85,7 +86,7 @@ public class GitRevision implements VcsRevision {
 
   @Nullable
   @Override
-  public GitFile getFile(@NotNull String fullPath) throws IOException {
+  public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
     GitTreeEntry entry = new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), commit.getTree()));
     GitFile result = new GitFile(repo, entry, "", GitProperty.emptyArray, revision);
     for (String pathItem : fullPath.split("/")) {

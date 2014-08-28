@@ -2,6 +2,7 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,7 +28,7 @@ public interface VcsRevision {
   String getLog();
 
   @Nullable
-  VcsFile getFile(@NotNull String fullPath) throws IOException;
+  VcsFile getFile(@NotNull String fullPath) throws IOException, SVNException;
 
   @NotNull
   Map<String, VcsLogEntry> getChanges();

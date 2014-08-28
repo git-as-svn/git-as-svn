@@ -6,6 +6,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.StreamHelper;
@@ -48,7 +49,7 @@ public class GitFile implements VcsFile {
   @Nullable
   private Map<String, GitFile> treeEntriesCache;
 
-  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) throws IOException {
+  public GitFile(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String fullPath, @NotNull GitProperty[] parentProps, int revision) throws IOException, SVNException {
     this.repo = repo;
     this.treeEntry = treeEntry;
     this.fullPath = fullPath;
@@ -107,7 +108,7 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public String getMd5() throws IOException {
+  public String getMd5() throws IOException, SVNException {
     return repo.getObjectMD5(treeEntry.getObjectId(), isSymlink() ? 'l' : 'f', this::openStream);
   }
 
@@ -167,7 +168,7 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Map<String, GitFile> getEntries() throws IOException {
+  public Map<String, GitFile> getEntries() throws IOException, SVNException {
     if (treeEntriesCache == null) {
       final Map<String, GitFile> result = new HashMap<>();
       for (Map.Entry<String, GitTreeEntry> entry : getRawEntries().entrySet()) {

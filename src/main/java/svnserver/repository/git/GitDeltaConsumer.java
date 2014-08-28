@@ -50,7 +50,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private ByteArrayOutputStream memory;
 
-  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file) throws IOException {
+  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file) throws IOException, SVNException {
     this.gitRepository = gitRepository;
     if (file != null) {
       this.originalMd5 = file.getMd5();

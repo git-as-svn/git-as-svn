@@ -24,7 +24,7 @@ public interface VcsFile {
   Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException;
 
   @NotNull
-  String getMd5() throws IOException;
+  String getMd5() throws IOException, SVNException;
 
   long getSize() throws IOException;
 
@@ -37,7 +37,7 @@ public interface VcsFile {
   SVNNodeKind getKind() throws IOException;
 
   @NotNull
-  Map<String, ? extends VcsFile> getEntries() throws IOException;
+  Map<String, ? extends VcsFile> getEntries() throws IOException, SVNException;
 
   @NotNull
   VcsRevision getLastChange() throws IOException;
