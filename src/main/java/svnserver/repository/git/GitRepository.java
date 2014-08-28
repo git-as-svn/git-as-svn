@@ -177,7 +177,7 @@ public class GitRepository implements VcsRepository {
 
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException {
     final int revisionId = revisions.size();
-    final Map<String, VcsLogEntry> changes = new TreeMap<>();
+    final Map<String, VcsLogEntry> changes = new HashMap<>();
     final GitFile oldTree;
     if (revisions.isEmpty()) {
       oldTree = null;
@@ -229,6 +229,9 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull TreeEntryProvider entryProvider) throws IOException {
+    if (treeEntry.getFileMode().getObjectType() == Constants.OBJ_BLOB)
+      return GitProperty.emptyArray;
+
     GitProperty[] props = cacheProperties.get(treeEntry.getObjectId().getObject());
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
@@ -422,7 +425,7 @@ public class GitRepository implements VcsRepository {
     if (treeId == null) {
       return Collections.emptyMap();
     }
-    final Map<String, GitTreeEntry> result = new TreeMap<>();
+    final Map<String, GitTreeEntry> result = new HashMap<>();
     final Repository repo = treeId.getRepo();
     final CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, repo.newObjectReader(), treeId.getObject());
     while (!treeParser.eof()) {

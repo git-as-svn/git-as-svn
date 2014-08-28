@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Git file.
@@ -170,7 +169,7 @@ public class GitFile implements VcsFile {
   @Override
   public Map<String, GitFile> getEntries() throws IOException {
     if (treeEntriesCache == null) {
-      final Map<String, GitFile> result = new TreeMap<>();
+      final Map<String, GitFile> result = new HashMap<>();
       for (Map.Entry<String, GitTreeEntry> entry : getRawEntries().entrySet()) {
         result.put(entry.getKey(), new GitFile(repo, entry.getValue(), StringHelper.joinPath(fullPath, entry.getKey()), props, revision));
       }
