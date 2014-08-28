@@ -35,7 +35,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private final Map<String, String> props;
   @NotNull
-  private GitRepository gitRepository;
+  private final GitRepository gitRepository;
   @Nullable
   private SVNDeltaProcessor window;
   @Nullable

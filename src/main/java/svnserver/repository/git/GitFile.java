@@ -136,7 +136,16 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public SVNNodeKind getKind() {
-    return GitHelper.getKind(treeEntry.getFileMode());
+    final int objType = treeEntry.getFileMode().getObjectType();
+    switch (objType) {
+      case Constants.OBJ_TREE:
+      case Constants.OBJ_COMMIT:
+        return SVNNodeKind.DIR;
+      case Constants.OBJ_BLOB:
+        return SVNNodeKind.FILE;
+      default:
+        throw new IllegalStateException("Unknown obj type: " + objType);
+    }
   }
 
   private ObjectLoader getObjectLoader() throws IOException {
