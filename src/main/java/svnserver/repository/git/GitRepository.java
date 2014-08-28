@@ -38,9 +38,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitRepository implements VcsRepository {
+  @FunctionalInterface
   public interface StreamFactory {
-
+    @NotNull
     InputStream openStream() throws IOException;
+  }
+
+  @FunctionalInterface
+  public interface TreeEntryProvider {
+    @NotNull
+    public Map<String, GitTreeEntry> getEntries() throws IOException;
   }
 
   private static final int REPORT_DELAY = 2500;
@@ -190,8 +197,7 @@ public class GitRepository implements VcsRepository {
   }
 
   private void collectChanges(@NotNull Map<String, VcsLogEntry> changes, @NotNull String path,
-                              @Nullable GitFile oldTree,
-                              @NotNull GitFile newTree) throws IOException {
+                              @Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException {
     final Map<String, GitFile> oldEntries = oldTree != null ? oldTree.getEntries() : Collections.emptyMap();
     final Map<String, GitFile> newEntries = newTree.getEntries();
     if (path.isEmpty()) {
@@ -222,11 +228,11 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry) throws IOException {
+  public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull TreeEntryProvider entryProvider) throws IOException {
     GitProperty[] props = cacheProperties.get(treeEntry.getObjectId().getObject());
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
-      for (Map.Entry<String, GitTreeEntry> entry : loadTree(treeEntry).entrySet()) {
+      for (Map.Entry<String, GitTreeEntry> entry : entryProvider.getEntries().entrySet()) {
         final GitProperty property = parseGitProperty(entry.getKey(), entry.getValue().getObjectId());
         if (property != null) {
           propList.add(property);
