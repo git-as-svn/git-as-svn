@@ -1,19 +1,25 @@
 package svnserver.parser;
 
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnCheckout;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static svnserver.parser.SvnTestHelper.sendDeltaAndClose;
 
@@ -23,6 +29,9 @@ import static svnserver.parser.SvnTestHelper.sendDeltaAndClose;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnCheckoutTest {
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(SvnCheckoutTest.class);
+
   @Test(timeOut = 60 * 1000)
   public void checkoutRootRevision() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
@@ -32,6 +41,52 @@ public class SvnCheckoutTest {
       checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
       checkout.setRevision(SVNRevision.create(0));
       checkout.run();
+    }
+  }
+
+  /**
+   * Workcopy mixed version update smoke test.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void randomUpdate() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
+      final SvnOperationFactory factory = server.createOperationFactory();
+      final SvnCheckout checkout = factory.createCheckout();
+      checkout.setSource(SvnTarget.fromURL(server.getUrl()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setRevision(SVNRevision.create(0));
+      checkout.run();
+
+      SVNRepository repo = server.openSvnRepository();
+      final long maxRevision = repo.getLatestRevision();
+      for (long revision = 1; revision <= maxRevision; revision++) {
+        final SvnLog svnLog = factory.createLog();
+        svnLog.setSingleTarget(SvnTarget.fromURL(server.getUrl()));
+        svnLog.setRevisionRanges(Arrays.asList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
+        svnLog.setDiscoverChangedPaths(true);
+        final SVNLogEntry logEntry = svnLog.run();
+        log.info("Update to revision #{}: {}", revision, logEntry.getMessage());
+
+        final TreeMap<String, SVNLogEntryPath> paths = new TreeMap<>(logEntry.getChangedPaths());
+        if (!paths.isEmpty()) {
+          String lastAdded = null;
+          SvnUpdate update = factory.createUpdate();
+          for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
+            String path = entry.getKey();
+            if ((lastAdded != null) && path.startsWith(lastAdded)) {
+              continue;
+            }
+            if (entry.getValue().getType() == 'A') {
+              lastAdded = path + "/";
+            }
+            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), path.substring(1))));
+          }
+          update.setRevision(SVNRevision.create(revision));
+          update.run();
+        }
+      }
     }
   }
 
