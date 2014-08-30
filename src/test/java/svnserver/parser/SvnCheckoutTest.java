@@ -5,10 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -53,13 +56,21 @@ public class SvnCheckoutTest {
   public void randomUpdate() throws Exception {
     try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
       final SvnOperationFactory factory = server.createOperationFactory();
+      factory.setAutoCloseContext(false);
+      factory.setPrimaryWcGeneration(SvnWcGeneration.V16);
+      factory.setAutoDisposeRepositoryPool(false);
+
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));
       checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
       checkout.setRevision(SVNRevision.create(0));
+      checkout.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
       checkout.run();
 
-      SVNRepository repo = server.openSvnRepository();
+      final SVNWCContext wcContext = factory.getWcContext();
+      wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
+
+      final SVNRepository repo = server.openSvnRepository();
       final long maxRevision = repo.getLatestRevision();
       for (long revision = 1; revision <= maxRevision; revision++) {
         final SvnLog svnLog = factory.createLog();
@@ -72,7 +83,7 @@ public class SvnCheckoutTest {
         final TreeMap<String, SVNLogEntryPath> paths = new TreeMap<>(logEntry.getChangedPaths());
         if (!paths.isEmpty()) {
           String lastAdded = null;
-          SvnUpdate update = factory.createUpdate();
+          final SvnUpdate update = factory.createUpdate();
           for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
             String path = entry.getKey();
             if ((lastAdded != null) && path.startsWith(lastAdded)) {
