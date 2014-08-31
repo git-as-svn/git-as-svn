@@ -6,23 +6,18 @@ import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static svnserver.parser.SvnTestHelper.sendDeltaAndClose;
 
@@ -57,7 +52,6 @@ public class SvnCheckoutTest {
     try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
       final SvnOperationFactory factory = server.createOperationFactory();
       factory.setAutoCloseContext(false);
-      factory.setPrimaryWcGeneration(SvnWcGeneration.V16);
       factory.setAutoDisposeRepositoryPool(false);
 
       final SvnCheckout checkout = factory.createCheckout();
@@ -70,8 +64,19 @@ public class SvnCheckoutTest {
       final SVNWCContext wcContext = factory.getWcContext();
       wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
 
+      factory.setEventHandler(new ISVNEventHandler() {
+        @Override
+        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          Assert.assertEquals(event.getExpectedAction(), event.getAction());
+        }
+
+        @Override
+        public void checkCancelled() throws SVNCancelException {
+        }
+      });
       final SVNRepository repo = server.openSvnRepository();
       final long maxRevision = repo.getLatestRevision();
+      final Random rand = new Random(0);
       for (long revision = 1; revision <= maxRevision; revision++) {
         final SvnLog svnLog = factory.createLog();
         svnLog.setSingleTarget(SvnTarget.fromURL(server.getUrl()));
@@ -81,20 +86,28 @@ public class SvnCheckoutTest {
         log.info("Update to revision #{}: {}", revision, logEntry.getMessage());
 
         final TreeMap<String, SVNLogEntryPath> paths = new TreeMap<>(logEntry.getChangedPaths());
-        if (!paths.isEmpty()) {
-          String lastAdded = null;
-          final SvnUpdate update = factory.createUpdate();
-          for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
-            String path = entry.getKey();
-            if ((lastAdded != null) && path.startsWith(lastAdded)) {
-              continue;
-            }
-            if (entry.getValue().getType() == 'A') {
-              lastAdded = path + "/";
-            }
-            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), path.substring(1))));
+        final List<String> targets = new ArrayList<>();
+        final SvnUpdate update = factory.createUpdate();
+        String lastAdded = null;
+        for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
+          String path = entry.getKey();
+          if ((lastAdded != null) && path.startsWith(lastAdded)) {
+            continue;
+          }
+          if (entry.getValue().getType() == 'A') {
+            lastAdded = path + "/";
+          }
+          if (entry.getValue().getType() == 'A' || rand.nextBoolean()) {
+            targets.add(path);
+          }
+        }
+        if (!targets.isEmpty()) {
+          for (String target : targets) {
+            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), target.substring(1))));
           }
           update.setRevision(SVNRevision.create(revision));
+          update.setSleepForTimestamp(false);
+          update.setMakeParents(true);
           update.run();
         }
       }
