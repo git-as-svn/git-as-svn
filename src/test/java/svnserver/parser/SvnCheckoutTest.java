@@ -1,19 +1,23 @@
 package svnserver.parser;
 
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnCheckout;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.*;
 
 import static svnserver.parser.SvnTestHelper.sendDeltaAndClose;
 
@@ -23,6 +27,9 @@ import static svnserver.parser.SvnTestHelper.sendDeltaAndClose;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnCheckoutTest {
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(SvnCheckoutTest.class);
+
   @Test(timeOut = 60 * 1000)
   public void checkoutRootRevision() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
@@ -33,6 +40,106 @@ public class SvnCheckoutTest {
       checkout.setRevision(SVNRevision.create(0));
       checkout.run();
     }
+  }
+
+  /**
+   * Workcopy mixed version update smoke test.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void randomUpdateRoot() throws Exception {
+    checkUpdate("");
+
+  }
+
+  /**
+   * Workcopy mixed version update smoke test.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void randomUpdateChild() throws Exception {
+    checkUpdate("/src");
+  }
+
+  private void checkUpdate(@NotNull String basePath) throws Exception {
+    try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
+      final SvnOperationFactory factory = server.createOperationFactory();
+      factory.setAutoCloseContext(false);
+      factory.setAutoDisposeRepositoryPool(false);
+
+      final SVNRepository repo = server.openSvnRepository();
+      final List<Long> revisions = loadUpdateRevisions(repo, basePath);
+      Assert.assertTrue(revisions.size() > 2);
+
+      final SvnCheckout checkout = factory.createCheckout();
+      checkout.setSource(SvnTarget.fromURL(server.getUrl().appendPath(basePath, false)));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setRevision(SVNRevision.create(revisions.get(0)));
+      checkout.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
+      checkout.run();
+
+      final SVNWCContext wcContext = factory.getWcContext();
+      wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
+
+      factory.setEventHandler(new ISVNEventHandler() {
+        @Override
+        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          Assert.assertEquals(event.getExpectedAction(), event.getAction());
+        }
+
+        @Override
+        public void checkCancelled() throws SVNCancelException {
+        }
+      });
+      final Random rand = new Random(0);
+      for (long revision : revisions.subList(1, revisions.size())) {
+        final SvnLog svnLog = factory.createLog();
+        svnLog.setSingleTarget(SvnTarget.fromURL(server.getUrl()));
+        svnLog.setRevisionRanges(Arrays.asList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
+        svnLog.setDiscoverChangedPaths(true);
+        final SVNLogEntry logEntry = svnLog.run();
+        log.info("Update to revision #{}: {}", revision, logEntry.getMessage());
+
+        final TreeMap<String, SVNLogEntryPath> paths = new TreeMap<>(logEntry.getChangedPaths());
+        final List<String> targets = new ArrayList<>();
+        final SvnUpdate update = factory.createUpdate();
+        String lastAdded = null;
+        for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
+          String path = entry.getKey();
+          if ((lastAdded != null) && path.startsWith(lastAdded)) {
+            continue;
+          }
+          if (entry.getValue().getType() == 'A') {
+            lastAdded = path + "/";
+          }
+          if (entry.getValue().getType() == 'A' || rand.nextBoolean()) {
+            if (path.startsWith(basePath)) {
+              final String subPath = path.substring(basePath.length());
+              targets.add(subPath.startsWith("/") ? subPath.substring(1) : subPath);
+            }
+          }
+        }
+        if (!targets.isEmpty()) {
+          for (String target : targets) {
+            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), target)));
+          }
+          update.setRevision(SVNRevision.create(revision));
+          update.setSleepForTimestamp(false);
+          update.setMakeParents(true);
+          update.run();
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private List<Long> loadUpdateRevisions(@NotNull SVNRepository repo, @NotNull String path) throws SVNException {
+    final long maxRevision = repo.getLatestRevision();
+    final LinkedList<Long> revisions = new LinkedList<>();
+    repo.log(new String[]{path}, maxRevision, 0, false, false, logEntry -> revisions.addFirst(logEntry.getRevision()));
+    return new ArrayList<>(revisions);
   }
 
   /**

@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -59,6 +60,7 @@ public final class SvnTestServer implements AutoCloseable {
   private final boolean safeBranch;
 
   private SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch) throws Exception {
+    SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
     tempDirectory = TestHelper.createTempDir("git-as-svn");
