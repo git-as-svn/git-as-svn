@@ -224,14 +224,17 @@ public class GitRepository implements VcsRepository {
       if (!newEntry.equals(oldEntry)) {
         final String fullPath = StringHelper.joinPath(path, newEntry.getFileName());
         final GitLogEntry logEntry = new GitLogEntry(oldEntry, newEntry);
-        if (oldEntry == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
+        if (newEntry.isDirectory()) {
           final GitLogEntry oldChange = changes.put(fullPath, logEntry);
           if (oldChange != null) {
             changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newEntry));
           }
-        }
-        if (newEntry.isDirectory()) {
           collectChanges(changes, fullPath, ((oldEntry != null) && oldEntry.isDirectory()) ? oldEntry : null, newEntry);
+        } else if (oldEntry == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
+          final GitLogEntry oldChange = changes.put(fullPath, logEntry);
+          if (oldChange != null) {
+            changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newEntry));
+          }
         }
       }
     }

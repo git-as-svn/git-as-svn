@@ -48,16 +48,35 @@ public class SvnCheckoutTest {
    * @throws Exception
    */
   @Test
-  public void randomUpdate() throws Exception {
+  public void randomUpdateRoot() throws Exception {
+    checkUpdate("");
+
+  }
+
+  /**
+   * Workcopy mixed version update smoke test.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void randomUpdateChild() throws Exception {
+    checkUpdate("/src");
+  }
+
+  private void checkUpdate(@NotNull String basePath) throws Exception {
     try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
       final SvnOperationFactory factory = server.createOperationFactory();
       factory.setAutoCloseContext(false);
       factory.setAutoDisposeRepositoryPool(false);
 
+      final SVNRepository repo = server.openSvnRepository();
+      final List<Long> revisions = loadUpdateRevisions(repo, basePath);
+      Assert.assertTrue(revisions.size() > 2);
+
       final SvnCheckout checkout = factory.createCheckout();
-      checkout.setSource(SvnTarget.fromURL(server.getUrl()));
+      checkout.setSource(SvnTarget.fromURL(server.getUrl().appendPath(basePath, false)));
       checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
-      checkout.setRevision(SVNRevision.create(0));
+      checkout.setRevision(SVNRevision.create(revisions.get(0)));
       checkout.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
       checkout.run();
 
@@ -74,10 +93,8 @@ public class SvnCheckoutTest {
         public void checkCancelled() throws SVNCancelException {
         }
       });
-      final SVNRepository repo = server.openSvnRepository();
-      final long maxRevision = repo.getLatestRevision();
       final Random rand = new Random(0);
-      for (long revision = 1; revision <= maxRevision; revision++) {
+      for (long revision : revisions.subList(1, revisions.size())) {
         final SvnLog svnLog = factory.createLog();
         svnLog.setSingleTarget(SvnTarget.fromURL(server.getUrl()));
         svnLog.setRevisionRanges(Arrays.asList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
@@ -91,6 +108,9 @@ public class SvnCheckoutTest {
         String lastAdded = null;
         for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
           String path = entry.getKey();
+          if (!path.startsWith(basePath)) {
+            continue;
+          }
           if ((lastAdded != null) && path.startsWith(lastAdded)) {
             continue;
           }
@@ -112,6 +132,14 @@ public class SvnCheckoutTest {
         }
       }
     }
+  }
+
+  @NotNull
+  private List<Long> loadUpdateRevisions(@NotNull SVNRepository repo, @NotNull String path) throws SVNException {
+    final long maxRevision = repo.getLatestRevision();
+    final LinkedList<Long> revisions = new LinkedList<>();
+    repo.log(new String[]{path}, maxRevision, 0, false, false, logEntry -> revisions.addFirst(logEntry.getRevision()));
+    return new ArrayList<>(revisions);
   }
 
   /**
