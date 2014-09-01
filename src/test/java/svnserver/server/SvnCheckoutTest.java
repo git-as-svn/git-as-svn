@@ -1,4 +1,4 @@
-package svnserver.parser;
+package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -15,11 +15,13 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.*;
+import svnserver.SvnTestServer;
+import svnserver.TestHelper;
 
 import java.io.File;
 import java.util.*;
 
-import static svnserver.parser.SvnTestHelper.sendDeltaAndClose;
+import static svnserver.SvnTestHelper.sendDeltaAndClose;
 
 /**
  * Simple checkout tests.

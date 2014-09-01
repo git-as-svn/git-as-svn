@@ -15,7 +15,7 @@ import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import svnserver.SvnConstants;
-import svnserver.parser.SvnTestServer;
+import svnserver.SvnTestServer;
 
 import java.io.File;
 import java.io.IOException;

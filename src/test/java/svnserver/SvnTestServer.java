@@ -1,4 +1,4 @@
-package svnserver.parser;
+package svnserver;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
