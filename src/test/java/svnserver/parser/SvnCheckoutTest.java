@@ -108,9 +108,6 @@ public class SvnCheckoutTest {
         String lastAdded = null;
         for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
           String path = entry.getKey();
-          if (!path.startsWith(basePath)) {
-            continue;
-          }
           if ((lastAdded != null) && path.startsWith(lastAdded)) {
             continue;
           }
@@ -118,12 +115,15 @@ public class SvnCheckoutTest {
             lastAdded = path + "/";
           }
           if (entry.getValue().getType() == 'A' || rand.nextBoolean()) {
-            targets.add(path);
+            if (path.startsWith(basePath)) {
+              final String subPath = path.substring(basePath.length());
+              targets.add(subPath.startsWith("/") ? subPath.substring(1) : subPath);
+            }
           }
         }
         if (!targets.isEmpty()) {
           for (String target : targets) {
-            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), target.substring(1))));
+            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), target)));
           }
           update.setRevision(SVNRevision.create(revision));
           update.setSleepForTimestamp(false);
