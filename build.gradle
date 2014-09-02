@@ -20,9 +20,8 @@ dependencies {
   compile "commons-io:commons-io:2.4"
   compile "org.ini4j:ini4j:0.5.2"
 
-  testCompile "org.apache.directory.server:apacheds-core:1.5.5"
-  testCompile "org.apache.directory.server:apacheds-protocol-ldap:1.5.5"
-  testCompile "org.apache.directory.server:apacheds-protocol-shared:1.5.5"
+  testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M17"
+  testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M23"
   testCompile "org.testng:testng:6.8.8"
 }
 

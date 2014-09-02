@@ -1,18 +1,20 @@
 package svnserver.ldap;
 
+import org.apache.directory.api.ldap.model.constants.SchemaConstants;
+import org.apache.directory.api.ldap.model.constants.SupportedSaslMechanisms;
+import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.api.ldap.schemamanager.impl.DefaultSchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
-import org.apache.directory.server.core.DirectoryService;
-import org.apache.directory.server.core.entry.ServerEntry;
-import org.apache.directory.server.core.partition.Partition;
-import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmIndex;
-import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
+import org.apache.directory.server.core.api.DirectoryService;
+import org.apache.directory.server.core.api.InstanceLayout;
+import org.apache.directory.server.core.api.partition.Partition;
+import org.apache.directory.server.core.api.schema.SchemaPartition;
+import org.apache.directory.server.core.partition.impl.avl.AvlPartition;
 import org.apache.directory.server.ldap.LdapServer;
-import org.apache.directory.server.ldap.handlers.bind.digestMD5.DigestMd5MechanismHandler;
+import org.apache.directory.server.ldap.handlers.sasl.digestMD5.DigestMd5MechanismHandler;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.directory.server.xdbm.Index;
-import org.apache.directory.shared.ldap.constants.SupportedSaslMechanisms;
-import org.apache.directory.shared.ldap.name.LdapDN;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.LDAPUserDBConfig;
 import svnserver.config.UserDBConfig;
@@ -21,7 +23,6 @@ import svnserver.parser.TestHelper;
 import java.io.File;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * Embedded LDAP server.
@@ -38,17 +39,24 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
 
   private EmbeddedDirectoryServer(@NotNull String dn, @NotNull URL ldifStream) throws Exception {
     // Initialize the LDAP service
+
     service = new DefaultDirectoryService();
-    service.setWorkingDirectory(TestHelper.createTempDir("ldap"));
+    service.setInstanceLayout(new InstanceLayout(TestHelper.createTempDir("ldap")));
 
     // Disable the ChangeLog system
     service.getChangeLog().setEnabled(false);
 
-    // Create a new partition named 'apache'.
-    Partition apachePartition = addPartition(new LdapDN(dn));
+    final SchemaManager schemaManager = new DefaultSchemaManager();
+    service.setSchemaManager(schemaManager);
 
-    // Index some attributes on the apache partition
-    addIndex(apachePartition, "objectClass", "ou", "uid");
+    final SchemaPartition schemaPartition = new SchemaPartition(schemaManager);
+    schemaPartition.setWrappedPartition(createPartition(new Dn(SchemaConstants.OU_SCHEMA), schemaManager));
+    service.setSchemaPartition(schemaPartition);
+
+    service.setSystemPartition(createPartition(new Dn("ou=system"), schemaManager));
+
+    // Create a new partition
+    service.addPartition(createPartition(new Dn(dn), schemaManager));
 
     ldapServer = new LdapServer();
     ldapServer.setSaslHost(HOST);
@@ -67,35 +75,13 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
     ldapServer.start();
   }
 
-  /**
-   * Add a new partition to the server
-   *
-   * @param partitionDn The partition DN
-   * @return The newly added partition
-   * @throws Exception If the partition can't be added
-   */
-  private Partition addPartition(@NotNull LdapDN partitionDn) throws Exception {
-    // Create a new partition named 'foo'.
-    Partition partition = new JdbmPartition();
-    partition.setId(partitionDn.getRdn().getNormValue());
-    partition.setSuffix(partitionDn.getNormName());
-    service.addPartition(partition);
+  @NotNull
+  private Partition createPartition(@NotNull Dn partitionDn, @NotNull SchemaManager schemaManager) throws Exception {
+    // Create a new partition
+    AvlPartition partition = new AvlPartition(schemaManager);
+    partition.setId(String.valueOf(partitionDn.getRdn().getNormValue().getValue()));
+    partition.setSuffixDn(new Dn(partitionDn.getNormName()));
     return partition;
-  }
-
-  /**
-   * Add a new set of index on the given attributes
-   *
-   * @param partition The partition on which we want to add index
-   * @param attrs     The list of attributes to index
-   */
-  private void addIndex(Partition partition, String... attrs) {
-    // Index some attributes on the apache partition
-    HashSet<Index<?, ServerEntry>> indexedAttributes = new HashSet<>();
-    for (String attribute : attrs) {
-      indexedAttributes.add(new JdbmIndex<String, ServerEntry>(attribute));
-    }
-    ((JdbmPartition) partition).setIndexedAttributes(indexedAttributes);
   }
 
   @Override
@@ -111,7 +97,7 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
 
   public UserDBConfig createUserConfig() throws Exception {
     final LDAPUserDBConfig config = new LDAPUserDBConfig();
-    config.setConnectionUrl("ldap://" + ldapServer.getSaslHost() + ":" + ldapServer.getPort() + "/" + service.getPartitions().iterator().next().getSuffixDn().getUpName());
+    config.setConnectionUrl("ldap://" + ldapServer.getSaslHost() + ":" + ldapServer.getPort() + "/" + service.getPartitions().iterator().next().getSuffixDn().getName());
     config.setUserSearch("(uid={0})");
     config.setUserSubtree(true);
     config.setNameAttribute("givenName");
