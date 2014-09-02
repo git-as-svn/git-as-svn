@@ -123,11 +123,11 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       paths.put(fullPath, args);
     }
 
-    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) {
+    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException {
       context.push(this::reportCommand);
       final String fullPath = joinPath(params.getPath(), args.path);
       forcePath(fullPath);
-      deletedPaths.add(fullPath);
+      deletedPaths.add(getFullPath(context, args.path));
     }
 
     private void forcePath(@NotNull String fullPath) {
@@ -159,7 +159,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listEnd();
 
       final String tokenId = createTokenId();
-      final SetPathParams rootParams = paths.get(path);
+      final SetPathParams rootParams = paths.get(joinPath(params.getPath(), ""));
       writer
           .listBegin()
           .word("open-root")
@@ -170,8 +170,9 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .string(tokenId)
           .listEnd()
           .listEnd();
-      VcsFile file = context.getRepository().getRevisionInfo(rev).getFile(context.getRepositoryPath(path));
-      updateEntry(context, path, getPrevFile(context, path, file), file, tokenId, path.isEmpty());
+      final String fullPath = context.getRepositoryPath(path);
+      VcsFile file = context.getRepository().getRevisionInfo(rev).getFile(fullPath);
+      updateEntry(context, path, getPrevFile(context, fullPath, file), file, tokenId, path.isEmpty());
       writer
           .listBegin()
           .word("close-dir")
@@ -208,7 +209,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       return "t" + String.valueOf(++lastTokenId);
     }
 
-    //  private void updateDir(@NotNull String path,int rev, want, entry, Object parentToken=None) throws IOException {
     private void updateDir(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId;
@@ -217,9 +217,9 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       } else {
         tokenId = createTokenId();
         if (oldFile == null) {
-          sendStartEntry(writer, "add-dir", fullPath, parentTokenId, tokenId, null);
+          sendStartEntry(writer, "add-dir", getLocalPath(context, newFile), parentTokenId, tokenId, null);
         } else {
-          sendStartEntry(writer, "open-dir", fullPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
+          sendStartEntry(writer, "open-dir", getLocalPath(context, newFile), parentTokenId, tokenId, oldFile.getLastChange().getId());
         }
       }
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
@@ -234,7 +234,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
       final Set<String> forced = new HashSet<>(forcedPaths.getOrDefault(fullPath, Collections.emptySet()));
       for (VcsFile newEntry : newFile.getEntries()) {
-        final VcsFile oldEntry = getPrevFile(context, joinPath(fullPath, newEntry.getFileName()), oldEntries.remove(newEntry.getFileName()));
+        final VcsFile oldEntry = getPrevFile(context, newEntry.getFullPath(), oldEntries.remove(newEntry.getFileName()));
         final String entryPath = joinPath(fullPath, newEntry.getFileName());
         if (!forced.remove(newEntry.getFileName())) {
           if (newEntry.equals(oldEntry)) {
@@ -246,10 +246,10 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
       for (VcsFile entry : oldEntries.values()) {
         forced.remove(entry.getFileName());
-        removeEntry(context, joinPath(fullPath, entry.getFileName()), entry.getLastChange().getId(), tokenId);
+        removeEntry(context, entry.getFullPath(), entry.getLastChange().getId(), tokenId);
       }
       for (String removed : forced) {
-        removeEntry(context, joinPath(fullPath, removed), newFile.getLastChange().getId(), tokenId);
+        removeEntry(context, context.getRepositoryPath(joinPath(fullPath, removed)), newFile.getLastChange().getId(), tokenId);
       }
       if (!rootDir) {
         writer
@@ -272,13 +272,13 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
+    private void updateFile(@NotNull SessionContext context, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
       if (oldFile == null) {
-        sendStartEntry(writer, "add-file", fullPath, parentTokenId, tokenId, null);
+        sendStartEntry(writer, "add-file", getLocalPath(context, newFile), parentTokenId, tokenId, null);
       } else {
-        sendStartEntry(writer, "open-file", fullPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
+        sendStartEntry(writer, "open-file", getLocalPath(context, newFile), parentTokenId, tokenId, oldFile.getLastChange().getId());
       }
       final String md5;
       if (!newFile.equals(oldFile)) {
@@ -360,33 +360,33 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       if (deletedPaths.contains(fullPath)) {
         return null;
       }
-      final SetPathParams pathParams = paths.get(fullPath);
+      final String localPath = getLocalPath(context, fullPath);
+      final SetPathParams pathParams = paths.get(localPath);
       if (pathParams == null) {
         return oldFile;
       }
       if (pathParams.startEmpty || (pathParams.rev == 0)) {
         return null;
       }
-      String repositoryPath = context.getRepositoryPath(fullPath);
-      return context.getRepository().getRevisionInfo(pathParams.rev).getFile(repositoryPath);
+      return context.getRepository().getRevisionInfo(pathParams.rev).getFile(fullPath);
     }
 
     private void updateEntry(@NotNull SessionContext context, @NotNull String fullPath, @Nullable VcsFile oldFile, @Nullable VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
       if (newFile == null) {
         if (oldFile != null) {
-          removeEntry(context, fullPath, oldFile.getLastChange().getId(), parentTokenId);
+          removeEntry(context, context.getRepositoryPath(fullPath), oldFile.getLastChange().getId(), parentTokenId);
         }
       } else if ((oldFile != null) && (!newFile.getKind().equals(oldFile.getKind()))) {
-        removeEntry(context, fullPath, oldFile.getLastChange().getId(), parentTokenId);
+        removeEntry(context, newFile.getFullPath(), oldFile.getLastChange().getId(), parentTokenId);
         updateEntry(context, fullPath, null, newFile, parentTokenId, rootDir);
       } else if (newFile.isDirectory()) {
         updateDir(context, fullPath, oldFile, newFile, parentTokenId, rootDir);
       } else {
-        updateFile(context, fullPath, oldFile, newFile, parentTokenId);
+        updateFile(context, oldFile, newFile, parentTokenId);
       }
     }
 
-    private void removeEntry(@NotNull SessionContext context, @NotNull String fullPath, int rev, @NotNull String parentTokenId) throws IOException {
+    private void removeEntry(@NotNull SessionContext context, @NotNull String fullPath, int rev, @NotNull String parentTokenId) throws IOException, SVNException {
       if (deletedPaths.contains(fullPath)) {
         return;
       }
@@ -395,7 +395,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listBegin()
           .word("delete-entry")
           .listBegin()
-          .string(fullPath)
+          .string(getLocalPath(context, fullPath))
           .listBegin()
           .number(rev) // todo: ???
           .listEnd()
@@ -440,9 +440,33 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listEnd();
     }
 
+    @Deprecated
     private String joinPath(@NotNull String prefix, @NotNull String name) {
       if (name.isEmpty()) return prefix;
       return prefix.isEmpty() ? name : (prefix + "/" + name);
+    }
+
+    @NotNull
+    private String getFullPath(@NotNull SessionContext context, @NotNull String name) throws SVNException {
+      return context.getRepositoryPath(StringHelper.joinPath(params.getPath(), name));
+    }
+
+    @NotNull
+    private String getLocalPath(@NotNull SessionContext context, @NotNull VcsFile file) throws SVNException {
+      return getLocalPath(context, file.getFullPath());
+    }
+
+    @Deprecated
+    @NotNull
+    private String getLocalPath(@NotNull SessionContext context, @NotNull String fullPath) throws SVNException {
+      final String prefix = context.getRepositoryPath(null);
+      if ((!fullPath.startsWith(prefix)) || ((fullPath.length() > prefix.length()) && (fullPath.charAt(prefix.length()) != '/'))) {
+        throw new IllegalStateException("Can't get local path: " + fullPath);
+      }
+      if (fullPath.length() == prefix.length()) {
+        return "";
+      }
+      return fullPath.substring(prefix.length() + 1);
     }
 
     private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
