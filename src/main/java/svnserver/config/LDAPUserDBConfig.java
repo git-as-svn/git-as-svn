@@ -38,7 +38,7 @@ public final class LDAPUserDBConfig implements UserDBConfig {
    * Pattern specifying the LDAP search filter to use after substitution of the username.
    */
   @NotNull
-  private String userSearch = "(mail={0})";
+  private String userSearch = "(samaccountname={0})";
   /**
    * LDAP attribute, containing user name.
    */
