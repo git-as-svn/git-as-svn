@@ -36,6 +36,8 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
   private final DirectoryService service;
   @NotNull
   private final LdapServer ldapServer;
+  @NotNull
+  private final Dn baseDn;
 
   private EmbeddedDirectoryServer(@NotNull String dn, @NotNull URL ldifStream) throws Exception {
     // Initialize the LDAP service
@@ -56,7 +58,8 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
     service.setSystemPartition(createPartition(new Dn("ou=system"), schemaManager));
 
     // Create a new partition
-    service.addPartition(createPartition(new Dn(dn), schemaManager));
+    baseDn = new Dn(dn);
+    service.addPartition(createPartition(baseDn, schemaManager));
 
     ldapServer = new LdapServer();
     ldapServer.setSaslHost(HOST);
@@ -97,7 +100,7 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
 
   public UserDBConfig createUserConfig() throws Exception {
     final LDAPUserDBConfig config = new LDAPUserDBConfig();
-    config.setConnectionUrl("ldap://" + ldapServer.getSaslHost() + ":" + ldapServer.getPort() + "/" + service.getPartitions().iterator().next().getSuffixDn().getName());
+    config.setConnectionUrl("ldap://" + ldapServer.getSaslHost() + ":" + ldapServer.getPort() + "/" + baseDn.getName());
     config.setUserSearch("(uid={0})");
     config.setUserSubtree(true);
     config.setNameAttribute("givenName");
