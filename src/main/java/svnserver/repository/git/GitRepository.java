@@ -81,7 +81,6 @@ public class GitRepository implements VcsRepository {
       throw new IOException("Branch not found: " + branch);
     }
     this.branch = branchRef.getName();
-    //addRevisionInfo(getEmptyCommit(repository));
     updateRevisions();
     this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
     log.info("Repository ready (branch: {}, sha1: {})", this.branch, branchRef.getObjectId().getName());
@@ -89,13 +88,13 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   private String getRepositoryId() {
-    if (revisions.size() > 1) {
-      RevCommit commit = revisions.get(1).getCommit();
-      if (commit.getParentCount() == 0) {
+    for (GitRevision revision : revisions) {
+      RevCommit commit = revision.getCommit();
+      if (commit != null) {
         return commit.getName();
       }
     }
-    return revisions.get(0).getCommit().getName();
+    throw new IllegalStateException("Can't find non-empty commit in repository");
   }
 
   @Override
@@ -136,7 +135,7 @@ public class GitRepository implements VcsRepository {
         if (lastRevision < 0) {
           final RevCommit firstCommit = newRevs.get(newRevs.size() - 1);
           if (!isTreeEmpty(firstCommit.getTree())) {
-            newRevs.add(getEmptyCommit(repository));
+            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null));
           }
         }
         final long beginTime = System.currentTimeMillis();
@@ -167,12 +166,8 @@ public class GitRepository implements VcsRepository {
 
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
     final int revisionId = revisions.size();
-    final GitFile oldTree;
-    if (revisions.isEmpty()) {
-      oldTree = null;
-    } else {
-      oldTree = new GitFile(this, revisions.get(revisionId - 1).getCommit(), revisionId - 1);
-    }
+    final RevCommit revCommit = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit();
+    final GitFile oldTree = revCommit == null ? null : new GitFile(this, revCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
     final Map<String, GitLogEntry> changes = collectChanges(oldTree, newTree);
     for (String path : changes.keySet()) {
@@ -400,12 +395,12 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private GitRevision getRevision(ObjectId revisionId) throws SVNException {
+  private GitRevision getRevision(@NotNull ObjectId revisionId) throws SVNException {
     lock.readLock().lock();
     try {
       for (int i = revisions.size() - 1; i >= 0; i--) {
         GitRevision revision = revisions.get(i);
-        if (revision.getCommit().equals(revisionId)) {
+        if (revisionId.equals(revision.getCommit())) {
           return revision;
         }
       }
@@ -413,24 +408,6 @@ public class GitRepository implements VcsRepository {
     } finally {
       lock.readLock().unlock();
     }
-  }
-
-  @NotNull
-  private static RevCommit getEmptyCommit(@NotNull Repository repository) throws IOException {
-    final ObjectInserter inserter = repository.newObjectInserter();
-    final TreeFormatter treeBuilder = new TreeFormatter();
-    final ObjectId treeId = inserter.insert(treeBuilder);
-
-    final CommitBuilder commitBuilder = new CommitBuilder();
-    commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
-    commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
-    commitBuilder.setMessage("");
-    commitBuilder.setTreeId(treeId);
-    final ObjectId commitId = inserter.insert(commitBuilder);
-    inserter.flush();
-
-    final RevWalk revWalk = new RevWalk(repository);
-    return revWalk.parseCommit(commitId);
   }
 
   @NotNull
@@ -585,7 +562,15 @@ public class GitRepository implements VcsRepository {
       this.branchRef = branchRef;
       this.revision = getLatestRevision();
       this.treeStack = new ArrayDeque<>();
-      this.treeStack.push(new GitTreeUpdate("", loadTree(new GitTreeEntry(repository, FileMode.TREE, revision.getCommit().getTree(), ""))));
+      this.treeStack.push(new GitTreeUpdate("", getOriginalTree()));
+    }
+
+    private Iterable<GitTreeEntry> getOriginalTree() throws IOException {
+      final RevCommit commit = revision.getCommit();
+      if (commit == null) {
+        return Collections.emptyList();
+      }
+      return loadTree(new GitTreeEntry(repository, FileMode.TREE, commit.getTree(), ""));
     }
 
     @Override
@@ -691,7 +676,10 @@ public class GitRepository implements VcsRepository {
         commitBuilder.setAuthor(ident);
         commitBuilder.setCommitter(ident);
         commitBuilder.setMessage(message);
-        commitBuilder.setParentId(revision.getCommit().getId());
+        final RevCommit parentCommit = revision.getCommit();
+        if (parentCommit != null) {
+          commitBuilder.setParentId(parentCommit.getId());
+        }
         commitBuilder.setTreeId(treeId);
         final ObjectId commitId = inserter.insert(commitBuilder);
         inserter.flush();

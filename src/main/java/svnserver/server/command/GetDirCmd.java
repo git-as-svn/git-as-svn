@@ -102,8 +102,8 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
             .number(item.getSize()) // size
             .bool(!item.getProperties(false).isEmpty()) // has-props
             .number(lastChange.getId()) // created-rev
-            .listBegin().string(lastChange.getDate()).listEnd() // created-date
-            .listBegin().string(lastChange.getAuthor()).listEnd() // last-author
+            .listBegin().stringNullable(lastChange.getDate()).listEnd() // created-date
+            .listBegin().stringNullable(lastChange.getAuthor()).listEnd() // last-author
             .listEnd()
             .separator();
       }

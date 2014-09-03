@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit;
 public class GitRevision implements VcsRevision {
   @NotNull
   private final GitRepository repo;
-  @NotNull
+  @Nullable
   private final RevCommit commit;
   @NotNull
   private final Map<String, GitLogEntry> changes;
 
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, GitLogEntry> changes, @NotNull RevCommit commit) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, GitLogEntry> changes, @Nullable RevCommit commit) {
     this.repo = repo;
     this.revision = revision;
     this.changes = changes;
@@ -41,7 +41,7 @@ public class GitRevision implements VcsRevision {
     return revision;
   }
 
-  @NotNull
+  @Nullable
   public RevCommit getCommit() {
     return commit;
   }
@@ -56,34 +56,45 @@ public class GitRevision implements VcsRevision {
   @Override
   public Map<String, String> getProperties() {
     final Map<String, String> props = new HashMap<>();
-    props.put(SVNRevisionProperty.AUTHOR, getAuthor());
-    props.put(SVNRevisionProperty.LOG, getLog());
-    props.put(SVNRevisionProperty.DATE, getDate());
-    props.put(SvnConstants.PROP_GIT, commit.name());
+    putProperty(props, SVNRevisionProperty.AUTHOR, getAuthor());
+    putProperty(props, SVNRevisionProperty.LOG, getLog());
+    putProperty(props, SVNRevisionProperty.DATE, getDate());
+    if (commit != null) {
+      props.put(SvnConstants.PROP_GIT, commit.name());
+    }
     return props;
   }
 
-  @NotNull
+  private void putProperty(@NotNull Map<String, String> props, @NotNull String name, @Nullable String value) {
+    if (value != null) {
+      props.put(name, value);
+    }
+  }
+
+  @Nullable
   @Override
   public String getDate() {
-    return StringHelper.formatDate(TimeUnit.SECONDS.toMillis(commit.getCommitTime()));
+    return commit == null ? null : StringHelper.formatDate(TimeUnit.SECONDS.toMillis(commit.getCommitTime()));
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getAuthor() {
-    return commit.getCommitterIdent().getName();
+    return commit == null ? null : commit.getCommitterIdent().getName();
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getLog() {
-    return commit.getFullMessage().trim();
+    return commit == null ? null : commit.getFullMessage().trim();
   }
 
   @Nullable
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
+    if (commit == null) {
+      return null;
+    }
     GitFile result = new GitFile(repo, commit, revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {

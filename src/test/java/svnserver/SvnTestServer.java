@@ -1,7 +1,9 @@
 package svnserver;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -19,6 +20,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.Config;
 import svnserver.config.LocalUserDBConfig;
 import svnserver.config.RepositoryConfig;
+import svnserver.config.UserDBConfig;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
@@ -27,7 +29,9 @@ import svnserver.server.SvnServer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -46,6 +50,8 @@ public final class SvnTestServer implements AutoCloseable {
   public static final String EMAIL = "foo@bar.org";
   @NotNull
   public static final String PASSWORD = "passw0rd";
+  @NotNull
+  private static final String TEST_BRANCH_PREFIX = "test_";
 
   @NotNull
   private final String BIND_HOST = "127.0.0.2";
@@ -59,14 +65,15 @@ public final class SvnTestServer implements AutoCloseable {
   private final SvnServer server;
   private final boolean safeBranch;
 
-  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch) throws Exception {
+  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch, @Nullable UserDBConfig userDBConfig) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
     tempDirectory = TestHelper.createTempDir("git-as-svn");
     final String srcBranch = branch == null ? repository.getBranch() : branch;
     if (safeBranch) {
-      testBranch = "test_" + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
+      cleanupBranches(repository);
+      testBranch = TEST_BRANCH_PREFIX + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
       new Git(repository)
           .branchCreate()
           .setName(testBranch)
@@ -81,26 +88,57 @@ public final class SvnTestServer implements AutoCloseable {
     config.setHost(BIND_HOST);
 
     config.setRepository(new TestRepositoryConfig(repository, testBranch));
-
-    config.setUserDB(new LocalUserDBConfig(new LocalUserDBConfig.UserEntry[]{
-        new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
-    }));
-
+    if (userDBConfig != null) {
+      config.setUserDB(userDBConfig);
+    } else {
+      config.setUserDB(new LocalUserDBConfig(new LocalUserDBConfig.UserEntry[]{
+          new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
+      }));
+    }
     server = new SvnServer(config);
     server.start();
     log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);
     log.info("Temporary directory: {}", tempDirectory);
   }
 
+  private void cleanupBranches(Repository repository) {
+    final List<String> branches = new ArrayList<>();
+    for (String ref : repository.getAllRefs().keySet()) {
+      if (ref.startsWith(Constants.R_HEADS + TEST_BRANCH_PREFIX)) {
+        branches.add(ref.substring(Constants.R_HEADS.length()));
+      }
+    }
+    if (!branches.isEmpty()) {
+      for (String branch : branches) {
+        log.info("Cleanup branch: {}", branch);
+        try {
+          new Git(repository)
+              .branchDelete()
+              .setBranchNames(branch)
+              .setForce(true)
+              .call();
+        } catch (GitAPIException e) {
+          log.error("Cleanup branch: " + branch, e);
+        }
+      }
+    }
+  }
+
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false);
+    return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false, null);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig) throws Exception {
+    final String branch = "master";
+    return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false, userDBConfig);
   }
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(findGitPath()), null, true);
+    return new SvnTestServer(new FileRepository(findGitPath()), null, true, null);
   }
 
   public SVNURL getUrl() throws SVNException {
@@ -160,22 +198,28 @@ public final class SvnTestServer implements AutoCloseable {
     }
   }
 
-  private ISVNAuthenticationManager getAuthenticator() {
-    return new BasicAuthenticationManager(USER_NAME, PASSWORD);
+  @NotNull
+  public SvnOperationFactory createOperationFactory() {
+    return createOperationFactory(USER_NAME, PASSWORD);
   }
 
   @NotNull
-  public SvnOperationFactory createOperationFactory() {
+  public SvnOperationFactory createOperationFactory(@NotNull String userName, @NotNull String password) {
     final SvnOperationFactory factory = new SvnOperationFactory();
     factory.setOptions(new DefaultSVNOptions(getTempDirectory(), true));
-    factory.setAuthenticationManager(getAuthenticator());
+    factory.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
     return factory;
   }
 
   @NotNull
   public SVNRepository openSvnRepository() throws SVNException {
+    return openSvnRepository(USER_NAME, PASSWORD);
+  }
+
+  @NotNull
+  public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
     final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
-    repo.setAuthenticationManager(getAuthenticator());
+    repo.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
     return repo;
   }
 

@@ -1,0 +1,83 @@
+dn: dc=example,dc=com
+objectClass: domain
+objectClass: top
+dc: example
+entryUUID: 1bb9d5e6-1d0d-4f74-8eaf-4bf831a77f81
+
+dn: ou=Services,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Services
+entryUUID: bd36235b-5007-4128-bf31-0e6f51ad00e7
+
+dn: cn=ldapadmin,dc=example,dc=com
+cn: ldapadmin
+sn: ldapadmin
+objectClass: top
+objectClass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+description: LDAP Administrator stuff
+givenName: LDAP Administrator
+uid: ldapadmin
+userPassword: ldapadmin
+mail: ldapadmin@mail.example.com
+entryUUID: ee24e04a-e2de-4446-be2d-e32e280f6f4e
+
+dn: cn=bind,dc=example,dc=com
+cn: bind
+sn: bind
+objectClass: person
+objectClass: top
+description: LDAP Proxy User
+userPassword: secret
+entryUUID: 98cf9792-965f-44ef-9b5c-5b177f135cea
+
+dn: ou=Unix,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Unix
+entryUUID: 5df3ce7f-0e4b-42c4-ab44-b2d975fa61b3
+
+dn: ou=Users,ou=Unix,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Users
+entryUUID: 4bf8c790-7bea-4dd4-b260-af9e920d65c1
+
+dn: ou=Groups,ou=Unix,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Groups
+entryUUID: afd8ee7d-7e8f-468a-9560-1ce2eff28082
+
+dn: cn=Simple User,ou=Users,ou=Unix,dc=example,dc=com
+givenName: Simple
+sn: User
+cn: Simple User
+uid: simple
+userPassword: simple
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: organizationalPerson
+entryUUID: f1368956-fe2c-4e2c-b4a5-5829fde39a3c
+
+dn: cn=User 1,ou=Users,ou=Unix,dc=example,dc=com
+givenName: Test
+sn: User
+cn: User 1
+uid: user1
+userPassword: user1
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: organizationalPerson
+entryUUID: 13bce526-b11b-49dc-b329-75e64d38c606
+
+dn: cn=group1,ou=Groups,ou=Unix,dc=example,dc=com
+cn: group1
+objectClass: top
+objectClass: groupOfUniqueNames
+entryUUID: ff678b8d-b433-4958-aff1-eeb513bcb788
+uniquemember: cn=User 1,ou=Users,ou=Unix,dc=example,dc=com

@@ -18,13 +18,13 @@ public interface VcsRevision {
   @NotNull
   Map<String, String> getProperties();
 
-  @NotNull
+  @Nullable
   String getDate();
 
-  @NotNull
+  @Nullable
   String getAuthor();
 
-  @NotNull
+  @Nullable
   String getLog();
 
   @Nullable
