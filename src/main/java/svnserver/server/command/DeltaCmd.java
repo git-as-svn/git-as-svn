@@ -116,18 +116,20 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       context.push(new CheckPermissionStep(this::complete));
     }
 
-    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
+    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
       context.push(this::reportCommand);
-      final String fullPath = joinPath(params.getPath(), args.path);
-      forcePath(fullPath);
+      final String localPath = joinPath(params.getPath(), args.path);
+      final String fullPath = getFullPath(context, args.path);
+      forcePath(localPath);
       paths.put(fullPath, args);
     }
 
     private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException {
       context.push(this::reportCommand);
-      final String fullPath = joinPath(params.getPath(), args.path);
-      forcePath(fullPath);
-      deletedPaths.add(getFullPath(context, args.path));
+      final String localPath = joinPath(params.getPath(), args.path);
+      final String fullPath = getFullPath(context, args.path);
+      forcePath(localPath);
+      deletedPaths.add(fullPath);
     }
 
     private void forcePath(@NotNull String fullPath) {
@@ -159,7 +161,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
           .listEnd();
 
       final String tokenId = createTokenId();
-      final SetPathParams rootParams = paths.get(joinPath(params.getPath(), ""));
+      final SetPathParams rootParams = paths.get(getFullPath(context, ""));
       writer
           .listBegin()
           .word("open-root")
@@ -360,8 +362,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       if (deletedPaths.contains(fullPath)) {
         return null;
       }
-      final String localPath = getLocalPath(context, fullPath);
-      final SetPathParams pathParams = paths.get(localPath);
+      final SetPathParams pathParams = paths.get(fullPath);
       if (pathParams == null) {
         return oldFile;
       }
@@ -448,7 +449,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
     @NotNull
     private String getFullPath(@NotNull SessionContext context, @NotNull String name) throws SVNException {
-      return context.getRepositoryPath(StringHelper.joinPath(params.getPath(), name));
+      return StringHelper.joinPath(context.getRepositoryPath(params.getPath()), name);
     }
 
     @NotNull
