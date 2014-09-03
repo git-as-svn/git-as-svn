@@ -1,7 +1,9 @@
 package svnserver.parser;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +29,9 @@ import svnserver.server.SvnServer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -46,6 +50,8 @@ public final class SvnTestServer implements AutoCloseable {
   public static final String EMAIL = "foo@bar.org";
   @NotNull
   public static final String PASSWORD = "passw0rd";
+  @NotNull
+  private static final String TEST_BRANCH_PREFIX = "test_";
 
   @NotNull
   private final String BIND_HOST = "127.0.0.2";
@@ -66,7 +72,8 @@ public final class SvnTestServer implements AutoCloseable {
     tempDirectory = TestHelper.createTempDir("git-as-svn");
     final String srcBranch = branch == null ? repository.getBranch() : branch;
     if (safeBranch) {
-      testBranch = "test_" + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
+      cleanupBranches(repository);
+      testBranch = TEST_BRANCH_PREFIX + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
       new Git(repository)
           .branchCreate()
           .setName(testBranch)
@@ -92,6 +99,29 @@ public final class SvnTestServer implements AutoCloseable {
     server.start();
     log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);
     log.info("Temporary directory: {}", tempDirectory);
+  }
+
+  private void cleanupBranches(Repository repository) {
+    final List<String> branches = new ArrayList<>();
+    for (String ref : repository.getAllRefs().keySet()) {
+      if (ref.startsWith(Constants.R_HEADS + TEST_BRANCH_PREFIX)) {
+        branches.add(ref.substring(Constants.R_HEADS.length()));
+      }
+    }
+    if (!branches.isEmpty()) {
+      for (String branch : branches) {
+        log.info("Cleanup branch: {}", branch);
+        try {
+          new Git(repository)
+              .branchDelete()
+              .setBranchNames(branch)
+              .setForce(true)
+              .call();
+        } catch (GitAPIException e) {
+          log.error("Cleanup branch: " + branch, e);
+        }
+      }
+    }
   }
 
   @NotNull
