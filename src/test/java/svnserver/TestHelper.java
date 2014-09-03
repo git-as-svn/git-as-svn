@@ -1,4 +1,4 @@
-package svnserver.parser;
+package svnserver;
 
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;

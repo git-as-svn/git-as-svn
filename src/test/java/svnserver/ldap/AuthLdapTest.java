@@ -3,7 +3,7 @@ package svnserver.ldap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
-import svnserver.parser.SvnTestServer;
+import svnserver.SvnTestServer;
 
 /**
  * LDAP authentication test.

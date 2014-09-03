@@ -1,4 +1,4 @@
-package svnserver.parser;
+package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
@@ -8,13 +8,14 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import svnserver.SvnTestServer;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static svnserver.parser.SvnTestHelper.*;
+import static svnserver.SvnTestHelper.*;
 
 /**
  * Check file properties.

@@ -1,4 +1,4 @@
-package svnserver.parser;
+package svnserver;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

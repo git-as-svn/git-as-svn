@@ -16,9 +16,9 @@ import org.apache.directory.server.ldap.handlers.sasl.digestMD5.DigestMd5Mechani
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.jetbrains.annotations.NotNull;
+import svnserver.TestHelper;
 import svnserver.config.LDAPUserDBConfig;
 import svnserver.config.UserDBConfig;
-import svnserver.parser.TestHelper;
 
 import java.io.File;
 import java.net.URL;

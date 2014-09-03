@@ -1,4 +1,4 @@
-package svnserver.parser;
+package svnserver.server;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -8,6 +8,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import svnserver.SvnTestServer;
+import svnserver.TestHelper;
 
 import java.io.File;
 
