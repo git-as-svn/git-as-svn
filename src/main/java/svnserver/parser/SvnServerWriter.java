@@ -1,6 +1,7 @@
 package svnserver.parser;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.StreamHelper;
 import svnserver.parser.token.*;
 
@@ -47,6 +48,11 @@ public class SvnServerWriter {
     return word(String.valueOf(c));
   }
 
+  @SuppressWarnings("QuestionableName")
+  @NotNull
+  public SvnServerWriter stringNullable(@Nullable String text) throws IOException {
+    return text != null ? string(text) : this;
+  }
   @SuppressWarnings("QuestionableName")
   @NotNull
   public SvnServerWriter string(@NotNull String text) throws IOException {
