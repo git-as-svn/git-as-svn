@@ -28,7 +28,7 @@ public class DeltaParams {
   private final Depth depth;
 
   /**
-   * TODO: issue #25.
+   * TODO: issue #35, copy detection.
    */
   private final boolean sendCopyFromArgs;
 

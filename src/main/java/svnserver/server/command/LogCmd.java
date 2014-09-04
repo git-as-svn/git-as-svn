@@ -42,7 +42,7 @@ import java.util.Set;
  *
  * @author a.navrotskiy
  */
-public class LogCmd extends BaseCmd<LogCmd.Params> {
+public final class LogCmd extends BaseCmd<LogCmd.Params> {
   public static class Params {
     @NotNull
     private final String[] targetPath;
@@ -52,7 +52,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
     private final int[] endRev;
     private final boolean changedPaths;
     /**
-     * TODO: issue #26.
+     * TODO: issue #35, copy detection.
      */
     private final boolean strictNode;
     private final int limit;
@@ -136,7 +136,7 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
               .listBegin()
               .string(entry.getKey()) // Path
               .word(change)
-              .listBegin().listEnd() // todo: copy information.
+              .listBegin().listEnd() // TODO: issue #35, copy detection
               .listBegin()
               .string(logEntry.getKind().toString())
               .bool(logEntry.isContentModified()) // text-mods
