@@ -65,7 +65,7 @@ public class StatCmd extends BaseCmd<StatCmd.Params> {
         .number(fileInfo.getSize()) // size
         .bool(!fileInfo.getProperties(false).isEmpty()) // has properties
         .number(fileInfo.getLastChange().getId()) // last change revision
-        .listBegin().stringNullable(fileInfo.getLastChange().getDate()).listEnd() // last change date
+        .listBegin().stringNullable(fileInfo.getLastChange().getDateString()).listEnd() // last change date
         .listBegin().stringNullable(fileInfo.getLastChange().getAuthor()).listEnd() // last change author
         .listEnd()
         .listEnd()

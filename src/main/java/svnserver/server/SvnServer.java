@@ -71,6 +71,7 @@ public class SvnServer extends Thread {
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DeltaCmd(DiffParams.class));
     commands.put("get-latest-rev", new GetLatestRevCmd());
+    commands.put("get-dated-rev", new GetDatedRevCmd());
     commands.put("get-dir", new GetDirCmd());
     commands.put("get-file", new GetFileCmd());
     commands.put("get-iprops", new GetIPropsCmd());

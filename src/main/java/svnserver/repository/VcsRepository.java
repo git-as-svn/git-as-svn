@@ -28,6 +28,16 @@ public interface VcsRepository {
   VcsRevision getLatestRevision() throws IOException;
 
   /**
+   * Get revision by date.
+   *
+   * @param dateTime Date.
+   * @return Revision number.
+   * @throws IOException
+   */
+  @NotNull
+  VcsRevision getRevisionByDate(long dateTime) throws IOException;
+
+  /**
    * Update revision information.
    *
    * @throws IOException

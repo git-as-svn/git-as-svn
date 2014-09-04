@@ -115,7 +115,7 @@ public class GitFile implements VcsFile {
       final GitRevision last = getLastChange();
       props.put(SVNProperty.UUID, repo.getUuid());
       props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
-      putProperty(props, SVNProperty.COMMITTED_DATE, last.getDate());
+      putProperty(props, SVNProperty.COMMITTED_DATE, last.getDateString());
       putProperty(props, SVNProperty.LAST_AUTHOR, last.getAuthor());
     }
     return props;
