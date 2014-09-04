@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsRevision;
 import svnserver.repository.git.prop.GitProperty;
@@ -31,13 +30,15 @@ public class GitRevision implements VcsRevision {
   @NotNull
   private final Map<String, GitLogEntry> changes;
 
+  private final long date;
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, GitLogEntry> changes, @Nullable RevCommit commit) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, GitLogEntry> changes, @Nullable RevCommit commit, int commitTimeSec) {
     this.repo = repo;
     this.revision = revision;
     this.changes = changes;
     this.objectId = commit != null ? commit.getId() : null;
+    this.date = TimeUnit.SECONDS.toMillis(commitTimeSec);
     this.commit = revision > 0 ? commit : null;
   }
 
@@ -68,7 +69,7 @@ public class GitRevision implements VcsRevision {
     final Map<String, String> props = new HashMap<>();
     putProperty(props, SVNRevisionProperty.AUTHOR, getAuthor());
     putProperty(props, SVNRevisionProperty.LOG, getLog());
-    putProperty(props, SVNRevisionProperty.DATE, getDate());
+    putProperty(props, SVNRevisionProperty.DATE, getDateString());
     if (commit != null) {
       props.put(SvnConstants.PROP_GIT, commit.name());
     }
@@ -81,10 +82,9 @@ public class GitRevision implements VcsRevision {
     }
   }
 
-  @Nullable
   @Override
-  public String getDate() {
-    return commit == null ? null : StringHelper.formatDate(TimeUnit.SECONDS.toMillis(commit.getCommitTime()));
+  public long getDate() {
+    return date;
   }
 
   @Nullable

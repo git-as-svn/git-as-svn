@@ -3,6 +3,7 @@ package svnserver.repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.StringHelper;
 
 import java.io.IOException;
 import java.util.Map;
@@ -18,8 +19,12 @@ public interface VcsRevision {
   @NotNull
   Map<String, String> getProperties();
 
-  @Nullable
-  String getDate();
+  long getDate();
+
+  @NotNull
+  default String getDateString() {
+    return StringHelper.formatDate(getDate());
+  }
 
   @Nullable
   String getAuthor();

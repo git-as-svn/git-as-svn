@@ -106,5 +106,4 @@ public final class SessionContext {
   public Step poll() {
     return stepStack.poll();
   }
-
 }

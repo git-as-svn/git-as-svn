@@ -54,6 +54,8 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
   @NotNull
+  private final TreeMap<Long, GitRevision> revisionByDate = new TreeMap<>();
+  @NotNull
   private final Map<String, IntList> lastUpdates = new ConcurrentHashMap<>();
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -135,7 +137,7 @@ public class GitRepository implements VcsRepository {
         if (lastRevision < 0) {
           final RevCommit firstCommit = newRevs.get(newRevs.size() - 1);
           if (!isTreeEmpty(firstCommit.getTree())) {
-            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null));
+            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null, firstCommit.getCommitTime()));
           }
         }
         final long beginTime = System.currentTimeMillis();
@@ -177,7 +179,11 @@ public class GitRepository implements VcsRepository {
         return result;
       });
     }
-    revisions.add(new GitRevision(this, revisionId, changes, commit));
+    final GitRevision revision = new GitRevision(this, revisionId, changes, commit, commit.getCommitTime());
+    if (revisionByDate.isEmpty() || revisionByDate.lastKey() <= revision.getDate()) {
+      revisionByDate.put(revision.getDate(), revision);
+    }
+    revisions.add(revision);
   }
 
   private static class TreeCompareEntry {
@@ -324,6 +330,21 @@ public class GitRepository implements VcsRepository {
     lock.readLock().lock();
     try {
       return revisions.get(revisions.size() - 1);
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public VcsRevision getRevisionByDate(long dateTime) throws IOException {
+    lock.readLock().lock();
+    try {
+      final Map.Entry<Long, GitRevision> entry = revisionByDate.floorEntry(dateTime);
+      if (entry != null) {
+        return entry.getValue();
+      }
+      return revisions.get(0);
     } finally {
       lock.readLock().unlock();
     }
