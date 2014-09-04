@@ -120,9 +120,6 @@ public class LogCmd extends BaseCmd<LogCmd.Params> {
       if (targetPaths.isEmpty())
         break;
 
-      if (rev == 0)
-        continue;
-
       final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
       final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
       if (!hasTargets(changes, targetPaths)) continue;
