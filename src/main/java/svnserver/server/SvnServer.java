@@ -80,6 +80,7 @@ public class SvnServer extends Thread {
     commands.put("rev-prop", new RevPropCmd());
     commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
+    commands.put("status", new StatusCmd());
     commands.put("update", new UpdateCmd());
 
     repository = config.getRepository().create();
@@ -125,49 +126,49 @@ public class SvnServer extends Thread {
   }
 
   public void serveClient(@NotNull Socket socket) throws IOException, SVNException {
-      socket.setTcpNoDelay(true);
-      final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
-      final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
+    socket.setTcpNoDelay(true);
+    final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
+    final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
-      final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
-      final User user = authenticate(parser, writer);
-      log.info("User: {}", user);
+    final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
+    final User user = authenticate(parser, writer);
+    log.info("User: {}", user);
 
-      final String basePath = getBasePath(clientInfo.getUrl());
-      final SessionContext context = new SessionContext(parser, writer, this, basePath, clientInfo, user);
-      repository.updateRevisions();
-      sendAnnounce(writer, basePath);
+    final String basePath = getBasePath(clientInfo.getUrl());
+    final SessionContext context = new SessionContext(parser, writer, this, basePath, clientInfo, user);
+    repository.updateRevisions();
+    sendAnnounce(writer, basePath);
 
-      while (!stopped) {
-        try {
-          Step step = context.poll();
-          if (step != null) {
-            step.process(context);
-            continue;
-          }
-
-          final SvnServerToken token = parser.readToken();
-          if (token != ListBeginToken.instance) {
-            throw new IOException("Unexpected token: " + token);
-          }
-          final String cmd = parser.readText();
-          BaseCmd command = commands.get(cmd);
-          if (command != null) {
-            log.info("Receive command: {}", cmd);
-            Object param = MessageParser.parse(command.getArguments(), parser);
-            parser.readToken(ListEndToken.class);
-            //noinspection unchecked
-            command.process(context, param);
-          } else {
-            log.warn("Unsupported command: {}", cmd);
-            BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
-            parser.skipItems();
-          }
-        } catch (SVNException e) {
-          log.error("Command execution error", e);
-          BaseCmd.sendError(writer, e.getErrorMessage());
+    while (!stopped) {
+      try {
+        Step step = context.poll();
+        if (step != null) {
+          step.process(context);
+          continue;
         }
+
+        final SvnServerToken token = parser.readToken();
+        if (token != ListBeginToken.instance) {
+          throw new IOException("Unexpected token: " + token);
+        }
+        final String cmd = parser.readText();
+        BaseCmd command = commands.get(cmd);
+        if (command != null) {
+          log.info("Receive command: {}", cmd);
+          Object param = MessageParser.parse(command.getArguments(), parser);
+          parser.readToken(ListEndToken.class);
+          //noinspection unchecked
+          command.process(context, param);
+        } else {
+          log.warn("Unsupported command: {}", cmd);
+          BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
+          parser.skipItems();
+        }
+      } catch (SVNException e) {
+        log.error("Command execution error", e);
+        BaseCmd.sendError(writer, e.getErrorMessage());
       }
+    }
   }
 
   @NotNull
