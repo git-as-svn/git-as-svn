@@ -22,18 +22,23 @@ import java.io.IOException;
  */
 public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
   public static class Params implements DeltaParams {
+
     @NotNull
     private final int[] rev;
+
     @NotNull
     private final String target;
+
     /**
-     * TODO: issue #28.
+     * TODO: issue #25.
      */
     private final boolean recurse;
+
     /**
-     * TODO: issue #28.
+     * TODO: issue #25.
      */
     private final boolean ignoreAncestry;
+
     /**
      * TODO: issue #28.
      * <p>
@@ -43,9 +48,11 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
      */
     @NotNull
     private final String url;
+
     private final boolean textDeltas;
+
     /**
-     * TODO: issue #28.
+     * TODO: issue #25.
      */
     @NotNull
     private final String depth;
