@@ -82,6 +82,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private final boolean startEmpty;
     @NotNull
     private final String[] lockToken;
+    /**
+     * TODO: issue #32, depth.
+     */
     @NotNull
     private final String depth;
 

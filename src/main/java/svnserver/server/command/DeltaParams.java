@@ -81,7 +81,7 @@ public class DeltaParams {
   }
 
   /**
-   * TODO: issue #25.
+   * TODO: issue #32.
    */
   @NotNull
   public Depth getDepth() {
