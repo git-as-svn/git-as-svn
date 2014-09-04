@@ -21,6 +21,6 @@ public final class StatusParams extends DeltaParams {
                       boolean recurse,
                       @NotNull int[] rev,
                       @NotNull String depth) {
-    super(rev, target, null, false, recurse, depth, false, false);
+    super(rev, target, null, false, Depth.parse(depth, recurse, Depth.Empty), false, false);
   }
 }

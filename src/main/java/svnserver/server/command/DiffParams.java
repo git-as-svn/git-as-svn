@@ -26,6 +26,6 @@ public final class DiffParams extends DeltaParams {
                     @NotNull String url,
                     boolean textDeltas,
                     @NotNull String depth) {
-    super(rev, target, url, textDeltas, recurse, depth, false, ignoreAncestry);
+    super(rev, target, url, textDeltas, Depth.parse(depth, recurse, Depth.Files), false, ignoreAncestry);
   }
 }

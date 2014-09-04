@@ -27,6 +27,6 @@ public final class SwitchParams extends DeltaParams {
                       @NotNull String depth,
                       boolean sendCopyFromArgs,
                       boolean ignoreAncestry) {
-    super(rev, target, url, true, recurse, depth, sendCopyFromArgs, ignoreAncestry);
+    super(rev, target, url, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry);
   }
 }

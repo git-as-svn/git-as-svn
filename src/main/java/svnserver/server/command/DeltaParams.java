@@ -15,25 +15,15 @@ import java.util.Locale;
  */
 public class DeltaParams {
 
-  /**
-   * TODO: issue #28.
-   * <p>
-   * svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
-   * <p>
-   * WARNING! Check ACL!
-   */
   @Nullable
-  private final String tgtPath;
+  private final String targetPath;
 
   @NotNull
   private final int[] rev;
 
   @NotNull
-  private final String target;
+  private final String path;
 
-  /**
-   * TODO: issue #25.
-   */
   @NotNull
   private final Depth depth;
 
@@ -50,29 +40,36 @@ public class DeltaParams {
   private final boolean textDeltas;
 
   public DeltaParams(@NotNull int[] rev,
-                     @NotNull String target,
-                     @Nullable String tgtPath,
-                     boolean textDeltas, boolean recurse,
-                     @NotNull String depth,
+                     @NotNull String path,
+                     @Nullable String targetPath,
+                     boolean textDeltas,
+                     @NotNull Depth depth,
                      boolean sendCopyFromArgs,
                      boolean ignoreAncestry) {
     this.rev = rev;
-    this.target = target;
-    this.tgtPath = tgtPath;
-    this.depth = Depth.parse(depth, recurse);
+    this.path = path;
+    this.targetPath = targetPath;
+    this.depth = depth;
     this.sendCopyFromArgs = sendCopyFromArgs;
     this.ignoreAncestry = ignoreAncestry;
     this.textDeltas = textDeltas;
   }
 
-  @NotNull
-  public String getTgtPath() {
-    return tgtPath;
+  /**
+   * TODO: issue #28.
+   * <p>
+   * svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
+   * <p>
+   * WARNING! Check ACL!
+   */
+  @Nullable
+  public String getTargetPath() {
+    return targetPath;
   }
 
   @NotNull
   public String getPath() {
-    return target;
+    return path;
   }
 
   public int getRev(@NotNull SessionContext context) throws IOException {
@@ -83,6 +80,9 @@ public class DeltaParams {
     return textDeltas;
   }
 
+  /**
+   * TODO: issue #25.
+   */
   @NotNull
   public Depth getDepth() {
     return depth;
@@ -97,9 +97,9 @@ public class DeltaParams {
     Infinity;
 
     @NotNull
-    public static Depth parse(@NotNull String depthStr, boolean recurse) {
+    public static Depth parse(@NotNull String depthStr, boolean recurse, @NotNull Depth nonRecurse) {
       if (depthStr.isEmpty())
-        return recurse ? Infinity : Files;
+        return recurse ? Infinity : nonRecurse;
 
       for (Depth depth : values())
         if (depth.name().toLowerCase(Locale.ENGLISH).equals(depthStr))
