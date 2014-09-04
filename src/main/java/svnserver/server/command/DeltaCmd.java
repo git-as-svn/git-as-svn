@@ -279,7 +279,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       } else {
         sendStartEntry(writer, "open-file", getLocalPath(context, newFile.getFullPath()), parentTokenId, tokenId, oldFile.getLastChange().getId());
       }
-      final String md5;
+      final String md5 = newFile.getMd5();
       if (!newFile.equals(oldFile)) {
         writer
             .listBegin()
@@ -291,43 +291,45 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
             .listEnd()
             .listEnd();
 
-        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-        try (InputStream source = openStream(oldFile);
-             InputStream target = newFile.openStream()) {
-          final boolean compress = context.hasCapability("svndiff1");
-          md5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
-            private boolean header = true;
+        if (params.needDeltas()) {
+          final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+          try (InputStream source = openStream(oldFile);
+               InputStream target = newFile.openStream()) {
+            final boolean compress = context.hasCapability("svndiff1");
+            final String validateMd5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
+              private boolean header = true;
 
-            @Override
-            public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-            }
-
-            @Override
-            public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-              if (!params.needDeltas())
-                return null;
-
-              try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-                diffWindow.writeTo(stream, header, compress);
-                header = false;
-                writer
-                    .listBegin()
-                    .word("textdelta-chunk")
-                    .listBegin()
-                    .string(tokenId)
-                    .binary(stream.toByteArray())
-                    .listEnd()
-                    .listEnd();
-                return null;
-              } catch (IOException e) {
-                throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
+              @Override
+              public void applyTextDelta(String path, String baseChecksum) throws SVNException {
               }
-            }
 
-            @Override
-            public void textDeltaEnd(String path) throws SVNException {
+              @Override
+              public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+                try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+                  diffWindow.writeTo(stream, header, compress);
+                  header = false;
+                  writer
+                      .listBegin()
+                      .word("textdelta-chunk")
+                      .listBegin()
+                      .string(tokenId)
+                      .binary(stream.toByteArray())
+                      .listEnd()
+                      .listEnd();
+                  return null;
+                } catch (IOException e) {
+                  throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
+                }
+              }
+
+              @Override
+              public void textDeltaEnd(String path) throws SVNException {
+              }
+            }, true);
+            if (!validateMd5.equals(md5)) {
+              throw new IllegalStateException("MD5 checksum mismatch: some shit happends.");
             }
-          }, true);
+          }
         }
         writer
             .listBegin()
@@ -336,8 +338,6 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
             .string(tokenId)
             .listEnd()
             .listEnd();
-      } else {
-        md5 = newFile.getMd5();
       }
       updateProps(writer, "change-file-prop", tokenId, oldFile, newFile);
       writer
