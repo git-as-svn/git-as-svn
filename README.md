@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/bozaro/git-as-svn.svg?branch=master)](https://travis-ci.org/bozaro/git-as-svn)
 
-Subversion frontend server for git repository i(n Java).
+Subversion frontend server for git repository (in Java).
 
 ## Python proof-of-concept realisation:
 
