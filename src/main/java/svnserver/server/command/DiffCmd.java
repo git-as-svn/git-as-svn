@@ -43,9 +43,6 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
      */
     @NotNull
     private final String url;
-    /**
-     * TODO: issue #28.
-     */
     private final boolean textDeltas;
     /**
      * TODO: issue #28.
@@ -61,6 +58,11 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
       this.url = url;
       this.textDeltas = textDeltas;
       this.depth = depth;
+    }
+
+    @Override
+    public boolean needDeltas() {
+      return textDeltas;
     }
 
     @NotNull

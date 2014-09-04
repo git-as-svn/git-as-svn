@@ -15,4 +15,6 @@ public interface DeltaParams {
   String getPath();
 
   int getRev(@NotNull SessionContext context) throws IOException;
+
+  boolean needDeltas();
 }

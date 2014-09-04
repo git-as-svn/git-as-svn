@@ -59,6 +59,11 @@ public final class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
       this.ignoreAncestry = ignoreAncestry;
     }
 
+    @Override
+    public boolean needDeltas() {
+      return true;
+    }
+
     @NotNull
     @Override
     public String getPath() {

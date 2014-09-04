@@ -304,6 +304,9 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
 
             @Override
             public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+              if (!params.needDeltas())
+                return null;
+
               try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
                 diffWindow.writeTo(stream, header, compress);
                 header = false;
