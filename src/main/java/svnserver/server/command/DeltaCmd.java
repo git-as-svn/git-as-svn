@@ -109,7 +109,18 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
       commands = new HashMap<>();
       commands.put("delete-path", new LambdaCmd<>(DeleteParams.class, this::deletePath));
       commands.put("set-path", new LambdaCmd<>(SetPathParams.class, this::setPathReport));
+      commands.put("abort-report", new LambdaCmd<>(NoParams.class, this::abortReport));
       commands.put("finish-report", new LambdaCmd<>(NoParams.class, this::finishReport));
+    }
+
+    private void abortReport(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
+      final SvnServerWriter writer = context.getWriter();
+      writer
+          .listBegin()
+          .word("success")
+          .listBegin()
+          .listEnd()
+          .listEnd();
     }
 
     private void finishReport(@NotNull SessionContext context, @NotNull NoParams args) {
