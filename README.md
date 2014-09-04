@@ -2,12 +2,11 @@
 
 [![Build Status](https://travis-ci.org/bozaro/git-as-svn.svg?branch=master)](https://travis-ci.org/bozaro/git-as-svn)
 
-An attempt to serve the svn:// protocol from git repositories (in Java).
+Subversion frontend server for git repository in Java).
 
 ## Python proof-of-concept realisation:
 
  * http://git.q42.co.uk/git_svn_server.git
- * https://github.com/slonopotamus/git-svnserver
 
 ## SVN protocol description
 
