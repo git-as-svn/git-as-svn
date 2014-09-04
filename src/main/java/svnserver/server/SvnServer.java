@@ -69,7 +69,7 @@ public class SvnServer extends Thread {
     userDB = config.getUserDB().create();
 
     commands.put("commit", new CommitCmd());
-    commands.put("diff", new DiffCmd());
+    commands.put("diff", new DeltaCmd(DiffParams.class));
     commands.put("get-latest-rev", new GetLatestRevCmd());
     commands.put("get-dir", new GetDirCmd());
     commands.put("get-file", new GetFileCmd());
@@ -80,8 +80,8 @@ public class SvnServer extends Thread {
     commands.put("rev-prop", new RevPropCmd());
     commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
-    commands.put("status", new StatusCmd());
-    commands.put("update", new UpdateCmd());
+    commands.put("status", new DeltaCmd(StatusParams.class));
+    commands.put("update", new DeltaCmd(UpdateParams.class));
 
     repository = config.getRepository().create();
     acl = new ACL(config.getAcl());

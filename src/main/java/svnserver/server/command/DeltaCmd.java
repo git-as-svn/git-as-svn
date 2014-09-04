@@ -51,7 +51,20 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
+public final class DeltaCmd extends BaseCmd<DeltaParams> {
+
+  @NotNull
+  private final Class<? extends DeltaParams> arguments;
+
+  public DeltaCmd(@NotNull Class<? extends DeltaParams> arguments) {
+    this.arguments = arguments;
+  }
+
+  @NotNull
+  @Override
+  public Class<? extends DeltaParams> getArguments() {
+    return arguments;
+  }
 
   public static class DeleteParams {
     @NotNull
@@ -85,7 +98,7 @@ public abstract class DeltaCmd<T extends DeltaParams> extends BaseCmd<T> {
   private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull DeltaParams args) throws IOException, SVNException {
     log.info("Enter report mode");
     ReportPipeline pipeline = new ReportPipeline(args);
     pipeline.reportCommand(context);

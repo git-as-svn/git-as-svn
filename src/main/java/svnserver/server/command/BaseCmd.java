@@ -22,7 +22,7 @@ public abstract class BaseCmd<T> {
    * @return Arguments class.
    */
   @NotNull
-  public abstract Class<T> getArguments();
+  public abstract Class<? extends T> getArguments();
 
   public void process(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
     context.push(new CheckPermissionStep(sessionContext -> processCommand(sessionContext, args)));
