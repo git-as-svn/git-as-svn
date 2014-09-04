@@ -29,9 +29,6 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
     @NotNull
     private final String target;
 
-    /**
-     * TODO: issue #25.
-     */
     private final boolean recurse;
 
     /**
@@ -51,9 +48,6 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
 
     private final boolean textDeltas;
 
-    /**
-     * TODO: issue #25.
-     */
     @NotNull
     private final String depth;
 
@@ -65,6 +59,12 @@ public class DiffCmd extends DeltaCmd<DiffCmd.Params> {
       this.url = url;
       this.textDeltas = textDeltas;
       this.depth = depth;
+    }
+
+    @NotNull
+    @Override
+    public Depth getDepth() {
+      return Depth.parse(depth, recurse);
     }
 
     @Override

@@ -25,17 +25,11 @@ public final class StatusCmd extends DeltaCmd<StatusCmd.Params> {
     @NotNull
     private final String target;
 
-    /**
-     * TODO: issue #25.
-     */
     private final boolean recurse;
 
     @NotNull
     private final int[] rev;
 
-    /**
-     * TODO: issue #25.
-     */
     @NotNull
     private final String depth;
 
@@ -44,6 +38,12 @@ public final class StatusCmd extends DeltaCmd<StatusCmd.Params> {
       this.target = target;
       this.recurse = recurse;
       this.depth = depth;
+    }
+
+    @NotNull
+    @Override
+    public Depth getDepth() {
+      return Depth.parse(depth, recurse);
     }
 
     @Override

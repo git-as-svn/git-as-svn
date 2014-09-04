@@ -24,19 +24,14 @@ public final class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
 
   public static class Params implements DeltaParams {
 
+    @NotNull
     private final int[] rev;
 
     @NotNull
     private final String target;
 
-    /**
-     * TODO: issue #25.
-     */
     private final boolean recurse;
 
-    /**
-     * TODO: issue #25.
-     */
     @NotNull
     private final String depth;
 
@@ -50,13 +45,19 @@ public final class UpdateCmd extends DeltaCmd<UpdateCmd.Params> {
      */
     private final boolean ignoreAncestry;
 
-    public Params(int[] rev, @NotNull String target, boolean recurse, @NotNull String depth, boolean sendCopyFromArgs, boolean ignoreAncestry) {
+    public Params(@NotNull int[] rev, @NotNull String target, boolean recurse, @NotNull String depth, boolean sendCopyFromArgs, boolean ignoreAncestry) {
       this.rev = rev;
       this.target = target;
       this.recurse = recurse;
       this.depth = depth;
       this.sendCopyFromArgs = sendCopyFromArgs;
       this.ignoreAncestry = ignoreAncestry;
+    }
+
+    @NotNull
+    @Override
+    public Depth getDepth() {
+      return Depth.parse(depth, recurse);
     }
 
     @Override
