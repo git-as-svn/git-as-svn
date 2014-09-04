@@ -1,5 +1,6 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,6 +9,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsRevision;
+import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,6 +25,8 @@ public class GitRevision implements VcsRevision {
   @NotNull
   private final GitRepository repo;
   @Nullable
+  private final ObjectId objectId;
+  @Nullable
   private final RevCommit commit;
   @NotNull
   private final Map<String, GitLogEntry> changes;
@@ -33,12 +37,18 @@ public class GitRevision implements VcsRevision {
     this.repo = repo;
     this.revision = revision;
     this.changes = changes;
-    this.commit = commit;
+    this.objectId = commit != null ? commit.getId() : null;
+    this.commit = revision > 0 ? commit : null;
   }
 
   @Override
   public int getId() {
     return revision;
+  }
+
+  @Nullable
+  public ObjectId getObjectId() {
+    return objectId;
   }
 
   @Nullable
@@ -93,7 +103,7 @@ public class GitRevision implements VcsRevision {
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
     if (commit == null) {
-      return null;
+      return new GitFile(repo, null, "", GitProperty.emptyArray, revision);
     }
     GitFile result = new GitFile(repo, commit, revision);
     for (String pathItem : fullPath.split("/")) {

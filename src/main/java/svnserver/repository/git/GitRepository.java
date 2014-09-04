@@ -89,9 +89,9 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private String getRepositoryId() {
     for (GitRevision revision : revisions) {
-      RevCommit commit = revision.getCommit();
-      if (commit != null) {
-        return commit.getName();
+      ObjectId commitId = revision.getObjectId();
+      if (commitId != null) {
+        return commitId.getName();
       }
     }
     throw new IllegalStateException("Can't find non-empty commit in repository");
@@ -117,7 +117,7 @@ public class GitRepository implements VcsRepository {
     lock.writeLock().lock();
     try {
       final int lastRevision = revisions.size() - 1;
-      final ObjectId lastCommitId = lastRevision < 0 ? null : revisions.get(lastRevision).getCommit();
+      final ObjectId lastCommitId = lastRevision < 0 ? null : revisions.get(lastRevision).getObjectId();
       final Ref master = repository.getRef(branch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
@@ -167,7 +167,7 @@ public class GitRepository implements VcsRepository {
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
     final int revisionId = revisions.size();
     final RevCommit revCommit = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit();
-    final GitFile oldTree = revCommit == null ? null : new GitFile(this, revCommit, revisionId - 1);
+    final GitFile oldTree = revCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, revCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
     final Map<String, GitLogEntry> changes = collectChanges(oldTree, newTree);
     for (String path : changes.keySet()) {
@@ -217,7 +217,12 @@ public class GitRepository implements VcsRepository {
       final GitFile oldEntry;
       if (oldValue != null) {
         while (true) {
-          final int compare = oldValue.getTreeEntry().compareTo(newEntry.getTreeEntry());
+          final GitTreeEntry oldTreeEntry = oldValue.getTreeEntry();
+          final GitTreeEntry newTreeEntry = newEntry.getTreeEntry();
+          if (oldTreeEntry == null || newTreeEntry == null) {
+            throw new IllegalStateException("Tree entry can be null only for revision tree root.");
+          }
+          final int compare = oldTreeEntry.compareTo(newTreeEntry);
           if (compare == 0) {
             oldEntry = oldValue;
             oldValue = oldEntries.hasNext() ? oldEntries.next() : null;
@@ -676,9 +681,9 @@ public class GitRepository implements VcsRepository {
         commitBuilder.setAuthor(ident);
         commitBuilder.setCommitter(ident);
         commitBuilder.setMessage(message);
-        final RevCommit parentCommit = revision.getCommit();
+        final ObjectId parentCommit = revision.getObjectId();
         if (parentCommit != null) {
-          commitBuilder.setParentId(parentCommit.getId());
+          commitBuilder.setParentId(parentCommit);
         }
         commitBuilder.setTreeId(treeId);
         final ObjectId commitId = inserter.insert(commitBuilder);
