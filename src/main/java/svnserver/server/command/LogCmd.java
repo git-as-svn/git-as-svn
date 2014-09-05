@@ -136,7 +136,13 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
               .listBegin()
               .string(entry.getKey()) // Path
               .word(change)
-              .listBegin().listEnd() // TODO: issue #35, copy detection
+              .listBegin();
+          final String copyFromPath = logEntry.getCopyFromPath();
+          if (copyFromPath != null) {
+            writer.string(copyFromPath);
+            writer.number(logEntry.getCopyFromRev());
+          }
+          writer.listEnd()
               .listBegin()
               .string(logEntry.getKind().toString())
               .bool(logEntry.isContentModified()) // text-mods

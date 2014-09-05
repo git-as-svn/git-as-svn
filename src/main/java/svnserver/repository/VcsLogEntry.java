@@ -1,6 +1,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 
@@ -20,4 +21,9 @@ public interface VcsLogEntry {
   boolean isContentModified() throws IOException, SVNException;
 
   boolean isPropertyModified() throws IOException, SVNException;
+
+  @Nullable
+  String getCopyFromPath();
+
+  int getCopyFromRev();
 }

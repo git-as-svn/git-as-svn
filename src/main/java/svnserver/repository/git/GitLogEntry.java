@@ -22,12 +22,14 @@ public class GitLogEntry implements VcsLogEntry {
   @Nullable
   private final GitFile newEntry;
   @Nullable
-  private final String copyFrom;
+  private final String copyPath;
+  private final int copyRev;
 
-  public GitLogEntry(@Nullable GitFile oldEntry, @Nullable GitFile newEntry, @NotNull Map<String, String> renames) {
+  public GitLogEntry(int rev, @Nullable GitFile oldEntry, @Nullable GitFile newEntry, @NotNull Map<String, String> renames) {
     this.oldEntry = oldEntry;
     this.newEntry = newEntry;
-    this.copyFrom = newEntry != null ? renames.get(newEntry.getFullPath()) : null;
+    this.copyPath = newEntry != null ? renames.get(newEntry.getFullPath()) : null;
+    this.copyRev = copyPath == null ? -1 : rev - 1;
   }
 
   @Override
@@ -64,6 +66,17 @@ public class GitLogEntry implements VcsLogEntry {
       return oldEntry.getKind();
 
     throw new IllegalStateException();
+  }
+
+  @Nullable
+  @Override
+  public String getCopyFromPath() {
+    return copyPath;
+  }
+
+  @Override
+  public int getCopyFromRev() {
+    return copyRev;
   }
 
   @Override
