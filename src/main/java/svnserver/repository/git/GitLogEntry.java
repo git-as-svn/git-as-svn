@@ -9,6 +9,7 @@ import svnserver.repository.VcsLogEntry;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Git modification type.
@@ -20,10 +21,13 @@ public class GitLogEntry implements VcsLogEntry {
   private final GitFile oldEntry;
   @Nullable
   private final GitFile newEntry;
+  @Nullable
+  private final String copyFrom;
 
-  public GitLogEntry(@Nullable GitFile oldEntry, @Nullable GitFile newEntry) {
+  public GitLogEntry(@Nullable GitFile oldEntry, @Nullable GitFile newEntry, @NotNull Map<String, String> renames) {
     this.oldEntry = oldEntry;
     this.newEntry = newEntry;
+    this.copyFrom = newEntry != null ? renames.get(newEntry.getFullPath()) : null;
   }
 
   @Override
@@ -71,7 +75,7 @@ public class GitLogEntry implements VcsLogEntry {
       return false;
 
     if (newEntry.isSymlink() == oldEntry.isSymlink()) {
-      return !newEntry.getObjectId().equals(oldEntry.getObjectId());
+      return !Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId());
     } else {
       return !newEntry.getMd5().equals(oldEntry.getMd5());
     }
