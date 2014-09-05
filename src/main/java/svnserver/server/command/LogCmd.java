@@ -10,9 +10,7 @@ import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Change current path in repository.
@@ -51,9 +49,6 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
     @NotNull
     private final int[] endRev;
     private final boolean changedPaths;
-    /**
-     * TODO: issue #35, copy detection.
-     */
     private final boolean strictNode;
     private final int limit;
     /**
@@ -104,7 +99,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       return;
     }
 
-    final Set<String> targetPaths = new HashSet<>();
+    final List<String> targetPaths = new ArrayList<>();
     for (String target : args.targetPath) {
       String fullTargetPath = context.getRepositoryPath(target);
       if (context.getRepository().getRevisionInfo(startRev).getFile(fullTargetPath) == null) {
@@ -114,19 +109,23 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       targetPaths.add(fullTargetPath);
     }
 
-    int logLimit = args.limit;
-    int step = startRev < endRev ? 1 : -1;
-    for (int rev = startRev; rev != endRev + step; rev += step) {
-      if (targetPaths.isEmpty())
-        break;
-
-      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
-      final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
-      if (!hasTargets(changes, targetPaths)) continue;
+    final List<VcsRevision> log;
+    if (startRev >= endRev) {
+      log = getLog(context, args, targetPaths, startRev, endRev, args.limit);
+    } else {
+      final List<VcsRevision> logReverse = getLog(context, args, targetPaths, endRev, startRev, -1);
+      final int minIndex = args.limit <= 0 ? 0 : Math.max(0, logReverse.size() - args.limit);
+      log = new ArrayList<>(logReverse.size() - minIndex);
+      for (int i = logReverse.size() - 1; i >= minIndex; i--) {
+        log.add(logReverse.get(i));
+      }
+    }
+    for (VcsRevision revisionInfo : log) {
       writer
           .listBegin()
           .listBegin();
       if (args.changedPaths) {
+        final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
         writer.separator();
         for (Map.Entry<String, ? extends VcsLogEntry> entry : changes.entrySet()) {
           final VcsLogEntry logEntry = entry.getValue();
@@ -153,7 +152,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         }
       }
       writer.listEnd()
-          .number(rev)
+          .number(revisionInfo.getId())
           .listBegin().stringNullable(revisionInfo.getAuthor()).listEnd()
           .listBegin().stringNullable(revisionInfo.getDateString()).listEnd()
           .listBegin().stringNullable(revisionInfo.getLog()).listEnd()
@@ -164,7 +163,6 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
           .listEnd()
           .listEnd()
           .separator();
-      if (--logLimit == 0) break;
     }
     writer
         .word("done");
@@ -176,7 +174,36 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         .listEnd();
   }
 
-  private static boolean hasTargets(Map<String, ? extends VcsLogEntry> changes, Set<String> targetPaths) {
+  private List<VcsRevision> getLog(@NotNull SessionContext context, @NotNull Params args, List<String> targetPaths, int endRev, int startRev, int limit) throws IOException, SVNException {
+    int logLimit = limit;
+    final List<VcsRevision> result = new ArrayList<>();
+    for (int rev = endRev; rev > startRev; rev--) {
+      if (targetPaths.isEmpty())
+        break;
+
+      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
+      final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
+      if (!hasTargets(changes, targetPaths)) continue;
+
+      final ListIterator<String> iter = targetPaths.listIterator();
+      while (iter.hasNext()) {
+        final String path = revisionInfo.getCopyFromPath(iter.next());
+        if (path != null) {
+          if (args.strictNode) {
+            iter.remove();
+          } else {
+            iter.set(path);
+          }
+        }
+      }
+
+      result.add(revisionInfo);
+      if (--logLimit == 0) break;
+    }
+    return result;
+  }
+
+  private static boolean hasTargets(Map<String, ? extends VcsLogEntry> changes, Collection<String> targetPaths) {
     for (String targetPath : targetPaths) {
       if (changes.containsKey(targetPath) || targetPath.isEmpty()) return true;
     }

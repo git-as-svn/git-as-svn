@@ -132,4 +132,10 @@ public class GitRevision implements VcsRevision {
     }
     return result;
   }
+
+  @Nullable
+  @Override
+  public String getCopyFromPath(@NotNull String fullPath) {
+    return renames.get(fullPath);
+  }
 }
