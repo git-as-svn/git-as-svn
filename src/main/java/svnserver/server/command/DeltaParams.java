@@ -32,11 +32,6 @@ public class DeltaParams {
    */
   private final boolean sendCopyFromArgs;
 
-  /**
-   * TODO: issue #25.
-   */
-  private final boolean ignoreAncestry;
-
   private final boolean textDeltas;
 
   public DeltaParams(@NotNull int[] rev,
@@ -45,13 +40,22 @@ public class DeltaParams {
                      boolean textDeltas,
                      @NotNull Depth depth,
                      boolean sendCopyFromArgs,
+                     /**
+                      * Broken-minded SVN feature we're unlikely to support EVER.
+                      * <p>
+                      * If {@code ignoreAncestry} is {@code false} and file was deleted and created back between source and target revisions,
+                      * SVN server sends two deltas for this file - deletion and addition. The only effect that this behavior produces is
+                      * increased number of tree conflicts on client.
+                      * <p>
+                      * Worse, in SVN it is possible to delete file and create it back in the same commit, effectively breaking its history.
+                      */
+                     @SuppressWarnings("UnusedParameters")
                      boolean ignoreAncestry) {
     this.rev = rev;
     this.path = path;
     this.targetPath = targetPath;
     this.depth = depth;
     this.sendCopyFromArgs = sendCopyFromArgs;
-    this.ignoreAncestry = ignoreAncestry;
     this.textDeltas = textDeltas;
   }
 
