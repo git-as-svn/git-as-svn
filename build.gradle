@@ -63,6 +63,7 @@ task deployJars(dependsOn: jar) << {
     from fullArtifacts.intersect(projectArtifacts)
     from "config.example"
     from "README.md"
+    from "LICENSE"
     into "${project.buildDir}/deploy"
   }
   copy {
