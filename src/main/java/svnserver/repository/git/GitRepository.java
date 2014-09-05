@@ -75,11 +75,13 @@ public class GitRepository implements VcsRepository {
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
   private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
+  private final boolean renameDetection;
 
   public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
-                       @NotNull GitPushMode pushMode, @NotNull String branch) throws IOException, SVNException {
+                       @NotNull GitPushMode pushMode, @NotNull String branch, boolean renameDetection) throws IOException, SVNException {
     this.repository = repository;
     this.pushMode = pushMode;
+    this.renameDetection = renameDetection;
     linkedRepositories = new ArrayList<>(linked);
     final Ref branchRef = repository.getRef(branch);
     if (branchRef == null) {
@@ -175,7 +177,7 @@ public class GitRepository implements VcsRepository {
     final GitFile oldTree = revCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, revCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
-    final Map<String, String> renames = collectRename(oldTree, newTree);
+    final Map<String, String> renames = renameDetection ? collectRename(oldTree, newTree) : Collections.emptyMap();
     final Map<String, GitLogEntry> changes = collectChanges(revisionId, oldTree, newTree, renames);
     for (String path : changes.keySet()) {
       lastUpdates.compute(path, (key, list) -> {

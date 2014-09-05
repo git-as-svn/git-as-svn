@@ -237,7 +237,7 @@ public final class SvnTestServer implements AutoCloseable {
     @NotNull
     @Override
     public VcsRepository create() throws IOException, SVNException {
-      return new GitRepository(repository, Collections.emptyList(), GitPushMode.SIMPLE, branch);
+      return new GitRepository(repository, Collections.emptyList(), GitPushMode.SIMPLE, branch, true);
     }
   }
 }
