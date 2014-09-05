@@ -120,7 +120,7 @@ public class ReplayTest {
     }, new FilterSVNEditor(srcExport));
 
     final ExportSVNEditor dstExport = new ExportSVNEditor();
-    dstRepo.diff(srcRepo.getLocation(), dstRev, dstRev - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
+    dstRepo.diff(dstRepo.getLocation(), dstRev, dstRev - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
       reporter.finishReport();
     }, new FilterSVNEditor(dstExport));
