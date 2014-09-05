@@ -82,6 +82,7 @@ public class SvnServer extends Thread {
     commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
     commands.put("status", new DeltaCmd(StatusParams.class));
+    commands.put("switch", new DeltaCmd(SwitchParams.class));
     commands.put("update", new DeltaCmd(UpdateParams.class));
 
     repository = config.getRepository().create();

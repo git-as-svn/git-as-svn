@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
  *    response: ( )
  * </pre>
  * <p>
- * TODO: issue #38.
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
