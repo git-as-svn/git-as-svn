@@ -40,28 +40,35 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
     private final boolean wantProps;
     private final boolean wantContents;
     /**
-     * This is a broken-minded SVN feature we are unlikely to support ever.
-     * Client can declare what fields it wants to be sent for child nodes (wantContents=true).
-     * However, 1) fields are not optional, so we still have fill them with junk values
-     * 2) They're trivial to calculate.
-     * 3) For additional lulz, see the email thread on dev@svn, 2012-03-28, subject
-     * "buildbot failure in ASF Buildbot on svn-slik-w2k3-x64-ra",
-     * <http://svn.haxx.se/dev/archive-2012-03/0655.shtml>.
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    @NotNull
-    private final String[] fields;
-    /**
      * TODO: issue #30.
      */
     private final boolean wantIProps;
 
-    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents, @NotNull String[] fields, boolean wantIProps) {
+    public Params(@NotNull String path,
+                  @NotNull int[] rev,
+                  boolean wantProps,
+                  boolean wantContents,
+                  /**
+                   * This is a broken-minded SVN feature we are unlikely to support ever.
+                   * <p>
+                   * Client can declare what fields it wants to be sent for child nodes (wantContents=true).
+                   * <p>
+                   * However,
+                   * <ul>
+                   * <li>fields are not optional, so we still have fill them with junk values</li>
+                   * <li>They're trivial to calculate.</li>
+                   * <li>For additional lulz, see the email thread on dev@svn, 2012-03-28, subject
+                   * "buildbot failure in ASF Buildbot on svn-slik-w2k3-x64-ra",
+                   * &lt;http://svn.haxx.se/dev/archive-2012-03/0655.shtml&gt;.</li>
+                   * </ul>
+                   */
+                  @SuppressWarnings("UnusedParameters")
+                  @NotNull String[] fields,
+                  boolean wantIProps) {
       this.path = path;
       this.rev = rev;
       this.wantProps = wantProps;
       this.wantContents = wantContents;
-      this.fields = fields;
       this.wantIProps = wantIProps;
     }
   }
