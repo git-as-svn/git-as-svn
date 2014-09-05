@@ -142,7 +142,7 @@ public class GitRepository implements VcsRepository {
         if (lastRevision < 0) {
           final RevCommit firstCommit = newRevs.get(newRevs.size() - 1);
           if (!isTreeEmpty(firstCommit.getTree())) {
-            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null, firstCommit.getCommitTime()));
+            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null, null, firstCommit.getCommitTime()));
           }
         }
         final long beginTime = System.currentTimeMillis();
@@ -173,12 +173,12 @@ public class GitRepository implements VcsRepository {
 
   private void addRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
     final int revisionId = revisions.size();
-    final RevCommit revCommit = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit();
-    final GitFile oldTree = revCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, revCommit, revisionId - 1);
+    final RevCommit prevCommit = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit();
+    final GitFile oldTree = prevCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, prevCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
     final Map<String, String> renames = renameDetection ? collectRename(oldTree, newTree) : Collections.emptyMap();
-    final Map<String, GitLogEntry> changes = collectChanges(revisionId, oldTree, newTree, renames);
+    final Map<String, GitLogPair> changes = collectChanges(oldTree, newTree);
     for (String path : changes.keySet()) {
       lastUpdates.compute(path, (key, list) -> {
         final IntList result = list == null ? new IntList() : list;
@@ -186,7 +186,7 @@ public class GitRepository implements VcsRepository {
         return result;
       });
     }
-    final GitRevision revision = new GitRevision(this, revisionId, changes, commit, commit.getCommitTime());
+    final GitRevision revision = new GitRevision(this, revisionId, renames, prevCommit, commit, commit.getCommitTime());
     if (revisionByDate.isEmpty() || revisionByDate.lastKey() <= revision.getDate()) {
       revisionByDate.put(revision.getDate(), revision);
     }
@@ -233,21 +233,21 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private Map<String, GitLogEntry> collectChanges(int revisionId, @Nullable GitFile oldTree, @NotNull GitFile newTree, @NotNull Map<String, String> renames) throws IOException, SVNException {
-    final Map<String, GitLogEntry> changes = new HashMap<>();
-    final GitLogEntry logEntry = new GitLogEntry(revisionId, oldTree, newTree, renames);
+  public Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException, SVNException {
+    final Map<String, GitLogPair> changes = new HashMap<>();
+    final GitLogPair logEntry = new GitLogPair(oldTree, newTree);
     if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
       changes.put("/", logEntry);
     }
     final Queue<TreeCompareEntry> queue = new ArrayDeque<>();
     queue.add(new TreeCompareEntry("", oldTree, newTree));
     while (!queue.isEmpty()) {
-      collectChanges(revisionId, changes, queue, queue.remove(), renames);
+      collectChanges(changes, queue, queue.remove());
     }
     return changes;
   }
 
-  private void collectChanges(int revisionId, @NotNull Map<String, GitLogEntry> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry, @NotNull Map<String, String> renames) throws IOException, SVNException {
+  private void collectChanges(@NotNull Map<String, GitLogPair> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry) throws IOException, SVNException {
     final Iterator<GitFile> oldEntries = compareEntry.oldTree != null ? compareEntry.oldTree.getEntries().iterator() : Collections.emptyIterator();
     GitFile oldValue = oldEntries.hasNext() ? oldEntries.next() : null;
     for (GitFile newEntry : compareEntry.newTree.getEntries()) {
@@ -274,7 +274,7 @@ public class GitRepository implements VcsRepository {
             oldEntry = null;
             break;
           }
-          changes.put(StringHelper.joinPath(compareEntry.path, oldValue.getFileName()), new GitLogEntry(revisionId, oldValue, null, renames));
+          changes.put(StringHelper.joinPath(compareEntry.path, oldValue.getFileName()), new GitLogPair(oldValue, null));
           oldValue = oldEntries.next();
         }
       } else {
@@ -282,17 +282,17 @@ public class GitRepository implements VcsRepository {
       }
       if (!newEntry.equals(oldEntry)) {
         final String fullPath = StringHelper.joinPath(compareEntry.path, newEntry.getFileName());
-        final GitLogEntry logEntry = new GitLogEntry(revisionId, oldEntry, newEntry, renames);
+        final GitLogPair logEntry = new GitLogPair(oldEntry, newEntry);
         if (newEntry.isDirectory()) {
-          final GitLogEntry oldChange = changes.put(fullPath, logEntry);
+          final GitLogPair oldChange = changes.put(fullPath, logEntry);
           if (oldChange != null) {
-            changes.put(fullPath, new GitLogEntry(revisionId, oldChange.getOldEntry(), newEntry, renames));
+            changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
           }
           queue.add(new TreeCompareEntry(fullPath, ((oldEntry != null) && oldEntry.isDirectory()) ? oldEntry : null, newEntry));
         } else if (oldEntry == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
-          final GitLogEntry oldChange = changes.put(fullPath, logEntry);
+          final GitLogPair oldChange = changes.put(fullPath, logEntry);
           if (oldChange != null) {
-            changes.put(fullPath, new GitLogEntry(revisionId, oldChange.getOldEntry(), newEntry, renames));
+            changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
           }
         }
       }
@@ -300,9 +300,9 @@ public class GitRepository implements VcsRepository {
     while (oldEntries.hasNext()) {
       final GitFile entry = oldEntries.next();
       final String fullPath = StringHelper.joinPath(compareEntry.path, entry.getFileName());
-      final GitLogEntry oldChange = changes.put(fullPath, new GitLogEntry(revisionId, entry, null, renames));
+      final GitLogPair oldChange = changes.put(fullPath, new GitLogPair(entry, null));
       if (oldChange != null) {
-        changes.put(fullPath, new GitLogEntry(revisionId, entry, oldChange.getNewEntry(), renames));
+        changes.put(fullPath, new GitLogPair(entry, oldChange.getNewEntry()));
       }
     }
   }

@@ -9,7 +9,6 @@ import svnserver.repository.VcsLogEntry;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Git modification type.
@@ -17,53 +16,40 @@ import java.util.Objects;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitLogEntry implements VcsLogEntry {
-  @Nullable
-  private final GitFile oldEntry;
-  @Nullable
-  private final GitFile newEntry;
+  @NotNull
+  private final GitLogPair pair;
   @Nullable
   private final String copyPath;
   private final int copyRev;
 
-  public GitLogEntry(int rev, @Nullable GitFile oldEntry, @Nullable GitFile newEntry, @NotNull Map<String, String> renames) {
-    this.oldEntry = oldEntry;
-    this.newEntry = newEntry;
-    this.copyPath = newEntry != null ? renames.get(newEntry.getFullPath()) : null;
+  public GitLogEntry(int rev, @NotNull GitLogPair pair, @NotNull Map<String, String> renames) {
+    this.pair = pair;
+    this.copyPath = pair.getNewEntry() != null ? renames.get(pair.getNewEntry().getFullPath()) : null;
     this.copyRev = copyPath == null ? -1 : rev - 1;
   }
 
   @Override
   public char getChange() throws IOException, SVNException {
-    if (newEntry == null)
+    if (pair.getNewEntry() == null)
       return SVNLogEntryPath.TYPE_DELETED;
 
-    if (oldEntry == null)
+    if (pair.getOldEntry() == null)
       return SVNLogEntryPath.TYPE_ADDED;
 
-    if (newEntry.getKind() != oldEntry.getKind())
+    if (pair.getNewEntry().getKind() != pair.getOldEntry().getKind())
       return SVNLogEntryPath.TYPE_REPLACED;
 
     return isContentModified() || isPropertyModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
   }
 
-  @Nullable
-  public GitFile getOldEntry() {
-    return oldEntry;
-  }
-
-  @Nullable
-  public GitFile getNewEntry() {
-    return newEntry;
-  }
-
   @NotNull
   @Override
   public SVNNodeKind getKind() {
-    if (newEntry != null)
-      return newEntry.getKind();
+    if (pair.getNewEntry() != null)
+      return pair.getNewEntry().getKind();
 
-    if (oldEntry != null)
-      return oldEntry.getKind();
+    if (pair.getOldEntry() != null)
+      return pair.getOldEntry().getKind();
 
     throw new IllegalStateException();
   }
@@ -81,24 +67,11 @@ public class GitLogEntry implements VcsLogEntry {
 
   @Override
   public boolean isContentModified() throws IOException, SVNException {
-    if (newEntry == null || newEntry.isDirectory())
-      return false;
-
-    if (oldEntry == null || oldEntry.isDirectory())
-      return false;
-
-    if (newEntry.isSymlink() == oldEntry.isSymlink()) {
-      return !Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId());
-    } else {
-      return !newEntry.getMd5().equals(oldEntry.getMd5());
-    }
+    return pair.isContentModified();
   }
 
   @Override
   public boolean isPropertyModified() throws IOException {
-    if ((newEntry == null) || (oldEntry == null)) return false;
-    final Map<String, String> newProps = newEntry.getProperties(false);
-    final Map<String, String> oldProps = oldEntry.getProperties(false);
-    return (!newProps.equals(oldProps));
+    return pair.isPropertyModified();
   }
 }
