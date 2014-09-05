@@ -1,10 +1,13 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.RenameDetector;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,6 +174,24 @@ public class GitRepository implements VcsRepository {
     final RevCommit revCommit = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit();
     final GitFile oldTree = revCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, revCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
+
+    if (oldTree.getObjectId() != null && newTree.getObjectId() != null) {
+      TreeWalk tw = new TreeWalk(repository);
+      tw.setRecursive(true);
+      tw.addTree(oldTree.getObjectId().getObject());
+      tw.addTree(newTree.getObjectId().getObject());
+
+      RenameDetector rd = new RenameDetector(repository);
+      rd.addAll(DiffEntry.scan(tw));
+
+      List<DiffEntry> lde = rd.compute(tw.getObjectReader(), null);
+      for (DiffEntry de : lde) {
+        if (de.getScore() >= rd.getRenameScore()) {
+          System.out.println("file: " + de.getOldPath() + " copied/moved to: " + de.getNewPath());
+        }
+      }
+    }
+
     final Map<String, GitLogEntry> changes = collectChanges(oldTree, newTree);
     for (String path : changes.keySet()) {
       lastUpdates.compute(path, (key, list) -> {
