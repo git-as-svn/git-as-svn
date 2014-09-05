@@ -10,10 +10,12 @@ import svnserver.auth.ACL;
 import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -64,8 +66,14 @@ public final class SessionContext {
 
   @NotNull
   public String getRepositoryPath(@Nullable String localPath) throws SVNException {
-    if ((localPath != null) && localPath.startsWith(baseUrl)) {
-      return localPath.substring(baseUrl.length() - 1);
+    if ((localPath != null) && localPath.startsWith("svn://")) {
+      if (localPath.startsWith(baseUrl)) {
+        return localPath.substring(baseUrl.length() - 1);
+      }
+      if (baseUrl.endsWith("/") && localPath.equals(baseUrl.substring(0, baseUrl.length() - 1))) {
+        return "";
+      }
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid URL: " + localPath + " (base: " + baseUrl + ")"));
     }
     if (!parent.startsWith(baseUrl)) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid current path prefix: " + parent + " (base: " + baseUrl + ")"));
@@ -105,5 +113,19 @@ public final class SessionContext {
   @Nullable
   public Step poll() {
     return stepStack.poll();
+  }
+
+  /**
+   * Get repository file.
+   *
+   * @param rev        Target revision.
+   * @param targetPath Target path or url.
+   * @return Return file object.
+   * @throws SVNException
+   * @throws IOException
+   */
+  @Nullable
+  public VcsFile getFile(int rev, String targetPath) throws SVNException, IOException {
+    return getRepository().getRevisionInfo(rev).getFile(getRepositoryPath(targetPath));
   }
 }
