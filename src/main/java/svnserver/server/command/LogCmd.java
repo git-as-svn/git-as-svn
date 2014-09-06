@@ -177,7 +177,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
   private List<VcsRevision> getLog(@NotNull SessionContext context, @NotNull Params args, List<String> targetPaths, int endRev, int startRev, int limit) throws IOException, SVNException {
     int logLimit = limit;
     final List<VcsRevision> result = new ArrayList<>();
-    for (int rev = endRev; rev > startRev; rev--) {
+    for (int rev = endRev; rev >= startRev; rev--) {
       if (targetPaths.isEmpty())
         break;
 
