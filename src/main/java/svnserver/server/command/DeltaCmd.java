@@ -398,18 +398,17 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     private void updateEntry(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile, @Nullable VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
-      if (newFile == null) {
-        if (oldFile != null) {
+      if (oldFile != null)
+        if (newFile == null || !oldFile.getKind().equals(newFile.getKind()))
           removeEntry(context, wcPath, oldFile.getLastChange().getId(), parentTokenId);
-        }
-      } else if ((oldFile != null) && (!newFile.getKind().equals(oldFile.getKind()))) {
-        removeEntry(context, wcPath, oldFile.getLastChange().getId(), parentTokenId);
-        updateEntry(context, wcPath, null, newFile, parentTokenId, rootDir);
-      } else if (newFile.isDirectory()) {
+
+      if (newFile == null)
+        return;
+
+      if (newFile.isDirectory())
         updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir);
-      } else {
+      else
         updateFile(context, wcPath, oldFile, newFile, parentTokenId);
-      }
     }
 
     private void removeEntry(@NotNull SessionContext context, @NotNull String wcPath, int rev, @NotNull String parentTokenId) throws IOException, SVNException {
