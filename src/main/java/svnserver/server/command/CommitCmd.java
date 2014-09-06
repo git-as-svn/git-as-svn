@@ -486,10 +486,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous users cannot create commits"));
       }
       if (!paths.isEmpty()) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed directory token: " + paths.keySet().iterator().next()));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed directory tokens: " + paths.keySet()));
       }
       if (!files.isEmpty()) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file token: " + paths.keySet().iterator().next()));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
       for (int pass = 0; ; ++pass) {
         if (pass >= MAX_PASS_COUNT) {
