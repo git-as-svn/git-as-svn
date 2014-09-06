@@ -82,9 +82,6 @@ public class DeltaParams {
     return textDeltas;
   }
 
-  /**
-   * TODO: issue #32.
-   */
   @NotNull
   public Depth getDepth() {
     return depth;
@@ -99,15 +96,23 @@ public class DeltaParams {
     Infinity;
 
     @NotNull
-    public static Depth parse(@NotNull String depthStr, boolean recurse, @NotNull Depth nonRecurse) {
-      if (depthStr.isEmpty())
-        return recurse ? Infinity : nonRecurse;
+    private final String value = name().toLowerCase(Locale.ENGLISH);
 
+    @NotNull
+    public static Depth parse(@NotNull String value) {
       for (Depth depth : values())
-        if (depth.name().toLowerCase(Locale.ENGLISH).equals(depthStr))
+        if (depth.value.equals(value))
           return depth;
 
       return Unknown;
+    }
+
+    @NotNull
+    public static Depth parse(@NotNull String value, boolean recurse, @NotNull Depth nonRecurse) {
+      if (value.isEmpty())
+        return recurse ? Infinity : nonRecurse;
+
+      return parse(value);
     }
   }
 }

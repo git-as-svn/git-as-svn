@@ -82,18 +82,15 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private final boolean startEmpty;
     @NotNull
     private final String[] lockToken;
-    /**
-     * TODO: issue #32, depth.
-     */
     @NotNull
-    private final String depth;
+    private final DeltaParams.Depth depth;
 
     public SetPathParams(@NotNull String path, int rev, boolean startEmpty, @NotNull String[] lockToken, @NotNull String depth) {
       this.path = path;
       this.rev = rev;
       this.startEmpty = startEmpty;
       this.lockToken = lockToken;
-      this.depth = depth;
+      this.depth = DeltaParams.Depth.parse(depth);
     }
   }
 
