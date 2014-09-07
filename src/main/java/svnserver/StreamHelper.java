@@ -30,4 +30,16 @@ public final class StreamHelper {
     }
     return totalSize;
   }
+
+  public static int readFully(@NotNull InputStream inputStream, byte[] buffer, int offset, int length) throws IOException {
+    int totalRead = 0;
+    while (totalRead < length) {
+      final int read = inputStream.read(buffer, offset + totalRead, length - totalRead);
+      if (read <= 0) {
+        break;
+      }
+      totalRead += read;
+    }
+    return totalRead;
+  }
 }
