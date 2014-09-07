@@ -2,6 +2,7 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.StreamHelper;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
@@ -53,6 +54,8 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     }
   }
 
+  private final static int WINDOW_SIZE = 1024 * 100;
+
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -88,10 +91,17 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
         .listEnd()
         .listEnd();
     if (args.wantContents) {
-      try (InputStream stream = fileInfo.openStream()) {
-        writer.binary(fileInfo.getSize(), stream);
+      byte[] buffer = new byte[WINDOW_SIZE];
+      try (final InputStream stream = fileInfo.openStream()) {
+        while (true) {
+          int read = StreamHelper.readFully(stream, buffer, 0, buffer.length);
+          writer.binary(buffer, 0, read);
+          if (read == 0) {
+            break;
+          }
+        }
       }
-      writer.string("")
+      writer
           .listBegin()
           .word("success")
           .listBegin()
