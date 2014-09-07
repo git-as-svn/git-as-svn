@@ -2,12 +2,10 @@ package svnserver.parser;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.StreamHelper;
 import svnserver.parser.token.*;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -53,21 +51,11 @@ public class SvnServerWriter {
   public SvnServerWriter stringNullable(@Nullable String text) throws IOException {
     return text != null ? string(text) : this;
   }
+
   @SuppressWarnings("QuestionableName")
   @NotNull
   public SvnServerWriter string(@NotNull String text) throws IOException {
     return binary(text.getBytes(StandardCharsets.UTF_8));
-  }
-
-  @NotNull
-  public SvnServerWriter binary(long size, @NotNull InputStream inputStream) throws IOException {
-    if (size < 0) throw new IllegalArgumentException("Size must be greate then zero: " + size);
-    stream.write(String.valueOf(size).getBytes(StandardCharsets.ISO_8859_1));
-    stream.write(':');
-    StreamHelper.copyTo(inputStream, stream);
-    stream.write(' ');
-    if (depth == 0) stream.flush();
-    return this;
   }
 
   @NotNull
