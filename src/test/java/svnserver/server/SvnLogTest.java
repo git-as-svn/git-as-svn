@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 import org.testng.internal.junit.ArrayAsserts;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
@@ -28,7 +29,15 @@ public class SvnLogTest {
     private final Set<String> paths;
 
     private LogEntry(@NotNull SVNLogEntry logEntry) {
-      this(logEntry.getRevision(), logEntry.getMessage(), logEntry.getChangedPaths().keySet());
+      this(logEntry.getRevision(), logEntry.getMessage(), convert(logEntry.getChangedPaths().values()));
+    }
+
+    private static Collection<String> convert(@NotNull Collection<SVNLogEntryPath> changedPaths) {
+      List<String> result = new ArrayList<>();
+      for (SVNLogEntryPath logPath : changedPaths) {
+        result.add(logPath.getType() + " " + logPath.getPath());
+      }
+      return result;
     }
 
     private LogEntry(long revision, @Nullable String message, @NotNull String... paths) {
@@ -72,12 +81,12 @@ public class SvnLogTest {
   }
 
   /**
-   * Check commit .gitattributes.
+   * Check simple svn log behaviour.
    *
    * @throws Exception
    */
   @Test(timeOut = 60 * 1000)
-  public void simpleLog() throws Exception {
+  public void simple() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       // r1 - add single file.
@@ -102,24 +111,24 @@ public class SvnLogTest {
       // svn log from root
       final long last = repo.getLatestRevision();
       checkLog(repo, last, 0, "/",
-          new LogEntry(4, "Create file: /foo/foo.txt", "/foo/foo.txt"),
-          new LogEntry(3, "Modify file: /foo/bar.txt", "/foo/bar.txt"),
-          new LogEntry(2, "Create directory: /foo", "/foo", "/foo/bar.txt"),
-          new LogEntry(1, "Create file: /foo.txt", "/foo.txt"),
+          new LogEntry(4, "Create file: /foo/foo.txt", "A /foo/foo.txt"),
+          new LogEntry(3, "Modify file: /foo/bar.txt", "M /foo/bar.txt"),
+          new LogEntry(2, "Create directory: /foo", "A /foo", "A /foo/bar.txt"),
+          new LogEntry(1, "Create file: /foo.txt", "A /foo.txt"),
           new LogEntry(0, null)
       );
 
       // svn log from root
       checkLog(repo, last, 0, "/foo",
-          new LogEntry(4, "Create file: /foo/foo.txt", "/foo/foo.txt"),
-          new LogEntry(3, "Modify file: /foo/bar.txt", "/foo/bar.txt"),
-          new LogEntry(2, "Create directory: /foo", "/foo", "/foo/bar.txt")
+          new LogEntry(4, "Create file: /foo/foo.txt", "A /foo/foo.txt"),
+          new LogEntry(3, "Modify file: /foo/bar.txt", "M /foo/bar.txt"),
+          new LogEntry(2, "Create directory: /foo", "A /foo", "A /foo/bar.txt")
       );
 
       // svn log from root
       checkLog(repo, last, 0, "/foo/bar.txt",
-          new LogEntry(3, "Modify file: /foo/bar.txt", "/foo/bar.txt"),
-          new LogEntry(2, "Create directory: /foo", "/foo", "/foo/bar.txt")
+          new LogEntry(3, "Modify file: /foo/bar.txt", "M /foo/bar.txt"),
+          new LogEntry(2, "Create directory: /foo", "A /foo", "A /foo/bar.txt")
       );
 
       // svn empty log
@@ -129,9 +138,269 @@ public class SvnLogTest {
     }
   }
 
+  /**
+   * Check file recreate log test.
+   */
+  @Test(timeOut = 60 * 1000)
+  public void recreateFile() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+      // r1 - add single file.
+      createFile(repo, "/foo.txt", "", null);
+      // r2 - modify file.
+      modifyFile(repo, "/foo.txt", "New content", repo.getLatestRevision());
+      // r3 - remove file.
+      deleteFile(repo, "/foo.txt");
+      final long delete = repo.getLatestRevision();
+      // r4 - recreate file.
+      createFile(repo, "/foo.txt", "", null);
+
+      // svn log from root
+      final long last = repo.getLatestRevision();
+      checkLog(repo, last, 0, "/foo.txt",
+          new LogEntry(4, "Create file: /foo.txt", "A /foo.txt")
+      );
+
+      // svn log from root
+      checkLog(repo, delete - 1, 0, "/foo.txt",
+          new LogEntry(2, "Modify file: /foo.txt", "M /foo.txt"),
+          new LogEntry(1, "Create file: /foo.txt", "A /foo.txt")
+      );
+    }
+  }
+
+  /**
+   * Check file recreate log test.
+   */
+  @Test(timeOut = 60 * 1000)
+  public void recreateDirectory() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+      // r1 - add single file.
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Create directory: /foo", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir("/foo", null, -1);
+        // Empty file.
+        final String file = "/foo/bar.txt";
+        editor.addFile(file, null, -1);
+        sendDeltaAndClose(editor, file, null, "");
+        // Close dir
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // r2 - modify file.
+      modifyFile(repo, "/foo/bar.txt", "New content", repo.getLatestRevision());
+      // r3 - remove directory.
+      deleteFile(repo, "/foo");
+      final long delete = repo.getLatestRevision();
+      // r4 - recreate file.
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Create directory: /foo", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir("/foo", null, -1);
+        // Empty file.
+        final String file = "/foo/bar.txt";
+        editor.addFile(file, null, -1);
+        sendDeltaAndClose(editor, file, null, "");
+        // Close dir
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeEdit();
+      }
+
+      // svn log from latest revision
+      final long last = repo.getLatestRevision();
+      checkLog(repo, last, 0, "/foo/bar.txt",
+          new LogEntry(4, "Create directory: /foo", "A /foo", "A /foo/bar.txt")
+      );
+
+      // svn log from revision before delete
+      checkLog(repo, delete - 1, 0, "/foo.txt",
+          new LogEntry(2, "Modify file: /foo/bar.txt", "M /foo/bar.txt"),
+          new LogEntry(1, "Create directory: /foo", "A /foo", "A /foo/bar.txt")
+      );
+    }
+  }
+
+  /**
+   * Check file move log test.
+   */
+  @Test(timeOut = 60 * 1000)
+  public void moveFile() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+      // r1 - add single file.
+      createFile(repo, "/foo.txt", "Foo content", null);
+      // r2 - rename file
+      {
+        final long revision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Rename: /foo.txt to /bar.txt", null, false, null);
+        editor.openRoot(-1);
+        // Empty file.
+        editor.addFile("/bar.txt", "/foo.txt", revision);
+        editor.closeFile("/bar.txt", null);
+        editor.deleteEntry("/foo.txt", revision);
+        // Close dir
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // r3 - modify file.
+      modifyFile(repo, "/bar.txt", "Bar content", repo.getLatestRevision());
+      // r4 - rename file
+      {
+        final long revision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Rename: /bar.txt to /baz.txt", null, false, null);
+        editor.openRoot(-1);
+        // Empty file.
+        editor.addFile("/baz.txt", "/bar.txt", revision);
+        editor.closeFile("/baz.txt", null);
+        editor.deleteEntry("/bar.txt", revision);
+        // Close dir
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // r5 - modify file.
+      modifyFile(repo, "/baz.txt", "Baz content", repo.getLatestRevision());
+      final long last = repo.getLatestRevision();
+      // r6 - remove file.
+      deleteFile(repo, "/baz.txt");
+
+      // svn log from last file exists revision
+      checkLog(repo, last, 0, "/baz.txt",
+          new LogEntry(5, "Modify file: /baz.txt", "M /baz.txt"),
+          new LogEntry(4, "Rename: /bar.txt to /baz.txt", "D /bar.txt", "A /baz.txt"),
+          new LogEntry(3, "Modify file: /bar.txt", "M /bar.txt"),
+          new LogEntry(2, "Rename: /foo.txt to /bar.txt", "D /foo.txt", "A /bar.txt"),
+          new LogEntry(1, "Create file: /foo.txt", "A /foo.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLog(repo, 0, last, "/baz.txt",
+          new LogEntry(1, "Create file: /foo.txt", "A /foo.txt"),
+          new LogEntry(2, "Rename: /foo.txt to /bar.txt", "D /foo.txt", "A /bar.txt"),
+          new LogEntry(3, "Modify file: /bar.txt", "M /bar.txt"),
+          new LogEntry(4, "Rename: /bar.txt to /baz.txt", "D /bar.txt", "A /baz.txt"),
+          new LogEntry(5, "Modify file: /baz.txt", "M /baz.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLogLimit(repo, last, 0, 3, "/baz.txt",
+          new LogEntry(5, "Modify file: /baz.txt", "M /baz.txt"),
+          new LogEntry(4, "Rename: /bar.txt to /baz.txt", "D /bar.txt", "A /baz.txt"),
+          new LogEntry(3, "Modify file: /bar.txt", "M /bar.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLogLimit(repo, 0, last, 3, "/baz.txt",
+          new LogEntry(1, "Create file: /foo.txt", "A /foo.txt"),
+          new LogEntry(2, "Rename: /foo.txt to /bar.txt", "D /foo.txt", "A /bar.txt"),
+          new LogEntry(3, "Modify file: /bar.txt", "M /bar.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLog(repo, 3, 0, "/bar.txt",
+          new LogEntry(3, "Modify file: /bar.txt", "M /bar.txt"),
+          new LogEntry(2, "Rename: /foo.txt to /bar.txt", "D /foo.txt", "A /bar.txt"),
+          new LogEntry(1, "Create file: /foo.txt", "A /foo.txt")
+      );
+    }
+  }
+
+  /**
+   * Check file move log test.
+   */
+  @Test(timeOut = 60 * 1000)
+  public void moveDirectory() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+      // r1 - add single file.
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Create directory: /foo", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir("/foo", null, -1);
+        // Some file.
+        editor.addFile("/foo/test.txt", null, -1);
+        sendDeltaAndClose(editor, "/foo/test.txt", null, "Foo content");
+        // Close dir
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // r2 - rename dir
+      {
+        final long revision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Rename: /foo to /bar", null, false, null);
+        editor.openRoot(-1);
+        // Move dir.
+        editor.addDir("/bar", "/foo", revision);
+        editor.closeDir();
+        editor.deleteEntry("/foo", revision);
+        // Close dir
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // r3 - modify file.
+      modifyFile(repo, "/bar/test.txt", "Bar content", repo.getLatestRevision());
+      // r4 - rename dir
+      {
+        final long revision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Rename: /bar to /baz", null, false, null);
+        editor.openRoot(-1);
+        // Move dir.
+        editor.addDir("/baz", "/bar", revision);
+        editor.closeDir();
+        editor.deleteEntry("/bar", revision);
+        // Close dir
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // r5 - modify file.
+      modifyFile(repo, "/baz/test.txt", "Baz content", repo.getLatestRevision());
+      final long last = repo.getLatestRevision();
+
+      // svn log from last file exists revision
+      checkLog(repo, last, 0, "/baz/test.txt",
+          new LogEntry(5, "Modify file: /baz/test.txt", "M /baz/test.txt"),
+          new LogEntry(4, "Rename: /bar to /baz", "D /bar", "A /baz", "A /baz/test.txt"),
+          new LogEntry(3, "Modify file: /bar/test.txt", "M /bar/test.txt"),
+          new LogEntry(2, "Rename: /foo to /bar", "D /foo", "A /bar", "A /bar/test.txt"),
+          new LogEntry(1, "Create directory: /foo", "A /foo", "A /foo/test.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLog(repo, 0, last, "/baz/test.txt",
+          new LogEntry(1, "Create directory: /foo", "A /foo", "A /foo/test.txt"),
+          new LogEntry(2, "Rename: /foo to /bar", "D /foo", "A /bar", "A /bar/test.txt"),
+          new LogEntry(3, "Modify file: /bar/test.txt", "M /bar/test.txt"),
+          new LogEntry(4, "Rename: /bar to /baz", "D /bar", "A /baz", "A /baz/test.txt"),
+          new LogEntry(5, "Modify file: /baz/test.txt", "M /baz/test.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLogLimit(repo, last, 0, 3, "/baz/test.txt",
+          new LogEntry(5, "Modify file: /baz/test.txt", "M /baz/test.txt"),
+          new LogEntry(4, "Rename: /bar to /baz", "D /bar", "A /baz", "A /baz/test.txt"),
+          new LogEntry(3, "Modify file: /bar/test.txt", "M /bar/test.txt")
+      );
+
+      // svn log from last file exists revision
+      checkLogLimit(repo, 0, last, 3, "/baz/test.txt",
+          new LogEntry(1, "Create directory: /foo", "A /foo", "A /foo/test.txt"),
+          new LogEntry(2, "Rename: /foo to /bar", "D /foo", "A /bar", "A /bar/test.txt"),
+          new LogEntry(3, "Modify file: /bar/test.txt", "M /bar/test.txt")
+      );
+    }
+  }
+
   private void checkLog(@NotNull SVNRepository repo, long r1, long r2, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
+    checkLogLimit(repo, r1, r2, 0, path, expecteds);
+  }
+
+  private void checkLogLimit(@NotNull SVNRepository repo, long r1, long r2, int limit, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
     final List<LogEntry> actual = new ArrayList<>();
-    repo.log(new String[]{path}, r1, r2, true, false, logEntry -> actual.add(new LogEntry(logEntry)));
+    repo.log(new String[]{path}, r1, r2, true, false, limit, logEntry -> actual.add(new LogEntry(logEntry)));
     ArrayAsserts.assertArrayEquals(expecteds, actual.toArray(new LogEntry[actual.size()]));
   }
 }
