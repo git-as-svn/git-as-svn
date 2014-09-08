@@ -66,7 +66,7 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
       int minRev = maxRev;
       while (true) {
         int change = context.getRepository().getLastChange(fullPath, minRev - 1);
-        if (change > 0) {
+        if (change >= 0) {
           minRev = change;
         } else {
           break;

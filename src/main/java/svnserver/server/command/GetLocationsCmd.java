@@ -65,7 +65,7 @@ public final class GetLocationsCmd extends BaseCmd<GetLocationsCmd.Params> {
       }
       while ((revision < lastChange) && (lastChange >= 0)) {
         int change = context.getRepository().getLastChange(fullPath, lastChange - 1);
-        if (change > 0) {
+        if (change >= 0) {
           lastChange = change;
           continue;
         }
