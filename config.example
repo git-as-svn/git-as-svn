@@ -18,6 +18,7 @@
 repository: !!svnserver.config.GitRepositoryConfig
   branch: master
   path: .git
+  renameDetection: true
 
 acl:
   groups:

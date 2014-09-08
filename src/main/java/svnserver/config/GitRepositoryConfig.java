@@ -32,6 +32,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private String[] linked = {};
   @NotNull
   private GitPushMode pushMode = GitPushMode.NATIVE;
+  private boolean renameDetection = true;
 
   @NotNull
   public String getBranch() {
@@ -69,6 +70,14 @@ public final class GitRepositoryConfig implements RepositoryConfig {
     this.pushMode = pushMode;
   }
 
+  public boolean isRenameDetection() {
+    return renameDetection;
+  }
+
+  public void setRenameDetection(boolean renameDetection) {
+    this.renameDetection = renameDetection;
+  }
+
   @NotNull
   public Repository createRepository() throws IOException {
     final File file = new File(getPath()).getAbsoluteFile();
@@ -97,6 +106,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   @Override
   public VcsRepository create() throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch());
+    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection());
   }
 }

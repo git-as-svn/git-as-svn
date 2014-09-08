@@ -235,7 +235,11 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public GitRevision getLastChange() throws IOException {
-    return repo.sureRevisionInfo(repo.getLastChange(getFullPath(), revision));
+    final int lastChange = repo.getLastChange(getFullPath(), revision);
+    if (lastChange < 0) {
+      throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + getFileName() + "@" + revision);
+    }
+    return repo.sureRevisionInfo(lastChange);
   }
 
   @Override

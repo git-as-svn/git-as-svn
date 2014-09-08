@@ -45,7 +45,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void executable() throws Exception {
     //Map<String, String> props = new HashMap<>()["key":""];
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
@@ -81,7 +81,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void symlink() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -150,7 +150,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitUpdatePropertiesRoot() throws Exception {
     //Map<String, String> props = new HashMap<>()["key":""];
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
@@ -180,7 +180,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitUpdatePropertiesSubdir() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -225,7 +225,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitDirWithProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -251,7 +251,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitDirWithoutProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -280,7 +280,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitDirUpdateWithProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -320,7 +320,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitDirUpdateWithoutProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -362,7 +362,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitRootWithProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -389,7 +389,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitRootWithoutProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -418,7 +418,7 @@ public class SvnFilePropertyTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitFileWithProperties() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();

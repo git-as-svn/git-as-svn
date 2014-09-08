@@ -80,6 +80,28 @@ public final class SvnTestHelper {
   }
 
   @NotNull
+  public static SVNCommitInfo deleteFile(@NotNull SVNRepository repo, @NotNull String filePath) throws SVNException, IOException {
+    long latestRevision = repo.getLatestRevision();
+    final ISVNEditor editor = repo.getCommitEditor("Delete file: " + filePath, null, false, null);
+    editor.openRoot(-1);
+    int index = 0;
+    int depth = 1;
+    while (true) {
+      index = filePath.indexOf('/', index + 1);
+      if (index < 0) {
+        break;
+      }
+      editor.openDir(filePath.substring(0, index), -1);
+      depth++;
+    }
+    editor.deleteEntry(filePath, latestRevision);
+    for (int i = 0; i < depth; ++i) {
+      editor.closeDir();
+    }
+    return editor.closeEdit();
+  }
+
+  @NotNull
   public static SVNCommitInfo modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String newData, long fileRev) throws SVNException, IOException {
     final ByteArrayOutputStream oldData = new ByteArrayOutputStream();
     repo.getFile(filePath, fileRev, null, oldData);

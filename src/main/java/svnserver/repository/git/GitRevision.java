@@ -7,12 +7,15 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.SvnConstants;
+import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsRevision;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,19 +30,22 @@ public class GitRevision implements VcsRevision {
   private final ObjectId objectId;
   @Nullable
   private final RevCommit commit;
+  @Nullable
+  private final RevCommit prevCommit;
   @NotNull
-  private final Map<String, GitLogEntry> changes;
+  private final Map<String, VcsCopyFrom> renames;
 
   private final long date;
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, GitLogEntry> changes, @Nullable RevCommit commit, int commitTimeSec) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, VcsCopyFrom> renames, @Nullable RevCommit prevCommit, @Nullable RevCommit commit, int commitTimeSec) {
     this.repo = repo;
     this.revision = revision;
-    this.changes = changes;
+    this.renames = renames;
     this.objectId = commit != null ? commit.getId() : null;
     this.date = TimeUnit.SECONDS.toMillis(commitTimeSec);
     this.commit = revision > 0 ? commit : null;
+    this.prevCommit = prevCommit;
   }
 
   @Override
@@ -59,7 +65,17 @@ public class GitRevision implements VcsRevision {
 
   @NotNull
   @Override
-  public Map<String, GitLogEntry> getChanges() {
+  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
+    if (commit == null) {
+      return Collections.emptyMap();
+    }
+    final GitFile oldTree = prevCommit == null ? new GitFile(repo, null, "", GitProperty.emptyArray, revision - 1) : new GitFile(repo, prevCommit, revision - 1);
+    final GitFile newTree = new GitFile(repo, commit, revision);
+
+    final Map<String, GitLogEntry> changes = new TreeMap<>();
+    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
+      changes.put(entry.getKey(), new GitLogEntry(entry.getValue(), renames));
+    }
     return changes;
   }
 
@@ -116,5 +132,11 @@ public class GitRevision implements VcsRevision {
       }
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public VcsCopyFrom getCopyFrom(@NotNull String fullPath) {
+    return renames.get(fullPath);
   }
 }

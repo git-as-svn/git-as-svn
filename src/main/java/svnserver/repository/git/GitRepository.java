@@ -1,10 +1,13 @@
 package svnserver.repository.git;
 
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.RenameDetector;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitRepository implements VcsRepository {
   private static final int REPORT_DELAY = 2500;
+  private static final int MARK_NO_FILE = -1;
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
@@ -72,11 +76,13 @@ public class GitRepository implements VcsRepository {
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
   private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
+  private final boolean renameDetection;
 
   public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
-                       @NotNull GitPushMode pushMode, @NotNull String branch) throws IOException, SVNException {
+                       @NotNull GitPushMode pushMode, @NotNull String branch, boolean renameDetection) throws IOException, SVNException {
     this.repository = repository;
     this.pushMode = pushMode;
+    this.renameDetection = renameDetection;
     linkedRepositories = new ArrayList<>(linked);
     final Ref branchRef = repository.getRef(branch);
     if (branchRef == null) {
@@ -137,7 +143,7 @@ public class GitRepository implements VcsRepository {
         if (lastRevision < 0) {
           final RevCommit firstCommit = newRevs.get(newRevs.size() - 1);
           if (!isTreeEmpty(firstCommit.getTree())) {
-            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null, firstCommit.getCommitTime()));
+            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null, null, firstCommit.getCommitTime()));
           }
         }
         final long beginTime = System.currentTimeMillis();
@@ -172,119 +178,52 @@ public class GitRepository implements VcsRepository {
     final GitFile oldTree = prevCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, prevCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
-    final Map<String, GitLogEntry> changes = collectChanges(oldTree, newTree);
-    for (String path : changes.keySet()) {
-      lastUpdates.compute(path, (key, list) -> {
+    final Map<String, VcsCopyFrom> renames = renameDetection ? collectRename(oldTree, newTree, revisionId - 1) : Collections.emptyMap();
+    final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree, true);
+    for (Map.Entry<String, GitLogPair> entry : changes.entrySet()) {
+      lastUpdates.compute(entry.getKey(), (key, list) -> {
         final IntList result = list == null ? new IntList() : list;
         result.add(revisionId);
+        if (entry.getValue().getNewEntry() == null) {
+          result.add(MARK_NO_FILE);
+        }
         return result;
       });
     }
-    final GitRevision revision = new GitRevision(this, revisionId, changes, commit, commit.getCommitTime());
+    final GitRevision revision = new GitRevision(this, revisionId, renames, prevCommit, commit, commit.getCommitTime());
     if (revisionByDate.isEmpty() || revisionByDate.lastKey() <= revision.getDate()) {
       revisionByDate.put(revision.getDate(), revision);
     }
     revisions.add(revision);
   }
 
-  private static class TreeCompareEntry {
-    @NotNull
-    private final String path;
-    @Nullable
-    private final GitFile oldTree;
-    @NotNull
-    private final GitFile newTree;
-
-    private TreeCompareEntry(@NotNull String path, @Nullable GitFile oldTree, @NotNull GitFile newTree) {
-      this.path = path;
-      this.oldTree = oldTree;
-      this.newTree = newTree;
-    }
-  }
-
   @NotNull
-  public Map<String, GitLogEntry> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException, SVNException {
-    final Map<String, GitLogEntry> changes = new HashMap<>();
-    final GitLogEntry logEntry = new GitLogEntry(oldTree, newTree);
-    if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
-      changes.put("/", logEntry);
+  private Map<String, VcsCopyFrom> collectRename(@NotNull GitFile oldTree, @NotNull GitFile newTree, int revision) throws IOException {
+    final GitObject<ObjectId> oldTreeId = oldTree.getObjectId();
+    final GitObject<ObjectId> newTreeId = newTree.getObjectId();
+    if (oldTreeId == null || newTreeId == null || !Objects.equals(oldTreeId.getRepo(), newTreeId.getRepo())) {
+      return Collections.emptyMap();
     }
-    final Queue<TreeCompareEntry> queue = new ArrayDeque<>();
-    queue.add(new TreeCompareEntry("", oldTree, newTree));
-    while (!queue.isEmpty()) {
-      collectChanges(changes, queue, queue.remove());
-    }
-    return changes;
-  }
+    final TreeWalk tw = new TreeWalk(repository);
+    tw.setRecursive(true);
+    tw.addTree(oldTree.getObjectId().getObject());
+    tw.addTree(newTree.getObjectId().getObject());
 
-  private void collectChanges(@NotNull Map<String, GitLogEntry> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry) throws IOException, SVNException {
-    Iterator<GitFile> oldIter = getIterator(compareEntry.oldTree);
-    Iterator<GitFile> newIter = getIterator(compareEntry.newTree);
-    GitFile oldValue = oldIter.hasNext() ? oldIter.next() : null;
-    GitFile newValue = newIter.hasNext() ? newIter.next() : null;
-    while (oldValue != null || newValue != null) {
-      final int compare;
-      if (newValue == null) {
-        compare = -1;
-      } else if (oldValue == null) {
-        compare = 1;
-      } else {
-        final GitTreeEntry oldTreeEntry = oldValue.getTreeEntry();
-        final GitTreeEntry newTreeEntry = newValue.getTreeEntry();
-        if (oldTreeEntry == null || newTreeEntry == null) {
-          throw new IllegalStateException("Tree entry can be null only for revision tree root.");
-        }
-        compare = oldValue.getTreeEntry().compareTo(newValue.getTreeEntry());
-      }
-      if (compare < 0) {
-        if (oldValue == null) {
+    final RenameDetector rd = new RenameDetector(repository);
+    rd.addAll(DiffEntry.scan(tw));
+
+    final Map<String, VcsCopyFrom> result = new HashMap<>();
+    for (DiffEntry diff : rd.compute(tw.getObjectReader(), null)) {
+      if (diff.getScore() >= rd.getRenameScore()) {
+        final String oldPath = StringHelper.normalize(diff.getOldPath());
+        final int lastChange = getLastChange(oldPath, revision);
+        if (lastChange <= 0) {
           throw new IllegalStateException();
         }
-        final String fullPath = StringHelper.joinPath(compareEntry.path, oldValue.getFileName());
-        final GitLogEntry oldChange = changes.put(fullPath, new GitLogEntry(oldValue, null));
-        if (oldChange != null) {
-          changes.put(fullPath, new GitLogEntry(oldValue, oldChange.getNewEntry()));
-        }
-        oldValue = oldIter.hasNext() ? oldIter.next() : null;
-      } else if (compare > 0) {
-        if (newValue == null) {
-          throw new IllegalStateException();
-        }
-        final String fullPath = StringHelper.joinPath(compareEntry.path, newValue.getFileName());
-        final GitLogEntry oldChange = changes.put(fullPath, new GitLogEntry(null, newValue));
-        if (oldChange != null) {
-          changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newValue));
-        }
-        if (newValue.isDirectory()) {
-          queue.add(new TreeCompareEntry(fullPath, null, newValue));
-        }
-        newValue = newIter.hasNext() ? newIter.next() : null;
-      } else if (compare == 0) {
-        if (!oldValue.equals(newValue)) {
-          final String fullPath = StringHelper.joinPath(compareEntry.path, newValue.getFileName());
-          final GitLogEntry logEntry = new GitLogEntry(oldValue, newValue);
-          if (newValue.isDirectory()) {
-            final GitLogEntry oldChange = changes.put(fullPath, logEntry);
-            if (oldChange != null) {
-              changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newValue));
-            }
-            queue.add(new TreeCompareEntry(fullPath, (oldValue.isDirectory()) ? oldValue : null, newValue));
-          } else if (logEntry.isContentModified() || logEntry.isPropertyModified()) {
-            final GitLogEntry oldChange = changes.put(fullPath, logEntry);
-            if (oldChange != null) {
-              changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newValue));
-            }
-          }
-        }
-        oldValue = oldIter.hasNext() ? oldIter.next() : null;
-        newValue = newIter.hasNext() ? newIter.next() : null;
+        result.put(StringHelper.normalize(diff.getNewPath()), new VcsCopyFrom(lastChange, oldPath));
       }
     }
-  }
-
-  @NotNull
-  private static Iterator<GitFile> getIterator(@Nullable GitFile tree) throws IOException, SVNException {
-    return tree != null ? tree.getEntries().iterator() : Collections.emptyIterator();
+    return result;
   }
 
   @NotNull
@@ -459,18 +398,24 @@ public class GitRepository implements VcsRepository {
     return new GitDeltaConsumer(this, (GitFile) file);
   }
 
+  @Override
   public int getLastChange(@NotNull String nodePath, int beforeRevision) {
     if (nodePath.isEmpty()) return beforeRevision;
     final IntList revs = this.lastUpdates.get(nodePath);
     if (revs != null) {
+      int prev = 0;
       for (int i = revs.size() - 1; i >= 0; --i) {
         final int rev = revs.get(i);
-        if (rev <= beforeRevision) {
+        if ((rev >= 0) && (rev <= beforeRevision)) {
+          if (prev == MARK_NO_FILE) {
+            return MARK_NO_FILE;
+          }
           return rev;
         }
+        prev = rev;
       }
     }
-    throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + nodePath + "@" + beforeRevision);
+    return MARK_NO_FILE;
   }
 
   @NotNull

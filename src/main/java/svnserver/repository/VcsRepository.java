@@ -78,4 +78,14 @@ public interface VcsRepository {
    */
   @NotNull
   VcsCommitBuilder createCommitBuilder() throws IOException, SVNException;
+
+  /**
+   * Get last file update in target revision.
+   *
+   * @param nodePath       File path.
+   * @param beforeRevision Target revision.
+   * @return Last file update revision or (< 0, if file not exists).
+   * If file is changed in target revision - return target revision.
+   */
+  int getLastChange(@NotNull String nodePath, int beforeRevision);
 }
