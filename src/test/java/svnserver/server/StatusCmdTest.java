@@ -13,7 +13,7 @@ import svnserver.SvnTestServer;
  */
 public final class StatusCmdTest {
 
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void simple() throws Exception {
     try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
       final SvnOperationFactory factory = server.createOperationFactory();

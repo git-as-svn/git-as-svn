@@ -31,7 +31,7 @@ public class SvnCommitTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void copyFileFromRevisionTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -65,7 +65,7 @@ public class SvnCommitTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void copyDirFromRevisionTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -125,7 +125,7 @@ public class SvnCommitTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitFileOufOfDateTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -149,7 +149,7 @@ public class SvnCommitTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void commitFileUpToDateTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();

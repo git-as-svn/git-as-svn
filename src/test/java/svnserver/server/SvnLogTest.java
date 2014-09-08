@@ -85,7 +85,7 @@ public class SvnLogTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void simple() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -141,7 +141,7 @@ public class SvnLogTest {
   /**
    * Check file recreate log test.
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void recreateFile() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -172,7 +172,7 @@ public class SvnLogTest {
   /**
    * Check file recreate log test.
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void recreateDirectory() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -227,7 +227,7 @@ public class SvnLogTest {
   /**
    * Check file move log test.
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void moveFile() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
@@ -311,7 +311,7 @@ public class SvnLogTest {
   /**
    * Check file move log test.
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void moveDirectory() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();

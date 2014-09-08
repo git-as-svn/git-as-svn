@@ -178,7 +178,7 @@ public class GitRepository implements VcsRepository {
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
     final Map<String, String> renames = renameDetection ? collectRename(oldTree, newTree) : Collections.emptyMap();
-    final Map<String, GitLogPair> changes = collectChanges(oldTree, newTree);
+    final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree);
     for (String path : changes.keySet()) {
       lastUpdates.compute(path, (key, list) -> {
         final IntList result = list == null ? new IntList() : list;
@@ -215,106 +215,6 @@ public class GitRepository implements VcsRepository {
       }
     }
     return result;
-  }
-
-  private static class TreeCompareEntry {
-    @NotNull
-    private final String path;
-    @Nullable
-    private final GitFile oldTree;
-    @NotNull
-    private final GitFile newTree;
-
-    private TreeCompareEntry(@NotNull String path, @Nullable GitFile oldTree, @NotNull GitFile newTree) {
-      this.path = path;
-      this.oldTree = oldTree;
-      this.newTree = newTree;
-    }
-  }
-
-  @NotNull
-  public Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException, SVNException {
-    final Map<String, GitLogPair> changes = new HashMap<>();
-    final GitLogPair logEntry = new GitLogPair(oldTree, newTree);
-    if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
-      changes.put("/", logEntry);
-    }
-    final Queue<TreeCompareEntry> queue = new ArrayDeque<>();
-    queue.add(new TreeCompareEntry("", oldTree, newTree));
-    while (!queue.isEmpty()) {
-      collectChanges(changes, queue, queue.remove());
-    }
-    return changes;
-  }
-
-  private void collectChanges(@NotNull Map<String, GitLogPair> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry) throws IOException, SVNException {
-    Iterator<GitFile> oldIter = getIterator(compareEntry.oldTree);
-    Iterator<GitFile> newIter = getIterator(compareEntry.newTree);
-    GitFile oldValue = oldIter.hasNext() ? oldIter.next() : null;
-    GitFile newValue = newIter.hasNext() ? newIter.next() : null;
-    while (oldValue != null || newValue != null) {
-      final int compare;
-      if (newValue == null) {
-        compare = -1;
-      } else if (oldValue == null) {
-        compare = 1;
-      } else {
-        final GitTreeEntry oldTreeEntry = oldValue.getTreeEntry();
-        final GitTreeEntry newTreeEntry = newValue.getTreeEntry();
-        if (oldTreeEntry == null || newTreeEntry == null) {
-          throw new IllegalStateException("Tree entry can be null only for revision tree root.");
-        }
-        compare = oldValue.getTreeEntry().compareTo(newValue.getTreeEntry());
-      }
-      if (compare < 0) {
-        if (oldValue == null) {
-          throw new IllegalStateException();
-        }
-        final String fullPath = StringHelper.joinPath(compareEntry.path, oldValue.getFileName());
-        final GitLogPair oldChange = changes.put(fullPath, new GitLogPair(oldValue, null));
-        if (oldChange != null) {
-          changes.put(fullPath, new GitLogPair(oldValue, oldChange.getNewEntry()));
-        }
-        oldValue = oldIter.hasNext() ? oldIter.next() : null;
-      } else if (compare > 0) {
-        if (newValue == null) {
-          throw new IllegalStateException();
-        }
-        final String fullPath = StringHelper.joinPath(compareEntry.path, newValue.getFileName());
-        final GitLogPair oldChange = changes.put(fullPath, new GitLogPair(null, newValue));
-        if (oldChange != null) {
-          changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newValue));
-        }
-        if (newValue.isDirectory()) {
-          queue.add(new TreeCompareEntry(fullPath, null, newValue));
-        }
-        newValue = newIter.hasNext() ? newIter.next() : null;
-      } else if (compare == 0) {
-        if (!oldValue.equals(newValue)) {
-          final String fullPath = StringHelper.joinPath(compareEntry.path, newValue.getFileName());
-          final GitLogPair logEntry = new GitLogPair(oldValue, newValue);
-          if (newValue.isDirectory()) {
-            final GitLogPair oldChange = changes.put(fullPath, logEntry);
-            if (oldChange != null) {
-              changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newValue));
-            }
-            queue.add(new TreeCompareEntry(fullPath, (oldValue.isDirectory()) ? oldValue : null, newValue));
-          } else if (logEntry.isContentModified() || logEntry.isPropertyModified()) {
-            final GitLogPair oldChange = changes.put(fullPath, logEntry);
-            if (oldChange != null) {
-              changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newValue));
-            }
-          }
-        }
-        oldValue = oldIter.hasNext() ? oldIter.next() : null;
-        newValue = newIter.hasNext() ? newIter.next() : null;
-      }
-    }
-  }
-
-  @NotNull
-  private static Iterator<GitFile> getIterator(@Nullable GitFile tree) throws IOException, SVNException {
-    return tree != null ? tree.getEntries().iterator() : Collections.emptyIterator();
   }
 
   @NotNull

@@ -32,7 +32,7 @@ public class SvnCheckoutTest {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnCheckoutTest.class);
 
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void checkoutRootRevision() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SvnOperationFactory factory = server.createOperationFactory();
@@ -157,7 +157,7 @@ public class SvnCheckoutTest {
    *
    * @throws Exception
    */
-  @Test(timeOut = 60 * 1000)
+  @Test
   public void checkoutAndUpdate() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
