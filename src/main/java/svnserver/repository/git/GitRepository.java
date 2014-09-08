@@ -248,63 +248,73 @@ public class GitRepository implements VcsRepository {
   }
 
   private void collectChanges(@NotNull Map<String, GitLogPair> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry) throws IOException, SVNException {
-    final Iterator<GitFile> oldEntries = compareEntry.oldTree != null ? compareEntry.oldTree.getEntries().iterator() : Collections.emptyIterator();
-    GitFile oldValue = oldEntries.hasNext() ? oldEntries.next() : null;
-    for (GitFile newEntry : compareEntry.newTree.getEntries()) {
-      final GitFile oldEntry;
-      if (oldValue != null) {
-        while (true) {
-          final GitTreeEntry oldTreeEntry = oldValue.getTreeEntry();
-          final GitTreeEntry newTreeEntry = newEntry.getTreeEntry();
-          if (oldTreeEntry == null || newTreeEntry == null) {
-            throw new IllegalStateException("Tree entry can be null only for revision tree root.");
-          }
-          final int compare = oldTreeEntry.compareTo(newTreeEntry);
-          if (compare == 0) {
-            oldEntry = oldValue;
-            oldValue = oldEntries.hasNext() ? oldEntries.next() : null;
-            break;
-          }
-          if (compare > 0) {
-            oldEntry = null;
-            break;
-          }
-          if (!oldEntries.hasNext()) {
-            oldValue = null;
-            oldEntry = null;
-            break;
-          }
-          changes.put(StringHelper.joinPath(compareEntry.path, oldValue.getFileName()), new GitLogPair(oldValue, null));
-          oldValue = oldEntries.next();
-        }
+    Iterator<GitFile> oldIter = getIterator(compareEntry.oldTree);
+    Iterator<GitFile> newIter = getIterator(compareEntry.newTree);
+    GitFile oldValue = oldIter.hasNext() ? oldIter.next() : null;
+    GitFile newValue = newIter.hasNext() ? newIter.next() : null;
+    while (oldValue != null || newValue != null) {
+      final int compare;
+      if (newValue == null) {
+        compare = -1;
+      } else if (oldValue == null) {
+        compare = 1;
       } else {
-        oldEntry = null;
+        final GitTreeEntry oldTreeEntry = oldValue.getTreeEntry();
+        final GitTreeEntry newTreeEntry = newValue.getTreeEntry();
+        if (oldTreeEntry == null || newTreeEntry == null) {
+          throw new IllegalStateException("Tree entry can be null only for revision tree root.");
+        }
+        compare = oldValue.getTreeEntry().compareTo(newValue.getTreeEntry());
       }
-      if (!newEntry.equals(oldEntry)) {
-        final String fullPath = StringHelper.joinPath(compareEntry.path, newEntry.getFileName());
-        final GitLogPair logEntry = new GitLogPair(oldEntry, newEntry);
-        if (newEntry.isDirectory()) {
-          final GitLogPair oldChange = changes.put(fullPath, logEntry);
-          if (oldChange != null) {
-            changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
-          }
-          queue.add(new TreeCompareEntry(fullPath, ((oldEntry != null) && oldEntry.isDirectory()) ? oldEntry : null, newEntry));
-        } else if (oldEntry == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
-          final GitLogPair oldChange = changes.put(fullPath, logEntry);
-          if (oldChange != null) {
-            changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
+      if (compare < 0) {
+        if (oldValue == null) {
+          throw new IllegalStateException();
+        }
+        final String fullPath = StringHelper.joinPath(compareEntry.path, oldValue.getFileName());
+        final GitLogPair oldChange = changes.put(fullPath, new GitLogPair(oldValue, null));
+        if (oldChange != null) {
+          changes.put(fullPath, new GitLogPair(oldValue, oldChange.getNewEntry()));
+        }
+        oldValue = oldIter.hasNext() ? oldIter.next() : null;
+      } else if (compare > 0) {
+        if (newValue == null) {
+          throw new IllegalStateException();
+        }
+        final String fullPath = StringHelper.joinPath(compareEntry.path, newValue.getFileName());
+        final GitLogPair oldChange = changes.put(fullPath, new GitLogPair(null, newValue));
+        if (oldChange != null) {
+          changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newValue));
+        }
+        if (newValue.isDirectory()) {
+          queue.add(new TreeCompareEntry(fullPath, null, newValue));
+        }
+        newValue = newIter.hasNext() ? newIter.next() : null;
+      } else if (compare == 0) {
+        if (!oldValue.equals(newValue)) {
+          final String fullPath = StringHelper.joinPath(compareEntry.path, newValue.getFileName());
+          final GitLogPair logEntry = new GitLogPair(oldValue, newValue);
+          if (newValue.isDirectory()) {
+            final GitLogPair oldChange = changes.put(fullPath, logEntry);
+            if (oldChange != null) {
+              changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newValue));
+            }
+            queue.add(new TreeCompareEntry(fullPath, (oldValue.isDirectory()) ? oldValue : null, newValue));
+          } else if (logEntry.isContentModified() || logEntry.isPropertyModified()) {
+            final GitLogPair oldChange = changes.put(fullPath, logEntry);
+            if (oldChange != null) {
+              changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newValue));
+            }
           }
         }
+        oldValue = oldIter.hasNext() ? oldIter.next() : null;
+        newValue = newIter.hasNext() ? newIter.next() : null;
       }
     }
-    while (oldEntries.hasNext()) {
-      final GitFile entry = oldEntries.next();
-      final String fullPath = StringHelper.joinPath(compareEntry.path, entry.getFileName());
-      final GitLogPair oldChange = changes.put(fullPath, new GitLogPair(entry, null));
-      if (oldChange != null) {
-        changes.put(fullPath, new GitLogPair(entry, oldChange.getNewEntry()));
-      }
-    }
+  }
+
+  @NotNull
+  private static Iterator<GitFile> getIterator(@Nullable GitFile tree) throws IOException, SVNException {
+    return tree != null ? tree.getEntries().iterator() : Collections.emptyIterator();
   }
 
   @NotNull
