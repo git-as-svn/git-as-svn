@@ -18,7 +18,7 @@ public final class ChangeHelper {
   }
 
   @NotNull
-  public static Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException, SVNException {
+  public static Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
     final Map<String, GitLogPair> changes = new HashMap<>();
     final GitLogPair logEntry = new GitLogPair(oldTree, newTree);
     if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
@@ -27,12 +27,12 @@ public final class ChangeHelper {
     final Queue<TreeCompareEntry> queue = new ArrayDeque<>();
     queue.add(new TreeCompareEntry("", oldTree, newTree));
     while (!queue.isEmpty()) {
-      collectChanges(changes, queue, queue.remove());
+      collectChanges(changes, queue, queue.remove(), fullRemoved);
     }
     return changes;
   }
 
-  private static void collectChanges(@NotNull Map<String, GitLogPair> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry) throws IOException, SVNException {
+  private static void collectChanges(@NotNull Map<String, GitLogPair> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry, boolean fullRemoved) throws IOException, SVNException {
     for (GitLogPair pair : compareEntry) {
       final GitFile newEntry = pair.getNewEntry();
       final GitFile oldEntry = pair.getOldEntry();
@@ -62,6 +62,12 @@ public final class ChangeHelper {
           changes.put(fullPath, new GitLogPair(oldEntry, oldChange.getNewEntry()));
         }
       }
+      if (fullRemoved && oldEntry != null && oldEntry.isDirectory()) {
+        final String fullPath = StringHelper.joinPath(compareEntry.path, oldEntry.getFileName());
+        if (newEntry == null || (!newEntry.isDirectory())) {
+          queue.add(new TreeCompareEntry(fullPath, oldEntry, null));
+        }
+      }
     }
   }
 
@@ -73,7 +79,7 @@ public final class ChangeHelper {
     @NotNull
     private final Iterable<GitFile> newTree;
 
-    private TreeCompareEntry(@NotNull String path, @Nullable GitFile oldTree, @NotNull GitFile newTree) throws IOException, SVNException {
+    private TreeCompareEntry(@NotNull String path, @Nullable GitFile oldTree, @Nullable GitFile newTree) throws IOException, SVNException {
       this.path = path;
       this.oldTree = getIterable(oldTree);
       this.newTree = getIterable(newTree);

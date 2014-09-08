@@ -73,7 +73,7 @@ public class GitRevision implements VcsRevision {
     final GitFile newTree = new GitFile(repo, commit, revision);
 
     final Map<String, GitLogEntry> changes = new TreeMap<>();
-    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree).entrySet()) {
+    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
       changes.put(entry.getKey(), new GitLogEntry(entry.getValue(), renames));
     }
     return changes;

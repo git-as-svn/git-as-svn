@@ -179,7 +179,7 @@ public class GitRepository implements VcsRepository {
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
     final Map<String, VcsCopyFrom> renames = renameDetection ? collectRename(oldTree, newTree, revisionId - 1) : Collections.emptyMap();
-    final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree);
+    final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree, true);
     for (Map.Entry<String, GitLogPair> entry : changes.entrySet()) {
       lastUpdates.compute(entry.getKey(), (key, list) -> {
         final IntList result = list == null ? new IntList() : list;

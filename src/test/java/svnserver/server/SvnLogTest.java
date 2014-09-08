@@ -217,7 +217,7 @@ public class SvnLogTest {
       );
 
       // svn log from revision before delete
-      checkLog(repo, delete - 1, 0, "/foo.txt",
+      checkLog(repo, delete - 1, 0, "/foo/bar.txt",
           new LogEntry(2, "Modify file: /foo/bar.txt", "M /foo/bar.txt"),
           new LogEntry(1, "Create directory: /foo", "A /foo", "A /foo/bar.txt")
       );
