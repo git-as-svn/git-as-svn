@@ -82,18 +82,26 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private final boolean startEmpty;
     @NotNull
     private final String[] lockToken;
-    /**
-     * TODO: issue #32, depth.
-     */
     @NotNull
-    private final String depth;
+    private final Depth depth;
 
     public SetPathParams(@NotNull String path, int rev, boolean startEmpty, @NotNull String[] lockToken, @NotNull String depth) {
       this.path = path;
       this.rev = rev;
       this.startEmpty = startEmpty;
       this.lockToken = lockToken;
-      this.depth = depth;
+      this.depth = Depth.parse(depth);
+    }
+
+    @Override
+    public String toString() {
+      return "SetPathParams{" +
+          "path='" + path + '\'' +
+          ", rev=" + rev +
+          ", startEmpty=" + startEmpty +
+          ", lockToken=" + Arrays.toString(lockToken) +
+          ", depth=" + depth +
+          '}';
     }
   }
 
@@ -143,11 +151,13 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       context.push(new CheckPermissionStep(this::complete));
     }
 
-    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
+    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
       context.push(this::reportCommand);
       final String wcPath = wcPath(args.path);
+      final SetPathParams prev = paths.putIfAbsent(wcPath, args);
+      if (prev != null)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "'set-path' called twice for " + args.path));
       forcePath(wcPath);
-      paths.put(wcPath, args);
     }
 
     private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException {
@@ -174,6 +184,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
+      final SetPathParams rootParams = paths.get(wcPath(""));
+      if (rootParams == null)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA));
+
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -182,8 +196,8 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd();
 
       final String tokenId = createTokenId();
-      final SetPathParams rootParams = paths.get(wcPath(""));
-      int rootRev = rootParams == null ? rev : rootParams.rev;
+
+      final int rootRev = rootParams.rev;
       writer
           .listBegin()
           .word("open-root")
@@ -198,7 +212,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final String targetPath = params.getTargetPath();
       final VcsFile newFile = context.getFile(rev, targetPath == null ? fullPath : targetPath);
       final VcsFile oldFile = getPrevFile(context, path, context.getFile(rootRev, fullPath));
-      updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty());
+      updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty(), rootParams.depth, params.getDepth());
       writer
           .listBegin()
           .word("close-dir")
@@ -235,7 +249,14 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return "t" + String.valueOf(++lastTokenId);
     }
 
-    private void updateDir(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
+    private void updateDir(@NotNull SessionContext context,
+                           @NotNull String wcPath,
+                           @Nullable VcsFile oldFile,
+                           @NotNull VcsFile newFile,
+                           @NotNull String parentTokenId,
+                           boolean rootDir,
+                           @NotNull Depth wcDepth,
+                           @NotNull Depth requestedDepth) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId;
       if (rootDir) {
@@ -249,6 +270,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         }
       }
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
+
+      final Depth.Action dirAction = wcDepth.determineAction(requestedDepth, true);
+      final Depth.Action fileAction = wcDepth.determineAction(requestedDepth, false);
+
       final Map<String, VcsFile> oldEntries;
       if (oldFile != null) {
         oldEntries = new HashMap<>();
@@ -262,13 +287,18 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       for (VcsFile newEntry : newFile.getEntries()) {
         final String entryPath = joinPath(wcPath, newEntry.getFileName());
         final VcsFile oldEntry = getPrevFile(context, entryPath, oldEntries.remove(newEntry.getFileName()));
-        if (!forced.remove(entryPath)) {
-          if (newEntry.equals(oldEntry)) {
-            // Same entry.
-            continue;
-          }
-        }
-        updateEntry(context, entryPath, oldEntry, newEntry, tokenId, false);
+
+        final Depth.Action action = newEntry.isDirectory() ? dirAction : fileAction;
+
+        if (!forced.remove(entryPath) && newEntry.equals(oldEntry) && action == Depth.Action.Normal)
+          // Same entry.
+          continue;
+
+        if (action == Depth.Action.Skip)
+          continue;
+
+        final Depth entryDepth = getWcDepth(entryPath, wcDepth);
+        updateEntry(context, entryPath, action == Depth.Action.Upgrade ? null : oldEntry, newEntry, tokenId, false, entryDepth, requestedDepth.deepen());
       }
       for (VcsFile entry : oldEntries.values()) {
         final String entryPath = joinPath(wcPath, entry.getFileName());
@@ -385,34 +415,49 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 
+    @NotNull
+    private Depth getWcDepth(@NotNull String wcPath, @NotNull Depth parentWcDepth) {
+      final SetPathParams params = paths.get(wcPath);
+      if (params == null)
+        return parentWcDepth.deepen();
+
+      return params.depth;
+    }
+
     @Nullable
     private VcsFile getPrevFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile) throws IOException, SVNException {
-      if (deletedPaths.contains(wcPath)) {
+      if (deletedPaths.contains(wcPath))
         return null;
-      }
+
       final SetPathParams pathParams = paths.get(wcPath);
-      if (pathParams == null) {
+      if (pathParams == null)
         return oldFile;
-      }
-      if (pathParams.startEmpty || (pathParams.rev == 0)) {
+
+      if (pathParams.startEmpty || pathParams.rev == 0)
         return null;
-      }
+
       return context.getFile(pathParams.rev, wcPath);
     }
 
-    private void updateEntry(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile, @Nullable VcsFile newFile, @NotNull String parentTokenId, boolean rootDir) throws IOException, SVNException {
-      if (newFile == null) {
-        if (oldFile != null) {
+    private void updateEntry(@NotNull SessionContext context,
+                             @NotNull String wcPath,
+                             @Nullable VcsFile oldFile,
+                             @Nullable VcsFile newFile,
+                             @NotNull String parentTokenId,
+                             boolean rootDir,
+                             @NotNull Depth wcDepth,
+                             @NotNull Depth requestedDepth) throws IOException, SVNException {
+      if (oldFile != null)
+        if (newFile == null || !oldFile.getKind().equals(newFile.getKind()))
           removeEntry(context, wcPath, oldFile.getLastChange().getId(), parentTokenId);
-        }
-      } else if ((oldFile != null) && (!newFile.getKind().equals(oldFile.getKind()))) {
-        removeEntry(context, wcPath, oldFile.getLastChange().getId(), parentTokenId);
-        updateEntry(context, wcPath, null, newFile, parentTokenId, rootDir);
-      } else if (newFile.isDirectory()) {
-        updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir);
-      } else {
+
+      if (newFile == null)
+        return;
+
+      if (newFile.isDirectory())
+        updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir, wcDepth, requestedDepth);
+      else
         updateFile(context, wcPath, oldFile, newFile, parentTokenId);
-      }
     }
 
     private void removeEntry(@NotNull SessionContext context, @NotNull String wcPath, int rev, @NotNull String parentTokenId) throws IOException, SVNException {

@@ -213,7 +213,7 @@ public class SvnServer extends Thread {
         .word("absent-entries")  // We support absent-dir and absent-dir editor commands
             //.word("commit-revprops") // We don't currently have _any_ revprop support
             //.word("mergeinfo")       // Nope, not yet
-            //.word("depth")           // Nope, not yet
+        .word("depth")
         .word("inherited-props")       // Need for .gitattributes and .gitignore
         .listEnd()
         .listEnd()

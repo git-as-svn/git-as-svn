@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.Locale;
 
 /**
  * Delta parameters.
@@ -82,32 +81,9 @@ public class DeltaParams {
     return textDeltas;
   }
 
-  /**
-   * TODO: issue #32.
-   */
   @NotNull
   public Depth getDepth() {
     return depth;
   }
 
-  public static enum Depth {
-    Exclude,
-    Unknown,
-    Empty,
-    Files,
-    Immediates,
-    Infinity;
-
-    @NotNull
-    public static Depth parse(@NotNull String depthStr, boolean recurse, @NotNull Depth nonRecurse) {
-      if (depthStr.isEmpty())
-        return recurse ? Infinity : nonRecurse;
-
-      for (Depth depth : values())
-        if (depth.name().toLowerCase(Locale.ENGLISH).equals(depthStr))
-          return depth;
-
-      return Unknown;
-    }
-  }
 }
