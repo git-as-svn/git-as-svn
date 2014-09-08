@@ -17,7 +17,8 @@ public class GitAttributesTest {
   public void testParseAttributes() {
     final GitProperty attr = new GitAttributes(
         "# Gradle\n" +
-            "*.gradle\t\ttext eol=native" +
+            "*.gradle\t\ttext eol=native\n" +
+            "*.jpg\tbinary\n" +
             "\n" +
             "# Java\n" +
             "\t*.java\t\t\teol=native  text\n" +
@@ -30,6 +31,7 @@ public class GitAttributesTest {
     Assert.assertEquals(props.size(), 1);
     Assert.assertEquals(props.get(SVNProperty.INHERITABLE_AUTO_PROPS),
         "*.gradle = svn:eol-style=native\n" +
+            "*.jpg = svn:mime-type=application/octet-stream\n" +
             "*.java = svn:eol-style=native\n" +
             "*.properties = svn:eol-style=native\n" +
             "*.py = svn:eol-style=native\n" +
