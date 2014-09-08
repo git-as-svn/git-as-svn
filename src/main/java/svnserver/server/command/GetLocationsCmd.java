@@ -1,6 +1,8 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsCopyFrom;
@@ -51,10 +53,15 @@ public final class GetLocationsCmd extends BaseCmd<GetLocationsCmd.Params> {
     Arrays.sort(sortedRevs);
     String fullPath = context.getRepositoryPath(args.path);
     int lastChange = context.getRepository().getLastChange(fullPath, args.pegRev);
+    if (lastChange < 0) {
+      writer.word("done");
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: " + fullPath + "@" + args.pegRev));
+    }
     for (int i = sortedRevs.length - 1; i >= 0; --i) {
       int revision = sortedRevs[i];
       if (revision > args.pegRev) {
-        continue;
+        writer.word("done");
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: " + fullPath + "@" + args.pegRev + " at revision " + revision));
       }
       while ((revision < lastChange) && (lastChange >= 0)) {
         int change = context.getRepository().getLastChange(fullPath, lastChange - 1);

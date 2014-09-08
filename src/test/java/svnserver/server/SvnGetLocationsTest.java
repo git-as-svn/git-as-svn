@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -80,7 +81,19 @@ public class SvnGetLocationsTest {
       checkGetLocations(repo, "/baz/test.txt", last, 1, "/foo/test.txt");
       checkGetLocations(repo, "/baz/test.txt", last, 0, null);
 
-      checkGetLocations(repo, "/bar/test.txt", 3, 4, null);
+      try {
+        checkGetLocations(repo, "/bar/test.xml", 3, 3, null);
+        Assert.fail();
+      } catch (SVNException e) {
+        Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_NOT_FOUND);
+      }
+      try {
+        checkGetLocations(repo, "/bar/test.txt", 3, 4, null);
+        Assert.fail();
+      } catch (SVNException e) {
+        Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_NOT_FOUND);
+      }
+
       checkGetLocations(repo, "/bar/test.txt", 3, 3, "/bar/test.txt");
       checkGetLocations(repo, "/bar/test.txt", 3, 2, "/bar/test.txt");
       checkGetLocations(repo, "/bar/test.txt", 3, 1, "/foo/test.txt");
