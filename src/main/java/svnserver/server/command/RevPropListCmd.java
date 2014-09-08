@@ -43,7 +43,7 @@ public class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
         .listBegin()
         .word("success")
         .listBegin()
-        .writeMap(revision.getProperties())
+        .writeMap(revision.getProperties(true))
         .listEnd()
         .listEnd();
   }

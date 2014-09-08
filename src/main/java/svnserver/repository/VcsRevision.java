@@ -17,7 +17,7 @@ public interface VcsRevision {
   int getId();
 
   @NotNull
-  Map<String, String> getProperties();
+  Map<String, String> getProperties(boolean includeInternalProps);
 
   long getDate();
 

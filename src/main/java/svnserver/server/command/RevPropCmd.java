@@ -47,7 +47,7 @@ public final class RevPropCmd extends BaseCmd<RevPropCmd.Params> {
         .word("success")
         .listBegin()
         .listBegin();
-    final String propValue = revision.getProperties().get(args.propName);
+    final String propValue = revision.getProperties(true).get(args.propName);
     if (propValue != null) {
       writer.string(propValue);
     }

@@ -59,20 +59,21 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
      * TODO: issue #26.
      */
     private final boolean includeMergedRevisions;
-    /**
-     * TODO: issue #26.
-     */
-    @NotNull
-    private final String revpropsMode;
-    /**
-     * TODO: issue #26.
-     */
-    @NotNull
-    private final String[] revprops;
 
-    public Params(@NotNull String[] targetPath, @NotNull int[] startRev, @NotNull int[] endRev, boolean changedPaths,
-                  boolean strictNode, int limit, boolean includeMergedRevisions,
-                  @NotNull String revpropsMode, @NotNull String[] revprops) {
+    public Params(@NotNull String[] targetPath,
+                  @NotNull int[] startRev,
+                  @NotNull int[] endRev,
+                  boolean changedPaths,
+                  boolean strictNode,
+                  int limit,
+                  boolean includeMergedRevisions,
+                  /**
+                   * Broken-minded SVN feature we will unlikely to support ever.
+                   */
+                  @SuppressWarnings("UnusedParameters")
+                  @NotNull String revpropsMode,
+                  @SuppressWarnings("UnusedParameters")
+                  @NotNull String[] revprops) {
       this.targetPath = targetPath;
       this.startRev = startRev;
       this.endRev = endRev;
@@ -80,8 +81,6 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       this.strictNode = strictNode;
       this.limit = limit;
       this.includeMergedRevisions = includeMergedRevisions;
-      this.revpropsMode = revpropsMode;
-      this.revprops = revprops;
     }
   }
 
@@ -144,6 +143,9 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
               .separator();
         }
       }
+
+      final Map<String, String> revProps = revisionInfo.getProperties(false);
+
       writer.listEnd()
           .number(revisionInfo.getId())
           .listBegin().stringNullable(revisionInfo.getAuthor()).listEnd()
@@ -151,9 +153,8 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
           .listBegin().stringNullable(revisionInfo.getLog()).listEnd()
           .bool(false)
           .bool(false)
-          .number(0)
-          .listBegin()
-          .listEnd()
+          .number(revProps.size())
+          .writeMap(revProps)
           .listEnd()
           .separator();
     }

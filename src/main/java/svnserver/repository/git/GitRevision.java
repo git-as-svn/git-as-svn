@@ -81,11 +81,13 @@ public class GitRevision implements VcsRevision {
 
   @NotNull
   @Override
-  public Map<String, String> getProperties() {
+  public Map<String, String> getProperties(boolean includeInternalProps) {
     final Map<String, String> props = new HashMap<>();
-    putProperty(props, SVNRevisionProperty.AUTHOR, getAuthor());
-    putProperty(props, SVNRevisionProperty.LOG, getLog());
-    putProperty(props, SVNRevisionProperty.DATE, getDateString());
+    if (includeInternalProps) {
+      putProperty(props, SVNRevisionProperty.AUTHOR, getAuthor());
+      putProperty(props, SVNRevisionProperty.LOG, getLog());
+      putProperty(props, SVNRevisionProperty.DATE, getDateString());
+    }
     if (commit != null) {
       props.put(SvnConstants.PROP_GIT, commit.name());
     }
