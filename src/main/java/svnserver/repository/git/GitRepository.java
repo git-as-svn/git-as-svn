@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitRepository implements VcsRepository {
   private static final int REPORT_DELAY = 2500;
+  private static final int MARK_NO_FILE = -1;
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
@@ -177,12 +178,15 @@ public class GitRepository implements VcsRepository {
     final GitFile oldTree = prevCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, prevCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
-    final Map<String, String> renames = renameDetection ? collectRename(oldTree, newTree) : Collections.emptyMap();
+    final Map<String, VcsCopyFrom> renames = renameDetection ? collectRename(oldTree, newTree, revisionId - 1) : Collections.emptyMap();
     final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree);
-    for (String path : changes.keySet()) {
-      lastUpdates.compute(path, (key, list) -> {
+    for (Map.Entry<String, GitLogPair> entry : changes.entrySet()) {
+      lastUpdates.compute(entry.getKey(), (key, list) -> {
         final IntList result = list == null ? new IntList() : list;
         result.add(revisionId);
+        if (entry.getValue().getNewEntry() == null) {
+          result.add(MARK_NO_FILE);
+        }
         return result;
       });
     }
@@ -194,7 +198,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private Map<String, String> collectRename(@NotNull GitFile oldTree, @NotNull GitFile newTree) throws IOException {
+  private Map<String, VcsCopyFrom> collectRename(@NotNull GitFile oldTree, @NotNull GitFile newTree, int revision) throws IOException {
     final GitObject<ObjectId> oldTreeId = oldTree.getObjectId();
     final GitObject<ObjectId> newTreeId = newTree.getObjectId();
     if (oldTreeId == null || newTreeId == null || !Objects.equals(oldTreeId.getRepo(), newTreeId.getRepo())) {
@@ -208,10 +212,15 @@ public class GitRepository implements VcsRepository {
     final RenameDetector rd = new RenameDetector(repository);
     rd.addAll(DiffEntry.scan(tw));
 
-    final Map<String, String> result = new HashMap<>();
+    final Map<String, VcsCopyFrom> result = new HashMap<>();
     for (DiffEntry diff : rd.compute(tw.getObjectReader(), null)) {
       if (diff.getScore() >= rd.getRenameScore()) {
-        result.put(StringHelper.normalize(diff.getNewPath()), StringHelper.normalize(diff.getOldPath()));
+        final String oldPath = StringHelper.normalize(diff.getOldPath());
+        final int lastChange = getLastChange(oldPath, revision);
+        if (lastChange <= 0) {
+          throw new IllegalStateException();
+        }
+        result.put(StringHelper.normalize(diff.getNewPath()), new VcsCopyFrom(lastChange, oldPath));
       }
     }
     return result;
@@ -389,18 +398,24 @@ public class GitRepository implements VcsRepository {
     return new GitDeltaConsumer(this, (GitFile) file);
   }
 
+  @Override
   public int getLastChange(@NotNull String nodePath, int beforeRevision) {
     if (nodePath.isEmpty()) return beforeRevision;
     final IntList revs = this.lastUpdates.get(nodePath);
     if (revs != null) {
+      int prev = 0;
       for (int i = revs.size() - 1; i >= 0; --i) {
         final int rev = revs.get(i);
-        if (rev <= beforeRevision) {
+        if ((rev >= 0) && (rev <= beforeRevision)) {
+          if (prev == MARK_NO_FILE) {
+            return MARK_NO_FILE;
+          }
           return rev;
         }
+        prev = rev;
       }
     }
-    throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + nodePath + "@" + beforeRevision);
+    return MARK_NO_FILE;
   }
 
   @NotNull

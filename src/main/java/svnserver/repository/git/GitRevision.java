@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.SvnConstants;
+import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsRevision;
 import svnserver.repository.git.prop.GitProperty;
 
@@ -32,12 +33,12 @@ public class GitRevision implements VcsRevision {
   @Nullable
   private final RevCommit prevCommit;
   @NotNull
-  private final Map<String, String> renames;
+  private final Map<String, VcsCopyFrom> renames;
 
   private final long date;
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, String> renames, @Nullable RevCommit prevCommit, @Nullable RevCommit commit, int commitTimeSec) {
+  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, VcsCopyFrom> renames, @Nullable RevCommit prevCommit, @Nullable RevCommit commit, int commitTimeSec) {
     this.repo = repo;
     this.revision = revision;
     this.renames = renames;
@@ -73,7 +74,7 @@ public class GitRevision implements VcsRevision {
 
     final Map<String, GitLogEntry> changes = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree).entrySet()) {
-      changes.put(entry.getKey(), new GitLogEntry(revision, entry.getValue(), renames));
+      changes.put(entry.getKey(), new GitLogEntry(entry.getValue(), renames));
     }
     return changes;
   }
@@ -135,7 +136,7 @@ public class GitRevision implements VcsRevision {
 
   @Nullable
   @Override
-  public String getCopyFromPath(@NotNull String fullPath) {
+  public VcsCopyFrom getCopyFrom(@NotNull String fullPath) {
     return renames.get(fullPath);
   }
 }

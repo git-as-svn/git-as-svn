@@ -5,12 +5,16 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * Change current path in repository.
@@ -98,22 +102,11 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       sendError(writer, SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + Math.max(startRev, endRev)));
       return;
     }
-
-    final List<String> targetPaths = new ArrayList<>();
-    for (String target : args.targetPath) {
-      String fullTargetPath = context.getRepositoryPath(target);
-      if (context.getRepository().getRevisionInfo(startRev).getFile(fullTargetPath) == null) {
-        writer.word("done");
-        sendError(writer, SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision " + startRev + ", path: " + fullTargetPath));
-      }
-      targetPaths.add(fullTargetPath);
-    }
-
     final List<VcsRevision> log;
     if (startRev >= endRev) {
-      log = getLog(context, args, targetPaths, startRev, endRev, args.limit);
+      log = getLog(context, args, startRev, endRev, args.limit);
     } else {
-      final List<VcsRevision> logReverse = getLog(context, args, targetPaths, endRev, startRev, -1);
+      final List<VcsRevision> logReverse = getLog(context, args, endRev, startRev, -1);
       final int minIndex = args.limit <= 0 ? 0 : Math.max(0, logReverse.size() - args.limit);
       log = new ArrayList<>(logReverse.size() - minIndex);
       for (int i = logReverse.size() - 1; i >= minIndex; i--) {
@@ -136,10 +129,10 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
               .string(entry.getKey()) // Path
               .word(change)
               .listBegin();
-          final String copyFromPath = logEntry.getCopyFromPath();
-          if (copyFromPath != null) {
-            writer.string(copyFromPath);
-            writer.number(logEntry.getCopyFromRev());
+          final VcsCopyFrom copyFrom = logEntry.getCopyFrom();
+          if (copyFrom != null) {
+            writer.string(copyFrom.getPath());
+            writer.number(copyFrom.getRevision());
           }
           writer.listEnd()
               .listBegin()
@@ -174,40 +167,53 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         .listEnd();
   }
 
-  private List<VcsRevision> getLog(@NotNull SessionContext context, @NotNull Params args, List<String> targetPaths, int endRev, int startRev, int limit) throws IOException, SVNException {
-    int logLimit = limit;
+  private List<VcsRevision> getLog(@NotNull SessionContext context, @NotNull Params args, int endRev, int startRev, int limit) throws IOException, SVNException {
+    final List<VcsCopyFrom> targetPaths = new ArrayList<>();
+    int revision = -1;
+    for (String target : args.targetPath) {
+      final String fullTargetPath = context.getRepositoryPath(target);
+      final int lastChange = context.getRepository().getLastChange(fullTargetPath, endRev);
+      if (lastChange >= startRev) {
+        targetPaths.add(new VcsCopyFrom(lastChange, fullTargetPath));
+        revision = Math.max(revision, lastChange);
+      }
+    }
     final List<VcsRevision> result = new ArrayList<>();
-    // todo: Надо смотреть только те ревизии, в которых изменились опрашиваемые файлы.
-    for (int rev = endRev; rev >= startRev; rev--) {
-      if (targetPaths.isEmpty())
-        break;
+    int logLimit = limit;
+    while (revision >= startRev) {
+      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
+      result.add(revisionInfo);
+      if (--logLimit == 0) break;
 
-      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(rev);
-      final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
-      if (!hasTargets(changes, targetPaths)) continue;
-
-      final ListIterator<String> iter = targetPaths.listIterator();
+      int nextRevision = -1;
+      final ListIterator<VcsCopyFrom> iter = targetPaths.listIterator();
       while (iter.hasNext()) {
-        final String path = revisionInfo.getCopyFromPath(iter.next());
-        if (path != null) {
-          if (args.strictNode) {
-            iter.remove();
+        final VcsCopyFrom entry = iter.next();
+        if (revision == entry.getRevision()) {
+          final int lastChange = context.getRepository().getLastChange(entry.getPath(), revision - 1);
+          if (lastChange >= revision) {
+            throw new IllegalStateException();
+          }
+          if (lastChange < 0) {
+            if (args.strictNode) {
+              iter.remove();
+              continue;
+            }
+            final VcsCopyFrom copyFrom = revisionInfo.getCopyFrom(entry.getPath());
+            if (copyFrom != null) {
+              iter.set(copyFrom);
+              nextRevision = Math.max(nextRevision, copyFrom.getRevision());
+            } else {
+              iter.remove();
+            }
           } else {
-            iter.set(path);
+            iter.set(new VcsCopyFrom(lastChange, entry.getPath()));
+            nextRevision = Math.max(nextRevision, lastChange);
           }
         }
       }
-
-      result.add(revisionInfo);
-      if (--logLimit == 0) break;
+      revision = nextRevision;
     }
     return result;
-  }
-
-  private static boolean hasTargets(Map<String, ? extends VcsLogEntry> changes, Collection<String> targetPaths) {
-    for (String targetPath : targetPaths) {
-      if (changes.containsKey(targetPath) || targetPath.isEmpty()) return true;
-    }
-    return false;
   }
 }

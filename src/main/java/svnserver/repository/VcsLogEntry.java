@@ -23,7 +23,5 @@ public interface VcsLogEntry {
   boolean isPropertyModified() throws IOException, SVNException;
 
   @Nullable
-  String getCopyFromPath();
-
-  int getCopyFromRev();
+  VcsCopyFrom getCopyFrom();
 }

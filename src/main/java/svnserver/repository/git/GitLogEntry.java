@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsLogEntry;
 
 import java.io.IOException;
@@ -19,13 +20,11 @@ public class GitLogEntry implements VcsLogEntry {
   @NotNull
   private final GitLogPair pair;
   @Nullable
-  private final String copyPath;
-  private final int copyRev;
+  private final VcsCopyFrom copyFrom;
 
-  public GitLogEntry(int rev, @NotNull GitLogPair pair, @NotNull Map<String, String> renames) {
+  public GitLogEntry(@NotNull GitLogPair pair, @NotNull Map<String, VcsCopyFrom> renames) {
     this.pair = pair;
-    this.copyPath = pair.getNewEntry() != null ? renames.get(pair.getNewEntry().getFullPath()) : null;
-    this.copyRev = copyPath == null ? -1 : rev - 1;
+    this.copyFrom = pair.getNewEntry() != null ? renames.get(pair.getNewEntry().getFullPath()) : null;
   }
 
   @Override
@@ -56,13 +55,8 @@ public class GitLogEntry implements VcsLogEntry {
 
   @Nullable
   @Override
-  public String getCopyFromPath() {
-    return copyPath;
-  }
-
-  @Override
-  public int getCopyFromRev() {
-    return copyRev;
+  public VcsCopyFrom getCopyFrom() {
+    return copyFrom;
   }
 
   @Override

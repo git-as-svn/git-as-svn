@@ -39,5 +39,5 @@ public interface VcsRevision {
   Map<String, ? extends VcsLogEntry> getChanges() throws IOException, SVNException;
 
   @Nullable
-  String getCopyFromPath(@NotNull String fullPath);
+  VcsCopyFrom getCopyFrom(@NotNull String fullPath);
 }
