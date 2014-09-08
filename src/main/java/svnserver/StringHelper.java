@@ -47,7 +47,7 @@ public final class StringHelper {
   }
 
   @NotNull
-  private static String normalize(@NotNull String path) {
+  public static String normalize(@NotNull String path) {
     if (path.isEmpty()) return "";
     String result = path;
     if (result.charAt(0) != '/') {
