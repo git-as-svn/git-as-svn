@@ -84,7 +84,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
     SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
+    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
     final VcsFile fileInfo = info.getFile(fullPath);
     if (fileInfo == null || (!fileInfo.isDirectory())) {
       sendError(writer, 200009, "Directory not found");

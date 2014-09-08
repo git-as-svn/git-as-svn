@@ -71,7 +71,7 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
       return;
     }
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
+    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
     final VcsFile fileInfo = info.getFile(fullPath);
     if (fileInfo == null) {
       sendError(writer, 200009, "File not found");

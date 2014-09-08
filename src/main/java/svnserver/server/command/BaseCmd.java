@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.VcsSupplier;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
@@ -38,6 +39,10 @@ public abstract class BaseCmd<T> {
 
   protected int getRevision(int[] rev, int defaultRevision) {
     return rev.length > 0 ? rev[0] : defaultRevision;
+  }
+
+  protected int getRevision(int[] rev, @NotNull VcsSupplier<Integer> defaultRevision) throws IOException, SVNException {
+    return rev.length > 0 ? rev[0] : defaultRevision.get();
   }
 
   public static void sendError(@NotNull SvnServerWriter writer, @NotNull SVNErrorMessage errorMessage) throws IOException {
