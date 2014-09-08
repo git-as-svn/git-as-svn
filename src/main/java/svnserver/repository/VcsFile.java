@@ -32,7 +32,7 @@ public interface VcsFile {
   @NotNull
   InputStream openStream() throws IOException;
 
-  boolean isDirectory() throws IOException;
+  boolean isDirectory();
 
   @NotNull
   SVNNodeKind getKind() throws IOException;

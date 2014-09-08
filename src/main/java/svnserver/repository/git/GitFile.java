@@ -149,7 +149,7 @@ public class GitFile implements VcsFile {
   }
 
   @Override
-  public boolean isDirectory() throws IOException {
+  public boolean isDirectory() {
     return getKind().equals(SVNNodeKind.DIR);
   }
 

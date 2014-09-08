@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import svnserver.SvnTestServer;
 
 import java.io.File;
@@ -69,52 +70,107 @@ public final class DepthTest {
     checkout.run();
   }
 
+  private void update(@NotNull String path, @NotNull SVNDepth depth) throws SVNException {
+    final SvnUpdate update = factory.createUpdate();
+    update.setSingleTarget(SvnTarget.fromFile(new File(wc, path)));
+    update.setDepthIsSticky(true);
+    update.setRevision(SVNRevision.HEAD);
+    update.setDepth(depth);
+    update.run();
+  }
+
   @Test
   public void empty() throws IOException, SVNException {
-    checkout("/", SVNDepth.EMPTY);
+    checkout("", SVNDepth.EMPTY);
     Assert.assertFalse(new File(wc, "a").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "a/b/c/d").exists());
   }
 
   @Test
   public void emptySubdir() throws IOException, SVNException {
-    checkout("/a/b", SVNDepth.EMPTY);
+    checkout("a/b", SVNDepth.EMPTY);
     Assert.assertFalse(new File(wc, "c").exists());
     Assert.assertFalse(new File(wc, "e").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "c/d").exists());
+    Assert.assertTrue(new File(wc, "e").exists());
   }
 
   @Test
   public void emptySubdir2() throws IOException, SVNException {
-    checkout("/a/b/c", SVNDepth.EMPTY);
+    checkout("a/b/c", SVNDepth.EMPTY);
     Assert.assertFalse(new File(wc, "d").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "d").exists());
   }
 
   @Test
   public void infinity() throws IOException, SVNException {
-    checkout("/", SVNDepth.INFINITY);
+    checkout("", SVNDepth.INFINITY);
     Assert.assertTrue(new File(wc, "a/b/c/d").exists());
     Assert.assertTrue(new File(wc, "a/b/e").exists());
   }
 
   @Test
   public void infinitySubdir() throws IOException, SVNException {
-    checkout("/a", SVNDepth.INFINITY);
+    checkout("a", SVNDepth.INFINITY);
     Assert.assertTrue(new File(wc, "b/c/d").exists());
     Assert.assertTrue(new File(wc, "b/e").exists());
   }
 
   @Test
   public void files() throws IOException, SVNException {
-    checkout("/a/b", SVNDepth.FILES);
+    checkout("a/b", SVNDepth.FILES);
     Assert.assertFalse(new File(wc, "c").exists());
     Assert.assertTrue(new File(wc, "e").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "c/d").exists());
   }
 
   @Test
   public void immediates() throws IOException, SVNException {
-    checkout("/a/b", SVNDepth.IMMEDIATES);
+    checkout("a/b", SVNDepth.IMMEDIATES);
     Assert.assertTrue(new File(wc, "c").exists());
     Assert.assertFalse(new File(wc, "c/d").exists());
     Assert.assertTrue(new File(wc, "e").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "c/d").exists());
+  }
+
+  @Test
+  public void complex() throws IOException, SVNException {
+    checkout("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "a/b/c/d").exists());
+
+    update("a/b", SVNDepth.FILES);
+    Assert.assertFalse(new File(wc, "a/b/c").exists());
+    Assert.assertTrue(new File(wc, "a/b/e").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "a/b/c").exists());
+    Assert.assertTrue(new File(wc, "a/b/c/d").exists());
+
+    update("a/b", SVNDepth.EMPTY);
+    Assert.assertFalse(new File(wc, "a/b/c").exists());
+    Assert.assertFalse(new File(wc, "a/b/e").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "a/b/c/d").exists());
+    Assert.assertTrue(new File(wc, "a/b/e").exists());
+
+    update("a/b", SVNDepth.IMMEDIATES);
+    Assert.assertTrue(new File(wc, "a/b/c").exists());
+    Assert.assertTrue(new File(wc, "a/b/e").exists());
+    Assert.assertFalse(new File(wc, "a/b/c/d").exists());
+
+    update("", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "a/b/c/d").exists());
   }
 
   @AfterMethod
