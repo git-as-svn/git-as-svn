@@ -209,69 +209,11 @@ public class GitRepository implements VcsRepository {
    * @throws SVNException
    */
   public boolean cacheRevisions() throws IOException, SVNException {
-    final Map<ObjectId, RevisionNode> revisionChilds = new HashMap<>();
-    final Deque<ObjectId> revisionFirst = new ArrayDeque<>();
-    final Deque<ObjectId> revisionQueue = new ArrayDeque<>();
-    final RevWalk revWalk = new RevWalk(repository);
-    for (Map.Entry<String, RevCommit> entry : LayoutHelper.getBranches(repository).entrySet()) {
-      final RevCommit revCommit = entry.getValue();
-      revisionQueue.add(revCommit);
-      revisionChilds.put(revCommit.getId(), new RevisionNode(revCommit, revCommit.getCommitTime(), entry.getKey()));
+    final Map<String, RevCommit> branches = LayoutHelper.getBranches(repository);
+    final List<RevCommit> commits = LayoutHelper.getNewRevisions(repository, svnRevisionByHash.keySet(), branches.values());
+    for (RevCommit commit : commits) {
+      System.out.println(commit);
     }
-    while (!revisionQueue.isEmpty()) {
-      final ObjectId objectId = revisionQueue.remove();
-      final RevCommit commit = revWalk.parseCommit(objectId);
-      if (commit == null || svnRevisionByHash.containsKey(objectId)) {
-        revisionFirst.add(objectId);
-        continue;
-      }
-      if (commit.getParentCount() > 0) {
-        final RevisionNode commitNode = revisionChilds.get(objectId);
-        final String refName = commitNode.name;
-        for (RevCommit parent : commit.getParents()) {
-          final ObjectId parentId = parent.getId();
-          commitNode.parents.add(parentId);
-          revisionChilds.computeIfAbsent(parentId, (id) -> {
-            revisionQueue.add(parent);
-            return new RevisionNode(parentId, parent.getCommitTime(), refName);
-          }).childs.add(objectId);
-        }
-      } else {
-        revisionFirst.add(objectId);
-      }
-    }
-    while (!revisionChilds.isEmpty()) {
-      RevisionNode firstNode = null;
-      final Iterator<ObjectId> iter = revisionFirst.iterator();
-      while (iter.hasNext()) {
-        final RevisionNode commitNode = revisionChilds.get(iter.next());
-        if (commitNode == null) {
-          iter.remove();
-          continue;
-        }
-        if (!commitNode.parents.isEmpty()) {
-          iter.remove();
-        } else if (firstNode == null || firstNode.commitTime > commitNode.commitTime) {
-          firstNode = commitNode;
-        }
-      }
-      if (firstNode == null) {
-        System.out.println("!");
-        break;
-      }
-      revisionChilds.remove(firstNode.objectId);
-      System.out.println(firstNode.objectId + " " + firstNode.name);
-      for (ObjectId childId : firstNode.childs) {
-        final RevisionNode childNode = revisionChilds.get(childId);
-        if (childNode != null) {
-          childNode.parents.remove(firstNode.objectId);
-          if (childNode.parents.isEmpty()) {
-            revisionFirst.add(childId);
-          }
-        }
-      }
-    }
-    System.out.println("!");
     /*// Fast check.
     lock.readLock().lock();
     try {
