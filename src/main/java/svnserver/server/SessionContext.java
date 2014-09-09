@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
 import svnserver.auth.ACL;
 import svnserver.auth.User;
@@ -33,7 +34,7 @@ public final class SessionContext {
   @NotNull
   private final SvnServer server;
   @NotNull
-  private final String baseUrl;
+  private final SVNURL baseUrl;
   @NotNull
   private final Set<String> capabilities;
   @NotNull
@@ -46,14 +47,14 @@ public final class SessionContext {
                         @NotNull SvnServer server,
                         @NotNull String baseUrl,
                         @NotNull ClientInfo clientInfo,
-                        @NotNull User user) {
+                        @NotNull User user) throws SVNException {
     this.parser = parser;
     this.writer = writer;
     this.server = server;
     this.user = user;
-    this.baseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+    this.baseUrl = SVNURL.parseURIEncoded(baseUrl + (baseUrl.endsWith("/") ? "" : ""));
+    this.parent = getRelative(SVNURL.parseURIEncoded(clientInfo.getUrl()));
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
-    setParent(clientInfo.getUrl());
   }
 
   public boolean hasCapability(@NotNull String capability) {
@@ -61,24 +62,31 @@ public final class SessionContext {
   }
 
   public void setParent(@NotNull String parent) {
-    this.parent = baseUrl.equals(parent + '/') ? baseUrl : parent;
+    this.parent = parent;
   }
 
   @NotNull
   public String getRepositoryPath(@Nullable String localPath) throws SVNException {
     if ((localPath != null) && localPath.startsWith("svn://")) {
-      if (localPath.startsWith(baseUrl)) {
-        return localPath.substring(baseUrl.length() - 1);
-      }
-      if (baseUrl.endsWith("/") && localPath.equals(baseUrl.substring(0, baseUrl.length() - 1))) {
-        return "";
-      }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid URL: " + localPath + " (base: " + baseUrl + ")"));
+      return getRelative(SVNURL.parseURIEncoded(localPath));
     }
-    if (!parent.startsWith(baseUrl)) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Invalid current path prefix: " + parent + " (base: " + baseUrl + ")"));
+    return StringHelper.joinPath(parent, localPath);
+  }
+
+  private String getRelative(@NotNull SVNURL url) throws SVNException {
+    final String root = baseUrl.getPath();
+    final String path = url.getPath();
+    if (!path.startsWith(root)) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: " + path + " (base: " + root + ")"));
     }
-    return StringHelper.joinPath(parent.substring(baseUrl.length() - 1), localPath);
+    if (root.length() == path.length()) {
+      return "";
+    }
+    final boolean hasSlash = root.endsWith("/");
+    if ((!hasSlash) && (path.charAt(root.length()) != '/')) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: " + path + " (base: " + root + ")"));
+    }
+    return StringHelper.normalize(path.substring(root.length()));
   }
 
   @NotNull

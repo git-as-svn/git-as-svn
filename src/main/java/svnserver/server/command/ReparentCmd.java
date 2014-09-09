@@ -1,6 +1,8 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
 
@@ -34,8 +36,8 @@ public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
-    context.setParent(args.url);
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.setParent(SVNURL.parseURIEncoded(args.url).getPath());
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
