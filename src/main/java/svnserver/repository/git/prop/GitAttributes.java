@@ -17,30 +17,24 @@ import java.util.*;
  */
 public final class GitAttributes implements GitProperty {
   @NotNull
-  private static final String MIME_BINARY = "application/octet-stream";
-  @NotNull
   private final static String EOL_PREFIX = "eol=";
   @NotNull
-  private final static EolRule[] emptyRules = {};
+  private final static Rule[] emptyRules = {};
   @NotNull
   private final GitRuleDir eolDir;
 
-  private enum MimeType {
-    BINARY,
-    UNKNOWN, TEXT
-  }
-
-  private static abstract class Rule {
+  private static final class Rule {
     @NotNull
     private final String mask;
-
-    protected Rule(@NotNull String mask) {
-      this.mask = mask;
-    }
-
     @NotNull
-    public String getMask() {
-      return mask;
+    private final String prop;
+    @NotNull
+    private final String value;
+
+    protected Rule(@NotNull String mask, @NotNull String prop, @NotNull String value) {
+      this.mask = mask;
+      this.prop = prop;
+      this.value = value;
     }
 
     @Override
@@ -48,19 +42,19 @@ public final class GitAttributes implements GitProperty {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      Rule rule = (Rule) o;
-      return mask.equals(rule.mask);
+      final Rule rule = (Rule) o;
+      return mask.equals(rule.mask)
+          && prop.equals(rule.prop)
+          && value.equals(rule.value);
     }
 
     @Override
     public int hashCode() {
-      return mask.hashCode();
+      int result = mask.hashCode();
+      result = 31 * result + prop.hashCode();
+      result = 31 * result + value.hashCode();
+      return result;
     }
-
-    @NotNull
-    public abstract GitProperty createForChild();
-
-    public abstract void applyAutoprops(@NotNull Map<String, String> props);
   }
 
   /**
@@ -77,16 +71,13 @@ public final class GitAttributes implements GitProperty {
     final List<Rule> parsedRules = new ArrayList<>();
     for (String line : content.split("(?:#[^\n]*)?\n")) {
       final String[] tokens = line.trim().split("\\s+");
-      final MimeType mimeType = getMimeType(tokens);
+      final String mimeType = getMimeType(tokens);
       if (mimeType != null) {
-        parsedRules.add(new MimeRule(tokens[0], mimeType));
-        if (mimeType == MimeType.BINARY) {
-          continue;
-        }
+        parsedRules.add(new Rule(tokens[0], SVNProperty.MIME_TYPE, mimeType));
       }
       final String eol = getEol(tokens);
       if (eol != null) {
-        parsedRules.add(new EolRule(tokens[0], eol));
+        parsedRules.add(new Rule(tokens[0], SVNProperty.EOL_STYLE, eol));
       }
     }
     if (parsedRules.isEmpty()) return emptyRules;
@@ -94,20 +85,11 @@ public final class GitAttributes implements GitProperty {
   }
 
   @Nullable
-  private MimeType getMimeType(String[] tokens) {
+  private String getMimeType(String[] tokens) {
     for (int i = 1; i < tokens.length; ++i) {
       String token = tokens[i];
-      int index = token.indexOf('=');
-      switch (index < 0 ? token : token.substring(0, index)) {
-        case "+binary":
-        case "binary":
-          return MimeType.BINARY;
-        case "+text":
-        case "text":
-          return MimeType.TEXT;
-        case "-binary":
-        case "-text":
-          return MimeType.UNKNOWN;
+      if (token.startsWith("binary")) {
+        return "application/octet-stream";
       }
     }
     return null;
@@ -138,11 +120,11 @@ public final class GitAttributes implements GitProperty {
     if (eolDir.rules.length > 0) {
       final Map<String, String> autoprops = new LinkedHashMap<>();
       for (Rule rule : eolDir.rules) {
-        rule.applyAutoprops(autoprops);
+        autoprops.compute(rule.mask, (key, value) -> (value == null ? "" : value + "; ") + rule.prop + "=" + rule.value);
       }
       final StringBuilder sb = new StringBuilder();
       for (Map.Entry<String, String> entry : autoprops.entrySet()) {
-        sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+        sb.append(entry.getKey()).append(" = ").append(entry.getValue()).append('\n');
       }
       props.put(SVNProperty.INHERITABLE_AUTO_PROPS, sb.toString());
     }
@@ -168,87 +150,6 @@ public final class GitAttributes implements GitProperty {
     return eolDir.hashCode();
   }
 
-  private final static class EolRule extends Rule {
-    @NotNull
-    private final String eol;
-
-    private EolRule(@NotNull String mask, @NotNull String eol) {
-      super(mask);
-      this.eol = eol;
-    }
-
-    @NotNull
-    @Override
-    public GitProperty createForChild() {
-      return new GitEolFile(eol);
-    }
-
-    @Override
-    public void applyAutoprops(@NotNull Map<String, String> props) {
-      props.put(getMask() + " = " + SVNProperty.EOL_STYLE, eol);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      final EolRule eolRule = (EolRule) o;
-      return eol.equals(eolRule.eol);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + eol.hashCode();
-      return result;
-    }
-  }
-
-  private final static class MimeRule extends Rule {
-    @NotNull
-    private final MimeType mimeType;
-
-    private MimeRule(@NotNull String mask, @NotNull MimeType mimeType) {
-      super(mask);
-      this.mimeType = mimeType;
-    }
-
-    @NotNull
-    @Override
-    public GitProperty createForChild() {
-      return new GitMimeFile(mimeType);
-    }
-
-    @Override
-    public void applyAutoprops(@NotNull Map<String, String> props) {
-      final String key = getMask() + " = " + SVNProperty.MIME_TYPE;
-      if (mimeType == MimeType.BINARY) {
-        props.put(key, MIME_BINARY);
-      } else {
-        props.remove(key);
-      }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      final MimeRule mimeRule = (MimeRule) o;
-      return mimeType == mimeRule.mimeType;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + mimeType.hashCode();
-      return result;
-    }
-  }
-
   private static final class GitRuleDir implements GitProperty {
     @NotNull
     private final Rule[] rules;
@@ -267,7 +168,7 @@ public final class GitAttributes implements GitProperty {
       if (mode.getObjectType() == Constants.OBJ_BLOB) {
         for (Rule rule : rules) {
           if (FilenameUtils.wildcardMatch(name, rule.mask, IOCase.SENSITIVE)) {
-            return rule.createForChild();
+            return new GitRuleFile(rule);
           }
         }
         return null;
@@ -291,17 +192,17 @@ public final class GitAttributes implements GitProperty {
     }
   }
 
-  private static final class GitEolFile implements GitProperty {
+  private static final class GitRuleFile implements GitProperty {
     @NotNull
-    private final String eol;
+    private final Rule rule;
 
-    private GitEolFile(@NotNull String eol) {
-      this.eol = eol;
+    private GitRuleFile(@NotNull Rule rule) {
+      this.rule = rule;
     }
 
     @Override
     public void apply(@NotNull Map<String, String> props) {
-      props.put(SVNProperty.EOL_STYLE, eol);
+      props.put(rule.prop, rule.value);
     }
 
     @Nullable
@@ -315,52 +216,13 @@ public final class GitAttributes implements GitProperty {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      GitEolFile that = (GitEolFile) o;
-
-      return eol.equals(that.eol);
+      final GitRuleFile that = (GitRuleFile) o;
+      return rule.equals(that.rule);
     }
 
     @Override
     public int hashCode() {
-      return eol.hashCode();
-    }
-  }
-
-  private static final class GitMimeFile implements GitProperty {
-    @NotNull
-    private final MimeType mimeType;
-
-    private GitMimeFile(@NotNull MimeType mimeType) {
-      this.mimeType = mimeType;
-    }
-
-    @Override
-    public void apply(@NotNull Map<String, String> props) {
-      if (mimeType == MimeType.BINARY) {
-        props.put(SVNProperty.MIME_TYPE, MIME_BINARY);
-      } else {
-        props.remove(SVNProperty.MIME_TYPE);
-      }
-    }
-
-    @Nullable
-    @Override
-    public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
-      return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final GitMimeFile that = (GitMimeFile) o;
-      return mimeType.equals(that.mimeType);
-    }
-
-    @Override
-    public int hashCode() {
-      return mimeType.hashCode();
+      return rule.hashCode();
     }
   }
 }
