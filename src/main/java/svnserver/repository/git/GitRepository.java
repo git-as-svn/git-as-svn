@@ -20,10 +20,8 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.repository.*;
-import svnserver.repository.git.prop.GitAttributes;
-import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
-import svnserver.repository.git.prop.GitTortoise;
+import svnserver.repository.git.prop.PropertyMapping;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -251,17 +249,12 @@ public class GitRepository implements VcsRepository {
   }
 
   @Nullable
-  private GitProperty parseGitProperty(String fileName, GitObject<ObjectId> objectId) throws IOException, SVNException {
-    switch (fileName) {
-      case ".tgitconfig":
-        return cachedParseGitProperty(objectId, GitTortoise::new);
-      case ".gitattributes":
-        return cachedParseGitProperty(objectId, GitAttributes::new);
-      case ".gitignore":
-        return cachedParseGitProperty(objectId, GitIgnore::new);
-      default:
-        return null;
-    }
+  private GitProperty parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+    final PropertyMapping mapping = PropertyMapping.byFileName.get(fileName);
+    if (mapping == null)
+      return null;
+
+    return cachedParseGitProperty(objectId, mapping.getParser());
   }
 
   @Nullable
@@ -518,6 +511,12 @@ public class GitRepository implements VcsRepository {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
           message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
         }
+
+        message
+            .append("\n----------------\nsvn properties must be consistent with Git config files:\n");
+        for (@NotNull String configFile : PropertyMapping.byFileName.keySet())
+          message.append("  ").append(configFile).append('\n');
+
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
       }
     }

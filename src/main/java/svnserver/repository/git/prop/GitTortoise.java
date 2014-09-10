@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitTortoise implements GitProperty {
+final class GitTortoise implements GitProperty {
   @NotNull
   private final Map<String, String> tortoiseProps;
 
