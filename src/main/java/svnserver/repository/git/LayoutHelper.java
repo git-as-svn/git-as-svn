@@ -6,7 +6,9 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +24,16 @@ public class LayoutHelper {
   private static final String REF = "refs/git-as-svn/v1";
   @NotNull
   private static final String SVN_ROOT = "svn";
+  @NotNull
+  private static final String MASTER = Constants.MASTER;
+  @NotNull
+  private static final String TRUNK = "trunk/";
+  @NotNull
+  private static final String PREFIX_BRANCH = "branchs/";
+  @NotNull
+  private static final String PREFIX_ANONIMOUS = "unnamed/";
+  @NotNull
+  private static final String PREFIX_TAG = "tags/";
 
   @NotNull
   public static Ref initRepository(@NotNull Repository repository) throws IOException {
@@ -53,14 +65,15 @@ public class LayoutHelper {
       try {
         if (ref.getName().startsWith(Constants.R_HEADS)) {
           final ObjectId objectId = ref.getObjectId();
-          result.put(ref.getName(), revWalk.parseCommit(objectId));
+          final String shortName = ref.getName().substring(Constants.R_HEADS.length());
+          result.put(shortName.equals(MASTER) ? TRUNK : (PREFIX_BRANCH + shortName + '/'), revWalk.parseCommit(objectId));
         }
         if (ref.getName().startsWith(Constants.R_TAGS)) {
           final RevTag revTag = revWalk.parseTag(ref.getObjectId());
           final ObjectId objectId = revTag.getObject();
           RevObject revObject = revWalk.parseAny(objectId);
           if (revObject instanceof RevCommit) {
-            result.put(ref.getName(), (RevCommit) revObject);
+            result.put(PREFIX_TAG + ref.getName().substring(Constants.R_TAGS.length()) + '/', (RevCommit) revObject);
           }
         }
       } catch (MissingObjectException ignored) {
@@ -149,14 +162,34 @@ public class LayoutHelper {
     final int p1 = getBranchPriority(branch1);
     final int p2 = getBranchPriority(branch2);
     if (p1 != p2) {
-      return p2 - p1;
+      return p1 - p2;
     }
     return branch1.compareTo(branch2);
   }
 
   public static int getBranchPriority(@NotNull String branchName) {
-    if (branchName.equals("refs/heads/master")) return 1;
-    return 0;
+    if (branchName.equals(TRUNK)) return 0;
+    if (branchName.startsWith(PREFIX_BRANCH)) return 1;
+    if (branchName.startsWith(PREFIX_TAG)) return 2;
+    return 3;
+  }
+
+  public static String getAnonimousBranch(RevCommit commit) {
+    return PREFIX_ANONIMOUS + commit.getId().abbreviate(6).name() + '/';
+  }
+
+  public static Map<String, RevCommit> getRevisionBranches(@NotNull Repository repository, @NotNull GitRevision prev) throws IOException {
+    final RevCommit commit = prev.getCommit();
+    if (commit == null) {
+      return new HashMap<>();
+    }
+    TreeWalk treeWalk = new TreeWalk(repository);
+    treeWalk.addTree(commit.getTree());
+    treeWalk.setRecursive(true);
+    while (treeWalk.next()) {
+      System.out.println("found: " + treeWalk.getPathString());
+    }
+    return null;
   }
 
   private static class RevisionNode {
@@ -177,6 +210,7 @@ public class LayoutHelper {
     final TreeFormatter rootBuilder = new TreeFormatter();
     rootBuilder.append(SVN_ROOT, FileMode.TREE, treeId);
     rootBuilder.append("uuid", FileMode.REGULAR_FILE, uuidId);
+    new ObjectChecker().checkTree(rootBuilder.toByteArray());
     final ObjectId rootId = inserter.insert(rootBuilder);
     // Create first commit with message.
     final CommitBuilder commitBuilder = new CommitBuilder();
@@ -189,8 +223,48 @@ public class LayoutHelper {
     return commitId;
   }
 
-  public static ObjectId createSvnLayout() {
-    return null;
+  @Nullable
+  public static ObjectId createSvnLayoutTree(@NotNull ObjectInserter inserter, @NotNull Map<String, RevCommit> revBranches) throws IOException {
+    final Deque<TreeFormatter> stack = new ArrayDeque<>();
+    stack.add(new TreeFormatter());
+    String dir = "";
+    final ObjectChecker checker = new ObjectChecker();
+    for (Map.Entry<String, RevCommit> entry : new TreeMap<>(revBranches).entrySet()) {
+      final String path = entry.getKey();
+      // Save already added nodes.
+      while (!path.startsWith(dir)) {
+        final int index = dir.lastIndexOf('/', dir.length() - 2) + 1;
+        final TreeFormatter tree = stack.pop();
+        checker.checkTree(tree.toByteArray());
+        stack.element().append(dir.substring(index, dir.length() - 1), FileMode.TREE, inserter.insert(tree));
+        dir = dir.substring(0, index);
+      }
+      // Go deeper.
+      for (int index = path.indexOf('/', dir.length()) + 1; index < path.length(); index = path.indexOf('/', index) + 1) {
+        dir = path.substring(0, index);
+        stack.push(new TreeFormatter());
+      }
+      // Add commit to tree.
+      {
+        final int index = path.lastIndexOf('/', path.length() - 2) + 1;
+        stack.element().append(path.substring(index, path.length() - 1), entry.getValue().getTree());
+      }
+    }
+    // Save already added nodes.
+    while (!dir.isEmpty()) {
+      int index = dir.lastIndexOf('/', dir.length() - 2) + 1;
+      final TreeFormatter tree = stack.pop();
+      checker.checkTree(tree.toByteArray());
+      stack.element().append(dir.substring(index, dir.length() - 1), FileMode.TREE, inserter.insert(tree));
+      dir = dir.substring(0, index);
+    }
+    // Save root tree to disk.
+    final TreeFormatter rootTree = stack.pop();
+    checker.checkTree(rootTree.toByteArray());
+    if (!stack.isEmpty()) {
+      throw new IllegalStateException();
+    }
+    return inserter.insert(rootTree);
   }
 
   @NotNull

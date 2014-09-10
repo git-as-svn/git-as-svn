@@ -208,9 +208,57 @@ public class GitRepository implements VcsRepository {
         }
       }
     }
+    final RevWalk revWalk = new RevWalk(repository);
+    final ObjectInserter inserter = repository.newObjectInserter();
+
+    RevCommit prev = revWalk.parseCommit(svnRevisions.get(svnRevisions.size() - 1).getObjectId());
+    Map<String, RevCommit> revBranches = new HashMap<>();
+
     for (RevCommit commit : commits) {
-      System.out.println(commit + " " + commitBranch.get(commit));
+      // todo: Map<String, RevCommit> revBranches = LayoutHelper.getRevisionBranches(repository, prev);
+      String branchName = commitBranch.get(commit);
+      if (branchName == null) {
+        if (commit.getParentCount() > 0) {
+          for (Map.Entry<String, RevCommit> entry : revBranches.entrySet()) {
+            if (entry.getValue().equals(commit.getParent(0))) {
+              branchName = new ComputeBranchName(entry.getKey()).apply(commit, branchName);
+            }
+          }
+        }
+        if (branchName == null) {
+          branchName = LayoutHelper.getAnonimousBranch(commit);
+        }
+        if (branchName == null) {
+          continue;
+        }
+      }
+      revBranches.put(branchName, commit);
+      ObjectId svnTree = LayoutHelper.createSvnLayoutTree(inserter, revBranches);
+
+      final TreeFormatter treeBuilder = new TreeFormatter();
+      treeBuilder.append("commit", prev);
+      treeBuilder.append("svn", FileMode.TREE, svnTree); // todo: Layout
+      final ObjectId rootTree = inserter.insert(treeBuilder);
+
+      final CommitBuilder commitBuilder = new CommitBuilder();
+      commitBuilder.setAuthor(commit.getAuthorIdent());
+      commitBuilder.setCommitter(commit.getCommitterIdent());
+      commitBuilder.setMessage(commit.getFullMessage());
+      commitBuilder.addParentId(prev);
+      // todo: commitBuilder.addParentId(commit);
+      commitBuilder.setTreeId(rootTree);
+      final ObjectId commitId = inserter.insert(commitBuilder);
+      inserter.flush();
+      prev = revWalk.parseCommit(commitId);
+
+      System.out.println(commit + " " + branchName);
     }
+    inserter.flush();
+
+    RefUpdate refUpdate = repository.updateRef(svnBranch);
+    refUpdate.setNewObjectId(prev);
+    refUpdate.update();
+
     return false;
   }
 
@@ -628,7 +676,7 @@ public class GitRepository implements VcsRepository {
     @NotNull
     @Override
     public String apply(RevCommit revCommit, @Nullable String old) {
-      return old == null || LayoutHelper.compareBranches(old, name) < 0 ? name : old;
+      return old == null || LayoutHelper.compareBranches(old, name) > 0 ? name : old;
     }
   }
 
