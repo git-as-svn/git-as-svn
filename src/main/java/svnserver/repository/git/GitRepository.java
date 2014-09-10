@@ -245,7 +245,6 @@ public class GitRepository implements VcsRepository {
       commitBuilder.setCommitter(commit.getCommitterIdent());
       commitBuilder.setMessage(commit.getFullMessage());
       commitBuilder.addParentId(prev);
-      // todo: commitBuilder.addParentId(commit);
       commitBuilder.setTreeId(rootTree);
       final ObjectId commitId = inserter.insert(commitBuilder);
       inserter.flush();
