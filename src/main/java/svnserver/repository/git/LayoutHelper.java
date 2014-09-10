@@ -145,6 +145,20 @@ public class LayoutHelper {
     return result;
   }
 
+  public static int compareBranches(@NotNull String branch1, @NotNull String branch2) {
+    final int p1 = getBranchPriority(branch1);
+    final int p2 = getBranchPriority(branch2);
+    if (p1 != p2) {
+      return p2 - p1;
+    }
+    return branch1.compareTo(branch2);
+  }
+
+  public static int getBranchPriority(@NotNull String branchName) {
+    if (branchName.equals("refs/heads/master")) return 1;
+    return 0;
+  }
+
   private static class RevisionNode {
     @NotNull
     private final Set<RevCommit> childs = new HashSet<>();
@@ -173,6 +187,10 @@ public class LayoutHelper {
     final ObjectId commitId = inserter.insert(commitBuilder);
     inserter.flush();
     return commitId;
+  }
+
+  public static ObjectId createSvnLayout() {
+    return null;
   }
 
   @NotNull

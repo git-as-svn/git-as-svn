@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
 
 /**
  * Implementation for Git repository.
@@ -184,24 +185,6 @@ public class GitRepository implements VcsRepository {
     }
   }
 
-  private static class RevisionNode {
-    @NotNull
-    private final ObjectId objectId;
-    @Nullable
-    private final String name;
-    private final int commitTime;
-    @NotNull
-    private final Set<ObjectId> childs = new HashSet<>();
-    @NotNull
-    private final Set<ObjectId> parents = new HashSet<>();
-
-    public RevisionNode(@NotNull ObjectId objectId, int commitTime, @Nullable String name) {
-      this.objectId = objectId;
-      this.name = name;
-      this.commitTime = commitTime;
-    }
-  }
-
   /**
    * Create cache for new revisions.
    *
@@ -211,65 +194,23 @@ public class GitRepository implements VcsRepository {
   public boolean cacheRevisions() throws IOException, SVNException {
     final Map<String, RevCommit> branches = LayoutHelper.getBranches(repository);
     final List<RevCommit> commits = LayoutHelper.getNewRevisions(repository, svnRevisionByHash.keySet(), branches.values());
+    final Map<RevCommit, String> commitBranch = new HashMap<>();
+    for (Map.Entry<String, RevCommit> entry : branches.entrySet()) {
+      commitBranch.compute(entry.getValue(), new ComputeBranchName(entry.getKey()));
+    }
+    for (int i = commits.size() - 1; i >= 0; --i) {
+      final RevCommit commit = commits.get(i);
+      final String branch = commitBranch.get(commit);
+      if (branch != null) {
+        final RevCommit[] parents = commit.getParents();
+        if (parents.length > 0) {
+          commitBranch.compute(parents[0], new ComputeBranchName(branch));
+        }
+      }
+    }
     for (RevCommit commit : commits) {
-      System.out.println(commit);
+      System.out.println(commit + " " + commitBranch.get(commit));
     }
-    /*// Fast check.
-    lock.readLock().lock();
-    try {
-      final int lastRevision = svnRevisions.size() - 1;
-      final ObjectId lastCommitId;
-      if (lastRevision >= 0) {
-        lastCommitId = svnRevisions.get(lastRevision).getCommit();
-        final Ref head = repository.getRef(svnBranch);
-        if (head.getObjectId().equals(lastCommitId)) {
-          return false;
-        }
-      }
-    } finally {
-      lock.readLock().unlock();
-    }
-    // Real loading.
-    lock.writeLock().lock();
-    try {
-      final int lastRevision = svnRevisions.size() - 1;
-      final ObjectId lastCommitId = lastRevision < 0 ? null : svnRevisions.get(lastRevision).getObjectId();
-      final Ref head = repository.getRef(svnBranch);
-      final List<RevCommit> newRevs = new ArrayList<>();
-      final RevWalk revWalk = new RevWalk(repository);
-      ObjectId objectId = head.getObjectId();
-      while (true) {
-        if (objectId.equals(lastCommitId)) {
-          break;
-        }
-        final RevCommit commit = revWalk.parseCommit(objectId);
-        newRevs.add(commit);
-        if (commit.getParentCount() == 0) break;
-        objectId = commit.getParent(0);
-      }
-      if (newRevs.isEmpty()) {
-        return false;
-      }
-      final long beginTime = System.currentTimeMillis();
-      int processed = 0;
-      long reportTime = beginTime;
-      log.info("Loading cached revision changes: {} revision", newRevs.size());
-      for (int i = newRevs.size() - 1; i >= 0; i--) {
-        loadRevisionInfo(newRevs.get(i));
-        processed++;
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - reportTime > REPORT_DELAY) {
-          log.info("  processed cached revision: {} ({} rev/sec)", newRevs.size() - i, 1000.0f * processed / (currentTime - reportTime));
-          reportTime = currentTime;
-          processed = 0;
-        }
-      }
-      final long endTime = System.currentTimeMillis();
-      log.info("Revision cached changes loaded: {} ms", endTime - beginTime);
-      return true;
-    } finally {
-      lock.writeLock().unlock();
-    }*/
     return false;
   }
 
@@ -675,6 +616,20 @@ public class GitRepository implements VcsRepository {
       }
     }
     return null;
+  }
+
+  private static class ComputeBranchName implements BiFunction<RevCommit, String, String> {
+    private final String name;
+
+    public ComputeBranchName(@NotNull String name) {
+      this.name = name;
+    }
+
+    @NotNull
+    @Override
+    public String apply(RevCommit revCommit, @Nullable String old) {
+      return old == null || LayoutHelper.compareBranches(old, name) < 0 ? name : old;
+    }
   }
 
   private class GitPropertyValidator {
