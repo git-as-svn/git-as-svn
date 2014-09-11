@@ -15,7 +15,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitIgnore implements GitProperty {
+final class GitIgnore implements GitProperty {
   @NotNull
   private final List<Rule> rules;
   // svn:global-ignores

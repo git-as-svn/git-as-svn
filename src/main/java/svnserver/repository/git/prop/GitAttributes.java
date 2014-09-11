@@ -15,7 +15,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitAttributes implements GitProperty {
+final class GitAttributes implements GitProperty {
   @NotNull
   private final static String EOL_PREFIX = "eol=";
   @NotNull
