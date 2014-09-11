@@ -1,5 +1,6 @@
 package svnserver.repository.git.prop;
 
+import org.atteo.classindex.IndexSubclasses;
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,7 @@ import java.util.Map;
 public interface GitProperty {
   static final GitProperty[] emptyArray = {};
 
+
   /**
    * Update file properties on element.
    *
@@ -25,7 +27,7 @@ public interface GitProperty {
   /**
    * Create GitProperty for child element.
    *
-   * @param name  Child node name.
+   * @param name Child node name.
    * @param mode Child node type.
    * @return Child property modifier or null, if this property is not affected for childs.
    */
