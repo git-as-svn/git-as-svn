@@ -1,6 +1,5 @@
 package svnserver.repository.git.prop;
 
-import org.atteo.classindex.IndexSubclasses;
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,6 @@ import java.util.Map;
  */
 public interface GitProperty {
   static final GitProperty[] emptyArray = {};
-
 
   /**
    * Update file properties on element.

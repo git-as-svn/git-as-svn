@@ -16,7 +16,8 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final class GitIgnore implements GitProperty {@SuppressWarnings("UnusedDeclaration")
+final class GitIgnore implements GitProperty {
+  @SuppressWarnings("UnusedDeclaration")
   public static final class Factory implements GitPropertyFactory {
     @NotNull
     @Override
