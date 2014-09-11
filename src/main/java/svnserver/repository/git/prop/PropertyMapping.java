@@ -1,40 +1,42 @@
 package svnserver.repository.git.prop;
 
+import org.atteo.classindex.ClassIndex;
 import org.jetbrains.annotations.NotNull;
-import svnserver.repository.VcsFunction;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public enum PropertyMapping {
-  DotTGitConfig(".tgitconfig", GitTortoise::new),
-  DotGitAttributes(".gitattributes", GitAttributes::new),
-  DitGitIgnore(".gitignore", GitIgnore::new);
-
+public class PropertyMapping {
   @NotNull
-  private final String fileName;
-
-  @NotNull
-  public VcsFunction<String, GitProperty> getParser() {
-    return parser;
-  }
-
-  @NotNull
-  private final VcsFunction<String, GitProperty> parser;
-
-  @NotNull
-  public static final Map<String, PropertyMapping> byFileName = new HashMap<>();
+  private static final Map<String, GitPropertyFactory> parserByFile = new TreeMap<>();
 
   static {
-    for (PropertyMapping parser : values())
-      byFileName.put(parser.fileName, parser);
+    try {
+      for (Class<? extends GitPropertyFactory> factoryClass : ClassIndex.getSubclasses(GitPropertyFactory.class)) {
+        final GitPropertyFactory factory = factoryClass.getConstructor().newInstance();
+        final GitPropertyFactory oldParser = parserByFile.put(factory.getFileName(), factory);
+        if (oldParser != null) {
+          throw new RuntimeException("Found two classes mapped for same file: " + oldParser.getClass() + " and " + factoryClass);
+        }
+      }
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  PropertyMapping(@NotNull String fileName, @NotNull VcsFunction<String, GitProperty> parser) {
-    this.fileName = fileName;
-    this.parser = parser;
+  @Nullable
+  public static GitPropertyFactory getFactory(@NotNull String fileName) {
+    return parserByFile.get(fileName);
+  }
+
+  @NotNull
+  public static Collection<String> getRegisteredFiles() {
+    return Collections.unmodifiableSet(parserByFile.keySet());
   }
 }
