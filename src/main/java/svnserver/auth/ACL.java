@@ -2,6 +2,9 @@ package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.AccessConfig;
 import svnserver.config.AclConfig;
 import svnserver.config.GroupConfig;
@@ -82,17 +85,20 @@ public final class ACL {
       throw new IllegalArgumentException("Duplicate ACL entry " + path + ": " + allowed);
   }
 
-  public boolean check(@NotNull User user, @NotNull String path) {
+  public void check(@NotNull User user, @NotNull String path) throws SVNException {
     String toCheck = path;
 
     while (!toCheck.isEmpty()) {
       if (doCheck(user, toCheck))
-        return true;
+        return;
 
       toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
     }
 
-    return doCheck(user, "/");
+    if (doCheck(user, "/"))
+      return;
+
+    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access " + path));
   }
 
   private boolean doCheck(@NotNull User user, @NotNull String path) {

@@ -2,6 +2,8 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -15,7 +17,7 @@ import java.io.IOException;
 public class DeltaParams {
 
   @Nullable
-  private final String targetPath;
+  private final SVNURL targetPath;
 
   @NotNull
   private final int[] rev;
@@ -35,7 +37,7 @@ public class DeltaParams {
 
   public DeltaParams(@NotNull int[] rev,
                      @NotNull String path,
-                     @Nullable String targetPath,
+                     @NotNull String targetPath,
                      boolean textDeltas,
                      @NotNull Depth depth,
                      boolean sendCopyFromArgs,
@@ -49,22 +51,17 @@ public class DeltaParams {
                       * Worse, in SVN it is possible to delete file and create it back in the same commit, effectively breaking its history.
                       */
                      @SuppressWarnings("UnusedParameters")
-                     boolean ignoreAncestry) {
+                     boolean ignoreAncestry) throws SVNException {
     this.rev = rev;
     this.path = path;
-    this.targetPath = targetPath;
+    this.targetPath = targetPath.isEmpty() ? null : SVNURL.parseURIEncoded(targetPath);
     this.depth = depth;
     this.sendCopyFromArgs = sendCopyFromArgs;
     this.textDeltas = textDeltas;
   }
 
-  /**
-   * svn diff StringHelper.java@34 svn://localhost/git-as-svn/src/main/java/svnserver/SvnConstants.java@33
-   * <p>
-   * WARNING! Check ACL!
-   */
   @Nullable
-  public String getTargetPath() {
+  public SVNURL getTargetPath() {
     return targetPath;
   }
 

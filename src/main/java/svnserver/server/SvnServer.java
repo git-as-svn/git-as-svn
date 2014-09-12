@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.SvnConstants;
+import org.tmatesoft.svn.core.SVNURL;
 import svnserver.auth.ACL;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
@@ -138,10 +138,9 @@ public class SvnServer extends Thread {
     final User user = authenticate(parser, writer);
     log.info("User: {}", user);
 
-    final String basePath = getBasePath(clientInfo.getUrl());
-    final SessionContext context = new SessionContext(parser, writer, this, basePath, clientInfo, user);
+    final SessionContext context = new SessionContext(parser, writer, this, clientInfo.getUrl(), clientInfo, user);
     repository.updateRevisions();
-    sendAnnounce(writer, basePath);
+    sendAnnounce(writer, context.getBaseUrl());
 
     while (!stopped) {
       try {
@@ -183,18 +182,6 @@ public class SvnServer extends Thread {
   @NotNull
   public VcsRepository getRepository() {
     return repository;
-  }
-
-  @NotNull
-  private String getBasePath(@NotNull String url) throws SVNException {
-    if (!url.startsWith(SvnConstants.URL_PREFIX)) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL));
-    }
-    int index = url.indexOf('/', SvnConstants.URL_PREFIX.length());
-    if (index < 0) {
-      index = url.length();
-    }
-    return url.substring(0, index) + '/';
   }
 
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
@@ -268,13 +255,13 @@ public class SvnServer extends Thread {
     }
   }
 
-  private void sendAnnounce(SvnServerWriter writer, @NotNull String baseUrl) throws IOException {
+  private void sendAnnounce(SvnServerWriter writer, @NotNull SVNURL baseUrl) throws IOException {
     writer
         .listBegin()
         .word("success")
         .listBegin()
         .string(repository.getUuid())
-        .string(baseUrl)
+        .string(baseUrl.toString())
         .listBegin()
             //.word("mergeinfo")
         .listEnd()
