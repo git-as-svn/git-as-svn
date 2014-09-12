@@ -1,6 +1,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * <pre>
@@ -25,7 +26,7 @@ public final class SwitchParams extends DeltaParams {
                       @NotNull String url,
                       @NotNull String depth,
                       boolean sendCopyFromArgs,
-                      boolean ignoreAncestry) {
+                      boolean ignoreAncestry) throws SVNException {
     super(rev, target, url, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry);
   }
 }
