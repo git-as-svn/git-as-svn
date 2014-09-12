@@ -185,6 +185,19 @@ public class GitRepository implements VcsRepository {
     }
   }
 
+  private static class CacheInfo {
+    @NotNull
+    private RevCommit commit;
+    @NotNull
+    private List<RevCommit> childs = new ArrayList<>();
+    @Nullable
+    private String svnBranch;
+
+    private CacheInfo(@NotNull RevCommit commit) {
+      this.commit = commit;
+    }
+  }
+
   /**
    * Create cache for new revisions.
    *
@@ -193,18 +206,32 @@ public class GitRepository implements VcsRepository {
    */
   public boolean cacheRevisions() throws IOException, SVNException {
     final Map<String, RevCommit> branches = LayoutHelper.getBranches(repository);
-    final List<RevCommit> commits = LayoutHelper.getNewRevisions(repository, svnRevisionByHash.keySet(), branches.values());
-    final Map<RevCommit, String> commitBranch = new HashMap<>();
-    for (Map.Entry<String, RevCommit> entry : branches.entrySet()) {
-      commitBranch.compute(entry.getValue(), new ComputeBranchName(entry.getKey()));
+    final List<CacheInfo> commitList = new ArrayList<>();
+    final Map<RevCommit, CacheInfo> commitMap = new HashMap<>();
+    // Create commit list.
+    for (RevCommit commit : LayoutHelper.getNewRevisions(repository, svnRevisionByHash.keySet(), branches.values())) {
+      final CacheInfo cacheInfo = new CacheInfo(commit);
+      commitList.add(cacheInfo);
+      commitMap.put(commit, cacheInfo);
+      for (RevCommit parent : commit.getParents()) {
+        commitMap.computeIfPresent(parent, (key, cacheInfo1) -> {
+          cacheInfo1.childs.add(commit);
+          return cacheInfo1;
+        });
+      }
     }
-    for (int i = commits.size() - 1; i >= 0; --i) {
-      final RevCommit commit = commits.get(i);
-      final String branch = commitBranch.get(commit);
+    // Set commit branch name.
+    for (Map.Entry<String, RevCommit> entry : branches.entrySet()) {
+      commitMap.computeIfPresent(entry.getValue(), new ComputeBranchName(entry.getKey()));
+    }
+
+    for (int i = commitList.size() - 1; i >= 0; --i) {
+      final CacheInfo commit = commitList.get(i);
+      final String branch = commit.svnBranch;
       if (branch != null) {
-        final RevCommit[] parents = commit.getParents();
+        final RevCommit[] parents = commit.commit.getParents();
         if (parents.length > 0) {
-          commitBranch.compute(parents[0], new ComputeBranchName(branch));
+          commitMap.computeIfPresent(parents[0], new ComputeBranchName(branch));
         }
       }
     }
@@ -214,25 +241,25 @@ public class GitRepository implements VcsRepository {
     RevCommit prev = revWalk.parseCommit(svnRevisions.get(svnRevisions.size() - 1).getObjectId());
     Map<String, RevCommit> revBranches = new HashMap<>();
 
-    for (RevCommit commit : commits) {
+    for (CacheInfo commitInfo : commitList) {
       // todo: Map<String, RevCommit> revBranches = LayoutHelper.getRevisionBranches(repository, prev);
-      String branchName = commitBranch.get(commit);
-      if (branchName == null) {
-        if (commit.getParentCount() > 0) {
+      final RevCommit revCommit = commitInfo.commit;
+      if (commitInfo.svnBranch == null) {
+        if (revCommit.getParentCount() > 0) {
           for (Map.Entry<String, RevCommit> entry : revBranches.entrySet()) {
-            if (entry.getValue().equals(commit.getParent(0))) {
-              branchName = new ComputeBranchName(entry.getKey()).apply(commit, branchName);
+            if (entry.getValue().equals(revCommit.getParent(0))) {
+              new ComputeBranchName(entry.getKey()).apply(revCommit, commitInfo);
             }
           }
         }
-        if (branchName == null) {
-          branchName = LayoutHelper.getAnonimousBranch(commit);
+        if (commitInfo.svnBranch == null) {
+          commitInfo.svnBranch = LayoutHelper.getAnonimousBranch(revCommit);
         }
-        if (branchName == null) {
+        if (commitInfo.svnBranch == null) {
           continue;
         }
       }
-      revBranches.put(branchName, commit);
+      revBranches.put(commitInfo.svnBranch, revCommit);
       ObjectId svnTree = LayoutHelper.createSvnLayoutTree(inserter, revBranches);
 
       final TreeFormatter treeBuilder = new TreeFormatter();
@@ -241,16 +268,16 @@ public class GitRepository implements VcsRepository {
       final ObjectId rootTree = inserter.insert(treeBuilder);
 
       final CommitBuilder commitBuilder = new CommitBuilder();
-      commitBuilder.setAuthor(commit.getAuthorIdent());
-      commitBuilder.setCommitter(commit.getCommitterIdent());
-      commitBuilder.setMessage(commit.getFullMessage());
+      commitBuilder.setAuthor(revCommit.getAuthorIdent());
+      commitBuilder.setCommitter(revCommit.getCommitterIdent());
+      commitBuilder.setMessage(revCommit.getFullMessage());
       commitBuilder.addParentId(prev);
       commitBuilder.setTreeId(rootTree);
       final ObjectId commitId = inserter.insert(commitBuilder);
       inserter.flush();
       prev = revWalk.parseCommit(commitId);
 
-      System.out.println(commit + " " + branchName);
+      System.out.println(revCommit + " " + commitInfo.svnBranch);
     }
     inserter.flush();
 
@@ -665,17 +692,21 @@ public class GitRepository implements VcsRepository {
     return null;
   }
 
-  private static class ComputeBranchName implements BiFunction<RevCommit, String, String> {
-    private final String name;
+  private static class ComputeBranchName implements BiFunction<RevCommit, CacheInfo, CacheInfo> {
+    @NotNull
+    private final String svnBranch;
 
-    public ComputeBranchName(@NotNull String name) {
-      this.name = name;
+    public ComputeBranchName(@NotNull String svnBranch) {
+      this.svnBranch = svnBranch;
     }
 
     @NotNull
     @Override
-    public String apply(RevCommit revCommit, @Nullable String old) {
-      return old == null || LayoutHelper.compareBranches(old, name) > 0 ? name : old;
+    public CacheInfo apply(@NotNull RevCommit revCommit, @NotNull CacheInfo old) {
+      if (old.svnBranch == null || LayoutHelper.compareBranches(old.svnBranch, svnBranch) > 0) {
+        old.svnBranch = svnBranch;
+      }
+      return old;
     }
   }
 
