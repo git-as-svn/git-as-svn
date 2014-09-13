@@ -1,6 +1,8 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StreamHelper;
 import svnserver.parser.SvnServerWriter;
@@ -66,27 +68,25 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     SvnServerWriter writer = context.getWriter();
     String fullPath = context.getRepositoryPath(args.path);
-    if (fullPath.endsWith("/")) {
-      sendError(writer, 200009, "Could not cat all targets because some targets are directories");
-      return;
-    }
+
+    if (fullPath.endsWith("/"))
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not cat all targets because some targets are directories"));
+
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
-    final VcsFile fileInfo = info.getFile(fullPath);
-    if (fileInfo == null) {
-      sendError(writer, 200009, "File not found");
-      return;
-    }
-    if (fileInfo.isDirectory()) {
-      sendError(writer, 200009, "Could not cat all targets because some targets are directories");
-      return;
-    }
+    final VcsRevision revision = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
+    final VcsFile fileInfo = revision.getFile(fullPath);
+    if (fileInfo == null)
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
+
+    if (fileInfo.isDirectory())
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, fullPath + " is a directory in revision " + revision.getId()));
+
     writer
         .listBegin()
         .word("success")
         .listBegin()
         .listBegin().string(fileInfo.getMd5()).listEnd() // md5
-        .number(info.getId()) // revision id
+        .number(revision.getId()) // revision id
         .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap())
         .listEnd()
         .listEnd();

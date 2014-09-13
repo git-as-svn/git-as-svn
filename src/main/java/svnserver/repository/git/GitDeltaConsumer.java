@@ -106,9 +106,10 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
         }
       }
-      if (window != null) {
-        throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
-      }
+
+      if (window != null)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
+
       window = new SVNDeltaProcessor();
       window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), memory, true);
     } catch (IOException e) {
@@ -118,18 +119,18 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
   @Override
   public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-    if (window == null) {
-      throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
-    }
+    if (window == null)
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
+
     return window.textDeltaChunk(diffWindow);
   }
 
   @Override
   public void textDeltaEnd(String path) throws SVNException {
     try {
-      if (window == null) {
-        throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
-      }
+      if (window == null)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
+
       final Repository repo = gitRepository.getRepository();
       final ObjectInserter inserter = repo.newObjectInserter();
       byte[] content = memory.toByteArray();

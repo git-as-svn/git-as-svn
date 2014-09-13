@@ -46,17 +46,13 @@ public abstract class BaseCmd<T> {
   }
 
   public static void sendError(@NotNull SvnServerWriter writer, @NotNull SVNErrorMessage errorMessage) throws IOException {
-    sendError(writer, errorMessage.getErrorCode().getCode(), errorMessage.getMessage());
-  }
-
-  public static void sendError(@NotNull SvnServerWriter writer, int code, @NotNull String msg) throws IOException {
     writer
         .listBegin()
         .word("failure")
         .listBegin()
         .listBegin()
-        .number(code)
-        .string(msg)
+        .number(errorMessage.getErrorCode().getCode())
+        .string(errorMessage.getMessage())
         .string("")
         .number(0)
         .listEnd()
