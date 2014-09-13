@@ -1,6 +1,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * <pre>
@@ -20,7 +21,7 @@ public final class StatusParams extends DeltaParams {
   public StatusParams(@NotNull String target,
                       boolean recurse,
                       @NotNull int[] rev,
-                      @NotNull String depth) {
-    super(rev, target, null, false, Depth.parse(depth, recurse, Depth.Empty), false, false);
+                      @NotNull String depth) throws SVNException {
+    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), false, false);
   }
 }

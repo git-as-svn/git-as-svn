@@ -18,12 +18,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.StringHelper;
+import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
-import svnserver.repository.git.prop.GitAttributes;
-import svnserver.repository.git.prop.GitIgnore;
 import svnserver.repository.git.prop.GitProperty;
-import svnserver.repository.git.prop.GitTortoise;
+import svnserver.repository.git.prop.GitPropertyFactory;
+import svnserver.repository.git.prop.PropertyMapping;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -460,24 +460,19 @@ public class GitRepository implements VcsRepository {
   }
 
   @Nullable
-  private GitProperty parseGitProperty(String fileName, GitObject<ObjectId> objectId) throws IOException, SVNException {
-    switch (fileName) {
-      case ".tgitconfig":
-        return cachedParseGitProperty(objectId, GitTortoise::new);
-      case ".gitattributes":
-        return cachedParseGitProperty(objectId, GitAttributes::new);
-      case ".gitignore":
-        return cachedParseGitProperty(objectId, GitIgnore::new);
-      default:
-        return null;
-    }
+  private GitProperty parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+    final GitPropertyFactory factory = PropertyMapping.getFactory(fileName);
+    if (factory == null)
+      return null;
+
+    return cachedParseGitProperty(objectId, factory);
   }
 
   @Nullable
-  private GitProperty cachedParseGitProperty(GitObject<ObjectId> objectId, VcsFunction<String, GitProperty> properyParser) throws IOException, SVNException {
+  private GitProperty cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
     GitProperty property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
-      property = properyParser.apply(loadContent(objectId));
+      property = factory.create(loadContent(objectId));
       filePropertyCache.put(objectId.getObject(), property);
     }
     return property;
@@ -745,6 +740,15 @@ public class GitRepository implements VcsRepository {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
           message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
         }
+
+        message.append("\n"
+            + "----------------\n" +
+            "Subversion properties must be consistent with Git config files:\n");
+        for (String configFile : PropertyMapping.getRegisteredFiles()) {
+          message.append("  ").append(configFile).append('\n');
+        }
+        message.append("\n" +
+            "For more detailed information you can see: ").append(WikiConstants.PROPERTIES).append("\n");
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
       }
     }

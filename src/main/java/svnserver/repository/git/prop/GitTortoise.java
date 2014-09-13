@@ -16,7 +16,22 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitTortoise implements GitProperty {
+final class GitTortoise implements GitProperty {
+  @SuppressWarnings("UnusedDeclaration")
+  public static final class Factory implements GitPropertyFactory {
+    @NotNull
+    @Override
+    public String getFileName() {
+      return ".tgitconfig";
+    }
+
+    @NotNull
+    @Override
+    public GitProperty create(@NotNull String content) throws IOException {
+      return new GitTortoise(content);
+    }
+  }
+
   @NotNull
   private final Map<String, String> tortoiseProps;
 

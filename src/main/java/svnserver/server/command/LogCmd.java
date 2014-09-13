@@ -96,11 +96,12 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
     final int head = context.getRepository().getLatestRevision().getId();
     int endRev = getRevision(args.endRev, head);
     int startRev = getRevision(args.startRev, 1);
-    if ((startRev > head) || (endRev > head)) {
+
+    if (startRev > head || endRev > head) {
       writer.word("done");
-      sendError(writer, SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + Math.max(startRev, endRev)));
-      return;
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + Math.max(startRev, endRev)));
     }
+
     final List<VcsRevision> log;
     if (startRev >= endRev) {
       log = getLog(context, args, startRev, endRev, args.limit);

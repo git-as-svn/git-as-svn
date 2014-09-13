@@ -1,8 +1,6 @@
 package svnserver.server.step;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.server.SessionContext;
 
@@ -24,8 +22,7 @@ public final class CheckPermissionStep implements Step {
 
   @Override
   public void process(@NotNull SessionContext context) throws IOException, SVNException {
-    if (!context.getAcl().check(context.getUser(), context.getRepositoryPath("")))
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
+    context.checkAcl(context.getRepositoryPath(""));
 
     context.getWriter()
         .listBegin()

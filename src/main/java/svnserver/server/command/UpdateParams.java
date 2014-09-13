@@ -1,6 +1,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * Update between revisions.
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class UpdateParams extends DeltaParams {
 
-  public UpdateParams(@NotNull int[] rev, @NotNull String target, boolean recurse, @NotNull String depth, boolean sendCopyFromArgs, boolean ignoreAncestry) {
-    super(rev, target, null, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry);
+  public UpdateParams(@NotNull int[] rev, @NotNull String target, boolean recurse, @NotNull String depth, boolean sendCopyFromArgs, boolean ignoreAncestry) throws SVNException {
+    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry);
   }
 }

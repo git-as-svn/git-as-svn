@@ -4,7 +4,7 @@
 
 Subversion frontend server for git repository (in Java).
 
-## Python proof-of-concept realisation:
+## Python proof-of-concept implementation:
 
  * http://git.q42.co.uk/git_svn_server.git
 

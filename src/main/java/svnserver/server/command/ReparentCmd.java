@@ -22,10 +22,10 @@ import java.io.IOException;
 public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
   public static class Params {
     @NotNull
-    private final String url;
+    private final SVNURL url;
 
-    public Params(@NotNull String url) {
-      this.url = url;
+    public Params(@NotNull String url) throws SVNException {
+      this.url = SVNURL.parseURIEncoded(url);
     }
   }
 
@@ -37,7 +37,7 @@ public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    context.setParent(SVNURL.parseURIEncoded(args.url).getPath());
+    context.setParent(args.url);
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
