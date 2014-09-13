@@ -1,6 +1,8 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
@@ -84,18 +86,20 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
     SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
-    final VcsFile fileInfo = info.getFile(fullPath);
-    if (fileInfo == null || (!fileInfo.isDirectory())) {
-      sendError(writer, 200009, "Directory not found");
-      return;
-    }
+    final VcsRevision revision = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
+    final VcsFile fileInfo = revision.getFile(fullPath);
+
+    if (fileInfo == null)
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
+
+    if (!fileInfo.isDirectory())
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, fullPath + " is not a directory in revision " + revision.getId()));
 
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .number(info.getId()) // rev
+        .number(revision.getId()) // rev
         .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap()) // props
         .listBegin()
         .separator();

@@ -53,7 +53,7 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
     final int startRev = getRevision(args.startRev, pegRev);
     if ((endRev > startRev) || (startRev > pegRev)) {
       writer.word("done");
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.getErrorCode(204900), "Invalid revision range: peg: " + pegRev + ", start: " + startRev + ", end " + endRev));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid revision range: peg: " + pegRev + ", start: " + startRev + ", end " + endRev));
     }
     String fullPath = context.getRepositoryPath(args.path);
     final int lastChange = context.getRepository().getLastChange(fullPath, pegRev);
