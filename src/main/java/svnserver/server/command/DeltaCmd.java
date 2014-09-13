@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -209,8 +210,14 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd()
           .listEnd();
       final String fullPath = context.getRepositoryPath(path);
-      final String targetPath = params.getTargetPath();
-      final VcsFile newFile = context.getFile(rev, targetPath == null ? fullPath : targetPath);
+
+      final SVNURL targetPath = params.getTargetPath();
+      final VcsFile newFile;
+      if (targetPath == null)
+        newFile = context.getFile(rev, fullPath);
+      else
+        newFile = context.getFile(rev, targetPath);
+
       final VcsFile oldFile = getPrevFile(context, path, context.getFile(rootRev, fullPath));
       updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty(), rootParams.depth, params.getDepth());
       writer

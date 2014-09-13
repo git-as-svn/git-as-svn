@@ -1,6 +1,8 @@
 package svnserver.server.msg;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * Информация о подключенном клиенте.
@@ -14,14 +16,14 @@ public class ClientInfo {
   @NotNull
   private final String[] capabilities;
   @NotNull
-  private final String url;
+  private final SVNURL url;
   @NotNull
   private final String userAgent;
 
-  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String userAgent) {
+  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String userAgent) throws SVNException {
     this.protocolVersion = protocolVersion;
     this.capabilities = capabilities;
-    this.url = url;
+    this.url = SVNURL.parseURIEncoded(url);
     this.userAgent = userAgent;
   }
 
@@ -35,7 +37,7 @@ public class ClientInfo {
   }
 
   @NotNull
-  public String getUrl() {
+  public SVNURL getUrl() {
     return url;
   }
 

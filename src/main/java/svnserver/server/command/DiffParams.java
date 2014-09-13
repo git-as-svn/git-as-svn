@@ -1,6 +1,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * Update between revisions.
@@ -25,7 +26,7 @@ public final class DiffParams extends DeltaParams {
                     boolean ignoreAncestry,
                     @NotNull String url,
                     boolean textDeltas,
-                    @NotNull String depth) {
+                    @NotNull String depth) throws SVNException {
     super(rev, target, url, textDeltas, Depth.parse(depth, recurse, Depth.Files), false, ignoreAncestry);
   }
 }

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import svnserver.StringHelper;
 import svnserver.parser.MessageParser;
@@ -87,12 +88,12 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   }
 
   public static class CopyParams {
-    @NotNull
-    private final String copyFrom;
+    @Nullable
+    private final SVNURL copyFrom;
     private final int rev;
 
-    public CopyParams(@NotNull String copyFrom, int rev) {
-      this.copyFrom = copyFrom;
+    public CopyParams(@NotNull String copyFrom, int rev) throws SVNException {
+      this.copyFrom = copyFrom.isEmpty() ? null : SVNURL.parseURIEncoded(copyFrom);
       this.rev = rev;
     }
   }
@@ -358,9 +359,9 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final VcsFile source;
-      if (args.copyParams.rev != 0) {
+      if (args.copyParams.copyFrom != null) {
         log.info("Copy dir: {} from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
-        source = context.getRepository().getRevisionInfo(args.copyParams.rev).getFile(context.getRepositoryPath(args.copyParams.copyFrom));
+        source = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
         if (source == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Directory not found: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }
@@ -381,9 +382,9 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final VcsDeltaConsumer deltaConsumer;
-      if (args.copyParams.rev != 0) {
+      if (args.copyParams.copyFrom != null) {
         log.info("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
-        final VcsFile file = context.getRepository().getRevisionInfo(args.copyParams.rev).getFile(context.getRepositoryPath(args.copyParams.copyFrom));
+        final VcsFile file = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find path: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }

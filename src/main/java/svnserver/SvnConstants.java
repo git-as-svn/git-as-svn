@@ -12,6 +12,4 @@ public final class SvnConstants {
   public static final String PROP_GIT = "git-commit";
   @NotNull
   public static final String LINK_PREFIX = "link ";
-  @NotNull
-  public static final String URL_PREFIX = "svn://";
 }

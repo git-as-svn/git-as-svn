@@ -68,7 +68,7 @@ public class SvnServerParserTest {
       final SvnServerParser parser = new SvnServerParser(stream);
       ClientInfo req = MessageParser.parse(ClientInfo.class, parser);
       Assert.assertEquals(req.getProtocolVersion(), 2);
-      Assert.assertEquals(req.getUrl(), "svn://localhost");
+      Assert.assertEquals(req.getUrl().toString(), "svn://localhost");
       Assert.assertEquals(req.getUserAgent(), "SVN/1.8.8 (x86_64-pc-linux-gnu)");
       ArrayAsserts.assertArrayEquals(new String[]{
           "edit-pipeline",
@@ -88,7 +88,7 @@ public class SvnServerParserTest {
       final SvnServerParser parser = new SvnServerParser(stream);
       ClientInfo req = MessageParser.parse(ClientInfo.class, parser);
       Assert.assertEquals(req.getProtocolVersion(), 2);
-      Assert.assertEquals(req.getUrl(), "svn://localhost");
+      Assert.assertEquals(req.getUrl().toString(), "svn://localhost");
       Assert.assertEquals(req.getUserAgent(), "");
       ArrayAsserts.assertArrayEquals(new String[]{
           "edit-pipeline",

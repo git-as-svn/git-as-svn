@@ -7,7 +7,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
-import svnserver.auth.ACL;
 import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
@@ -45,35 +44,38 @@ public final class SessionContext {
   public SessionContext(@NotNull SvnServerParser parser,
                         @NotNull SvnServerWriter writer,
                         @NotNull SvnServer server,
-                        @NotNull String baseUrl,
+                        @NotNull SVNURL baseUrl,
                         @NotNull ClientInfo clientInfo,
                         @NotNull User user) throws SVNException {
     this.parser = parser;
     this.writer = writer;
     this.server = server;
     this.user = user;
-    this.baseUrl = SVNURL.parseURIEncoded(baseUrl + (baseUrl.endsWith("/") ? "" : ""));
-    this.parent = getRelative(SVNURL.parseURIEncoded(clientInfo.getUrl()));
+    this.baseUrl = SVNURL.create(baseUrl.getProtocol(), null, baseUrl.getHost(), baseUrl.getPort(), "", false);
+    setParent(clientInfo.getUrl());
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
+  }
+
+  @NotNull
+  public SVNURL getBaseUrl() {
+    return baseUrl;
   }
 
   public boolean hasCapability(@NotNull String capability) {
     return capabilities.contains(capability);
   }
 
-  public void setParent(@NotNull String parent) {
-    this.parent = parent;
+  public void setParent(@NotNull SVNURL url) throws SVNException {
+    this.parent = getRepositoryPath(url);
   }
 
   @NotNull
-  public String getRepositoryPath(@Nullable String localPath) throws SVNException {
-    if ((localPath != null) && localPath.startsWith("svn://")) {
-      return getRelative(SVNURL.parseURIEncoded(localPath));
-    }
+  public String getRepositoryPath(@NotNull String localPath) throws SVNException {
     return StringHelper.joinPath(parent, localPath);
   }
 
-  private String getRelative(@NotNull SVNURL url) throws SVNException {
+  @NotNull
+  private String getRepositoryPath(@NotNull SVNURL url) throws SVNException {
     final String root = baseUrl.getPath();
     final String path = url.getPath();
     if (!path.startsWith(root)) {
@@ -100,11 +102,6 @@ public final class SessionContext {
   }
 
   @NotNull
-  public ACL getAcl() {
-    return server.getAcl();
-  }
-
-  @NotNull
   public SvnServerParser getParser() {
     return parser;
   }
@@ -126,14 +123,25 @@ public final class SessionContext {
   /**
    * Get repository file.
    *
-   * @param rev        Target revision.
-   * @param targetPath Target path or url.
+   * @param rev  Target revision.
+   * @param path Target path or url.
    * @return Return file object.
    * @throws SVNException
    * @throws IOException
    */
   @Nullable
-  public VcsFile getFile(int rev, String targetPath) throws SVNException, IOException {
-    return getRepository().getRevisionInfo(rev).getFile(getRepositoryPath(targetPath));
+  public VcsFile getFile(int rev, @NotNull String path) throws SVNException, IOException {
+    return getRepository().getRevisionInfo(rev).getFile(getRepositoryPath(path));
+  }
+
+  @Nullable
+  public VcsFile getFile(int rev, @NotNull SVNURL url) throws SVNException, IOException {
+    final String path = getRepositoryPath(url);
+    checkAcl(path);
+    return getRepository().getRevisionInfo(rev).getFile(path);
+  }
+
+  public void checkAcl(@NotNull String path) throws SVNException {
+    server.getAcl().check(user, path);
   }
 }
