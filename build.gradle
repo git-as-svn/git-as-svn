@@ -1,3 +1,13 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
+  }
+}
+
 task wrapper(type: Wrapper) {
   gradleVersion = "2.0"
 }
@@ -6,9 +16,15 @@ repositories {
   mavenCentral()
 }
 
+apply plugin: "license"
 apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "project-report"
+
+license {
+  header rootProject.file('license_header.txt')
+  exclude "src/test/resources/svnserver"
+}
 
 dependencies {
   compile "org.jetbrains:annotations:13.0"
