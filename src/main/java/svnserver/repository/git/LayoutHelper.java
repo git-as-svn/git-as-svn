@@ -9,6 +9,8 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.repository.git.cache.CacheHelper;
+import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.layout.RefMappingDirect;
 import svnserver.repository.git.layout.RefMappingGroup;
 import svnserver.repository.git.layout.RefMappingPrefix;
@@ -200,18 +202,11 @@ public class LayoutHelper {
     return PREFIX_ANONIMOUS + commit.getId().abbreviate(6).name() + '/';
   }
 
-  public static Map<String, RevCommit> getRevisionBranches(@NotNull Repository repository, @NotNull GitRevision prev) throws IOException {
-    final RevCommit commit = prev.getCommit();
+  public static CacheRevision getRevisionBranches(@NotNull Repository repository, @Nullable RevCommit commit) throws IOException {
     if (commit == null) {
-      return new HashMap<>();
+      return CacheRevision.empty;
     }
-    TreeWalk treeWalk = new TreeWalk(repository);
-    treeWalk.addTree(commit.getTree());
-    treeWalk.setRecursive(true);
-    while (treeWalk.next()) {
-      System.out.println("found: " + treeWalk.getPathString());
-    }
-    return new HashMap<>();
+    return CacheHelper.load(TreeWalk.forPath(repository, ENTRY_COMMIT, commit.getTree()));
   }
 
   private static class RevisionNode {

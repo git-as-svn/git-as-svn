@@ -254,10 +254,17 @@ public class GitRepository implements VcsRepository {
     final ObjectInserter inserter = repository.newObjectInserter();
 
     GitRevision prev = svnRevisions.get(svnRevisions.size() - 1);
+
+    CacheRevision prevCache = LayoutHelper.getRevisionBranches(repository, prev.getCommit());
+    final Map<String, RevCommit> revBranches = new TreeMap<>();
+    for (Map.Entry<String, ObjectId> entry : prevCache.getBranches().entrySet()) {
+      revBranches.put(entry.getKey(), revWalk.parseCommit(entry.getValue()));
+    }
+
     int rev = 0;
     for (CacheInfo commitInfo : commitList) {
       rev++;
-      Map<String, RevCommit> revBranches = LayoutHelper.getRevisionBranches(repository, prev);
+
       final RevCommit revCommit = commitInfo.commit;
       if (commitInfo.svnBranch == null) {
         if (!commitInfo.parents.isEmpty()) {
@@ -277,7 +284,7 @@ public class GitRepository implements VcsRepository {
       revBranches.put(commitInfo.svnBranch, revCommit);
       ObjectId svnTree = LayoutHelper.createSvnLayoutTree(inserter, revBranches);
 
-      final CacheRevision cacheRevision = createCache(revCommit);
+      final CacheRevision cacheRevision = createCache(revCommit, revBranches);
 
       final TreeFormatter treeBuilder = new TreeFormatter();
       treeBuilder.append("commit.yml", FileMode.REGULAR_FILE, CacheHelper.save(inserter, cacheRevision));
@@ -308,17 +315,14 @@ public class GitRepository implements VcsRepository {
     return false;
   }
 
-  private CacheRevision createCache(@NotNull RevCommit newCommit) throws IOException, SVNException {
+  private CacheRevision createCache(@NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches) throws IOException, SVNException {
     final RevCommit oldCommit = newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null;
     final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, -1) : new GitFile(this, oldCommit, -1);
     final GitFile newTree = new GitFile(this, newCommit, -1);
-    final Map<String, String> renames = collectRename(
-        oldTree,
-        newTree
-    );
     return new CacheRevision(
         newCommit.getFullMessage(),
-        renames
+        collectRename(oldTree, newTree),
+        branches
     );
   }
 
