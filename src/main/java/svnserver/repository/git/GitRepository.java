@@ -28,6 +28,8 @@ import svnserver.StringHelper;
 import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
+import svnserver.repository.git.cache.CacheHelper;
+import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
@@ -236,7 +238,7 @@ public class GitRepository implements VcsRepository {
     for (Map.Entry<String, RevCommit> entry : branches.entrySet()) {
       commitMap.computeIfPresent(entry.getValue(), new ComputeBranchName(entry.getKey()));
     }
-
+    // Assing to commit parent branch name.
     for (int i = commitList.size() - 1; i >= 0; --i) {
       final CacheInfo commit = commitList.get(i);
       final String branch = commit.svnBranch;
@@ -247,14 +249,15 @@ public class GitRepository implements VcsRepository {
         }
       }
     }
+
     final RevWalk revWalk = new RevWalk(repository);
     final ObjectInserter inserter = repository.newObjectInserter();
 
-    RevCommit prev = revWalk.parseCommit(svnRevisions.get(svnRevisions.size() - 1).getObjectId());
-    Map<String, RevCommit> revBranches = new HashMap<>();
-
+    GitRevision prev = svnRevisions.get(svnRevisions.size() - 1);
+    int rev = 0;
     for (CacheInfo commitInfo : commitList) {
-      // todo: Map<String, RevCommit> revBranches = LayoutHelper.getRevisionBranches(repository, prev);
+      rev++;
+      Map<String, RevCommit> revBranches = LayoutHelper.getRevisionBranches(repository, prev);
       final RevCommit revCommit = commitInfo.commit;
       if (commitInfo.svnBranch == null) {
         if (!commitInfo.parents.isEmpty()) {
@@ -274,30 +277,49 @@ public class GitRepository implements VcsRepository {
       revBranches.put(commitInfo.svnBranch, revCommit);
       ObjectId svnTree = LayoutHelper.createSvnLayoutTree(inserter, revBranches);
 
+      final CacheRevision cacheRevision = createCache(revCommit);
+
       final TreeFormatter treeBuilder = new TreeFormatter();
-      treeBuilder.append("commit", prev);
+      treeBuilder.append("commit.yml", FileMode.REGULAR_FILE, CacheHelper.save(inserter, cacheRevision));
+      treeBuilder.append("commit.ref", revCommit);
       treeBuilder.append("svn", FileMode.TREE, svnTree); // todo: Layout
       final ObjectId rootTree = inserter.insert(treeBuilder);
 
       final CommitBuilder commitBuilder = new CommitBuilder();
       commitBuilder.setAuthor(revCommit.getAuthorIdent());
       commitBuilder.setCommitter(revCommit.getCommitterIdent());
-      commitBuilder.setMessage(revCommit.getFullMessage());
-      commitBuilder.addParentId(prev);
+      commitBuilder.setMessage("#" + rev + ": " + revCommit.getFullMessage());
+      commitBuilder.addParentId(prev.getObjectId());
       commitBuilder.setTreeId(rootTree);
       final ObjectId commitId = inserter.insert(commitBuilder);
       inserter.flush();
-      prev = revWalk.parseCommit(commitId);
 
+      RevCommit commit = revWalk.parseCommit(commitId);
+
+      prev = new GitRevision(this, prev.getId() + 1, Collections.emptyMap(), prev.getCommit(), commit, revCommit.getCommitTime());
       System.out.println(revCommit + " " + commitInfo.svnBranch);
     }
     inserter.flush();
 
     RefUpdate refUpdate = repository.updateRef(svnBranch);
-    refUpdate.setNewObjectId(prev);
+    refUpdate.setNewObjectId(prev.getObjectId());
     refUpdate.update();
 
     return false;
+  }
+
+  private CacheRevision createCache(@NotNull RevCommit newCommit) throws IOException, SVNException {
+    final RevCommit oldCommit = newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null;
+    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, -1) : new GitFile(this, oldCommit, -1);
+    final GitFile newTree = new GitFile(this, newCommit, -1);
+    final Map<String, String> renames = collectRename(
+        oldTree,
+        newTree
+    );
+    return new CacheRevision(
+        newCommit.getFullMessage(),
+        renames
+    );
   }
 
   @Override
@@ -399,7 +421,15 @@ public class GitRepository implements VcsRepository {
     final GitFile oldTree = prevCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, prevCommit, revisionId - 1);
     final GitFile newTree = new GitFile(this, commit, revisionId);
 
-    final Map<String, VcsCopyFrom> renames = renameDetection ? collectRename(oldTree, newTree, revisionId - 1) : Collections.emptyMap();
+    final Map<String, VcsCopyFrom> renames = new TreeMap<>();
+    for (Map.Entry<String, String> rename : collectRename(oldTree, newTree).entrySet()) {
+      final String oldPath = rename.getValue();
+      final int lastChange = getLastChange(oldPath, revisionId - 1);
+      if (lastChange <= 0) {
+        throw new IllegalStateException();
+      }
+      renames.put(StringHelper.normalize(rename.getKey()), new VcsCopyFrom(lastChange, oldPath));
+    }
     final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree, true);
     for (Map.Entry<String, GitLogPair> entry : changes.entrySet()) {
       lastUpdates.compute(entry.getKey(), (key, list) -> {
@@ -419,7 +449,10 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private Map<String, VcsCopyFrom> collectRename(@NotNull GitFile oldTree, @NotNull GitFile newTree, int revision) throws IOException {
+  private Map<String, String> collectRename(@NotNull GitFile oldTree, @NotNull GitFile newTree) throws IOException {
+    if (!renameDetection) {
+      return Collections.emptyMap();
+    }
     final GitObject<ObjectId> oldTreeId = oldTree.getObjectId();
     final GitObject<ObjectId> newTreeId = newTree.getObjectId();
     if (oldTreeId == null || newTreeId == null || !Objects.equals(oldTreeId.getRepo(), newTreeId.getRepo())) {
@@ -433,15 +466,10 @@ public class GitRepository implements VcsRepository {
     final RenameDetector rd = new RenameDetector(repository);
     rd.addAll(DiffEntry.scan(tw));
 
-    final Map<String, VcsCopyFrom> result = new HashMap<>();
+    final Map<String, String> result = new HashMap<>();
     for (DiffEntry diff : rd.compute(tw.getObjectReader(), null)) {
       if (diff.getScore() >= rd.getRenameScore()) {
-        final String oldPath = StringHelper.normalize(diff.getOldPath());
-        final int lastChange = getLastChange(oldPath, revision);
-        if (lastChange <= 0) {
-          throw new IllegalStateException();
-        }
-        result.put(StringHelper.normalize(diff.getNewPath()), new VcsCopyFrom(lastChange, oldPath));
+        result.put(StringHelper.normalize(diff.getNewPath()), StringHelper.normalize(diff.getOldPath()));
       }
     }
     return result;

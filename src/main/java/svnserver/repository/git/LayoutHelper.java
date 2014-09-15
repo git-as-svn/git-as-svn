@@ -32,7 +32,11 @@ public class LayoutHelper {
   @NotNull
   private static final String REF = "refs/git-as-svn/v1";
   @NotNull
-  private static final String SVN_ROOT = "svn";
+  private static final String ENTRY_COMMIT = "commit.yml";
+  @NotNull
+  private static final String ENTRY_ROOT = "svn";
+  @NotNull
+  private static final String ENTRY_UUID = "uuid";
   @NotNull
   private static final String PREFIX_ANONIMOUS = "unnamed/";
 
@@ -42,6 +46,7 @@ public class LayoutHelper {
     if (ref != null) {
       // todo: Remove after layout cache loading support
       final RefUpdate refUpdate = repository.updateRef(REF);
+      refUpdate.setForceUpdate(true);
       refUpdate.delete();
       ref = null;
     }
@@ -206,7 +211,7 @@ public class LayoutHelper {
     while (treeWalk.next()) {
       System.out.println("found: " + treeWalk.getPathString());
     }
-    return null;
+    return new HashMap<>();
   }
 
   private static class RevisionNode {
@@ -225,15 +230,15 @@ public class LayoutHelper {
     final ObjectId treeId = inserter.insert(new TreeFormatter());
     // Create commit tree.
     final TreeFormatter rootBuilder = new TreeFormatter();
-    rootBuilder.append(SVN_ROOT, FileMode.TREE, treeId);
-    rootBuilder.append("uuid", FileMode.REGULAR_FILE, uuidId);
+    rootBuilder.append(ENTRY_ROOT, FileMode.TREE, treeId);
+    rootBuilder.append(ENTRY_UUID, FileMode.REGULAR_FILE, uuidId);
     new ObjectChecker().checkTree(rootBuilder.toByteArray());
     final ObjectId rootId = inserter.insert(rootBuilder);
     // Create first commit with message.
     final CommitBuilder commitBuilder = new CommitBuilder();
     commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
     commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
-    commitBuilder.setMessage(revisionName(0));
+    commitBuilder.setMessage("#0: Initial revision");
     commitBuilder.setTreeId(rootId);
     final ObjectId commitId = inserter.insert(commitBuilder);
     inserter.flush();
@@ -282,10 +287,5 @@ public class LayoutHelper {
       throw new IllegalStateException();
     }
     return inserter.insert(rootTree);
-  }
-
-  @NotNull
-  private static String revisionName(int rev) {
-    return "Revision " + rev;
   }
 }

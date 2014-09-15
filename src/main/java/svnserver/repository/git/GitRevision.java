@@ -45,7 +45,12 @@ public class GitRevision implements VcsRevision {
   private final long date;
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, VcsCopyFrom> renames, @Nullable RevCommit prevCommit, @Nullable RevCommit commit, int commitTimeSec) {
+  public GitRevision(@NotNull GitRepository repo,
+                     int revision,
+                     @NotNull Map<String, VcsCopyFrom> renames,
+                     @Nullable RevCommit prevCommit,
+                     @Nullable RevCommit commit,
+                     int commitTimeSec) {
     this.repo = repo;
     this.revision = revision;
     this.renames = renames;
