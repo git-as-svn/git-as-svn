@@ -9,6 +9,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.repository.git.layout.RefMappingDirect;
+import svnserver.repository.git.layout.RefMappingGroup;
+import svnserver.repository.git.layout.RefMappingPrefix;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,19 +24,17 @@ import java.util.*;
  */
 public class LayoutHelper {
   @NotNull
+  private static final RefMappingGroup layoutMapping = new RefMappingGroup(
+      new RefMappingDirect(Constants.R_HEADS + Constants.MASTER, "trunk/"),
+      new RefMappingPrefix(Constants.R_HEADS, "branchs/"),
+      new RefMappingPrefix(Constants.R_TAGS, "tags/")
+  );
+  @NotNull
   private static final String REF = "refs/git-as-svn/v1";
   @NotNull
   private static final String SVN_ROOT = "svn";
   @NotNull
-  private static final String MASTER = Constants.MASTER;
-  @NotNull
-  private static final String TRUNK = "trunk/";
-  @NotNull
-  private static final String PREFIX_BRANCH = "branchs/";
-  @NotNull
   private static final String PREFIX_ANONIMOUS = "unnamed/";
-  @NotNull
-  private static final String PREFIX_TAG = "tags/";
 
   @NotNull
   public static Ref initRepository(@NotNull Repository repository) throws IOException {
@@ -69,23 +70,40 @@ public class LayoutHelper {
     final Map<String, RevCommit> result = new TreeMap<>();
     for (Ref ref : repository.getAllRefs().values()) {
       try {
-        if (ref.getName().startsWith(Constants.R_HEADS)) {
-          final ObjectId objectId = ref.getObjectId();
-          final String shortName = ref.getName().substring(Constants.R_HEADS.length());
-          result.put(shortName.equals(MASTER) ? TRUNK : (PREFIX_BRANCH + shortName + '/'), revWalk.parseCommit(objectId));
-        }
-        if (ref.getName().startsWith(Constants.R_TAGS)) {
-          final RevTag revTag = revWalk.parseTag(ref.getObjectId());
-          final ObjectId objectId = revTag.getObject();
-          RevObject revObject = revWalk.parseAny(objectId);
-          if (revObject instanceof RevCommit) {
-            result.put(PREFIX_TAG + ref.getName().substring(Constants.R_TAGS.length()) + '/', (RevCommit) revObject);
+        final String svnPath = layoutMapping.gitToSvn(ref.getName());
+        if (svnPath != null) {
+          final RevCommit revCommit = unwrapCommit(revWalk, ref.getObjectId());
+          if (revCommit != null) {
+            result.put(svnPath, revCommit);
           }
         }
       } catch (MissingObjectException ignored) {
       }
     }
     return result;
+  }
+
+  /**
+   * Unwrap commit from reference.
+   *
+   * @param revWalk  Git parser.
+   * @param objectId Reference object.
+   * @return Wrapped commit or null (ex: tag on tree).
+   * @throws IOException .
+   */
+  @Nullable
+  private static RevCommit unwrapCommit(@NotNull RevWalk revWalk, @NotNull ObjectId objectId) throws IOException {
+    RevObject revObject = revWalk.parseAny(objectId);
+    while (true) {
+      if (revObject instanceof RevCommit) {
+        return (RevCommit) revObject;
+      }
+      if (revObject instanceof RevTag) {
+        revObject = ((RevTag) revObject).getObject();
+        continue;
+      }
+      return null;
+    }
   }
 
   /**
@@ -165,19 +183,12 @@ public class LayoutHelper {
   }
 
   public static int compareBranches(@NotNull String branch1, @NotNull String branch2) {
-    final int p1 = getBranchPriority(branch1);
-    final int p2 = getBranchPriority(branch2);
+    final int p1 = layoutMapping.getPriority(branch1);
+    final int p2 = layoutMapping.getPriority(branch2);
     if (p1 != p2) {
       return p1 - p2;
     }
     return branch1.compareTo(branch2);
-  }
-
-  public static int getBranchPriority(@NotNull String branchName) {
-    if (branchName.equals(TRUNK)) return 0;
-    if (branchName.startsWith(PREFIX_BRANCH)) return 1;
-    if (branchName.startsWith(PREFIX_TAG)) return 2;
-    return 3;
   }
 
   public static String getAnonimousBranch(RevCommit commit) {

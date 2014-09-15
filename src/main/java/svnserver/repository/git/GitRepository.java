@@ -193,14 +193,18 @@ public class GitRepository implements VcsRepository {
   }
 
   private static class CacheInfo {
+    private final int id;
     @NotNull
     private RevCommit commit;
     @NotNull
-    private List<RevCommit> childs = new ArrayList<>();
+    private List<CacheInfo> childs = new ArrayList<>();
+    @NotNull
+    private List<CacheInfo> parents = new ArrayList<>();
     @Nullable
     private String svnBranch;
 
-    private CacheInfo(@NotNull RevCommit commit) {
+    private CacheInfo(int id, @NotNull RevCommit commit) {
+      this.id = id;
       this.commit = commit;
     }
   }
@@ -217,13 +221,14 @@ public class GitRepository implements VcsRepository {
     final Map<RevCommit, CacheInfo> commitMap = new HashMap<>();
     // Create commit list.
     for (RevCommit commit : LayoutHelper.getNewRevisions(repository, svnRevisionByHash.keySet(), branches.values())) {
-      final CacheInfo cacheInfo = new CacheInfo(commit);
+      final CacheInfo cacheInfo = new CacheInfo(commitList.size(), commit);
       commitList.add(cacheInfo);
       commitMap.put(commit, cacheInfo);
       for (RevCommit parent : commit.getParents()) {
-        commitMap.computeIfPresent(parent, (key, cacheInfo1) -> {
-          cacheInfo1.childs.add(commit);
-          return cacheInfo1;
+        commitMap.computeIfPresent(parent, (key, parentInfo) -> {
+          parentInfo.childs.add(0, cacheInfo);
+          cacheInfo.parents.add(parentInfo);
+          return parentInfo;
         });
       }
     }
@@ -252,9 +257,9 @@ public class GitRepository implements VcsRepository {
       // todo: Map<String, RevCommit> revBranches = LayoutHelper.getRevisionBranches(repository, prev);
       final RevCommit revCommit = commitInfo.commit;
       if (commitInfo.svnBranch == null) {
-        if (revCommit.getParentCount() > 0) {
+        if (!commitInfo.parents.isEmpty()) {
           for (Map.Entry<String, RevCommit> entry : revBranches.entrySet()) {
-            if (entry.getValue().equals(revCommit.getParent(0))) {
+            if (entry.getValue().equals(commitInfo.parents.get(0).commit)) {
               new ComputeBranchName(entry.getKey()).apply(revCommit, commitInfo);
             }
           }
