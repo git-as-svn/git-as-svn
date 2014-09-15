@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.parser.token.*;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -31,8 +32,6 @@ public final class MessageParser {
   }
 
   @NotNull
-  private static final String[] emptyStrings = {};
-  @NotNull
   private static final byte[] emptyBytes = {};
   @NotNull
   private static final int[] emptyInts = {};
@@ -42,7 +41,6 @@ public final class MessageParser {
   static {
     parsers = new HashMap<>();
     parsers.put(String.class, MessageParser::parseString);
-    parsers.put(String[].class, MessageParser::parseStrings);
     parsers.put(byte[].class, MessageParser::parseBinary);
     parsers.put(int.class, MessageParser::parseInt);
     parsers.put(int[].class, MessageParser::parseInts);
@@ -59,10 +57,30 @@ public final class MessageParser {
     return parseObject(type, tokenParser);
   }
 
+  @SuppressWarnings("unchecked")
+  @NotNull
   private static <T> T parseObject(Class<T> type, @Nullable SvnServerParser tokenParser) throws IOException {
-    if (tokenParser != null) {
-      tokenParser.readToken(ListBeginToken.class);
+    if (tokenParser != null && tokenParser.readItem(ListBeginToken.class) == null)
+      tokenParser = null;
+
+    final int depth = getDepth(tokenParser);
+
+    if (type.isArray()) {
+      final List<Object> result = new ArrayList<>();
+
+      if (tokenParser != null) {
+        while (true) {
+          final Object element = parse(type.getComponentType(), tokenParser);
+          if (getDepth(tokenParser) < depth)
+            break;
+
+          result.add(element);
+        }
+      }
+
+      return (T) result.toArray((Object[]) Array.newInstance(type.getComponentType(), result.size()));
     }
+
     final Constructor<?>[] ctors = type.getDeclaredConstructors();
     if (ctors.length != 1) {
       throw new IllegalStateException("Can't find parser ctor for object: " + type.getName());
@@ -70,11 +88,10 @@ public final class MessageParser {
     final Constructor<?> ctor = ctors[0];
     final Parameter[] ctorParams = ctor.getParameters();
     Object[] params = new Object[ctorParams.length];
-    int depth = getDepth(tokenParser);
     for (int i = 0; i < params.length; ++i) {
       params[i] = parse(ctorParams[i].getType(), getDepth(tokenParser) == depth ? tokenParser : null);
     }
-    while ((tokenParser != null) && (getDepth(tokenParser) >= depth)) {
+    while (tokenParser != null && getDepth(tokenParser) >= depth) {
       tokenParser.readToken();
     }
     try {
@@ -101,23 +118,6 @@ public final class MessageParser {
     }
     final StringToken token = tokenParser.readItem(StringToken.class);
     return token != null ? token.getData() : emptyBytes;
-  }
-
-  @NotNull
-  private static String[] parseStrings(@Nullable SvnServerParser tokenParser) throws IOException {
-    if (tokenParser == null) {
-      return emptyStrings;
-    }
-    if (tokenParser.readItem(ListBeginToken.class) != null) {
-      final List<String> result = new ArrayList<>();
-      while (true) {
-        final TextToken token = tokenParser.readItem(TextToken.class);
-        if (token == null) break;
-        result.add(token.getText());
-      }
-      return result.toArray(new String[result.size()]);
-    }
-    return emptyStrings;
   }
 
   private static int parseInt(@Nullable SvnServerParser tokenParser) throws IOException {

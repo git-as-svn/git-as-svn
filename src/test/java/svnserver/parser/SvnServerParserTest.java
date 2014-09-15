@@ -70,6 +70,18 @@ public class SvnServerParserTest {
   }
 
   @Test
+  public void test2dString() throws IOException {
+    try (InputStream stream = new ByteArrayInputStream("( ( 1:a ) ( 1:b ) )".getBytes(StandardCharsets.UTF_8))) {
+      final SvnServerParser parser = new SvnServerParser(stream);
+      final String[][] actual = MessageParser.parse(String[][].class, parser);
+      ArrayAsserts.assertArrayEquals(new String[][]{
+          new String[]{"a"},
+          new String[]{"b"},
+      }, actual);
+    }
+  }
+
+  @Test
   public void testMessageParse() throws IOException {
     try (InputStream stream = new ByteArrayInputStream("( 2 ( edit-pipeline svndiff1 absent-entries depth mergeinfo log-revprops ) 15:svn://localhost 31:SVN/1.8.8 (x86_64-pc-linux-gnu) ( ) ) test ".getBytes(StandardCharsets.UTF_8))) {
       final SvnServerParser parser = new SvnServerParser(stream);
