@@ -9,6 +9,7 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.repository.Depth;
 
 /**
  * <pre>

@@ -94,6 +94,13 @@ public class SvnServer extends Thread {
     commands.put("switch", new DeltaCmd(SwitchParams.class));
     commands.put("update", new DeltaCmd(UpdateParams.class));
 
+    commands.put("lock", new LockCmd());
+    commands.put("lock-many", new LockManyCmd());
+    commands.put("unlock", new UnlockCmd());
+    commands.put("unlock-many", new UnlockManyCmd());
+    commands.put("get-lock", new GetLockCmd());
+    commands.put("get-locks", new GetLocksCmd());
+
     repository = config.getRepository().create();
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));

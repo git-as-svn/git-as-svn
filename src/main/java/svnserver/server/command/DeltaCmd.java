@@ -24,6 +24,7 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.Depth;
 import svnserver.repository.VcsFile;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
