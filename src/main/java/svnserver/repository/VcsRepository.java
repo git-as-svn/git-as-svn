@@ -9,6 +9,7 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.repository.locks.LockManager;
 
 import java.io.IOException;
 
@@ -25,6 +26,9 @@ public interface VcsRepository {
    */
   @NotNull
   String getUuid();
+
+  @NotNull
+  LockManager getLockManager();
 
   /**
    * Get latest revision number.

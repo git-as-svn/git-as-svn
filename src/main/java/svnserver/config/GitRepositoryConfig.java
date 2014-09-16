@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.locks.LockManagerType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,6 +41,8 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private GitPushMode pushMode = GitPushMode.NATIVE;
   private boolean renameDetection = true;
+  @NotNull
+  private LockManagerType lockManager = LockManagerType.DumbReadOnly;
 
   @NotNull
   public String getBranch() {
@@ -113,6 +116,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   @Override
   public VcsRepository create() throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection());
+    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), lockManager.create());
   }
 }

@@ -5,7 +5,7 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.server.command;
+package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +85,7 @@ public enum Depth {
   public enum Action {
     Skip,
     Upgrade,
-    Normal;
+    Normal
   }
 
   @NotNull

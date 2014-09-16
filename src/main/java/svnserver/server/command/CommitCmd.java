@@ -55,12 +55,40 @@ import java.util.Map;
  */
 
 public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
+
+  /**
+   * TODO: locks
+   */
+  public static final class LockInfo {
+
+    @NotNull
+    private final String path;
+    @NotNull
+    private final String lockToken;
+
+    public LockInfo(@NotNull String path, @NotNull String lockToken) {
+      this.path = path;
+      this.lockToken = lockToken;
+    }
+  }
+
   public static class CommitParams {
     @NotNull
     private final String message;
+    /**
+     * TODO: locks
+     */
+    @NotNull
+    private final LockInfo[] locks;
+    /**
+     * TODO: locks
+     */
+    private final boolean keepLocks;
 
-    public CommitParams(@NotNull String message) {
+    public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks) {
       this.message = message;
+      this.locks = locks;
+      this.keepLocks = keepLocks;
     }
   }
 

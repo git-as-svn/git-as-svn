@@ -31,6 +31,7 @@ import svnserver.repository.*;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
+import svnserver.repository.locks.LockManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +54,8 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
-
+  @NotNull
+  private final LockManager lockManager;
   @NotNull
   public static final byte[] emptyBytes = new byte[0];
   @NotNull
@@ -85,8 +87,13 @@ public class GitRepository implements VcsRepository {
   private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
 
-  public GitRepository(@NotNull Repository repository, @NotNull List<Repository> linked,
-                       @NotNull GitPushMode pushMode, @NotNull String branch, boolean renameDetection) throws IOException, SVNException {
+  public GitRepository(@NotNull Repository repository,
+                       @NotNull List<Repository> linked,
+                       @NotNull GitPushMode pushMode,
+                       @NotNull String branch,
+                       boolean renameDetection,
+                       @NotNull LockManager lockManager) throws IOException, SVNException {
+    this.lockManager = lockManager;
     this.repository = repository;
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
@@ -99,6 +106,12 @@ public class GitRepository implements VcsRepository {
     updateRevisions();
     this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
     log.info("Repository ready (branch: {}, sha1: {})", this.branch, branchRef.getObjectId().getName());
+  }
+
+  @NotNull
+  @Override
+  public LockManager getLockManager() {
+    return lockManager;
   }
 
   @NotNull
