@@ -8,7 +8,6 @@
 package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +30,10 @@ import java.nio.charset.StandardCharsets;
 public enum GitPushMode {
   NATIVE {
     @Override
-    public boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull Ref branch) throws IOException, SVNException {
+    public boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull String branch) throws IOException, SVNException {
       try {
         repository.getDirectory();
-        final ProcessBuilder processBuilder = new ProcessBuilder("git", "push", "--porcelain", "--quiet", ".", commitId.name() + ":" + branch.getName())
+        final ProcessBuilder processBuilder = new ProcessBuilder("git", "push", "--porcelain", "--quiet", ".", commitId.name() + ":" + branch)
             .directory(repository.getDirectory())
             .redirectErrorStream(true);
         processBuilder.environment().put("LANG", "en_US.utf8");
@@ -84,8 +83,8 @@ public enum GitPushMode {
   },
   SIMPLE {
     @Override
-    public boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull Ref branch) throws SVNException, IOException {
-      final RefUpdate refUpdate = repository.updateRef(branch.getName());
+    public boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull String branch) throws SVNException, IOException {
+      final RefUpdate refUpdate = repository.updateRef(branch);
       refUpdate.setNewObjectId(commitId);
       final RefUpdate.Result result = refUpdate.update();
       switch (result) {
@@ -106,6 +105,6 @@ public enum GitPushMode {
   @NotNull
   private static final String SYSTEM_MESSAGE_PREFIX = "!";
 
-  public abstract boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull Ref branch) throws SVNException, IOException;
+  public abstract boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull String branch) throws SVNException, IOException;
 
 }

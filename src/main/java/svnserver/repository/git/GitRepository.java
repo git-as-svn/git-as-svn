@@ -68,13 +68,9 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
   @NotNull
-  private final List<GitRevision> svnRevisions = new ArrayList<>();
-  @NotNull
   private final TreeMap<Long, GitRevision> revisionByDate = new TreeMap<>();
   @NotNull
-  private final TreeMap<Long, GitRevision> svnRevisionByDate = new TreeMap<>();
-  @NotNull
-  private final TreeMap<ObjectId, GitRevision> svnRevisionByHash = new TreeMap<>();
+  private final TreeMap<ObjectId, GitRevision> revisionByHash = new TreeMap<>();
   @NotNull
   private final Map<String, IntList> lastUpdates = new ConcurrentHashMap<>();
   @NotNull
@@ -85,7 +81,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final String uuid;
   @NotNull
-  private final String branch;
+  private final String gitBranch;
   @NotNull
   private final String svnBranch;
   @NotNull
@@ -104,29 +100,18 @@ public class GitRepository implements VcsRepository {
     linkedRepositories = new ArrayList<>(linked);
 
     this.svnBranch = LayoutHelper.initRepository(repository).getName();
+    this.gitBranch = Constants.R_HEADS + branch;
     loadRevisions();
     cacheRevisions();
 
-    final Ref branchRef = repository.getRef(branch);
-    if (branchRef == null) {
-      throw new IOException("Branch not found: " + branch);
-    }
-    this.branch = branchRef.getName();
-
     updateRevisions();
-    this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + this.branch).getBytes(StandardCharsets.UTF_8)).toString();
-    log.info("Repository ready (branch: {}, sha1: {})", this.branch, branchRef.getObjectId().getName());
+    this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
+    log.info("Repository ready (branch: {})", gitBranch);
   }
 
   @NotNull
-  private String getRepositoryId() {
-    for (GitRevision revision : revisions) {
-      ObjectId commitId = revision.getObjectId();
-      if (commitId != null) {
-        return commitId.getName();
-      }
-    }
-    throw new IllegalStateException("Can't find non-empty commit in repository");
+  private String getRepositoryId() throws IOException {
+    return LayoutHelper.loadRepositoryId(repository.newObjectReader(), revisions.get(0).getCacheCommit());
   }
 
   /**
@@ -139,10 +124,10 @@ public class GitRepository implements VcsRepository {
     // Fast check.
     lock.readLock().lock();
     try {
-      final int lastRevision = svnRevisions.size() - 1;
+      final int lastRevision = revisions.size() - 1;
       final ObjectId lastCommitId;
       if (lastRevision >= 0) {
-        lastCommitId = svnRevisions.get(lastRevision).getCommit();
+        lastCommitId = revisions.get(lastRevision).getGitNewCommit();
         final Ref head = repository.getRef(svnBranch);
         if (head.getObjectId().equals(lastCommitId)) {
           return false;
@@ -154,8 +139,8 @@ public class GitRepository implements VcsRepository {
     // Real loading.
     lock.writeLock().lock();
     try {
-      final int lastRevision = svnRevisions.size() - 1;
-      final ObjectId lastCommitId = lastRevision < 0 ? null : svnRevisions.get(lastRevision).getObjectId();
+      final int lastRevision = revisions.size() - 1;
+      final ObjectId lastCommitId = lastRevision < 0 ? null : revisions.get(lastRevision).getCacheCommit();
       final Ref head = repository.getRef(svnBranch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
@@ -218,131 +203,30 @@ public class GitRepository implements VcsRepository {
    * @throws SVNException
    */
   public boolean cacheRevisions() throws IOException, SVNException {
-    final Map<String, RevCommit> branches = LayoutHelper.getBranches(repository);
-    final List<CacheInfo> commitList = new ArrayList<>();
-    final Map<RevCommit, CacheInfo> commitMap = new HashMap<>();
-    // Create commit list.
-    for (RevCommit commit : LayoutHelper.getNewRevisions(repository, svnRevisionByHash.keySet(), branches.values())) {
-      final CacheInfo cacheInfo = new CacheInfo(commitList.size(), commit);
-      commitList.add(cacheInfo);
-      commitMap.put(commit, cacheInfo);
-      for (RevCommit parent : commit.getParents()) {
-        commitMap.computeIfPresent(parent, (key, parentInfo) -> {
-          parentInfo.childs.add(0, cacheInfo);
-          cacheInfo.parents.add(parentInfo);
-          return parentInfo;
-        });
-      }
-    }
-    // Set commit branch name.
-    for (Map.Entry<String, RevCommit> entry : branches.entrySet()) {
-      commitMap.computeIfPresent(entry.getValue(), new ComputeBranchName(entry.getKey()));
-    }
-    // Assing to commit parent branch name.
-    for (int i = commitList.size() - 1; i >= 0; --i) {
-      final CacheInfo commit = commitList.get(i);
-      final String branch = commit.svnBranch;
-      if (branch != null) {
-        final RevCommit[] parents = commit.commit.getParents();
-        if (parents.length > 0) {
-          commitMap.computeIfPresent(parents[0], new ComputeBranchName(branch));
-        }
-      }
-    }
-
-    final RevWalk revWalk = new RevWalk(repository);
-    final ObjectInserter inserter = repository.newObjectInserter();
-
-    GitRevision prev = svnRevisions.get(svnRevisions.size() - 1);
-
-    CacheRevision prevCache = LayoutHelper.getRevisionBranches(repository, prev.getCommit());
-    final Map<String, RevCommit> revBranches = new TreeMap<>();
-    for (Map.Entry<String, ObjectId> entry : prevCache.getBranches().entrySet()) {
-      revBranches.put(entry.getKey(), revWalk.parseCommit(entry.getValue()));
-    }
-
-    for (CacheInfo commitInfo : commitList) {
-      final RevCommit revCommit = commitInfo.commit;
-      if (commitInfo.svnBranch == null) {
-        if (!commitInfo.parents.isEmpty()) {
-          for (Map.Entry<String, RevCommit> entry : revBranches.entrySet()) {
-            if (entry.getValue().equals(commitInfo.parents.get(0).commit)) {
-              new ComputeBranchName(entry.getKey()).apply(revCommit, commitInfo);
-            }
-          }
-        }
-        if (commitInfo.svnBranch == null) {
-          commitInfo.svnBranch = LayoutHelper.getAnonimousBranch(revCommit);
-        }
-        if (commitInfo.svnBranch == null) {
-          continue;
-        }
-      }
-      revBranches.put(commitInfo.svnBranch, revCommit);
-
-      final int revisionId = prev.getId() + 1;
-      final CacheRevision cacheRevision = createCache(revCommit, revBranches, revisionId);
-      final ObjectId commitId = LayoutHelper.createCacheCommit(inserter, prev.getObjectId(), revCommit, cacheRevision);
-      inserter.flush();
-
-      RevCommit commit = revWalk.parseCommit(commitId);
-
-      prev = new GitRevision(this, revisionId, Collections.emptyMap(), prev.getCommit(), commit, revCommit.getCommitTime());
-      System.out.println(revCommit + " " + commitInfo.svnBranch);
-    }
-    inserter.flush();
-
-    RefUpdate refUpdate = repository.updateRef(svnBranch);
-    refUpdate.setNewObjectId(prev.getObjectId());
-    refUpdate.update();
-
-    return false;
-  }
-
-  private CacheRevision createCache(@NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches, int revisionId) throws IOException, SVNException {
-    final RevCommit oldCommit = newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null;
-    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, oldCommit, revisionId - 1);
-    final GitFile newTree = new GitFile(this, newCommit, revisionId);
-    final Map<String, CacheChange> fileChange = new TreeMap<>();
-    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
-      fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
-    }
-    return new CacheRevision(
-        revisionId,
-        newCommit.getFullMessage(),
-        collectRename(oldTree, newTree),
-        fileChange,
-        branches
-    );
-  }
-
-  @Override
-  public void updateRevisions() throws IOException, SVNException {
     // Fast check.
     lock.readLock().lock();
     try {
       final int lastRevision = revisions.size() - 1;
       if (lastRevision >= 0) {
-        final ObjectId lastCommitId = revisions.get(lastRevision).getCommit();
-        final Ref master = repository.getRef(branch);
-        if (master.getObjectId().equals(lastCommitId)) {
-          return;
+        final ObjectId lastCommitId = revisions.get(lastRevision).getGitNewCommit();
+        final Ref master = repository.getRef(gitBranch);
+        if ((master == null) || (master.getObjectId().equals(lastCommitId))) {
+          return false;
         }
       }
     } finally {
       lock.readLock().unlock();
     }
     // Real update.
+    final ObjectInserter inserter = repository.newObjectInserter();
     lock.writeLock().lock();
     try {
-      final int lastRevision = revisions.size() - 1;
-      final ObjectId lastCommitId = lastRevision < 0 ? null : revisions.get(lastRevision).getObjectId();
-      final Ref master = repository.getRef(branch);
+      final Ref master = repository.getRef(gitBranch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
       ObjectId objectId = master.getObjectId();
       while (true) {
-        if (objectId.equals(lastCommitId)) {
+        if (revisionByHash.containsKey(objectId)) {
           break;
         }
         final RevCommit commit = revWalk.parseCommit(objectId);
@@ -351,18 +235,18 @@ public class GitRepository implements VcsRepository {
         objectId = commit.getParent(0);
       }
       if (!newRevs.isEmpty()) {
-        if (lastRevision < 0) {
-          final RevCommit firstCommit = newRevs.get(newRevs.size() - 1);
-          if (!isTreeEmpty(firstCommit.getTree())) {
-            revisions.add(new GitRevision(this, 0, Collections.emptyMap(), null, null, firstCommit.getCommitTime()));
-          }
-        }
         final long beginTime = System.currentTimeMillis();
         int processed = 0;
         long reportTime = beginTime;
         log.info("Loading revision changes: {} revision", newRevs.size());
+        int revisionId = revisions.size();
+        ObjectId cacheId = revisions.get(revisions.size() - 1).getCacheCommit();
         for (int i = newRevs.size() - 1; i >= 0; i--) {
-          addRevisionInfo(newRevs.get(i));
+          final RevCommit revCommit = newRevs.get(i);
+          final CacheRevision cacheRevision = createCache(revCommit.getParentCount() > 0 ? revWalk.parseCommit(revCommit.getParent(0)) : null, revCommit, Collections.emptyMap(), revisionId);
+          cacheId = LayoutHelper.createCacheCommit(inserter, cacheId, revCommit, cacheRevision);
+          inserter.flush();
+
           processed++;
           long currentTime = System.currentTimeMillis();
           if (currentTime - reportTime > REPORT_DELAY) {
@@ -370,12 +254,44 @@ public class GitRepository implements VcsRepository {
             reportTime = currentTime;
             processed = 0;
           }
+          revisionId++;
         }
         final long endTime = System.currentTimeMillis();
         log.info("Revision changes loaded: {} ms", endTime - beginTime);
+
+        final RefUpdate refUpdate = repository.updateRef(svnBranch);
+        refUpdate.setNewObjectId(cacheId);
+        refUpdate.update();
       }
+      return !newRevs.isEmpty();
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  private CacheRevision createCache(@Nullable RevCommit oldCommit, @NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches, int revisionId) throws IOException, SVNException {
+    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, oldCommit, revisionId - 1);
+    final GitFile newTree = new GitFile(this, newCommit, revisionId);
+    final Map<String, CacheChange> fileChange = new TreeMap<>();
+    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
+      fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
+    }
+    return new CacheRevision(
+        revisionId,
+        newCommit,
+        collectRename(oldTree, newTree),
+        fileChange,
+        branches
+    );
+  }
+
+  @Override
+  public void updateRevisions() throws IOException, SVNException {
+    while (true) {
+      loadRevisions();
+      if (!cacheRevisions()) {
+        break;
+      }
     }
   }
 
@@ -384,60 +300,33 @@ public class GitRepository implements VcsRepository {
   }
 
   private void loadRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
-    final int rev = svnRevisions.size();
-    final Map<String, VcsCopyFrom> copyFroms = Collections.emptyMap(); //todo: CacheHelper.loadCopyFroms(commit);
-    final Map<String, GitLogPair> changes = Collections.emptyMap(); //todo: CacheHelper.loadChanges(commit);
-    final RevCommit oldCommit = commit.getParentCount() > 0 ? commit.getParent(0) : null;
-    final RevCommit svnCommit = commit.getParentCount() > 1 ? commit.getParent(1) : null;
-    for (Map.Entry<String, GitLogPair> entry : changes.entrySet()) {
-      lastUpdates.compute(entry.getKey(), (key, list) -> {
-        final IntList result = list == null ? new IntList() : list;
-        result.add(rev);
-        if (entry.getValue().getNewEntry() == null) {
-          result.add(MARK_NO_FILE);
-        }
-        return result;
-      });
+    final RevWalk revWalk = new RevWalk(repository.newObjectReader());
+    final CacheRevision cacheRevision = LayoutHelper.loadCacheRevision(revWalk.getObjectReader(), commit);
+    final int revisionId = cacheRevision.getRevisionId();
+    final Map<String, VcsCopyFrom> copyFroms = new HashMap<>();
+    for (Map.Entry<String, String> entry : cacheRevision.getRenames().entrySet()) {
+      copyFroms.put(entry.getKey(), new VcsCopyFrom(revisionId - 1, entry.getValue()));
     }
-    final GitRevision revision = new GitRevision(this, rev, copyFroms, oldCommit, commit, commit.getCommitTime());
-    if (svnRevisionByDate.isEmpty() || svnRevisionByDate.lastKey() <= revision.getDate()) {
-      svnRevisionByDate.put(revision.getDate(), revision);
-    }
-    if (svnCommit != null) {
-      svnRevisionByHash.put(svnCommit.getId(), revision);
-    }
-    svnRevisions.add(revision);
-  }
-
-  private void addRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
-    final int revisionId = revisions.size();
-    final RevCommit prevCommit = revisions.isEmpty() ? null : revisions.get(revisionId - 1).getCommit();
-    final GitFile oldTree = prevCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, prevCommit, revisionId - 1);
-    final GitFile newTree = new GitFile(this, commit, revisionId);
-
-    final Map<String, VcsCopyFrom> renames = new TreeMap<>();
-    for (Map.Entry<String, String> rename : collectRename(oldTree, newTree).entrySet()) {
-      final String oldPath = rename.getValue();
-      final int lastChange = getLastChange(oldPath, revisionId - 1);
-      if (lastChange <= 0) {
-        throw new IllegalStateException();
-      }
-      renames.put(StringHelper.normalize(rename.getKey()), new VcsCopyFrom(lastChange, oldPath));
-    }
-    final Map<String, GitLogPair> changes = ChangeHelper.collectChanges(oldTree, newTree, true);
-    for (Map.Entry<String, GitLogPair> entry : changes.entrySet()) {
+    final RevCommit oldCommit = revisions.isEmpty() ? null : revisions.get(revisions.size() - 1).getGitNewCommit();
+    final RevCommit svnCommit = cacheRevision.getSvnCommitId() != null ? revWalk.parseCommit(cacheRevision.getSvnCommitId()) : null;
+    for (Map.Entry<String, CacheChange> entry : cacheRevision.getFileChange().entrySet()) {
       lastUpdates.compute(entry.getKey(), (key, list) -> {
         final IntList result = list == null ? new IntList() : list;
         result.add(revisionId);
-        if (entry.getValue().getNewEntry() == null) {
+        if (entry.getValue().getNewFile() == null) {
           result.add(MARK_NO_FILE);
         }
         return result;
       });
     }
-    final GitRevision revision = new GitRevision(this, revisionId, renames, prevCommit, commit, commit.getCommitTime());
-    if (revisionByDate.isEmpty() || revisionByDate.lastKey() <= revision.getDate()) {
-      revisionByDate.put(revision.getDate(), revision);
+    final GitRevision revision = new GitRevision(this, commit.getId(), cacheRevision.getRevisionId(), copyFroms, oldCommit, svnCommit, commit.getCommitTime());
+    if (cacheRevision.getRevisionId() > 0) {
+      if (revisionByDate.isEmpty() || revisionByDate.lastKey() <= revision.getDate()) {
+        revisionByDate.put(revision.getDate(), revision);
+      }
+    }
+    if (svnCommit != null) {
+      revisionByHash.put(svnCommit.getId(), revision);
     }
     revisions.add(revision);
   }
@@ -612,13 +501,11 @@ public class GitRepository implements VcsRepository {
   private GitRevision getRevision(@NotNull ObjectId revisionId) throws SVNException {
     lock.readLock().lock();
     try {
-      for (int i = revisions.size() - 1; i >= 0; i--) {
-        GitRevision revision = revisions.get(i);
-        if (revisionId.equals(revision.getCommit())) {
-          return revision;
-        }
+      final GitRevision revision = revisionByHash.get(revisionId);
+      if (revision == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revisionId.name()));
       }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revisionId.name()));
+      return revision;
     } finally {
       lock.readLock().unlock();
     }
@@ -659,7 +546,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   @Override
   public VcsCommitBuilder createCommitBuilder() throws IOException, SVNException {
-    return new GitCommitBuilder(repository.getRef(branch));
+    return new GitCommitBuilder(gitBranch);
   }
 
   @NotNull
@@ -800,20 +687,20 @@ public class GitRepository implements VcsRepository {
     @NotNull
     private final GitRevision revision;
     @NotNull
-    private final Ref branchRef;
+    private final String branch;
     @NotNull
     private final List<VcsConsumer<GitPropertyValidator>> validateActions = new ArrayList<>();
 
-    public GitCommitBuilder(@NotNull Ref branchRef) throws IOException, SVNException {
+    public GitCommitBuilder(@NotNull String branch) throws IOException, SVNException {
       this.inserter = repository.newObjectInserter();
-      this.branchRef = branchRef;
+      this.branch = branch;
       this.revision = getLatestRevision();
       this.treeStack = new ArrayDeque<>();
       this.treeStack.push(new GitTreeUpdate("", getOriginalTree()));
     }
 
     private Iterable<GitTreeEntry> getOriginalTree() throws IOException {
-      final RevCommit commit = revision.getCommit();
+      final RevCommit commit = revision.getGitNewCommit();
       if (commit == null) {
         return Collections.emptyList();
       }
@@ -923,9 +810,9 @@ public class GitRepository implements VcsRepository {
         commitBuilder.setAuthor(ident);
         commitBuilder.setCommitter(ident);
         commitBuilder.setMessage(message);
-        final ObjectId parentCommit = revision.getObjectId();
+        final RevCommit parentCommit = revision.getGitNewCommit();
         if (parentCommit != null) {
-          commitBuilder.setParentId(parentCommit);
+          commitBuilder.setParentId(parentCommit.getId());
         }
         commitBuilder.setTreeId(treeId);
         final ObjectId commitId = inserter.insert(commitBuilder);
@@ -935,8 +822,8 @@ public class GitRepository implements VcsRepository {
         validateProperties(new RevWalk(repository).parseCommit(commitId));
 
         log.info("Create commit {}: {}", commitId.name(), message);
-        log.info("Try to push commit in branch: {}", branchRef.getName());
-        if (!pushMode.push(repository, commitId, branchRef)) {
+        log.info("Try to push commit in branch: {}", branch);
+        if (!pushMode.push(repository, commitId, branch)) {
           log.info("Non fast forward push rejected");
           return null;
         }

@@ -15,6 +15,7 @@ import svnserver.repository.git.layout.RefMappingDirect;
 import svnserver.repository.git.layout.RefMappingGroup;
 import svnserver.repository.git.layout.RefMappingPrefix;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -220,11 +221,19 @@ public class LayoutHelper {
     return PREFIX_ANONIMOUS + commit.getId().abbreviate(6).name() + '/';
   }
 
-  public static CacheRevision getRevisionBranches(@NotNull Repository repository, @Nullable RevCommit commit) throws IOException {
-    if (commit == null) {
-      return CacheRevision.empty;
+  @NotNull
+  public static CacheRevision loadCacheRevision(@NotNull ObjectReader objectReader, @NotNull RevCommit commit) throws IOException {
+    return CacheHelper.load(TreeWalk.forPath(objectReader, ENTRY_COMMIT_YML, commit.getTree()));
+  }
+
+  @NotNull
+  public static String loadRepositoryId(@NotNull ObjectReader objectReader, ObjectId commit) throws IOException {
+    RevWalk revWalk = new RevWalk(objectReader);
+    TreeWalk treeWalk = TreeWalk.forPath(objectReader, ENTRY_UUID, revWalk.parseCommit(commit).getTree());
+    if (treeWalk != null) {
+      return new String(objectReader.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8);
     }
-    return CacheHelper.load(TreeWalk.forPath(repository, ENTRY_COMMIT_YML, commit.getTree()));
+    throw new FileNotFoundException(ENTRY_UUID);
   }
 
   private static class RevisionNode {

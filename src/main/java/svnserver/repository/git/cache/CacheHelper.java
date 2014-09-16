@@ -5,8 +5,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
@@ -48,8 +50,8 @@ public final class CacheHelper {
   }
 
   @NotNull
-  public static CacheRevision load(@NotNull TreeWalk tree) throws IOException {
-    if (tree.getTreeCount() == 0) {
+  public static CacheRevision load(@Nullable TreeWalk tree) throws IOException {
+    if (tree == null) {
       return CacheRevision.empty;
     }
     final ObjectLoader loader = tree.getObjectReader().open(tree.getObjectId(0));
@@ -88,6 +90,7 @@ public final class CacheHelper {
     public CacheRepresenter() {
       this.representers.put(ObjectId.class, new ObjectIdRepresent());
       this.representers.put(RevCommit.class, new ObjectIdRepresent());
+      this.representers.put(RevTree.class, new ObjectIdRepresent());
 
       addClassTag(CacheRevision.class, new Tag("!revision"));
     }
