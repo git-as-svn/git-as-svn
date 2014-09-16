@@ -163,9 +163,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
       context.push(this::reportCommand);
       final String wcPath = wcPath(args.path);
-      final SetPathParams prev = paths.putIfAbsent(wcPath, args);
-      if (prev != null)
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "'set-path' called twice for " + args.path));
+      paths.put(wcPath, args);
       forcePath(wcPath);
     }
 
