@@ -30,7 +30,7 @@ dependencies {
   compile "org.jetbrains:annotations:13.0"
   compile "org.eclipse.jgit:org.eclipse.jgit:3.4.1.201406201815-r"
   compile "org.tmatesoft.svnkit:svnkit:1.8.5"
-  compile "org.yaml:snakeyaml:1.13"
+  compile "org.yaml:snakeyaml:1.14"
   compile "org.slf4j:slf4j-simple:1.7.7"
   compile "com.beust:jcommander:1.35"
   compile "commons-io:commons-io:2.4"

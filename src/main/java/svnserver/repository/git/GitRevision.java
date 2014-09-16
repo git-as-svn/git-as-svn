@@ -33,26 +33,37 @@ import java.util.concurrent.TimeUnit;
 public class GitRevision implements VcsRevision {
   @NotNull
   private final GitRepository repo;
+  @NotNull
+  private final ObjectId cacheCommit;
   @Nullable
-  private final ObjectId objectId;
+  private final RevCommit gitOldCommit;
   @Nullable
-  private final RevCommit commit;
-  @Nullable
-  private final RevCommit prevCommit;
+  private final RevCommit gitNewCommit;
+
   @NotNull
   private final Map<String, VcsCopyFrom> renames;
-
   private final long date;
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo, int revision, @NotNull Map<String, VcsCopyFrom> renames, @Nullable RevCommit prevCommit, @Nullable RevCommit commit, int commitTimeSec) {
+  public GitRevision(@NotNull GitRepository repo,
+                     @NotNull ObjectId cacheCommit,
+                     int revision,
+                     @NotNull Map<String, VcsCopyFrom> renames,
+                     @Nullable RevCommit gitOldCommit,
+                     @Nullable RevCommit gitNewCommit,
+                     int commitTimeSec) {
     this.repo = repo;
+    this.cacheCommit = cacheCommit;
     this.revision = revision;
     this.renames = renames;
-    this.objectId = commit != null ? commit.getId() : null;
+    this.gitOldCommit = gitOldCommit;
+    this.gitNewCommit = gitNewCommit;
     this.date = TimeUnit.SECONDS.toMillis(commitTimeSec);
-    this.commit = revision > 0 ? commit : null;
-    this.prevCommit = prevCommit;
+  }
+
+  @NotNull
+  public ObjectId getCacheCommit() {
+    return cacheCommit;
   }
 
   @Override
@@ -61,23 +72,18 @@ public class GitRevision implements VcsRevision {
   }
 
   @Nullable
-  public ObjectId getObjectId() {
-    return objectId;
-  }
-
-  @Nullable
-  public RevCommit getCommit() {
-    return commit;
+  public RevCommit getGitNewCommit() {
+    return gitNewCommit;
   }
 
   @NotNull
   @Override
   public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
-    if (commit == null) {
+    if (gitNewCommit == null) {
       return Collections.emptyMap();
     }
-    final GitFile oldTree = prevCommit == null ? new GitFile(repo, null, "", GitProperty.emptyArray, revision - 1) : new GitFile(repo, prevCommit, revision - 1);
-    final GitFile newTree = new GitFile(repo, commit, revision);
+    final GitFile oldTree = gitOldCommit == null ? new GitFile(repo, null, "", GitProperty.emptyArray, revision - 1) : new GitFile(repo, gitOldCommit, revision - 1);
+    final GitFile newTree = new GitFile(repo, gitNewCommit, revision);
 
     final Map<String, GitLogEntry> changes = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
@@ -95,8 +101,8 @@ public class GitRevision implements VcsRevision {
       putProperty(props, SVNRevisionProperty.LOG, getLog());
       putProperty(props, SVNRevisionProperty.DATE, getDateString());
     }
-    if (commit != null) {
-      props.put(SvnConstants.PROP_GIT, commit.name());
+    if (gitNewCommit != null) {
+      props.put(SvnConstants.PROP_GIT, gitNewCommit.name());
     }
     return props;
   }
@@ -115,22 +121,22 @@ public class GitRevision implements VcsRevision {
   @Nullable
   @Override
   public String getAuthor() {
-    return commit == null ? null : commit.getCommitterIdent().getName();
+    return gitNewCommit == null ? null : gitNewCommit.getCommitterIdent().getName();
   }
 
   @Nullable
   @Override
   public String getLog() {
-    return commit == null ? null : commit.getFullMessage().trim();
+    return gitNewCommit == null ? null : gitNewCommit.getFullMessage().trim();
   }
 
   @Nullable
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
-    if (commit == null) {
+    if (gitNewCommit == null) {
       return new GitFile(repo, null, "", GitProperty.emptyArray, revision);
     }
-    GitFile result = new GitFile(repo, commit, revision);
+    GitFile result = new GitFile(repo, gitNewCommit, revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;

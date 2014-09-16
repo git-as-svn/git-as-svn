@@ -135,13 +135,13 @@ public final class SvnTestServer implements AutoCloseable {
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false, null);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, false, null);
   }
 
   @NotNull
   public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig) throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(branch), branch, false, userDBConfig);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, false, userDBConfig);
   }
 
   @NotNull

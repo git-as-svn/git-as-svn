@@ -19,6 +19,11 @@ public final class VcsCopyFrom {
   @NotNull
   private final String path;
 
+  private VcsCopyFrom() {
+    revision = 0;
+    path = "";
+  }
+
   public VcsCopyFrom(int revision, @NotNull String path) {
     this.revision = revision;
     this.path = path;

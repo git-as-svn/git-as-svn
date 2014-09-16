@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.ObjectChecker;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.TreeFormatter;
@@ -53,6 +54,7 @@ public class GitTreeUpdate {
     for (GitTreeEntry entry : sortedEntries) {
       treeBuilder.append(entry.getFileName(), entry.getFileMode(), entry.getObjectId().getObject());
     }
+    new ObjectChecker().checkTree(treeBuilder.toByteArray());
     return inserter.insert(treeBuilder);
   }
 }
