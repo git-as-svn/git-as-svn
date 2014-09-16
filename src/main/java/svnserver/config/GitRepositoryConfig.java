@@ -89,6 +89,15 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   }
 
   @NotNull
+  public LockManagerType getLockManager() {
+    return lockManager;
+  }
+
+  public void setLockManager(@NotNull LockManagerType lockManager) {
+    this.lockManager = lockManager;
+  }
+
+  @NotNull
   public Repository createRepository() throws IOException {
     final File file = new File(getPath()).getAbsoluteFile();
     if (!file.exists()) {
