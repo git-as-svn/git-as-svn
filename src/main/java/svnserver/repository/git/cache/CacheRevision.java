@@ -20,15 +20,23 @@ public class CacheRevision {
   @NotNull
   private final Map<String, String> renames = new TreeMap<>();
   @NotNull
+  private final Map<String, CacheChange> fileChange = new TreeMap<>();
+  @NotNull
   private final Map<String, ObjectId> branches = new TreeMap<>();
 
-  public CacheRevision() {
+  protected CacheRevision() {
     this.message = "";
   }
 
-  public CacheRevision(@NotNull String message, @NotNull Map<String, String> renames, @NotNull Map<String, ? extends ObjectId> branches) {
+  public CacheRevision(
+      @NotNull String message,
+      @NotNull Map<String, String> renames,
+      @NotNull Map<String, CacheChange> fileChange,
+      @NotNull Map<String, ? extends ObjectId> branches
+  ) {
     this.message = message;
     this.renames.putAll(renames);
+    this.fileChange.putAll(fileChange);
     this.branches.putAll(branches);
   }
 
@@ -40,6 +48,11 @@ public class CacheRevision {
   @NotNull
   public Map<String, String> getRenames() {
     return Collections.unmodifiableMap(renames);
+  }
+
+  @NotNull
+  public Map<String, CacheChange> getFileChange() {
+    return Collections.unmodifiableMap(fileChange);
   }
 
   @NotNull

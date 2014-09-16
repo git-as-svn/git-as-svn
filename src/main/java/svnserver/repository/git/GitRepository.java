@@ -28,6 +28,7 @@ import svnserver.StringHelper;
 import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
+import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheHelper;
 import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.prop.GitProperty;
@@ -319,9 +320,14 @@ public class GitRepository implements VcsRepository {
     final RevCommit oldCommit = newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null;
     final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, -1) : new GitFile(this, oldCommit, -1);
     final GitFile newTree = new GitFile(this, newCommit, -1);
+    final Map<String, CacheChange> fileChange = new TreeMap<>();
+    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
+      fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
+    }
     return new CacheRevision(
         newCommit.getFullMessage(),
         collectRename(oldTree, newTree),
+        fileChange,
         branches
     );
   }
