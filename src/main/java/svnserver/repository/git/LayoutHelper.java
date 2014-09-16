@@ -28,13 +28,15 @@ public class LayoutHelper {
   @NotNull
   private static final RefMappingGroup layoutMapping = new RefMappingGroup(
       new RefMappingDirect(Constants.R_HEADS + Constants.MASTER, "trunk/"),
-      new RefMappingPrefix(Constants.R_HEADS, "branchs/"),
+      new RefMappingPrefix(Constants.R_HEADS, "branches/"),
       new RefMappingPrefix(Constants.R_TAGS, "tags/")
   );
   @NotNull
   private static final String REF = "refs/git-as-svn/v1";
   @NotNull
-  private static final String ENTRY_COMMIT = "commit.yml";
+  private static final String ENTRY_COMMIT_YML = "commit.yml";
+  @NotNull
+  private static final String ENTRY_COMMIT_REF = "commit.ref";
   @NotNull
   private static final String ENTRY_ROOT = "svn";
   @NotNull
@@ -88,6 +90,22 @@ public class LayoutHelper {
       }
     }
     return result;
+  }
+
+  public static ObjectId createCacheCommit(@NotNull ObjectInserter inserter, @NotNull ObjectId parent, @NotNull RevCommit commit, @NotNull CacheRevision cacheRevision) throws IOException {
+    final TreeFormatter treeBuilder = new TreeFormatter();
+    treeBuilder.append(ENTRY_COMMIT_YML, FileMode.REGULAR_FILE, CacheHelper.save(inserter, cacheRevision));
+    treeBuilder.append(ENTRY_COMMIT_REF, commit);
+    treeBuilder.append("svn", FileMode.TREE, createSvnLayoutTree(inserter, cacheRevision.getBranches()));
+    final ObjectId rootTree = inserter.insert(treeBuilder);
+
+    final CommitBuilder commitBuilder = new CommitBuilder();
+    commitBuilder.setAuthor(commit.getAuthorIdent());
+    commitBuilder.setCommitter(commit.getCommitterIdent());
+    commitBuilder.setMessage("#" + cacheRevision.getRevisionId() + ": " + commit.getFullMessage());
+    commitBuilder.addParentId(parent);
+    commitBuilder.setTreeId(rootTree);
+    return inserter.insert(commitBuilder);
   }
 
   /**
@@ -206,7 +224,7 @@ public class LayoutHelper {
     if (commit == null) {
       return CacheRevision.empty;
     }
-    return CacheHelper.load(TreeWalk.forPath(repository, ENTRY_COMMIT, commit.getTree()));
+    return CacheHelper.load(TreeWalk.forPath(repository, ENTRY_COMMIT_YML, commit.getTree()));
   }
 
   private static class RevisionNode {
@@ -241,12 +259,12 @@ public class LayoutHelper {
   }
 
   @Nullable
-  public static ObjectId createSvnLayoutTree(@NotNull ObjectInserter inserter, @NotNull Map<String, RevCommit> revBranches) throws IOException {
+  private static ObjectId createSvnLayoutTree(@NotNull ObjectInserter inserter, @NotNull Map<String, ObjectId> revBranches) throws IOException {
     final Deque<TreeFormatter> stack = new ArrayDeque<>();
     stack.add(new TreeFormatter());
     String dir = "";
     final ObjectChecker checker = new ObjectChecker();
-    for (Map.Entry<String, RevCommit> entry : new TreeMap<>(revBranches).entrySet()) {
+    for (Map.Entry<String, ObjectId> entry : new TreeMap<>(revBranches).entrySet()) {
       final String path = entry.getKey();
       // Save already added nodes.
       while (!path.startsWith(dir)) {
@@ -264,7 +282,7 @@ public class LayoutHelper {
       // Add commit to tree.
       {
         final int index = path.lastIndexOf('/', path.length() - 2) + 1;
-        stack.element().append(path.substring(index, path.length() - 1), entry.getValue().getTree());
+        stack.element().append(path.substring(index, path.length() - 1), FileMode.GITLINK, entry.getValue());
       }
     }
     // Save already added nodes.

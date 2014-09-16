@@ -29,7 +29,6 @@ import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
-import svnserver.repository.git.cache.CacheHelper;
 import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
@@ -262,10 +261,7 @@ public class GitRepository implements VcsRepository {
       revBranches.put(entry.getKey(), revWalk.parseCommit(entry.getValue()));
     }
 
-    int rev = 0;
     for (CacheInfo commitInfo : commitList) {
-      rev++;
-
       final RevCommit revCommit = commitInfo.commit;
       if (commitInfo.svnBranch == null) {
         if (!commitInfo.parents.isEmpty()) {
@@ -283,28 +279,15 @@ public class GitRepository implements VcsRepository {
         }
       }
       revBranches.put(commitInfo.svnBranch, revCommit);
-      ObjectId svnTree = LayoutHelper.createSvnLayoutTree(inserter, revBranches);
 
-      final CacheRevision cacheRevision = createCache(revCommit, revBranches);
-
-      final TreeFormatter treeBuilder = new TreeFormatter();
-      treeBuilder.append("commit.yml", FileMode.REGULAR_FILE, CacheHelper.save(inserter, cacheRevision));
-      treeBuilder.append("commit.ref", revCommit);
-      treeBuilder.append("svn", FileMode.TREE, svnTree); // todo: Layout
-      final ObjectId rootTree = inserter.insert(treeBuilder);
-
-      final CommitBuilder commitBuilder = new CommitBuilder();
-      commitBuilder.setAuthor(revCommit.getAuthorIdent());
-      commitBuilder.setCommitter(revCommit.getCommitterIdent());
-      commitBuilder.setMessage("#" + rev + ": " + revCommit.getFullMessage());
-      commitBuilder.addParentId(prev.getObjectId());
-      commitBuilder.setTreeId(rootTree);
-      final ObjectId commitId = inserter.insert(commitBuilder);
+      final int revisionId = prev.getId() + 1;
+      final CacheRevision cacheRevision = createCache(revCommit, revBranches, revisionId);
+      final ObjectId commitId = LayoutHelper.createCacheCommit(inserter, prev.getObjectId(), revCommit, cacheRevision);
       inserter.flush();
 
       RevCommit commit = revWalk.parseCommit(commitId);
 
-      prev = new GitRevision(this, prev.getId() + 1, Collections.emptyMap(), prev.getCommit(), commit, revCommit.getCommitTime());
+      prev = new GitRevision(this, revisionId, Collections.emptyMap(), prev.getCommit(), commit, revCommit.getCommitTime());
       System.out.println(revCommit + " " + commitInfo.svnBranch);
     }
     inserter.flush();
@@ -316,15 +299,16 @@ public class GitRepository implements VcsRepository {
     return false;
   }
 
-  private CacheRevision createCache(@NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches) throws IOException, SVNException {
+  private CacheRevision createCache(@NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches, int revisionId) throws IOException, SVNException {
     final RevCommit oldCommit = newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null;
-    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, -1) : new GitFile(this, oldCommit, -1);
-    final GitFile newTree = new GitFile(this, newCommit, -1);
+    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, oldCommit, revisionId - 1);
+    final GitFile newTree = new GitFile(this, newCommit, revisionId);
     final Map<String, CacheChange> fileChange = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
       fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
     }
     return new CacheRevision(
+        revisionId,
         newCommit.getFullMessage(),
         collectRename(oldTree, newTree),
         fileChange,

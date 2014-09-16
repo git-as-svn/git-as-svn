@@ -15,6 +15,8 @@ import java.util.TreeMap;
 public class CacheRevision {
   @NotNull
   public static final CacheRevision empty = new CacheRevision();
+
+  private final int revisionId;
   @NotNull
   private final String message;
   @NotNull
@@ -25,19 +27,26 @@ public class CacheRevision {
   private final Map<String, ObjectId> branches = new TreeMap<>();
 
   protected CacheRevision() {
+    this.revisionId = 0;
     this.message = "";
   }
 
   public CacheRevision(
+      int revisionId,
       @NotNull String message,
       @NotNull Map<String, String> renames,
       @NotNull Map<String, CacheChange> fileChange,
       @NotNull Map<String, ? extends ObjectId> branches
   ) {
+    this.revisionId = revisionId;
     this.message = message;
     this.renames.putAll(renames);
     this.fileChange.putAll(fileChange);
     this.branches.putAll(branches);
+  }
+
+  public int getRevisionId() {
+    return revisionId;
   }
 
   @NotNull
