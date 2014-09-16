@@ -20,11 +20,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.StreamHelper;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
+import svnserver.TemporaryOutputStream;
 import svnserver.repository.VcsFile;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -192,12 +192,12 @@ public class GitFile implements VcsFile {
     }
     if (isSymlink()) {
       try (
-          ByteArrayOutputStream outputStream = new ByteArrayOutputStream(SvnConstants.LINK_PREFIX.length() + (int) loader.getSize());
+          TemporaryOutputStream outputStream = new TemporaryOutputStream();
           InputStream inputStream = loader.openStream()
       ) {
         outputStream.write(SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.ISO_8859_1));
         StreamHelper.copyTo(inputStream, outputStream);
-        return new ByteArrayInputStream(outputStream.toByteArray());
+        return outputStream.toInputStream();
       }
     }
     return loader.openStream();
