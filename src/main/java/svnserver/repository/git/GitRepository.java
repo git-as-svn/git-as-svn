@@ -172,7 +172,7 @@ public class GitRepository implements VcsRepository {
         }
       }
       final long endTime = System.currentTimeMillis();
-      log.info("Revision cached changes loaded: {} ms", endTime - beginTime);
+      log.info("Cached revision loaded: {} ms", endTime - beginTime);
       return true;
     } finally {
       lock.writeLock().unlock();
@@ -253,6 +253,10 @@ public class GitRepository implements VcsRepository {
             log.info("  processed revision: {} ({} rev/sec)", newRevs.size() - i, 1000.0f * processed / (currentTime - reportTime));
             reportTime = currentTime;
             processed = 0;
+
+            final RefUpdate refUpdate = repository.updateRef(svnBranch);
+            refUpdate.setNewObjectId(cacheId);
+            refUpdate.update();
           }
           revisionId++;
         }
@@ -308,7 +312,7 @@ public class GitRepository implements VcsRepository {
       copyFroms.put(entry.getKey(), new VcsCopyFrom(revisionId - 1, entry.getValue()));
     }
     final RevCommit oldCommit = revisions.isEmpty() ? null : revisions.get(revisions.size() - 1).getGitNewCommit();
-    final RevCommit svnCommit = cacheRevision.getSvnCommitId() != null ? revWalk.parseCommit(cacheRevision.getSvnCommitId()) : null;
+    final RevCommit svnCommit = cacheRevision.getGitCommitId() != null ? revWalk.parseCommit(cacheRevision.getGitCommitId()) : null;
     for (Map.Entry<String, CacheChange> entry : cacheRevision.getFileChange().entrySet()) {
       lastUpdates.compute(entry.getKey(), (key, list) -> {
         final IntList result = list == null ? new IntList() : list;

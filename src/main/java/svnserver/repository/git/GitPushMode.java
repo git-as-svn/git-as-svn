@@ -90,6 +90,7 @@ public enum GitPushMode {
       switch (result) {
         case REJECTED:
           return false;
+        case NEW:
         case FAST_FORWARD:
           return true;
         default:

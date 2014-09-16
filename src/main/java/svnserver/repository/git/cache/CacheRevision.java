@@ -20,9 +20,7 @@ public class CacheRevision {
 
   private final int revisionId;
   @Nullable
-  private final ObjectId svnCommitId;
-  @NotNull
-  private final String message;
+  private final ObjectId gitCommitId;
   @NotNull
   private final Map<String, String> renames = new TreeMap<>();
   @NotNull
@@ -32,8 +30,7 @@ public class CacheRevision {
 
   protected CacheRevision() {
     this.revisionId = 0;
-    this.svnCommitId = null;
-    this.message = "";
+    this.gitCommitId = null;
   }
 
   public CacheRevision(
@@ -45,11 +42,9 @@ public class CacheRevision {
   ) {
     this.revisionId = revisionId;
     if (svnCommit != null) {
-      this.svnCommitId = svnCommit.getId();
-      this.message = svnCommit.getFullMessage();
+      this.gitCommitId = svnCommit.getId();
     } else {
-      this.svnCommitId = null;
-      this.message = "Initial commit";
+      this.gitCommitId = null;
     }
     this.renames.putAll(renames);
     this.fileChange.putAll(fileChange);
@@ -60,14 +55,9 @@ public class CacheRevision {
     return revisionId;
   }
 
-  @NotNull
-  public String getMessage() {
-    return message;
-  }
-
   @Nullable
-  public ObjectId getSvnCommitId() {
-    return svnCommitId;
+  public ObjectId getGitCommitId() {
+    return gitCommitId;
   }
 
   @NotNull

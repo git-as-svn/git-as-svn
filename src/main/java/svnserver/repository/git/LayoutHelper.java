@@ -33,7 +33,7 @@ public class LayoutHelper {
       new RefMappingPrefix(Constants.R_TAGS, "tags/")
   );
   @NotNull
-  private static final String REF = "refs/git-as-svn/v1";
+  private static final String REF = "refs/git-as-svn/v0";
   @NotNull
   private static final String ENTRY_COMMIT_YML = "commit.yml";
   @NotNull
@@ -48,13 +48,6 @@ public class LayoutHelper {
   @NotNull
   public static Ref initRepository(@NotNull Repository repository) throws IOException {
     Ref ref = repository.getRef(REF);
-    if (ref != null) {
-      // todo: Remove after layout cache loading support
-      final RefUpdate refUpdate = repository.updateRef(REF);
-      refUpdate.setForceUpdate(true);
-      refUpdate.delete();
-      ref = null;
-    }
     if (ref == null) {
       final ObjectId revision = createFirstRevision(repository);
       final RefUpdate refUpdate = repository.updateRef(REF);
