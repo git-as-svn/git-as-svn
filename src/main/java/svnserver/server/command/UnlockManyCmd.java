@@ -59,6 +59,7 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    final SvnServerWriter writer = context.getWriter();
 
     final UnlockTarget[] targets = new UnlockTarget[args.paths.length];
     for (int i = 0; i < args.paths.length; ++i) {
@@ -67,11 +68,18 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
       final String lockToken = pathToken.lockToken.length == 0 ? null : pathToken.lockToken[0];
       targets[i] = new UnlockTarget(path, lockToken);
     }
-
     context.getRepository().getLockManager().unlock(args.breakLock, targets);
 
-    final SvnServerWriter writer = context.getWriter();
+    for (PathToken path : args.paths)
+      writer
+          .listBegin()
+          .word("success")
+          .listBegin()
+          .string(path.path)
+          .listEnd()
+          .listEnd();
 
+    writer.word("done");
     writer
         .listBegin()
         .word("success")
