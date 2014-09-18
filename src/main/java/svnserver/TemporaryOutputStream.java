@@ -9,8 +9,11 @@ package svnserver;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Stream for write-then-read functionality.
@@ -25,7 +28,7 @@ public class TemporaryOutputStream extends OutputStream {
   @NotNull
   private final ByteArrayOutputStream memoryStream = new ByteArrayOutputStream();
   @Nullable
-  private File tempFile;
+  private FileHolder tempFile;
   @Nullable
   private FileOutputStream fileOutputStream;
   private long totalSize = 0;
@@ -53,12 +56,17 @@ public class TemporaryOutputStream extends OutputStream {
     return totalSize;
   }
 
+  @TestOnly
+  @Nullable
+  File tempFile() {
+    return tempFile != null ? tempFile.file : null;
+  }
+
   @NotNull
   private FileOutputStream ensureFile() throws IOException {
     if (fileOutputStream == null) {
-      tempFile = File.createTempFile("tmp", "");
-      tempFile.deleteOnExit();
-      fileOutputStream = new FileOutputStream(tempFile);
+      tempFile = new FileHolder();
+      fileOutputStream = new FileOutputStream(tempFile.file);
     }
     return fileOutputStream;
   }
@@ -82,7 +90,11 @@ public class TemporaryOutputStream extends OutputStream {
     if (fileOutputStream != null) {
       flush();
     }
-    return new TemporaryInputStream(memoryStream.toByteArray(), tempFile);
+    if (tempFile != null) {
+      return new TemporaryInputStream(memoryStream.toByteArray(), tempFile);
+    } else {
+      return new ByteArrayInputStream(memoryStream.toByteArray());
+    }
   }
 
   @Override
@@ -98,22 +110,23 @@ public class TemporaryOutputStream extends OutputStream {
       fileOutputStream.close();
     }
     if (tempFile != null) {
-      //noinspection ResultOfMethodCallIgnored
-      tempFile.delete();
-      tempFile = null;
+      tempFile.close();
     }
   }
 
   private static class TemporaryInputStream extends InputStream {
     @NotNull
     private final byte[] memoryBytes;
-    @Nullable
+    @NotNull
     private final FileInputStream fileStream;
+    @NotNull
+    private final FileHolder holder;
     private int offset = 0;
 
-    private TemporaryInputStream(@NotNull byte[] memoryBytes, @Nullable File file) throws FileNotFoundException {
+    private TemporaryInputStream(@NotNull byte[] memoryBytes, @NotNull FileHolder holder) throws FileNotFoundException {
       this.memoryBytes = memoryBytes;
-      this.fileStream = file == null ? null : new FileInputStream(file);
+      this.holder = holder.copy();
+      this.fileStream = new FileInputStream(holder.file);
     }
 
     @Override
@@ -122,10 +135,7 @@ public class TemporaryOutputStream extends OutputStream {
         //noinspection MagicNumber
         return memoryBytes[offset++] & 0xff;
       }
-      if (fileStream != null) {
-        return fileStream.read();
-      }
-      return -1;
+      return fileStream.read();
     }
 
     @Override
@@ -139,16 +149,48 @@ public class TemporaryOutputStream extends OutputStream {
         offset += count;
         return count;
       }
-      if (fileStream != null) {
-        return fileStream.read(buf, off, len);
-      }
-      return -1;
+      return fileStream.read(buf, off, len);
     }
 
     @Override
     public void close() throws IOException {
-      if (fileStream != null) {
-        fileStream.close();
+      fileStream.close();
+      holder.close();
+    }
+  }
+
+  private static class FileHolder {
+    @NotNull
+    private final File file;
+    @NotNull
+    private final AtomicInteger usages;
+    @NotNull
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+
+    private FileHolder() throws IOException {
+      this.usages = new AtomicInteger(1);
+      this.file = File.createTempFile("tmp", "");
+      file.deleteOnExit();
+    }
+
+    private FileHolder(@NotNull File file, @NotNull AtomicInteger usages) {
+      this.file = file;
+      this.usages = usages;
+    }
+
+    @NotNull
+    public FileHolder copy() {
+      usages.incrementAndGet();
+      return new FileHolder(file, usages);
+    }
+
+    public void close() throws IOException {
+      if (closed.compareAndSet(false, true)) {
+        if (usages.decrementAndGet() == 0) {
+          if (!file.delete()) {
+            throw new IOException("Can't delete temporary file: " + file.getAbsolutePath());
+          }
+        }
       }
     }
   }

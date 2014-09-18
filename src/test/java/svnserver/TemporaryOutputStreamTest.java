@@ -7,6 +7,7 @@
  */
 package svnserver;
 
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
 import org.testng.internal.junit.ArrayAsserts;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
@@ -65,6 +67,7 @@ public class TemporaryOutputStreamTest {
           writeSize += count;
         }
       }
+      Assert.assertEquals(outputStream.tempFile() == null, totalSize <= MAX_MEMORY_SIZE);
       Assert.assertEquals(expectedStream.size(), totalSize);
       Assert.assertEquals(outputStream.size(), totalSize);
 
@@ -98,5 +101,43 @@ public class TemporaryOutputStreamTest {
 
       ArrayAsserts.assertArrayEquals(actualStream.toByteArray(), expectedStream.toByteArray());
     }
+  }
+
+  @Test
+  public void checkLifeTime() throws IOException {
+    final byte[] expectedData = new byte[MAX_MEMORY_SIZE * 2];
+    final Random random = new Random(0);
+    random.nextBytes(expectedData);
+
+    final TemporaryOutputStream outputStream = new TemporaryOutputStream(MAX_MEMORY_SIZE);
+    Assert.assertNull(outputStream.tempFile());
+    outputStream.write(expectedData);
+    checkFileExists(outputStream, true);
+
+    final InputStream inputStream1 = outputStream.toInputStream();
+    final InputStream inputStream2 = outputStream.toInputStream();
+
+    final byte[] actualData1 = IOUtils.toByteArray(inputStream1, expectedData.length);
+    inputStream1.close();
+    inputStream1.close();
+
+    outputStream.close();
+    outputStream.close();
+
+    final byte[] actualData2 = IOUtils.toByteArray(inputStream2, expectedData.length);
+    checkFileExists(outputStream, true);
+    inputStream2.close();
+    checkFileExists(outputStream, false);
+    inputStream2.close();
+    checkFileExists(outputStream, false);
+
+    ArrayAsserts.assertArrayEquals(actualData1, expectedData);
+    ArrayAsserts.assertArrayEquals(actualData2, expectedData);
+  }
+
+  private static void checkFileExists(@NotNull TemporaryOutputStream outputStream, boolean exists) {
+    final File tempFile = outputStream.tempFile();
+    Assert.assertNotNull(tempFile);
+    Assert.assertEquals(tempFile.exists(), exists);
   }
 }
