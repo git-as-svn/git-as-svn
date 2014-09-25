@@ -145,14 +145,17 @@ public class GitFile implements VcsFile {
 
   @Override
   public long getSize() throws IOException {
-    final ObjectLoader loader = getObjectLoader();
-    if (loader == null) {
+    if (getFileMode().getObjectType() != Constants.OBJ_BLOB)
       return 0;
-    }
-    if (isSymlink()) {
+
+    final ObjectLoader loader = getObjectLoader();
+    if (loader == null)
+      return 0;
+
+    if (isSymlink())
       return SvnConstants.LINK_PREFIX.length() + loader.getSize();
-    }
-    return getFileMode().getObjectType() == Constants.OBJ_BLOB ? loader.getSize() : 0;
+
+    return loader.getSize();
   }
 
   @Override
