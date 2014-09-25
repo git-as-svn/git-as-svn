@@ -8,6 +8,7 @@
 package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitRevision implements VcsRevision {
+public final class GitRevision implements VcsRevision {
   @NotNull
   private final GitRepository repo;
   @NotNull
@@ -121,7 +122,11 @@ public class GitRevision implements VcsRevision {
   @Nullable
   @Override
   public String getAuthor() {
-    return gitNewCommit == null ? null : gitNewCommit.getCommitterIdent().getName();
+    if (gitNewCommit == null)
+      return null;
+
+    final PersonIdent ident = gitNewCommit.getCommitterIdent();
+    return String.format("%s <%s>", ident.getName(), ident.getEmailAddress());
   }
 
   @Nullable
