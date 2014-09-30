@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.StreamHelper;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
@@ -113,10 +114,15 @@ public class GitFile implements VcsFile {
       prop.apply(props);
     }
     final FileMode fileMode = getFileMode();
-    if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
-      props.put(SVNProperty.EXECUTABLE, "*");
-    } else if (fileMode.equals(FileMode.SYMLINK)) {
+    if (fileMode.equals(FileMode.SYMLINK)) {
       props.put(SVNProperty.SPECIAL, "*");
+    } else {
+      if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
+        props.put(SVNProperty.EXECUTABLE, "*");
+      }
+      if (fileMode.getObjectType() == Constants.OBJ_BLOB && repo.isObjectBinary(getObjectId())) {
+        props.put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
+      }
     }
     if (includeInternalProps) {
       final GitRevision last = getLastChange();
