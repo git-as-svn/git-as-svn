@@ -29,6 +29,8 @@ public interface VcsLogEntry {
 
   boolean isPropertyModified() throws IOException, SVNException;
 
+  boolean isModified() throws IOException, SVNException;
+
   @Nullable
   VcsCopyFrom getCopyFrom();
 }

@@ -58,6 +58,22 @@ public final class GitLogPair {
     if ((newEntry == null) || (oldEntry == null)) return false;
     final Map<String, String> newProps = newEntry.getProperties(false);
     final Map<String, String> oldProps = oldEntry.getProperties(false);
-    return (!newProps.equals(oldProps));
+    return !Objects.equals(newProps, oldProps);
+  }
+
+  public boolean isModified() throws IOException, SVNException {
+    if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
+      // Type modified.
+      if (!Objects.equals(newEntry.getFileMode(), oldEntry.getFileMode())) return true;
+      // Content modified.
+      if ((!newEntry.isDirectory()) && (!oldEntry.isDirectory())) {
+        if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
+      }
+      // Probably properties modified
+      if (!Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())) {
+        return isPropertyModified();
+      }
+    }
+    return false;
   }
 }

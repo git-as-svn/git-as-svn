@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.StringHelper;
 import svnserver.WikiConstants;
 import svnserver.auth.User;
@@ -88,6 +89,8 @@ public class GitRepository implements VcsRepository {
   private final String svnBranch;
   @NotNull
   private final Map<String, String> md5Cache = new ConcurrentHashMap<>();
+  @NotNull
+  private final Map<String, Boolean> binaryCache = new ConcurrentHashMap<>();
   @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
@@ -453,6 +456,20 @@ public class GitRepository implements VcsRepository {
   @NotNull
   public Repository getRepository() {
     return repository;
+  }
+
+  public boolean isObjectBinary(@Nullable GitObject<? extends ObjectId> objectId) throws IOException {
+    if (objectId == null) return false;
+    final String key = objectId.getObject().name();
+    Boolean result = binaryCache.get(key);
+    if (result == null) {
+      final ObjectReader reader = objectId.getRepo().newObjectReader();
+      try (InputStream stream = reader.open(objectId.getObject()).openStream()) {
+        result = SVNFileUtil.detectMimeType(stream) != null;
+      }
+      binaryCache.putIfAbsent(key, result);
+    }
+    return result;
   }
 
   @NotNull

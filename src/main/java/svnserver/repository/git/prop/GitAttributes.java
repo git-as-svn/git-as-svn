@@ -14,6 +14,7 @@ import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.IOException;
 import java.util.*;
@@ -39,8 +40,6 @@ final class GitAttributes implements GitProperty {
     }
   }
 
-  @NotNull
-  private static final String FILE_NAME = ".";
   @NotNull
   private static final String EOL_PREFIX = "eol=";
   @NotNull
@@ -114,7 +113,7 @@ final class GitAttributes implements GitProperty {
     for (int i = 1; i < tokens.length; ++i) {
       String token = tokens[i];
       if (token.startsWith("binary")) {
-        return "application/octet-stream";
+        return SVNFileUtil.BINARY_MIME_TYPE;
       }
     }
     return null;
