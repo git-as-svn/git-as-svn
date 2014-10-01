@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
@@ -45,6 +46,10 @@ public class SvnFilePropertyTest {
   @NotNull
   private final static Map<String, String> propsAutoProps = new HashMap<String, String>() {{
     put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n");
+  }};
+  @NotNull
+  private final static Map<String, String> propsBinary = new HashMap<String, String>() {{
+    put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
   }};
 
   /**
@@ -80,6 +85,42 @@ public class SvnFilePropertyTest {
       }
       checkFileProp(repo, "/non-exec.txt", propsExecutable);
       checkFileProp(repo, "/exec.txt", null);
+    }
+  }
+
+  /**
+   * Check commit .gitattributes.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void binary() throws Exception {
+    //Map<String, String> props = new HashMap<>()["key":""];
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      createFile(repo, "/data.txt", "Test file", null);
+      createFile(repo, "/data.dat", "Test data\0", propsBinary);
+      checkFileProp(repo, "/data.txt", null);
+      checkFileProp(repo, "/data.dat", propsBinary);
+      {
+        final long latestRevision = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Modify files", null, false, null);
+        editor.openRoot(-1);
+
+        editor.openFile("/data.txt", latestRevision);
+        editor.changeFileProperty("/data.txt", SVNProperty.MIME_TYPE, SVNPropertyValue.create(SVNFileUtil.BINARY_MIME_TYPE));
+        sendDeltaAndClose(editor, "/data.txt", "Test file", "Test file\0");
+
+        editor.openFile("/data.dat", latestRevision);
+        editor.changeFileProperty("/data.dat", SVNProperty.MIME_TYPE, null);
+        sendDeltaAndClose(editor, "/data.dat", "Test data\0", "Test data");
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      checkFileProp(repo, "/data.txt", propsBinary);
+      checkFileProp(repo, "/data.dat", null);
     }
   }
 
