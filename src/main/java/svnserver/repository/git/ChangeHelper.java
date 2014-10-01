@@ -28,7 +28,7 @@ public final class ChangeHelper {
   public static Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
     final Map<String, GitLogPair> changes = new HashMap<>();
     final GitLogPair logEntry = new GitLogPair(oldTree, newTree);
-    if (oldTree == null || logEntry.isContentModified() || logEntry.isPropertyModified()) {
+    if (oldTree == null || logEntry.isModified()) {
       changes.put("/", logEntry);
     }
     final Queue<TreeCompareEntry> queue = new ArrayDeque<>();
@@ -55,7 +55,7 @@ public final class ChangeHelper {
               changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
             }
             queue.add(new TreeCompareEntry(fullPath, ((oldEntry != null) && oldEntry.isDirectory()) ? oldEntry : null, newEntry));
-          } else if (oldEntry == null || pair.isContentModified() || pair.isPropertyModified()) {
+          } else if (oldEntry == null || pair.isModified()) {
             final GitLogPair oldChange = changes.put(fullPath, pair);
             if (oldChange != null) {
               changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));

@@ -106,13 +106,18 @@ public class GitFile implements VcsFile {
     return treeEntry == null ? null : treeEntry.getObjectId();
   }
 
-  @NotNull
-  @Override
-  public Map<String, String> getProperties(boolean includeInternalProps) throws IOException {
+  public Map<String, String> getUpstreamProperties() {
     final Map<String, String> props = new HashMap<>();
     for (GitProperty prop : this.props) {
       prop.apply(props);
     }
+    return props;
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> getProperties(boolean includeInternalProps) throws IOException {
+    final Map<String, String> props = getUpstreamProperties();
     final FileMode fileMode = getFileMode();
     if (fileMode.equals(FileMode.SYMLINK)) {
       props.put(SVNProperty.SPECIAL, "*");

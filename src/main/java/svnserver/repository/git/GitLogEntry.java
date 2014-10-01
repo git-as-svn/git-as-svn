@@ -45,7 +45,7 @@ public class GitLogEntry implements VcsLogEntry {
     if (pair.getNewEntry().getKind() != pair.getOldEntry().getKind())
       return SVNLogEntryPath.TYPE_REPLACED;
 
-    return isContentModified() || isPropertyModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
+    return isModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
   }
 
   @NotNull
@@ -74,5 +74,10 @@ public class GitLogEntry implements VcsLogEntry {
   @Override
   public boolean isPropertyModified() throws IOException {
     return pair.isPropertyModified();
+  }
+
+  @Override
+  public boolean isModified() throws IOException, SVNException {
+    return pair.isModified();
   }
 }
