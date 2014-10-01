@@ -58,7 +58,7 @@ public final class GitLogPair {
     if ((newEntry == null) || (oldEntry == null)) return false;
     final Map<String, String> newProps = newEntry.getProperties(false);
     final Map<String, String> oldProps = oldEntry.getProperties(false);
-    return Objects.equals(newProps, oldProps);
+    return !Objects.equals(newProps, oldProps);
   }
 
   public boolean isModified() throws IOException, SVNException {
@@ -71,7 +71,7 @@ public final class GitLogPair {
       }
       // Probably properties modified
       if (!Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())) {
-        return isPropertyModified() || isContentModified();
+        return isPropertyModified();
       }
     }
     return false;

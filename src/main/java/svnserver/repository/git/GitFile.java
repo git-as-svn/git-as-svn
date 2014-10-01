@@ -107,11 +107,11 @@ public class GitFile implements VcsFile {
   }
 
   public Map<String, String> getUpstreamProperties() {
-    final Map<String, String> props = new HashMap<>();
-    for (GitProperty prop : this.props) {
-      prop.apply(props);
+    final Map<String, String> result = new HashMap<>();
+    for (GitProperty prop : props) {
+      prop.apply(result);
     }
-    return props;
+    return result;
   }
 
   @NotNull
