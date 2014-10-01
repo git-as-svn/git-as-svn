@@ -154,6 +154,15 @@ public class GitFile implements VcsFile {
     return repo.getObjectMD5(treeEntry.getObjectId(), isSymlink() ? 'l' : 'f', this::openStream);
   }
 
+  @NotNull
+  @Override
+  public String getContentHash() throws IOException, SVNException {
+    if (treeEntry == null || isDirectory()) {
+      throw new IllegalStateException("Can't compare content from directory.");
+    }
+    return treeEntry.getObjectId().getObject().name() + (isSymlink() ? 'l' : 'f');
+  }
+
   @Override
   public long getSize() throws IOException {
     if (getFileMode().getObjectType() != Constants.OBJ_BLOB)

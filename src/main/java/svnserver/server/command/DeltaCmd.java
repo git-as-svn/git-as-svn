@@ -351,7 +351,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         sendStartEntry(writer, "open-file", wcPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
       }
       final String md5 = newFile.getMd5();
-      if (!newFile.equals(oldFile)) {
+      if (oldFile == null || !newFile.getContentHash().equals(oldFile.getContentHash())) {
         writer
             .listBegin()
             .word("apply-textdelta")
