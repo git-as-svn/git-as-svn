@@ -163,9 +163,13 @@ public final class SvnTestServer implements AutoCloseable {
     return tempDirectory;
   }
 
+  public void shutdown(int millis) throws IOException, InterruptedException {
+    server.shutdown(millis);
+  }
+
   @Override
   public void close() throws Exception {
-    server.shutdown();
+    shutdown(0);
     if (safeBranch) {
       new Git(repository)
           .branchDelete()
@@ -229,6 +233,10 @@ public final class SvnTestServer implements AutoCloseable {
     final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
     repo.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
     return repo;
+  }
+
+  public void startShutdown() throws IOException {
+    server.startShutdown();
   }
 
   private static class TestRepositoryConfig implements RepositoryConfig {
