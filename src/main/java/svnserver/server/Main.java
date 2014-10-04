@@ -52,7 +52,7 @@ public class Main {
     server.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
-        server.shutdown(1000); // todo: configure timeout
+        server.shutdown(config.getShutdownTimeout());
       } catch (IOException | InterruptedException e) {
         log.error("Can't shutdown correctly", e);
       }

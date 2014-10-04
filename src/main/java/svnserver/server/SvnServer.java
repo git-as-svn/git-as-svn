@@ -114,6 +114,7 @@ public class SvnServer extends Thread {
     repository = config.getRepository().create();
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
+    serverSocket.setReuseAddress(config.getReuseAddress());
 
     poolExecutor = Executors.newCachedThreadPool();
     log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
@@ -314,7 +315,7 @@ public class SvnServer extends Thread {
     }
   }
 
-  public void shutdown(int millis) throws InterruptedException, IOException {
+  public void shutdown(long millis) throws InterruptedException, IOException {
     startShutdown();
     if (!poolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
       forceShutdown();
