@@ -9,6 +9,8 @@ package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Top configuration object.
  *
@@ -16,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class Config {
-  private int port = 3690;
   @NotNull
   private String host = "0.0.0.0";
   @NotNull
@@ -30,6 +31,10 @@ public final class Config {
 
   @NotNull
   private AclConfig acl = new AclConfig();
+
+  private int port = 3690;
+  private boolean reuseAddress = false;
+  private long shutdownTimeout = TimeUnit.SECONDS.toMillis(5);
 
   public void setPort(int port) {
     this.port = port;
@@ -82,5 +87,21 @@ public final class Config {
 
   public void setAcl(@NotNull AclConfig acl) {
     this.acl = acl;
+  }
+
+  public boolean getReuseAddress() {
+    return reuseAddress;
+  }
+
+  public void setReuseAddress(boolean reuseAddress) {
+    this.reuseAddress = reuseAddress;
+  }
+
+  public long getShutdownTimeout() {
+    return shutdownTimeout;
+  }
+
+  public void setShutdownTimeout(long shutdownTimeout) {
+    this.shutdownTimeout = shutdownTimeout;
   }
 }

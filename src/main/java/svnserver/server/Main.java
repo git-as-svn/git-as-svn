@@ -50,6 +50,13 @@ public class Main {
     }
     final SvnServer server = new SvnServer(config);
     server.start();
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        server.shutdown(config.getShutdownTimeout());
+      } catch (IOException | InterruptedException e) {
+        log.error("Can't shutdown correctly", e);
+      }
+    }));
     server.join();
   }
 

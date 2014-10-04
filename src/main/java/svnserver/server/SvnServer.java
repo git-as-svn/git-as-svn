@@ -42,8 +42,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
@@ -53,10 +57,13 @@ import java.util.concurrent.Executors;
 public class SvnServer extends Thread {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
+  private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
   @NotNull
   private final UserDB userDB;
   @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
+  @NotNull
+  private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
   @NotNull
   private final VcsRepository repository;
   @NotNull
@@ -67,7 +74,10 @@ public class SvnServer extends Thread {
   private final ExecutorService poolExecutor;
   @NotNull
   private final ACL acl;
-  private volatile boolean stopped = false;
+  @NotNull
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
+  @NotNull
+  private final AtomicLong lastSessionId = new AtomicLong();
 
   public SvnServer(@NotNull Config config) throws IOException, SVNException {
     setDaemon(true);
@@ -104,6 +114,7 @@ public class SvnServer extends Thread {
     repository = config.getRepository().create();
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
+    serverSocket.setReuseAddress(config.getReuseAddress());
 
     poolExecutor = Executors.newCachedThreadPool();
     log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
@@ -116,27 +127,30 @@ public class SvnServer extends Thread {
   @Override
   public void run() {
     log.info("Server is ready on port: {}", serverSocket.getLocalPort());
-    while (!stopped) {
+    while (!stopped.get()) {
       final Socket client;
       try {
         client = this.serverSocket.accept();
       } catch (IOException e) {
-        if (stopped) {
+        if (stopped.get()) {
           log.info("Server Stopped");
           break;
         }
         log.error("Error accepting client connection", e);
         continue;
       }
+      long sessionId = lastSessionId.incrementAndGet();
       poolExecutor.execute(() -> {
         log.info("New connection from: {}", client.getRemoteSocketAddress());
         try (Socket clientSocket = client) {
+          connections.put(sessionId, client);
           serveClient(clientSocket);
         } catch (EOFException | SocketException ignore) {
           // client disconnect is not a error
         } catch (SVNException | IOException e) {
           log.info("Client error:", e);
         } finally {
+          connections.remove(sessionId);
           log.info("Connection from {} closed", client.getRemoteSocketAddress());
         }
       });
@@ -156,7 +170,7 @@ public class SvnServer extends Thread {
     repository.updateRevisions();
     sendAnnounce(writer, context.getBaseUrl());
 
-    while (!stopped) {
+    while (!isInterrupted()) {
       try {
         Step step = context.poll();
         if (step != null) {
@@ -293,15 +307,28 @@ public class SvnServer extends Thread {
         .listEnd();
   }
 
-  public void shutdown() throws InterruptedException, IOException {
-    shutdown(0);
+  public void startShutdown() throws IOException {
+    if (stopped.compareAndSet(false, true)) {
+      log.info("Shutdown server");
+      serverSocket.close();
+      poolExecutor.shutdown();
+    }
   }
 
-  public void shutdown(int millis) throws InterruptedException, IOException {
-    log.info("Shutdown server");
-    stopped = true;
-    serverSocket.close();
+  public void shutdown(long millis) throws InterruptedException, IOException {
+    startShutdown();
+    if (!poolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
+      forceShutdown();
+    }
     join(millis);
     log.info("Server shutdowned");
   }
+
+  private void forceShutdown() throws IOException, InterruptedException {
+    for (Socket socket : connections.values()) {
+      socket.close();
+    }
+    poolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
+  }
+
 }
