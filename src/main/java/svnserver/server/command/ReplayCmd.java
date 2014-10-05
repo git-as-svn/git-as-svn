@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.Depth;
+import svnserver.repository.SendCopyFrom;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
   }
 
   public static void replayRevision(@NotNull SessionContext context, int revision, boolean sendDeltas) throws IOException, SVNException {
-    final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(new DeltaParams(new int[]{revision}, "", "", sendDeltas, Depth.Infinity, true, false, false));
+    final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(new DeltaParams(new int[]{revision}, "", "", sendDeltas, Depth.Infinity, SendCopyFrom.OnlyRelative, false, false));
     pipeline.setPathReport("", revision - 1, false, SVNDepth.INFINITY);
     pipeline.sendDelta(context, "", revision);
 

@@ -10,6 +10,7 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
+import svnserver.repository.SendCopyFrom;
 
 /**
  * <pre>
@@ -32,6 +33,6 @@ public final class StatusParams extends DeltaParams {
       @NotNull int[] rev,
       @NotNull String depth
   ) throws SVNException {
-    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), false, false, true);
+    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), SendCopyFrom.Never, false, true);
   }
 }

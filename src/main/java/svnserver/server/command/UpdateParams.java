@@ -10,6 +10,7 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
+import svnserver.repository.SendCopyFrom;
 
 /**
  * Update between revisions.
@@ -36,6 +37,6 @@ public final class UpdateParams extends DeltaParams {
       boolean sendCopyFromArgs,
       boolean ignoreAncestry
   ) throws SVNException {
-    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry, true);
+    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs ? SendCopyFrom.Always : SendCopyFrom.Never, ignoreAncestry, true);
   }
 }

@@ -60,4 +60,7 @@ public interface VcsFile {
 
   @NotNull
   VcsRevision getLastChange() throws IOException;
+
+  @Nullable
+  VcsCopyFrom getCopyFrom() throws IOException;
 }

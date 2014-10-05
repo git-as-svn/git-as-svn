@@ -22,6 +22,7 @@ import svnserver.StreamHelper;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.TemporaryOutputStream;
+import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsFile;
 import svnserver.repository.git.prop.GitProperty;
 
@@ -270,6 +271,13 @@ public class GitFile implements VcsFile {
       throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + getFileName() + "@" + revision);
     }
     return repo.sureRevisionInfo(lastChange);
+  }
+
+  @Nullable
+  @Override
+  public VcsCopyFrom getCopyFrom() throws IOException {
+    // todo: #35 Copy detection
+    return null;
   }
 
   @Override

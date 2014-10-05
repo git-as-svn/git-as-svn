@@ -22,6 +22,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.Depth;
+import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsFile;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
@@ -272,7 +273,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     private void updateDir(@NotNull SessionContext context,
                            @NotNull String wcPath,
-                           @Nullable VcsFile oldFile,
+                           @Nullable VcsFile prevFile,
                            @NotNull VcsFile newFile,
                            @NotNull String parentTokenId,
                            boolean rootDir,
@@ -280,15 +281,13 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
                            @NotNull Depth requestedDepth) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId;
+      final VcsFile oldFile;
       if (rootDir) {
         tokenId = parentTokenId;
+        oldFile = prevFile;
       } else {
         tokenId = createTokenId();
-        if (oldFile == null) {
-          sendStartEntry(writer, "add-dir", wcPath, parentTokenId, tokenId, null);
-        } else {
-          sendStartEntry(writer, "open-dir", wcPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
-        }
+        oldFile = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId);
       }
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
 
@@ -351,14 +350,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
+    private void updateFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile prevFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId = createTokenId();
-      if (oldFile == null) {
-        sendStartEntry(writer, "add-file", wcPath, parentTokenId, tokenId, null);
-      } else {
-        sendStartEntry(writer, "open-file", wcPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
-      }
+      final VcsFile oldFile = sendEntryHeader(context, wcPath, prevFile, newFile, "file", parentTokenId, tokenId);
       final String md5 = newFile.getMd5();
       if (oldFile == null || !newFile.getContentHash().equals(oldFile.getContentHash())) {
         writer
@@ -500,7 +495,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd();
     }
 
-    private void sendStartEntry(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String fileName, @NotNull String parentTokenId, @NotNull String tokenId, @Nullable Integer revision) throws IOException {
+    private void sendOpenEntry(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String fileName, @NotNull String parentTokenId, @NotNull String tokenId, @Nullable Integer revision) throws IOException {
       writer
           .listBegin()
           .word(command)
@@ -511,6 +506,40 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listBegin();
       if (revision != null) {
         writer.number(revision);
+      }
+      writer
+          .listEnd()
+          .listEnd()
+          .listEnd();
+    }
+
+    @Nullable
+    private VcsFile sendEntryHeader(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String type, @NotNull String parentTokenId, @NotNull String tokenId) throws IOException, SVNException {
+      final SvnServerWriter writer = context.getWriter();
+      if (oldFile == null) {
+        final VcsCopyFrom copyFrom = params.getSendCopyFrom().getCopyFrom(wcPath(""), newFile);
+        sendNewEntry(writer, "add-" + type, wcPath, parentTokenId, tokenId, copyFrom);
+        if (copyFrom != null) {
+          return context.getRepository().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath());
+        }
+      } else {
+        sendOpenEntry(writer, "open-" + type, wcPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
+      }
+      return oldFile;
+    }
+
+    private void sendNewEntry(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String fileName, @NotNull String parentTokenId, @NotNull String tokenId, @Nullable VcsCopyFrom copyFrom) throws IOException {
+      writer
+          .listBegin()
+          .word(command)
+          .listBegin()
+          .string(fileName)
+          .string(parentTokenId)
+          .string(tokenId)
+          .listBegin();
+      if (copyFrom != null) {
+        writer.string(copyFrom.getPath());
+        writer.number(copyFrom.getRevision());
       }
       writer
           .listEnd()

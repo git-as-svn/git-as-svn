@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.repository.Depth;
+import svnserver.repository.SendCopyFrom;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -36,10 +37,8 @@ public class DeltaParams {
   @NotNull
   private final Depth depth;
 
-  /**
-   * TODO: issue #35, copy detection.
-   */
-  private final boolean sendCopyFromArgs;
+  @NotNull
+  private final SendCopyFrom sendCopyFrom;
 
   private final boolean includeInternalProps;
 
@@ -51,7 +50,7 @@ public class DeltaParams {
       @NotNull String targetPath,
       boolean textDeltas,
       @NotNull Depth depth,
-      boolean sendCopyFromArgs,
+      @NotNull SendCopyFrom sendCopyFrom,
       /**
        * Broken-minded SVN feature we're unlikely to support EVER.
        * <p>
@@ -69,7 +68,7 @@ public class DeltaParams {
     this.path = path;
     this.targetPath = targetPath.isEmpty() ? null : SVNURL.parseURIEncoded(targetPath);
     this.depth = depth;
-    this.sendCopyFromArgs = sendCopyFromArgs;
+    this.sendCopyFrom = sendCopyFrom;
     this.textDeltas = textDeltas;
     this.includeInternalProps = includeInternalProps;
   }
@@ -95,6 +94,11 @@ public class DeltaParams {
   @NotNull
   public Depth getDepth() {
     return depth;
+  }
+
+  @NotNull
+  public SendCopyFrom getSendCopyFrom() {
+    return sendCopyFrom;
   }
 
   public boolean isIncludeInternalProps() {
