@@ -11,10 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -160,6 +157,12 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       context.push(new CheckPermissionStep(this::complete));
     }
 
+    public void setPathReport(@NotNull String path, int rev, boolean startEmpty, @NotNull SVNDepth depth) throws SVNException {
+      final String wcPath = wcPath(path);
+      paths.put(wcPath, new SetPathParams(path, rev, startEmpty, new String[0], depth.getName()));
+      forcePath(wcPath);
+    }
+
     private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
       context.push(this::reportCommand);
       final String wcPath = wcPath(args.path);
@@ -190,7 +193,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       sendResponse(context, params.getPath(), params.getRev(context));
     }
 
-    protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
+    protected void sendDelta(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
       final SetPathParams rootParams = paths.get(wcPath(""));
       if (rootParams == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA));
@@ -231,6 +234,11 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .word("close-dir")
           .listBegin().string(tokenId).listEnd()
           .listEnd();
+    }
+
+    protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
+      final SvnServerWriter writer = context.getWriter();
+      sendDelta(context, path, rev);
       writer
           .listBegin()
           .word("close-edit")
@@ -331,8 +339,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
-      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(true) : new HashMap<>();
-      for (Map.Entry<String, String> entry : newFile.getProperties(true).entrySet()) {
+      final boolean includeInternalProps = params.isIncludeInternalProps();
+      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(includeInternalProps) : new HashMap<>();
+      for (Map.Entry<String, String> entry : newFile.getProperties(includeInternalProps).entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
           changeProp(writer, command, tokenId, entry.getKey(), entry.getValue());
         }

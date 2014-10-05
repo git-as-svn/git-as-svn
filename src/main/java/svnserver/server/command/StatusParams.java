@@ -26,10 +26,12 @@ import svnserver.repository.Depth;
  */
 public final class StatusParams extends DeltaParams {
 
-  public StatusParams(@NotNull String target,
-                      boolean recurse,
-                      @NotNull int[] rev,
-                      @NotNull String depth) throws SVNException {
-    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), false, false);
+  public StatusParams(
+      @NotNull String target,
+      boolean recurse,
+      @NotNull int[] rev,
+      @NotNull String depth
+  ) throws SVNException {
+    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), false, false, true);
   }
 }

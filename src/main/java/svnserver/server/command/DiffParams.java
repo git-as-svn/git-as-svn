@@ -28,13 +28,15 @@ import svnserver.repository.Depth;
  */
 public final class DiffParams extends DeltaParams {
 
-  public DiffParams(@NotNull int[] rev,
-                    @NotNull String target,
-                    boolean recurse,
-                    boolean ignoreAncestry,
-                    @NotNull String url,
-                    boolean textDeltas,
-                    @NotNull String depth) throws SVNException {
-    super(rev, target, url, textDeltas, Depth.parse(depth, recurse, Depth.Files), false, ignoreAncestry);
+  public DiffParams(
+      @NotNull int[] rev,
+      @NotNull String target,
+      boolean recurse,
+      boolean ignoreAncestry,
+      @NotNull String url,
+      boolean textDeltas,
+      @NotNull String depth
+  ) throws SVNException {
+    super(rev, target, url, textDeltas, Depth.parse(depth, recurse, Depth.Files), false, ignoreAncestry, true);
   }
 }

@@ -28,7 +28,14 @@ import svnserver.repository.Depth;
  */
 public final class UpdateParams extends DeltaParams {
 
-  public UpdateParams(@NotNull int[] rev, @NotNull String target, boolean recurse, @NotNull String depth, boolean sendCopyFromArgs, boolean ignoreAncestry) throws SVNException {
-    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry);
+  public UpdateParams(
+      @NotNull int[] rev,
+      @NotNull String target,
+      boolean recurse,
+      @NotNull String depth,
+      boolean sendCopyFromArgs,
+      boolean ignoreAncestry
+  ) throws SVNException {
+    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry, true);
   }
 }

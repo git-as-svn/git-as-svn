@@ -41,31 +41,37 @@ public class DeltaParams {
    */
   private final boolean sendCopyFromArgs;
 
+  private final boolean includeInternalProps;
+
   private final boolean textDeltas;
 
-  public DeltaParams(@NotNull int[] rev,
-                     @NotNull String path,
-                     @NotNull String targetPath,
-                     boolean textDeltas,
-                     @NotNull Depth depth,
-                     boolean sendCopyFromArgs,
-                     /**
-                      * Broken-minded SVN feature we're unlikely to support EVER.
-                      * <p>
-                      * If {@code ignoreAncestry} is {@code false} and file was deleted and created back between source and target revisions,
-                      * SVN server sends two deltas for this file - deletion and addition. The only effect that this behavior produces is
-                      * increased number of tree conflicts on client.
-                      * <p>
-                      * Worse, in SVN it is possible to delete file and create it back in the same commit, effectively breaking its history.
-                      */
-                     @SuppressWarnings("UnusedParameters")
-                     boolean ignoreAncestry) throws SVNException {
+  public DeltaParams(
+      @NotNull int[] rev,
+      @NotNull String path,
+      @NotNull String targetPath,
+      boolean textDeltas,
+      @NotNull Depth depth,
+      boolean sendCopyFromArgs,
+      /**
+       * Broken-minded SVN feature we're unlikely to support EVER.
+       * <p>
+       * If {@code ignoreAncestry} is {@code false} and file was deleted and created back between source and target revisions,
+       * SVN server sends two deltas for this file - deletion and addition. The only effect that this behavior produces is
+       * increased number of tree conflicts on client.
+       * <p>
+       * Worse, in SVN it is possible to delete file and create it back in the same commit, effectively breaking its history.
+       */
+      @SuppressWarnings("UnusedParameters")
+      boolean ignoreAncestry,
+      boolean includeInternalProps
+  ) throws SVNException {
     this.rev = rev;
     this.path = path;
     this.targetPath = targetPath.isEmpty() ? null : SVNURL.parseURIEncoded(targetPath);
     this.depth = depth;
     this.sendCopyFromArgs = sendCopyFromArgs;
     this.textDeltas = textDeltas;
+    this.includeInternalProps = includeInternalProps;
   }
 
   @Nullable
@@ -91,4 +97,7 @@ public class DeltaParams {
     return depth;
   }
 
+  public boolean isIncludeInternalProps() {
+    return includeInternalProps;
+  }
 }
