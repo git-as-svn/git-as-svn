@@ -28,13 +28,15 @@ import svnserver.repository.Depth;
  */
 public final class SwitchParams extends DeltaParams {
 
-  public SwitchParams(@NotNull int[] rev,
-                      @NotNull String target,
-                      boolean recurse,
-                      @NotNull String url,
-                      @NotNull String depth,
-                      boolean sendCopyFromArgs,
-                      boolean ignoreAncestry) throws SVNException {
-    super(rev, target, url, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry);
+  public SwitchParams(
+      @NotNull int[] rev,
+      @NotNull String target,
+      boolean recurse,
+      @NotNull String url,
+      @NotNull String depth,
+      boolean sendCopyFromArgs,
+      boolean ignoreAncestry
+  ) throws SVNException {
+    super(rev, target, url, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs, ignoreAncestry, true);
   }
 }

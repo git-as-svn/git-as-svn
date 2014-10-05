@@ -97,6 +97,8 @@ public class SvnServer extends Thread {
     commands.put("log", new LogCmd());
     commands.put("reparent", new ReparentCmd());
     commands.put("check-path", new CheckPathCmd());
+    commands.put("replay", new ReplayCmd());
+    commands.put("replay-range", new ReplayRangeCmd());
     commands.put("rev-prop", new RevPropCmd());
     commands.put("rev-proplist", new RevPropListCmd());
     commands.put("stat", new StatCmd());
