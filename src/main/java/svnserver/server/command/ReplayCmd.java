@@ -25,13 +25,9 @@ import java.io.IOException;
 public class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
   public static class Params {
     private final int revision;
-    private final int lowWaterMark;
-    private final boolean sendDeltas;
 
-    public Params(int revision, int lowWaterMark, boolean sendDeltas) {
+    public Params(int revision) {
       this.revision = revision;
-      this.lowWaterMark = lowWaterMark;
-      this.sendDeltas = sendDeltas;
     }
   }
 
@@ -43,19 +39,25 @@ public class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(new DeltaParams(new int[]{args.revision}, "", "", args.sendDeltas, Depth.Infinity, true, false, false));
-    pipeline.setPathReport("", args.revision - 1, false, SVNDepth.INFINITY);
-    pipeline.sendDelta(context, "", args.revision);
+    replayRevision(context, args.revision, true);
+
+    final SvnServerWriter writer = context.getWriter();
+    writer
+        .listBegin()
+        .word("success")
+        .listBegin().listEnd()
+        .listEnd();
+  }
+
+  public static void replayRevision(@NotNull SessionContext context, int revision, boolean sendDeltas) throws IOException, SVNException {
+    final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(new DeltaParams(new int[]{revision}, "", "", sendDeltas, Depth.Infinity, true, false, false));
+    pipeline.setPathReport("", revision - 1, false, SVNDepth.INFINITY);
+    pipeline.sendDelta(context, "", revision);
 
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()
         .word("finish-replay")
-        .listBegin().listEnd()
-        .listEnd();
-    writer
-        .listBegin()
-        .word("success")
         .listBegin().listEnd()
         .listEnd();
   }
