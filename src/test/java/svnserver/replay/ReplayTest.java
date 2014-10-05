@@ -78,8 +78,7 @@ public class ReplayTest {
     checkReplaySelf(this::replayRangeRevision);
   }
 
-  @Test
-  public void checkReplaySelf(@NotNull ReplayMethod replayMethod) throws Exception {
+  private void checkReplaySelf(@NotNull ReplayMethod replayMethod) throws Exception {
     try (
         SvnTestServer src = SvnTestServer.createMasterRepository();
         SvnTestServer dst = SvnTestServer.createEmpty()
