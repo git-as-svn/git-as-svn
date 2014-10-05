@@ -276,8 +276,7 @@ public class GitFile implements VcsFile {
   @Nullable
   @Override
   public VcsCopyFrom getCopyFrom() throws IOException {
-    // todo: #35 Copy detection
-    return null;
+    return getLastChange().getCopyFrom(getFullPath());
   }
 
   @Override

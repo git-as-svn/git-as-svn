@@ -488,7 +488,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listBegin()
           .string(wcPath)
           .listBegin()
-          .number(rev) // todo: ???
+          .number(rev)
           .listEnd()
           .string(parentTokenId)
           .listEnd()
