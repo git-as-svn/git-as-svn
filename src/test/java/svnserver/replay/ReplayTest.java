@@ -37,6 +37,11 @@ public class ReplayTest {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(ReplayTest.class);
 
+  @FunctionalInterface
+  private interface ReplayMethod {
+    void replay(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException;
+  }
+
   @Test
   public void testReplayFileModification() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
@@ -50,7 +55,7 @@ public class ReplayTest {
       for (long revision = 1; revision <= lastRevision; revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
         log.info("  replay commit #{}: {}", revision, message.getString());
-        replayRevision(srcRepo, dstRepo, revision);
+        replayRangeRevision(srcRepo, dstRepo, revision);
         log.info("  compare revisions #{}: {}", revision, message.getString());
         compareRevision(srcRepo, revision, dstRepo, dstRepo.getLatestRevision());
       }
@@ -59,7 +64,22 @@ public class ReplayTest {
   }
 
   @Test
-  public void testReplaySelf() throws Exception {
+  public void testReplaySelfWithUpdate() throws Exception {
+    checkReplaySelf(this::updateRevision);
+  }
+
+  @Test
+  public void testReplaySelfWithReplay() throws Exception {
+    checkReplaySelf(this::replayRevision);
+  }
+
+  @Test
+  public void testReplaySelfWithReplayRange() throws Exception {
+    checkReplaySelf(this::replayRangeRevision);
+  }
+
+  @Test
+  public void checkReplaySelf(@NotNull ReplayMethod replayMethod) throws Exception {
     try (
         SvnTestServer src = SvnTestServer.createMasterRepository();
         SvnTestServer dst = SvnTestServer.createEmpty()
@@ -75,7 +95,7 @@ public class ReplayTest {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
         final SVNPropertyValue srcHash = srcRepo.getRevisionPropertyValue(revision, SvnConstants.PROP_GIT);
         log.info("  replay commit #{} {}: {}", revision, new String(srcHash.getBytes()), message.getString());
-        updateRevision(srcRepo, dstRepo, revision);
+        replayMethod.replay(srcRepo, dstRepo, revision);
         log.info("  compare revisions #{}: {}", revision, message.getString());
         compareRevision(srcRepo, revision, dstRepo, revision);
         final SVNPropertyValue dstHash = dstRepo.getRevisionPropertyValue(revision, SvnConstants.PROP_GIT);
@@ -96,7 +116,7 @@ public class ReplayTest {
     return new RevWalk(git).parseCommit(ObjectId.fromString(new String(hash.getBytes())));
   }
 
-  private void replayRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
+  private void replayRangeRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
     srcRepo.replayRange(revision, revision, -1, true, new ISVNReplayHandler() {
       @Override
       public ISVNEditor handleStartRevision(long revision, SVNProperties revisionProperties) throws SVNException {
@@ -108,6 +128,13 @@ public class ReplayTest {
         editor.closeEdit();
       }
     });
+  }
+
+  private void replayRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
+    SVNProperties revisionProperties = srcRepo.getRevisionProperties(revision, null);
+    ISVNEditor editor = dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null);
+    srcRepo.replay(revision - 1, revision, true, editor);
+    editor.closeEdit();
   }
 
   private void updateRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
