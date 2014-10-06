@@ -27,6 +27,8 @@ import svnserver.SvnTestServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Replay svn repository to git repository.
@@ -116,10 +118,13 @@ public class ReplayTest {
   }
 
   private void replayRangeRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
+    final Map<Long, CopyFromSVNEditor> copyFroms = new TreeMap<>();
     srcRepo.replayRange(revision, revision, -1, true, new ISVNReplayHandler() {
       @Override
       public ISVNEditor handleStartRevision(long revision, SVNProperties revisionProperties) throws SVNException {
-        return dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null);
+        final CopyFromSVNEditor editor = new CopyFromSVNEditor(dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null), "/");
+        copyFroms.put(revision, editor);
+        return editor;
       }
 
       @Override
@@ -127,22 +132,42 @@ public class ReplayTest {
         editor.closeEdit();
       }
     });
+    for (Map.Entry<Long, CopyFromSVNEditor> entry : copyFroms.entrySet()) {
+      checkCopyFrom(srcRepo, entry.getValue(), entry.getKey());
+    }
   }
 
   private void replayRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
     SVNProperties revisionProperties = srcRepo.getRevisionProperties(revision, null);
-    ISVNEditor editor = dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null);
+    CopyFromSVNEditor editor = new CopyFromSVNEditor(dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null), "/");
     srcRepo.replay(revision - 1, revision, true, editor);
     editor.closeEdit();
+    checkCopyFrom(srcRepo, editor, revision);
   }
 
   private void updateRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException {
     final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
-    final ISVNEditor editor = dstRepo.getCommitEditor(message.getString(), null);
-    srcRepo.diff(srcRepo.getLocation(), revision, revision - 1, null, false, SVNDepth.INFINITY, true, reporter -> {
+    final CopyFromSVNEditor editor = new CopyFromSVNEditor(dstRepo.getCommitEditor(message.getString(), null), "/");
+    srcRepo.update(revision, "", SVNDepth.INFINITY, true, reporter -> {
       reporter.setPath("", null, revision - 1, SVNDepth.INFINITY, false);
       reporter.finishReport();
     }, new FilterSVNEditor(editor));
+    checkCopyFrom(srcRepo, editor, revision);
+  }
+
+  private void checkCopyFrom(@NotNull SVNRepository repo, @NotNull CopyFromSVNEditor editor, long revision) throws SVNException {
+    final Map<String, String> copyFrom = new TreeMap<>();
+    repo.log(new String[]{""}, revision, revision, true, true, logEntry -> {
+      for (SVNLogEntryPath entry : logEntry.getChangedPaths().values()) {
+        if (entry.getCopyPath() != null) {
+          copyFrom.put(entry.getPath(), entry.getCopyPath() + "@" + entry.getCopyRevision());
+        }
+      }
+    });
+    if (!editor.getCopyFrom().equals(copyFrom)) {
+      System.out.println("X");
+    }
+    Assert.assertEquals(editor.getCopyFrom(), copyFrom);
   }
 
   private void compareRevision(@NotNull SVNRepository srcRepo, long srcRev, @NotNull SVNRepository dstRepo, long dstRev) throws SVNException {

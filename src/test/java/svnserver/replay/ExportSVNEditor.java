@@ -8,13 +8,10 @@
 package svnserver.replay;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
-import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -22,7 +19,7 @@ import java.util.*;
  *
  * @author a.navrotskiy
  */
-public class ExportSVNEditor implements ISVNEditor {
+public class ExportSVNEditor extends SVNEditorWrapper {
   @NotNull
   private final Deque<String> paths = new ArrayDeque<>();
   @NotNull
@@ -30,8 +27,8 @@ public class ExportSVNEditor implements ISVNEditor {
   @NotNull
   private final Map<String, Map<String, String>> properties = new HashMap<>();
 
-  @Override
-  public void targetRevision(long revision) throws SVNException {
+  public ExportSVNEditor() {
+    super(null);
   }
 
   @Override
@@ -41,19 +38,7 @@ public class ExportSVNEditor implements ISVNEditor {
   }
 
   @Override
-  public void deleteEntry(String path, long revision) throws SVNException {
-  }
-
-  @Override
-  public void absentDir(String path) throws SVNException {
-  }
-
-  @Override
-  public void absentFile(String path) throws SVNException {
-  }
-
-  @Override
-  public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+  public void addDir(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) throws SVNException {
     paths.push(path);
     files.put(path, "directory");
   }
@@ -75,14 +60,6 @@ public class ExportSVNEditor implements ISVNEditor {
   }
 
   @Override
-  public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-  }
-
-  @Override
-  public void openFile(String path, long revision) throws SVNException {
-  }
-
-  @Override
   public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
     properties.computeIfAbsent(paths.element(), (s) -> new TreeMap<>()).put(name, value.getString());
   }
@@ -90,28 +67,6 @@ public class ExportSVNEditor implements ISVNEditor {
   @Override
   public void closeFile(String path, String textChecksum) throws SVNException {
     files.put(path, textChecksum);
-  }
-
-  @Override
-  public SVNCommitInfo closeEdit() throws SVNException {
-    return null;
-  }
-
-  @Override
-  public void abortEdit() throws SVNException {
-  }
-
-  @Override
-  public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-  }
-
-  @Override
-  public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-    return null;
-  }
-
-  @Override
-  public void textDeltaEnd(String path) throws SVNException {
   }
 
   @Override
