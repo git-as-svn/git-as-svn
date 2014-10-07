@@ -16,16 +16,19 @@
 # realm: Example realm
 
 repository: !!svnserver.config.GitRepositoryConfig
+  # Allowed push modes:
+  # - SIMPLE - use embedded push (hooks ignored, fast, no dependencies)
+  # - NATIVE - use console git for push (hooks worked, can be slow on some commits, requie installed console git)
+  pushMode: SIMPLE
   branch: master
-  path: .git
+  path: example.git
   renameDetection: true
 
 acl:
   groups:
     - name: developers
       users:
-        - bozaro
-        - slonopotamus
+        - test
 
   access:
     - path: /
@@ -37,18 +40,12 @@ acl:
 # Simple in-memory user database
 userDB: !!svnserver.config.LocalUserDBConfig
   users:
-    - username: bozaro
+    - username: test
       # Clear-text password is required to perform CRAM-MD5 authentication
-      password: password
+      password: test
       # Email and real name are used to create Git commits
-      email: bozaro@users.noreply.github.com
-      realName: Artem V. Navrotskiy
-
-    - username: slonopotamus
-      password: password
-      email: marat@slonopotamus.org
-      realName: Marat Radchenko
-
+      email: test@noreply.fake
+      realName: Test User
 
 # Authenticates a user by binding to the directory with the DN of the entry for that user and the password
 # presented by the user. If this simple bind succeeds the user is considered to be authenticated.

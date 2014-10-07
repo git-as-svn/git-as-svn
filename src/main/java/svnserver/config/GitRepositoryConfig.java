@@ -101,6 +101,12 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   public Repository createRepository() throws IOException {
     final File file = new File(getPath()).getAbsoluteFile();
     if (!file.exists()) {
+      if (file.mkdirs()) {
+        log.info("Repository path: {} - not exists, creating bare repository", file);
+        final FileRepository repository = new FileRepository(file);
+        repository.create(true);
+        return repository;
+      }
       throw new FileNotFoundException(file.getPath());
     }
     log.info("Repository path: {}", file);
