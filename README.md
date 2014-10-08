@@ -27,7 +27,7 @@ For quick run you need:
 
 As result:
 
- * Server creates empty bare repository in directory: `example.git`
+ * Server creates bare repository with example commit in directory: `example.git`
  * The server will be available on svn://localhost:3690/ url (login/password: test/test)
 
 ## Build from sources

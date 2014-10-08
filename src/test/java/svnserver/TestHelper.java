@@ -12,10 +12,7 @@ import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -36,6 +33,20 @@ public class TestHelper {
     dir.delete();
     dir.mkdir();
     return dir;
+  }
+
+  public static void deleteDirectory(@NotNull File file) throws IOException {
+    if (file.isDirectory()) {
+      final File[] files = file.listFiles();
+      if (files != null) {
+        for (File entry : files) {
+          deleteDirectory(entry);
+        }
+      }
+    }
+    if (!file.delete()) {
+      throw new FileNotFoundException("Failed to delete file: " + file);
+    }
   }
 
   public static Repository emptyRepository() throws IOException {

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.locks.LockManagerType;
@@ -40,6 +41,9 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private String[] linked = {};
   @NotNull
   private GitPushMode pushMode = GitPushMode.NATIVE;
+  @NotNull
+  private GitCreateMode createMode = GitCreateMode.ERROR;
+
   private boolean renameDetection = true;
   @NotNull
   private LockManagerType lockManager = LockManagerType.DumbReadOnly;
@@ -98,16 +102,20 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   }
 
   @NotNull
+  public GitCreateMode getCreateMode() {
+    return createMode;
+  }
+
+  public void setCreateMode(@NotNull GitCreateMode createMode) {
+    this.createMode = createMode;
+  }
+
+  @NotNull
   public Repository createRepository() throws IOException {
     final File file = new File(getPath()).getAbsoluteFile();
     if (!file.exists()) {
-      if (file.mkdirs()) {
-        log.info("Repository path: {} - not exists, creating bare repository", file);
-        final FileRepository repository = new FileRepository(file);
-        repository.create(true);
-        return repository;
-      }
-      throw new FileNotFoundException(file.getPath());
+      log.info("Repository path: {} - not exists, create mode: {}", file, createMode);
+      return createMode.createRepository(file, branch);
     }
     log.info("Repository path: {}", file);
     return new FileRepository(file);
