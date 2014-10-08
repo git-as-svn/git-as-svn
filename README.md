@@ -15,6 +15,21 @@ Subversion frontend server for git repository (in Java).
 
 # How to use
 
+## Run from binaries
+
+For quick run you need:
+
+ * Install Java 1.8 or later
+ * Download binaries archive from: https://github.com/bozaro/git-as-svn/releases
+ * After unpacking archive you can run server executing:<br/>
+   `java -jar build/deploy/git-as-svn.jar --config config.example --show-config`
+     
+
+As result:
+
+ * Server creates empty bare repository in directory: `example.git`
+ * The server will be available on svn://localhost:3690/ url (login/password: test/test)
+
 ## Build from sources
 
 To build from sources you need install JDK 1.8 or later and run build script.
@@ -28,13 +43,5 @@ For Windows:
     call gradlew.bat deployZip
 
 When build completes you can run server executing:
-
-    java -jar build/deploy/git-as-svn.jar --config config.example --show-config
-
-## Run from binaries
-
-You can download binaries archive from: https://github.com/bozaro/git-as-svn/releases
-
-After unpacking archive you can run server executing:
 
     java -jar build/deploy/git-as-svn.jar --config config.example --show-config
