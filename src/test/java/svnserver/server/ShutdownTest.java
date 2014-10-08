@@ -10,14 +10,13 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.testng.internal.junit.ArrayAsserts;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 
-import java.net.ConnectException;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Check file properties.
@@ -27,6 +26,7 @@ import java.util.Arrays;
 public class ShutdownTest {
   private static final int SHOWDOWN_TIME = 5000;
   private static final int FORCE_TIME = 1;
+  private static final int JOIN_TIME = 100;
 
   /**
    * Check simple shutdown:
@@ -38,10 +38,10 @@ public class ShutdownTest {
    */
   @Test
   public void simpleShutdown() throws Exception {
-    final String[] oldThreads = getAllThreads();
+    final Map<String, Thread> oldThreads = getAllThreads();
     final SvnTestServer server = SvnTestServer.createEmpty();
-    final SVNRepository repo1 = server.openSvnRepository();
     final SVNRepository repo2 = server.openSvnRepository();
+    final SVNRepository repo1 = server.openSvnRepository();
     repo1.getLatestRevision();
     final ISVNEditor editor = repo1.getCommitEditor("Empty commit", null, false, null);
     editor.openRoot(-1);
@@ -50,16 +50,14 @@ public class ShutdownTest {
       // Can't create new connection is shutdown mode.
       repo2.getLatestRevision();
       Assert.fail();
-    } catch (SVNException e) {
-      Throwable cause = e.getCause();
-      Assert.assertTrue(cause instanceof ConnectException);
+    } catch (SVNException ignored) {
     }
     editor.closeDir();
     editor.closeEdit();
     repo1.closeSession();
+    repo2.closeSession();
     server.shutdown(SHOWDOWN_TIME);
-    final String[] newThreads = getAllThreads();
-    ArrayAsserts.assertArrayEquals(newThreads, oldThreads);
+    checkThreads(oldThreads);
   }
 
   /**
@@ -72,7 +70,7 @@ public class ShutdownTest {
    */
   @Test
   public void timeoutShutdown() throws Exception {
-    final String[] oldThreads = getAllThreads();
+    final Map<String, Thread> oldThreads = getAllThreads();
     final SvnTestServer server = SvnTestServer.createEmpty();
     final SVNRepository repo = server.openSvnRepository();
     repo.getLatestRevision();
@@ -80,8 +78,7 @@ public class ShutdownTest {
     editor.openRoot(-1);
     server.startShutdown();
     server.shutdown(FORCE_TIME);
-    final String[] newThreads = getAllThreads();
-    ArrayAsserts.assertArrayEquals(newThreads, oldThreads);
+    checkThreads(oldThreads);
     try {
       editor.closeDir();
       editor.closeEdit();
@@ -90,17 +87,26 @@ public class ShutdownTest {
     }
   }
 
+  private static void checkThreads(@NotNull Map<String, Thread> oldThreads) throws InterruptedException {
+    final Map<String, Thread> newThreads = getAllThreads();
+    for (Map.Entry<String, Thread> entry : newThreads.entrySet()) {
+      if (!oldThreads.containsKey(entry.getKey())) {
+        entry.getValue().join(JOIN_TIME);
+      }
+    }
+  }
+
   @NotNull
-  private static String[] getAllThreads() {
+  private static Map<String, Thread> getAllThreads() {
     for (int count = Thread.activeCount() + 1; ; count *= 2) {
       Thread[] threads = new Thread[count];
       final int size = Thread.enumerate(threads);
       if (size < threads.length) {
-        final String[] result = new String[size];
+        final Map<String, Thread> result = new TreeMap<>();
         for (int i = 0; i < size; ++i) {
-          result[i] = threads[i].getId() + "#" + threads[i].getName();
+          final Thread thread = threads[i];
+          result.put(thread.getId() + "#" + thread.getName(), thread);
         }
-        Arrays.sort(result);
         return result;
       }
     }
