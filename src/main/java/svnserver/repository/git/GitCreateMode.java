@@ -67,7 +67,7 @@ public enum GitCreateMode {
     final ObjectInserter inserter = repository.newObjectInserter();
     // Create commit tree.
     final TreeFormatter rootBuilder = new TreeFormatter();
-    rootBuilder.append(".gitattributes", FileMode.REGULAR_FILE, insertFile(inserter, "example/.gitattributes"));
+    rootBuilder.append(".gitattributes", FileMode.REGULAR_FILE, insertFile(inserter, "example/_gitattributes"));
     new ObjectChecker().checkTree(rootBuilder.toByteArray());
     final ObjectId rootId = inserter.insert(rootBuilder);
     // Create first commit with message.
