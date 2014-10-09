@@ -23,6 +23,8 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.*;
+import svnserver.repository.locks.LockDesc;
+import svnserver.repository.locks.LockManagerWrite;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
@@ -55,10 +57,6 @@ import java.util.Map;
  */
 
 public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
-
-  /**
-   * TODO: locks
-   */
   public static final class LockInfo {
 
     @NotNull
@@ -73,17 +71,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   }
 
   public static class CommitParams {
+    private final boolean keepLocks;
     @NotNull
     private final String message;
-    /**
-     * TODO: locks
-     */
     @NotNull
     private final LockInfo[] locks;
-    /**
-     * TODO: locks
-     */
-    private final boolean keepLocks;
 
     public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks) {
       this.message = message;
@@ -292,10 +284,12 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final Map<String, FileUpdater> files;
     @NotNull
     private final Map<String, String> locks;
+    private boolean keepLocks;
     private boolean aborted = false;
 
     public EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
+      this.keepLocks = params.keepLocks;
       this.rootEntry = new EntryUpdater(context.getRepository().getLatestRevision().getFile(""), true);
       paths = new HashMap<>();
       files = new HashMap<>();
@@ -538,14 +532,17 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (!files.isEmpty()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
-      final Map<String, String> lockTokens = new HashMap<>();
       final VcsRevision revision = context.getRepository().wrapLockWrite((lockManager) -> {
+        final List<LockDesc> oldLocks = getLocks(lockManager, locks);
         for (int pass = 0; ; ++pass) {
           if (pass >= MAX_PASS_COUNT) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
           }
           final VcsRevision newRevision = updateDir(context.getRepository().createCommitBuilder(lockManager, locks), rootEntry).commit(context.getUser(), message);
           if (newRevision != null) {
+            if (keepLocks) {
+              lockManager.renewLocks(oldLocks.toArray(new LockDesc[oldLocks.size()]));
+            }
             return newRevision;
           }
         }
@@ -558,6 +555,18 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
+    }
+
+    @NotNull
+    private List<LockDesc> getLocks(LockManagerWrite lockManager, Map<String, String> locks) {
+      final List<LockDesc> result = new ArrayList<>();
+      for (Map.Entry<String, String> entry : locks.entrySet()) {
+        final LockDesc lock = lockManager.getLock(entry.getKey());
+        if (lock != null && lock.getToken().equals(entry.getValue())) {
+          result.add(lock);
+        }
+      }
+      return result;
     }
 
     private void complete(@NotNull SessionContext context, @NotNull VcsRevision revision) throws IOException, SVNException {

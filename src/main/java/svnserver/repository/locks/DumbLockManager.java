@@ -37,7 +37,7 @@ public final class DumbLockManager implements LockManagerWrite, LockManagerFacto
     checkReadOnly();
     final LockDesc[] result = new LockDesc[targets.length];
     for (int i = 0; i < targets.length; ++i)
-      result[i] = new LockDesc(targets[i].getPath(), "", context.getUser().getUserName(), comment, 0);
+      result[i] = new LockDesc(targets[i].getPath(), "", "", context.getUser().getUserName(), comment, 0);
     return result;
   }
 
@@ -58,6 +58,10 @@ public final class DumbLockManager implements LockManagerWrite, LockManagerFacto
 
   @Override
   public void validateLocks() throws SVNException {
+  }
+
+  @Override
+  public void renewLocks(@NotNull LockDesc[] locks) {
   }
 
   private void checkReadOnly() throws SVNException {

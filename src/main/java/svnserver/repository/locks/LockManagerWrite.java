@@ -25,4 +25,6 @@ public interface LockManagerWrite extends LockManagerRead {
   void unlock(@NotNull SessionContext context, boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException;
 
   void validateLocks() throws SVNException;
+
+  void renewLocks(@NotNull LockDesc[] locks) throws IOException, SVNException;
 }

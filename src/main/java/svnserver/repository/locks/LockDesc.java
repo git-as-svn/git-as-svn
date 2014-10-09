@@ -24,10 +24,13 @@ public final class LockDesc {
   private final String owner;
   @Nullable
   private final String comment;
+  @NotNull
+  private final String hash;
   private final long created;
 
-  public LockDesc(@NotNull String path, @NotNull String token, @NotNull String owner, @Nullable String comment, long created) {
+  public LockDesc(@NotNull String path, @NotNull String hash, @NotNull String token, @NotNull String owner, @Nullable String comment, long created) {
     this.path = path;
+    this.hash = hash;
     this.token = token;
     this.owner = owner;
     this.comment = comment;
@@ -37,6 +40,11 @@ public final class LockDesc {
   @NotNull
   public String getPath() {
     return path;
+  }
+
+  @NotNull
+  public String getHash() {
+    return hash;
   }
 
   @NotNull
@@ -52,6 +60,10 @@ public final class LockDesc {
   @Nullable
   public String getComment() {
     return comment;
+  }
+
+  public long getCreated() {
+    return created;
   }
 
   @NotNull

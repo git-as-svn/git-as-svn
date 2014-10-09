@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class InMemoryLockFactory implements LockManagerFactory {
+  private final char SEPARATOR = '/';
   @NotNull
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
   @NotNull
@@ -78,17 +79,17 @@ public final class InMemoryLockFactory implements LockManagerFactory {
           if (file == null || file.isDirectory()) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, target.getPath()));
           }
-          if (locks.containsKey(repo.getUuid() + "/" + target.getPath())) {
+          if (locks.containsKey(repo.getUuid() + SEPARATOR + target.getPath())) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, target.getPath()));
           }
           if (target.getRev() < file.getLastChange().getId()) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, target.getPath()));
           }
-          result[i] = new LockDesc(targets[i].getPath(), createLockId(), context.getUser().getUserName(), comment, 0);
+          result[i] = new LockDesc(file.getFullPath(), file.getContentHash(), createLockId(), context.getUser().getUserName(), comment, 0);
         }
         // Add locks.
         for (LockDesc lockDesc : result) {
-          locks.put(repo.getUuid() + "/" + lockDesc.getPath(), lockDesc);
+          locks.put(repo.getUuid() + SEPARATOR + lockDesc.getPath(), lockDesc);
         }
       }
       return result;
@@ -97,29 +98,57 @@ public final class InMemoryLockFactory implements LockManagerFactory {
     @NotNull
     @Override
     public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
-      return depth.visit(new InMemoryLockVisitor(repo.getUuid() + "/" + path));
+      return depth.visit(new InMemoryLockVisitor(repo.getUuid() + SEPARATOR + path));
     }
 
     @Override
     public LockDesc getLock(@NotNull String path) {
-      return locks.get(repo.getUuid() + "/" + path);
+      return locks.get(repo.getUuid() + SEPARATOR + path);
     }
 
     @Override
     public void unlock(@NotNull SessionContext context, boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException {
       for (UnlockTarget target : targets) {
-        final LockDesc lock = locks.get(repo.getUuid() + "/" + target.getPath());
+        final LockDesc lock = locks.get(repo.getUuid() + SEPARATOR + target.getPath());
         if ((lock == null) || (!lock.getToken().equals(target.getToken()))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, target.getPath()));
         }
       }
       for (UnlockTarget target : targets) {
-        locks.remove(repo.getUuid() + "/" + target.getPath());
+        locks.remove(repo.getUuid() + SEPARATOR + target.getPath());
       }
     }
 
     @Override
     public void validateLocks() throws SVNException {
+      try {
+        final VcsRevision revision = repo.getLatestRevision();
+        final Iterator<Map.Entry<String, LockDesc>> iter = locks.entrySet().iterator();
+        while (iter.hasNext()) {
+          final Map.Entry<String, LockDesc> entry = iter.next();
+          final LockDesc item = entry.getValue();
+          final VcsFile file = revision.getFile(item.getPath());
+          if ((file == null) || file.isDirectory() || (!item.getHash().equals(file.getContentHash()))) {
+            iter.remove();
+          }
+        }
+      } catch (IOException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
+      }
+    }
+
+    @Override
+    public void renewLocks(@NotNull LockDesc[] lockDescs) throws IOException, SVNException {
+      final VcsRevision revision = repo.getLatestRevision();
+      for (LockDesc lockDesc : lockDescs) {
+        final String pathKey = repo.getUuid() + SEPARATOR + lockDesc.getPath();
+        if (!locks.containsKey(pathKey)) {
+          final VcsFile file = revision.getFile(lockDesc.getPath());
+          if ((file != null) && (!file.isDirectory())) {
+            locks.put(pathKey, new LockDesc(lockDesc.getPath(), file.getContentHash(), lockDesc.getToken(), lockDesc.getOwner(), lockDesc.getComment(), lockDesc.getCreated()));
+          }
+        }
+      }
     }
   }
 
@@ -141,7 +170,12 @@ public final class InMemoryLockFactory implements LockManagerFactory {
     @NotNull
     @Override
     public Iterator<LockDesc> visitFiles() throws SVNException {
-      return null;
+      return new LockDescIterator(pathKey) {
+        @Override
+        protected boolean filter(@NotNull Map.Entry<String, LockDesc> item) {
+          return pathKey.equals(item.getKey()) || pathKey.equals(StringHelper.parentDir(pathKey));
+        }
+      };
     }
 
     @NotNull
@@ -153,36 +187,57 @@ public final class InMemoryLockFactory implements LockManagerFactory {
     @NotNull
     @Override
     public Iterator<LockDesc> visitInfinity() throws SVNException {
-      Iterator<Map.Entry<String, LockDesc>> iterator = locks.tailMap(pathKey, true).entrySet().iterator();
-      return new Iterator<LockDesc>() {
-        @Nullable
-        private LockDesc nextItem = findNext();
-
+      return new LockDescIterator(pathKey) {
         @Override
-        public boolean hasNext() {
-          return nextItem != null;
-        }
-
-        @Override
-        public LockDesc next() {
-          LockDesc result = nextItem;
-          if (result != null) {
-            nextItem = findNext();
-          }
-          return result;
-        }
-
-        protected LockDesc findNext() {
-          while (iterator.hasNext()) {
-            Map.Entry<String, LockDesc> item = iterator.next();
-            if (StringHelper.isParentPath(pathKey, item.getKey())) {
-              return item.getValue();
-            }
-          }
-          return null;
+        protected boolean filter(@NotNull Map.Entry<String, LockDesc> item) {
+          return true;
         }
       };
     }
+
+  }
+
+  private abstract class LockDescIterator implements Iterator<LockDesc> {
+    @NotNull
+    private final Iterator<Map.Entry<String, LockDesc>> iterator;
+    @NotNull
+    private final String pathKey;
+    @Nullable
+    private LockDesc nextItem;
+
+    public LockDescIterator(@NotNull String pathKey) {
+      this.iterator = locks.tailMap(pathKey, true).entrySet().iterator();
+      this.pathKey = pathKey;
+      this.nextItem = findNext();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return nextItem != null;
+    }
+
+    @Override
+    public LockDesc next() {
+      LockDesc result = nextItem;
+      if (result != null) {
+        nextItem = findNext();
+      }
+      return result;
+    }
+
+    protected LockDesc findNext() {
+      while (iterator.hasNext()) {
+        Map.Entry<String, LockDesc> item = iterator.next();
+        if (StringHelper.isParentPath(pathKey, item.getKey())) {
+          if (filter(item)) {
+            return item.getValue();
+          }
+        }
+      }
+      return null;
+    }
+
+    protected abstract boolean filter(@NotNull Map.Entry<String, LockDesc> item);
   }
 
   private static String createLockId() {
