@@ -8,6 +8,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Locale;
 
@@ -24,6 +25,11 @@ public enum Depth {
 
       return Action.Skip;
     }
+
+    @NotNull
+    public <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException {
+      return visitor.visitEmpty();
+    }
   },
 
   Files {
@@ -34,6 +40,11 @@ public enum Depth {
         return requestedDepth == Immediates || requestedDepth == Infinity ? Action.Upgrade : Action.Skip;
 
       return requestedDepth == Empty ? Action.Skip : Action.Normal;
+    }
+
+    @NotNull
+    public <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException {
+      return visitor.visitFiles();
     }
   },
 
@@ -46,6 +57,11 @@ public enum Depth {
 
       return requestedDepth == Empty ? Action.Skip : Action.Normal;
     }
+
+    @NotNull
+    public <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException {
+      return visitor.visitImmediates();
+    }
   },
 
   Infinity {
@@ -56,6 +72,11 @@ public enum Depth {
         return requestedDepth == Empty || requestedDepth == Files ? Action.Skip : Action.Normal;
 
       return requestedDepth == Empty ? Action.Skip : Action.Normal;
+    }
+
+    @NotNull
+    public <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException {
+      return visitor.visitInfinity();
     }
   };
 
@@ -78,6 +99,9 @@ public enum Depth {
 
     return parse(value);
   }
+
+  @NotNull
+  public abstract <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException;
 
   @NotNull
   public abstract Action determineAction(@NotNull Depth requestedDepth, boolean directory);

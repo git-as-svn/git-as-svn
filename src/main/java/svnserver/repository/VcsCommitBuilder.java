@@ -83,8 +83,9 @@ public interface VcsCommitBuilder {
   /**
    * Check last modification revision of path.
    *
-   * @param path Full path.
-   * @param rev  Revision.
+   * @param path         Full path.
+   * @param rev          Revision.
+   * @param checkLock Check locks for this entry.
    */
-  void checkUpToDate(String path, int rev) throws SVNException, IOException;
+  void checkUpToDate(String path, int rev, boolean checkLock) throws SVNException, IOException;
 }

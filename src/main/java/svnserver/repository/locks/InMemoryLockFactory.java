@@ -12,17 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.Depth;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.StringHelper;
+import svnserver.repository.*;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -36,7 +31,7 @@ public final class InMemoryLockFactory implements LockManagerFactory {
   @NotNull
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
   @NotNull
-  private Map<String, LockDesc> locks = new TreeMap<>();
+  private TreeMap<String, LockDesc> locks = new TreeMap<>();
 
   @NotNull
   @Override
@@ -102,7 +97,7 @@ public final class InMemoryLockFactory implements LockManagerFactory {
     @NotNull
     @Override
     public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE));
+      return depth.visit(new InMemoryLockVisitor(repo.getUuid() + "/" + path));
     }
 
     @Override
@@ -128,7 +123,69 @@ public final class InMemoryLockFactory implements LockManagerFactory {
     }
   }
 
-  private String createLockId() {
+  public class InMemoryLockVisitor implements DepthVisitor<Iterator<LockDesc>> {
+    @NotNull
+    private final String pathKey;
+
+    public InMemoryLockVisitor(@NotNull String pathKey) {
+      this.pathKey = pathKey;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<LockDesc> visitEmpty() throws SVNException {
+      final LockDesc desc = locks.get(pathKey);
+      return desc == null ? Collections.emptyIterator() : Arrays.asList(desc).iterator();
+    }
+
+    @NotNull
+    @Override
+    public Iterator<LockDesc> visitFiles() throws SVNException {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<LockDesc> visitImmediates() throws SVNException {
+      return visitFiles();
+    }
+
+    @NotNull
+    @Override
+    public Iterator<LockDesc> visitInfinity() throws SVNException {
+      Iterator<Map.Entry<String, LockDesc>> iterator = locks.tailMap(pathKey, true).entrySet().iterator();
+      return new Iterator<LockDesc>() {
+        @Nullable
+        private LockDesc nextItem = findNext();
+
+        @Override
+        public boolean hasNext() {
+          return nextItem != null;
+        }
+
+        @Override
+        public LockDesc next() {
+          LockDesc result = nextItem;
+          if (result != null) {
+            nextItem = findNext();
+          }
+          return result;
+        }
+
+        protected LockDesc findNext() {
+          while (iterator.hasNext()) {
+            Map.Entry<String, LockDesc> item = iterator.next();
+            if (StringHelper.isParentPath(pathKey, item.getKey())) {
+              return item.getValue();
+            }
+          }
+          return null;
+        }
+      };
+    }
+  }
+
+  private static String createLockId() {
     return UUID.randomUUID().toString();
   }
 }

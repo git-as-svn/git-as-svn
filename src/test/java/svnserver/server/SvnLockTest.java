@@ -43,12 +43,7 @@ public class SvnLockTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       createFile(repo, "/example.txt", "", null);
-      try {
-        lock(repo, "example2.txt", repo.getLatestRevision(), null);
-        Assert.fail();
-      } catch (SVNException e) {
-        Assert.assertEquals(SVNErrorCode.FS_NOT_FOUND, e.getErrorMessage().getErrorCode());
-      }
+      lock(repo, "example2.txt", repo.getLatestRevision(), SVNErrorCode.FS_NOT_FOUND);
     }
   }
 
@@ -171,14 +166,14 @@ public class SvnLockTest {
       final long latestRevision = repo.getLatestRevision();
 
       // Lock
-      final SVNLock lock = lock(repo, "example.txt", latestRevision, null);
-      Assert.assertNotNull(lock);
-      unlock(repo, lock, null);
+      final SVNLock oldLock = lock(repo, "example.txt", latestRevision, null);
+      Assert.assertNotNull(oldLock);
+      unlock(repo, oldLock, null);
 
-      lock(repo, "example.txt", latestRevision, null);
+      final SVNLock newLock = lock(repo, "example.txt", latestRevision, null);
       try {
         final Map<String, String> locks = new HashMap<>();
-        locks.put(lock.getPath(), lock.getID());
+        locks.put(oldLock.getPath(), oldLock.getID());
         final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, false, null);
         editor.openRoot(-1);
         editor.openFile("/example.txt", latestRevision);
@@ -189,7 +184,7 @@ public class SvnLockTest {
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
       }
-      Assert.assertNull(repo.getLock("/example.txt"));
+      compareLock(repo.getLock("/example.txt"), newLock);
     }
   }
 
@@ -289,7 +284,7 @@ public class SvnLockTest {
    * @throws Exception
    */
   @Test
-  public void deleteLockedDir() throws Exception {
+  public void deleteLockedDirNoLock() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       {
@@ -309,13 +304,46 @@ public class SvnLockTest {
       try {
         final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
         editor.openRoot(-1);
-        editor.deleteEntry("/example/example.txt", latestRevision);
+        editor.deleteEntry("/example", latestRevision);
         editor.closeDir();
         editor.closeEdit();
         Assert.fail();
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
       }
+    }
+  }
+
+  /**
+   * Check for deny modify locking file.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void deleteLockedDirWithLock() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir("/example", null, -1);
+        editor.addFile("/example/example.txt", null, -1);
+        sendDeltaAndClose(editor, "/example/example.txt", null, "Source content");
+        editor.closeDir();
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      final long latestRevision = repo.getLatestRevision();
+      // Lock
+      final SVNLock lock = lock(repo, "/example/example.txt", latestRevision, null);
+      Assert.assertNotNull(lock);
+      final Map<String, String> locks = new HashMap<>();
+      locks.put(lock.getPath(), lock.getID());
+      final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, false, null);
+      editor.openRoot(-1);
+      editor.deleteEntry("/example", latestRevision);
+      editor.closeDir();
+      editor.closeEdit();
     }
   }
 

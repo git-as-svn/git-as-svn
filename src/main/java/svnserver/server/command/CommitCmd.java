@@ -234,7 +234,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         .listEnd()
         .listEnd();
     log.info("Enter editor mode");
-    EditorPipeline pipeline = new EditorPipeline(context.getRepository(), args);
+    EditorPipeline pipeline = new EditorPipeline(context, args);
     pipeline.editorCommand(context);
   }
 
@@ -290,13 +290,16 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final Map<String, EntryUpdater> paths;
     @NotNull
     private final Map<String, FileUpdater> files;
+    @NotNull
+    private final Map<String, String> locks;
     private boolean aborted = false;
 
-    public EditorPipeline(@NotNull VcsRepository repository, @NotNull CommitParams params) throws IOException, SVNException {
+    public EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
-      this.rootEntry = new EntryUpdater(repository.getLatestRevision().getFile(""), true);
+      this.rootEntry = new EntryUpdater(context.getRepository().getLatestRevision().getFile(""), true);
       paths = new HashMap<>();
       files = new HashMap<>();
+      locks = getLocks(context, params.locks);
       commands = new HashMap<>();
       commands.put("add-dir", new LambdaCmd<>(AddParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(AddParams.class, this::addFile));
@@ -315,6 +318,14 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       exitCommands = new HashMap<>();
       exitCommands.put("close-edit", new LambdaCmd<>(NoParams.class, this::closeEdit));
       exitCommands.put("abort-edit", new LambdaCmd<>(NoParams.class, this::abortEdit));
+    }
+
+    private static Map<String, String> getLocks(@NotNull SessionContext context, @NotNull LockInfo[] locks) throws SVNException {
+      final Map<String, String> result = new HashMap<>();
+      for (LockInfo lock : locks) {
+        result.put(context.getRepositoryPath(lock.path), lock.lockToken);
+      }
+      return result;
     }
 
     private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
@@ -356,7 +367,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         if (lastUpdater.source == null) {
           throw new IllegalStateException();
         }
-        checkUpToDate(lastUpdater.source, rev);
+        checkUpToDate(lastUpdater.source, rev, false);
         final Map<String, String> props = lastUpdater.props;
         lastUpdater.changes.add(treeBuilder -> treeBuilder.checkDirProperties(props));
       }
@@ -370,7 +381,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
       final EntryUpdater dir = new EntryUpdater(sourceDir, parent.head);
       if ((rev >= 0) && (parent.head)) {
-        checkUpToDate(sourceDir, rev);
+        checkUpToDate(sourceDir, rev, false);
       }
       paths.put(args.token, dir);
       parent.changes.add(treeBuilder -> {
@@ -438,7 +449,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       log.info("Delete entry: {} (rev: {})", args.name, rev);
       final VcsFile entry = parent.getEntry(StringHelper.baseName(args.name));
       if (parent.head && (rev >= 0) && (parent.source != null)) {
-        checkUpToDate(entry, rev);
+        checkUpToDate(entry, rev, true);
       }
       parent.changes.add(treeBuilder -> treeBuilder.delete(entry.getFileName()));
     }
@@ -451,16 +462,16 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
       if (parent.head && (rev >= 0)) {
-        checkUpToDate(vcsFile, rev);
+        checkUpToDate(vcsFile, rev, true);
       }
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
-    private void checkUpToDate(@NotNull VcsFile vcsFile, int rev) throws IOException, SVNException {
+    private void checkUpToDate(@NotNull VcsFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
       if (vcsFile.getLastChange().getId() > rev) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
       }
-      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev));
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
     }
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -527,12 +538,13 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (!files.isEmpty()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
+      final Map<String, String> lockTokens = new HashMap<>();
       final VcsRevision revision = context.getRepository().wrapLockWrite((lockManager) -> {
         for (int pass = 0; ; ++pass) {
           if (pass >= MAX_PASS_COUNT) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
           }
-          final VcsRevision newRevision = updateDir(context.getRepository().createCommitBuilder(), rootEntry).commit(context.getUser(), message);
+          final VcsRevision newRevision = updateDir(context.getRepository().createCommitBuilder(lockManager, locks), rootEntry).commit(context.getUser(), message);
           if (newRevision != null) {
             return newRevision;
           }
