@@ -24,9 +24,6 @@ public final class DumbLockManager implements LockManager {
 
   private boolean readOnly;
 
-  public DumbLockManager() {
-  }
-
   public DumbLockManager(boolean readOnly) {
     this.readOnly = readOnly;
   }
@@ -42,13 +39,6 @@ public final class DumbLockManager implements LockManager {
     return result;
   }
 
-  @NotNull
-  @Override
-  public LockDesc lock(@NotNull String username, @Nullable String comment, boolean stealLock, @NotNull LockTarget target) throws SVNException {
-    checkReadOnly();
-    return new LockDesc(target.getPath(), "", username, comment, 0);
-  }
-
   @Nullable
   @Override
   public LockDesc getLock(@NotNull String path) throws SVNException {
@@ -59,11 +49,6 @@ public final class DumbLockManager implements LockManager {
   @Override
   public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
     return Collections.<LockDesc>emptyList().iterator();
-  }
-
-  @Override
-  public void unlock(boolean breakLock, @NotNull UnlockTarget target) throws SVNException {
-    checkReadOnly();
   }
 
   @Override

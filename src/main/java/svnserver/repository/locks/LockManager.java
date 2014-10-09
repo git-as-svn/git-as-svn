@@ -23,15 +23,23 @@ public interface LockManager {
   LockDesc[] lock(@NotNull String username, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException;
 
   @NotNull
-  LockDesc lock(@NotNull String username, @Nullable String comment, boolean stealLock, @NotNull LockTarget target) throws SVNException;
-
-  @Nullable
-  LockDesc getLock(@NotNull String path) throws SVNException;
+  default LockDesc lock(@NotNull String username, @Nullable String comment, boolean stealLock, @NotNull LockTarget target) throws SVNException {
+    final LockDesc[] locks = lock(username, comment, stealLock, new LockTarget[]{target});
+    if (locks.length != 1) {
+      throw new IllegalStateException();
+    }
+    return locks[0];
+  }
 
   @NotNull
   Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException;
 
-  void unlock(boolean breakLock, @NotNull UnlockTarget target) throws SVNException;
+  @Nullable
+  LockDesc getLock(@NotNull String path) throws SVNException;
 
   void unlock(boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException;
+
+  default void unlock(boolean breakLock, @NotNull UnlockTarget target) throws SVNException {
+    unlock(breakLock, new UnlockTarget[]{target});
+  }
 }
