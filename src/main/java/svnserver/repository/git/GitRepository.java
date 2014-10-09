@@ -34,7 +34,10 @@ import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
-import svnserver.repository.locks.LockManager;
+import svnserver.repository.locks.LockManagerFactory;
+import svnserver.repository.locks.LockManagerRead;
+import svnserver.repository.locks.LockManagerWrite;
+import svnserver.repository.locks.LockWorker;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +62,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
   @NotNull
-  private final LockManager lockManager;
+  private final LockManagerFactory lockManagerFactory;
   @NotNull
   public static final byte[] emptyBytes = new byte[0];
   @NotNull
@@ -102,11 +105,11 @@ public class GitRepository implements VcsRepository {
                        @NotNull GitPushMode pushMode,
                        @NotNull String branch,
                        boolean renameDetection,
-                       @NotNull LockManager lockManager) throws IOException, SVNException {
-    this.lockManager = lockManager;
+                       @NotNull LockManagerFactory lockManagerFactory) throws IOException, SVNException {
     this.repository = repository;
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
+    this.lockManagerFactory = lockManagerFactory;
     linkedRepositories = new ArrayList<>(linked);
 
     this.svnBranch = LayoutHelper.initRepository(repository).getName();
@@ -117,12 +120,6 @@ public class GitRepository implements VcsRepository {
     updateRevisions();
     this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
     log.info("Repository ready (branch: {})", gitBranch);
-  }
-
-  @NotNull
-  @Override
-  public LockManager getLockManager() {
-    return lockManager;
   }
 
   @NotNull
@@ -152,6 +149,10 @@ public class GitRepository implements VcsRepository {
     } finally {
       lock.readLock().unlock();
     }
+    return lockManagerFactory.wrapLockWrite(this, this::loadRevisionsFromGit);
+  }
+
+  private boolean loadRevisionsFromGit(@NotNull LockManagerWrite lockManager) throws IOException, SVNException {
     // Real loading.
     lock.writeLock().lock();
     try {
@@ -188,6 +189,7 @@ public class GitRepository implements VcsRepository {
         }
       }
       final long endTime = System.currentTimeMillis();
+      lockManager.validateLocks();
       log.info("Cached revision loaded: {} ms", endTime - beginTime);
       return true;
     } finally {
@@ -640,6 +642,18 @@ public class GitRepository implements VcsRepository {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public <T> T wrapLockRead(@NotNull LockWorker<T, LockManagerRead> work) throws SVNException, IOException {
+    return lockManagerFactory.wrapLockRead(this, work);
+  }
+
+  @NotNull
+  @Override
+  public <T> T wrapLockWrite(@NotNull LockWorker<T, LockManagerWrite> work) throws SVNException, IOException {
+    return lockManagerFactory.wrapLockWrite(this, work);
   }
 
   private static class ComputeBranchName implements BiFunction<RevCommit, CacheInfo, CacheInfo> {

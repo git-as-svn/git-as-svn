@@ -31,7 +31,7 @@ import svnserver.config.UserDBConfig;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.locks.DumbLockManager;
+import svnserver.repository.locks.InMemoryLockFactory;
 import svnserver.server.SvnServer;
 
 import java.io.File;
@@ -244,7 +244,7 @@ public final class SvnTestServer implements AutoCloseable {
           GitPushMode.SIMPLE,
           branch,
           true,
-          new DumbLockManager(true)
+          new InMemoryLockFactory()
       );
     }
   }

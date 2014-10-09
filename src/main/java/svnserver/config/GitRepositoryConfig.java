@@ -46,7 +46,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   private boolean renameDetection = true;
   @NotNull
-  private LockManagerType lockManager = LockManagerType.DumbReadOnly;
+  private LockManagerType lockManager = LockManagerType.InMemory;
 
   @NotNull
   public String getBranch() {

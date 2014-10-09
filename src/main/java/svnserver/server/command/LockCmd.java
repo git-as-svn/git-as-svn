@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManager;
 import svnserver.repository.locks.LockTarget;
 import svnserver.server.SessionContext;
 
@@ -59,15 +58,16 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
     final String path = context.getRepositoryPath(args.path);
     final LockTarget lockTarget = new LockTarget(path, rev);
     final String comment = args.comment.length == 0 ? null : args.comment[0];
-    final LockManager lockManager = context.getRepository().getLockManager();
-    final LockDesc lockDesc = lockManager.lock(context.getUser().getUserName(), comment, args.stealLock, lockTarget);
+    final LockDesc[] lockDescs = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context, comment, args.stealLock, new LockTarget[]{lockTarget}));
+    if (lockDescs.length != 1) {
+      throw new IllegalStateException();
+    }
     final SvnServerWriter writer = context.getWriter();
-
     // TODO: is it correct?
     writer.listBegin()
         .word("success")
         .listBegin();
-    LockCmd.writeLock(writer, lockDesc);
+    LockCmd.writeLock(writer, lockDescs[0]);
     writer
         .listEnd()
         .listEnd();

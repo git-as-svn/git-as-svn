@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManager;
 import svnserver.server.SessionContext;
 
+import javax.xml.ws.Holder;
 import java.io.IOException;
 
 /**
@@ -45,15 +45,16 @@ public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final LockManager lockManager = context.getRepository().getLockManager();
     final String path = context.getRepositoryPath(args.path);
-    final LockDesc lockDesc = lockManager.getLock(path);
 
+    final Holder<LockDesc> holder = context.getRepository().wrapLockRead((lockManager) -> new Holder<>(lockManager.getLock(context.getRepositoryPath(path))));
     writer.listBegin()
         .word("success")
+        .listBegin()
         .listBegin();
-    LockCmd.writeLock(writer, lockDesc);
+    LockCmd.writeLock(writer, holder.value);
     writer
+        .listEnd()
         .listEnd()
         .listEnd();
   }

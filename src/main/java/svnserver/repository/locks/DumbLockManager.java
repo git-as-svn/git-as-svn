@@ -13,14 +13,17 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
+import svnserver.repository.VcsRepository;
+import svnserver.server.SessionContext;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class DumbLockManager implements LockManager {
+public final class DumbLockManager implements LockManagerWrite, LockManagerFactory {
 
   private boolean readOnly;
 
@@ -30,34 +33,48 @@ public final class DumbLockManager implements LockManager {
 
   @NotNull
   @Override
-  public LockDesc[] lock(@NotNull String username, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException {
+  public LockDesc[] lock(@NotNull SessionContext context, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException, IOException {
     checkReadOnly();
-
     final LockDesc[] result = new LockDesc[targets.length];
     for (int i = 0; i < targets.length; ++i)
-      result[i] = lock(username, comment, stealLock, targets[i]);
+      result[i] = new LockDesc(targets[i].getPath(), "", context.getUser().getUserName(), comment, 0);
     return result;
-  }
-
-  @Nullable
-  @Override
-  public LockDesc getLock(@NotNull String path) throws SVNException {
-    return null;
   }
 
   @NotNull
   @Override
   public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
-    return Collections.<LockDesc>emptyList().iterator();
+    return Collections.emptyIterator();
   }
 
   @Override
-  public void unlock(boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException {
-    checkReadOnly();
+  public LockDesc getLock(@NotNull String path) {
+    return null;
+  }
+
+  @Override
+  public void unlock(@NotNull SessionContext context, boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException {
+  }
+
+  @Override
+  public void validateLocks() throws SVNException {
   }
 
   private void checkReadOnly() throws SVNException {
     if (readOnly)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE));
   }
+
+  @NotNull
+  @Override
+  public <T> T wrapLockRead(@NotNull VcsRepository repository, @NotNull LockWorker<T, LockManagerRead> work) throws IOException, SVNException {
+    return work.exec(this);
+  }
+
+  @NotNull
+  @Override
+  public <T> T wrapLockWrite(@NotNull VcsRepository repository, @NotNull LockWorker<T, LockManagerWrite> work) throws IOException, SVNException {
+    return work.exec(this);
+  }
+
 }

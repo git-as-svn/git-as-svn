@@ -8,35 +8,17 @@
 package svnserver.repository.locks;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
+import svnserver.repository.Depth;
+
+import java.util.Iterator;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public enum LockManagerType {
-  InMemory {
-    @NotNull
-    @Override
-    public LockManagerFactory create() {
-      return new InMemoryLockFactory();
-    }
-  },
-
-  DumbReadOnly {
-    @NotNull
-    @Override
-    public LockManagerFactory create() {
-      return new DumbLockManager(true);
-    }
-  },
-
-  DumbReadWrite {
-    @NotNull
-    @Override
-    public LockManagerFactory create() {
-      return new DumbLockManager(false);
-    }
-  };
-
+public interface LockManagerRead {
   @NotNull
-  public abstract LockManagerFactory create();
+  Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException;
+
+  LockDesc getLock(@NotNull String path);
 }

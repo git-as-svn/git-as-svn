@@ -39,11 +39,16 @@ public class SvnLockTest {
    * @throws Exception
    */
   @Test
-  public void lockNonExists() throws Exception {
+  public void lockNotExists() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       createFile(repo, "/example.txt", "", null);
-      lock(repo, "example2.txt", repo.getLatestRevision(), SVNErrorCode.FS_OUT_OF_DATE);
+      try {
+        lock(repo, "example2.txt", repo.getLatestRevision(), null);
+        Assert.fail();
+      } catch (SVNException e) {
+        Assert.assertEquals(SVNErrorCode.FS_NOT_FOUND, e.getErrorMessage().getErrorCode());
+      }
     }
   }
 
@@ -85,12 +90,7 @@ public class SvnLockTest {
       editor.closeEdit();
 
       final long latestRevision = repo.getLatestRevision();
-      try {
-        lock(repo, "example", latestRevision, null);
-        Assert.fail();
-      } catch (SVNException e) {
-        Assert.assertEquals(SVNErrorCode.FS_NOT_FILE, e.getErrorMessage().getErrorCode());
-      }
+      lock(repo, "example", latestRevision, SVNErrorCode.FS_NOT_FOUND);
     }
   }
 
@@ -108,6 +108,8 @@ public class SvnLockTest {
       final long latestRevision = repo.getLatestRevision();
 
       createFile(repo, "/example2.txt", "", null);
+
+      Assert.assertNull(repo.getLock("example.txt"));
 
       // New lock
       final SVNLock lock = lock(repo, "example.txt", latestRevision, null);
@@ -152,6 +154,102 @@ public class SvnLockTest {
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
       }
+    }
+  }
+
+  /**
+   * Check for deny modify locking file.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void modifyLockedInvalidLock() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      createFile(repo, "/example.txt", "", null);
+      final long latestRevision = repo.getLatestRevision();
+
+      // Lock
+      final SVNLock lock = lock(repo, "example.txt", latestRevision, null);
+      Assert.assertNotNull(lock);
+      unlock(repo, lock, null);
+
+      lock(repo, "example.txt", latestRevision, null);
+      try {
+        final Map<String, String> locks = new HashMap<>();
+        locks.put(lock.getPath(), lock.getID());
+        final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, false, null);
+        editor.openRoot(-1);
+        editor.openFile("/example.txt", latestRevision);
+        sendDeltaAndClose(editor, "/example.txt", "", "Source content");
+        editor.closeDir();
+        editor.closeEdit();
+        Assert.fail();
+      } catch (SVNException e) {
+        Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
+      }
+      Assert.assertNull(repo.getLock("/example.txt"));
+    }
+  }
+
+  /**
+   * Check for commit with keep locks.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void modifyLockedRemoveLock() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      createFile(repo, "/example.txt", "", null);
+      final long latestRevision = repo.getLatestRevision();
+
+      // Lock
+      final SVNLock lock = lock(repo, "example.txt", latestRevision, null);
+      Assert.assertNotNull(lock);
+      {
+        final Map<String, String> locks = new HashMap<>();
+        locks.put(lock.getPath(), lock.getID());
+        final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, false, null);
+        editor.openRoot(-1);
+        editor.openFile("/example.txt", latestRevision);
+        sendDeltaAndClose(editor, "/example.txt", "", "Source content");
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      Assert.assertNull(repo.getLock("/example.txt"));
+    }
+  }
+
+  /**
+   * Check for commit with remove locks.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void modifyLockedKeepLock() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      createFile(repo, "/example.txt", "", null);
+      final long latestRevision = repo.getLatestRevision();
+
+      // Lock
+      final SVNLock lock = lock(repo, "example.txt", latestRevision, null);
+      Assert.assertNotNull(lock);
+      {
+        final Map<String, String> locks = new HashMap<>();
+        locks.put(lock.getPath(), lock.getID());
+        final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, true, null);
+        editor.openRoot(-1);
+        editor.openFile("/example.txt", latestRevision);
+        sendDeltaAndClose(editor, "/example.txt", "", "Source content");
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      compareLock(repo.getLock("/example.txt"), lock);
     }
   }
 
@@ -276,52 +374,59 @@ public class SvnLockTest {
   }
 
   @Nullable
-  private SVNLock lock(@NotNull SVNRepository repo, @NotNull String path, long revision, @Nullable SVNErrorCode errorCode) throws SVNException {
+  private SVNLock lock(@NotNull SVNRepository repo, @NotNull String path, long revision, @Nullable SVNErrorCode errorCode) {
     final Map<String, Long> pathsToRevisions = new HashMap<>();
     pathsToRevisions.put(path, revision);
     final List<SVNLock> locks = new ArrayList<>();
-    repo.lock(pathsToRevisions, null, false, new ISVNLockHandler() {
-      @Override
-      public void handleLock(@NotNull String path, @Nullable SVNLock lock, @Nullable SVNErrorMessage error) throws SVNException {
-        if (errorCode == null) {
-          Assert.assertNull(error);
+    try {
+      repo.lock(pathsToRevisions, null, false, new ISVNLockHandler() {
+        @Override
+        public void handleLock(@NotNull String path, @Nullable SVNLock lock, @Nullable SVNErrorMessage error) throws SVNException {
+          if (error != null) {
+            throw new SVNException(error);
+          }
+          Assert.assertNull(errorCode);
           Assert.assertNotNull(lock);
           locks.add(lock);
-        } else {
-          Assert.assertNotNull(error);
-          Assert.assertEquals(error.getErrorCode(), errorCode);
         }
-      }
 
-      @Override
-      public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-        Assert.fail();
-      }
-    });
-    Assert.assertTrue(locks.size() <= 1);
-    return locks.isEmpty() ? null : locks.get(0);
+        @Override
+        public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+          Assert.fail();
+        }
+      });
+      Assert.assertNull(errorCode);
+      Assert.assertTrue(locks.size() <= 1);
+      return locks.isEmpty() ? null : locks.get(0);
+    } catch (SVNException e) {
+      Assert.assertEquals(e.getErrorMessage().getErrorCode(), errorCode);
+      return null;
+    }
   }
 
-  private void unlock(@NotNull SVNRepository repo, @NotNull SVNLock lock, @Nullable SVNErrorCode errorCode) throws SVNException {
-    final Map<String, String> pathsToTokens = new HashMap<>();
-    pathsToTokens.put(lock.getPath(), lock.getID());
-    repo.unlock(pathsToTokens, false, new ISVNLockHandler() {
-      @Override
-      public void handleLock(@NotNull String path, @Nullable SVNLock lock, @Nullable SVNErrorMessage error) throws SVNException {
-        Assert.fail();
-      }
+  private void unlock(@NotNull SVNRepository repo, @NotNull SVNLock lock, @Nullable SVNErrorCode errorCode) {
+    try {
+      final Map<String, String> pathsToTokens = new HashMap<>();
+      pathsToTokens.put(lock.getPath(), lock.getID());
+      repo.unlock(pathsToTokens, false, new ISVNLockHandler() {
+        @Override
+        public void handleLock(@NotNull String path, @Nullable SVNLock lock, @Nullable SVNErrorMessage error) throws SVNException {
+          Assert.fail();
+        }
 
-      @Override
-      public void handleUnlock(String path, SVNLock removedLock, SVNErrorMessage error) throws SVNException {
-        if (errorCode == null) {
-          Assert.assertNull(error);
+        @Override
+        public void handleUnlock(String path, SVNLock removedLock, SVNErrorMessage error) throws SVNException {
+          if (error != null) {
+            throw new SVNException(error);
+          }
+          Assert.assertNull(errorCode);
           Assert.assertNotNull(removedLock);
           compareLock(removedLock, lock);
-        } else {
-          Assert.assertNotNull(error);
-          Assert.assertEquals(error.getErrorCode(), errorCode);
         }
-      }
-    });
+      });
+      Assert.assertNull(errorCode);
+    } catch (SVNException e) {
+      Assert.assertEquals(e.getErrorMessage().getErrorCode(), errorCode);
+    }
   }
 }

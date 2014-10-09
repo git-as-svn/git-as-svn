@@ -10,7 +10,6 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.locks.LockManager;
 import svnserver.repository.locks.UnlockTarget;
 import svnserver.server.SessionContext;
 
@@ -50,11 +49,11 @@ public final class UnlockCmd extends BaseCmd<UnlockCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String path = context.getRepositoryPath(args.path);
-    final LockManager lockManager = context.getRepository().getLockManager();
     final String lockToken = args.lockToken.length == 0 ? null : args.lockToken[0];
-
-    lockManager.unlock(args.breakLock, new UnlockTarget(path, lockToken));
-
+    context.getRepository().wrapLockWrite((lockManager) -> {
+      lockManager.unlock(context, args.breakLock, new UnlockTarget[]{new UnlockTarget(context.getRepositoryPath(path), lockToken)});
+      return Boolean.TRUE;
+    });
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()

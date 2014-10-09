@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManager;
 import svnserver.repository.locks.LockTarget;
 import svnserver.server.SessionContext;
 
@@ -78,7 +77,6 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final String username = context.getUser().getUserName();
     final int latestRev = context.getRepository().getLatestRevision().getId();
     final String comment = args.comment.length == 0 ? null : args.comment[0];
 
@@ -89,10 +87,9 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
       targets[i] = new LockTarget(path, rev);
     }
 
-    final LockManager lockManager = context.getRepository().getLockManager();
     final LockDesc[] locks;
     try {
-      locks = lockManager.lock(username, comment, args.stealLock, targets);
+      locks = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context, comment, args.stealLock, targets));
     } catch (SVNException e) {
       writer.word("done");
       throw e;

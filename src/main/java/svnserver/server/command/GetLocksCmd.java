@@ -12,7 +12,6 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.Depth;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManager;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -50,10 +49,8 @@ public final class GetLocksCmd extends BaseCmd<GetLocksCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String path = context.getRepositoryPath(args.path);
-    final LockManager lockManager = context.getRepository().getLockManager();
     final SvnServerWriter writer = context.getWriter();
-    final Iterator<LockDesc> locks = lockManager.getLocks(path, args.depth);
-
+    final Iterator<LockDesc> locks = context.getRepository().wrapLockRead((lockManager) -> lockManager.getLocks(context.getRepositoryPath(path), args.depth));
     writer
         .listBegin()
         .word("success")

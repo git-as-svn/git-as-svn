@@ -527,16 +527,18 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (!files.isEmpty()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
-      for (int pass = 0; ; ++pass) {
-        if (pass >= MAX_PASS_COUNT) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
+      final VcsRevision revision = context.getRepository().wrapLockWrite((lockManager) -> {
+        for (int pass = 0; ; ++pass) {
+          if (pass >= MAX_PASS_COUNT) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
+          }
+          final VcsRevision newRevision = updateDir(context.getRepository().createCommitBuilder(), rootEntry).commit(context.getUser(), message);
+          if (newRevision != null) {
+            return newRevision;
+          }
         }
-        final VcsRevision revision = updateDir(context.getRepository().createCommitBuilder(), rootEntry).commit(context.getUser(), message);
-        if (revision != null) {
-          context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
-          break;
-        }
-      }
+      });
+      context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
