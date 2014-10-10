@@ -30,6 +30,9 @@ public final class Config {
   private UserDBConfig userDB = new LocalUserDBConfig();
 
   @NotNull
+  private CacheConfig cacheConfig = new PersistentCacheConfig();
+
+  @NotNull
   private AclConfig acl = new AclConfig();
 
   private int port = 3690;
@@ -103,5 +106,14 @@ public final class Config {
 
   public void setShutdownTimeout(long shutdownTimeout) {
     this.shutdownTimeout = shutdownTimeout;
+  }
+
+  @NotNull
+  public CacheConfig getCacheConfig() {
+    return cacheConfig;
+  }
+
+  public void setCacheConfig(@NotNull CacheConfig cacheConfig) {
+    this.cacheConfig = cacheConfig;
   }
 }

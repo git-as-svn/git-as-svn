@@ -8,6 +8,7 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -69,6 +70,8 @@ public class SvnServer extends Thread {
   @NotNull
   private final Config config;
   @NotNull
+  private final DB cacheDb;
+  @NotNull
   private final ServerSocket serverSocket;
   @NotNull
   private final ExecutorService poolExecutor;
@@ -83,6 +86,7 @@ public class SvnServer extends Thread {
     setDaemon(true);
     this.config = config;
 
+    cacheDb = config.getCacheConfig().createCache();
     userDB = config.getUserDB().create();
 
     commands.put("commit", new CommitCmd());
@@ -113,7 +117,7 @@ public class SvnServer extends Thread {
     commands.put("get-lock", new GetLockCmd());
     commands.put("get-locks", new GetLocksCmd());
 
-    repository = config.getRepository().create();
+    repository = config.getRepository().create(cacheDb);
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
     serverSocket.setReuseAddress(config.getReuseAddress());
@@ -323,6 +327,7 @@ public class SvnServer extends Thread {
       forceShutdown();
     }
     join(millis);
+    cacheDb.close();
     log.info("Server shutdowned");
   }
 

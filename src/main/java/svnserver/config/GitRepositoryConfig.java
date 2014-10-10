@@ -10,6 +10,7 @@ package svnserver.config;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -17,7 +18,7 @@ import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.locks.LockManagerType;
+import svnserver.repository.locks.PersistentLockFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,8 +46,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private GitCreateMode createMode = GitCreateMode.ERROR;
 
   private boolean renameDetection = true;
-  @NotNull
-  private LockManagerType lockManager = LockManagerType.InMemory;
 
   @NotNull
   public String getBranch() {
@@ -93,15 +92,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   }
 
   @NotNull
-  public LockManagerType getLockManager() {
-    return lockManager;
-  }
-
-  public void setLockManager(@NotNull LockManagerType lockManager) {
-    this.lockManager = lockManager;
-  }
-
-  @NotNull
   public GitCreateMode getCreateMode() {
     return createMode;
   }
@@ -138,7 +128,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   @NotNull
   @Override
-  public VcsRepository create() throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), lockManager.create());
+  public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
+    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
   }
 }

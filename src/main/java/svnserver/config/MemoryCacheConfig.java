@@ -8,22 +8,17 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.DB;
-import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.VcsRepository;
-
-import javax.xml.bind.annotation.XmlSeeAlso;
-import java.io.IOException;
+import org.mapdb.DBMaker;
 
 /**
- * Repository configuration.
+ * In-memory cache config.
  *
- * @author a.navrotskiy
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@XmlSeeAlso({
-    GitRepositoryConfig.class
-})
-public interface RepositoryConfig {
+public class MemoryCacheConfig implements CacheConfig {
   @NotNull
-  VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException;
+  @Override
+  public org.mapdb.DB createCache() {
+    return DBMaker.newTempFileDB().make();
+  }
 }
