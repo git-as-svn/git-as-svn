@@ -18,7 +18,7 @@ import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.locks.LockManagerType;
+import svnserver.repository.locks.PersistentLockFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,8 +46,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private GitCreateMode createMode = GitCreateMode.ERROR;
 
   private boolean renameDetection = true;
-  @NotNull
-  private LockManagerType lockManager = LockManagerType.Persistent;
 
   @NotNull
   public String getBranch() {
@@ -94,15 +92,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   }
 
   @NotNull
-  public LockManagerType getLockManager() {
-    return lockManager;
-  }
-
-  public void setLockManager(@NotNull LockManagerType lockManager) {
-    this.lockManager = lockManager;
-  }
-
-  @NotNull
   public GitCreateMode getCreateMode() {
     return createMode;
   }
@@ -140,6 +129,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   @Override
   public VcsRepository create(@NotNull TxMaker cacheDb) throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), lockManager.create(cacheDb));
+    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), new PersistentLockFactory(cacheDb));
   }
 }

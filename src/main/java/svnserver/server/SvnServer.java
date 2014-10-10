@@ -86,7 +86,7 @@ public class SvnServer extends Thread {
     setDaemon(true);
     this.config = config;
 
-    cacheDb = config.createCache();
+    cacheDb = config.getCacheConfig().createCache();
     userDB = config.getUserDB().create();
 
     commands.put("commit", new CommitCmd());

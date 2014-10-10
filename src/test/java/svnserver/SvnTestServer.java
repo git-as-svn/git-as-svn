@@ -25,10 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import svnserver.config.Config;
-import svnserver.config.LocalUserDBConfig;
-import svnserver.config.RepositoryConfig;
-import svnserver.config.UserDBConfig;
+import svnserver.config.*;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
@@ -94,7 +91,7 @@ public final class SvnTestServer implements AutoCloseable {
     final Config config = new Config();
     config.setPort(0);
     config.setHost(BIND_HOST);
-
+    config.setCacheConfig(new MemoryCacheConfig());
     config.setRepository(new TestRepositoryConfig(repository, testBranch));
     if (userDBConfig != null) {
       config.setUserDB(userDBConfig);

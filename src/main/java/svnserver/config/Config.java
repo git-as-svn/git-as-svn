@@ -8,8 +8,6 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.DBMaker;
-import org.mapdb.TxMaker;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +28,9 @@ public final class Config {
 
   @NotNull
   private UserDBConfig userDB = new LocalUserDBConfig();
+
+  @NotNull
+  private CacheConfig cacheConfig = new PersistentCacheConfig();
 
   @NotNull
   private AclConfig acl = new AclConfig();
@@ -108,7 +109,11 @@ public final class Config {
   }
 
   @NotNull
-  public TxMaker createCache() {
-    return DBMaker.newMemoryDB().makeTxMaker();
+  public CacheConfig getCacheConfig() {
+    return cacheConfig;
+  }
+
+  public void setCacheConfig(@NotNull CacheConfig cacheConfig) {
+    this.cacheConfig = cacheConfig;
   }
 }
