@@ -369,6 +369,40 @@ public class SvnLockTest {
   }
 
   /**
+   * Check get locks.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void getLocks() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
+        editor.openRoot(-1);
+        editor.addDir("/example", null, -1);
+        editor.addFile("/example/example.txt", null, -1);
+        sendDeltaAndClose(editor, "/example/example.txt", null, "Source content");
+        editor.closeDir();
+        editor.addFile("/foo.txt", null, -1);
+        sendDeltaAndClose(editor, "/foo.txt", null, "Source content");
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      compareLocks(repo.getLocks(""));
+
+      final long latestRevision = repo.getLatestRevision();
+      // Lock
+      final SVNLock lock1 = lock(repo, "/example/example.txt", latestRevision, false, null);
+      Assert.assertNotNull(lock1);
+      final SVNLock lock2 = lock(repo, "/foo.txt", latestRevision, false, null);
+      Assert.assertNotNull(lock2);
+
+      compareLocks(repo.getLocks(""), lock1, lock2);
+    }
+  }
+
+  /**
    * Check for deny modify locking file.
    *
    * @throws Exception
@@ -453,6 +487,17 @@ public class SvnLockTest {
       Assert.assertNotNull(actual);
       Assert.assertEquals(actual.getID(), expeted.getID());
     }
+  }
+
+  private void compareLocks(SVNLock[] actual, SVNLock... expected) {
+    Map<String, SVNLock> actualLocks = new HashMap<>();
+    for (SVNLock lock : actual) {
+      actualLocks.put(lock.getPath(), lock);
+    }
+    for (SVNLock lock : expected) {
+      compareLock(actualLocks.remove(lock.getPath()), lock);
+    }
+    Assert.assertTrue(actualLocks.isEmpty());
   }
 
   @Nullable
