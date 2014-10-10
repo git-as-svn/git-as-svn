@@ -8,7 +8,7 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.TxMaker;
+import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -70,7 +70,7 @@ public class SvnServer extends Thread {
   @NotNull
   private final Config config;
   @NotNull
-  private final TxMaker cacheDb;
+  private final DB cacheDb;
   @NotNull
   private final ServerSocket serverSocket;
   @NotNull

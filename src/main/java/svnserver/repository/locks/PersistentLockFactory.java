@@ -10,7 +10,6 @@ package svnserver.repository.locks;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.mapdb.Serializer;
-import org.mapdb.TxMaker;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsRepository;
 
@@ -18,7 +17,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -30,17 +29,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class PersistentLockFactory implements LockManagerFactory {
   @NotNull
-  private final static String LOCK_COLLECTION = "locks";
-  @NotNull
   private final static Serializer<LockDesc> serializer = new CustomSerializer();
 
   @NotNull
-  private final TxMaker txMaker;
-  @NotNull
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+  @NotNull
+  private final SortedMap<String, LockDesc> map;
 
-  public PersistentLockFactory(@NotNull TxMaker txMaker) {
-    this.txMaker = txMaker;
+  public PersistentLockFactory(@NotNull DB db) {
+    this.map = db.createTreeMap("locks").valueSerializer(serializer).makeOrGet();
   }
 
   @NotNull
@@ -57,16 +54,11 @@ public final class PersistentLockFactory implements LockManagerFactory {
 
   @NotNull
   private <T> T wrapLock(@NotNull Lock lock, @NotNull VcsRepository repo, @NotNull LockWorker<T, ? super TreeMapLockManager> work) throws IOException, SVNException {
-    final DB db = txMaker.makeTx();
     lock.lock();
     try {
-      NavigableMap<String, LockDesc> map = db.createTreeMap(LOCK_COLLECTION).valueSerializer(serializer).makeOrGet();
-      final T result = work.exec(new TreeMapLockManager(repo, map));
-      db.commit();
-      return result;
+      return work.exec(new TreeMapLockManager(repo, map));
     } finally {
       lock.unlock();
-      db.close();
     }
   }
 

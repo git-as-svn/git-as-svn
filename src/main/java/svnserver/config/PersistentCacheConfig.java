@@ -8,8 +8,8 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.mapdb.TxMaker;
 
 import java.io.File;
 
@@ -33,13 +33,14 @@ public class PersistentCacheConfig implements CacheConfig {
 
   @NotNull
   @Override
-  public TxMaker createCache() {
+  public DB createCache() {
     return DBMaker.newFileDB(new File(path))
         .closeOnJvmShutdown()
+        .transactionDisable()
         .asyncWriteEnable()
         .mmapFileEnable()
         .cacheSoftRefEnable()
-        .makeTxMaker();
+        .make();
   }
 }
 

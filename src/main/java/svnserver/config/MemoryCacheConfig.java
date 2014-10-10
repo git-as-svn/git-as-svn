@@ -9,7 +9,6 @@ package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DBMaker;
-import org.mapdb.TxMaker;
 
 /**
  * In-memory cache config.
@@ -19,7 +18,7 @@ import org.mapdb.TxMaker;
 public class MemoryCacheConfig implements CacheConfig {
   @NotNull
   @Override
-  public TxMaker createCache() {
-    return DBMaker.newTempFileDB().makeTxMaker();
+  public org.mapdb.DB createCache() {
+    return DBMaker.newTempFileDB().make();
   }
 }

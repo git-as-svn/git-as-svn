@@ -10,7 +10,7 @@ package svnserver.config;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.TxMaker;
+import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -128,7 +128,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   @NotNull
   @Override
-  public VcsRepository create(@NotNull TxMaker cacheDb) throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), new PersistentLockFactory(cacheDb));
+  public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
+    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
   }
 }

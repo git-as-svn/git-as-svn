@@ -23,11 +23,11 @@ import java.util.*;
  */
 public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>> {
   @NotNull
-  private NavigableMap<String, LockDesc> locks;
+  private SortedMap<String, LockDesc> locks;
   @NotNull
   private final String pathKey;
 
-  public TreeMapLockDepthVisitor(@NotNull NavigableMap<String, LockDesc> locks, @NotNull String pathKey) {
+  public TreeMapLockDepthVisitor(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
     this.pathKey = pathKey;
     this.locks = locks;
   }
@@ -75,8 +75,8 @@ public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>>
     @Nullable
     private LockDesc nextItem;
 
-    public LockDescIterator(@NotNull NavigableMap<String, LockDesc> locks, @NotNull String pathKey) {
-      this.iterator = locks.tailMap(pathKey, true).entrySet().iterator();
+    public LockDescIterator(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
+      this.iterator = locks.tailMap(pathKey).entrySet().iterator();
       this.pathKey = pathKey;
       this.nextItem = findNext();
     }

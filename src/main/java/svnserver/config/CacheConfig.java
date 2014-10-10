@@ -8,7 +8,7 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.TxMaker;
+import org.mapdb.DB;
 
 /**
  * Cache configuration.
@@ -17,5 +17,5 @@ import org.mapdb.TxMaker;
  */
 public interface CacheConfig {
   @NotNull
-  TxMaker createCache();
+  DB createCache();
 }

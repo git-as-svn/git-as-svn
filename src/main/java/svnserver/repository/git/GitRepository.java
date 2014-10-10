@@ -18,6 +18,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -88,9 +89,9 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final String svnBranch;
   @NotNull
-  private final Map<String, String> md5Cache = new ConcurrentHashMap<>();
+  private final Map<String, String> md5Cache;
   @NotNull
-  private final Map<String, Boolean> binaryCache = new ConcurrentHashMap<>();
+  private final Map<String, Boolean> binaryCache;
   @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
@@ -102,7 +103,10 @@ public class GitRepository implements VcsRepository {
                        @NotNull GitPushMode pushMode,
                        @NotNull String branch,
                        boolean renameDetection,
-                       @NotNull LockManagerFactory lockManagerFactory) throws IOException, SVNException {
+                       @NotNull LockManagerFactory lockManagerFactory,
+                       @NotNull DB cacheDb) throws IOException, SVNException {
+    this.md5Cache = cacheDb.getHashMap("cache.md5");
+    this.binaryCache = cacheDb.getHashMap("cache.binary");
     this.repository = repository;
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
@@ -301,20 +305,16 @@ public class GitRepository implements VcsRepository {
 
   @Override
   public void updateRevisions() throws IOException, SVNException {
-    updateRevisionsNoValidate();
-    lockManagerFactory.wrapLockWrite(this, (lockManager) -> {
-      lockManager.validateLocks();
-      return Boolean.TRUE;
-    });
-  }
-
-  private void updateRevisionsNoValidate() throws IOException, SVNException {
     while (true) {
       loadRevisions();
       if (!cacheRevisions()) {
         break;
       }
     }
+    lockManagerFactory.wrapLockWrite(this, (lockManager) -> {
+      lockManager.validateLocks();
+      return Boolean.TRUE;
+    });
   }
 
   private boolean isTreeEmpty(RevTree tree) throws IOException {
@@ -906,9 +906,7 @@ public class GitRepository implements VcsRepository {
           return null;
         }
         log.info("Commit is pushed");
-
-        updateRevisionsNoValidate();
-        lockManager.validateLocks();
+        updateRevisions();
         return getRevision(commitId);
       }
     }

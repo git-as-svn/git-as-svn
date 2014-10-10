@@ -21,7 +21,7 @@ import svnserver.server.SessionContext;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.UUID;
 
 /**
@@ -35,9 +35,9 @@ public class TreeMapLockManager implements LockManagerWrite {
   @NotNull
   private final VcsRepository repo;
   @NotNull
-  private NavigableMap<String, LockDesc> locks;
+  private final SortedMap<String, LockDesc> locks;
 
-  TreeMapLockManager(@NotNull VcsRepository repo, @NotNull NavigableMap<String, LockDesc> locks) {
+  public TreeMapLockManager(@NotNull VcsRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
     this.locks = locks;
     this.repo = repo;
   }

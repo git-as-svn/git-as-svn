@@ -14,7 +14,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mapdb.TxMaker;
+import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -235,14 +235,15 @@ public final class SvnTestServer implements AutoCloseable {
 
     @NotNull
     @Override
-    public VcsRepository create(@NotNull TxMaker cacheDb) throws IOException, SVNException {
+    public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
       return new GitRepository(
           repository,
           Collections.emptyList(),
           GitPushMode.SIMPLE,
           branch,
           true,
-          new PersistentLockFactory(cacheDb)
+          new PersistentLockFactory(cacheDb),
+          cacheDb
       );
     }
   }
