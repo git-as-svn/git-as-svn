@@ -37,7 +37,8 @@ public class PersistentCacheConfig implements CacheConfig {
     return DBMaker.newFileDB(new File(path))
         .closeOnJvmShutdown()
         .asyncWriteEnable()
-        .cacheLRUEnable()
+        .mmapFileEnable()
+        .cacheSoftRefEnable()
         .makeTxMaker();
   }
 }
