@@ -146,10 +146,6 @@ public class GitRepository implements VcsRepository {
     } finally {
       lock.readLock().unlock();
     }
-    return lockManagerFactory.wrapLockWrite(this, this::loadRevisionsFromGit);
-  }
-
-  private boolean loadRevisionsFromGit(@NotNull LockManagerWrite lockManager) throws IOException, SVNException {
     // Real loading.
     lock.writeLock().lock();
     try {
@@ -186,7 +182,6 @@ public class GitRepository implements VcsRepository {
         }
       }
       final long endTime = System.currentTimeMillis();
-      lockManager.validateLocks();
       log.info("Cached revision loaded: {} ms", endTime - beginTime);
       return true;
     } finally {
@@ -306,6 +301,14 @@ public class GitRepository implements VcsRepository {
 
   @Override
   public void updateRevisions() throws IOException, SVNException {
+    updateRevisionsNoValidate();
+    lockManagerFactory.wrapLockWrite(this, (lockManager) -> {
+      lockManager.validateLocks();
+      return Boolean.TRUE;
+    });
+  }
+
+  private void updateRevisionsNoValidate() throws IOException, SVNException {
     while (true) {
       loadRevisions();
       if (!cacheRevisions()) {
@@ -904,7 +907,8 @@ public class GitRepository implements VcsRepository {
         }
         log.info("Commit is pushed");
 
-        updateRevisions();
+        updateRevisionsNoValidate();
+        lockManager.validateLocks();
         return getRevision(commitId);
       }
     }

@@ -8,6 +8,7 @@
 package svnserver.repository.locks;
 
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.TxMaker;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -16,27 +17,19 @@ public enum LockManagerType {
   InMemory {
     @NotNull
     @Override
-    public LockManagerFactory create() {
+    public LockManagerFactory create(@NotNull TxMaker cacheDb) {
       return new InMemoryLockFactory();
     }
   },
 
-  DumbReadOnly {
+  Persistent {
     @NotNull
     @Override
-    public LockManagerFactory create() {
-      return new DumbLockManager(true);
-    }
-  },
-
-  DumbReadWrite {
-    @NotNull
-    @Override
-    public LockManagerFactory create() {
-      return new DumbLockManager(false);
+    public LockManagerFactory create(@NotNull TxMaker cacheDb) {
+      return new PersistentLockFactory(cacheDb);
     }
   };
 
   @NotNull
-  public abstract LockManagerFactory create();
+  public abstract LockManagerFactory create(@NotNull TxMaker cacheDb);
 }

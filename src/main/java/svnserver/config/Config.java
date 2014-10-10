@@ -8,6 +8,8 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.DBMaker;
+import org.mapdb.TxMaker;
 
 import java.util.concurrent.TimeUnit;
 
@@ -103,5 +105,10 @@ public final class Config {
 
   public void setShutdownTimeout(long shutdownTimeout) {
     this.shutdownTimeout = shutdownTimeout;
+  }
+
+  @NotNull
+  public TxMaker createCache() {
+    return DBMaker.newMemoryDB().makeTxMaker();
   }
 }

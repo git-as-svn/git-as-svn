@@ -8,6 +8,7 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.TxMaker;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsRepository;
 
@@ -24,5 +25,5 @@ import java.io.IOException;
 })
 public interface RepositoryConfig {
   @NotNull
-  VcsRepository create() throws IOException, SVNException;
+  VcsRepository create(@NotNull TxMaker cacheDb) throws IOException, SVNException;
 }
