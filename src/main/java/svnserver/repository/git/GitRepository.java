@@ -89,6 +89,8 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final String svnBranch;
   @NotNull
+  private final DB cacheDb;
+  @NotNull
   private final Map<String, String> md5Cache;
   @NotNull
   private final Map<String, Boolean> binaryCache;
@@ -105,6 +107,7 @@ public class GitRepository implements VcsRepository {
                        boolean renameDetection,
                        @NotNull LockManagerFactory lockManagerFactory,
                        @NotNull DB cacheDb) throws IOException, SVNException {
+    this.cacheDb = cacheDb;
     this.md5Cache = cacheDb.getHashMap("cache.md5");
     this.binaryCache = cacheDb.getHashMap("cache.binary");
     this.repository = repository;
@@ -311,10 +314,11 @@ public class GitRepository implements VcsRepository {
         break;
       }
     }
-    lockManagerFactory.wrapLockWrite(this, (lockManager) -> {
+    wrapLockWrite((lockManager) -> {
       lockManager.validateLocks();
       return Boolean.TRUE;
     });
+    cacheDb.commit();
   }
 
   private boolean isTreeEmpty(RevTree tree) throws IOException {

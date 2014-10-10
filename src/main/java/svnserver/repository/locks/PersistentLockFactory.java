@@ -35,8 +35,11 @@ public final class PersistentLockFactory implements LockManagerFactory {
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
   @NotNull
   private final SortedMap<String, LockDesc> map;
+  @NotNull
+  private final DB db;
 
   public PersistentLockFactory(@NotNull DB db) {
+    this.db = db;
     this.map = db.createTreeMap("locks").valueSerializer(serializer).makeOrGet();
   }
 
@@ -49,7 +52,9 @@ public final class PersistentLockFactory implements LockManagerFactory {
   @NotNull
   @Override
   public <T> T wrapLockWrite(@NotNull VcsRepository repo, @NotNull LockWorker<T, LockManagerWrite> work) throws IOException, SVNException {
-    return wrapLock(rwLock.writeLock(), repo, work);
+    final T result = wrapLock(rwLock.writeLock(), repo, work);
+    db.commit();
+    return result;
   }
 
   @NotNull
