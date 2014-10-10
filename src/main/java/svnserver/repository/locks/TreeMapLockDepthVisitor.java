@@ -45,7 +45,7 @@ public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>>
     return new LockDescIterator(locks, pathKey) {
       @Override
       protected boolean filter(@NotNull Map.Entry<String, LockDesc> item) {
-        return pathKey.equals(item.getKey()) || pathKey.equals(StringHelper.parentDir(pathKey));
+        return pathKey.equals(item.getKey()) || pathKey.equals(StringHelper.parentDir(item.getKey()));
       }
     };
   }
