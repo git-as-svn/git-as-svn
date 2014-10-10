@@ -76,10 +76,13 @@ public final class InMemoryLockFactory implements LockManagerFactory {
         for (int i = 0; i < targets.length; ++i) {
           final LockTarget target = targets[i];
           final VcsFile file = revision.getFile(target.getPath());
-          if (file == null || file.isDirectory()) {
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, target.getPath()));
+          if (file == null) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, target.getPath()));
           }
-          if (locks.containsKey(repo.getUuid() + SEPARATOR + target.getPath())) {
+          if (file.isDirectory()) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, target.getPath()));
+          }
+          if ((!stealLock) && locks.containsKey(repo.getUuid() + SEPARATOR + target.getPath())) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, target.getPath()));
           }
           if (target.getRev() < file.getLastChange().getId()) {
@@ -110,7 +113,7 @@ public final class InMemoryLockFactory implements LockManagerFactory {
     public void unlock(@NotNull SessionContext context, boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException {
       for (UnlockTarget target : targets) {
         final LockDesc lock = locks.get(repo.getUuid() + SEPARATOR + target.getPath());
-        if ((lock == null) || (!lock.getToken().equals(target.getToken()))) {
+        if ((lock == null) || (!(breakLock || lock.getToken().equals(target.getToken())))) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, target.getPath()));
         }
       }
