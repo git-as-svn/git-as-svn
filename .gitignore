@@ -21,5 +21,5 @@ build
 hs_err_pid*
 
 # Local run
-examples.git
+example.git
 *.mapdb*

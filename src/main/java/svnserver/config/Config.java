@@ -24,7 +24,7 @@ public final class Config {
   private String realm = "";
 
   @NotNull
-  private RepositoryMappingConfig repositoryMapping;
+  private RepositoryMappingConfig repositoryMapping = new RepositoryListMappingConfig();
 
   @NotNull
   private UserDBConfig userDB = new LocalUserDBConfig();

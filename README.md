@@ -23,12 +23,14 @@ For quick run you need:
  * Download binaries archive from: https://github.com/bozaro/git-as-svn/releases/latest
  * After unpacking archive you can run server executing:<br/>
    `java -jar git-as-svn.jar --config config.example --show-config`
-     
+ * Test connection:<br/>
+   `svn ls svn://localhost/example`<br/>
+   with login/password: test/test
 
 As result:
 
  * Server creates bare repository with example commit in directory: `example.git`
- * The server will be available on svn://localhost:3690/ url (login/password: test/test)
+ * The server will be available on svn://localhost/example/ url (login/password: test/test)
 
 ## Build from sources
 
