@@ -116,7 +116,7 @@ public class GitRepository implements VcsRepository {
     this.lockManagerFactory = lockManagerFactory;
     linkedRepositories = new ArrayList<>(linked);
 
-    this.svnBranch = LayoutHelper.initRepository(repository).getName();
+    this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
     this.gitBranch = Constants.R_HEADS + branch;
     loadRevisions();
     cacheRevisions();
