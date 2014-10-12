@@ -26,10 +26,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.*;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.locks.PersistentLockFactory;
+import svnserver.repository.mapping.RepositoryListMapping;
 import svnserver.server.SvnServer;
 
 import java.io.File;
@@ -67,13 +68,16 @@ public final class SvnTestServer implements AutoCloseable {
   @NotNull
   private final String testBranch;
   @NotNull
+  private final String prefix;
+  @NotNull
   private final SvnServer server;
   private final boolean safeBranch;
 
-  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, boolean safeBranch, @Nullable UserDBConfig userDBConfig) throws Exception {
+  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
+    this.prefix = prefix;
     tempDirectory = TestHelper.createTempDir("git-as-svn");
     final String srcBranch = branch == null ? repository.getBranch() : branch;
     if (safeBranch) {
@@ -92,7 +96,7 @@ public final class SvnTestServer implements AutoCloseable {
     config.setPort(0);
     config.setHost(BIND_HOST);
     config.setCacheConfig(new MemoryCacheConfig());
-    config.setRepository(new TestRepositoryConfig(repository, testBranch));
+    config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix));
     if (userDBConfig != null) {
       config.setUserDB(userDBConfig);
     } else {
@@ -132,22 +136,22 @@ public final class SvnTestServer implements AutoCloseable {
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, false, null);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, null);
   }
 
   @NotNull
   public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig) throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, false, userDBConfig);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, userDBConfig);
   }
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(findGitPath()), null, true, null);
+    return new SvnTestServer(new FileRepository(findGitPath()), null, "/master", true, null);
   }
 
   public SVNURL getUrl() throws SVNException {
-    return SVNURL.create("svn", null, BIND_HOST, server.getPort(), "", true);
+    return SVNURL.create("svn", null, BIND_HOST, server.getPort(), prefix, true);
   }
 
   @NotNull
@@ -222,21 +226,24 @@ public final class SvnTestServer implements AutoCloseable {
     server.startShutdown();
   }
 
-  private static class TestRepositoryConfig implements RepositoryConfig {
+  private static class TestRepositoryConfig implements RepositoryMappingConfig {
     @NotNull
     private final Repository repository;
     @NotNull
     private final String branch;
+    @NotNull
+    private final String prefix;
 
-    public TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch) {
+    public TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch, @NotNull String prefix) {
       this.repository = repository;
       this.branch = branch;
+      this.prefix = prefix;
     }
 
     @NotNull
     @Override
-    public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
-      return new GitRepository(
+    public VcsRepositoryMapping create(@NotNull DB cacheDb) throws IOException, SVNException {
+      return RepositoryListMapping.create(prefix, new GitRepository(
           repository,
           Collections.emptyList(),
           GitPushMode.SIMPLE,
@@ -244,7 +251,7 @@ public final class SvnTestServer implements AutoCloseable {
           true,
           new PersistentLockFactory(cacheDb),
           cacheDb
-      );
+      ));
     }
   }
 }
