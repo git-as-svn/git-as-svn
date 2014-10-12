@@ -15,19 +15,21 @@
 #
 # realm: Example realm
 
-repository: !!svnserver.config.GitRepositoryConfig
-  # Allowed push modes:
-  # - SIMPLE - use embedded push (hooks ignored, fast, no dependencies)
-  # - NATIVE - use console git for push (hooks worked, can be slow on some commits, requie installed console git)
-  pushMode: SIMPLE
-  # Allowed create modes:
-  # - ERROR - exit with error, if repository not exists
-  # - EMPTY - create empty repository
-  # - EXAMPLE - create repository with example data
-  createMode: EXAMPLE
-  branch: master
-  path: example.git
-  renameDetection: true
+repositoryMapping: !!svnserver.config.RepositoryListMappingConfig
+  repositories:
+    example: !!svnserver.config.GitRepositoryConfig
+      # Allowed push modes:
+      # - SIMPLE - use embedded push (hooks ignored, fast, no dependencies)
+      # - NATIVE - use console git for push (hooks worked, can be slow on some commits, requie installed console git)
+      pushMode: SIMPLE
+      # Allowed create modes:
+      # - ERROR - exit with error, if repository not exists
+      # - EMPTY - create empty repository
+      # - EXAMPLE - create repository with example data
+      createMode: EXAMPLE
+      branch: master
+      path: example.git
+      renameDetection: true
 
 acl:
   groups:

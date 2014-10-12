@@ -17,6 +17,7 @@ import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
 import svnserver.server.msg.ClientInfo;
@@ -40,7 +41,7 @@ public final class SessionContext {
   @NotNull
   private final SvnServer server;
   @NotNull
-  private final SVNURL baseUrl;
+  private final RepositoryInfo repositoryInfo;
   @NotNull
   private final Set<String> capabilities;
   @NotNull
@@ -51,21 +52,16 @@ public final class SessionContext {
   public SessionContext(@NotNull SvnServerParser parser,
                         @NotNull SvnServerWriter writer,
                         @NotNull SvnServer server,
-                        @NotNull SVNURL baseUrl,
+                        @NotNull RepositoryInfo repositoryInfo,
                         @NotNull ClientInfo clientInfo,
                         @NotNull User user) throws SVNException {
     this.parser = parser;
     this.writer = writer;
     this.server = server;
     this.user = user;
-    this.baseUrl = SVNURL.create(baseUrl.getProtocol(), null, baseUrl.getHost(), baseUrl.getPort(), "", false);
+    this.repositoryInfo = repositoryInfo;
     setParent(clientInfo.getUrl());
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
-  }
-
-  @NotNull
-  public SVNURL getBaseUrl() {
-    return baseUrl;
   }
 
   public boolean hasCapability(@NotNull String capability) {
@@ -83,7 +79,7 @@ public final class SessionContext {
 
   @NotNull
   private String getRepositoryPath(@NotNull SVNURL url) throws SVNException {
-    final String root = baseUrl.getPath();
+    final String root = repositoryInfo.getBaseUrl().getPath();
     final String path = url.getPath();
     if (!path.startsWith(root)) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: " + path + " (base: " + root + ")"));
@@ -105,7 +101,7 @@ public final class SessionContext {
 
   @NotNull
   public VcsRepository getRepository() {
-    return server.getRepository();
+    return repositoryInfo.getRepository();
   }
 
   @NotNull

@@ -24,7 +24,7 @@ public final class Config {
   private String realm = "";
 
   @NotNull
-  private RepositoryConfig repository = new GitRepositoryConfig();
+  private RepositoryMappingConfig repositoryMapping = new RepositoryListMappingConfig();
 
   @NotNull
   private UserDBConfig userDB = new LocalUserDBConfig();
@@ -65,22 +65,22 @@ public final class Config {
     this.realm = realm.trim();
   }
 
-  public void setRepository(@NotNull RepositoryConfig repository) {
-    this.repository = repository;
-  }
-
   @NotNull
-  public RepositoryConfig getRepository() {
-    return repository;
+  public RepositoryMappingConfig getRepositoryMapping() {
+    return repositoryMapping;
   }
 
-  public void setUserDB(@NotNull UserDBConfig userDB) {
-    this.userDB = userDB;
+  public void setRepositoryMapping(@NotNull RepositoryMappingConfig repositoryMapping) {
+    this.repositoryMapping = repositoryMapping;
   }
 
   @NotNull
   public UserDBConfig getUserDB() {
     return userDB;
+  }
+
+  public void setUserDB(@NotNull UserDBConfig userDB) {
+    this.userDB = userDB;
   }
 
   @NotNull

@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import svnserver.auth.ACL;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
@@ -26,7 +25,9 @@ import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
+import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepository;
+import svnserver.repository.VcsRepositoryMapping;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
@@ -66,7 +67,7 @@ public class SvnServer extends Thread {
   @NotNull
   private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
   @NotNull
-  private final VcsRepository repository;
+  private final VcsRepositoryMapping repositoryMapping;
   @NotNull
   private final Config config;
   @NotNull
@@ -117,7 +118,7 @@ public class SvnServer extends Thread {
     commands.put("get-lock", new GetLockCmd());
     commands.put("get-locks", new GetLocksCmd());
 
-    repository = config.getRepository().create(cacheDb);
+    repositoryMapping = config.getRepositoryMapping().create(cacheDb);
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
     serverSocket.setReuseAddress(config.getReuseAddress());
@@ -169,12 +170,18 @@ public class SvnServer extends Thread {
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
-    final User user = authenticate(parser, writer);
+    final RepositoryInfo repositoryInfo = repositoryMapping.getRepository(clientInfo.getUrl());
+    if (repositoryInfo == null) {
+      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + clientInfo.getUrl()));
+      return;
+    }
+    final User user = authenticate(parser, writer, repositoryInfo);
     log.info("User: {}", user);
 
-    final SessionContext context = new SessionContext(parser, writer, this, clientInfo.getUrl(), clientInfo, user);
+    final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo, user);
+    final VcsRepository repository = context.getRepository();
     repository.updateRevisions();
-    sendAnnounce(writer, context.getBaseUrl());
+    sendAnnounce(writer, repositoryInfo);
 
     while (!isInterrupted()) {
       try {
@@ -213,11 +220,6 @@ public class SvnServer extends Thread {
     return acl;
   }
 
-  @NotNull
-  public VcsRepository getRepository() {
-    return repository;
-  }
-
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
     // Анонсируем поддерживаемые функции.
     writer
@@ -249,7 +251,7 @@ public class SvnServer extends Thread {
   }
 
   @NotNull
-  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer) throws IOException, SVNException {
+  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
     final Collection<Authenticator> authenticators = userDB.authenticators();
     writer
@@ -259,7 +261,7 @@ public class SvnServer extends Thread {
         .listBegin()
         .word(String.join(" ", authenticators.stream().map(Authenticator::getMethodName).toArray(String[]::new)))
         .listEnd()
-        .string(config.getRealm().isEmpty() ? repository.getUuid() : config.getRealm())
+        .string(config.getRealm().isEmpty() ? repositoryInfo.getRepository().getUuid() : config.getRealm())
         .listEnd()
         .listEnd();
 
@@ -289,13 +291,13 @@ public class SvnServer extends Thread {
     }
   }
 
-  private void sendAnnounce(SvnServerWriter writer, @NotNull SVNURL baseUrl) throws IOException {
+  private void sendAnnounce(@NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException {
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .string(repository.getUuid())
-        .string(baseUrl.toString())
+        .string(repositoryInfo.getRepository().getUuid())
+        .string(repositoryInfo.getBaseUrl().toString())
         .listBegin()
             //.word("mergeinfo")
         .listEnd()
