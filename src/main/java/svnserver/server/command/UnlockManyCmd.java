@@ -73,19 +73,17 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
         lockManager.unlock(context, args.breakLock, targets);
         return Boolean.TRUE;
       });
+      for (PathToken path : args.paths)
+        writer
+            .listBegin()
+            .word("success")
+            .listBegin()
+            .string(path.path)
+            .listEnd()
+            .listEnd();
     } catch (SVNException e) {
-      writer.word("done");
-      throw e;
+      sendError(writer, e.getErrorMessage());
     }
-    for (PathToken path : args.paths)
-      writer
-          .listBegin()
-          .word("success")
-          .listBegin()
-          .string(path.path)
-          .listEnd()
-          .listEnd();
-
     writer.word("done");
     writer
         .listBegin()
