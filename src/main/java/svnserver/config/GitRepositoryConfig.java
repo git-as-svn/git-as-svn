@@ -37,9 +37,9 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private String branch = "master";
   @NotNull
-  private String path = ".git";
+  private File path = new File(".git");
   @NotNull
-  private String[] linked = {};
+  private String[] submodules = {};
   @NotNull
   private GitPushMode pushMode = GitPushMode.NATIVE;
   @NotNull
@@ -56,22 +56,13 @@ public final class GitRepositoryConfig implements RepositoryConfig {
     this.branch = branch;
   }
 
-  @NotNull
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(@NotNull String path) {
-    this.path = path;
-  }
-
-  public void setLinked(@NotNull String[] linked) {
-    this.linked = linked;
+  public void setSubmodules(@NotNull String[] submodules) {
+    this.submodules = submodules;
   }
 
   @NotNull
-  public String[] getLinked() {
-    return linked;
+  public String[] getSubmodules() {
+    return submodules;
   }
 
   @NotNull
@@ -102,19 +93,18 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   @NotNull
   public Repository createRepository() throws IOException {
-    final File file = new File(getPath()).getAbsoluteFile();
-    if (!file.exists()) {
-      log.info("Repository path: {} - not exists, create mode: {}", file, createMode);
-      return createMode.createRepository(file, branch);
+    if (!path.exists()) {
+      log.info("Repository path: {} - not exists, create mode: {}", path, createMode);
+      return createMode.createRepository(path, branch);
     }
-    log.info("Repository path: {}", file);
-    return new FileRepository(file);
+    log.info("Repository path: {}", path);
+    return new FileRepository(path);
   }
 
   @NotNull
   public List<Repository> createLinkedRepositories() throws IOException {
     final List<Repository> result = new ArrayList<>();
-    for (String linkedPath : getLinked()) {
+    for (String linkedPath : getSubmodules()) {
       final File file = new File(linkedPath).getAbsoluteFile();
       if (!file.exists()) {
         throw new FileNotFoundException(file.getPath());
