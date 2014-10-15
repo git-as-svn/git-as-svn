@@ -10,6 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
+import svnserver.config.serializer.ConfigPrepare;
 import svnserver.config.serializer.ConfigType;
 
 import java.io.File;
@@ -20,19 +21,19 @@ import java.io.File;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("persistentCache")
-public class PersistentCacheConfig implements CacheConfig {
+public class PersistentCacheConfig implements CacheConfig, ConfigPrepare {
   @NotNull
-  private String path = "git-as-svn.mapdb";
+  private File path;
 
-  @NotNull
-  public String getPath() {
-    return path;
+  @Override
+  public void prepare(@NotNull File basePath) {
+    path = new File(basePath, "git-as-svn.mapdb");
   }
 
   @NotNull
   @Override
   public DB createCache() {
-    return DBMaker.newFileDB(new File(path))
+    return DBMaker.newFileDB(path)
         .closeOnJvmShutdown()
         .asyncWriteEnable()
         .mmapFileEnable()
