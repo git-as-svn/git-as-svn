@@ -10,6 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.serializer.ConfigType;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
 
@@ -22,18 +23,11 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@ConfigType("listMapping")
 public class RepositoryListMappingConfig implements RepositoryMappingConfig {
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull
   private Map<String, RepositoryConfig> repositories = new TreeMap<>();
-
-  @NotNull
-  public Map<String, RepositoryConfig> getRepositories() {
-    return repositories;
-  }
-
-  public void setRepositories(@NotNull Map<String, RepositoryConfig> repositories) {
-    this.repositories = repositories;
-  }
 
   @NotNull
   @Override

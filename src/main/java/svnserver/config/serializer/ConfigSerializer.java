@@ -1,5 +1,13 @@
+/**
+ * This file is part of git-as-svn. It is subject to the license terms
+ * in the LICENSE file found in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/gpl-2.0.html. No part of git-as-svn,
+ * including this file, may be copied, modified, propagated, or distributed
+ * except according to the terms contained in the LICENSE file.
+ */
 package svnserver.config.serializer;
 
+import org.atteo.classindex.ClassIndex;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.TypeDescription;
@@ -13,10 +21,13 @@ import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Represent;
 import org.yaml.snakeyaml.representer.Representer;
 import svnserver.config.Config;
-import svnserver.config.GitRepositoryConfig;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Helper for parse/serialize configuration files.
@@ -25,7 +36,9 @@ import java.nio.charset.StandardCharsets;
  */
 public class ConfigSerializer {
   @NotNull
-  private static final String TAG_HREF = "!file";
+  private static final String TAG_PREFIX = "!";
+  @NotNull
+  private static final String TAG_HREF = TAG_PREFIX + "file";
   @NotNull
   private final Yaml yaml;
 
@@ -36,10 +49,6 @@ public class ConfigSerializer {
 
     yaml = new Yaml(new ConfigConstructor(basePath), new ConfigRepresenter(), options);
     yaml.setBeanAccess(BeanAccess.FIELD);
-  }
-
-  public void save(@NotNull OutputStream stream, @NotNull Config config) {
-    yaml.dump(config, new OutputStreamWriter(stream, StandardCharsets.UTF_8));
   }
 
   @NotNull
@@ -59,6 +68,17 @@ public class ConfigSerializer {
     }
   }
 
+  private static Map<String, Class<?>> configTypes() {
+    final Map<String, Class<?>> result = new TreeMap<>();
+    for (Class<?> type : ClassIndex.getAnnotated(ConfigType.class)) {
+      final String name = type.getAnnotation(ConfigType.class).value();
+      if (result.put(TAG_PREFIX + name, type) != null) {
+        throw new IllegalStateException("Found duplicate type name: " + name);
+      }
+    }
+    return result;
+  }
+
   public static class ConfigConstructor extends Constructor {
     @NotNull
     private final File basePath;
@@ -66,13 +86,18 @@ public class ConfigSerializer {
     public ConfigConstructor(@NotNull File basePath) {
       this.basePath = basePath;
       this.yamlConstructors.put(new Tag(TAG_HREF), new FileConstruct());
-
-      addTypeDescription(new TypeDescription(GitRepositoryConfig.class, "!repositoryGit"));
+      for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
+        addTypeDescription(new TypeDescription(entry.getValue(), entry.getKey()));
+      }
     }
 
     @Override
-    protected Class<?> getClassForName(String name) throws ClassNotFoundException {
-      return super.getClassForName(name);
+    protected Object constructObject(Node node) {
+      Object result = super.constructObject(node);
+      if (result instanceof ConfigPrepare) {
+        ((ConfigPrepare) result).prepare(basePath);
+      }
+      return result;
     }
 
     private class FileConstruct extends AbstractConstruct {
@@ -85,8 +110,9 @@ public class ConfigSerializer {
   public static class ConfigRepresenter extends Representer {
     public ConfigRepresenter() {
       this.representers.put(File.class, new FileRepresent());
-
-      addClassTag(GitRepositoryConfig.class, new Tag("!repositoryGit"));
+      for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
+        addClassTag(entry.getValue(), new Tag(entry.getKey()));
+      }
     }
 
     private class FileRepresent implements Represent {

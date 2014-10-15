@@ -10,10 +10,13 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.LDAPUserDB;
 import svnserver.auth.UserDB;
+import svnserver.config.serializer.ConfigType;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
+@SuppressWarnings("FieldCanBeLocal")
+@ConfigType("ldapUsers")
 public final class LDAPUserDBConfig implements UserDBConfig {
 
   /**
@@ -70,18 +73,9 @@ public final class LDAPUserDBConfig implements UserDBConfig {
   public String getContextFactory() {
     return contextFactory;
   }
-
-  public void setContextFactory(@NotNull String contextFactory) {
-    this.contextFactory = contextFactory;
-  }
-
   @NotNull
   public String getAuthentication() {
     return authentication;
-  }
-
-  public void setAuthentication(@NotNull String authentication) {
-    this.authentication = authentication;
   }
 
   public boolean isUserSubtree() {
@@ -113,10 +107,6 @@ public final class LDAPUserDBConfig implements UserDBConfig {
   @NotNull
   public String getEmailAttribute() {
     return emailAttribute;
-  }
-
-  public void setEmailAttribute(@NotNull String emailAttribute) {
-    this.emailAttribute = emailAttribute;
   }
 
   @NotNull

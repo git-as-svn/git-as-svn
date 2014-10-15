@@ -5,21 +5,17 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.config.serializer;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.DB;
-import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.VcsRepositoryMapping;
 
-import java.io.IOException;
+import java.io.File;
 
 /**
- * Repository mapping config.
+ * Prepare config data before parsing.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface RepositoryMappingConfig {
-  @NotNull
-  VcsRepositoryMapping create(@NotNull DB cacheDb) throws IOException, SVNException;
+public interface ConfigPrepare {
+  void prepare(@NotNull File basePath);
 }

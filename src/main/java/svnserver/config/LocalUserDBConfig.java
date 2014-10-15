@@ -12,10 +12,12 @@ import svnserver.auth.LocalUserDB;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.auth.UserWithPassword;
+import svnserver.config.serializer.ConfigType;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
+@ConfigType("localUsers")
 public final class LocalUserDBConfig implements UserDBConfig {
 
   @NotNull
@@ -25,15 +27,6 @@ public final class LocalUserDBConfig implements UserDBConfig {
   }
 
   public LocalUserDBConfig(@NotNull UserEntry[] users) {
-    this.users = users;
-  }
-
-  @NotNull
-  public UserEntry[] getUsers() {
-    return users;
-  }
-
-  public void setUsers(@NotNull UserEntry[] users) {
     this.users = users;
   }
 
@@ -63,6 +56,7 @@ public final class LocalUserDBConfig implements UserDBConfig {
     @NotNull
     private String password = "";
 
+    @SuppressWarnings("UnusedDeclaration")
     public UserEntry() {
     }
 
@@ -70,42 +64,6 @@ public final class LocalUserDBConfig implements UserDBConfig {
       this.username = username;
       this.realName = realName;
       this.email = email;
-      this.password = password;
-    }
-
-    @NotNull
-    public String getUsername() {
-      return username;
-    }
-
-    public void setUsername(@NotNull String username) {
-      this.username = username;
-    }
-
-    @NotNull
-    public String getRealName() {
-      return realName;
-    }
-
-    public void setRealName(@NotNull String realName) {
-      this.realName = realName;
-    }
-
-    @NotNull
-    public String getEmail() {
-      return email;
-    }
-
-    public void setEmail(@NotNull String email) {
-      this.email = email;
-    }
-
-    @NotNull
-    public String getPassword() {
-      return password;
-    }
-
-    public void setPassword(@NotNull String password) {
       this.password = password;
     }
   }

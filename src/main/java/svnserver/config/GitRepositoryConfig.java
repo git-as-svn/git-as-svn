@@ -14,6 +14,8 @@ import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.serializer.ConfigPrepare;
+import svnserver.config.serializer.ConfigType;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitPushMode;
@@ -31,33 +33,26 @@ import java.util.List;
  *
  * @author a.navrotskiy
  */
-public final class GitRepositoryConfig implements RepositoryConfig {
+@SuppressWarnings("FieldCanBeLocal")
+@ConfigType("git")
+public final class GitRepositoryConfig implements RepositoryConfig, ConfigPrepare {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepositoryConfig.class);
   @NotNull
   private String branch = "master";
   @NotNull
-  private File path = new File(".git");
+  private File path;
   @NotNull
   private String[] submodules = {};
   @NotNull
   private GitPushMode pushMode = GitPushMode.NATIVE;
   @NotNull
   private GitCreateMode createMode = GitCreateMode.ERROR;
-
   private boolean renameDetection = true;
 
-  @NotNull
-  public String getBranch() {
-    return branch;
-  }
-
-  public void setBranch(@NotNull String branch) {
-    this.branch = branch;
-  }
-
-  public void setSubmodules(@NotNull String[] submodules) {
-    this.submodules = submodules;
+  @Override
+  public void prepare(@NotNull File basePath) {
+    path = new File(basePath, ".git");
   }
 
   @NotNull
@@ -70,25 +65,8 @@ public final class GitRepositoryConfig implements RepositoryConfig {
     return pushMode;
   }
 
-  public void setPushMode(@NotNull GitPushMode pushMode) {
-    this.pushMode = pushMode;
-  }
-
   public boolean isRenameDetection() {
     return renameDetection;
-  }
-
-  public void setRenameDetection(boolean renameDetection) {
-    this.renameDetection = renameDetection;
-  }
-
-  @NotNull
-  public GitCreateMode getCreateMode() {
-    return createMode;
-  }
-
-  public void setCreateMode(@NotNull GitCreateMode createMode) {
-    this.createMode = createMode;
   }
 
   @NotNull
@@ -119,6 +97,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   @Override
   public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
+    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), branch, isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
   }
 }
