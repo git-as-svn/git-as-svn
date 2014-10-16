@@ -14,6 +14,7 @@ import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.serializer.ConfigType;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitPushMode;
@@ -31,6 +32,8 @@ import java.util.List;
  *
  * @author a.navrotskiy
  */
+@SuppressWarnings("FieldCanBeLocal")
+@ConfigType("git")
 public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepositoryConfig.class);
@@ -39,39 +42,16 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private String path = ".git";
   @NotNull
-  private String[] linked = {};
+  private String[] submodules = {};
   @NotNull
   private GitPushMode pushMode = GitPushMode.NATIVE;
   @NotNull
   private GitCreateMode createMode = GitCreateMode.ERROR;
-
   private boolean renameDetection = true;
 
   @NotNull
-  public String getBranch() {
-    return branch;
-  }
-
-  public void setBranch(@NotNull String branch) {
-    this.branch = branch;
-  }
-
-  @NotNull
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(@NotNull String path) {
-    this.path = path;
-  }
-
-  public void setLinked(@NotNull String[] linked) {
-    this.linked = linked;
-  }
-
-  @NotNull
-  public String[] getLinked() {
-    return linked;
+  public String[] getSubmodules() {
+    return submodules;
   }
 
   @NotNull
@@ -79,42 +59,25 @@ public final class GitRepositoryConfig implements RepositoryConfig {
     return pushMode;
   }
 
-  public void setPushMode(@NotNull GitPushMode pushMode) {
-    this.pushMode = pushMode;
-  }
-
   public boolean isRenameDetection() {
     return renameDetection;
   }
 
-  public void setRenameDetection(boolean renameDetection) {
-    this.renameDetection = renameDetection;
-  }
-
   @NotNull
-  public GitCreateMode getCreateMode() {
-    return createMode;
-  }
-
-  public void setCreateMode(@NotNull GitCreateMode createMode) {
-    this.createMode = createMode;
-  }
-
-  @NotNull
-  public Repository createRepository() throws IOException {
-    final File file = new File(getPath()).getAbsoluteFile();
-    if (!file.exists()) {
-      log.info("Repository path: {} - not exists, create mode: {}", file, createMode);
-      return createMode.createRepository(file, branch);
+  public Repository createRepository(@NotNull File basePath) throws IOException {
+    final File fullPath = new File(basePath, path);
+    if (!fullPath.exists()) {
+      log.info("Repository fullPath: {} - not exists, create mode: {}", fullPath, createMode);
+      return createMode.createRepository(fullPath, branch);
     }
-    log.info("Repository path: {}", file);
-    return new FileRepository(file);
+    log.info("Repository fullPath: {}", fullPath);
+    return new FileRepository(fullPath);
   }
 
   @NotNull
   public List<Repository> createLinkedRepositories() throws IOException {
     final List<Repository> result = new ArrayList<>();
-    for (String linkedPath : getLinked()) {
+    for (String linkedPath : getSubmodules()) {
       final File file = new File(linkedPath).getAbsoluteFile();
       if (!file.exists()) {
         throw new FileNotFoundException(file.getPath());
@@ -128,7 +91,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   @NotNull
   @Override
-  public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), getBranch(), isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
+  public VcsRepository create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException {
+    return new GitRepository(createRepository(basePath), createLinkedRepositories(), getPushMode(), branch, isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
   }
 }

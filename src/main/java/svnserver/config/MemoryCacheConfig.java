@@ -8,17 +8,22 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.mapdb.DB;
 import org.mapdb.DBMaker;
+import svnserver.config.serializer.ConfigType;
+
+import java.io.File;
 
 /**
  * In-memory cache config.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@ConfigType("memoryCache")
 public class MemoryCacheConfig implements CacheConfig {
   @NotNull
   @Override
-  public org.mapdb.DB createCache() {
+  public DB createCache(@NotNull File basePath) {
     return DBMaker.newTempFileDB().make();
   }
 }

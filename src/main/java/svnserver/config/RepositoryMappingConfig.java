@@ -12,7 +12,7 @@ import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsRepositoryMapping;
 
-import javax.xml.bind.annotation.XmlSeeAlso;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -20,10 +20,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@XmlSeeAlso({
-    RepositoryListMappingConfig.class
-})
 public interface RepositoryMappingConfig {
   @NotNull
-  VcsRepositoryMapping create(@NotNull DB cacheDb) throws IOException, SVNException;
+  VcsRepositoryMapping create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException;
 }

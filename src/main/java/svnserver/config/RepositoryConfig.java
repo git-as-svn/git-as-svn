@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsRepository;
 
 import javax.xml.bind.annotation.XmlSeeAlso;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -25,5 +26,5 @@ import java.io.IOException;
 })
 public interface RepositoryConfig {
   @NotNull
-  VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException;
+  VcsRepository create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException;
 }

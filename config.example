@@ -1,4 +1,4 @@
-!!svnserver.config.Config:
+!config:
 
 # Specifies IP to listen to for client connections
 #
@@ -15,9 +15,9 @@
 #
 # realm: Example realm
 
-repositoryMapping: !!svnserver.config.RepositoryListMappingConfig
+repositoryMapping: !listMapping
   repositories:
-    example: !!svnserver.config.GitRepositoryConfig
+    example: !git
       # Allowed push modes:
       # - SIMPLE - use embedded push (hooks ignored, fast, no dependencies)
       # - NATIVE - use console git for push (hooks worked, can be slow on some commits, requie installed console git)
@@ -45,7 +45,7 @@ acl:
         - '@developers'
 
 # Simple in-memory user database
-userDB: !!svnserver.config.LocalUserDBConfig
+userDB: !localUsers
   users:
     - username: test
       # Clear-text password is required to perform CRAM-MD5 authentication
@@ -57,7 +57,7 @@ userDB: !!svnserver.config.LocalUserDBConfig
 # Authenticates a user by binding to the directory with the DN of the entry for that user and the password
 # presented by the user. If this simple bind succeeds the user is considered to be authenticated.
 #
-#userDB: !!svnserver.config.LDAPUserDBConfig
+#userDB: !ldapUsers
 
 # The type of authentication to use.
 #

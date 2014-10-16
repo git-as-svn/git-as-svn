@@ -35,6 +35,7 @@ import svnserver.server.step.Step;
 
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -83,11 +84,11 @@ public class SvnServer extends Thread {
   @NotNull
   private final AtomicLong lastSessionId = new AtomicLong();
 
-  public SvnServer(@NotNull Config config) throws IOException, SVNException {
+  public SvnServer(@NotNull File basePath, @NotNull Config config) throws IOException, SVNException {
     setDaemon(true);
     this.config = config;
 
-    cacheDb = config.getCacheConfig().createCache();
+    cacheDb = config.getCacheConfig().createCache(basePath);
     userDB = config.getUserDB().create();
 
     commands.put("commit", new CommitCmd());
@@ -118,7 +119,7 @@ public class SvnServer extends Thread {
     commands.put("get-lock", new GetLockCmd());
     commands.put("get-locks", new GetLocksCmd());
 
-    repositoryMapping = config.getRepositoryMapping().create(cacheDb);
+    repositoryMapping = config.getRepositoryMapping().create(basePath, cacheDb);
     acl = new ACL(config.getAcl());
     serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
     serverSocket.setReuseAddress(config.getReuseAddress());

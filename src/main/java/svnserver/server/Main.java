@@ -13,11 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import org.yaml.snakeyaml.Yaml;
 import svnserver.config.Config;
+import svnserver.config.serializer.ConfigSerializer;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Entry point.
@@ -37,18 +37,12 @@ public class Main {
       return;
     }
     // Load config
-    Yaml yaml = new Yaml();
-    Config config;
-    try (
-        InputStream stream = new FileInputStream(cmd.configuration);
-        Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)
-    ) {
-      config = yaml.loadAs(reader, Config.class);
-    }
+    ConfigSerializer serializer = new ConfigSerializer();
+    Config config = serializer.load(cmd.configuration);
     if (cmd.showConfig) {
-      log.info("Actual config:\n{}", yaml.dump(config));
+      log.info("Actual config:\n{}", serializer.dump(config));
     }
-    final SvnServer server = new SvnServer(config);
+    final SvnServer server = new SvnServer(cmd.configuration.getAbsoluteFile().getParentFile(), config);
     server.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {

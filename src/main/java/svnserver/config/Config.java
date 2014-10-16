@@ -8,6 +8,7 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.config.serializer.ConfigType;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,6 +18,8 @@ import java.util.concurrent.TimeUnit;
  * @author a.navrotskiy
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
+@SuppressWarnings("FieldCanBeLocal")
+@ConfigType("config")
 public final class Config {
   @NotNull
   private String host = "0.0.0.0";
@@ -39,7 +42,12 @@ public final class Config {
   private boolean reuseAddress = false;
   private long shutdownTimeout = TimeUnit.SECONDS.toMillis(5);
 
-  public void setPort(int port) {
+  @SuppressWarnings("UnusedDeclaration")
+  public Config() {
+  }
+
+  public Config(@NotNull String host, int port) {
+    this.host = host;
     this.port = port;
   }
 
@@ -52,17 +60,9 @@ public final class Config {
     return host;
   }
 
-  public void setHost(@NotNull String host) {
-    this.host = host;
-  }
-
   @NotNull
   public String getRealm() {
     return realm;
-  }
-
-  public void setRealm(@NotNull String realm) {
-    this.realm = realm.trim();
   }
 
   @NotNull
@@ -88,24 +88,12 @@ public final class Config {
     return acl;
   }
 
-  public void setAcl(@NotNull AclConfig acl) {
-    this.acl = acl;
-  }
-
   public boolean getReuseAddress() {
     return reuseAddress;
   }
 
-  public void setReuseAddress(boolean reuseAddress) {
-    this.reuseAddress = reuseAddress;
-  }
-
   public long getShutdownTimeout() {
     return shutdownTimeout;
-  }
-
-  public void setShutdownTimeout(long shutdownTimeout) {
-    this.shutdownTimeout = shutdownTimeout;
   }
 
   @NotNull
