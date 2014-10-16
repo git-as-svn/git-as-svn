@@ -28,7 +28,7 @@ repositoryMapping: !listMapping
       # - EXAMPLE - create repository with example data
       createMode: EXAMPLE
       branch: master
-      path: !file example.git
+      path: example.git
       renameDetection: true
 
 acl:

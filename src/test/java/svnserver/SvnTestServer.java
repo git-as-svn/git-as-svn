@@ -102,7 +102,7 @@ public final class SvnTestServer implements AutoCloseable {
           new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
       }));
     }
-    server = new SvnServer(config);
+    server = new SvnServer(tempDirectory, config);
     server.start();
     log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);
     log.info("Temporary directory: {}", tempDirectory);
@@ -240,7 +240,7 @@ public final class SvnTestServer implements AutoCloseable {
 
     @NotNull
     @Override
-    public VcsRepositoryMapping create(@NotNull DB cacheDb) throws IOException, SVNException {
+    public VcsRepositoryMapping create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException {
       return RepositoryListMapping.create(prefix, new GitRepository(
           repository,
           Collections.emptyList(),

@@ -12,13 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.introspector.BeanAccess;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Represent;
 import org.yaml.snakeyaml.representer.Representer;
 import svnserver.config.Config;
 
@@ -38,16 +34,14 @@ public class ConfigSerializer {
   @NotNull
   private static final String TAG_PREFIX = "!";
   @NotNull
-  private static final String TAG_HREF = TAG_PREFIX + "file";
-  @NotNull
   private final Yaml yaml;
 
-  public ConfigSerializer(@NotNull File basePath) {
+  public ConfigSerializer() {
     final DumperOptions options = new DumperOptions();
     options.setPrettyFlow(true);
     options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
-    yaml = new Yaml(new ConfigConstructor(basePath), new ConfigRepresenter(), options);
+    yaml = new Yaml(new ConfigConstructor(), new ConfigRepresenter(), options);
     yaml.setBeanAccess(BeanAccess.FIELD);
   }
 
@@ -80,45 +74,17 @@ public class ConfigSerializer {
   }
 
   public static class ConfigConstructor extends Constructor {
-    @NotNull
-    private final File basePath;
-
-    public ConfigConstructor(@NotNull File basePath) {
-      this.basePath = basePath;
-      this.yamlConstructors.put(new Tag(TAG_HREF), new FileConstruct());
+    public ConfigConstructor() {
       for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
         addTypeDescription(new TypeDescription(entry.getValue(), entry.getKey()));
-      }
-    }
-
-    @Override
-    protected Object constructObject(Node node) {
-      Object result = super.constructObject(node);
-      if (result instanceof ConfigPrepare) {
-        ((ConfigPrepare) result).prepare(basePath);
-      }
-      return result;
-    }
-
-    private class FileConstruct extends AbstractConstruct {
-      public Object construct(Node node) {
-        return new File(basePath, (String) constructScalar((ScalarNode) node));
       }
     }
   }
 
   public static class ConfigRepresenter extends Representer {
     public ConfigRepresenter() {
-      this.representers.put(File.class, new FileRepresent());
       for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
         addClassTag(entry.getValue(), new Tag(entry.getKey()));
-      }
-    }
-
-    private class FileRepresent implements Represent {
-      public Node representData(Object data) {
-        final File file = (File) data;
-        return representScalar(new Tag(TAG_HREF), file.getAbsolutePath());
       }
     }
   }

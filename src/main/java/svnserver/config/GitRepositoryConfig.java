@@ -14,7 +14,6 @@ import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.config.serializer.ConfigPrepare;
 import svnserver.config.serializer.ConfigType;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
@@ -35,13 +34,13 @@ import java.util.List;
  */
 @SuppressWarnings("FieldCanBeLocal")
 @ConfigType("git")
-public final class GitRepositoryConfig implements RepositoryConfig, ConfigPrepare {
+public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepositoryConfig.class);
   @NotNull
   private String branch = "master";
   @NotNull
-  private File path;
+  private String path = ".git";
   @NotNull
   private String[] submodules = {};
   @NotNull
@@ -49,11 +48,6 @@ public final class GitRepositoryConfig implements RepositoryConfig, ConfigPrepar
   @NotNull
   private GitCreateMode createMode = GitCreateMode.ERROR;
   private boolean renameDetection = true;
-
-  @Override
-  public void prepare(@NotNull File basePath) {
-    path = new File(basePath, ".git");
-  }
 
   @NotNull
   public String[] getSubmodules() {
@@ -70,13 +64,14 @@ public final class GitRepositoryConfig implements RepositoryConfig, ConfigPrepar
   }
 
   @NotNull
-  public Repository createRepository() throws IOException {
-    if (!path.exists()) {
-      log.info("Repository path: {} - not exists, create mode: {}", path, createMode);
-      return createMode.createRepository(path, branch);
+  public Repository createRepository(@NotNull File basePath) throws IOException {
+    final File fullPath = new File(basePath, path);
+    if (!fullPath.exists()) {
+      log.info("Repository fullPath: {} - not exists, create mode: {}", fullPath, createMode);
+      return createMode.createRepository(fullPath, branch);
     }
-    log.info("Repository path: {}", path);
-    return new FileRepository(path);
+    log.info("Repository fullPath: {}", fullPath);
+    return new FileRepository(fullPath);
   }
 
   @NotNull
@@ -96,7 +91,7 @@ public final class GitRepositoryConfig implements RepositoryConfig, ConfigPrepar
 
   @NotNull
   @Override
-  public VcsRepository create(@NotNull DB cacheDb) throws IOException, SVNException {
-    return new GitRepository(createRepository(), createLinkedRepositories(), getPushMode(), branch, isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
+  public VcsRepository create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException {
+    return new GitRepository(createRepository(basePath), createLinkedRepositories(), getPushMode(), branch, isRenameDetection(), new PersistentLockFactory(cacheDb), cacheDb);
   }
 }

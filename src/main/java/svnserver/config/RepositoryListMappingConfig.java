@@ -14,6 +14,7 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
@@ -31,10 +32,10 @@ public class RepositoryListMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public VcsRepositoryMapping create(@NotNull DB cacheDb) throws IOException, SVNException {
+  public VcsRepositoryMapping create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException {
     final RepositoryListMapping.Builder builder = new RepositoryListMapping.Builder();
     for (Map.Entry<String, RepositoryConfig> entry : repositories.entrySet()) {
-      builder.add(entry.getKey(), entry.getValue().create(cacheDb));
+      builder.add(entry.getKey(), entry.getValue().create(basePath, cacheDb));
     }
     return builder.build();
   }

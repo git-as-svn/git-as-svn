@@ -10,6 +10,8 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 
+import java.io.File;
+
 /**
  * Cache configuration.
  *
@@ -17,5 +19,5 @@ import org.mapdb.DB;
  */
 public interface CacheConfig {
   @NotNull
-  DB createCache();
+  DB createCache(@NotNull File basePath);
 }

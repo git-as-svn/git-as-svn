@@ -37,12 +37,12 @@ public class Main {
       return;
     }
     // Load config
-    ConfigSerializer serializer = new ConfigSerializer(cmd.configuration.getAbsoluteFile().getParentFile());
+    ConfigSerializer serializer = new ConfigSerializer();
     Config config = serializer.load(cmd.configuration);
     if (cmd.showConfig) {
       log.info("Actual config:\n{}", serializer.dump(config));
     }
-    final SvnServer server = new SvnServer(config);
+    final SvnServer server = new SvnServer(cmd.configuration.getAbsoluteFile().getParentFile(), config);
     server.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
