@@ -53,8 +53,6 @@ public class GitFile implements VcsFile {
 
   // Cache
   @Nullable
-  private ObjectLoader objectLoader;
-  @Nullable
   private Iterable<GitTreeEntry> rawEntriesCache;
   @Nullable
   private Iterable<GitFile> treeEntriesCache;
@@ -201,10 +199,7 @@ public class GitFile implements VcsFile {
 
   @Nullable
   private ObjectLoader getObjectLoader() throws IOException {
-    if (objectLoader == null && treeEntry != null) {
-      objectLoader = treeEntry.getObjectId().openObject();
-    }
-    return objectLoader;
+    return treeEntry != null ? treeEntry.getObjectId().openObject() : null;
   }
 
   @NotNull
