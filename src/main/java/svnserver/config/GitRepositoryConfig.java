@@ -65,7 +65,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   @NotNull
   public Repository createRepository(@NotNull File basePath) throws IOException {
-    final File fullPath = new File(basePath, path);
+    final File fullPath = ConfigHelper.joinPath(basePath, path);
     if (!fullPath.exists()) {
       log.info("Repository fullPath: {} - not exists, create mode: {}", fullPath, createMode);
       return createMode.createRepository(fullPath, branch);

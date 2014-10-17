@@ -28,7 +28,7 @@ public class PersistentCacheConfig implements CacheConfig {
   @NotNull
   @Override
   public DB createCache(@NotNull File basePath) {
-    return DBMaker.newFileDB(new File(basePath, path))
+    return DBMaker.newFileDB(ConfigHelper.joinPath(basePath, path))
         .closeOnJvmShutdown()
         .asyncWriteEnable()
         .mmapFileEnable()
