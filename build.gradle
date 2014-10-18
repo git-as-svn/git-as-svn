@@ -5,6 +5,7 @@ buildscript {
 
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
+    classpath "org.ajoberstar:gradle-git:0.9.0"
   }
 }
 
@@ -72,6 +73,13 @@ jar {
         "Class-Path": "${-> createLauncherClassPath()}"
     )
   }
+}
+
+processResources {
+  expand ([
+      "revision" : org.ajoberstar.grgit.Grgit.open(project.file(rootProject.projectDir)).head().id,
+      "tag"      : (System.getenv("TRAVIS_TAG") ?: ""),
+  ])
 }
 
 task deployJars(dependsOn: jar) << {
