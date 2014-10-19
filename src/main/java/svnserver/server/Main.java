@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.VersionInfo;
 import svnserver.config.Config;
 import svnserver.config.serializer.ConfigSerializer;
 
@@ -29,6 +30,7 @@ public class Main {
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
 
   public static void main(@NotNull String[] args) throws IOException, SVNException, InterruptedException {
+    log.info("Git as svn version: {}", VersionInfo.getVersionInfo());
     final CmdArgs cmd = new CmdArgs();
     final JCommander jc = new JCommander(cmd);
     jc.parse(args);
