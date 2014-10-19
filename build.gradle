@@ -76,9 +76,9 @@ jar {
 }
 
 processResources {
-  expand ([
-      "revision" : org.ajoberstar.grgit.Grgit.open(project.file(rootProject.projectDir)).head().id,
-      "tag"      : (System.getenv("TRAVIS_TAG") ?: ""),
+  expand([
+      "revision": org.ajoberstar.grgit.Grgit.open(project.file(rootProject.projectDir)).head().id,
+      "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
   ])
 }
 
