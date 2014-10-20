@@ -281,7 +281,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
                            @NotNull Depth requestedDepth) throws IOException, SVNException {
       final SvnServerWriter writer = context.getWriter();
       final String tokenId;
-      final VcsFile oldFile;
+      VcsFile oldFile;
       if (rootDir) {
         tokenId = parentTokenId;
         oldFile = prevFile;
@@ -289,6 +289,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         tokenId = createTokenId();
         oldFile = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId);
       }
+      if (getStartEmpty(wcPath)) {
+        oldFile = null;
+      }
+
       updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
 
       final Depth.Action dirAction = wcDepth.determineAction(requestedDepth, true);
@@ -441,6 +445,11 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return params.depth;
     }
 
+    private boolean getStartEmpty(@NotNull String wcPath) {
+      final SetPathParams params = paths.get(wcPath);
+      return params != null && params.startEmpty;
+    }
+
     @Nullable
     private VcsFile getPrevFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile) throws IOException, SVNException {
       if (deletedPaths.contains(wcPath))
@@ -450,7 +459,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       if (pathParams == null)
         return oldFile;
 
-      if (pathParams.startEmpty || pathParams.rev == 0)
+      if (pathParams.rev == 0)
         return null;
 
       return context.getFile(pathParams.rev, wcPath);
