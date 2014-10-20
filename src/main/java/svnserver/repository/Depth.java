@@ -16,6 +16,20 @@ import java.util.Locale;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public enum Depth {
+  Unknown {
+    @NotNull
+    @Override
+    public <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException {
+      return visitor.visitUnknown();
+    }
+
+    @NotNull
+    @Override
+    public Action determineAction(@NotNull Depth requestedDepth, boolean directory) {
+      return Action.Skip;
+    }
+  },
+
   Empty {
     @NotNull
     @Override
@@ -89,7 +103,7 @@ public enum Depth {
       if (depth.value.equals(value))
         return depth;
 
-    return Infinity;
+    return Unknown;
   }
 
   @NotNull

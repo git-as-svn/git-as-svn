@@ -27,4 +27,7 @@ public interface DepthVisitor<R> {
 
   @NotNull
   R visitInfinity() throws SVNException;
+
+  @NotNull
+  R visitUnknown();
 }

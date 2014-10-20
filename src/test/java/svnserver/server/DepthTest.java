@@ -8,6 +8,7 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -77,18 +78,25 @@ public final class DepthTest {
     checkout.run();
   }
 
-  private void update(@NotNull String path, @NotNull SVNDepth depth) throws SVNException {
+  private void update(@NotNull String path, @Nullable SVNDepth depth) throws SVNException {
     final SvnUpdate update = factory.createUpdate();
     update.setSingleTarget(SvnTarget.fromFile(new File(wc, path)));
-    update.setDepthIsSticky(true);
     update.setRevision(SVNRevision.HEAD);
-    update.setDepth(depth);
+
+    if (depth != null) {
+      update.setDepthIsSticky(true);
+      update.setDepth(depth);
+    }
+
     update.run();
   }
 
   @Test
   public void empty() throws IOException, SVNException {
     checkout("", SVNDepth.EMPTY);
+    Assert.assertFalse(new File(wc, "a").exists());
+
+    update("", null);
     Assert.assertFalse(new File(wc, "a").exists());
 
     update("", SVNDepth.INFINITY);
@@ -98,6 +106,10 @@ public final class DepthTest {
   @Test
   public void emptySubdir() throws IOException, SVNException {
     checkout("a/b", SVNDepth.EMPTY);
+    Assert.assertFalse(new File(wc, "c").exists());
+    Assert.assertFalse(new File(wc, "e").exists());
+
+    update("", null);
     Assert.assertFalse(new File(wc, "c").exists());
     Assert.assertFalse(new File(wc, "e").exists());
 
@@ -111,6 +123,9 @@ public final class DepthTest {
     checkout("a/b/c", SVNDepth.EMPTY);
     Assert.assertFalse(new File(wc, "d").exists());
 
+    update("", null);
+    Assert.assertFalse(new File(wc, "d").exists());
+
     update("", SVNDepth.INFINITY);
     Assert.assertTrue(new File(wc, "d").exists());
   }
@@ -120,11 +135,19 @@ public final class DepthTest {
     checkout("", SVNDepth.INFINITY);
     Assert.assertTrue(new File(wc, "a/b/c/d").exists());
     Assert.assertTrue(new File(wc, "a/b/e").exists());
+
+    update("", null);
+    Assert.assertTrue(new File(wc, "a/b/c/d").exists());
+    Assert.assertTrue(new File(wc, "a/b/e").exists());
   }
 
   @Test
   public void infinitySubdir() throws IOException, SVNException {
     checkout("a", SVNDepth.INFINITY);
+    Assert.assertTrue(new File(wc, "b/c/d").exists());
+    Assert.assertTrue(new File(wc, "b/e").exists());
+
+    update("", null);
     Assert.assertTrue(new File(wc, "b/c/d").exists());
     Assert.assertTrue(new File(wc, "b/e").exists());
   }
@@ -135,6 +158,10 @@ public final class DepthTest {
     Assert.assertFalse(new File(wc, "c").exists());
     Assert.assertTrue(new File(wc, "e").exists());
 
+    update("", null);
+    Assert.assertFalse(new File(wc, "c").exists());
+    Assert.assertTrue(new File(wc, "e").exists());
+
     update("", SVNDepth.INFINITY);
     Assert.assertTrue(new File(wc, "c/d").exists());
   }
@@ -142,6 +169,11 @@ public final class DepthTest {
   @Test
   public void immediates() throws IOException, SVNException {
     checkout("a/b", SVNDepth.IMMEDIATES);
+    Assert.assertTrue(new File(wc, "c").exists());
+    Assert.assertFalse(new File(wc, "c/d").exists());
+    Assert.assertTrue(new File(wc, "e").exists());
+
+    update("", null);
     Assert.assertTrue(new File(wc, "c").exists());
     Assert.assertFalse(new File(wc, "c/d").exists());
     Assert.assertTrue(new File(wc, "e").exists());

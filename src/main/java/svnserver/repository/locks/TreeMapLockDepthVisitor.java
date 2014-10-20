@@ -67,6 +67,12 @@ public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>>
     };
   }
 
+  @NotNull
+  @Override
+  public Iterator<LockDesc> visitUnknown() {
+    return Collections.emptyIterator();
+  }
+
   private static abstract class LockDescIterator implements Iterator<LockDesc> {
     @NotNull
     private final Iterator<Map.Entry<String, LockDesc>> iterator;
