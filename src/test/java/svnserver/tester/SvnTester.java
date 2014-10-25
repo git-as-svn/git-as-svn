@@ -7,6 +7,7 @@
  */
 package svnserver.tester;
 
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -22,5 +23,6 @@ public interface SvnTester extends AutoCloseable {
    * @return New connection.
    * @throws SVNException Some error.
    */
+  @NotNull
   SVNRepository openSvnRepository() throws SVNException;
 }

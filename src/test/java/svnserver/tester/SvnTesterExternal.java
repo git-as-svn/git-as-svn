@@ -34,57 +34,50 @@ public class SvnTesterExternal implements SvnTester {
   private final ISVNAuthenticationManager authManager;
   @NotNull
   private final String suffix;
-  private boolean created;
 
-  public SvnTesterExternal(@NotNull SVNURL url, @Nullable ISVNAuthenticationManager authManager) {
+  public SvnTesterExternal(@NotNull SVNURL url, @Nullable ISVNAuthenticationManager authManager) throws SVNException {
     this.url = url;
     this.authManager = authManager;
     this.suffix = UUID.randomUUID().toString();
-    this.created = false;
+    final SVNRepository repo = openSvnRepository(url);
+    try {
+      final ISVNEditor editor = repo.getCommitEditor("Create subdir for test", null, false, null);
+      editor.openRoot(-1);
+      editor.addDir(suffix, null, -1);
+      editor.closeDir();
+      editor.closeEdit();
+    } finally {
+      repo.closeSession();
+    }
   }
 
+  @NotNull
   @Override
   public SVNRepository openSvnRepository() throws SVNException {
-    if (!created) {
-      final SVNRepository repo = openSvnRepository(url);
-      try {
-        final ISVNEditor editor = repo.getCommitEditor("Create subdir for test", null, false, null);
-        editor.openRoot(-1);
-        editor.addDir(suffix, null, -1);
-        editor.closeDir();
-        editor.closeEdit();
-        created = true;
-      } finally {
-        repo.closeSession();
-      }
-    }
     return openSvnRepository(url.appendPath(suffix, false));
   }
 
   @Override
   public void close() throws Exception {
-    if (created) {
-      final SVNRepository repo = openSvnRepository(url);
-      long revision = repo.getLatestRevision();
-      try {
-        final SVNLock[] locks = repo.getLocks(suffix);
-        if (locks.length > 0) {
-          final SVNURL root = repo.getRepositoryRoot(true);
-          final Map<String, String> locksMap = new HashMap<>();
-          for (SVNLock lock : locks) {
-            final String relativePath = SVNURLUtil.getRelativeURL(url, root.appendPath(lock.getPath(), false), false);
-            locksMap.put(relativePath, lock.getID());
-          }
-          repo.unlock(locksMap, true, null);
+    final SVNRepository repo = openSvnRepository(url);
+    long revision = repo.getLatestRevision();
+    try {
+      final SVNLock[] locks = repo.getLocks(suffix);
+      if (locks.length > 0) {
+        final SVNURL root = repo.getRepositoryRoot(true);
+        final Map<String, String> locksMap = new HashMap<>();
+        for (SVNLock lock : locks) {
+          final String relativePath = SVNURLUtil.getRelativeURL(url, root.appendPath(lock.getPath(), false), false);
+          locksMap.put(relativePath, lock.getID());
         }
-        final ISVNEditor editor = repo.getCommitEditor("Remove subdir for test", null, false, null);
-        editor.openRoot(-1);
-        editor.deleteEntry(suffix, revision);
-        editor.closeEdit();
-        created = false;
-      } finally {
-        repo.closeSession();
+        repo.unlock(locksMap, true, null);
       }
+      final ISVNEditor editor = repo.getCommitEditor("Remove subdir for test", null, false, null);
+      editor.openRoot(-1);
+      editor.deleteEntry(suffix, revision);
+      editor.closeEdit();
+    } finally {
+      repo.closeSession();
     }
   }
 
