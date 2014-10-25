@@ -32,6 +32,7 @@ import svnserver.repository.git.GitRepository;
 import svnserver.repository.locks.PersistentLockFactory;
 import svnserver.repository.mapping.RepositoryListMapping;
 import svnserver.server.SvnServer;
+import svnserver.tester.SvnTester;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +46,7 @@ import java.util.UUID;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnTestServer implements AutoCloseable {
+public final class SvnTestServer implements SvnTester {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnTestServer.class);
   @NotNull
@@ -210,13 +211,8 @@ public final class SvnTestServer implements AutoCloseable {
 
   @NotNull
   public SVNRepository openSvnRepository() throws SVNException {
-    return openSvnRepository(USER_NAME, PASSWORD);
-  }
-
-  @NotNull
-  public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
     final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
-    repo.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
+    repo.setAuthenticationManager(new BasicAuthenticationManager(USER_NAME, PASSWORD));
     return repo;
   }
 

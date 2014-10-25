@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public final class SvnTestHelper {
   @NotNull
-  private final static byte[] emptyBytes = {};
+  private static final byte[] emptyBytes = {};
 
   private SvnTestHelper() {
   }

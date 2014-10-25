@@ -10,6 +10,8 @@ package svnserver.ldap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 
 /**
@@ -38,7 +40,9 @@ public class AuthLdapTest {
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig())
     ) {
-      server.openSvnRepository(login, password).getLatestRevision();
+      final SVNRepository repo = server.openSvnRepository();
+      repo.setAuthenticationManager(new BasicAuthenticationManager(login, password));
+      repo.getLatestRevision();
     }
   }
 }
