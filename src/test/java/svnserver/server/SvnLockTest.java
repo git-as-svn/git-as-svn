@@ -10,6 +10,7 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -19,7 +20,9 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.StringHelper;
-import svnserver.SvnTestServer;
+import svnserver.tester.SvnTester;
+import svnserver.tester.SvnTesterDataProvider;
+import svnserver.tester.SvnTesterFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,14 +37,19 @@ import static svnserver.SvnTestHelper.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnLockTest {
+  @DataProvider
+  public static Object[][] data() {
+    return SvnTesterDataProvider.data();
+  }
+
   /**
    * Check to take lock on absent file.
    *
    * @throws Exception
    */
-  @Test
-  public void lockNotExists() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void lockNotExists(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
       createFile(repo, "/example.txt", "", null);
       lock(repo, "example2.txt", repo.getLatestRevision(), false, SVNErrorCode.FS_OUT_OF_DATE);
@@ -53,9 +61,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void lockOutOfDate() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void lockOutOfDate(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -71,9 +79,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void lockNotFile() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void lockNotFile(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
@@ -95,9 +103,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void lockForce() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void lockForce(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -122,9 +130,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void unlockForce() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void unlockForce(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -148,9 +156,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void lockSimple() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void lockSimple(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -185,9 +193,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void modifyLocked() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void modifyLocked(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -211,9 +219,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void modifyLockedInvalidLock() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void modifyLockedInvalidLock(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -238,7 +246,7 @@ public class SvnLockTest {
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
       }
-      compareLock(repo.getLock("/example.txt"), newLock);
+      compareLock(server.openSvnRepository().getLock("/example.txt"), newLock);
     }
   }
 
@@ -247,9 +255,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void modifyLockedRemoveLock() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void modifyLockedRemoveLock(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -277,9 +285,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void modifyLockedKeepLock() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void modifyLockedKeepLock(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -307,9 +315,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void deleteLocked() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void deleteLocked(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -337,9 +345,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void deleteLockedDirNoLock() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void deleteLockedDirNoLock(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
       {
         final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
@@ -373,9 +381,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void getLocks() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void getLocks(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
       {
         final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
@@ -407,9 +415,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void deleteLockedDirWithLock() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void deleteLockedDirWithLock(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
       {
         final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
@@ -440,9 +448,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void unlockTwice() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void unlockTwice(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
@@ -461,9 +469,9 @@ public class SvnLockTest {
    *
    * @throws Exception
    */
-  @Test
-  public void unlockNotOwner() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+  @Test(dataProvider = "data")
+  public void unlockNotOwner(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
       createFile(repo, "/example.txt", "", null);
