@@ -8,6 +8,7 @@
 package svnserver.tester;
 
 import org.jetbrains.annotations.NotNull;
+import org.testng.annotations.DataProvider;
 import svnserver.SvnTestServer;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class SvnTesterDataProvider {
     @NotNull
     private final SvnTesterFactory factory;
 
-    protected NamedFactory(@NotNull String name, SvnTesterFactory factory) {
+    protected NamedFactory(@NotNull String name, @NotNull SvnTesterFactory factory) {
       this.name = name;
       this.factory = factory;
     }
@@ -41,7 +42,8 @@ public class SvnTesterDataProvider {
     }
   }
 
-  public static Object[][] data() {
+  @DataProvider
+  public static Object[][] all() {
     final List<NamedFactory> testers = createTesters();
     final Object[][] result = new Object[testers.size()][];
     for (int i = 0; i < result.length; ++i) {

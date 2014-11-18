@@ -149,6 +149,8 @@ public final class SvnTestServer implements SvnTester {
     return new SvnTestServer(new FileRepository(findGitPath()), null, "/master", true, null);
   }
 
+  @Override
+  @NotNull
   public SVNURL getUrl() throws SVNException {
     return SVNURL.create("svn", null, BIND_HOST, server.getPort(), prefix, true);
   }

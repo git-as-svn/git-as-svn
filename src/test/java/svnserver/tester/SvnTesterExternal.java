@@ -53,6 +53,12 @@ public class SvnTesterExternal implements SvnTester {
 
   @NotNull
   @Override
+  public SVNURL getUrl() throws SVNException {
+    return url;
+  }
+
+  @NotNull
+  @Override
   public SVNRepository openSvnRepository() throws SVNException {
     return openSvnRepository(url.appendPath(suffix, false));
   }

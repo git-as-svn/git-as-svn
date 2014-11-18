@@ -51,7 +51,7 @@ public class GitIgnoreTest {
     checkProps(attr, null, null, "foo", "bar");
     checkProps(attr, "bar\n", null, "server", "foo");
     checkProps(attr, null, null, "server", "foo", "bar");
-    // Rule: data/**/*.sample
+    // Rule: all/**/*.sample
     checkProps(attr, "build\n", "*.sample\n", "data");
     checkProps(attr, null, null, "data", "data");
     checkProps(attr, null, null, "server", "data");

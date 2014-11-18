@@ -9,6 +9,7 @@ package svnserver.tester;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -17,6 +18,15 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface SvnTester extends AutoCloseable {
+  /**
+   * Get URL to root of the working copy.
+   *
+   * @return Working copy root.
+   * @throws SVNException Some error.
+   */
+  @NotNull
+  SVNURL getUrl() throws SVNException;
+
   /**
    * Open connection to subversion server.
    *

@@ -47,6 +47,12 @@ public class SvnTesterSvnKit implements SvnTester {
 
   @NotNull
   @Override
+  public SVNURL getUrl() throws SVNException {
+    return url;
+  }
+
+  @NotNull
+  @Override
   public SVNRepository openSvnRepository() throws SVNException {
     SVNRepository repo = SVNRepositoryFactory.create(url);
     repo.setAuthenticationManager(new BasicAuthenticationManager(USER_NAME, PASSWORD));
