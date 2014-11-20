@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
@@ -24,6 +25,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import svnserver.TestHelper;
+import svnserver.replay.ReportSVNEditor;
 import svnserver.tester.SvnTester;
 import svnserver.tester.SvnTesterDataProvider;
 import svnserver.tester.SvnTesterExternalListener;
@@ -107,14 +109,52 @@ public final class DepthTest {
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void empty(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
-      checkout("", SVNDepth.EMPTY);
-      Assert.assertFalse(new File(wc, "a").exists());
-
-      update("", null);
-      Assert.assertFalse(new File(wc, "a").exists());
-
-      update("", SVNDepth.INFINITY);
-      Assert.assertTrue(new File(wc, "a/b/c/d").exists());
+      final long revision = server.openSvnRepository().getLatestRevision();
+      // svn checkout --depth empty
+      check(server, "", SVNDepth.EMPTY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.EMPTY, true);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n");
+      // svn update
+      check(server, "", SVNDepth.EMPTY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n");
+      // svn update --set-depth infinity
+      check(server, "", SVNDepth.INFINITY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-dir\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c/d - apply-text-delta: null\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
+          "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
+          "a/b/c/d - delta-chunk\n" +
+          "a/b/c/d - delta-end\n" +
+          "a/b/e - apply-text-delta: null\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/e - change-file-prop: svn:entry:last-author\n" +
+          "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
+          "a/b/e - delta-chunk\n" +
+          "a/b/e - delta-end\n");
     }
   }
 
@@ -239,5 +279,12 @@ public final class DepthTest {
       update("", SVNDepth.INFINITY);
       Assert.assertTrue(new File(wc, "a/b/c/d").exists());
     }
+  }
+
+  private void check(@NotNull SvnTester server, @NotNull String path, @Nullable SVNDepth depth, @NotNull ISVNReporterBaton reporterBaton, @NotNull String expected) throws SVNException {
+    final SVNRepository repo = server.openSvnRepository();
+    final ReportSVNEditor editor = new ReportSVNEditor();
+    repo.update(server.getUrl(), repo.getLatestRevision(), path, depth, reporterBaton, editor);
+    Assert.assertEquals(editor.toString(), expected);
   }
 }

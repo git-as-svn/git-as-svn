@@ -54,12 +54,12 @@ public class SvnTesterDataProvider {
 
   public static List<NamedFactory> createTesters() {
     final List<NamedFactory> result = new ArrayList<>();
-    result.add(new NamedFactory("GitAsSvn", SvnTestServer::createEmpty));
-    result.add(new NamedFactory("SvnKit", SvnTesterSvnKit::new));
     final SvnTesterFactory external = SvnTesterExternalListener.get();
     if (external != null) {
       result.add(new NamedFactory("Native", external));
     }
+    result.add(new NamedFactory("GitAsSvn", SvnTestServer::createEmpty));
+    result.add(new NamedFactory("SvnKit", SvnTesterSvnKit::new));
     return result;
   }
 }
