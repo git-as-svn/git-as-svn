@@ -58,6 +58,32 @@ public final class DepthTest {
   }
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
+  public void interruptedUpdate(@NotNull SvnTesterFactory factory) throws Exception {
+    try (SvnTester server = create(factory)) {
+      final long revision = server.openSvnRepository().getLatestRevision();
+      check(server, "", SVNDepth.INFINITY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, false);
+        reporter.setPath("a/b/c", null, revision, SVNDepth.INFINITY, true);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "/ - open-dir: r0\n" +
+          "a/b/c/d - apply-text-delta: null\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
+          "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
+          "a/b/c/d - delta-chunk\n" +
+          "a/b/c/d - delta-end\n");
+    }
+  }
+
+  @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void empty(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
       final long revision = server.openSvnRepository().getLatestRevision();
