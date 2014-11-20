@@ -54,7 +54,7 @@ public class SvnTesterExternal implements SvnTester {
   @NotNull
   @Override
   public SVNURL getUrl() throws SVNException {
-    return url;
+    return url.appendPath(suffix, false);
   }
 
   @NotNull

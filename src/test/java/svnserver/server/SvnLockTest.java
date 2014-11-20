@@ -10,6 +10,7 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -21,6 +22,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.StringHelper;
 import svnserver.tester.SvnTester;
 import svnserver.tester.SvnTesterDataProvider;
+import svnserver.tester.SvnTesterExternalListener;
 import svnserver.tester.SvnTesterFactory;
 
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import static svnserver.SvnTestHelper.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@Listeners(SvnTesterExternalListener.class)
 public class SvnLockTest {
   /**
    * Check to take lock on absent file.

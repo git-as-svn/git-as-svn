@@ -10,6 +10,7 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -25,6 +26,7 @@ import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import svnserver.TestHelper;
 import svnserver.tester.SvnTester;
 import svnserver.tester.SvnTesterDataProvider;
+import svnserver.tester.SvnTesterExternalListener;
 import svnserver.tester.SvnTesterFactory;
 
 import java.io.File;
@@ -34,6 +36,7 @@ import static svnserver.SvnTestHelper.sendDeltaAndClose;
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
+@Listeners(SvnTesterExternalListener.class)
 public final class DepthTest {
 
   @NotNull
