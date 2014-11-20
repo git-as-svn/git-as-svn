@@ -119,6 +119,7 @@ public final class DepthTest {
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n");
+
       // svn update
       check(server, "", SVNDepth.EMPTY, reporter -> {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
@@ -128,6 +129,7 @@ public final class DepthTest {
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n");
+
       // svn update --set-depth infinity
       check(server, "", SVNDepth.INFINITY, reporter -> {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
@@ -192,60 +194,191 @@ public final class DepthTest {
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void infinity(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
-      checkout("", SVNDepth.INFINITY);
-      Assert.assertTrue(new File(wc, "a/b/c/d").exists());
-      Assert.assertTrue(new File(wc, "a/b/e").exists());
+      final long revision = server.openSvnRepository().getLatestRevision();
+      // svn checkout --depth infinity a
+      check(server, "", SVNDepth.INFINITY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-dir\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c/d - apply-text-delta: null\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
+          "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
+          "a/b/c/d - delta-chunk\n" +
+          "a/b/c/d - delta-end\n" +
+          "a/b/e - apply-text-delta: null\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/e - change-file-prop: svn:entry:last-author\n" +
+          "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
+          "a/b/e - delta-chunk\n" +
+          "a/b/e - delta-end\n");
 
-      update("", null);
-      Assert.assertTrue(new File(wc, "a/b/c/d").exists());
-      Assert.assertTrue(new File(wc, "a/b/e").exists());
+      // svn update
+      check(server, "", SVNDepth.UNKNOWN, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n");
     }
   }
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void infinitySubdir(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
-      checkout("a", SVNDepth.INFINITY);
-      Assert.assertTrue(new File(wc, "b/c/d").exists());
-      Assert.assertTrue(new File(wc, "b/e").exists());
+      final long revision = server.openSvnRepository().getLatestRevision();
+      // svn checkout --depth infinity a
+      check(server, "a", SVNDepth.INFINITY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-dir\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "/ - open-dir: r0\n" +
+          "a/b/c/d - apply-text-delta: null\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
+          "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
+          "a/b/c/d - delta-chunk\n" +
+          "a/b/c/d - delta-end\n" +
+          "a/b/e - apply-text-delta: null\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/e - change-file-prop: svn:entry:last-author\n" +
+          "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
+          "a/b/e - delta-chunk\n" +
+          "a/b/e - delta-end\n");
 
-      update("", null);
-      Assert.assertTrue(new File(wc, "b/c/d").exists());
-      Assert.assertTrue(new File(wc, "b/e").exists());
+      // svn update
+      check(server, "a", SVNDepth.UNKNOWN, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n");
     }
   }
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void files(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
-      checkout("a/b", SVNDepth.FILES);
-      Assert.assertFalse(new File(wc, "c").exists());
-      Assert.assertTrue(new File(wc, "e").exists());
+      final long revision = server.openSvnRepository().getLatestRevision();
+      // svn checkout --depth infinity a
+      check(server, "a/b", SVNDepth.FILES, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "/ - open-dir: r0\n" +
+          "a/b/e - apply-text-delta: null\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/e - change-file-prop: svn:entry:last-author\n" +
+          "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
+          "a/b/e - delta-chunk\n" +
+          "a/b/e - delta-end\n");
 
-      update("", null);
-      Assert.assertFalse(new File(wc, "c").exists());
-      Assert.assertTrue(new File(wc, "e").exists());
+      // svn update
+      check(server, "a/b", SVNDepth.UNKNOWN, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.FILES, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n");
 
-      update("", SVNDepth.INFINITY);
-      Assert.assertTrue(new File(wc, "c/d").exists());
+      // svn update --set-depth infinity
+      check(server, "a/b", SVNDepth.INFINITY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.FILES, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-dir\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "/ - open-dir: r0\n" +
+          "a/b/c/d - apply-text-delta: null\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
+          "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
+          "a/b/c/d - delta-chunk\n" +
+          "a/b/c/d - delta-end\n");
     }
   }
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void immediates(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
-      checkout("a/b", SVNDepth.IMMEDIATES);
-      Assert.assertTrue(new File(wc, "c").exists());
-      Assert.assertFalse(new File(wc, "c/d").exists());
-      Assert.assertTrue(new File(wc, "e").exists());
+      final long revision = server.openSvnRepository().getLatestRevision();
+      // svn checkout --depth immediates a/b
+      check(server, "a/b", SVNDepth.IMMEDIATES, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-dir\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "/ - open-dir: r0\n" +
+          "a/b/e - apply-text-delta: null\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/e - change-file-prop: svn:entry:last-author\n" +
+          "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
+          "a/b/e - delta-chunk\n" +
+          "a/b/e - delta-end\n");
 
-      update("", null);
-      Assert.assertTrue(new File(wc, "c").exists());
-      Assert.assertFalse(new File(wc, "c/d").exists());
-      Assert.assertTrue(new File(wc, "e").exists());
+      // svn update
+      check(server, "a/b", SVNDepth.UNKNOWN, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.IMMEDIATES, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n");
 
-      update("", SVNDepth.INFINITY);
-      Assert.assertTrue(new File(wc, "c/d").exists());
+      // svn update --set-depth infinity
+      check(server, "a/b", SVNDepth.INFINITY, reporter -> {
+        reporter.setPath("", null, revision, SVNDepth.IMMEDIATES, false);
+        reporter.finishReport();
+      }, " - open-root: r0\n" +
+          "/ - add-file\n" +
+          "/ - change-dir-prop: svn:entry:committed-date\n" +
+          "/ - change-dir-prop: svn:entry:committed-rev\n" +
+          "/ - change-dir-prop: svn:entry:last-author\n" +
+          "/ - change-dir-prop: svn:entry:uuid\n" +
+          "/ - open-dir: r0\n" +
+          "a/b/c/d - apply-text-delta: null\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
+          "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
+          "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
+          "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
+          "a/b/c/d - delta-chunk\n" +
+          "a/b/c/d - delta-end\n");
     }
   }
 
@@ -284,7 +417,7 @@ public final class DepthTest {
   private void check(@NotNull SvnTester server, @NotNull String path, @Nullable SVNDepth depth, @NotNull ISVNReporterBaton reporterBaton, @NotNull String expected) throws SVNException {
     final SVNRepository repo = server.openSvnRepository();
     final ReportSVNEditor editor = new ReportSVNEditor();
-    repo.update(server.getUrl(), repo.getLatestRevision(), path, depth, reporterBaton, editor);
+    repo.update(repo.getLatestRevision(), path, depth, false, reporterBaton, editor);
     Assert.assertEquals(editor.toString(), expected);
   }
 }
