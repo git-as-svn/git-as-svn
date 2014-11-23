@@ -293,7 +293,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         oldFile = null;
       }
 
-      updateProps(writer, "change-dir-prop", tokenId, oldFile, newFile);
+      updateProps(writer, "change-dir-prop", tokenId, rootDir, oldFile, newFile);
 
       final Depth.Action dirAction = wcDepth.determineAction(requestedDepth, true);
       final Depth.Action fileAction = wcDepth.determineAction(requestedDepth, false);
@@ -341,9 +341,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
+    private void updateProps(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, boolean rootDir, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
       final boolean includeInternalProps = params.isIncludeInternalProps();
-      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(includeInternalProps) : new HashMap<>();
+      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(includeInternalProps && (!rootDir)) : new HashMap<>();
       for (Map.Entry<String, String> entry : newFile.getProperties(includeInternalProps).entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
           changeProp(writer, command, tokenId, entry.getKey(), entry.getValue());
@@ -418,7 +418,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
             .listEnd()
             .listEnd();
       }
-      updateProps(writer, "change-file-prop", tokenId, oldFile, newFile);
+      updateProps(writer, "change-file-prop", tokenId, false, oldFile, newFile);
       writer
           .listBegin()
           .word("close-file")
