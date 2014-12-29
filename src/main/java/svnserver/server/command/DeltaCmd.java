@@ -328,7 +328,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final String tokenId;
       final HeaderEntry header;
       VcsFile oldFile;
-      if (rootDir) {
+      if (rootDir && wcPath.isEmpty()) {
         tokenId = parentTokenId;
         oldFile = prevFile;
         header = null;
@@ -348,7 +348,20 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
 
       updateProps(context, "change-dir-prop", tokenId, rootDir, oldFile, newFile);
+      updateDirEntries(context, wcPath, oldFile, newFile, tokenId, wcDepth, requestedDepth);
 
+      if (header != null) {
+        header.close();
+      }
+    }
+
+    private void updateDirEntries(@NotNull SessionContext context,
+                                  @NotNull String wcPath,
+                                  @Nullable VcsFile oldFile,
+                                  @NotNull VcsFile newFile,
+                                  @NotNull String tokenId,
+                                  @NotNull Depth wcDepth,
+                                  @NotNull Depth requestedDepth) throws IOException, SVNException {
       final Depth.Action dirAction = wcDepth.determineAction(requestedDepth, true);
       final Depth.Action fileAction = wcDepth.determineAction(requestedDepth, false);
 
@@ -385,9 +398,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
       for (String removed : forced) {
         removeEntry(context, removed, newFile.getLastChange().getId(), tokenId);
-      }
-      if (header != null) {
-        header.close();
       }
     }
 
