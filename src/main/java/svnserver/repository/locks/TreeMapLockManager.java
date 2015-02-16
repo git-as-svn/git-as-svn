@@ -58,8 +58,9 @@ public class TreeMapLockManager implements LockManagerWrite {
         if (file.isDirectory()) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, target.getPath()));
         }
-        if ((!stealLock) && locks.containsKey(repo.getUuid() + SEPARATOR + target.getPath())) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, target.getPath()));
+        final LockDesc currentLock = locks.get(repo.getUuid() + SEPARATOR + target.getPath());
+        if ((!stealLock) && (currentLock != null)) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path is already locked by {1}: {0}", target.getPath(), currentLock.getOwner()));
         }
         if (target.getRev() < file.getLastChange().getId()) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, target.getPath()));
