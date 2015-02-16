@@ -71,6 +71,9 @@ public final class SvnTestServer implements AutoCloseable {
   private final String prefix;
   @NotNull
   private final SvnServer server;
+  @NotNull
+  private final List<SvnOperationFactory> svnFactories = new ArrayList<>();
+
   private final boolean safeBranch;
 
   private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig) throws Exception {
@@ -176,6 +179,10 @@ public final class SvnTestServer implements AutoCloseable {
           .setForce(true)
           .call();
     }
+    for (SvnOperationFactory factory : svnFactories) {
+      factory.dispose();
+    }
+    svnFactories.clear();
     repository.close();
     TestHelper.deleteDirectory(tempDirectory);
   }
@@ -205,6 +212,7 @@ public final class SvnTestServer implements AutoCloseable {
     final SvnOperationFactory factory = new SvnOperationFactory();
     factory.setOptions(new DefaultSVNOptions(getTempDirectory(), true));
     factory.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
+    svnFactories.add(factory);
     return factory;
   }
 
