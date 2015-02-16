@@ -55,6 +55,7 @@ import java.util.function.BiFunction;
  */
 public class GitRepository implements VcsRepository {
   private static final int REPORT_DELAY = 2500;
+  private static final int MAX_PROPERTY_ERRROS = 50;
   private static final int MARK_NO_FILE = -1;
 
   @NotNull
@@ -681,6 +682,9 @@ public class GitRepository implements VcsRepository {
   private class GitPropertyValidator {
     @NotNull
     private final Deque<GitFile> treeStack;
+    @NotNull
+    private final Map<String, Set<String>> propertyMismatch = new TreeMap<>();
+    private int errorCount = 0;
 
     public GitPropertyValidator(@NotNull GitFile root) {
       this.treeStack = new ArrayDeque<>();
@@ -703,17 +707,48 @@ public class GitRepository implements VcsRepository {
       }
       final Map<String, String> expected = node.getProperties(false);
       if (!properties.equals(expected)) {
-        final StringBuilder message = new StringBuilder();
-        message.append("Can't commit entry: ").append(node.getFullPath()).append("\nInvalid svn properties found.\n");
-        message.append("Expected:\n");
-        for (Map.Entry<String, String> entry : expected.entrySet()) {
-          message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
+        if (errorCount < MAX_PROPERTY_ERRROS) {
+          final StringBuilder delta = new StringBuilder();
+          delta.append("Expected:\n");
+          for (Map.Entry<String, String> entry : expected.entrySet()) {
+            delta.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
+          }
+          delta.append("Actual:\n");
+          for (Map.Entry<String, String> entry : properties.entrySet()) {
+            delta.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
+          }
+          propertyMismatch.compute(delta.toString(), new BiFunction<String, Set<String>, Set<String>>() {
+            @Override
+            public Set<String> apply(@NotNull String key, @Nullable Set<String> value) {
+              if (value == null) {
+                value = new TreeSet<>();
+              }
+              value.add(node.getFullPath());
+              return value;
+            }
+          });
+          errorCount++;
         }
-        message.append("Actual:\n");
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-          message.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
-        }
+      }
+    }
 
+    public void closeDir() {
+      treeStack.pop();
+    }
+
+    public void done() throws SVNException {
+      if (!propertyMismatch.isEmpty()) {
+        final StringBuilder message = new StringBuilder();
+        for (Map.Entry<String, Set<String>> entry : propertyMismatch.entrySet()) {
+          if (message.length() > 0) {
+            message.append("\n");
+          }
+          message.append("Invalid svn properties on files:\n");
+          for (String path : entry.getValue()) {
+            message.append("  ").append(path).append("\n");
+          }
+          message.append(entry.getKey());
+        }
         message.append("\n"
             + "----------------\n" +
             "Subversion properties must be consistent with Git config files:\n");
@@ -724,10 +759,6 @@ public class GitRepository implements VcsRepository {
             "For more detailed information you can see: ").append(WikiConstants.PROPERTIES).append("\n");
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
       }
-    }
-
-    public void closeDir() {
-      treeStack.pop();
     }
   }
 
@@ -921,6 +952,7 @@ public class GitRepository implements VcsRepository {
       for (VcsConsumer<GitPropertyValidator> validateAction : validateActions) {
         validateAction.accept(validator);
       }
+      validator.done();
     }
 
     private PersonIdent createIdent(User userInfo) {
