@@ -239,6 +239,7 @@ public class SvnServer extends Thread {
             //.word("mergeinfo")       // Nope, not yet
         .word("depth")
         .word("inherited-props")       // Need for .gitattributes and .gitignore
+        .word("log-revprops")          // svn log --with-all-revprops
         .listEnd()
         .listEnd()
         .listEnd();
