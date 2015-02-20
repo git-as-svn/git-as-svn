@@ -20,10 +20,7 @@ import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
+import javax.naming.directory.*;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,10 +79,9 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
         return null;
       }
 
-      final String realName = String.valueOf(attributes.get(config.getNameAttribute()).get());
-      final String email = String.valueOf(attributes.get(config.getEmailAttribute()).get());
-
-      return new User(username, realName, email);
+      final String realName = getAttribute(attributes, config.getNameAttribute());
+      final String email = getAttribute(attributes, config.getEmailAttribute());
+      return new User(username, realName != null ? realName : username, email);
     } catch (AuthenticationException e) {
       return null;
     } catch (NamingException e) {
@@ -98,6 +94,12 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
           log.error(e.getMessage(), e);
         }
     }
+  }
+
+  @Nullable
+  private String getAttribute(@NotNull Attributes attributes, @NotNull String name) throws NamingException {
+    Attribute attribute = attributes.get(name);
+    return attribute == null ? null : String.valueOf(attribute.get());
   }
 
   @NotNull
