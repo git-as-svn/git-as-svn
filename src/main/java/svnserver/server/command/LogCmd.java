@@ -75,7 +75,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
                   int limit,
                   boolean includeMergedRevisions,
                   /**
-                   * Broken-minded SVN feature we will unlikely to support ever.
+                   * Broken-minded SVN feature we're unlikely to support EVER.
                    */
                   @SuppressWarnings("UnusedParameters")
                   @NotNull String revpropsMode,
