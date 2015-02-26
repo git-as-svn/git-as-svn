@@ -171,16 +171,13 @@ public class GitFile implements VcsFile {
       throw new IllegalStateException("Can't get size without object.");
     }
 
-    return repo.getObjectSize(treeEntry.getObjectId(), isSymlink() ? 'l' : 'f', () -> {
+    return repo.getObjectSize(treeEntry.getObjectId(), ' ', () -> {
       final ObjectLoader loader = getObjectLoader();
       if (loader == null)
         return 0L;
 
-      if (isSymlink())
-        return SvnConstants.LINK_PREFIX.length() + loader.getSize();
-
       return loader.getSize();
-    });
+    }) + (isSymlink() ? 0 : SvnConstants.LINK_PREFIX.length());
   }
 
   @Override
