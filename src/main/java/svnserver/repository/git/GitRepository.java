@@ -94,6 +94,8 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, String> md5Cache;
   @NotNull
+  private final Map<String, Long> sizeCache;
+  @NotNull
   private final Map<String, Boolean> binaryCache;
   @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
@@ -110,6 +112,7 @@ public class GitRepository implements VcsRepository {
                        @NotNull DB cacheDb) throws IOException, SVNException {
     this.cacheDb = cacheDb;
     this.md5Cache = cacheDb.getHashMap("cache.md5");
+    this.sizeCache = cacheDb.getHashMap("cache.size");
     this.binaryCache = cacheDb.getHashMap("cache.binary");
     this.repository = repository;
     this.pushMode = pushMode;
@@ -495,6 +498,17 @@ public class GitRepository implements VcsRepository {
       }
       result = StringHelper.toHex(md5.digest());
       md5Cache.putIfAbsent(key, result);
+    }
+    return result;
+  }
+
+  @NotNull
+  public long getObjectSize(@NotNull GitObject<? extends ObjectId> objectId, char type, @NotNull VcsSupplier<Long> sizeInfo) throws IOException, SVNException {
+    final String key = type + objectId.getObject().name();
+    Long result = sizeCache.get(key);
+    if (result == null) {
+      result = sizeInfo.get();
+      sizeCache.putIfAbsent(key, result);
     }
     return result;
   }

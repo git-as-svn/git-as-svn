@@ -42,7 +42,7 @@ public interface VcsFile {
     return getMd5();
   }
 
-  long getSize() throws IOException;
+  long getSize() throws IOException, SVNException;
 
   @NotNull
   InputStream openStream() throws IOException;

@@ -163,18 +163,24 @@ public class GitFile implements VcsFile {
   }
 
   @Override
-  public long getSize() throws IOException {
+  public long getSize() throws IOException, SVNException {
     if (getFileMode().getObjectType() != Constants.OBJ_BLOB)
-      return 0;
+      return 0L;
 
-    final ObjectLoader loader = getObjectLoader();
-    if (loader == null)
-      return 0;
+    if (treeEntry == null) {
+      throw new IllegalStateException("Can't get size without object.");
+    }
 
-    if (isSymlink())
-      return SvnConstants.LINK_PREFIX.length() + loader.getSize();
+    return repo.getObjectSize(treeEntry.getObjectId(), isSymlink() ? 'l' : 'f', () -> {
+      final ObjectLoader loader = getObjectLoader();
+      if (loader == null)
+        return 0L;
 
-    return loader.getSize();
+      if (isSymlink())
+        return SvnConstants.LINK_PREFIX.length() + loader.getSize();
+
+      return loader.getSize();
+    });
   }
 
   @Override
