@@ -7,10 +7,7 @@
  */
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.FileMode;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,13 +168,10 @@ public class GitFile implements VcsFile {
       throw new IllegalStateException("Can't get size without object.");
     }
 
-    return repo.getObjectSize(treeEntry.getObjectId(), ' ', () -> {
-      final ObjectLoader loader = getObjectLoader();
-      if (loader == null)
-        return 0L;
-
-      return loader.getSize();
-    }) + (isSymlink() ? 0 : SvnConstants.LINK_PREFIX.length());
+    final GitObject<ObjectId> objectId = treeEntry.getObjectId();
+    ObjectReader reader = objectId.getRepo().newObjectReader();
+    long objectSize = reader.getObjectSize(objectId.getObject(), treeEntry.getFileMode().getObjectType());
+    return objectSize + (isSymlink() ? 0 : SvnConstants.LINK_PREFIX.length());
   }
 
   @Override
