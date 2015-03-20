@@ -114,13 +114,15 @@ public class SvnServerWriter {
   }
 
   @NotNull
-  public SvnServerWriter writeMap(Map<String, String> properties) throws IOException {
+  public SvnServerWriter writeMap(@Nullable Map<String, String> properties) throws IOException {
     listBegin();
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      listBegin();
-      string(entry.getKey());
-      string(entry.getValue());
-      listEnd();
+    if (properties != null) {
+      for (Map.Entry<String, String> entry : properties.entrySet()) {
+        listBegin();
+        string(entry.getKey());
+        string(entry.getValue());
+        listEnd();
+      }
     }
     listEnd();
     return this;

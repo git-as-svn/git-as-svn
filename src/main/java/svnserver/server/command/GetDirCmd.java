@@ -18,7 +18,6 @@ import svnserver.repository.VcsRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.Collections;
 
 /**
  * Get file content.
@@ -107,7 +106,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .word("success")
         .listBegin()
         .number(revision.getId()) // rev
-        .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap()) // props
+        .writeMap(args.wantProps ? fileInfo.getAllProperties() : null) // props
         .listBegin()
         .separator();
     if (args.wantContents) {
@@ -118,7 +117,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
             .string(item.getFileName()) // name
             .word(item.getKind().toString()) // node-kind
             .number(item.getSize()) // size
-            .bool(!item.getProperties(false).isEmpty()) // has-props
+            .bool(!item.getProperties().isEmpty()) // has-props
             .number(lastChange.getId()) // created-rev
             .listBegin().stringNullable(lastChange.getDateString()).listEnd() // created-date
             .listBegin().stringNullable(lastChange.getAuthor()).listEnd() // last-author

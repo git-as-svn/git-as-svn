@@ -139,7 +139,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     @FunctionalInterface
     private static interface HeaderWriter {
-      void write(@NotNull SvnServerWriter writer) throws IOException;
+      void write(@NotNull SvnServerWriter writer) throws IOException, SVNException;
     }
 
     private class HeaderEntry implements AutoCloseable {
@@ -158,7 +158,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         pathStack.addLast(this);
       }
 
-      public void write() throws IOException {
+      public void write() throws IOException, SVNException {
         if (!writed) {
           writed = true;
           beginWriter.write(context.getWriter());
@@ -166,7 +166,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
 
       @Override
-      public void close() throws IOException {
+      public void close() throws IOException, SVNException {
         if (writed) {
           endWriter.write(context.getWriter());
         }
@@ -174,7 +174,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private SvnServerWriter getWriter(@NotNull SessionContext context) throws IOException {
+    private SvnServerWriter getWriter(@NotNull SessionContext context) throws IOException, SVNException {
       for (HeaderEntry entry : pathStack) {
         entry.write();
       }
@@ -190,7 +190,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       commands.put("finish-report", new LambdaCmd<>(NoParams.class, this::finishReport));
     }
 
-    private void abortReport(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
+    private void abortReport(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
       final SvnServerWriter writer = getWriter(context);
       writer
           .listBegin()
@@ -347,7 +347,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         oldFile = null;
       }
 
-      updateProps(context, "change-dir-prop", tokenId, rootDir, oldFile, newFile);
+      if (rootDir) {
+        sendRevProps(getWriter(context), newFile, "dir", tokenId);
+      }
+      updateProps(context, "change-dir-prop", tokenId, oldFile, newFile);
       updateDirEntries(context, wcPath, oldFile, newFile, tokenId, wcDepth, requestedDepth);
 
       if (header != null) {
@@ -401,10 +404,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void updateProps(@NotNull SessionContext context, @NotNull String command, @NotNull String tokenId, boolean rootDir, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
-      final boolean includeInternalProps = params.isIncludeInternalProps();
-      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties(includeInternalProps && (!rootDir)) : new HashMap<>();
-      for (Map.Entry<String, String> entry : newFile.getProperties(includeInternalProps).entrySet()) {
+    private void updateProps(@NotNull SessionContext context, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
+      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : new HashMap<>();
+      for (Map.Entry<String, String> entry : newFile.getProperties().entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
           changeProp(getWriter(context), command, tokenId, entry.getKey(), entry.getValue());
         }
@@ -490,7 +492,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
               .listEnd()
               .listEnd();
         }
-        updateProps(context, "change-file-prop", tokenId, false, oldFile, newFile);
+        updateProps(context, "change-file-prop", tokenId, oldFile, newFile);
       }
     }
 
@@ -591,13 +593,23 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         final VcsFile entryFile = copyFrom != null ? context.getRepository().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath()) : null;
         final HeaderEntry entry = new HeaderEntry(context, entryFile, writer -> {
           sendNewEntry(writer, "add-" + type, wcPath, parentTokenId, tokenId, copyFrom);
+          sendRevProps(writer, newFile, type, tokenId);
         }, endWriter);
         getWriter(context);
         return entry;
       } else {
         return new HeaderEntry(context, oldFile, writer -> {
           sendOpenEntry(writer, "open-" + type, wcPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
+          sendRevProps(writer, newFile, type, tokenId);
         }, endWriter);
+      }
+    }
+
+    private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull VcsFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException, SVNException {
+      if (params.isIncludeInternalProps()) {
+        for (Map.Entry<String, String> prop : newFile.getRevProperties().entrySet()) {
+          changeProp(writer, "change-" + type + "-prop", tokenId, prop.getKey(), prop.getValue());
+        }
       }
     }
 

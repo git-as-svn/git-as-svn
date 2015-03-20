@@ -253,7 +253,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private EntryUpdater(@Nullable VcsFile source, boolean head) throws IOException, SVNException {
       this.source = source;
       this.head = head;
-      this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties(false));
+      this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties());
     }
 
     @NotNull
