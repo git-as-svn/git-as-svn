@@ -149,7 +149,7 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(findGitPath()), null, "/master", true, null);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "/master", true, null);
   }
 
   @Override
@@ -188,21 +188,6 @@ public final class SvnTestServer implements SvnTester {
     svnFactories.clear();
     repository.close();
     TestHelper.deleteDirectory(tempDirectory);
-  }
-
-  private static File findGitPath() {
-    final File root = new File(".").getAbsoluteFile();
-    File path = root;
-    while (true) {
-      final File repo = new File(path, ".git");
-      if (repo.exists()) {
-        return repo;
-      }
-      path = path.getParentFile();
-      if (path == null) {
-        throw new IllegalStateException("Repository not found from directiry: " + root.getAbsolutePath());
-      }
-    }
   }
 
   @NotNull

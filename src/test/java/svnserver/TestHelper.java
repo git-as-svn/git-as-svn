@@ -27,9 +27,24 @@ public class TestHelper {
     }
   }
 
+  public static File findGitPath() {
+    final File root = new File(".").getAbsoluteFile();
+    File path = root;
+    while (true) {
+      final File repo = new File(path, ".git");
+      if (repo.exists()) {
+        return repo;
+      }
+      path = path.getParentFile();
+      if (path == null) {
+        throw new IllegalStateException("Repository not found from directiry: " + root.getAbsolutePath());
+      }
+    }
+  }
+
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public static File createTempDir(@NotNull String prefix) throws IOException {
-    final File dir = File.createTempFile(prefix, "");
+    final File dir = File.createTempFile(prefix + "-", "", new File(findGitPath().getParentFile(), "build/tmp/"));
     dir.delete();
     dir.mkdir();
     return dir;
