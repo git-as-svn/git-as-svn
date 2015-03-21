@@ -112,7 +112,7 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Map<String, String> getProperties(boolean includeInternalProps) throws IOException {
+  public Map<String, String> getProperties() throws IOException {
     final Map<String, String> props = getUpstreamProperties();
     final FileMode fileMode = getFileMode();
     if (fileMode.equals(FileMode.SYMLINK)) {
@@ -125,13 +125,18 @@ public class GitFile implements VcsFile {
         props.put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
       }
     }
-    if (includeInternalProps) {
-      final GitRevision last = getLastChange();
-      props.put(SVNProperty.UUID, repo.getUuid());
-      props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
-      putProperty(props, SVNProperty.COMMITTED_DATE, last.getDateString());
-      putProperty(props, SVNProperty.LAST_AUTHOR, last.getAuthor());
-    }
+    return props;
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> getRevProperties() throws IOException {
+    final Map<String, String> props = new HashMap<>();
+    final GitRevision last = getLastChange();
+    props.put(SVNProperty.UUID, repo.getUuid());
+    props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
+    putProperty(props, SVNProperty.COMMITTED_DATE, last.getDateString());
+    putProperty(props, SVNProperty.LAST_AUTHOR, last.getAuthor());
     return props;
   }
 

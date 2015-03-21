@@ -65,7 +65,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     if (file != null) {
       this.originalMd5 = file.getMd5();
       this.originalId = file.getObjectId();
-      this.props = new HashMap<>(file.getProperties(false));
+      this.props = new HashMap<>(file.getProperties());
       this.originalSymlink = file.getFileMode() == FileMode.SYMLINK;
     } else {
       this.originalMd5 = null;

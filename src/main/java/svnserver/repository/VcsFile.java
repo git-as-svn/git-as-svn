@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -29,7 +30,18 @@ public interface VcsFile {
   String getFullPath();
 
   @NotNull
-  Map<String, String> getProperties(boolean includeInternalProps) throws IOException, SVNException;
+  Map<String, String> getProperties() throws IOException, SVNException;
+
+  @NotNull
+  Map<String, String> getRevProperties() throws IOException, SVNException;
+
+  @NotNull
+  default Map<String, String> getAllProperties() throws IOException, SVNException {
+    Map<String, String> props = new HashMap<>();
+    props.putAll(getRevProperties());
+    props.putAll(getProperties());
+    return props;
+  }
 
   @NotNull
   String getMd5() throws IOException, SVNException;

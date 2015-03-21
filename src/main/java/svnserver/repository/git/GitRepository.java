@@ -705,7 +705,7 @@ public class GitRepository implements VcsRepository {
       if (node == null) {
         throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
       }
-      final Map<String, String> expected = node.getProperties(false);
+      final Map<String, String> expected = node.getProperties();
       if (!properties.equals(expected)) {
         if (errorCount < MAX_PROPERTY_ERRROS) {
           final StringBuilder delta = new StringBuilder();

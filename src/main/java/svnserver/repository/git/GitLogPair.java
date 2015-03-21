@@ -56,8 +56,8 @@ public final class GitLogPair {
 
   public boolean isPropertyModified() throws IOException {
     if ((newEntry == null) || (oldEntry == null)) return false;
-    final Map<String, String> newProps = newEntry.getProperties(false);
-    final Map<String, String> oldProps = oldEntry.getProperties(false);
+    final Map<String, String> newProps = newEntry.getProperties();
+    final Map<String, String> oldProps = oldEntry.getProperties();
     return !Objects.equals(newProps, oldProps);
   }
 

@@ -79,7 +79,7 @@ public class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
       writer
           .listBegin()
           .string(file.getFullPath())
-          .writeMap(file.getProperties(false))
+          .writeMap(file.getProperties())
           .listEnd();
     }
     writer

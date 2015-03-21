@@ -20,7 +20,6 @@ import svnserver.server.SessionContext;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 
 /**
  * Get file content.
@@ -63,7 +62,7 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     }
   }
 
-  private final static int WINDOW_SIZE = 1024 * 100;
+  private static final int WINDOW_SIZE = 1024 * 100;
 
   @NotNull
   @Override
@@ -94,7 +93,7 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
         .listBegin()
         .listBegin().string(fileInfo.getMd5()).listEnd() // md5
         .number(revision.getId()) // revision id
-        .writeMap(args.wantProps ? fileInfo.getProperties(true) : Collections.emptyMap())
+        .writeMap(args.wantProps ? fileInfo.getAllProperties() : null)
         .listEnd()
         .listEnd();
     if (args.wantContents) {
