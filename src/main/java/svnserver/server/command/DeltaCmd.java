@@ -406,6 +406,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     private void updateProps(@NotNull SessionContext context, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
       final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : new HashMap<>();
+      if (oldFile == null) {
+        getWriter(context);
+      }
       for (Map.Entry<String, String> entry : newFile.getProperties().entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
           changeProp(getWriter(context), command, tokenId, entry.getKey(), entry.getValue());
