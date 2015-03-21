@@ -78,9 +78,9 @@ public class ReportSVNEditor implements ISVNEditor {
   @Override
   public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
     if (copyFromPath != null) {
-      add("add-file: " + copyFromPath + ", " + rev(copyFromRevision));
+      add(path, "add-file: " + copyFromPath + ", " + rev(copyFromRevision));
     } else {
-      add("add-file");
+      add(path, "add-file");
     }
   }
 
