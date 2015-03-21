@@ -64,6 +64,7 @@ tasks.withType(JavaCompile) {
 
 test {
   useTestNG()
+  maxHeapSize = "256m"
   ignoreFailures = "$testIgnoreFailures".toBoolean()
 }
 
