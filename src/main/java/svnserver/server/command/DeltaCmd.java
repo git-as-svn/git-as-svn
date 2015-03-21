@@ -350,7 +350,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       if (rootDir) {
         sendRevProps(getWriter(context), newFile, "dir", tokenId);
       }
-      updateProps(context, "change-dir-prop", tokenId, oldFile, newFile);
+      updateProps(context, "dir", tokenId, oldFile, newFile);
       updateDirEntries(context, wcPath, oldFile, newFile, tokenId, wcDepth, requestedDepth);
 
       if (header != null) {
@@ -404,18 +404,18 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void updateProps(@NotNull SessionContext context, @NotNull String command, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
+    private void updateProps(@NotNull SessionContext context, @NotNull String type, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
       final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : new HashMap<>();
       if (oldFile == null) {
         getWriter(context);
       }
       for (Map.Entry<String, String> entry : newFile.getProperties().entrySet()) {
         if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
-          changeProp(getWriter(context), command, tokenId, entry.getKey(), entry.getValue());
+          changeProp(getWriter(context), type, tokenId, entry.getKey(), entry.getValue());
         }
       }
       for (String propName : oldProps.keySet()) {
-        changeProp(getWriter(context), command, tokenId, propName, null);
+        changeProp(getWriter(context), type, tokenId, propName, null);
       }
     }
 
@@ -495,7 +495,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
               .listEnd()
               .listEnd();
         }
-        updateProps(context, "change-file-prop", tokenId, oldFile, newFile);
+        updateProps(context, "file", tokenId, oldFile, newFile);
       }
     }
 
@@ -611,7 +611,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull VcsFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException, SVNException {
       if (params.isIncludeInternalProps()) {
         for (Map.Entry<String, String> prop : newFile.getRevProperties().entrySet()) {
-          changeProp(writer, "change-" + type + "-prop", tokenId, prop.getKey(), prop.getValue());
+          changeProp(writer, type, tokenId, prop.getKey(), prop.getValue());
         }
       }
     }
@@ -635,10 +635,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd();
     }
 
-    private void changeProp(@NotNull SvnServerWriter writer, @NotNull String command, @NotNull String tokenId, @NotNull String key, @Nullable String value) throws IOException {
+    private void changeProp(@NotNull SvnServerWriter writer, @NotNull String type, @NotNull String tokenId, @NotNull String key, @Nullable String value) throws IOException {
       writer
           .listBegin()
-          .word(command)
+          .word("change-" + type + "-prop")
           .listBegin()
           .string(tokenId)
           .string(key)
