@@ -384,8 +384,8 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
         final Depth.Action action = newEntry.isDirectory() ? dirAction : fileAction;
 
-        if (!forced.remove(entryPath) && newEntry.equals(oldEntry) && action == Depth.Action.Normal)
-          // Same entry.
+        if (!forced.remove(entryPath) && newEntry.equals(oldEntry) && action == Depth.Action.Normal && requestedDepth == wcDepth)
+          // Same entry with same depth parameter.
           continue;
 
         if (action == Depth.Action.Skip)
