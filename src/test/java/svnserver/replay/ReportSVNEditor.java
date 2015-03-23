@@ -153,7 +153,7 @@ public class ReportSVNEditor implements ISVNEditor {
   }
 
   private void add(@NotNull String line) {
-    add(paths.getLast(), line);
+    add(paths.getFirst(), line);
   }
 
   private void add(@NotNull String path, @NotNull String line) {

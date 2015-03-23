@@ -44,7 +44,9 @@ public class TestHelper {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public static File createTempDir(@NotNull String prefix) throws IOException {
-    final File dir = File.createTempFile(prefix + "-", "", new File(findGitPath().getParentFile(), "build/tmp/"));
+    final File tmp = new File(findGitPath().getParentFile(), "build/tmp/");
+    tmp.mkdirs();
+    final File dir = File.createTempFile(prefix + "-", "", tmp);
     dir.delete();
     dir.mkdir();
     return dir;

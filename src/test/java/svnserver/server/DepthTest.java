@@ -77,7 +77,21 @@ public final class DepthTest {
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - open-dir: r0\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -129,11 +143,25 @@ public final class DepthTest {
           ".gitignore - close-file: 57457451fdf67806102d334f30c062f3\n" +
           ".gitignore - delta-chunk\n" +
           ".gitignore - delta-end\n" +
-          "/ - add-dir\n" +
           "/ - change-dir-prop: svn:entry:committed-date\n" +
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
+          "a - add-dir\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - add-dir\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -164,11 +192,11 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n");
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n");
 
       // svn update
       check(server, "a/b", SVNDepth.EMPTY, reporter -> {
@@ -181,12 +209,16 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - add-dir\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -217,11 +249,11 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n");
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - open-dir: r0\n");
 
       // svn update
       check(server, "a/b/c", SVNDepth.EMPTY, reporter -> {
@@ -234,11 +266,11 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - open-dir: r0\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -269,12 +301,26 @@ public final class DepthTest {
           ".gitignore - close-file: 57457451fdf67806102d334f30c062f3\n" +
           ".gitignore - delta-chunk\n" +
           ".gitignore - delta-end\n" +
-          "/ - add-dir\n" +
           "/ - change-dir-prop: svn:entry:committed-date\n" +
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
           "/ - change-dir-prop: svn:ignore\n" +
+          "a - add-dir\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - add-dir\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -315,12 +361,21 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - add-dir\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a - open-dir: r0\n" +
+          "a/b - add-dir\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -357,11 +412,11 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
           "a/b/e - add-file\n" +
           "a/b/e - apply-text-delta: null\n" +
           "a/b/e - change-file-prop: svn:entry:committed-date\n" +
@@ -383,12 +438,16 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.FILES, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - add-dir\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -410,12 +469,16 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - add-dir\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/e - add-file\n" +
           "a/b/e - apply-text-delta: null\n" +
           "a/b/e - change-file-prop: svn:entry:committed-date\n" +
@@ -437,11 +500,16 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.IMMEDIATES, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - change-dir-prop: svn:entry:committed-date\n" +
-          "/ - change-dir-prop: svn:entry:committed-rev\n" +
-          "/ - change-dir-prop: svn:entry:last-author\n" +
-          "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - open-dir: r0\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -472,12 +540,26 @@ public final class DepthTest {
           ".gitignore - close-file: 57457451fdf67806102d334f30c062f3\n" +
           ".gitignore - delta-chunk\n" +
           ".gitignore - delta-end\n" +
-          "/ - add-dir\n" +
           "/ - change-dir-prop: svn:entry:committed-date\n" +
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
           "/ - change-dir-prop: svn:ignore\n" +
+          "a - add-dir\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - add-dir\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -509,12 +591,25 @@ public final class DepthTest {
         reporter.setPath("a/b", null, revision, SVNDepth.FILES, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - add-dir\n" +
           "/ - change-dir-prop: svn:entry:committed-date\n" +
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -537,12 +632,25 @@ public final class DepthTest {
         reporter.setPath("a/b", null, revision, SVNDepth.EMPTY, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
-          "/ - add-dir\n" +
           "/ - change-dir-prop: svn:entry:committed-date\n" +
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - add-dir\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
@@ -579,7 +687,21 @@ public final class DepthTest {
           "/ - change-dir-prop: svn:entry:committed-rev\n" +
           "/ - change-dir-prop: svn:entry:last-author\n" +
           "/ - change-dir-prop: svn:entry:uuid\n" +
-          "/ - open-dir: r0\n" +
+          "a - change-dir-prop: svn:entry:committed-date\n" +
+          "a - change-dir-prop: svn:entry:committed-rev\n" +
+          "a - change-dir-prop: svn:entry:last-author\n" +
+          "a - change-dir-prop: svn:entry:uuid\n" +
+          "a - open-dir: r0\n" +
+          "a/b - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b - change-dir-prop: svn:entry:last-author\n" +
+          "a/b - change-dir-prop: svn:entry:uuid\n" +
+          "a/b - open-dir: r0\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-date\n" +
+          "a/b/c - change-dir-prop: svn:entry:committed-rev\n" +
+          "a/b/c - change-dir-prop: svn:entry:last-author\n" +
+          "a/b/c - change-dir-prop: svn:entry:uuid\n" +
+          "a/b/c - open-dir: r0\n" +
           "a/b/c/d - add-file\n" +
           "a/b/c/d - apply-text-delta: null\n" +
           "a/b/c/d - change-file-prop: svn:entry:committed-date\n" +
