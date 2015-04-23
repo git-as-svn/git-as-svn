@@ -22,6 +22,7 @@ import svnserver.config.LDAPUserDBConfig;
 
 import javax.naming.NamingException;
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -97,13 +98,11 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
         final File certFile = ConfigHelper.joinPath(basePath, certPem);
         log.info("Loading CA certificate from: {}", certFile.getAbsolutePath());
         trustManager = createTrustManager(Files.readAllBytes(certFile.toPath()));
+        return new SSLUtil(null, trustManager).createSSLSocketFactory();
       } else {
-        log.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        log.error("CA certificate for LDAP server is not defined. LDAP server validation is disabled");
-        log.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        trustManager = new TrustAllTrustManager();
+        log.info("CA certificate not defined. Using JVM default SSL context");
+        return SSLContext.getDefault().getSocketFactory();
       }
-      return new SSLUtil(null, trustManager).createSSLSocketFactory();
     } catch (GeneralSecurityException e) {
       throw new IllegalStateException(e);
     } catch (IOException e) {
