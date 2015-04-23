@@ -8,9 +8,12 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.auth.LDAPUserDB;
 import svnserver.auth.UserDB;
 import svnserver.config.serializer.ConfigType;
+
+import java.io.File;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -26,18 +29,6 @@ public final class LDAPUserDBConfig implements UserDBConfig {
    */
   @NotNull
   private String connectionUrl = "ldap://localhost:389/ou=groups,dc=mycompany,dc=com";
-  /**
-   * The JNDI context factory used to acquire our InitialContext. By
-   * default, assumes use of an LDAP server using the standard JNDI LDAP
-   * provider.
-   */
-  @NotNull
-  private String contextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
-  /**
-   * The type of authentication to use.
-   */
-  @NotNull
-  private String authentication = "DIGEST-MD5";
   /**
    * The search scope. Set to <code>true</code> if you wish to search the entire subtree rooted at the
    * <code>userBase</code> entry. The default value of <code>false</code> requests a single-level search
@@ -59,6 +50,11 @@ public final class LDAPUserDBConfig implements UserDBConfig {
    */
   @NotNull
   private String emailAttribute = "mail";
+  /**
+   * Certificate for validation LDAP server with SSL connection.
+   */
+  @Nullable
+  private String ldapCertPem;
 
   @NotNull
   public String getConnectionUrl() {
@@ -67,15 +63,6 @@ public final class LDAPUserDBConfig implements UserDBConfig {
 
   public void setConnectionUrl(@NotNull String connectionUrl) {
     this.connectionUrl = connectionUrl;
-  }
-
-  @NotNull
-  public String getContextFactory() {
-    return contextFactory;
-  }
-  @NotNull
-  public String getAuthentication() {
-    return authentication;
   }
 
   public boolean isUserSubtree() {
@@ -109,9 +96,18 @@ public final class LDAPUserDBConfig implements UserDBConfig {
     return emailAttribute;
   }
 
+  @Nullable
+  public String getLdapCertPem() {
+    return ldapCertPem;
+  }
+
+  public void setLdapCertPem(@Nullable String ldapCertPem) {
+    this.ldapCertPem = ldapCertPem;
+  }
+
   @NotNull
   @Override
-  public UserDB create() {
-    return new LDAPUserDB(this);
+  public UserDB create(@NotNull File basePath) {
+    return new LDAPUserDB(this, basePath);
   }
 }
