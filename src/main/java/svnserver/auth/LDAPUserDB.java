@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.ConfigHelper;
 import svnserver.config.LDAPUserDBConfig;
 
 import javax.naming.NamingException;
@@ -93,7 +94,7 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
       final TrustManager trustManager;
       final String certPem = config.getLdapCertPem();
       if (certPem != null) {
-        final File certFile = new File(basePath, certPem);
+        final File certFile = ConfigHelper.joinPath(basePath, certPem);
         log.info("Loading CA certificate from: {}", certFile.getAbsolutePath());
         trustManager = createTrustManager(Files.readAllBytes(certFile.toPath()));
       } else {
