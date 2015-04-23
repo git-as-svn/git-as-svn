@@ -7,10 +7,7 @@
  */
 package svnserver.auth;
 
-import com.unboundid.ldap.sdk.DIGESTMD5BindRequest;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +21,22 @@ import svnserver.config.LDAPUserDBConfig;
 
 import javax.naming.NamingException;
 import javax.net.SocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+import javax.xml.bind.DatatypeConverter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,7 +65,7 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
   @Nullable
   private final SocketFactory socketFactory;
 
-  public LDAPUserDB(@NotNull LDAPUserDBConfig config) {
+  public LDAPUserDB(@NotNull LDAPUserDBConfig config, @NotNull File basePath) {
     URI ldapUri = URI.create(config.getConnectionUrl());
     SocketFactory factory;
     int defaultPort;
@@ -64,7 +75,7 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
         defaultPort = 389;
         break;
       case "ldaps":
-        factory = createSslFactory(config);
+        factory = createSslFactory(config, basePath);
         defaultPort = 636;
         break;
       default:
@@ -77,11 +88,25 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
     this.ldapHost = ldapUri.getHost();
   }
 
-  private static SocketFactory createSslFactory(@NotNull LDAPUserDBConfig config) {
+  private static SocketFactory createSslFactory(@NotNull LDAPUserDBConfig config, @NotNull File basePath) {
     try {
-      return new SSLUtil(null, new TrustAllTrustManager()).createSSLSocketFactory();
+      final TrustManager trustManager;
+      final String certPem = config.getLdapCertPem();
+      if (certPem != null) {
+        final File certFile = new File(basePath, certPem);
+        log.info("Loading CA certificate from: {}", certFile.getAbsolutePath());
+        trustManager = createTrustManager(Files.readAllBytes(certFile.toPath()));
+      } else {
+        log.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        log.error("CA certificate for LDAP server is not defined. LDAP server validation is disabled");
+        log.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        trustManager = new TrustAllTrustManager();
+      }
+      return new SSLUtil(null, trustManager).createSSLSocketFactory();
     } catch (GeneralSecurityException e) {
-      throw new IllegalStateException("Can't create SSL Socket Factory", e);
+      throw new IllegalStateException(e);
+    } catch (IOException e) {
+      throw new IllegalStateException("Can't load certificate file", e);
     }
   }
 
@@ -92,9 +117,9 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
       LDAPConnection ldap = new LDAPConnection(socketFactory, ldapHost, ldapPort);
       try {
         ldap.bind(new DIGESTMD5BindRequest(username, password));
-        com.unboundid.ldap.sdk.SearchResult search = ldap.search(
+        SearchResult search = ldap.search(
             baseDn,
-            config.isUserSubtree() ? com.unboundid.ldap.sdk.SearchScope.SUB : com.unboundid.ldap.sdk.SearchScope.ONE,
+            config.isUserSubtree() ? SearchScope.SUB : SearchScope.ONE,
             MessageFormat.format(config.getUserSearch(), username),
             config.getNameAttribute(), config.getEmailAttribute()
         );
@@ -105,7 +130,7 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
           log.error("Multiple LDAP entries found for {}", username);
           return null;
         }
-        final com.unboundid.ldap.sdk.SearchResultEntry entry = search.getSearchEntries().get(0);
+        final SearchResultEntry entry = search.getSearchEntries().get(0);
         final String realName = getAttribute(entry, config.getNameAttribute());
         final String email = getAttribute(entry, config.getEmailAttribute());
         return new User(username, realName != null ? realName : username, email);
@@ -123,8 +148,8 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
   }
 
   @Nullable
-  private String getAttribute(@NotNull com.unboundid.ldap.sdk.SearchResultEntry entry, @NotNull String name) throws NamingException {
-    com.unboundid.ldap.sdk.Attribute attribute = entry.getAttribute(name);
+  private String getAttribute(@NotNull SearchResultEntry entry, @NotNull String name) throws NamingException {
+    Attribute attribute = entry.getAttribute(name);
     return attribute == null ? null : attribute.getValue();
   }
 
@@ -132,5 +157,61 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
   @Override
   public Collection<Authenticator> authenticators() {
     return authenticators;
+  }
+
+  @NotNull
+  public static byte[] parseDERFromPEM(@NotNull byte[] pem, @NotNull String beginDelimiter, @NotNull String endDelimiter) throws GeneralSecurityException {
+    final String data = new String(pem, StandardCharsets.ISO_8859_1);
+    String[] tokens = data.split(beginDelimiter);
+    if (tokens.length != 2) {
+      throw new GeneralSecurityException("Invalid PEM certificate data. Delimiter not found: " + beginDelimiter);
+    }
+    tokens = tokens[1].split(endDelimiter);
+    if (tokens.length != 2) {
+      throw new GeneralSecurityException("Invalid PEM certificate data. Delimiter not found: " + endDelimiter);
+    }
+    return DatatypeConverter.parseBase64Binary(tokens[0]);
+  }
+
+  @NotNull
+  public static KeyStore getKeyStoreFromDER(@NotNull byte[] certBytes) throws GeneralSecurityException {
+    try {
+      final CertificateFactory factory = CertificateFactory.getInstance("X.509");
+      final KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+      keystore.load(null);
+      keystore.setCertificateEntry("alias", factory.generateCertificate(new ByteArrayInputStream(certBytes)));
+      return keystore;
+    } catch (IOException e) {
+      throw new KeyStoreException(e);
+    }
+  }
+
+  @NotNull
+  public static TrustManager createTrustManager(@NotNull byte[] pem) throws GeneralSecurityException {
+    final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    final KeyStore keystore = getKeyStoreFromDER(parseDERFromPEM(pem, "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----"));
+    factory.init(keystore);
+
+    final TrustManager[] trustManagers = factory.getTrustManagers();
+    return new X509TrustManager() {
+      @Override
+      public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        for (TrustManager trustManager : trustManagers) {
+          ((X509TrustManager) trustManager).checkClientTrusted(x509Certificates, s);
+        }
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        for (TrustManager trustManager : trustManagers) {
+          ((X509TrustManager) trustManager).checkServerTrusted(x509Certificates, s);
+        }
+      }
+
+      @Override
+      public X509Certificate[] getAcceptedIssuers() {
+        return new X509Certificate[0];
+      }
+    };
   }
 }

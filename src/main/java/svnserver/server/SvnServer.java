@@ -89,7 +89,7 @@ public class SvnServer extends Thread {
     this.config = config;
 
     cacheDb = config.getCacheConfig().createCache(basePath);
-    userDB = config.getUserDB().create();
+    userDB = config.getUserDB().create(basePath);
 
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DeltaCmd(DiffParams.class));

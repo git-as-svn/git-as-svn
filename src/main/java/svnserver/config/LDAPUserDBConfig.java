@@ -8,9 +8,12 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.auth.LDAPUserDB;
 import svnserver.auth.UserDB;
 import svnserver.config.serializer.ConfigType;
+
+import java.io.File;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -47,6 +50,11 @@ public final class LDAPUserDBConfig implements UserDBConfig {
    */
   @NotNull
   private String emailAttribute = "mail";
+  /**
+   * Certificate for validation LDAP server with SSL connection.
+   */
+  @Nullable
+  private String ldapCertPem;
 
   @NotNull
   public String getConnectionUrl() {
@@ -88,9 +96,18 @@ public final class LDAPUserDBConfig implements UserDBConfig {
     return emailAttribute;
   }
 
+  @Nullable
+  public String getLdapCertPem() {
+    return ldapCertPem;
+  }
+
+  public void setLdapCertPem(@Nullable String ldapCertPem) {
+    this.ldapCertPem = ldapCertPem;
+  }
+
   @NotNull
   @Override
-  public UserDB create() {
-    return new LDAPUserDB(this);
+  public UserDB create(@NotNull File basePath) {
+    return new LDAPUserDB(this, basePath);
   }
 }

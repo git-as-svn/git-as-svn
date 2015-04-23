@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import svnserver.auth.UserDB;
 
 import javax.xml.bind.annotation.XmlSeeAlso;
+import java.io.File;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -21,5 +22,5 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 })
 public interface UserDBConfig {
   @NotNull
-  UserDB create();
+  UserDB create(@NotNull File basePath);
 }
