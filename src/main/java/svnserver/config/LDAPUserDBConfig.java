@@ -27,18 +27,6 @@ public final class LDAPUserDBConfig implements UserDBConfig {
   @NotNull
   private String connectionUrl = "ldap://localhost:389/ou=groups,dc=mycompany,dc=com";
   /**
-   * The JNDI context factory used to acquire our InitialContext. By
-   * default, assumes use of an LDAP server using the standard JNDI LDAP
-   * provider.
-   */
-  @NotNull
-  private String contextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
-  /**
-   * The type of authentication to use.
-   */
-  @NotNull
-  private String authentication = "DIGEST-MD5";
-  /**
    * The search scope. Set to <code>true</code> if you wish to search the entire subtree rooted at the
    * <code>userBase</code> entry. The default value of <code>false</code> requests a single-level search
    * including only the top level.
@@ -67,15 +55,6 @@ public final class LDAPUserDBConfig implements UserDBConfig {
 
   public void setConnectionUrl(@NotNull String connectionUrl) {
     this.connectionUrl = connectionUrl;
-  }
-
-  @NotNull
-  public String getContextFactory() {
-    return contextFactory;
-  }
-  @NotNull
-  public String getAuthentication() {
-    return authentication;
   }
 
   public boolean isUserSubtree() {

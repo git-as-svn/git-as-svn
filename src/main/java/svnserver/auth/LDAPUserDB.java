@@ -7,6 +7,12 @@
  */
 package svnserver.auth;
 
+import com.unboundid.ldap.sdk.DIGESTMD5BindRequest;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.util.ssl.SSLUtil;
+import com.unboundid.util.ssl.TrustAllTrustManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -16,15 +22,13 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.LDAPUserDBConfig;
 
-import javax.naming.AuthenticationException;
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import javax.naming.directory.*;
+import javax.net.SocketFactory;
+import java.net.URI;
+import java.security.GeneralSecurityException;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
 
 /**
  * Authenticates a user by binding to the directory with the DN of the entry for that user and the password
@@ -42,64 +46,86 @@ public final class LDAPUserDB implements UserDB, PasswordChecker {
 
   @NotNull
   private final LDAPUserDBConfig config;
+  @NotNull
+  private final String baseDn;
+  @NotNull
+  private final String ldapHost;
+  private final int ldapPort;
+  @Nullable
+  private final SocketFactory socketFactory;
 
   public LDAPUserDB(@NotNull LDAPUserDBConfig config) {
+    URI ldapUri = URI.create(config.getConnectionUrl());
+    SocketFactory factory;
+    int defaultPort;
+    switch (ldapUri.getScheme().toLowerCase()) {
+      case "ldap":
+        factory = null;
+        defaultPort = 389;
+        break;
+      case "ldaps":
+        factory = createSslFactory(config);
+        defaultPort = 636;
+        break;
+      default:
+        throw new IllegalStateException("Unknown ldap scheme: " + ldapUri.getScheme());
+    }
+    this.socketFactory = factory;
+    this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
     this.config = config;
+    this.ldapPort = ldapUri.getPort() > 0 ? ldapUri.getPort() : defaultPort;
+    this.ldapHost = ldapUri.getHost();
+  }
+
+  private static SocketFactory createSslFactory(@NotNull LDAPUserDBConfig config) {
+    try {
+      return new SSLUtil(null, new TrustAllTrustManager()).createSSLSocketFactory();
+    } catch (GeneralSecurityException e) {
+      throw new IllegalStateException("Can't create SSL Socket Factory", e);
+    }
   }
 
   @Nullable
   @Override
   public User check(@NotNull String username, @NotNull String password) throws SVNException {
-    final Hashtable<String, Object> env = new Hashtable<>();
-    env.put(Context.INITIAL_CONTEXT_FACTORY, config.getContextFactory());
-    env.put(Context.PROVIDER_URL, config.getConnectionUrl());
-    env.put(Context.SECURITY_AUTHENTICATION, config.getAuthentication());
-    env.put(Context.SECURITY_PRINCIPAL, username);
-    env.put(Context.SECURITY_CREDENTIALS, password);
-
-    InitialDirContext context = null;
     try {
-      context = new InitialDirContext(env);
-
-      final SearchControls searchControls = new SearchControls();
-      searchControls.setSearchScope(config.isUserSubtree() ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
-      searchControls.setReturningAttributes(new String[]{config.getNameAttribute(), config.getEmailAttribute()});
-      searchControls.setCountLimit(2);
-
-      final NamingEnumeration<SearchResult> search = context.search("", MessageFormat.format(config.getUserSearch(), username), searchControls);
-      if (!search.hasMore()) {
-        log.debug("Failed to find LDAP entry for {}", username);
+      LDAPConnection ldap = new LDAPConnection(socketFactory, ldapHost, ldapPort);
+      try {
+        ldap.bind(new DIGESTMD5BindRequest(username, password));
+        com.unboundid.ldap.sdk.SearchResult search = ldap.search(
+            baseDn,
+            config.isUserSubtree() ? com.unboundid.ldap.sdk.SearchScope.SUB : com.unboundid.ldap.sdk.SearchScope.ONE,
+            MessageFormat.format(config.getUserSearch(), username),
+            config.getNameAttribute(), config.getEmailAttribute()
+        );
+        if (search.getEntryCount() == 0) {
+          log.debug("Failed to find LDAP entry for {}", username);
+          return null;
+        } else if (search.getEntryCount() > 1) {
+          log.error("Multiple LDAP entries found for {}", username);
+          return null;
+        }
+        final com.unboundid.ldap.sdk.SearchResultEntry entry = search.getSearchEntries().get(0);
+        final String realName = getAttribute(entry, config.getNameAttribute());
+        final String email = getAttribute(entry, config.getEmailAttribute());
+        return new User(username, realName != null ? realName : username, email);
+      } finally {
+        ldap.close();
+      }
+    } catch (LDAPException e) {
+      if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
         return null;
       }
-
-      final Attributes attributes = search.next().getAttributes();
-
-      if (search.hasMore()) {
-        log.error("Multiple LDAP entries found for {}", username);
-        return null;
-      }
-
-      final String realName = getAttribute(attributes, config.getNameAttribute());
-      final String email = getAttribute(attributes, config.getEmailAttribute());
-      return new User(username, realName != null ? realName : username, email);
-    } catch (AuthenticationException e) {
-      return null;
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
     } catch (NamingException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
-    } finally {
-      if (context != null)
-        try {
-          context.close();
-        } catch (NamingException e) {
-          log.error(e.getMessage(), e);
-        }
     }
   }
 
   @Nullable
-  private String getAttribute(@NotNull Attributes attributes, @NotNull String name) throws NamingException {
-    Attribute attribute = attributes.get(name);
-    return attribute == null ? null : String.valueOf(attribute.get());
+  private String getAttribute(@NotNull com.unboundid.ldap.sdk.SearchResultEntry entry, @NotNull String name) throws NamingException {
+    com.unboundid.ldap.sdk.Attribute attribute = entry.getAttribute(name);
+    return attribute == null ? null : attribute.getValue();
   }
 
   @NotNull

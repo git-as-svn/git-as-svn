@@ -38,9 +38,10 @@ dependencies {
   compile "org.ini4j:ini4j:0.5.2"
   compile "org.atteo.classindex:classindex:3.1"
   compile "org.mapdb:mapdb:1.0.6"
+  compile "com.unboundid:unboundid-ldapsdk:2.3.8"
 
-  testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M17"
-  testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M23"
+  testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
+  testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
   testCompile "org.testng:testng:6.8.8"
 }
 
