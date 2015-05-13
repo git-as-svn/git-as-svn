@@ -59,21 +59,15 @@ userDB: !localUsers
 #
 #userDB: !ldapUsers
 
-# The type of authentication to use.
-#
-#  authentication: DIGEST-MD5
-
 # This is a URL whose format is defined by the JNDI provider.
 # It is usually an LDAP URL that specifies the domain name of the directory server to connect to,
 # and optionally the port number and distinguished name (DN) of the required root naming context.
 #
 # connectionUrl: ldap://localhost:389/ou=groups,dc=mycompany,dc=com
 
-# The JNDI context factory used to acquire our InitialContext. By
-# default, assumes use of an LDAP server using the standard JNDI LDAP
-# provider.
+# This is a file of LDAP SSL CA certificate.
 #
-# contextFactory: com.sun.jndi.ldap.LdapCtxFactory
+# ldapCertPem: ldap.pem
 
 # Pattern specifying the LDAP search filter to use after substitution of the username.
 #

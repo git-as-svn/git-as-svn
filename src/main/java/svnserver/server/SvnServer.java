@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -89,7 +90,7 @@ public class SvnServer extends Thread {
     this.config = config;
 
     cacheDb = config.getCacheConfig().createCache(basePath);
-    userDB = config.getUserDB().create();
+    userDB = config.getUserDB().create(basePath);
 
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DeltaCmd(DiffParams.class));
@@ -121,9 +122,10 @@ public class SvnServer extends Thread {
 
     repositoryMapping = config.getRepositoryMapping().create(basePath, cacheDb);
     acl = new ACL(config.getAcl());
-    serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
-    serverSocket.setReuseAddress(config.getReuseAddress());
 
+    serverSocket = new ServerSocket();
+    serverSocket.setReuseAddress(config.getReuseAddress());
+    serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
     poolExecutor = Executors.newCachedThreadPool();
     log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
   }
