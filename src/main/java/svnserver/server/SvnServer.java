@@ -122,12 +122,10 @@ public class SvnServer extends Thread {
 
     repositoryMapping = config.getRepositoryMapping().create(basePath, cacheDb);
     acl = new ACL(config.getAcl());
-    /*serverSocket = new ServerSocket(config.getPort(), 0, InetAddress.getByName(config.getHost()));
-    serverSocket.setReuseAddress(config.getReuseAddress());*/
 
-    serverSocket=new ServerSocket();
+    serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
-    serverSocket.bind(new InetSocketAddress( InetAddress.getByName(config.getHost()),config.getPort()));
+    serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
     poolExecutor = Executors.newCachedThreadPool();
     log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
   }
