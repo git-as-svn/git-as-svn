@@ -11,7 +11,7 @@ $PrefixDir=Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 ###Get Registry Value
 Function Get-RegistryValue
-{ 
+{
     param(
         [Parameters(Position=0,Mandatory=$True,HelpMessage="Enter Key")]
         [ValidateNotNullorEmpty()]
@@ -20,7 +20,7 @@ Function Get-RegistryValue
         [ValidateNotNullorEmpty()]
         [String]$Subkey
         )
-    (Get-ItemProperty $Key $Subkey).$value 
+    (Get-ItemProperty $Key $Subkey).$value
 }
 
 Function Parser-IniFile
@@ -120,8 +120,8 @@ $TheseIni="${PrefixDir}/launcher.cfg"
 $Thesevmo="${PrefixDir}/launcher.vmoptions"
 
 #Start-Process
-#Stop-Process [-id] 
-#$pro = Get-Process -name java; $pro.Kill(); 
+#Stop-Process [-id]
+#$pro = Get-Process -name java; $pro.Kill();
 
 IF($Help)
 {
@@ -138,6 +138,13 @@ IF($Stop){
 }
 
 IF($Restart){
+    $Id=Get-ProcessId
+    IF($Id -eq 0)
+    {
+        #
+        $Obj=Get-Process -Name "Java"
+    }
+    Stop-Process -Force -Id $id
     #Stop and not exit
 }
 

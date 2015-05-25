@@ -1,7 +1,7 @@
 @echo off
 
 if not exist "%~dp0launcher.ps1" goto NotFound
-start PowerShell -NoLogo -NoProfile -ExecutionPolicy unrestricted -File "%~dp0launcher.ps1" 
+start PowerShell -NoLogo -NoProfile -ExecutionPolicy unrestricted -File "%~dp0launcher.ps1"  %1 %2 %3
 
 
 :NotFound
