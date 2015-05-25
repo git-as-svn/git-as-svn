@@ -81,7 +81,7 @@ Function Get-JavaSE
     $jdk
 }
 
-Function Get-ProcessId(){
+Function Get-InsiderProcessId(){
     #Process Id
     if(!Test-Path "${PrefixDir}\launcher.lock.pid"){
       return 0
@@ -90,6 +90,29 @@ Function Get-ProcessId(){
     $id=$IdValue[0]
     $id
 }
+
+Function Stop-InsiderService(){
+    $javaid=Get-InsiderProcessId
+    IF($javaid -eq 0)
+    {
+        $Obj=Get-Process -Name "Java"
+        if( $Obj -ne $null){
+            #
+        }
+    }
+    $Obj=Get-Process -Id $javaid
+    if($Obj -ne $null){
+        Stop-Process -Force -Id $javaid
+        $Obj2=Get-Process -Id $javaid
+        if($Obj2 -ne $null){
+            Write-Host "Stop Java Service Failed !"
+            exit 3
+        }
+        Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
+        Write-Host "Stop Java Service Success !"
+    }
+}
+
 
 Function Print-HelpMessage(){
     Write-Host "git-as-svn launcher shell
@@ -130,21 +153,31 @@ IF($Help)
 }
 
 IF($Status){
+    $javaid=Get-InsiderProcessId
+    $Obj=Get-Process -Id $javaid
+    if($Obj -eq $null){
+        Write-Host "Not Found Bind Service is running!"
+        Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
+        exit 1
+    }
+    if($Obj.ProcessName -eq "Java"){
+        Write-Host "Found Process is running pid: ${Obj.Id}"
+    }else{
+        Write-Host "From Process Id find ProcessName,but this name is not java"
+        Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
+        exit 1
+    }
+
     exit 0;
 }
 
 IF($Stop){
+    Stop-InsiderService
     exit 0;
 }
 
 IF($Restart){
-    $Id=Get-ProcessId
-    IF($Id -eq 0)
-    {
-        #
-        $Obj=Get-Process -Name "Java"
-    }
-    Stop-Process -Force -Id $id
+    Stop-InsiderService
     #Stop and not exit
 }
 
