@@ -5,8 +5,8 @@
 #
 ######################################################################################>
 
-__Author__="Force.Charlie"
-__Date__="2015.05.25"
+$__Author__="Force.Charlie"
+$__Date__="2015.05.25"
 $PrefixDir=Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 ###Get Registry Value
@@ -15,7 +15,7 @@ Function Get-RegistryValue
     param(
         [Parameters(Position=0,Mandatory=$True,HelpMessage="Enter Key")]
         [ValidateNotNullorEmpty()]
-        [String]$Key
+        [String]$Key,
         [Parameter(Position=1,Mandatory=$True,HelpMessage="Enter Sub key")]
         [ValidateNotNullorEmpty()]
         [String]$Subkey
@@ -83,6 +83,9 @@ Function Get-JavaSE
 
 Function Get-ProcessId(){
     #Process Id
+    if(!Test-Path "${PrefixDir}\launcher.lock.pid"){
+      return 0
+    }
     $IdValue=Get-Content "${PrefixDir}\launcher.lock.pid"
     $id=$IdValue[0]
     $id
@@ -105,11 +108,11 @@ Write-Host  "git-as-svn Launcher `n Please Set launcher.cfg configure Redirect o
 Set launcher.vmoptions ,get jvm startup paramteres"
 
 Param(
-    [switch]$Stop
-    [switch]$Restart
-    [switch]$Status
-    [switch]$Start
-    [switch]$Help
+    [switch]$Stop,
+    [switch]$Restart,
+    [switch]$Status,
+    [switch]$Start,
+    [switch]$Help,
     [switch]$Trace
     )
 
