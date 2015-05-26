@@ -15,9 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import svnserver.TestHelper;
 
 import java.io.File;
@@ -27,6 +30,7 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.text.MessageFormat;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Listener for creating SvnTesterExternal.
@@ -52,6 +56,8 @@ public class SvnTesterExternalListener implements ITestListener {
   private static final String CONFIG_PASSWD = "" +
       "[users]\n" +
       "{0} = {1}\n";
+  private static final long SERVER_STARTUP_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+  private static final long SERVER_STARTUP_DELAY = TimeUnit.MILLISECONDS.toMillis(20);
   @Nullable
   private static NativeDaemon daemon;
 
@@ -157,6 +163,21 @@ public class SvnTesterExternalListener implements ITestListener {
           "--listen-host", HOST,
           "--listen-port", Integer.toString(port)
       });
+      long serverStartupTimeout = System.currentTimeMillis() + SERVER_STARTUP_TIMEOUT;
+      while (true) {
+        try {
+          SVNRepositoryFactory.create(url).getRevisionPropertyValue(0, "example");
+        } catch (SVNAuthenticationException ignored) {
+          break;
+        } catch (SVNException e) {
+          if ((e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_IO_ERROR) && (System.currentTimeMillis() < serverStartupTimeout)) {
+            Thread.sleep(SERVER_STARTUP_DELAY);
+            continue;
+          }
+          throw e;
+        }
+        break;
+      }
     }
 
     @NotNull
