@@ -46,7 +46,7 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
     final Map.Entry<String, VcsRepository> entry = getMapped(mapping, url.getPath());
     if (entry != null) {
       return new RepositoryInfo(
-          SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), entry.getKey(), true),
+          SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort() == SVNURL.getDefaultPortNumber(url.getProtocol()) ? -1 : url.getPort(), entry.getKey(), true),
           entry.getValue()
       );
     }
