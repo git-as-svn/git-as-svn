@@ -116,28 +116,22 @@ Function Stop-InsiderService(){
 
 Function Print-HelpMessage(){
     Write-Host "git-as-svn launcher shell
-    usage: launcher Option -Trace
-    `t-Start`tStart git-as-svn
-    `t-Stop`tStop git-as-svn
-    `t-Restart`tRestart git-as-svn
-    `t-Status`tGet git-as-svn run status
-    `t-Help`tPrint usage and exit
-    `t-Trace`tTrace output,not set redirect standard io"
+usage: launcher Option -Trace
+`t-Start`t`tStart git-as-svn
+`t-Stop`t`tStop git-as-svn
+`t-Restart`tRestart git-as-svn
+`t-Status`t`tGet git-as-svn run status
+`t-Help`t`tPrint usage and exit
+`t-Trace`t`tTrace output,not set redirect standard io"
 }
 
 
 
-Write-Host  "git-as-svn Launcher `n Please Set launcher.cfg configure Redirect output and
+Write-Host  "git-as-svn Launcher `nPlease Set launcher.cfg configure Redirect output and
 Set launcher.vmoptions ,get jvm startup paramteres"
 
-Param(
-    [switch]$Stop,
-    [switch]$Restart,
-    [switch]$Status,
-    [switch]$Start,
-    [switch]$Help,
-    [switch]$Trace
-    )
+$cmd = $args
+
 
 $TheseIni="${PrefixDir}/launcher.cfg"
 $Thesevmo="${PrefixDir}/launcher.vmoptions"
@@ -146,13 +140,13 @@ $Thesevmo="${PrefixDir}/launcher.vmoptions"
 #Stop-Process [-id]
 #$pro = Get-Process -name java; $pro.Kill();
 
-IF($Help)
+IF($cmd -icontains "Help")
 {
     Print-HelpMessage
     exit 0
 }
 
-IF($Status){
+IF($cmd -icontains "Status"){
     $javaid=Get-InsiderProcessId
     $Obj=Get-Process -Id $javaid
     if($Obj -eq $null){
@@ -171,25 +165,25 @@ IF($Status){
     exit 0;
 }
 
-IF($Stop){
+IF($cmd -icontains "Stop"){
     Stop-InsiderService
     exit 0;
 }
 
-IF($Restart){
+IF($cmd -icontains "Restart"){
     Stop-InsiderService
     #Stop and not exit
 }
-
+$RedirectFile="Debug.log"
 $IniAttr=Parser-IniFile -File "${PrefixDir}/launcher.cfg"
 $VMOptions=Get-VMOptions -File "${PrefixDir}/launcher.vmoptions"
 $RedirectFile=$IniAttr["Windows"]["stdout"]
 $JdkRawEnv=$IniAttr["Windows"]["JAVA_HOME"]
 $AppPackage=$IniAttr["Environment"]["Package"]
-if
+
 $JavaEnv=Get-JavaSE -Default $JdkRawEnv
 
-IF(! Test-Path $JavaEnv ){
+IF($JavaEnv -eq $null ){
     Write-Host "Not Found any Java JDK in your setting or in your environment!"
     Exit 1
 }
@@ -199,6 +193,6 @@ IF($Trace){
 }else{
    $ProcessObj= Start-Process -FilePath "${JavaEnv}/bin/java.exe" -PassThru -Argumentlist "${VMOptions} -jar ${PrefixDir}\git-as-svn.jar $Parameters"  `
 -RedirectStandardOutput "${RedirectFile}" -RedirectStandardError "${RedirectFile}" -WindowStyle Hidden
-   $PId=$ProcessObj.Id
+   $InPid=$ProcessObj.Id
    $ProcessObj.Id | Out-File $PrefixDir/launcher.lock.pid
 }
