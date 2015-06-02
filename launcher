@@ -90,7 +90,7 @@ function GetPrivateProfileString()
 	return 0
 }
 
-usage(){
+function usage(){
 cat<<EOF
 git-as-svn launcher helper
 usage: launcher [options]
@@ -103,27 +103,91 @@ EOF
 exit 0
 }
 
-
-start(){
-
+function ReadVMOptions(){
+	if [ ! -f "$PrefixDir/launcher.vmoptions" ]; then
+		echo "Not Found launcher.vmoptions in $PrefixDir"
+		exit 1
+	fi
+	vmArgs=""
+	while read oneline
+	do
+		if [ ! `echo $oneline |grep ^#` ]; then
+			vmArgs="${vmArgs} $oneline"
+		fi
+	done <"$PrefixDir/launcher.vmoptions"
+	echo $vmArgs
 }
 
-stop(){
-
+###
+# PID Validity Checking
+# PidValidityCheck $pid $bin
+###
+function PidValidityCheck()
+{
+	mypid=$1
+	vpid=`ps -ax | awk '{ print $1 }' | grep -e "^${mypid}$"`
+	if [ ! -z $vpid ]; then
+		echo "Not found Process ( PID: $mypid)"
+		return 1
+	fi
+	selfbin= `readlink /proc/$2/exe`
+	if [ [ $2 == $selfbin ]]; then
+		return 0
+	else
+		return 1
+	fi
 }
 
-restart(){
-
+function Startup()
+{
+	echo "Begin Startup"
+	jdkenv=$(GetPrivateProfileString Posix JAVA_HOME)
+	javabin=`which java`
+	if [ -f "$jdkenv/bin/java" ]; then
+		javabin="$jdkenv/bin/java"
+	fi
+	vmArgs=$(ReadVMOptions)
+	serstdio=$(GetPrivateProfileString Posix stdout)
+	jarpkg=$(GetPrivateProfileString Environment Package)
+	params=$(GetPrivateProfileString Environment Params)
+	nohup $javabin $vmArgs -jar $jarpkg $params >$serstdio &
+	javapid=$!
+	if [ -z $javapid ]; then
+		echo $javapid>"$PrefixDir/launcher.lock.pid"
+	else
+		echo "Start $jarpkg Failed ,your should check $serstdio."
+	fi
 }
+###
+function Stop()
+{
+  echo "Stop"
+}
+##
+function Restart()
+{
+	echo "Restart"
+	$status=$(Stop)
+	if [ $status -eq "0" ]; then
+		Startup
+	else
+		echo "Stop Service Failed."
+	fi
+}
+
+function Status()
+{
+	echo "Begin check Service run status"
+}
+
 
 for arg ;do
 	case "$arg" in
 		-help) usage ;;
-		-start) start;;
-		-stop) stop;;
-		-restart) restart;;
+		-start) Startup;;
+		-stop) Stop;;
+		-restart) Restart;;
 esac
 done
 
 usage
-
