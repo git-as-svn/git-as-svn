@@ -72,12 +72,16 @@ Function Get-JavaSE
     param(
         [String]$Default
         )
-    if($Default -eq $null){
-
-        }else{
-            $jdk=$env:JAVA_HOME
+    IF($Default -ne $null){
+        IF( Test-Path "${Default}/bin/java.exe" ){
+            $jdk=$Default
+        }ELSE{
+            Write-Host "Not found java.exe in ${Default}/bin"
+            return $null
         }
-    $jdk=""
+    }ELSE{
+        $jdk=$env:JAVA_HOME
+    }
     $jdk
 }
 
@@ -98,6 +102,8 @@ Function Stop-InsiderService(){
         $Obj=Get-Process -Name "Java"
         if( $Obj -ne $null){
             #
+            Write-Host "Not found any java process in your system."
+            return 1
         }
     }
     $Obj=Get-Process -Id $javaid
@@ -106,10 +112,11 @@ Function Stop-InsiderService(){
         $Obj2=Get-Process -Id $javaid
         if($Obj2 -ne $null){
             Write-Host "Stop Java Service Failed !"
-            exit 3
+            return 3
         }
         Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
         Write-Host "Stop Java Service Success !"
+        return 0
     }
 }
 
@@ -161,14 +168,14 @@ IF($cmd -icontains "Status"){
         Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
         exit 1
     }
-
-    exit 0;
+    exit 0
 }
 
 IF($cmd -icontains "Stop"){
     Stop-InsiderService
-    exit 0;
+    exit 0
 }
+
 
 IF($cmd -icontains "Restart"){
     Stop-InsiderService
@@ -181,7 +188,29 @@ $RedirectFile=$IniAttr["Windows"]["stdout"]
 $JdkRawEnv=$IniAttr["Windows"]["JAVA_HOME"]
 $AppPackage=$IniAttr["Environment"]["Package"]
 
-$JavaEnv=Get-JavaSE -Default $JdkRawEnv
+$oldid=Get-InsiderProcessId
+IF($oldid -ne 0){
+    $TaskObj = Get-Process -id $oldid
+    IF($TaskObj -ne $null -and $TaskObj.name -eq "Java"){
+        Write-Host "Failed start Service,${PrefixDir}:${AppPackage} alway runing !"
+        exit 1
+    }
+}
+
+$JavaEnv="$env:JAVA_HOME"
+IF($JdkRawEnv -eq $null)
+{
+    $JavaEnv=Get-JavaSE
+}else{
+    $JavaEnv=Get-JavaSE -Default $JdkRawEnv
+}
+
+$JavaExe="java"
+IF($JavaEnv -ne $null)
+{
+    $JavaExe="${JavaEnv}/bin/java.exe"
+}
+
 
 IF($JavaEnv -eq $null ){
     Write-Host "Not Found any Java JDK in your setting or in your environment!"
@@ -189,10 +218,19 @@ IF($JavaEnv -eq $null ){
 }
 ####By default
 IF($Trace){
-    Start-Process -FilePath "${JavaEnv}/bin/java.exe" -Argumentlist "${VMOptions} -jar ${PrefixDir}\git-as-svn.jar $Parameters"  -WindowStyle Hidden
+    Start-Process -FilePath "${JavaExe}" -Argumentlist "${VMOptions} -jar ${PrefixDir}\git-as-svn.jar $Parameters"  -WindowStyle Hidden
 }else{
-   $ProcessObj= Start-Process -FilePath "${JavaEnv}/bin/java.exe" -PassThru -Argumentlist "${VMOptions} -jar ${PrefixDir}\git-as-svn.jar $Parameters"  `
+   $ProcessObj= Start-Process -FilePath "${JavaExe}" -PassThru -Argumentlist "${VMOptions} -jar ${PrefixDir}\${AppPackage} $Parameters"  `
 -RedirectStandardOutput "${RedirectFile}" -RedirectStandardError "${RedirectFile}" -WindowStyle Hidden
+   IF( $ProcessObj -eq $null){
+    Write-Host "Failed to start Java Service: Package Name: ${AppPackage}"
+    Write-Host "CurrentDir: ${PrefixDir}"
+    Write-Host "JavaPath: ${JavaExe}"
+    Write-Host "VMOptions: ${VMOptions}"
+    Write-Host "Stdio: ${RedirectFile}"
+    exit 1
+   }
    $InPid=$ProcessObj.Id
    $ProcessObj.Id | Out-File $PrefixDir/launcher.lock.pid
+   Write-Host "Success ,Your can find log from: $(RedirectFile).`nView the service status type: launcher Status "
 }
