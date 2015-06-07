@@ -77,7 +77,8 @@ function GetPrivateProfileString()
 				continue
 			fi
 			field=$(echo $line | awk -F= '{gsub(" |\t","",$1); print $1}')
-			value=$(echo $line | awk -F= '{gsub(" |\t","",$2); print $2}')
+			#####Fix Me We Support Space Value
+			value=$(echo $line | awk -F= '{gsub("","",$2); print $2}')
 			#echo "'$field':'$value'"
 			if [ "X$fieldname" = "X$field" ];then
 				#echo "result value:'$result'"
@@ -141,15 +142,15 @@ function PidValidityCheck()
 function Startup()
 {
 	echo "Begin Startup"
-	jdkenv=$(GetPrivateProfileString Posix JAVA_HOME)
+	jdkenv=$(GetPrivateProfileString launcher.cfg Posix JAVA_HOME)
 	javabin=`which java`
 	if [ -f "$jdkenv/bin/java" ]; then
 		javabin="$jdkenv/bin/java"
 	fi
 	vmArgs=$(ReadVMOptions)
-	serstdio=$(GetPrivateProfileString Posix stdout)
-	jarpkg=$(GetPrivateProfileString Environment Package)
-	params=$(GetPrivateProfileString Environment Params)
+	serstdio=$(GetPrivateProfileString launcher.cfg Posix stdout)
+	jarpkg=$(GetPrivateProfileString launcher.cfg Environment Package)
+	params=$(GetPrivateProfileString launcher.cfg Environment Params)
 	nohup $javabin $vmArgs -jar $jarpkg $params >$serstdio &
 	javapid=$!
 	if [ -z $javapid ]; then
@@ -162,6 +163,9 @@ function Startup()
 function Stop()
 {
   echo "Stop"
+  if [ -f "$PrefixDir/launcher.lock.pid" ]; then
+  echo "Found pid lock file"
+  fi
 }
 ##
 function Restart()

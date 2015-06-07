@@ -187,6 +187,8 @@ $VMOptions=Get-VMOptions -File "${PrefixDir}/launcher.vmoptions"
 $RedirectFile=$IniAttr["Windows"]["stdout"]
 $JdkRawEnv=$IniAttr["Windows"]["JAVA_HOME"]
 $AppPackage=$IniAttr["Environment"]["Package"]
+######Parser-IniFile Support Spaces
+$Parameters=$IniAttr["Environment"]["Params"]
 
 $oldid=Get-InsiderProcessId
 IF($oldid -ne 0){
