@@ -69,20 +69,9 @@ Function Get-VMOptions
 
 Function Get-JavaSE
 {
-    param(
-        [String]$Default
-        )
-    IF($Default -ne $null){
-        IF( Test-Path "${Default}/bin/java.exe" ){
-            $jdk=$Default
-        }ELSE{
-            Write-Host "Not found java.exe in ${Default}/bin"
-            return $null
-        }
-    }ELSE{
-        $jdk=$env:JAVA_HOME
-    }
-    $jdk
+    $jdk=$env:JAVA_HOME
+    #This is regedit search java
+    return $jdk
 }
 
 Function Get-InsiderProcessId(){
@@ -130,6 +119,7 @@ usage: launcher Option -Trace
 `t-Status`t`tGet git-as-svn run status
 `t-Help`t`tPrint usage and exit
 `t-Trace`t`tTrace output,not set redirect standard io"
+    Write-Host "Author:$__Author__, Date: $__Date__"
 }
 
 
@@ -163,6 +153,8 @@ IF($cmd -icontains "Status"){
     }
     if($Obj.ProcessName -eq "Java"){
         Write-Host "Found Process is running pid: ${Obj.Id}"
+        $ProcessObj=Get-Process -Id $javaid
+        Write-Host "Process Info:`n$ProcessObj"
     }else{
         Write-Host "From Process Id find ProcessName,but this name is not java"
         Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
@@ -204,7 +196,7 @@ IF($JdkRawEnv -eq $null)
 {
     $JavaEnv=Get-JavaSE
 }else{
-    $JavaEnv=Get-JavaSE -Default $JdkRawEnv
+    $JavaEnv=$JdkRawEnv
 }
 
 $JavaExe="java"
