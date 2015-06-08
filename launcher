@@ -178,9 +178,10 @@ function Start-Service()
 	jarpkg=$(GetPrivateProfileString launcher.cfg Environment Package)
 	params=$(GetPrivateProfileString launcher.cfg Environment Params)
 	nohup $javabin $vmArgs -jar $jarpkg $params >$serstdio &
-	javapid=$!
-	if [ -z $javapid ]; then
-		echo $javapid>"$PrefixDir/launcher.lock.pid"
+	javaId=`echo $!`
+	if [ -d "/proc/$javaId" ]; then
+		echo $!>"$PrefixDir/launcher.lock.pid"
+		echo "Start Service Success,pid: $javaId"
 	else
 		echo "Start $jarpkg Failed ,your should check $serstdio."
 	fi
@@ -203,8 +204,8 @@ function Stop()
 function Restart()
 {
 	echo "launcher script will restart Service."
-	value=$(Stop-InsiderService)
-	if [ $value -eq "0" ]; then
+	Stop-InsiderService
+	if [ $? -eq "0" ]; then
 		Start-Service
 	else
 		echo "Stop Service Failed."
@@ -217,13 +218,13 @@ function Status()
 	echo "launcher check Service run status"
 	if [ ! -f "$PrefixDir/launcher.lock.pid" ]; then
 		echo "Not found launcher.lock.pid in Service Root $PrefixDir"
-		return 1;
+		exit 1
 	fi
 	pid=$(cat $PrefixDir/launcher.lock.pid)
 	if [ ! -d "/proc/$pid" ]; then
 		echo "Service Not running,pid:$pid"
 		rm "$PrefixDir/launcher.lock.pid"
-		return 1;
+		exit 1
 	else
 		echo "Service Start Time:"
 		ps -p $pid -o lstart
