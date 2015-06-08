@@ -139,9 +139,35 @@ function PidValidityCheck()
 	fi
 }
 
-function Startup()
+function Stop-InsiderService()
 {
-	echo "Begin Startup"
+	if [ -f "$PrefixDir/launcher.lock.pid" ]; then
+		echo "First,your pid lock file launcher.lock.pid is exists"
+	else
+		echo "Not found launcher.lock.pid in Service Root $PrefixDir"
+		return 1;
+	fi
+	pid=$(cat $PrefixDir/launcher.lock.pid)
+	if [ ! -d "/proc/$pid" ]; then
+		echo "Service Not running,pid:$pid"
+		rm "$PrefixDir/launcher.lock.pid"
+		return 1;
+	else
+		kill $pid
+		if [ $? -eq 0 ]; then
+			echo "Kill Service process success,pid is $pid"
+			rm "$PrefixDir/launcher.lock.pid"
+			return 0;
+		else
+			echo "Kill Service process failed,pid is $pid"
+		fi
+	fi
+	rm "$PrefixDir/launcher.lock.pid"
+	return 1;
+}
+
+function Start-Service()
+{
 	jdkenv=$(GetPrivateProfileString launcher.cfg Posix JAVA_HOME)
 	javabin=`which java`
 	if [ -f "$jdkenv/bin/java" ]; then
@@ -159,29 +185,52 @@ function Startup()
 		echo "Start $jarpkg Failed ,your should check $serstdio."
 	fi
 }
+
+function Startup()
+{
+	echo "launcher script will start java service."
+	Start-Service
+	exit 0
+}
 ###
 function Stop()
 {
-  echo "Stop"
-  if [ -f "$PrefixDir/launcher.lock.pid" ]; then
-  echo "Found pid lock file"
-  fi
+	echo "launcher script will Stop Service."
+	Stop-InsiderService
+	exit 0
 }
 ##
 function Restart()
 {
-	echo "Restart"
-	$status=$(Stop)
-	if [ $status -eq "0" ]; then
-		Startup
+	echo "launcher script will restart Service."
+	value=$(Stop-InsiderService)
+	if [ $value -eq "0" ]; then
+		Start-Service
 	else
 		echo "Stop Service Failed."
 	fi
+	exit 0
 }
 
 function Status()
 {
-	echo "Begin check Service run status"
+	echo "launcher check Service run status"
+	if [ ! -f "$PrefixDir/launcher.lock.pid" ]; then
+		echo "Not found launcher.lock.pid in Service Root $PrefixDir"
+		return 1;
+	fi
+	pid=$(cat $PrefixDir/launcher.lock.pid)
+	if [ ! -d "/proc/$pid" ]; then
+		echo "Service Not running,pid:$pid"
+		rm "$PrefixDir/launcher.lock.pid"
+		return 1;
+	else
+		echo "Service Start Time:"
+		ps -p $pid -o lstart
+		echo "Service is running,status info>"
+		cat "/proc/$pid/status"
+	fi
+	exit 0
 }
 
 
@@ -190,6 +239,7 @@ for arg ;do
 		-help) usage ;;
 		-start) Startup;;
 		-stop) Stop;;
+		-status) Status;;
 		-restart) Restart;;
 esac
 done
