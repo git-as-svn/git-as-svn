@@ -139,13 +139,13 @@ $Thesevmo="${PrefixDir}/launcher.vmoptions"
 #Stop-Process [-id]
 #$pro = Get-Process -name java; $pro.Kill();
 
-IF($cmd -icontains "Help")
+IF($cmd -icontains "-help")
 {
     Print-HelpMessage
     exit 0
 }
 
-IF($cmd -icontains "Status"){
+IF($cmd -icontains "-status"){
     $javaid=Get-InsiderProcessId
     $Obj=Get-Process -Id $javaid
     if($Obj -eq $null){
@@ -163,13 +163,13 @@ IF($cmd -icontains "Status"){
     exit 0
 }
 
-IF($cmd -icontains "Stop"){
+IF($cmd -icontains "-stop"){
     Stop-InsiderService
     exit 0
 }
 
 
-IF($cmd -icontains "Restart"){
+IF($cmd -icontains "-restart"){
     Stop-InsiderService
     #Stop and not exit
 }

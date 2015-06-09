@@ -4,12 +4,16 @@
 ###Windows
 launcher.bat start launcher.ps1     
 launcher.ps1 server start,stop restart status feature     
-base powershell      
+base powershell
+Example:       
+>launcher -start
+
 
 ###Linux
 launcher server start stop restart status feature,    
 base bash-shell       
-
+Example:       
+>./launcher -start
 
 
 ##launcher.cfg
