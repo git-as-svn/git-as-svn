@@ -1,6 +1,6 @@
 #!/usr/bin/env powershell
 <#####################################################################################
-# git-as-svn
+# launcher.ps1
 #
 #
 ######################################################################################>
@@ -76,12 +76,12 @@ Function Get-JavaSE
 
 Function Get-InsiderProcessId(){
     #Process Id
-    if(!Test-Path "${PrefixDir}\launcher.lock.pid"){
+    if((Test-Path "${PrefixDir}\launcher.lock.pid") -ne $True){
       return 0
     }
     $IdValue=Get-Content "${PrefixDir}\launcher.lock.pid"
-    $id=$IdValue[0]
-    $id
+    $id=$IdValue
+    return $id
 }
 
 Function Stop-InsiderService(){
@@ -98,6 +98,8 @@ Function Stop-InsiderService(){
     $Obj=Get-Process -Id $javaid
     if($Obj -ne $null){
         Stop-Process -Force -Id $javaid
+        Write-Host "Wait Stop Java Service"
+        Sleep 3
         $Obj2=Get-Process -Id $javaid
         if($Obj2 -ne $null){
             Write-Host "Stop Java Service Failed !"
@@ -111,12 +113,12 @@ Function Stop-InsiderService(){
 
 
 Function Print-HelpMessage(){
-    Write-Host "git-as-svn launcher shell
+    Write-Host "Service launcher shell
 usage: launcher Option -Trace
-`t-Start`t`tStart git-as-svn
-`t-Stop`t`tStop git-as-svn
-`t-Restart`tRestart git-as-svn
-`t-Status`t`tGet git-as-svn run status
+`t-Start`t`tStart service
+`t-Stop`t`tStop service
+`t-Restart`tRestart service
+`t-Status`t`tGet service run status
 `t-Help`t`tPrint usage and exit
 `t-Trace`t`tTrace output,not set redirect standard io"
     Write-Host "Author:$__Author__, Date: $__Date__"
@@ -124,7 +126,7 @@ usage: launcher Option -Trace
 
 
 
-Write-Host  "git-as-svn Launcher `nPlease Set launcher.cfg configure Redirect output and
+Write-Host  "Service Launcher `nPlease Set launcher.cfg configure Redirect output and
 Set launcher.vmoptions ,get jvm startup paramteres"
 
 $cmd = $args
@@ -152,9 +154,7 @@ IF($cmd -icontains "Status"){
         exit 1
     }
     if($Obj.ProcessName -eq "Java"){
-        Write-Host "Found Process is running pid: ${Obj.Id}"
-        $ProcessObj=Get-Process -Id $javaid
-        Write-Host "Process Info:`n$ProcessObj"
+        Write-Host "Process Info:`n${Obj}"
     }else{
         Write-Host "From Process Id find ProcessName,but this name is not java"
         Remove-Item -Path "${PrefixDir}/launcher.lock.pid"
@@ -173,10 +173,11 @@ IF($cmd -icontains "Restart"){
     Stop-InsiderService
     #Stop and not exit
 }
-$RedirectFile="Debug.log"
+$StdoutFile="Debug.log"
 $IniAttr=Parser-IniFile -File "${PrefixDir}/launcher.cfg"
 $VMOptions=Get-VMOptions -File "${PrefixDir}/launcher.vmoptions"
-$RedirectFile=$IniAttr["Windows"]["stdout"]
+$StdoutFile=$IniAttr["Windows"]["stdout"]
+$StderroFile=$IniAttr["Windows"]["stderr"]
 $JdkRawEnv=$IniAttr["Windows"]["JAVA_HOME"]
 $AppPackage=$IniAttr["Environment"]["Package"]
 ######Parser-IniFile Support Spaces
@@ -212,19 +213,19 @@ IF($JavaEnv -eq $null ){
 }
 ####By default
 IF($Trace){
-    Start-Process -FilePath "${JavaExe}" -Argumentlist "${VMOptions} -jar ${PrefixDir}\git-as-svn.jar $Parameters"  -WindowStyle Hidden
+    Start-Process -FilePath "${JavaExe}" -Argumentlist "${VMOptions} -jar ${PrefixDir}\service.jar $Parameters"  -WindowStyle Hidden
 }else{
-   $ProcessObj= Start-Process -FilePath "${JavaExe}" -PassThru -Argumentlist "${VMOptions} -jar ${PrefixDir}\${AppPackage} $Parameters"  `
--RedirectStandardOutput "${RedirectFile}" -RedirectStandardError "${RedirectFile}" -WindowStyle Hidden
+   $ProcessObj= Start-Process -FilePath "${JavaExe}" -PassThru -Argumentlist "${VMOptions} -jar ${PrefixDir}\${AppPackage} $Parameters"  -RedirectStandardOutput "${StdoutFile}" -RedirectStandardError "${StdoutFile}" -WindowStyle Hidden
    IF( $ProcessObj -eq $null){
     Write-Host "Failed to start Java Service: Package Name: ${AppPackage}"
     Write-Host "CurrentDir: ${PrefixDir}"
     Write-Host "JavaPath: ${JavaExe}"
     Write-Host "VMOptions: ${VMOptions}"
-    Write-Host "Stdio: ${RedirectFile}"
+    Write-Host "Stdio: ${StdoutFile}"
+    Write-Host "Your can find error info from ${StderroFile}"
     exit 1
    }
    $InPid=$ProcessObj.Id
    $ProcessObj.Id | Out-File $PrefixDir/launcher.lock.pid
-   Write-Host "Success ,Your can find log from: $(RedirectFile).`nView the service status type: launcher Status "
+   Write-Host "Success ,Your can find log from: ${StdoutFile}.`nView the service status type: launcher Status "
 }
