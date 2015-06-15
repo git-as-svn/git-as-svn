@@ -213,7 +213,7 @@ IF($JavaEnv -eq $null ){
 }
 ####By default
 IF($Trace){
-    Start-Process -FilePath "${JavaExe}" -Argumentlist "${VMOptions} -jar ${PrefixDir}\service.jar $Parameters"  -WindowStyle Hidden
+    Start-Process -FilePath "${JavaExe}" -Argumentlist "${VMOptions} -jar ${PrefixDir}\${AppPackage} $Parameters" 
 }else{
    $ProcessObj= Start-Process -FilePath "${JavaExe}" -PassThru -Argumentlist "${VMOptions} -jar ${PrefixDir}\${AppPackage} $Parameters"  -RedirectStandardOutput "${StdoutFile}" -RedirectStandardError "${StdoutFile}" -WindowStyle Hidden
    IF( $ProcessObj -eq $null){
