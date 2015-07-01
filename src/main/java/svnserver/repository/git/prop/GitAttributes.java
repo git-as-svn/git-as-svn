@@ -41,6 +41,8 @@ final class GitAttributes implements GitProperty {
   }
 
   @NotNull
+  private static final String FILTER_PREFIX = "filter=";
+  @NotNull
   private static final String EOL_PREFIX = "eol=";
   @NotNull
   private static final Rule[] emptyRules = {};
