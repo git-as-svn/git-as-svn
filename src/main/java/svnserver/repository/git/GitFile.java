@@ -7,7 +7,9 @@
  */
 package svnserver.repository.git;
 
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,18 +17,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import svnserver.StreamHelper;
 import svnserver.StringHelper;
-import svnserver.SvnConstants;
-import svnserver.TemporaryOutputStream;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsFile;
+import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -39,6 +37,8 @@ public class GitFile implements VcsFile {
   public static final byte[] emptyBytes = new byte[0];
   @NotNull
   private final GitRepository repo;
+  @Nullable
+  private final GitFilter filter;
   @NotNull
   private final GitProperty[] props;
   @Nullable
@@ -63,9 +63,11 @@ public class GitFile implements VcsFile {
     if (treeEntry != null) {
       this.treeEntry = treeEntry;
       this.props = GitProperty.joinProperties(parentProps, treeEntry.getFileName(), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
+      this.filter = repo.getFilter(treeEntry);
     } else {
       this.treeEntry = null;
       this.props = GitProperty.emptyArray;
+      this.filter = null;
     }
   }
 
@@ -149,19 +151,19 @@ public class GitFile implements VcsFile {
   @NotNull
   @Override
   public String getMd5() throws IOException, SVNException {
-    if (treeEntry == null || isDirectory()) {
-      throw new IllegalStateException("Can't get md5 from directory.");
+    if (filter == null || treeEntry == null) {
+      throw new IllegalStateException("Can't get md5 without object.");
     }
-    return repo.getObjectMD5(treeEntry.getObjectId(), isSymlink() ? 'l' : 'f', this::openStream);
+    return filter.getMd5(treeEntry.getObjectId());
   }
 
   @NotNull
   @Override
   public String getContentHash() throws IOException, SVNException {
-    if (treeEntry == null || isDirectory()) {
-      throw new IllegalStateException("Can't compare content from directory.");
+    if (filter == null || treeEntry == null) {
+      throw new IllegalStateException("Can't get content hash without object.");
     }
-    return treeEntry.getObjectId().getObject().name() + (isSymlink() ? 'l' : 'f');
+    return filter.getContentHash(treeEntry.getObjectId());
   }
 
   @Override
@@ -169,14 +171,10 @@ public class GitFile implements VcsFile {
     if (getFileMode().getObjectType() != Constants.OBJ_BLOB)
       return 0L;
 
-    if (treeEntry == null) {
+    if (filter == null || treeEntry == null) {
       throw new IllegalStateException("Can't get size without object.");
     }
-
-    final GitObject<ObjectId> objectId = treeEntry.getObjectId();
-    ObjectReader reader = objectId.getRepo().newObjectReader();
-    long objectSize = reader.getObjectSize(objectId.getObject(), treeEntry.getFileMode().getObjectType());
-    return objectSize + (isSymlink() ? 0 : SvnConstants.LINK_PREFIX.length());
+    return filter.getSize(treeEntry.getObjectId());
   }
 
   @Override
@@ -199,29 +197,13 @@ public class GitFile implements VcsFile {
     }
   }
 
-  @Nullable
-  private ObjectLoader getObjectLoader() throws IOException {
-    return treeEntry != null ? treeEntry.getObjectId().openObject() : null;
-  }
-
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    final ObjectLoader loader = getObjectLoader();
-    if (loader == null) {
-      return new ByteArrayInputStream(emptyBytes);
+    if (filter == null || treeEntry == null) {
+      throw new IllegalStateException("Can't get open stream without object.");
     }
-    if (isSymlink()) {
-      try (
-          TemporaryOutputStream outputStream = new TemporaryOutputStream();
-          InputStream inputStream = loader.openStream()
-      ) {
-        outputStream.write(SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.ISO_8859_1));
-        StreamHelper.copyTo(inputStream, outputStream);
-        return outputStream.toInputStream();
-      }
-    }
-    return loader.openStream();
+    return filter.openStream(treeEntry.getObjectId());
   }
 
   public boolean isSymlink() {

@@ -32,6 +32,9 @@ import svnserver.auth.User;
 import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
+import svnserver.repository.git.filter.GitFilter;
+import svnserver.repository.git.filter.GitFilterLink;
+import svnserver.repository.git.filter.GitFilterRaw;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
@@ -40,8 +43,6 @@ import svnserver.repository.locks.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -100,6 +101,10 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
+  @NotNull
+  private final GitFilter filterLink;
+  @NotNull
+  private final GitFilter filterRaw;
 
   public GitRepository(@NotNull Repository repository,
                        @NotNull List<Repository> linked,
@@ -115,6 +120,8 @@ public class GitRepository implements VcsRepository {
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
+    this.filterLink = new GitFilterLink(cacheDb);
+    this.filterRaw = new GitFilterRaw(cacheDb);
     linkedRepositories = new ArrayList<>(linked);
 
     this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
@@ -409,6 +416,14 @@ public class GitRepository implements VcsRepository {
     return props;
   }
 
+  @NotNull
+  public GitFilter getFilter(@NotNull GitTreeEntry treeEntry) throws IOException, SVNException {
+    if (treeEntry.getFileMode() == FileMode.SYMLINK) {
+      return filterLink;
+    }
+    return filterRaw;
+  }
+
   @Nullable
   private GitProperty parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     final GitPropertyFactory factory = PropertyMapping.getFactory(fileName);
@@ -480,26 +495,6 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public String getObjectMD5(@NotNull GitObject<? extends ObjectId> objectId, char type, @NotNull VcsSupplier<InputStream> streamFactory) throws IOException, SVNException {
-    final String key = type + objectId.getObject().name();
-    String result = md5Cache.get(key);
-    if (result == null) {
-      final byte[] buffer = new byte[64 * 1024];
-      final MessageDigest md5 = getMd5();
-      try (InputStream stream = streamFactory.get()) {
-        while (true) {
-          int size = stream.read(buffer);
-          if (size < 0) break;
-          md5.update(buffer, 0, size);
-        }
-      }
-      result = StringHelper.toHex(md5.digest());
-      md5Cache.putIfAbsent(key, result);
-    }
-    return result;
-  }
-
-  @NotNull
   @Override
   public GitRevision getRevisionInfo(int revision) throws IOException, SVNException {
     final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
@@ -527,14 +522,6 @@ public class GitRepository implements VcsRepository {
       return revisions.get(revision);
     } finally {
       lock.readLock().unlock();
-    }
-  }
-
-  private static MessageDigest getMd5() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
     }
   }
 
@@ -717,15 +704,12 @@ public class GitRepository implements VcsRepository {
           for (Map.Entry<String, String> entry : properties.entrySet()) {
             delta.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
           }
-          propertyMismatch.compute(delta.toString(), new BiFunction<String, Set<String>, Set<String>>() {
-            @Override
-            public Set<String> apply(@NotNull String key, @Nullable Set<String> value) {
-              if (value == null) {
-                value = new TreeSet<>();
-              }
-              value.add(node.getFullPath());
-              return value;
+          propertyMismatch.compute(delta.toString(), (key, value) -> {
+            if (value == null) {
+              value = new TreeSet<>();
             }
+            value.add(node.getFullPath());
+            return value;
           });
           errorCount++;
         }
