@@ -9,14 +9,11 @@ package svnserver.repository.git.filter;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.StreamHelper;
 import svnserver.SvnConstants;
-import svnserver.TemporaryOutputStream;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
@@ -45,15 +42,7 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   @Override
   public InputStream openStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
-    final ObjectLoader loader = objectId.openObject();
-    try (
-        TemporaryOutputStream outputStream = new TemporaryOutputStream();
-        InputStream inputStream = loader.openStream()
-    ) {
-      outputStream.write(SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.ISO_8859_1));
-      StreamHelper.copyTo(inputStream, outputStream);
-      return outputStream.toInputStream();
-    }
+    return new StreamWrapper(objectId.openObject().openStream());
   }
 
   @NotNull
@@ -66,5 +55,47 @@ public class GitFilterLink implements GitFilter {
   public long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     final ObjectReader reader = objectId.getRepo().newObjectReader();
     return reader.getObjectSize(objectId.getObject(), Constants.OBJ_BLOB) + SvnConstants.LINK_PREFIX.length();
+  }
+
+  private final static class StreamWrapper extends InputStream {
+    @NotNull
+    private static final byte[] LINK_PREFIX = SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.ISO_8859_1);
+    @NotNull
+    private final InputStream inner;
+    private int offset = 0;
+
+    public StreamWrapper(@NotNull InputStream inner) {
+      this.inner = inner;
+    }
+
+    @Override
+    public int read() throws IOException {
+      if (offset >= LINK_PREFIX.length) {
+        return inner.read();
+      }
+      return LINK_PREFIX[offset++];
+    }
+
+    @Override
+    public int read(@NotNull byte[] buffer, int off, int len) throws IOException {
+      if (offset >= LINK_PREFIX.length) {
+        return super.read(buffer, off, len);
+      }
+      final int size = Math.min(len, LINK_PREFIX.length - offset);
+      System.arraycopy(LINK_PREFIX, 0, buffer, off, size);
+      offset += size;
+      if (size < len) {
+        int bytes = inner.read(buffer, off + size, len - size);
+        if (bytes > 0) {
+          return size + bytes;
+        }
+      }
+      return size;
+    }
+
+    @Override
+    public void close() throws IOException {
+      inner.close();
+    }
   }
 }
