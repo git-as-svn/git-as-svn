@@ -138,7 +138,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private final Deque<HeaderEntry> pathStack = new ArrayDeque<>();
 
     @FunctionalInterface
-    private static interface HeaderWriter {
+    private interface HeaderWriter {
       void write(@NotNull SvnServerWriter writer) throws IOException, SVNException;
     }
 
@@ -334,13 +334,11 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         header = null;
       } else {
         tokenId = createTokenId();
-        header = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId, writer -> {
-          writer
-              .listBegin()
-              .word("close-dir")
-              .listBegin().string(tokenId).listEnd()
-              .listEnd();
-        });
+        header = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId, writer -> writer
+            .listBegin()
+            .word("close-dir")
+            .listBegin().string(tokenId).listEnd()
+            .listEnd());
         oldFile = header.file;
       }
       if (getStartEmpty(wcPath)) {
@@ -422,18 +420,16 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private void updateFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile prevFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
       final String tokenId = createTokenId();
       final String md5 = newFile.getMd5();
-      try (final HeaderEntry header = sendEntryHeader(context, wcPath, prevFile, newFile, "file", parentTokenId, tokenId, writer -> {
-        writer
-            .listBegin()
-            .word("close-file")
-            .listBegin()
-            .string(tokenId)
-            .listBegin()
-            .string(md5)
-            .listEnd()
-            .listEnd()
-            .listEnd();
-      })) {
+      try (final HeaderEntry header = sendEntryHeader(context, wcPath, prevFile, newFile, "file", parentTokenId, tokenId, writer -> writer
+          .listBegin()
+          .word("close-file")
+          .listBegin()
+          .string(tokenId)
+          .listBegin()
+          .string(md5)
+          .listEnd()
+          .listEnd()
+          .listEnd())) {
         final VcsFile oldFile = header.file;
         if (oldFile == null || !newFile.getContentHash().equals(oldFile.getContentHash())) {
           final SvnServerWriter writer = getWriter(context);
@@ -500,7 +496,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     @NotNull
-    private InputStream openStream(@Nullable VcsFile file) throws IOException {
+    private InputStream openStream(@Nullable VcsFile file) throws IOException, SVNException {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 

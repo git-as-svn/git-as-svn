@@ -65,7 +65,7 @@ public class GitFilterHelper {
   @NotNull
   private static Metadata createMetadata(@NotNull GitObject<ObjectId> objectId, @NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize) throws IOException, SVNException {
     final byte[] buffer = new byte[BUFFER_SIZE];
-    try (final InputStream stream = filter.openStream(objectId)) {
+    try (final InputStream stream = filter.inputStream(objectId)) {
       final MessageDigest digest = cacheMd5 != null ? createDigestMd5() : null;
       long totalSize = 0;
       while (true) {

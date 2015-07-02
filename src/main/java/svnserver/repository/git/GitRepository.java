@@ -417,8 +417,8 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public GitFilter getFilter(@NotNull GitTreeEntry treeEntry) throws IOException, SVNException {
-    if (treeEntry.getFileMode() == FileMode.SYMLINK) {
+  public GitFilter getFilter(@NotNull FileMode fileMode) throws IOException, SVNException {
+    if (fileMode == FileMode.SYMLINK) {
       return filterLink;
     }
     return filterRaw;

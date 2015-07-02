@@ -14,6 +14,7 @@ import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * File fiter interface.
@@ -29,15 +30,6 @@ public interface GitFilter {
    */
   @NotNull
   String getName();
-
-  /**
-   * Get object stream.
-   *
-   * @param objectId Object reference.
-   * @return Object stream.
-   */
-  @NotNull
-  InputStream openStream(@NotNull GitObject<ObjectId> objectId) throws IOException;
 
   /**
    * Get object content hash.
@@ -67,4 +59,21 @@ public interface GitFilter {
    */
   long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException;
 
+  /**
+   * Get object stream.
+   *
+   * @param objectId Object reference.
+   * @return Object stream.
+   */
+  @NotNull
+  InputStream inputStream(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException;
+
+  /**
+   * Create stream wrapper for object.
+   *
+   * @param stream Stream with real blob data.
+   * @return Return output stream for writing original file data.
+   */
+  @NotNull
+  OutputStream outputStream(@NotNull OutputStream stream) throws IOException, SVNException;
 }

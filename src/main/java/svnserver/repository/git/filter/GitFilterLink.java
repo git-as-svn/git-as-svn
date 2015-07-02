@@ -13,11 +13,12 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.SvnConstants;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StreamCorruptedException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -26,6 +27,8 @@ import java.nio.charset.StandardCharsets;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitFilterLink implements GitFilter {
+  @NotNull
+  private static final byte[] LINK_PREFIX = "link ".getBytes(StandardCharsets.ISO_8859_1);
   @NotNull
   private final DB cacheDb;
 
@@ -41,12 +44,6 @@ public class GitFilterLink implements GitFilter {
 
   @NotNull
   @Override
-  public InputStream openStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
-    return new StreamWrapper(objectId.openObject().openStream());
-  }
-
-  @NotNull
-  @Override
   public String getMd5(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     return GitFilterHelper.getMd5(this, cacheDb, objectId, false);
   }
@@ -54,17 +51,27 @@ public class GitFilterLink implements GitFilter {
   @Override
   public long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     final ObjectReader reader = objectId.getRepo().newObjectReader();
-    return reader.getObjectSize(objectId.getObject(), Constants.OBJ_BLOB) + SvnConstants.LINK_PREFIX.length();
+    return reader.getObjectSize(objectId.getObject(), Constants.OBJ_BLOB) + LINK_PREFIX.length;
   }
 
-  private final static class StreamWrapper extends InputStream {
-    @NotNull
-    private static final byte[] LINK_PREFIX = SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.ISO_8859_1);
+  @NotNull
+  @Override
+  public InputStream inputStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
+    return new InputWrapper(objectId.openObject().openStream());
+  }
+
+  @NotNull
+  @Override
+  public OutputStream outputStream(@NotNull OutputStream stream) {
+    return new OutputWrapper(stream);
+  }
+
+  private final static class InputWrapper extends InputStream {
     @NotNull
     private final InputStream inner;
     private int offset = 0;
 
-    public StreamWrapper(@NotNull InputStream inner) {
+    public InputWrapper(@NotNull InputStream inner) {
       this.inner = inner;
     }
 
@@ -73,7 +80,7 @@ public class GitFilterLink implements GitFilter {
       if (offset >= LINK_PREFIX.length) {
         return inner.read();
       }
-      return LINK_PREFIX[offset++];
+      return LINK_PREFIX[offset++] & 0xFF;
     }
 
     @Override
@@ -91,6 +98,55 @@ public class GitFilterLink implements GitFilter {
         }
       }
       return size;
+    }
+
+    @Override
+    public void close() throws IOException {
+      inner.close();
+    }
+  }
+
+  private final static class OutputWrapper extends OutputStream {
+    @NotNull
+    private final OutputStream inner;
+    private int offset = 0;
+
+    public OutputWrapper(@NotNull OutputStream inner) {
+      this.inner = inner;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      if (offset >= LINK_PREFIX.length) {
+        inner.write(b);
+        return;
+      }
+      if ((LINK_PREFIX[offset++] & 0xFF) != b) {
+        throw new StreamCorruptedException("Link entry has invalid content prefix.");
+      }
+    }
+
+    @Override
+    public void write(@NotNull byte[] buffer, int off, int len) throws IOException {
+      if (offset >= LINK_PREFIX.length) {
+        super.write(buffer, off, len);
+        return;
+      }
+      final int size = Math.min(len, LINK_PREFIX.length - offset);
+      for (int i = 0; i < size; ++i) {
+        if ((LINK_PREFIX[offset + i] & 0xFF) != buffer[off + i]) {
+          throw new StreamCorruptedException("Link entry has invalid content prefix.");
+        }
+      }
+      offset += size;
+      if (size < len) {
+        inner.write(buffer, off + size, len - size);
+      }
+    }
+
+    @Override
+    public void flush() throws IOException {
+      inner.flush();
     }
 
     @Override

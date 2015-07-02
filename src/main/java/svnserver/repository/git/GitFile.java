@@ -34,8 +34,6 @@ import java.util.*;
  */
 public class GitFile implements VcsFile {
   @NotNull
-  public static final byte[] emptyBytes = new byte[0];
-  @NotNull
   private final GitRepository repo;
   @Nullable
   private final GitFilter filter;
@@ -63,7 +61,7 @@ public class GitFile implements VcsFile {
     if (treeEntry != null) {
       this.treeEntry = treeEntry;
       this.props = GitProperty.joinProperties(parentProps, treeEntry.getFileName(), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
-      this.filter = repo.getFilter(treeEntry);
+      this.filter = repo.getFilter(treeEntry.getFileMode());
     } else {
       this.treeEntry = null;
       this.props = GitProperty.emptyArray;
@@ -87,6 +85,11 @@ public class GitFile implements VcsFile {
       fullPathCache = StringHelper.joinPath(parentPath, getFileName());
     }
     return fullPathCache;
+  }
+
+  @Nullable
+  public GitFilter getFilter() {
+    return filter;
   }
 
   @Nullable
@@ -199,11 +202,11 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public InputStream openStream() throws IOException {
+  public InputStream openStream() throws IOException, SVNException {
     if (filter == null || treeEntry == null) {
       throw new IllegalStateException("Can't get open stream without object.");
     }
-    return filter.openStream(treeEntry.getObjectId());
+    return filter.inputStream(treeEntry.getObjectId());
   }
 
   public boolean isSymlink() {

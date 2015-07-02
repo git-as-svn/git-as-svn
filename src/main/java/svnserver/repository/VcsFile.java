@@ -57,7 +57,7 @@ public interface VcsFile {
   long getSize() throws IOException, SVNException;
 
   @NotNull
-  InputStream openStream() throws IOException;
+  InputStream openStream() throws IOException, SVNException;
 
   boolean isDirectory();
 

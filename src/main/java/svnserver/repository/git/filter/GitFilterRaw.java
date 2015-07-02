@@ -18,6 +18,7 @@ import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Get object as is.
@@ -40,13 +41,6 @@ public final class GitFilterRaw implements GitFilter {
 
   @NotNull
   @Override
-  public InputStream openStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
-    final ObjectLoader loader = objectId.openObject();
-    return loader.openStream();
-  }
-
-  @NotNull
-  @Override
   public String getMd5(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     return GitFilterHelper.getMd5(this, cacheDb, objectId, false);
   }
@@ -55,5 +49,18 @@ public final class GitFilterRaw implements GitFilter {
   public long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     final ObjectReader reader = objectId.getRepo().newObjectReader();
     return reader.getObjectSize(objectId.getObject(), Constants.OBJ_BLOB);
+  }
+
+  @NotNull
+  @Override
+  public InputStream inputStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
+    final ObjectLoader loader = objectId.openObject();
+    return loader.openStream();
+  }
+
+  @NotNull
+  @Override
+  public OutputStream outputStream(@NotNull OutputStream stream) {
+    return stream;
   }
 }
