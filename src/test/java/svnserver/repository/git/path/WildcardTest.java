@@ -7,7 +7,9 @@
  */
 package svnserver.repository.git.path;
 
+import org.eclipse.jgit.errors.InvalidPatternException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -32,7 +34,7 @@ public class WildcardTest {
 
   @Test(dataProvider = "splitPatternData")
   public static void splitPatternTest(@NotNull String pattern, @NotNull String[] expected) {
-    final List<String> actual = Wildcard.splitPattern(pattern);
+    final List<String> actual = WildcardHelper.splitPattern(pattern);
     Assert.assertEquals(actual.toArray(new String[actual.size()]), expected, pattern);
   }
 
@@ -40,6 +42,7 @@ public class WildcardTest {
   public static Object[][] normalizePatternData() {
     return new Object[][]{
         // Simple mask
+        new Object[]{"*", new String[]{"*"}},
         new Object[]{"**", new String[]{}},
         new Object[]{"**/", new String[]{"**/"}},
         new Object[]{"foo", new String[]{"**/", "foo"}},
@@ -74,7 +77,29 @@ public class WildcardTest {
 
   @Test(dataProvider = "normalizePatternData")
   public static void normalizePatternTest(@NotNull String pattern, @NotNull String[] expected) {
-    final List<String> actual = Wildcard.normalizePattern(Wildcard.splitPattern(pattern));
+    final List<String> actual = WildcardHelper.normalizePattern(WildcardHelper.splitPattern(pattern));
     Assert.assertEquals(actual.toArray(new String[actual.size()]), expected, pattern);
+  }
+
+  @DataProvider
+  public static Object[][] nameMatcherData() {
+    return new Object[][]{
+        new Object[]{"*", false, "*"},
+        new Object[]{"*/", false, "*"},
+        new Object[]{"foo*.bar", false, "foo*.bar"},
+        new Object[]{"foo*.bar/", false, "foo*.bar"},
+        new Object[]{"foo*buzz*.bar", false, "foo*buzz*.bar"},
+        new Object[]{"fo[oO]*.bar", false, null},
+        new Object[]{"sample", false, "sample"},
+        new Object[]{"sample/", false, "sample"},
+        new Object[]{"**/", true, null},
+    };
+  }
+
+  @Test(dataProvider = "nameMatcherData")
+  public static void nameMatcherTest(@NotNull String mask, boolean recursive, @Nullable String svnMask) throws InvalidPatternException {
+    final NameMatcher matcher = WildcardHelper.nameMatcher(mask);
+    Assert.assertEquals(matcher.isRecursive(), recursive);
+    Assert.assertEquals(svnMask, matcher.getSvnMask());
   }
 }
