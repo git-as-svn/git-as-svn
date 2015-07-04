@@ -5,7 +5,7 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.repository.git.path.matcher;
+package svnserver.repository.git.path.matcher.name;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,5 +43,31 @@ public class SimpleMatcher implements NameMatcher {
   @Override
   public String getSvnMask() {
     return prefix + "*" + suffix;
+  }
+
+  @Override
+  public boolean equals(@Nullable Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final SimpleMatcher that = (SimpleMatcher) o;
+
+    return (dirOnly == that.dirOnly)
+        && (prefix.equals(that.prefix))
+        && suffix.equals(that.suffix);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = prefix.hashCode();
+    result = 31 * result + suffix.hashCode();
+    result = 31 * result + (dirOnly ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  @NotNull
+  public String toString() {
+    return prefix + "*" + suffix + (dirOnly ? "/" : "");
   }
 }

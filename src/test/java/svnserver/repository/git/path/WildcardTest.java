@@ -162,7 +162,8 @@ public class WildcardTest {
     PathMatcher matcher = wildcard.getMatcher();
     for (String name : WildcardHelper.splitPattern(path)) {
       if (matcher == null) break;
-      matcher = matcher.createChild(name);
+      boolean isDir = name.endsWith("/");
+      matcher = matcher.createChild(isDir ? name.substring(0, name.length() - 1) : name, isDir);
     }
     if (expectedMatch == null) {
       Assert.assertNull(matcher);
@@ -170,5 +171,22 @@ public class WildcardTest {
       Assert.assertNotNull(matcher);
       Assert.assertEquals(matcher.isMatch(), expectedMatch.booleanValue());
     }
+  }
+
+  @DataProvider
+  public static Object[][] tryRemoveBackslashesData() {
+    return new Object[][]{
+        new Object[]{"test", "test"},
+        new Object[]{"test\\n", "test\\n"},
+        new Object[]{"space\\ ", "space "},
+        new Object[]{"foo\\!bar\\ ", "foo!bar "},
+        new Object[]{"\\#some", "#some"},
+        new Object[]{"foo\\[bar", "foo\\[bar"},
+    };
+  }
+
+  @Test(dataProvider = "tryRemoveBackslashesData")
+  public static void tryRemoveBackslashesTest(@NotNull String pattern, @NotNull String expected) {
+    Assert.assertEquals(WildcardHelper.tryRemoveBackslashes(pattern), expected);
   }
 }

@@ -11,7 +11,6 @@ import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -71,46 +70,5 @@ public class GitIgnoreTest {
     Assert.assertEquals(props.get("svn:ignore"), local);
     Assert.assertEquals(props.get("svn:global-ignores"), global);
     Assert.assertEquals(props.size(), (local == null ? 0 : 1) + (global == null ? 0 : 1));
-  }
-
-  @DataProvider
-  public static Object[][] testLineParseData() {
-    return new Object[][]{
-        // Comments
-        new Object[]{"#comment", ""},
-        new Object[]{"\\#comment", "#comment"},
-        // Trailing space
-        new Object[]{"space ", "space"},
-        new Object[]{"space\\ ", "space "},
-        new Object[]{"space\\ \\     ", "space  "},
-        new Object[]{"    ", ""},
-        // Mask begins from "**/"
-        new Object[]{"**/foo/bar", "**/foo/bar"},
-        new Object[]{"**/foo/", "foo"},
-        new Object[]{"**/foo", "foo"},
-        new Object[]{"/**/foo/bar", "**/foo/bar"},
-        new Object[]{"/**/foo/", "foo"},
-        new Object[]{"/**/foo", "foo"},
-        new Object[]{"**/**/foo/bar", "**/foo/bar"},
-        new Object[]{"**/**/foo/", "foo"},
-        new Object[]{"**/**/foo", "foo"},
-        new Object[]{"/**/**/foo/bar", "**/foo/bar"},
-        new Object[]{"/**/**/foo/", "foo"},
-        new Object[]{"/**/**/foo", "foo"},
-        new Object[]{"foo/**/", "/foo"},
-        new Object[]{"foo/**", "/foo"},
-        new Object[]{"foo/**/**/", "/foo"},
-        new Object[]{"foo/**/**", "/foo"},
-        // Directories
-        new Object[]{"foo", "foo"},
-        new Object[]{"foo/", "/foo"},
-        new Object[]{"/foo", "/foo"},
-        new Object[]{"/foo/", "/foo"},
-    };
-  }
-
-  @Test(dataProvider = "testLineParseData")
-  public void testLineParse(@NotNull String raw, @NotNull String expected) {
-    Assert.assertEquals(GitIgnore.parseLine(raw), expected);
   }
 }

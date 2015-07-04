@@ -17,7 +17,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PathMatcher {
   @Nullable
-  PathMatcher createChild(@NotNull String name);
+  PathMatcher createChild(@NotNull String name, boolean isDir);
 
   boolean isMatch();
+
+  @Nullable
+  default String getSvnMaskLocal() {
+    return null;
+  }
+
+  @Nullable
+  default String getSvnMaskGlobal() {
+    return null;
+  }
 }

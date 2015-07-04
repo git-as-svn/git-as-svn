@@ -5,36 +5,38 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.repository.git.path.matcher;
+package svnserver.repository.git.path.matcher.path;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.repository.git.path.NameMatcher;
+import svnserver.repository.git.path.PathMatcher;
 
 /**
- * Recursive directory matcher like "**".
+ * Matches with any path.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class RecursiveMatcher implements NameMatcher {
-  public static final RecursiveMatcher INSTANCE = new RecursiveMatcher();
+public class AlwaysMatcher implements PathMatcher {
+  @NotNull
+  public final static AlwaysMatcher INSTANCE = new AlwaysMatcher();
 
-  private RecursiveMatcher() {
+  private AlwaysMatcher() {
+  }
+
+  @Nullable
+  @Override
+  public PathMatcher createChild(@NotNull String name, boolean isDir) {
+    return this;
   }
 
   @Override
-  public boolean isMatch(@NotNull String name, boolean isDir) {
+  public boolean isMatch() {
     return true;
   }
 
   @Nullable
   @Override
-  public String getSvnMask() {
-    return null;
-  }
-
-  @Override
-  public boolean isRecursive() {
-    return true;
+  public String getSvnMaskGlobal() {
+    return "*";
   }
 }

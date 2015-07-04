@@ -9,10 +9,10 @@ package svnserver.repository.git.path;
 
 import org.eclipse.jgit.errors.InvalidPatternException;
 import org.jetbrains.annotations.NotNull;
-import svnserver.repository.git.path.matcher.ComplexMatcher;
-import svnserver.repository.git.path.matcher.EqualsMatcher;
-import svnserver.repository.git.path.matcher.RecursiveMatcher;
-import svnserver.repository.git.path.matcher.SimpleMatcher;
+import svnserver.repository.git.path.matcher.name.ComplexMatcher;
+import svnserver.repository.git.path.matcher.name.EqualsMatcher;
+import svnserver.repository.git.path.matcher.name.RecursiveMatcher;
+import svnserver.repository.git.path.matcher.name.SimpleMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +37,11 @@ public class WildcardHelper {
       return RecursiveMatcher.INSTANCE;
     }
     final boolean dirOnly = mask.endsWith("/");
-    final String nameMask = dirOnly ? mask.substring(0, mask.length() - 1) : mask;
-    if ((mask.indexOf('[') < 0) && (mask.indexOf(']') < 0) && (mask.indexOf('\\') < 0)) {
+    final String nameMask = tryRemoveBackslashes(dirOnly ? mask.substring(0, mask.length() - 1) : mask);
+    if ((nameMask.indexOf('[') < 0) && (nameMask.indexOf(']') < 0) && (nameMask.indexOf('\\') < 0)) {
       // Subversion compatible mask.
-      if (mask.indexOf('?') < 0) {
-        int asterisk = mask.indexOf('*');
+      if (nameMask.indexOf('?') < 0) {
+        int asterisk = nameMask.indexOf('*');
         if (asterisk < 0) {
           return new EqualsMatcher(nameMask, dirOnly);
         } else if (mask.indexOf('*', asterisk + 1) < 0) {
@@ -52,6 +52,36 @@ public class WildcardHelper {
     } else {
       return new ComplexMatcher(nameMask, dirOnly, false);
     }
+  }
+
+  @NotNull
+  public static String tryRemoveBackslashes(@NotNull String pattern) {
+    final StringBuilder result = new StringBuilder(pattern.length());
+    int start = 0;
+    while (true) {
+      int next = pattern.indexOf('\\', start);
+      if (next == -1) {
+        if (start < pattern.length()) {
+          result.append(pattern, start, pattern.length());
+        }
+        break;
+      }
+      if (next == pattern.length() - 1) {
+        // Return original string.
+        return pattern;
+      }
+      switch (pattern.charAt(next + 1)) {
+        case ' ':
+        case '#':
+        case '!':
+          result.append(pattern, start, next);
+          start = next + 1;
+          break;
+        default:
+          return pattern;
+      }
+    }
+    return result.toString();
   }
 
   /**
