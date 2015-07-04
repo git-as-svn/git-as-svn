@@ -18,7 +18,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.repository.git.path.PathMatcher;
 import svnserver.repository.git.path.Wildcard;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
 
@@ -28,20 +27,6 @@ import java.util.regex.PatternSyntaxException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 final class GitIgnore implements GitProperty {
-  @SuppressWarnings("UnusedDeclaration")
-  public static final class Factory implements GitPropertyFactory {
-    @NotNull
-    @Override
-    public String getFileName() {
-      return ".gitignore";
-    }
-
-    @NotNull
-    @Override
-    public GitProperty create(@NotNull String content) throws IOException {
-      return new GitIgnore(content);
-    }
-  }
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitIgnore.class);

@@ -34,8 +34,10 @@ final class GitTortoise implements GitProperty {
 
     @NotNull
     @Override
-    public GitProperty create(@NotNull String content) throws IOException {
-      return new GitTortoise(content);
+    public GitProperty[] create(@NotNull String content) throws IOException {
+      return new GitProperty[]{
+          new GitTortoise(content)
+      };
     }
   }
 

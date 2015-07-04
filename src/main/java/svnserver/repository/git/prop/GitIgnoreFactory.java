@@ -7,33 +7,28 @@
  */
 package svnserver.repository.git.prop;
 
-import org.atteo.classindex.IndexSubclasses;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 /**
- * Factory for creating GitProperty.
+ * Factory for creating .gitignore properties.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@IndexSubclasses
-public interface GitPropertyFactory {
-
-  /**
-   * Return mappeg git file name.
-   *
-   * @return File name.
-   */
+@SuppressWarnings("UnusedDeclaration")
+public final class GitIgnoreFactory implements GitPropertyFactory {
   @NotNull
-  String getFileName();
+  @Override
+  public String getFileName() {
+    return ".gitignore";
+  }
 
-  /**
-   * Create git property worker by file content.
-   *
-   * @param content File content.
-   * @return Git property worker.
-   */
   @NotNull
-  GitProperty[] create(@NotNull String content) throws IOException;
+  @Override
+  public GitProperty[] create(@NotNull String content) throws IOException {
+    return new GitProperty[]{
+        new GitIgnore(content)
+    };
+  }
 }

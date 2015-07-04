@@ -99,7 +99,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
-  private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
+  private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
   @NotNull
   private final GitFilter filterLink;
@@ -401,9 +401,9 @@ public class GitRepository implements VcsRepository {
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
       for (GitTreeEntry entry : entryProvider.get()) {
-        final GitProperty property = parseGitProperty(entry.getFileName(), entry.getObjectId());
-        if (property != null) {
-          propList.add(property);
+        final GitProperty[] parseProps = parseGitProperty(entry.getFileName(), entry.getObjectId());
+        if (parseProps.length > 0) {
+          propList.addAll(Arrays.asList(parseProps));
         }
       }
       if (!propList.isEmpty()) {
@@ -424,20 +424,23 @@ public class GitRepository implements VcsRepository {
     return filterRaw;
   }
 
-  @Nullable
-  private GitProperty parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  @NotNull
+  private GitProperty[] parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     final GitPropertyFactory factory = PropertyMapping.getFactory(fileName);
     if (factory == null)
-      return null;
+      return GitProperty.emptyArray;
 
     return cachedParseGitProperty(objectId, factory);
   }
 
-  @Nullable
-  private GitProperty cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
-    GitProperty property = filePropertyCache.get(objectId.getObject());
+  @NotNull
+  private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
+    GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
       property = factory.create(loadContent(objectId));
+      if (property.length == 0) {
+        property = GitProperty.emptyArray;
+      }
       filePropertyCache.put(objectId.getObject(), property);
     }
     return property;
