@@ -21,15 +21,17 @@ public class SimpleMatcher implements NameMatcher {
   private final String prefix;
   @NotNull
   private final String suffix;
+  private final boolean dirOnly;
 
-  public SimpleMatcher(@NotNull String prefix, @NotNull String suffix) {
+  public SimpleMatcher(@NotNull String prefix, @NotNull String suffix, boolean dirOnly) {
     this.prefix = prefix;
     this.suffix = suffix;
+    this.dirOnly = dirOnly;
   }
 
   @Override
-  public boolean isMatch(@NotNull String name) {
-    return (name.length() >= prefix.length() + suffix.length()) && name.startsWith(prefix) && name.endsWith(suffix);
+  public boolean isMatch(@NotNull String name, boolean isDir) {
+    return (!dirOnly || isDir) && (name.length() >= prefix.length() + suffix.length()) && name.startsWith(prefix) && name.endsWith(suffix);
   }
 
   @Override
@@ -40,6 +42,6 @@ public class SimpleMatcher implements NameMatcher {
   @Nullable
   @Override
   public String getSvnMask() {
-    return MatcherHelper.stripSlash(prefix + "*" + suffix);
+    return prefix + "*" + suffix;
   }
 }

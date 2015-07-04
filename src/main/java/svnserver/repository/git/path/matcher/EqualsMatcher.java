@@ -19,14 +19,16 @@ import svnserver.repository.git.path.NameMatcher;
 public class EqualsMatcher implements NameMatcher {
   @NotNull
   private final String name;
+  private final boolean dirOnly;
 
-  public EqualsMatcher(@NotNull String name) {
+  public EqualsMatcher(@NotNull String name, boolean dirOnly) {
     this.name = name;
+    this.dirOnly = dirOnly;
   }
 
   @Override
-  public boolean isMatch(@NotNull String name) {
-    return this.name.equals(name);
+  public boolean isMatch(@NotNull String name, boolean isDir) {
+    return (!dirOnly || isDir) && this.name.equals(name);
   }
 
   @Override
@@ -37,6 +39,6 @@ public class EqualsMatcher implements NameMatcher {
   @Nullable
   @Override
   public String getSvnMask() {
-    return MatcherHelper.stripSlash(name);
+    return name;
   }
 }

@@ -25,16 +25,14 @@ public class ComplexMatcher implements NameMatcher {
   @NotNull
   private final IMatcher matcher;
 
-  public ComplexMatcher(@NotNull String pattern, boolean isSvnMask) throws InvalidPatternException {
-    final boolean dirOnly = pattern.endsWith("/");
-    this.svnMask = isSvnMask ? MatcherHelper.stripSlash(pattern) : null;
+  public ComplexMatcher(@NotNull String pattern, boolean dirOnly, boolean isSvnMask) throws InvalidPatternException {
+    this.svnMask = isSvnMask ? pattern : null;
     this.matcher = PathMatcher.createPathMatcher(dirOnly ? pattern.substring(0, pattern.length() - 1) : pattern, null, dirOnly);
   }
 
   @Override
-  public boolean isMatch(@NotNull String name) {
-    final boolean dir = name.endsWith("/");
-    return matcher.matches(dir ? name.substring(0, name.length() - 1) : name, dir);
+  public boolean isMatch(@NotNull String name, boolean isDir) {
+    return matcher.matches(name, isDir);
   }
 
   @Override

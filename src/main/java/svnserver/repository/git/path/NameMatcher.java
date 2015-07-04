@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface NameMatcher {
-  boolean isMatch(@NotNull String name);
+  boolean isMatch(@NotNull String name, boolean isDir);
 
   boolean isRecursive();
 

@@ -29,29 +29,28 @@ import java.util.Objects;
 public class WildcardHelper {
   public static final char PATH_SEPARATOR = '/';
 
-  private static final boolean DEBUG_WILDCARD = false;
-
-  private WildcardHelper() {
-  }
+  private static final boolean DEBUG_WILDCARD = true;
 
   @NotNull
   public static NameMatcher nameMatcher(@NotNull String mask) throws InvalidPatternException {
     if (mask.equals("**/")) {
       return RecursiveMatcher.INSTANCE;
     }
+    final boolean dirOnly = mask.endsWith("/");
+    final String nameMask = dirOnly ? mask.substring(0, mask.length() - 1) : mask;
     if ((mask.indexOf('[') < 0) && (mask.indexOf(']') < 0) && (mask.indexOf('\\') < 0)) {
       // Subversion compatible mask.
       if (mask.indexOf('?') < 0) {
         int asterisk = mask.indexOf('*');
         if (asterisk < 0) {
-          return new EqualsMatcher(mask);
+          return new EqualsMatcher(nameMask, dirOnly);
         } else if (mask.indexOf('*', asterisk + 1) < 0) {
-          return new SimpleMatcher(mask.substring(0, asterisk), mask.substring(asterisk + 1));
+          return new SimpleMatcher(nameMask.substring(0, asterisk), nameMask.substring(asterisk + 1), dirOnly);
         }
       }
-      return new ComplexMatcher(mask, true);
+      return new ComplexMatcher(nameMask, dirOnly, true);
     } else {
-      return new ComplexMatcher(mask, false);
+      return new ComplexMatcher(nameMask, dirOnly, false);
     }
   }
 
@@ -89,6 +88,9 @@ public class WildcardHelper {
     if (tokens.size() == 1 && !tokens.get(0).endsWith("/")) {
       tokens.add(0, "**/");
     }
+    if (tokens.size() == 0 || !tokens.get(0).equals("/")) {
+      tokens.add(0, "/");
+    }
     ListIterator<String> iter = tokens.listIterator();
     String prev = null;
     while (iter.hasNext()) {
@@ -114,22 +116,18 @@ public class WildcardHelper {
           iter.set(prev);
           continue;
         }
-        if (token.equals("*")) {
+        if (token.equals("*") || token.equals("**")) {
           iter.previous();
           iter.previous();
           iter.remove();
-          if (iter.hasPrevious()) {
-            prev = iter.previous();
-            iter.next();
-          } else {
-            prev = null;
-          }
+          assert (iter.hasPrevious());
+          prev = iter.previous();
+          iter.next();
           continue;
         }
       }
       if (token.equals("**")) {
         iter.remove();
-        iter.previous();
         continue;
       }
       if (token.equals("**/")) {

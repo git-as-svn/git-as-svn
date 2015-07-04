@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.repository.git.path.NameMatcher;
 
 /**
- * Recursive matcher like "**".
+ * Recursive directory matcher like "**".
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
@@ -23,7 +23,7 @@ public class RecursiveMatcher implements NameMatcher {
   }
 
   @Override
-  public boolean isMatch(@NotNull String name) {
+  public boolean isMatch(@NotNull String name, boolean isDir) {
     return true;
   }
 
