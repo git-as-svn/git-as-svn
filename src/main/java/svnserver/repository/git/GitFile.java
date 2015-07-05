@@ -61,7 +61,7 @@ public class GitFile implements VcsFile {
     if (treeEntry != null) {
       this.treeEntry = treeEntry;
       this.props = GitProperty.joinProperties(parentProps, treeEntry.getFileName(), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
-      this.filter = repo.getFilter(treeEntry.getFileMode());
+      this.filter = repo.getFilter(treeEntry.getFileMode(), this.props);
     } else {
       this.treeEntry = null;
       this.props = GitProperty.emptyArray;
@@ -117,7 +117,7 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
-  public Map<String, String> getProperties() throws IOException {
+  public Map<String, String> getProperties() throws IOException, SVNException {
     final Map<String, String> props = getUpstreamProperties();
     final FileMode fileMode = getFileMode();
     if (fileMode.equals(FileMode.SYMLINK)) {
@@ -126,7 +126,7 @@ public class GitFile implements VcsFile {
       if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
         props.put(SVNProperty.EXECUTABLE, "*");
       }
-      if (fileMode.getObjectType() == Constants.OBJ_BLOB && repo.isObjectBinary(getObjectId())) {
+      if (fileMode.getObjectType() == Constants.OBJ_BLOB && repo.isObjectBinary(filter, getObjectId())) {
         props.put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
       }
     }

@@ -38,7 +38,7 @@ public interface GitFilter {
    * @return Object content hash.
    */
   @NotNull
-  default String getContentHash(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  default String getContentHash(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     return getName() + " " + objectId.getObject().getName();
   }
 
@@ -49,7 +49,7 @@ public interface GitFilter {
    * @return Object md5 sum.
    */
   @NotNull
-  String getMd5(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException;
+  String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException;
 
   /**
    * Get object size.
@@ -57,7 +57,7 @@ public interface GitFilter {
    * @param objectId Object reference.
    * @return Object size in bytes.
    */
-  long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException;
+  long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException;
 
   /**
    * Get object stream.
@@ -66,7 +66,7 @@ public interface GitFilter {
    * @return Object stream.
    */
   @NotNull
-  InputStream inputStream(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException;
+  InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException;
 
   /**
    * Create stream wrapper for object.

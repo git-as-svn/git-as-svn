@@ -119,6 +119,12 @@ final class GitIgnore implements GitProperty {
     }
   }
 
+  @Nullable
+  @Override
+  public String getFilterName() {
+    return null;
+  }
+
   private static String addIgnore(@Nullable String oldValue, @NotNull String[] ignores) {
     final Set<String> contains = new HashSet<>();
     final StringBuilder result = new StringBuilder();

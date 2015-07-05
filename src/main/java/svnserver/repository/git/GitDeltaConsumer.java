@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.TemporaryOutputStream;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.git.filter.GitFilter;
+import svnserver.repository.git.prop.GitProperty;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -91,7 +92,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   public GitObject<ObjectId> getObjectId() throws IOException, SVNException {
     if ((originalId != null) && originalId.equals(objectId) && (newFilter == null)) {
-      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE);
+      this.
+          newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, GitProperty.emptyArray);
       if (oldFilter == null) {
         throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
@@ -126,7 +128,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window != null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE);
+      // todo #72: Need correct new filter calculation. In this case file will write as is and after that rewrite with correct filter.
+      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, GitProperty.emptyArray);
       window = new SVNDeltaProcessor();
       window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream), true);
     } catch (IOException e) {
@@ -171,5 +174,14 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
       }
     }
+  }
+
+  @NotNull
+  public String getFilterName() {
+    if (newFilter != null)
+      return newFilter.getName();
+    if (oldFilter != null)
+      return oldFilter.getName();
+    throw new IllegalStateException();
   }
 }

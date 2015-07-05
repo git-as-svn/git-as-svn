@@ -54,7 +54,7 @@ public final class GitLogPair {
     }
   }
 
-  public boolean isPropertyModified() throws IOException {
+  public boolean isPropertyModified() throws IOException, SVNException {
     if ((newEntry == null) || (oldEntry == null)) return false;
     final Map<String, String> newProps = newEntry.getProperties();
     final Map<String, String> oldProps = oldEntry.getProperties();

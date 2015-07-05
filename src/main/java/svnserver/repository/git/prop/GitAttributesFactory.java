@@ -32,6 +32,8 @@ public final class GitAttributesFactory implements GitPropertyFactory {
   private static final Logger log = LoggerFactory.getLogger(GitAttributesFactory.class);
   @NotNull
   private static final String EOL_PREFIX = "eol=";
+  @NotNull
+  private static final String FILTER_PREFIX = "filter=";
 
   @NotNull
   @Override
@@ -49,6 +51,11 @@ public final class GitAttributesFactory implements GitPropertyFactory {
         final Wildcard wildcard = new Wildcard(tokens[0]);
         processProperty(properties, wildcard, SVNProperty.MIME_TYPE, getMimeType(tokens));
         processProperty(properties, wildcard, SVNProperty.EOL_STYLE, getEol(tokens));
+
+        final String filter = getFilter(tokens);
+        if (filter != null) {
+          properties.add(new GitFilterProperty(wildcard.getMatcher(), filter));
+        }
       } catch (InvalidPatternException | PatternSyntaxException e) {
         log.warn("Found invalid git pattern: {}", line);
       }
@@ -92,6 +99,17 @@ public final class GitAttributesFactory implements GitPropertyFactory {
           case "crlf":
             return SVNProperty.EOL_STYLE_CRLF;
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private String getFilter(String[] tokens) {
+    for (int i = 1; i < tokens.length; ++i) {
+      final String token = tokens[i];
+      if (token.startsWith(FILTER_PREFIX)) {
+        return token.substring(FILTER_PREFIX.length());
       }
     }
     return null;

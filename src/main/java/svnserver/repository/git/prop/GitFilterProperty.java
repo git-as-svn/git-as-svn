@@ -16,29 +16,25 @@ import svnserver.repository.git.path.PathMatcher;
 import java.util.Map;
 
 /**
- * Parse and processing .gitignore.
+ * Replace file filter.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitFileProperty implements GitProperty {
+public final class GitFilterProperty implements GitProperty {
   @NotNull
   private final PathMatcher matcher;
   @NotNull
-  private final String property;
-  @NotNull
-  private final String value;
+  private final String filterName;
 
   /**
    * Set property to all matched file.
    *
-   * @param matcher  File matcher.
-   * @param property Property name.
-   * @param value    Property value.
+   * @param matcher    File matcher.
+   * @param filterName Filter name.
    */
-  public GitFileProperty(@NotNull PathMatcher matcher, @NotNull String property, @NotNull String value) {
+  public GitFilterProperty(@NotNull PathMatcher matcher, @NotNull String filterName) {
     this.matcher = matcher;
-    this.property = property;
-    this.value = value;
+    this.filterName = filterName;
   }
 
   @Override
@@ -48,7 +44,7 @@ public final class GitFileProperty implements GitProperty {
   @Nullable
   @Override
   public String getFilterName() {
-    return null;
+    return matcher.isMatch() ? filterName : null;
   }
 
   @Nullable
@@ -56,50 +52,27 @@ public final class GitFileProperty implements GitProperty {
   public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
     final boolean isDir = fileMode.getObjectType() != Constants.OBJ_BLOB;
     final PathMatcher matcherChild = matcher.createChild(name, isDir);
-    if (matcherChild != null) {
-      if (isDir) {
-        return new GitFileProperty(matcherChild, property, value);
-      } else if (matcherChild.isMatch()) {
-        return new GitProperty() {
-          @Override
-          public void apply(@NotNull Map<String, String> props) {
-            props.put(property, value);
-          }
-
-          @Nullable
-          @Override
-          public String getFilterName() {
-            return null;
-          }
-
-          @Nullable
-          @Override
-          public GitProperty createForChild(@NotNull String name, @NotNull FileMode mode) {
-            return null;
-          }
-        };
-      }
+    if ((matcherChild != null) && (isDir || matcherChild.isMatch())) {
+      return new GitFilterProperty(matcherChild, filterName);
     }
     return null;
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    GitFileProperty that = (GitFileProperty) o;
+    final GitFilterProperty that = (GitFilterProperty) o;
 
     return matcher.equals(that.matcher)
-        && property.equals(that.property)
-        && value.equals(that.value);
+        && filterName.equals(that.filterName);
   }
 
   @Override
   public int hashCode() {
     int result = matcher.hashCode();
-    result = 31 * result + property.hashCode();
-    result = 31 * result + value.hashCode();
+    result = 31 * result + filterName.hashCode();
     return result;
   }
 }

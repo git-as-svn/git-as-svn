@@ -73,6 +73,12 @@ final class GitTortoise implements GitProperty {
 
   @Nullable
   @Override
+  public String getFilterName() {
+    return null;
+  }
+
+  @Nullable
+  @Override
   public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
     return null;
   }

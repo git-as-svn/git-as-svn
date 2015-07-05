@@ -33,6 +33,7 @@ import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.filter.GitFilter;
+import svnserver.repository.git.filter.GitFilterGzip;
 import svnserver.repository.git.filter.GitFilterLink;
 import svnserver.repository.git.filter.GitFilterRaw;
 import svnserver.repository.git.prop.GitProperty;
@@ -417,9 +418,24 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public GitFilter getFilter(@NotNull FileMode fileMode) throws IOException, SVNException {
+  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) throws IOException, SVNException {
+    if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
+      return filterRaw;
+    }
     if (fileMode == FileMode.SYMLINK) {
       return filterLink;
+    }
+    for (int i = props.length - 1; i >= 0; --i) {
+      final String filterName = props[i].getFilterName();
+      if (filterName != null) {
+        // todo #72: Temporary code.
+        switch (filterName) {
+          case "gzip":
+            return new GitFilterGzip(cacheDb);
+          default:
+            throw new IOException("Invalid filter");
+        }
+      }
     }
     return filterRaw;
   }
@@ -483,13 +499,12 @@ public class GitRepository implements VcsRepository {
     return repository;
   }
 
-  public boolean isObjectBinary(@Nullable GitObject<? extends ObjectId> objectId) throws IOException {
-    if (objectId == null) return false;
-    final String key = objectId.getObject().name();
+  public boolean isObjectBinary(@Nullable GitFilter filter, @Nullable GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+    if (objectId == null || filter == null) return false;
+    final String key = filter.getName() + " " + objectId.getObject().name();
     Boolean result = binaryCache.get(key);
     if (result == null) {
-      final ObjectReader reader = objectId.getRepo().newObjectReader();
-      try (InputStream stream = reader.open(objectId.getObject()).openStream()) {
+      try (InputStream stream = filter.inputStream(objectId)) {
         result = SVNFileUtil.detectMimeType(stream) != null;
       }
       binaryCache.putIfAbsent(key, result);
@@ -689,12 +704,32 @@ public class GitRepository implements VcsRepository {
       treeStack.push(file);
     }
 
-    public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties) throws IOException, SVNException {
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties, @NotNull String filterName) throws IOException, SVNException {
       final GitFile dir = treeStack.element();
       final GitFile node = name == null ? dir : dir.getEntry(name);
       if (node == null) {
         throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
       }
+
+      if (!node.isDirectory()) {
+        assert (node.getFilter() != null);
+        if (!filterName.equals(node.getFilter().getName())) {
+          // todo #72: Replace by IllegalStateException
+          final String delta = "Invalid writer filter:\n"
+              + "Expected: " + node.getFilter().getName() + "\n"
+              + "Actual: " + filterName + "\n";
+          propertyMismatch.compute(delta, (key, value) -> {
+            if (value == null) {
+              value = new TreeSet<>();
+            }
+            value.add(node.getFullPath());
+            return value;
+          });
+          errorCount++;
+          return;
+        }
+      }
+
       final Map<String, String> expected = node.getProperties();
       if (!properties.equals(expected)) {
         if (errorCount < MAX_PROPERTY_ERRROS) {
@@ -842,7 +877,7 @@ public class GitRepository implements VcsRepository {
 
     @Override
     public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
-      validateActions.add(validator -> validator.checkProperties(null, props));
+      validateActions.add(validator -> validator.checkProperties(null, props, ""));
     }
 
     @Override
@@ -879,7 +914,7 @@ public class GitRepository implements VcsRepository {
         return;
       }
       current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
-      validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties()));
+      validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer.getFilterName()));
     }
 
     private FileMode getFileMode(@NotNull Map<String, String> props) {

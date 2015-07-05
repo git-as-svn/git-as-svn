@@ -72,7 +72,7 @@ public class GitLogEntry implements VcsLogEntry {
   }
 
   @Override
-  public boolean isPropertyModified() throws IOException {
+  public boolean isPropertyModified() throws IOException, SVNException {
     return pair.isPropertyModified();
   }
 

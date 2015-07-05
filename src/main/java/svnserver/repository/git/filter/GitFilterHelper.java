@@ -32,7 +32,7 @@ public class GitFilterHelper {
   private GitFilterHelper() {
   }
 
-  public static long getSize(@NotNull GitFilter filter, @NotNull DB cacheDb, @NotNull GitObject<ObjectId> objectId, boolean needMd5) throws IOException, SVNException {
+  public static long getSize(@NotNull GitFilter filter, @NotNull DB cacheDb, @NotNull GitObject<? extends ObjectId> objectId, boolean needMd5) throws IOException, SVNException {
     final Map<String, Long> cacheSize = getCacheSize(filter, cacheDb);
     final Long size = cacheSize.get(objectId.getObject().name());
     if (size != null) {
@@ -42,7 +42,7 @@ public class GitFilterHelper {
   }
 
   @NotNull
-  public static String getMd5(@NotNull GitFilter filter, @NotNull DB cacheDb, @NotNull GitObject<ObjectId> objectId, boolean needSize) throws IOException, SVNException {
+  public static String getMd5(@NotNull GitFilter filter, @NotNull DB cacheDb, @NotNull GitObject<? extends ObjectId> objectId, boolean needSize) throws IOException, SVNException {
     final Map<String, String> cacheMd5 = getCacheMd5(filter, cacheDb);
     final String md5 = cacheMd5.get(objectId.getObject().name());
     if (md5 != null) {
@@ -63,7 +63,7 @@ public class GitFilterHelper {
   }
 
   @NotNull
-  private static Metadata createMetadata(@NotNull GitObject<ObjectId> objectId, @NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize) throws IOException, SVNException {
+  private static Metadata createMetadata(@NotNull GitObject<? extends ObjectId> objectId, @NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize) throws IOException, SVNException {
     final byte[] buffer = new byte[BUFFER_SIZE];
     try (final InputStream stream = filter.inputStream(objectId)) {
       final MessageDigest digest = cacheMd5 != null ? createDigestMd5() : null;

@@ -20,7 +20,7 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface GitProperty {
-  static final GitProperty[] emptyArray = {};
+  GitProperty[] emptyArray = {};
 
   /**
    * Update file properties on element.
@@ -39,6 +39,14 @@ public interface GitProperty {
   @Nullable
   GitProperty createForChild(@NotNull String name, @NotNull FileMode mode);
 
+  /**
+   * Get overrided filter name.
+   *
+   * @return Filter name.
+   */
+  @Nullable
+  String getFilterName();
+
   @NotNull
   static GitProperty[] joinProperties(@NotNull GitProperty[] parentProps, @NotNull String entryName, @NotNull FileMode fileMode, @NotNull GitProperty[] entryProps) {
     if (parentProps.length == 0) {
@@ -56,5 +64,4 @@ public interface GitProperty {
     System.arraycopy(entryProps, 0, joined, index, entryProps.length);
     return index == parentProps.length ? joined : Arrays.copyOf(joined, index + entryProps.length);
   }
-
 }

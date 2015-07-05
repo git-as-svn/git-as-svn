@@ -76,6 +76,12 @@ public final class GitAutoProperty implements GitProperty {
 
   @Nullable
   @Override
+  public String getFilterName() {
+    return null;
+  }
+
+  @Nullable
+  @Override
   public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
     if (fileMode.getObjectType() == Constants.OBJ_BLOB) {
       return null;

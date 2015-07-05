@@ -44,19 +44,19 @@ public class GitFilterLink implements GitFilter {
 
   @NotNull
   @Override
-  public String getMd5(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     return GitFilterHelper.getMd5(this, cacheDb, objectId, false);
   }
 
   @Override
-  public long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     final ObjectReader reader = objectId.getRepo().newObjectReader();
     return reader.getObjectSize(objectId.getObject(), Constants.OBJ_BLOB) + LINK_PREFIX.length;
   }
 
   @NotNull
   @Override
-  public InputStream inputStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
+  public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     return new InputWrapper(objectId.openObject().openStream());
   }
 

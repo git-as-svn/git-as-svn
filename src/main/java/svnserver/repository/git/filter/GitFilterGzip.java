@@ -40,18 +40,18 @@ public class GitFilterGzip implements GitFilter {
 
   @NotNull
   @Override
-  public String getMd5(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     return GitFilterHelper.getMd5(this, cacheDb, objectId, true);
   }
 
   @Override
-  public long getSize(@NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     return GitFilterHelper.getSize(this, cacheDb, objectId, true);
   }
 
   @NotNull
   @Override
-  public InputStream inputStream(@NotNull GitObject<ObjectId> objectId) throws IOException {
+  public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     return new GZIPInputStream(objectId.openObject().openStream());
   }
 
