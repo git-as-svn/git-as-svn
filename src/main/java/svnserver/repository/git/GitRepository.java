@@ -559,14 +559,14 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsDeltaConsumer createFile() throws IOException, SVNException {
-    return new GitDeltaConsumer(this, null);
+  public VcsDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), null);
   }
 
   @NotNull
   @Override
-  public VcsDeltaConsumer modifyFile(@NotNull VcsFile file) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, (GitFile) file);
+  public VcsDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), (GitFile) file);
   }
 
   @Override
@@ -831,7 +831,7 @@ public class GitRepository implements VcsRepository {
       }
     }
 
-    private void checkLockFile(@NotNull GitFile file) throws SVNException {
+    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
       final String fullPath = file.getFullPath();
       if (file.isDirectory()) {
         final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);

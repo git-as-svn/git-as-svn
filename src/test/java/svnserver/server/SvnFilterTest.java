@@ -9,8 +9,6 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -128,17 +126,9 @@ public class SvnFilterTest {
       final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
 
       // Add filter to file.
-      createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", null);
+      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", null);
       // On file read now we must have uncompressed content.
-      try {
-        createFile(repo, "/data.z", foo, null);
-      } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_HOOK_FAILURE)) {
-          // todo #72: Remove this try/cache check after read-write support.
-          return;
-        }
-        throw e;
-      }
+      createFile(repo, "/data.z", foo, null);
       checkFileContent(repo, "/data.z", foo);
       // Modify file.
       modifyFile(repo, "/data.z", bar, repo.getLatestRevision());

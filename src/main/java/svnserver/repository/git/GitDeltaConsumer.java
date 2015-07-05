@@ -43,6 +43,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private final Map<String, String> props;
   @NotNull
   private final GitRepository gitRepository;
+  @NotNull
+  private final GitEntry entry;
   @Nullable
   private SVNDeltaProcessor window;
   @Nullable
@@ -59,9 +61,12 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private TemporaryOutputStream temporaryStream;
+  @Nullable
+  private String md5;
 
-  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file) throws IOException, SVNException {
+  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @NotNull GitEntry entry, @Nullable GitFile file) throws IOException, SVNException {
     this.gitRepository = gitRepository;
+    this.entry = entry;
     if (file != null) {
       this.originalMd5 = file.getMd5();
       this.originalId = file.getObjectId();
@@ -129,7 +134,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
       // todo #72: Need correct new filter calculation. In this case file will write as is and after that rewrite with correct filter.
-      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, GitProperty.emptyArray);
+      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
       window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream), true);
     } catch (IOException e) {
@@ -153,6 +158,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
       final Repository repo = gitRepository.getRepository();
       final ObjectInserter inserter = repo.newObjectInserter();
+      md5 = window.textDeltaEnd();
       try (InputStream stream = temporaryStream.toInputStream()) {
         objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
       }
@@ -166,7 +172,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Override
   public void validateChecksum(@NotNull String md5) throws SVNException {
     if (window != null) {
-      if (!md5.equals(window.textDeltaEnd())) {
+      if (!md5.equals(this.md5)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
       }
     } else if (originalMd5 != null) {

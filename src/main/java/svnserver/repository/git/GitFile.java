@@ -32,7 +32,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFile implements VcsFile {
+public class GitFile implements GitEntry, VcsFile {
   @NotNull
   private final GitRepository repo;
   @Nullable
@@ -75,8 +75,20 @@ public class GitFile implements VcsFile {
 
   @NotNull
   @Override
+  public GitEntry createChild(@NotNull String name, boolean isDir) {
+    return new GitEntryImpl(props, name, isDir);
+  }
+
+  @NotNull
+  @Override
   public String getFileName() {
     return treeEntry == null ? "" : treeEntry.getFileName();
+  }
+
+  @NotNull
+  @Override
+  public GitProperty[] getRawProperties() {
+    return props;
   }
 
   @NotNull
@@ -178,11 +190,6 @@ public class GitFile implements VcsFile {
       throw new IllegalStateException("Can't get size without object.");
     }
     return filter.getSize(treeEntry.getObjectId());
-  }
-
-  @Override
-  public boolean isDirectory() {
-    return getKind().equals(SVNNodeKind.DIR);
   }
 
   @NotNull
