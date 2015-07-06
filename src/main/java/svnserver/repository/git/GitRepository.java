@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git;
 
+import com.sun.nio.sctp.InvalidStreamException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.RenameDetector;
 import org.eclipse.jgit.lib.*;
@@ -33,7 +34,7 @@ import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.filter.GitFilter;
-import svnserver.repository.git.filter.GitFilterGzip;
+import svnserver.repository.git.filter.GitFilterHelper;
 import svnserver.repository.git.filter.GitFilterLink;
 import svnserver.repository.git.filter.GitFilterRaw;
 import svnserver.repository.git.prop.GitProperty;
@@ -98,14 +99,12 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, Boolean> binaryCache;
   @NotNull
+  private final Map<String, GitFilter> gitFilters;
+  @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
   private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
-  @NotNull
-  private final GitFilter filterLink;
-  @NotNull
-  private final GitFilter filterRaw;
 
   public GitRepository(@NotNull Repository repository,
                        @NotNull List<Repository> linked,
@@ -121,8 +120,7 @@ public class GitRepository implements VcsRepository {
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
-    this.filterLink = new GitFilterLink(cacheDb);
-    this.filterRaw = new GitFilterRaw(cacheDb);
+    this.gitFilters = GitFilterHelper.createFilters(cacheDb);
     linkedRepositories = new ArrayList<>(linked);
 
     this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
@@ -420,24 +418,22 @@ public class GitRepository implements VcsRepository {
   @NotNull
   public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) throws IOException, SVNException {
     if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
-      return filterRaw;
+      return gitFilters.get(GitFilterRaw.NAME);
     }
     if (fileMode == FileMode.SYMLINK) {
-      return filterLink;
+      return gitFilters.get(GitFilterLink.NAME);
     }
     for (int i = props.length - 1; i >= 0; --i) {
       final String filterName = props[i].getFilterName();
       if (filterName != null) {
-        // todo #72: Temporary code.
-        switch (filterName) {
-          case "gzip":
-            return new GitFilterGzip(cacheDb);
-          default:
-            throw new IOException("Invalid filter");
+        final GitFilter filter = gitFilters.get(filterName);
+        if (filter == null) {
+          throw new InvalidStreamException("Unknown filter requested: " + filterName);
         }
+        return filter;
       }
     }
-    return filterRaw;
+    return gitFilters.get(GitFilterRaw.NAME);
   }
 
   @NotNull
@@ -714,7 +710,7 @@ public class GitRepository implements VcsRepository {
       if (!node.isDirectory()) {
         assert (node.getFilter() != null);
         if (!filterName.equals(node.getFilter().getName())) {
-          // todo #72: Replace by IllegalStateException
+          // todo #77: Replace by IllegalStateException
           final String delta = "Invalid writer filter:\n"
               + "Expected: " + node.getFilter().getName() + "\n"
               + "Actual: " + filterName + "\n";

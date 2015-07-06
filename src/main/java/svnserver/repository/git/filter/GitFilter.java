@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.filter;
 
+import org.atteo.classindex.IndexSubclasses;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
@@ -22,6 +23,7 @@ import java.io.OutputStream;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@IndexSubclasses
 public interface GitFilter {
   /**
    * Filter name.

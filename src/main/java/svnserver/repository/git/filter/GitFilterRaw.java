@@ -28,6 +28,8 @@ import java.io.OutputStream;
 public final class GitFilterRaw implements GitFilter {
   @NotNull
   private final DB cacheDb;
+  @NotNull
+  public static final String NAME = "raw";
 
   public GitFilterRaw(@NotNull DB cacheDb) {
     this.cacheDb = cacheDb;
@@ -36,7 +38,7 @@ public final class GitFilterRaw implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return "raw";
+    return NAME;
   }
 
   @NotNull

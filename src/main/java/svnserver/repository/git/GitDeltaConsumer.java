@@ -131,7 +131,6 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window != null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      // todo #72: Need correct new filter calculation. In this case file will write as is and after that rewrite with correct filter.
       newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
       window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream), true);

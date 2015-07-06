@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.filter;
 
+import org.atteo.classindex.ClassIndex;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +18,10 @@ import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -96,6 +99,25 @@ public class GitFilterHelper {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  @NotNull
+  public static Map<String, GitFilter> createFilters(@NotNull DB cacheDb) {
+    final Map<String, GitFilter> result = new HashMap<>();
+    for (Class<? extends GitFilter> type : ClassIndex.getSubclasses(GitFilter.class)) {
+      if (Modifier.isAbstract(type.getModifiers())) continue;
+      if (!Modifier.isPublic(type.getModifiers())) continue;
+      try {
+        final GitFilter filter = type.getConstructor(DB.class).newInstance(cacheDb);
+        final GitFilter oldFilter = result.put(filter.getName(), filter);
+        if (oldFilter != null) {
+          throw new RuntimeException("Found two classes mapped for same file: " + oldFilter.getClass() + " and " + type);
+        }
+      } catch (ReflectiveOperationException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return result;
   }
 
   private static class Metadata {

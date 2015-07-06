@@ -30,6 +30,8 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   private static final byte[] LINK_PREFIX = "link ".getBytes(StandardCharsets.ISO_8859_1);
   @NotNull
+  public static final String NAME = "link";
+  @NotNull
   private final DB cacheDb;
 
   public GitFilterLink(@NotNull DB cacheDb) {
@@ -39,7 +41,7 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return "link";
+    return NAME;
   }
 
   @NotNull
