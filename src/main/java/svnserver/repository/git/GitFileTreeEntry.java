@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import svnserver.StringHelper;
 import svnserver.repository.VcsCopyFrom;
+import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
 
@@ -30,39 +30,39 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFileTreeEntry implements GitFile {
+public class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   @NotNull
   private final GitRepository repo;
   @NotNull
   private final GitFilter filter;
   @NotNull
-  private final GitProperty[] props;
-  @NotNull
   private final GitTreeEntry treeEntry;
-  @NotNull
-  private final String parentPath;
 
   private final int revision;
 
   // Cache
-  @Nullable
-  private Iterable<GitTreeEntry> rawEntriesCache;
+  @NotNull
+  private final EntriesCache entriesCache;
   @Nullable
   private Iterable<GitFile> treeEntriesCache;
-  @Nullable
-  private String fullPathCache;
 
-  public GitFileTreeEntry(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry, @NotNull String parentPath, @NotNull GitProperty[] parentProps, int revision) throws IOException, SVNException {
+  private GitFileTreeEntry(@NotNull GitRepository repo, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision, @NotNull EntriesCache entriesCache) throws IOException, SVNException {
+    super(parentProps, parentPath, repo.collectProperties(treeEntry, entriesCache), treeEntry.getFileName(), treeEntry.getFileMode());
     this.repo = repo;
-    this.parentPath = parentPath;
     this.revision = revision;
     this.treeEntry = treeEntry;
-    this.props = GitProperty.joinProperties(parentProps, treeEntry.getFileName(), treeEntry.getFileMode(), repo.collectProperties(treeEntry, this::getRawEntries));
-    this.filter = repo.getFilter(treeEntry.getFileMode(), this.props);
+    this.entriesCache = entriesCache;
+    this.filter = repo.getFilter(treeEntry.getFileMode(), this.getRawProperties());
   }
 
-  public GitFileTreeEntry(@NotNull GitRepository repo, @NotNull RevCommit commit, int revisionId) throws IOException, SVNException {
-    this(repo, new GitTreeEntry(repo.getRepository(), FileMode.TREE, commit.getTree(), ""), "", GitProperty.emptyArray, revisionId);
+  @NotNull
+  public static GitFile create(@NotNull GitRepository repo, @NotNull RevCommit commit, int revision) throws IOException, SVNException {
+    return create(repo, GitProperty.emptyArray, "", new GitTreeEntry(repo.getRepository(), FileMode.TREE, commit.getTree(), ""), revision);
+  }
+
+  @NotNull
+  private static GitFile create(@NotNull GitRepository repo, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision) throws IOException, SVNException {
+    return new GitFileTreeEntry(repo, parentProps, parentPath, treeEntry, revision, new EntriesCache(repo, treeEntry));
   }
 
   @NotNull
@@ -74,26 +74,6 @@ public class GitFileTreeEntry implements GitFile {
   @Override
   public int getRevision() {
     return revision;
-  }
-
-  @NotNull
-  @Override
-  public String getFileName() {
-    return treeEntry.getFileName();
-  }
-
-  @NotNull
-  @Override
-  public GitProperty[] getRawProperties() {
-    return props;
-  }
-
-  @NotNull
-  public String getFullPath() {
-    if (fullPathCache == null) {
-      fullPathCache = StringHelper.joinPath(parentPath, getFileName());
-    }
-    return fullPathCache;
   }
 
   @NotNull
@@ -158,21 +138,13 @@ public class GitFileTreeEntry implements GitFile {
   }
 
   @NotNull
-  private Iterable<GitTreeEntry> getRawEntries() throws IOException {
-    if (rawEntriesCache == null) {
-      rawEntriesCache = repo.loadTree(treeEntry);
-    }
-    return rawEntriesCache;
-  }
-
-  @NotNull
   @Override
   public Iterable<GitFile> getEntries() throws IOException, SVNException {
     if (treeEntriesCache == null) {
       final List<GitFile> result = new ArrayList<>();
       final String fullPath = getFullPath();
-      for (GitTreeEntry entry : getRawEntries()) {
-        result.add(new GitFileTreeEntry(repo, entry, fullPath, props, revision));
+      for (GitTreeEntry entry : entriesCache.get()) {
+        result.add(GitFileTreeEntry.create(repo, getRawProperties(), fullPath, entry, revision));
       }
       treeEntriesCache = result;
     }
@@ -180,10 +152,10 @@ public class GitFileTreeEntry implements GitFile {
   }
 
   @Nullable
-  public GitFileTreeEntry getEntry(@NotNull String name) throws IOException, SVNException {
-    for (GitTreeEntry entry : getRawEntries()) {
+  public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
+    for (GitTreeEntry entry : entriesCache.get()) {
       if (entry.getFileName().equals(name)) {
-        return new GitFileTreeEntry(repo, entry, getFullPath(), props, revision);
+        return create(repo, getRawProperties(), getFullPath(), entry, revision);
       }
     }
     return null;
@@ -201,12 +173,13 @@ public class GitFileTreeEntry implements GitFile {
     if (o == null || getClass() != o.getClass()) return false;
     GitFileTreeEntry that = (GitFileTreeEntry) o;
     return Objects.equals(treeEntry, that.treeEntry)
-        && Arrays.equals(props, that.props);
+        && Arrays.equals(getRawProperties(), that.getRawProperties());
   }
 
   @Override
   public int hashCode() {
-    return treeEntry.hashCode();
+    return treeEntry.hashCode()
+        + Arrays.hashCode(getRawProperties()) * 31;
   }
 
   @Override
@@ -215,5 +188,24 @@ public class GitFileTreeEntry implements GitFile {
         "fullPath='" + getFullPath() + '\'' +
         ", objectId=" + treeEntry +
         '}';
+  }
+
+  private static class EntriesCache implements VcsSupplier<Iterable<GitTreeEntry>> {
+    private final GitRepository repo;
+    private final GitTreeEntry treeEntry;
+    public Iterable<GitTreeEntry> rawEntriesCache;
+
+    public EntriesCache(GitRepository repo, GitTreeEntry treeEntry) {
+      this.repo = repo;
+      this.treeEntry = treeEntry;
+    }
+
+    @Override
+    public Iterable<GitTreeEntry> get() throws SVNException, IOException {
+      if (rawEntriesCache == null) {
+        rawEntriesCache = repo.loadTree(treeEntry);
+      }
+      return rawEntriesCache;
+    }
   }
 }

@@ -34,7 +34,7 @@ public interface GitFile extends GitEntry, VcsFile {
   @NotNull
   @Override
   default GitEntry createChild(@NotNull String name, boolean isDir) {
-    return new GitEntryImpl(getRawProperties(), getFullPath(), name, isDir);
+    return new GitEntryImpl(getRawProperties(), getFullPath(), GitProperty.emptyArray, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE);
   }
 
   @NotNull

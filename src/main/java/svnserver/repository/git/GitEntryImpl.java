@@ -34,10 +34,10 @@ public class GitEntryImpl implements GitEntry {
   @Nullable
   private String fullPathCache;
 
-  public GitEntryImpl(@NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull String name, boolean isDir) {
+  public GitEntryImpl(@NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitProperty[] props, @NotNull String name, @NotNull FileMode fileMode) {
     this.parentPath = parentPath;
     this.name = name;
-    this.props = GitProperty.joinProperties(parentProps, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE, GitProperty.emptyArray);
+    this.props = GitProperty.joinProperties(parentProps, name, fileMode, props);
   }
 
   @NotNull
@@ -70,6 +70,6 @@ public class GitEntryImpl implements GitEntry {
   @NotNull
   @Override
   public GitEntry createChild(@NotNull String name, boolean isDir) {
-    return new GitEntryImpl(props, getFullPath(), name, isDir);
+    return new GitEntryImpl(props, getFullPath(), GitProperty.emptyArray, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE);
   }
 }

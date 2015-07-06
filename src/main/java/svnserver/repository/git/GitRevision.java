@@ -82,8 +82,8 @@ public final class GitRevision implements VcsRevision {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
     }
-    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : new GitFileTreeEntry(repo, gitOldCommit, revision - 1);
-    final GitFile newTree = new GitFileTreeEntry(repo, gitNewCommit, revision);
+    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit, revision - 1);
+    final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit, revision);
 
     final Map<String, GitLogEntry> changes = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
@@ -140,7 +140,7 @@ public final class GitRevision implements VcsRevision {
     if (gitNewCommit == null) {
       return new GitFileEmptyTree(repo, "", revision);
     }
-    GitFile result = new GitFileTreeEntry(repo, gitNewCommit, revision);
+    GitFile result = GitFileTreeEntry.create(repo, gitNewCommit, revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;

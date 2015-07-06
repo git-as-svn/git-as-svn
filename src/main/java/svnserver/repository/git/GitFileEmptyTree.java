@@ -32,7 +32,7 @@ public class GitFileEmptyTree extends GitEntryImpl implements GitFile {
   private final int revision;
 
   public GitFileEmptyTree(@NotNull GitRepository repo, @NotNull String parentPath, int revision) {
-    super(GitProperty.emptyArray, parentPath, "", true);
+    super(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE);
     this.repo = repo;
     this.revision = revision;
   }
