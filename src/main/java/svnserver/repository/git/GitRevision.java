@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsRevision;
-import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -83,8 +82,8 @@ public final class GitRevision implements VcsRevision {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
     }
-    final GitFile oldTree = gitOldCommit == null ? new GitFile(repo, null, "", GitProperty.emptyArray, revision - 1) : new GitFile(repo, gitOldCommit, revision - 1);
-    final GitFile newTree = new GitFile(repo, gitNewCommit, revision);
+    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : new GitFileTreeEntry(repo, gitOldCommit, revision - 1);
+    final GitFile newTree = new GitFileTreeEntry(repo, gitNewCommit, revision);
 
     final Map<String, GitLogEntry> changes = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
@@ -139,9 +138,9 @@ public final class GitRevision implements VcsRevision {
   @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
     if (gitNewCommit == null) {
-      return new GitFile(repo, null, "", GitProperty.emptyArray, revision);
+      return new GitFileEmptyTree(repo, "", revision);
     }
-    GitFile result = new GitFile(repo, gitNewCommit, revision);
+    GitFile result = new GitFileTreeEntry(repo, gitNewCommit, revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;

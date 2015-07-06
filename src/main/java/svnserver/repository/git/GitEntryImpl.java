@@ -9,7 +9,13 @@ package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+import svnserver.StringHelper;
+import svnserver.repository.VcsFile;
 import svnserver.repository.git.prop.GitProperty;
+
+import java.io.IOException;
 
 /**
  * Simple GitEntry implementation.
@@ -21,8 +27,15 @@ public class GitEntryImpl implements GitEntry {
   private final GitProperty[] props;
   @NotNull
   private final String name;
+  @NotNull
+  private final String parentPath;
 
-  public GitEntryImpl(@NotNull GitProperty[] parentProps, @NotNull String name, boolean isDir) {
+  // Cache
+  @Nullable
+  private String fullPathCache;
+
+  public GitEntryImpl(@NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull String name, boolean isDir) {
+    this.parentPath = parentPath;
     this.name = name;
     this.props = GitProperty.joinProperties(parentProps, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE, GitProperty.emptyArray);
   }
@@ -41,7 +54,22 @@ public class GitEntryImpl implements GitEntry {
 
   @NotNull
   @Override
+  public String getFullPath() {
+    if (fullPathCache == null) {
+      fullPathCache = StringHelper.joinPath(parentPath, getFileName());
+    }
+    return fullPathCache;
+  }
+
+  @Nullable
+  @Override
+  public VcsFile getEntry(@NotNull String name) throws IOException, SVNException {
+    return null;
+  }
+
+  @NotNull
+  @Override
   public GitEntry createChild(@NotNull String name, boolean isDir) {
-    return new GitEntryImpl(props, name, isDir);
+    return new GitEntryImpl(props, getFullPath(), name, isDir);
   }
 }

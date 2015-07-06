@@ -24,9 +24,6 @@ import java.util.Map;
  */
 public interface VcsFile extends VcsEntry {
   @NotNull
-  String getFullPath();
-
-  @NotNull
   Map<String, String> getProperties() throws IOException, SVNException;
 
   @NotNull
@@ -65,9 +62,6 @@ public interface VcsFile extends VcsEntry {
 
   @NotNull
   Iterable<? extends VcsFile> getEntries() throws IOException, SVNException;
-
-  @Nullable
-  VcsFile getEntry(@NotNull String name) throws IOException, SVNException;
 
   @NotNull
   VcsRevision getLastChange() throws IOException;

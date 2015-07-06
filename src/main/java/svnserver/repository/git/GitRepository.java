@@ -300,8 +300,8 @@ public class GitRepository implements VcsRepository {
   }
 
   private CacheRevision createCache(@Nullable RevCommit oldCommit, @NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches, int revisionId) throws IOException, SVNException {
-    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, oldCommit, revisionId - 1);
-    final GitFile newTree = new GitFile(this, newCommit, revisionId);
+    final GitFile oldTree = oldCommit == null ? new GitFileEmptyTree(this, "", revisionId - 1) : new GitFileTreeEntry(this, oldCommit, revisionId - 1);
+    final GitFile newTree = new GitFileTreeEntry(this, newCommit, revisionId);
     final Map<String, CacheChange> fileChange = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
       fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
@@ -969,7 +969,7 @@ public class GitRepository implements VcsRepository {
     }
 
     private void validateProperties(@NotNull RevCommit commit) throws IOException, SVNException {
-      final GitFile root = new GitFile(GitRepository.this, commit, 0);
+      final GitFile root = new GitFileTreeEntry(GitRepository.this, commit, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
       for (VcsConsumer<GitPropertyValidator> validateAction : validateActions) {
         validateAction.accept(validator);

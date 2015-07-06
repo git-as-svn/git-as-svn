@@ -8,6 +8,10 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+
+import java.io.IOException;
 
 /**
  * Directory entry.
@@ -19,5 +23,11 @@ public interface VcsEntry {
   String getFileName();
 
   @NotNull
+  String getFullPath();
+
+  @NotNull
   VcsEntry createChild(@NotNull String name, boolean isDir);
+
+  @Nullable
+  VcsFile getEntry(@NotNull String name) throws IOException, SVNException;
 }

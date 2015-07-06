@@ -233,7 +233,6 @@ public class SvnFilterTest {
       checkFileContent(repo, "/data.z", bar);
     }
   }
-
   /**
    * Copy file with filter change.
    *
