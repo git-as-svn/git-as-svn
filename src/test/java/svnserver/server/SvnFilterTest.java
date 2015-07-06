@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 
@@ -41,8 +42,7 @@ public class SvnFilterTest {
    * @throws Exception
    */
   @Test
-  public void simpleBinaryRead() throws Exception {
-    //Map<String, String> props = new HashMap<>()["key":""];
+  public void binaryRead() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
@@ -79,8 +79,7 @@ public class SvnFilterTest {
    * @throws Exception
    */
   @Test
-  public void simpleTextRead() throws Exception {
-    //Map<String, String> props = new HashMap<>()["key":""];
+  public void textRead() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
@@ -117,8 +116,7 @@ public class SvnFilterTest {
    * @throws Exception
    */
   @Test()
-  public void simpleWrite() throws Exception {
-    //Map<String, String> props = new HashMap<>()["key":""];
+  public void write() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
@@ -132,6 +130,169 @@ public class SvnFilterTest {
       checkFileContent(repo, "/data.z", foo);
       // Modify file.
       modifyFile(repo, "/data.z", bar, repo.getLatestRevision());
+      checkFileContent(repo, "/data.z", bar);
+    }
+  }
+
+  /**
+   * Write file before .gitattributes in single commit.
+   *
+   * @throws Exception
+   */
+  @Test()
+  public void writeBeforeAttributes() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
+      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
+
+      // Create file.
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
+        editor.openRoot(-1);
+
+        editor.addFile("data.z", null, -1);
+        sendDeltaAndClose(editor, "data.z", null, foo);
+
+        editor.addFile(".gitattributes", null, -1);
+        sendDeltaAndClose(editor, ".gitattributes", null, "*.z\t\t\tfilter=gzip\n");
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // On file read now we must have uncompressed content.
+      checkFileContent(repo, "/data.z", foo);
+
+      // Modify file.
+      {
+        final long rev = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
+        editor.openRoot(-1);
+
+        editor.openFile("data.z", rev);
+        sendDeltaAndClose(editor, "data.z", foo, bar);
+
+        editor.openFile(".gitattributes", rev);
+        sendDeltaAndClose(editor, ".gitattributes", "*.z\t\t\tfilter=gzip\n", "");
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // On file read now we must have uncompressed content.
+      checkFileContent(repo, "/data.z", bar);
+    }
+  }
+
+  /**
+   * Write file after .gitattributes in single commit.
+   *
+   * @throws Exception
+   */
+  @Test()
+  public void writeAfterAttributes() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
+      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
+
+      // Create file.
+      {
+        final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
+        editor.openRoot(-1);
+
+        editor.addFile(".gitattributes", null, -1);
+        sendDeltaAndClose(editor, ".gitattributes", null, "*.z\t\t\tfilter=gzip\n");
+
+        editor.addFile("data.z", null, -1);
+        sendDeltaAndClose(editor, "data.z", null, foo);
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // On file read now we must have uncompressed content.
+      checkFileContent(repo, "/data.z", foo);
+
+      // Modify file.
+      {
+        final long rev = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
+        editor.openRoot(-1);
+
+        editor.openFile(".gitattributes", rev);
+        sendDeltaAndClose(editor, ".gitattributes", "*.z\t\t\tfilter=gzip\n", "");
+
+        editor.openFile("data.z", rev);
+        sendDeltaAndClose(editor, "data.z", foo, bar);
+
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // On file read now we must have uncompressed content.
+      checkFileContent(repo, "/data.z", bar);
+    }
+  }
+
+  /**
+   * Copy file with filter change.
+   *
+   * @throws Exception
+   */
+  @Test()
+  public void copy() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
+
+      // Add filter to file.
+      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", null);
+      // Create source file.
+      createFile(repo, "/data.txt", foo, null);
+      // Copy source file with "raw" filter to destination with "gzip" filter.
+      {
+        final long rev = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Copy file commit", null, false, null);
+        editor.openRoot(-1);
+        editor.addFile("data.z", "data.txt", rev);
+        editor.closeFile("data.z", null);
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // On file read now we must have uncompressed content.
+      checkFileContent(repo, "/data.z", foo);
+    }
+  }
+
+  /**
+   * Copy file with filter change.
+   *
+   * @throws Exception
+   */
+  @Test()
+  public void copyAndModify() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
+      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
+
+      // Add filter to file.
+      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", null);
+      // Create source file.
+      createFile(repo, "/data.txt", foo, null);
+      // Copy source file with "raw" filter to destination with "gzip" filter.
+      {
+        final long rev = repo.getLatestRevision();
+        final ISVNEditor editor = repo.getCommitEditor("Copy file commit", null, false, null);
+        editor.openRoot(-1);
+        editor.addFile("data.z", "data.txt", rev);
+        sendDeltaAndClose(editor, "data.z", foo, bar);
+        editor.closeDir();
+        editor.closeEdit();
+      }
+      // On file read now we must have uncompressed content.
       checkFileContent(repo, "/data.z", bar);
     }
   }
