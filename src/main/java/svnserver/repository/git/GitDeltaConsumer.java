@@ -96,27 +96,38 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   public GitObject<ObjectId> getObjectId() throws IOException, SVNException {
     if ((originalId != null) && originalId.equals(objectId) && (newFilter == null)) {
-      this.newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
+      this.newFilter = oldFilter;
+      this.objectId = originalId;
       if (oldFilter == null) {
         throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
-      if (!newFilter.equals(oldFilter)) {
-        final Repository repo = gitRepository.getRepository();
-
-        final TemporaryOutputStream content = new TemporaryOutputStream();
-        try (InputStream inputStream = oldFilter.inputStream(originalId);
-             OutputStream outputStream = newFilter.outputStream(content)) {
-          IOUtils.copy(inputStream, outputStream);
-        }
-
-        final ObjectInserter inserter = repo.newObjectInserter();
-        try (InputStream inputStream = content.toInputStream()) {
-          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream));
-        }
-        inserter.flush();
-      }
+      migrateFilter(gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
     }
     return objectId;
+  }
+
+  public boolean migrateFilter(@NotNull GitFilter filter) throws IOException, SVNException {
+    if (newFilter == null || objectId == null) {
+      throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
+    }
+    final GitObject<ObjectId> beforeId = objectId;
+    if (!newFilter.equals(filter)) {
+      final Repository repo = gitRepository.getRepository();
+
+      final TemporaryOutputStream content = new TemporaryOutputStream();
+      try (InputStream inputStream = newFilter.inputStream(objectId);
+           OutputStream outputStream = filter.outputStream(content)) {
+        IOUtils.copy(inputStream, outputStream);
+      }
+
+      final ObjectInserter inserter = repo.newObjectInserter();
+      try (InputStream inputStream = content.toInputStream()) {
+        objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream));
+        newFilter = filter;
+      }
+      inserter.flush();
+    }
+    return !beforeId.equals(objectId);
   }
 
   @Override

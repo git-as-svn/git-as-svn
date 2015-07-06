@@ -10,8 +10,6 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -170,7 +168,7 @@ public class SvnFilterTest {
       final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
 
       // Create file.
-      try {
+      {
         final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
         editor.openRoot(-1);
 
@@ -182,18 +180,12 @@ public class SvnFilterTest {
 
         editor.closeDir();
         editor.closeEdit();
-      } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_HOOK_FAILURE)) {
-          // todo #77: Remove this try/cache check
-          return;
-        }
-        throw e;
       }
       // On file read now we must have uncompressed content.
       checkFileContent(repo, "/data.z", foo);
 
       // Modify file.
-      try {
+      {
         final long rev = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
         editor.openRoot(-1);
@@ -206,12 +198,6 @@ public class SvnFilterTest {
 
         editor.closeDir();
         editor.closeEdit();
-      } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_HOOK_FAILURE)) {
-          // todo #77: Remove this try/cache check
-          return;
-        }
-        throw e;
       }
       // On file read now we must have uncompressed content.
       checkFileContent(repo, "/data.z", bar);
@@ -232,7 +218,7 @@ public class SvnFilterTest {
       final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
 
       // Create file.
-      try {
+      {
         final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
         editor.openRoot(-1);
 
@@ -244,18 +230,12 @@ public class SvnFilterTest {
 
         editor.closeDir();
         editor.closeEdit();
-      } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_HOOK_FAILURE)) {
-          // todo #77: Remove this try/cache check
-          return;
-        }
-        throw e;
       }
       // On file read now we must have uncompressed content.
       checkFileContent(repo, "/data.z", foo);
 
       // Modify file.
-      try {
+      {
         final long rev = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
         editor.openRoot(-1);
@@ -268,12 +248,6 @@ public class SvnFilterTest {
 
         editor.closeDir();
         editor.closeEdit();
-      } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_HOOK_FAILURE)) {
-          // todo #77: Remove this try/cache check
-          return;
-        }
-        throw e;
       }
       // On file read now we must have uncompressed content.
       checkFileContent(repo, "/data.z", bar);

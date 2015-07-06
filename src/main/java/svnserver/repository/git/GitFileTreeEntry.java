@@ -10,7 +10,7 @@ package svnserver.repository.git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -56,8 +56,8 @@ public class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   }
 
   @NotNull
-  public static GitFile create(@NotNull GitRepository repo, @NotNull RevCommit commit, int revision) throws IOException, SVNException {
-    return create(repo, GitProperty.emptyArray, "", new GitTreeEntry(repo.getRepository(), FileMode.TREE, commit.getTree(), ""), revision);
+  public static GitFile create(@NotNull GitRepository repo, @NotNull RevTree tree, int revision) throws IOException, SVNException {
+    return create(repo, GitProperty.emptyArray, "", new GitTreeEntry(repo.getRepository(), FileMode.TREE, tree, ""), revision);
   }
 
   @NotNull

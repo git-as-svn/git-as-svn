@@ -298,8 +298,8 @@ public class GitRepository implements VcsRepository {
   }
 
   private CacheRevision createCache(@Nullable RevCommit oldCommit, @NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches, int revisionId) throws IOException, SVNException {
-    final GitFile oldTree = oldCommit == null ? new GitFileEmptyTree(this, "", revisionId - 1) : GitFileTreeEntry.create(this, oldCommit, revisionId - 1);
-    final GitFile newTree = GitFileTreeEntry.create(this, newCommit, revisionId);
+    final GitFile oldTree = oldCommit == null ? new GitFileEmptyTree(this, "", revisionId - 1) : GitFileTreeEntry.create(this, oldCommit.getTree(), revisionId - 1);
+    final GitFile newTree = GitFileTreeEntry.create(this, newCommit.getTree(), revisionId);
     final Map<String, CacheChange> fileChange = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
       fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
@@ -680,19 +680,20 @@ public class GitRepository implements VcsRepository {
     }
   }
 
-  private class GitPropertyValidator {
+  private abstract class CommitAction {
     @NotNull
     private final Deque<GitFile> treeStack;
-    @NotNull
-    private final Map<String, Set<String>> propertyMismatch = new TreeMap<>();
-    private int errorCount = 0;
 
-    public GitPropertyValidator(@NotNull GitFile root) {
+    public CommitAction(@NotNull GitFile root) {
       this.treeStack = new ArrayDeque<>();
       this.treeStack.push(root);
     }
 
-    public void openDir(@NotNull String name) throws IOException, SVNException {
+    protected GitFile getElement() {
+      return treeStack.element();
+    }
+
+    public final void openDir(@NotNull String name) throws IOException, SVNException {
       final GitFile file = treeStack.element().getEntry(name);
       if (file == null) {
         throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
@@ -700,34 +701,69 @@ public class GitRepository implements VcsRepository {
       treeStack.push(file);
     }
 
-    public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties, @NotNull String filterName) throws IOException, SVNException {
-      final GitFile dir = treeStack.element();
+    public abstract void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException, SVNException;
+
+    public final void closeDir() {
+      treeStack.pop();
+    }
+  }
+
+  private class GitFilterMigration extends CommitAction {
+    private int migrateCount = 0;
+
+    public GitFilterMigration(@NotNull GitFile root) {
+      super(root);
+    }
+
+    @Override
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException, SVNException {
+      final GitFile dir = getElement();
       final GitFile node = name == null ? dir : dir.getEntry(name);
       if (node == null) {
         throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
       }
 
-      if (!node.isDirectory()) {
+      if (deltaConsumer != null) {
         assert (node.getFilter() != null);
-        if (!filterName.equals(node.getFilter().getName())) {
-          // todo #77: Replace by IllegalStateException
-          final String delta = "Invalid writer filter:\n"
+        if (deltaConsumer.migrateFilter(node.getFilter())) {
+          migrateCount++;
+        }
+      }
+    }
+
+    public int done() throws SVNException {
+      return migrateCount;
+    }
+  }
+
+  private class GitPropertyValidator extends CommitAction {
+    @NotNull
+    private final Map<String, Set<String>> propertyMismatch = new TreeMap<>();
+    private int errorCount = 0;
+
+    public GitPropertyValidator(@NotNull GitFile root) {
+      super(root);
+    }
+
+    @Override
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException, SVNException {
+      final GitFile dir = getElement();
+      final GitFile node = name == null ? dir : dir.getEntry(name);
+      if (node == null) {
+        throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
+      }
+
+      if (deltaConsumer != null) {
+        assert (node.getFilter() != null);
+        if (!node.getFilter().getName().equals(deltaConsumer.getFilterName())) {
+          throw new IllegalStateException("Invalid writer filter:\n"
               + "Expected: " + node.getFilter().getName() + "\n"
-              + "Actual: " + filterName + "\n";
-          propertyMismatch.compute(delta, (key, value) -> {
-            if (value == null) {
-              value = new TreeSet<>();
-            }
-            value.add(node.getFullPath());
-            return value;
-          });
-          errorCount++;
-          return;
+              + "Actual: " + deltaConsumer.getFilterName());
         }
       }
 
       final Map<String, String> expected = node.getProperties();
-      if (!properties.equals(expected)) {
+      if (!props.equals(expected)) {
         if (errorCount < MAX_PROPERTY_ERRROS) {
           final StringBuilder delta = new StringBuilder();
           delta.append("Expected:\n");
@@ -735,7 +771,7 @@ public class GitRepository implements VcsRepository {
             delta.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
           }
           delta.append("Actual:\n");
-          for (Map.Entry<String, String> entry : properties.entrySet()) {
+          for (Map.Entry<String, String> entry : props.entrySet()) {
             delta.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
           }
           propertyMismatch.compute(delta.toString(), (key, value) -> {
@@ -748,10 +784,6 @@ public class GitRepository implements VcsRepository {
           errorCount++;
         }
       }
-    }
-
-    public void closeDir() {
-      treeStack.pop();
     }
 
     public void done() throws SVNException {
@@ -794,7 +826,7 @@ public class GitRepository implements VcsRepository {
     @NotNull
     private final Map<String, String> locks;
     @NotNull
-    private final List<VcsConsumer<GitPropertyValidator>> validateActions = new ArrayList<>();
+    private final List<VcsConsumer<CommitAction>> commitActions = new ArrayList<>();
 
     public GitCommitBuilder(@NotNull LockManagerWrite lockManager, @NotNull Map<String, String> locks, @NotNull String branch) throws IOException, SVNException {
       this.inserter = repository.newObjectInserter();
@@ -855,7 +887,7 @@ public class GitRepository implements VcsRepository {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
       final GitFile source = (GitFile) sourceDir;
-      validateActions.add(validator -> validator.openDir(name));
+      commitActions.add(action -> action.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(source == null ? null : source.getTreeEntry())));
     }
 
@@ -866,13 +898,13 @@ public class GitRepository implements VcsRepository {
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
-      validateActions.add(validator -> validator.openDir(name));
+      commitActions.add(action -> action.openDir(name));
       treeStack.push(new GitTreeUpdate(name, loadTree(originalDir)));
     }
 
     @Override
     public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
-      validateActions.add(validator -> validator.checkProperties(null, props, ""));
+      commitActions.add(action -> action.checkProperties(null, props, null));
     }
 
     @Override
@@ -888,7 +920,7 @@ public class GitRepository implements VcsRepository {
       if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(repository, subtreeId), last.getName())) != null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
       }
-      validateActions.add(GitPropertyValidator::closeDir);
+      commitActions.add(CommitAction::closeDir);
     }
 
     @Override
@@ -909,7 +941,7 @@ public class GitRepository implements VcsRepository {
         return;
       }
       current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
-      validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer.getFilterName()));
+      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
     }
 
     private FileMode getFileMode(@NotNull Map<String, String> props) {
@@ -931,9 +963,17 @@ public class GitRepository implements VcsRepository {
     public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
       synchronized (pushLock) {
         final GitTreeUpdate root = treeStack.element();
-        final ObjectId treeId = root.buildTree(inserter);
+        ObjectId treeId = root.buildTree(inserter);
         log.info("Create tree {} for commit.", treeId.name());
         inserter.flush();
+
+        if (filterMigration(new RevWalk(repository).parseTree(treeId)) != 0) {
+          log.info("Need recreate tree after filter migration.");
+          return null;
+        }
+
+        log.info("Validate properties");
+        validateProperties(new RevWalk(repository).parseTree(treeId));
 
         final CommitBuilder commitBuilder = new CommitBuilder();
         final PersonIdent ident = createIdent(userInfo);
@@ -948,9 +988,6 @@ public class GitRepository implements VcsRepository {
         final ObjectId commitId = inserter.insert(commitBuilder);
         inserter.flush();
 
-        log.info("Validate properties");
-        validateProperties(new RevWalk(repository).parseCommit(commitId));
-
         log.info("Create commit {}: {}", commitId.name(), message);
         log.info("Try to push commit in branch: {}", branch);
         if (!pushMode.push(repository, commitId, branch)) {
@@ -963,13 +1000,22 @@ public class GitRepository implements VcsRepository {
       }
     }
 
-    private void validateProperties(@NotNull RevCommit commit) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(GitRepository.this, commit, 0);
+    private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
+      final GitFile root = GitFileTreeEntry.create(GitRepository.this, tree, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
-      for (VcsConsumer<GitPropertyValidator> validateAction : validateActions) {
+      for (VcsConsumer<CommitAction> validateAction : commitActions) {
         validateAction.accept(validator);
       }
       validator.done();
+    }
+
+    private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
+      final GitFile root = GitFileTreeEntry.create(GitRepository.this, tree, 0);
+      final GitFilterMigration validator = new GitFilterMigration(root);
+      for (VcsConsumer<CommitAction> validateAction : commitActions) {
+        validateAction.accept(validator);
+      }
+      return validator.done();
     }
 
     private PersonIdent createIdent(User userInfo) {

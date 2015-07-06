@@ -59,4 +59,9 @@ public class GitObject<T extends ObjectId> {
   public int hashCode() {
     return object.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return object.name();
+  }
 }
