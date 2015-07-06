@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.TemporaryOutputStream;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.git.filter.GitFilter;
-import svnserver.repository.git.prop.GitProperty;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -97,8 +96,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   public GitObject<ObjectId> getObjectId() throws IOException, SVNException {
     if ((originalId != null) && originalId.equals(objectId) && (newFilter == null)) {
-      this.
-          newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, GitProperty.emptyArray);
+      this.newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       if (oldFilter == null) {
         throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
