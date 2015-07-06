@@ -5,16 +5,21 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver;
+package svnserver.repository.git.path;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Some svn constants.
+ * Interface for matching name of path.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnConstants {
-  @NotNull
-  public static final String PROP_GIT = "git-commit";
+public interface NameMatcher {
+  boolean isMatch(@NotNull String name, boolean isDir);
+
+  boolean isRecursive();
+
+  @Nullable
+  String getSvnMask();
 }

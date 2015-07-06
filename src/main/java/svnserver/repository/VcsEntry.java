@@ -5,16 +5,29 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver;
+package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+
+import java.io.IOException;
 
 /**
- * Some svn constants.
+ * Directory entry.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnConstants {
+public interface VcsEntry {
   @NotNull
-  public static final String PROP_GIT = "git-commit";
+  String getFileName();
+
+  @NotNull
+  String getFullPath();
+
+  @NotNull
+  VcsEntry createChild(@NotNull String name, boolean isDir);
+
+  @Nullable
+  VcsFile getEntry(@NotNull String name) throws IOException, SVNException;
 }

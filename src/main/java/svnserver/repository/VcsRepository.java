@@ -67,19 +67,23 @@ public interface VcsRepository {
   /**
    * Create new file in repository.
    *
+   * @param parent Parent directory.
+   * @param name   File name.
    * @return File updater.
    */
   @NotNull
-  VcsDeltaConsumer createFile() throws IOException, SVNException;
+  VcsDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException;
 
   /**
    * Modification of the existing file.
    *
-   * @param file File for modification.
+   * @param parent Parent directory.
+   * @param name   File name.
+   * @param file   File for modification.
    * @return File updater.
    */
   @NotNull
-  VcsDeltaConsumer modifyFile(@NotNull VcsFile file) throws IOException, SVNException;
+  VcsDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException;
 
   /**
    * Create tree for commit.

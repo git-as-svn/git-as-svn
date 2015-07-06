@@ -5,16 +5,22 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver;
+package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.repository.VcsEntry;
+import svnserver.repository.git.prop.GitProperty;
 
 /**
- * Some svn constants.
+ * Git entry.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnConstants {
+public interface GitEntry extends VcsEntry {
   @NotNull
-  public static final String PROP_GIT = "git-commit";
+  GitProperty[] getRawProperties();
+
+  @Override
+  @NotNull
+  GitEntry createChild(@NotNull String name, boolean isDir);
 }

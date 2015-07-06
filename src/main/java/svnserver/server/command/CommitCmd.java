@@ -242,6 +242,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   }
 
   private static class EntryUpdater {
+    // New parent entry (destination)
+    @NotNull
+    private final VcsEntry entry;
+    // Old source entry (source)
     @Nullable
     private final VcsFile source;
     @NotNull
@@ -250,7 +254,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final List<VcsConsumer<VcsCommitBuilder>> changes = new ArrayList<>();
     private final boolean head;
 
-    private EntryUpdater(@Nullable VcsFile source, boolean head) throws IOException, SVNException {
+    private EntryUpdater(@NotNull VcsEntry entry, @Nullable VcsFile source, boolean head) throws IOException, SVNException {
+      this.entry = entry;
       this.source = source;
       this.head = head;
       this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties());
@@ -290,7 +295,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     public EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
       this.keepLocks = params.keepLocks;
-      this.rootEntry = new EntryUpdater(context.getRepository().getLatestRevision().getFile(""), true);
+      final VcsFile entry = context.getRepository().getLatestRevision().getFile("");
+      if (entry == null) {
+        throw new IllegalStateException("Repository root entry not found.");
+      }
+      this.rootEntry = new EntryUpdater(entry, entry, true);
       paths = new HashMap<>();
       files = new HashMap<>();
       locks = getLocks(context, params.locks);
@@ -348,7 +357,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       EntryUpdater lastUpdater = rootEntry;
       for (int i = 1; i < rootPath.length; ++i) {
         String name = rootPath[i];
-        final EntryUpdater updater = new EntryUpdater(lastUpdater.getEntry(name), true);
+        final VcsFile entry = lastUpdater.getEntry(name);
+        final EntryUpdater updater = new EntryUpdater(entry, entry, true);
         lastUpdater.changes.add(treeBuilder -> {
           treeBuilder.openDir(name);
           updateDir(treeBuilder, updater);
@@ -373,7 +383,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Modify file: {} (rev: {})", args.name, rev);
       final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
-      final EntryUpdater dir = new EntryUpdater(sourceDir, parent.head);
+      final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
       if ((rev >= 0) && (parent.head)) {
         checkUpToDate(sourceDir, rev, false);
       }
@@ -409,7 +419,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         log.info("Add dir: {}", args.name);
         source = null;
       }
-      final EntryUpdater updater = new EntryUpdater(source, false);
+      final EntryUpdater updater = new EntryUpdater(parent.entry, source, false);
       paths.put(args.token, updater);
       parent.changes.add(treeBuilder -> {
         treeBuilder.addDir(StringHelper.baseName(args.name), source);
@@ -428,10 +438,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find path: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }
-        deltaConsumer = context.getRepository().modifyFile(file);
+        deltaConsumer = context.getRepository().modifyFile(parent.entry, args.name, file);
       } else {
-        log.info("Add file: {} (rev: {})", parent);
-        deltaConsumer = context.getRepository().createFile();
+        log.info("Add file: {}", parent);
+        deltaConsumer = context.getRepository().createFile(parent.entry, args.name);
       }
       files.put(args.token, new FileUpdater(deltaConsumer));
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, false));
@@ -453,7 +463,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Modify file: {} (rev: {})", parent, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
-      final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(vcsFile);
+      final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
       if (parent.head && (rev >= 0)) {
         checkUpToDate(vcsFile, rev, true);

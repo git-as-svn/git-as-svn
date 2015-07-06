@@ -61,6 +61,11 @@ public final class SvnTestHelper {
 
   @NotNull
   public static SVNCommitInfo createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content, @Nullable Map<String, String> props) throws SVNException, IOException {
+    return createFile(repo, filePath, content.getBytes(StandardCharsets.UTF_8), props);
+  }
+
+  @NotNull
+  public static SVNCommitInfo createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] content, @Nullable Map<String, String> props) throws SVNException, IOException {
     final ISVNEditor editor = repo.getCommitEditor("Create file: " + filePath, null, false, null);
     editor.openRoot(-1);
     int index = 0;
@@ -110,6 +115,11 @@ public final class SvnTestHelper {
 
   @NotNull
   public static SVNCommitInfo modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String newData, long fileRev) throws SVNException, IOException {
+    return modifyFile(repo, filePath, newData.getBytes(StandardCharsets.UTF_8), fileRev);
+  }
+
+  @NotNull
+  public static SVNCommitInfo modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] newData, long fileRev) throws SVNException, IOException {
     final ByteArrayOutputStream oldData = new ByteArrayOutputStream();
     repo.getFile(filePath, fileRev, null, oldData);
 
@@ -126,7 +136,7 @@ public final class SvnTestHelper {
       depth++;
     }
     editor.openFile(filePath, fileRev);
-    sendDeltaAndClose(editor, filePath, oldData.toByteArray(), newData.getBytes(StandardCharsets.UTF_8));
+    sendDeltaAndClose(editor, filePath, oldData.toByteArray(), newData);
     for (int i = 0; i < depth; ++i) {
       editor.closeDir();
     }
@@ -156,4 +166,10 @@ public final class SvnTestHelper {
     }
   }
 
+  public static void checkFileContent(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] content) throws IOException, SVNException {
+    try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+      repo.getFile(filePath, repo.getLatestRevision(), null, stream);
+      Assert.assertEquals(stream.toByteArray(), content);
+    }
+  }
 }

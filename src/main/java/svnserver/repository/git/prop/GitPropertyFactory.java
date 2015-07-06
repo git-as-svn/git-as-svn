@@ -35,5 +35,5 @@ public interface GitPropertyFactory {
    * @return Git property worker.
    */
   @NotNull
-  GitProperty create(@NotNull String content) throws IOException;
+  GitProperty[] create(@NotNull String content) throws IOException;
 }

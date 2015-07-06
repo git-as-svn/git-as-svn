@@ -7,8 +7,10 @@
  */
 package svnserver.repository.git;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.repository.git.filter.GitFilter;
 
 import java.io.IOException;
 import java.util.Map;
@@ -47,14 +49,20 @@ public final class GitLogPair {
     if (oldEntry == null || oldEntry.isDirectory())
       return false;
 
-    if (newEntry.isSymlink() == oldEntry.isSymlink()) {
+    if (Objects.equals(filterName(newEntry), filterName(oldEntry))) {
       return !Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId());
     } else {
       return !newEntry.getMd5().equals(oldEntry.getMd5());
     }
   }
 
-  public boolean isPropertyModified() throws IOException {
+  @Nullable
+  private static String filterName(@NotNull GitFile gitFile) {
+    final GitFilter filter = gitFile.getFilter();
+    return filter == null ? null : filter.getName();
+  }
+
+  public boolean isPropertyModified() throws IOException, SVNException {
     if ((newEntry == null) || (oldEntry == null)) return false;
     final Map<String, String> newProps = newEntry.getProperties();
     final Map<String, String> oldProps = oldEntry.getProperties();

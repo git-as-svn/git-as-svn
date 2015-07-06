@@ -5,16 +5,30 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver;
+package svnserver.repository.git.prop;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
- * Some svn constants.
+ * Factory for creating .gitignore properties.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnConstants {
+@SuppressWarnings("UnusedDeclaration")
+public final class GitIgnoreFactory implements GitPropertyFactory {
   @NotNull
-  public static final String PROP_GIT = "git-commit";
+  @Override
+  public String getFileName() {
+    return ".gitignore";
+  }
+
+  @NotNull
+  @Override
+  public GitProperty[] create(@NotNull String content) throws IOException {
+    return new GitProperty[]{
+        new GitIgnore(content)
+    };
+  }
 }

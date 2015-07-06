@@ -19,16 +19,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import svnserver.SvnConstants;
 import svnserver.TemporaryOutputStream;
 import svnserver.repository.VcsDeltaConsumer;
+import svnserver.repository.git.filter.GitFilter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,11 +39,11 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
   @NotNull
-  private static final byte[] linkPrefix = SvnConstants.LINK_PREFIX.getBytes(StandardCharsets.UTF_8);
-  @NotNull
   private final Map<String, String> props;
   @NotNull
   private final GitRepository gitRepository;
+  @NotNull
+  private final GitEntry entry;
   @Nullable
   private SVNDeltaProcessor window;
   @Nullable
@@ -54,25 +52,32 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   private final String originalMd5;
   @Nullable
   private GitObject<ObjectId> objectId;
-  private final boolean originalSymlink;
+  @Nullable
+  private final GitFilter oldFilter;
+  @Nullable
+  private GitFilter newFilter;
 
   // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private TemporaryOutputStream temporaryStream;
+  @Nullable
+  private String md5;
 
-  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @Nullable GitFile file) throws IOException, SVNException {
+  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @NotNull GitEntry entry, @Nullable GitFile file) throws IOException, SVNException {
     this.gitRepository = gitRepository;
+    this.entry = entry;
     if (file != null) {
       this.originalMd5 = file.getMd5();
       this.originalId = file.getObjectId();
       this.props = new HashMap<>(file.getProperties());
-      this.originalSymlink = file.getFileMode() == FileMode.SYMLINK;
+      this.oldFilter = file.getFilter();
     } else {
       this.originalMd5 = null;
       this.originalId = null;
       this.props = new HashMap<>();
-      this.originalSymlink = false;
+      this.oldFilter = null;
     }
+    this.newFilter = null;
     this.objectId = originalId;
     this.temporaryStream = new TemporaryOutputStream();
   }
@@ -90,24 +95,26 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
   @Nullable
   public GitObject<ObjectId> getObjectId() throws IOException, SVNException {
-    if ((originalId != null) && originalId.equals(objectId) && (props.containsKey(SVNProperty.SPECIAL) != originalSymlink)) {
-      final Repository repo = gitRepository.getRepository();
-      final ObjectInserter inserter = repo.newObjectInserter();
-      if (originalSymlink) {
-        final TemporaryOutputStream content = new TemporaryOutputStream();
-        content.write(linkPrefix);
-        originalId.openObject().copyTo(content);
-        try (InputStream stream = content.toInputStream()) {
-          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), stream));
-        }
-      } else {
-        final ObjectLoader objectLoader = originalId.openObject();
-        try (final ObjectStream stream = objectLoader.openStream()) {
-          final int skipBytes = checkLinkPrefix(stream);
-          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, objectLoader.getSize() - skipBytes, stream));
-        }
+    if ((originalId != null) && originalId.equals(objectId) && (newFilter == null)) {
+      this.newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
+      if (oldFilter == null) {
+        throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
-      inserter.flush();
+      if (!newFilter.equals(oldFilter)) {
+        final Repository repo = gitRepository.getRepository();
+
+        final TemporaryOutputStream content = new TemporaryOutputStream();
+        try (InputStream inputStream = oldFilter.inputStream(originalId);
+             OutputStream outputStream = newFilter.outputStream(content)) {
+          IOUtils.copy(inputStream, outputStream);
+        }
+
+        final ObjectInserter inserter = repo.newObjectInserter();
+        try (InputStream inputStream = content.toInputStream()) {
+          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream));
+        }
+        inserter.flush();
+      }
     }
     return objectId;
   }
@@ -124,8 +131,9 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window != null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
+      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
-      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), temporaryStream, true);
+      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream), true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
@@ -147,13 +155,9 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
       final Repository repo = gitRepository.getRepository();
       final ObjectInserter inserter = repo.newObjectInserter();
+      md5 = window.textDeltaEnd();
       try (InputStream stream = temporaryStream.toInputStream()) {
-        if (props.containsKey(SVNProperty.SPECIAL)) {
-          checkLinkPrefix(stream);
-          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, temporaryStream.size() - linkPrefix.length, stream));
-        } else {
-          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
-        }
+        objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
       }
       inserter.flush();
       log.info("Created blob {} for file: {}", objectId.getObject().getName(), path);
@@ -162,19 +166,10 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     }
   }
 
-  private int checkLinkPrefix(@NotNull InputStream stream) throws SVNException, IOException {
-    byte[] checkBuffer = new byte[linkPrefix.length];
-    final int count = IOUtils.read(stream, checkBuffer);
-    if ((linkPrefix.length != count) || (!Arrays.equals(checkBuffer, linkPrefix))) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "Link entry has invalid content prefix."));
-    }
-    return count;
-  }
-
   @Override
   public void validateChecksum(@NotNull String md5) throws SVNException {
     if (window != null) {
-      if (!md5.equals(window.textDeltaEnd())) {
+      if (!md5.equals(this.md5)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
       }
     } else if (originalMd5 != null) {
@@ -182,5 +177,14 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
       }
     }
+  }
+
+  @NotNull
+  public String getFilterName() {
+    if (newFilter != null)
+      return newFilter.getName();
+    if (oldFilter != null)
+      return oldFilter.getName();
+    throw new IllegalStateException();
   }
 }

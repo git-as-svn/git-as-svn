@@ -7,16 +7,19 @@
  */
 package svnserver.repository.git.prop;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOCase;
+import org.eclipse.jgit.errors.InvalidPatternException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.repository.git.path.PathMatcher;
+import svnserver.repository.git.path.Wildcard;
 
-import java.io.IOException;
 import java.util.*;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Parse and processing .gitignore.
@@ -24,23 +27,12 @@ import java.util.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 final class GitIgnore implements GitProperty {
-  @SuppressWarnings("UnusedDeclaration")
-  public static final class Factory implements GitPropertyFactory {
-    @NotNull
-    @Override
-    public String getFileName() {
-      return ".gitignore";
-    }
-
-    @NotNull
-    @Override
-    public GitProperty create(@NotNull String content) throws IOException {
-      return new GitIgnore(content);
-    }
-  }
 
   @NotNull
-  private final List<Rule> rules;
+  private static final Logger log = LoggerFactory.getLogger(GitIgnore.class);
+
+  @NotNull
+  private final List<PathMatcher> matchers;
   // svn:global-ignores
   @NotNull
   private final String[] global;
@@ -60,48 +52,53 @@ final class GitIgnore implements GitProperty {
   public GitIgnore(@NotNull String content) {
     final List<String> localList = new ArrayList<>();
     final List<String> globalList = new ArrayList<>();
-    rules = new ArrayList<>();
+    matchers = new ArrayList<>();
     for (String rawLine : content.split("\n")) {
-      String line = parseLine(rawLine);
+      final String line = trimLine(rawLine);
       if (line.isEmpty()) continue;
-      processLine(localList, globalList, rules, line);
+      try {
+        final Wildcard wildcard = new Wildcard(line);
+        if (wildcard.isSvnCompatible()) {
+          processMatcher(localList, globalList, matchers, wildcard.getMatcher());
+        }
+      } catch (InvalidPatternException | PatternSyntaxException e) {
+        log.warn("Found invalid git pattern: {}", line);
+      }
     }
     local = localList.toArray(new String[localList.size()]);
     global = globalList.toArray(new String[globalList.size()]);
   }
 
-  private GitIgnore(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<Rule> rules) {
+  private GitIgnore(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<PathMatcher> matchers) {
     this.local = local.toArray(new String[local.size()]);
     this.global = global.toArray(new String[global.size()]);
-    this.rules = rules;
+    this.matchers = matchers;
   }
 
-  private static void processLine(@NotNull List<String> localList, @NotNull List<String> globalList, @NotNull List<Rule> rules, @NotNull String ruleLine) {
-    String line = ruleLine;
-    if (line.startsWith("/") && line.indexOf('/', 1) != -1) line = line.substring(1);
-    if (line.startsWith("**/") && line.indexOf('/', 3) == -1) line = line.substring(3);
-    // Remove unusefull prefix
-    final int lastIndex = line.lastIndexOf('/');
-    if (lastIndex == -1) {
-      // simple mask in all dirs
-      globalList.add(line);
-      return;
-    } else if (lastIndex == 0) {
-      // simple mask in current dir
-      localList.add(line.substring(1));
+  private static void processMatcher(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<PathMatcher> matchers, @Nullable PathMatcher matcher) {
+    if (matcher == null) {
       return;
     }
-    final int index = line.indexOf('/');
-    rules.add(new Rule(line.substring(0, index), line.substring(index)));
+    final String maskGlobal = matcher.getSvnMaskGlobal();
+    if (maskGlobal != null) {
+      global.add(maskGlobal);
+      return;
+    }
+    final String maskLocal = matcher.getSvnMaskLocal();
+    if (maskLocal != null) {
+      local.add(maskLocal);
+      return;
+    }
+    matchers.add(matcher);
   }
 
-  @NotNull
-  public static String parseLine(@NotNull String line) {
+  private String trimLine(@NotNull String line) {
     if (line.isEmpty() || line.startsWith("#") || line.startsWith("!") || line.startsWith("\\!")) return "";
     // Remove trailing spaces end escapes.
     int end = line.length();
     while (end > 0) {
-      if (line.charAt(end - 1) != ' ') {
+      final char c = line.charAt(end - 1);
+      if (c != ' ') {
         if ((end < line.length()) && (line.charAt(end - 1) == '\\')) {
           end++;
         }
@@ -109,39 +106,7 @@ final class GitIgnore implements GitProperty {
       }
       end--;
     }
-    String parsed = line.substring(0, end).replaceAll("\\\\", "");
-    // Add leading "/"
-    if (!parsed.startsWith("/") && parsed.contains("/")) {
-      parsed = "/" + parsed;
-    }
-    // Remove trailing "/"
-    if (parsed.endsWith("/")) {
-      if (parsed.indexOf('/') == parsed.length() - 1) {
-        // foo/ -> /foo
-        parsed = "/" + parsed.substring(0, parsed.length() - 1);
-      } else {
-        // /foo/bar/ -> /foo/bar
-        // foo/bar/ -> foo/bar
-        parsed = parsed.substring(0, parsed.length() - 1);
-      }
-    }
-    // Remove trailing "/**"
-    while (parsed.endsWith("/**")) {
-      parsed = parsed.substring(0, parsed.length() - 3);
-    }
-    // Remove leading "**/"
-    while (parsed.startsWith("/**/**/")) {
-      parsed = parsed.substring(3);
-    }
-    if (parsed.startsWith("/**/") && (parsed.indexOf('/', 4) == -1)) {
-      parsed = parsed.substring(4);
-    }
-    // Remove leading "/"
-    if (parsed.startsWith("/") && (parsed.indexOf('/', 1) != -1)) {
-      parsed = parsed.substring(1);
-    }
-    // Return.
-    return parsed;
+    return line.substring(0, end);
   }
 
   @Override
@@ -152,6 +117,12 @@ final class GitIgnore implements GitProperty {
     if (local.length > 0) {
       props.compute(SVNProperty.IGNORE, (key, value) -> addIgnore(value, local));
     }
+  }
+
+  @Nullable
+  @Override
+  public String getFilterName() {
+    return null;
   }
 
   private static String addIgnore(@Nullable String oldValue, @NotNull String[] ignores) {
@@ -172,28 +143,19 @@ final class GitIgnore implements GitProperty {
   @Nullable
   @Override
   public GitProperty createForChild(@NotNull String name, @NotNull FileMode fileMode) {
-    if (rules.isEmpty() || (fileMode.getObjectType() == Constants.OBJ_BLOB)) {
+    if (matchers.isEmpty() || (fileMode.getObjectType() == Constants.OBJ_BLOB)) {
       return null;
     }
     final List<String> localList = new ArrayList<>();
     final List<String> globalList = new ArrayList<>();
-    final List<Rule> childRules = new ArrayList<>();
-    for (Rule rule : rules) {
-      if (rule.mask.equals("**")) {
-        childRules.add(rule);
-        final int index = rule.rule.indexOf('/', 1);
-        if (rule.rule.substring(1, index).equals(name)) {
-          processLine(localList, globalList, childRules, rule.rule.substring(index));
-        }
-      }
-      if (FilenameUtils.wildcardMatch(name, rule.mask, IOCase.SENSITIVE)) {
-        processLine(localList, globalList, childRules, rule.rule);
-      }
+    final List<PathMatcher> childMatchers = new ArrayList<>();
+    for (PathMatcher matcher : matchers) {
+      processMatcher(localList, globalList, childMatchers, matcher.createChild(name, true));
     }
-    if (localList.isEmpty() && globalList.isEmpty() && childRules.isEmpty()) {
+    if (localList.isEmpty() && globalList.isEmpty() && childMatchers.isEmpty()) {
       return null;
     }
-    return new GitIgnore(localList, globalList, childRules);
+    return new GitIgnore(localList, globalList, childMatchers);
   }
 
   @Override
@@ -205,43 +167,14 @@ final class GitIgnore implements GitProperty {
 
     return Arrays.equals(global, gitIgnore.global)
         && Arrays.equals(local, gitIgnore.local)
-        && rules.equals(gitIgnore.rules);
+        && matchers.equals(gitIgnore.matchers);
   }
 
   @Override
   public int hashCode() {
-    int result = rules.hashCode();
+    int result = matchers.hashCode();
     result = 31 * result + Arrays.hashCode(global);
     result = 31 * result + Arrays.hashCode(local);
     return result;
-  }
-
-  private final static class Rule {
-    @NotNull
-    private final String mask;
-    @NotNull
-    private final String rule;
-
-    private Rule(@NotNull String mask, @NotNull String rule) {
-      this.mask = mask;
-      this.rule = rule;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Rule rule1 = (Rule) o;
-      return mask.equals(rule1.mask)
-          && rule.equals(rule1.rule);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = mask.hashCode();
-      result = 31 * result + rule.hashCode();
-      return result;
-    }
   }
 }

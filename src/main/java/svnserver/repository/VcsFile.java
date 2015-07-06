@@ -18,17 +18,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Информация о файле.
+ * File information.
  *
  * @author a.navrotskiy
  */
-public interface VcsFile {
-  @NotNull
-  String getFileName();
-
-  @NotNull
-  String getFullPath();
-
+public interface VcsFile extends VcsEntry {
   @NotNull
   Map<String, String> getProperties() throws IOException, SVNException;
 
@@ -57,18 +51,17 @@ public interface VcsFile {
   long getSize() throws IOException, SVNException;
 
   @NotNull
-  InputStream openStream() throws IOException;
-
-  boolean isDirectory();
+  InputStream openStream() throws IOException, SVNException;
 
   @NotNull
   SVNNodeKind getKind() throws IOException;
 
+  default boolean isDirectory() throws IOException {
+    return getKind().equals(SVNNodeKind.DIR);
+  }
+
   @NotNull
   Iterable<? extends VcsFile> getEntries() throws IOException, SVNException;
-
-  @Nullable
-  VcsFile getEntry(@NotNull String name) throws IOException, SVNException;
 
   @NotNull
   VcsRevision getLastChange() throws IOException;

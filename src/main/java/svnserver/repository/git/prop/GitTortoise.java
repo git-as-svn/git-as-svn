@@ -34,8 +34,10 @@ final class GitTortoise implements GitProperty {
 
     @NotNull
     @Override
-    public GitProperty create(@NotNull String content) throws IOException {
-      return new GitTortoise(content);
+    public GitProperty[] create(@NotNull String content) throws IOException {
+      return new GitProperty[]{
+          new GitTortoise(content)
+      };
     }
   }
 
@@ -67,6 +69,12 @@ final class GitTortoise implements GitProperty {
   @Override
   public void apply(@NotNull Map<String, String> props) {
     props.putAll(tortoiseProps);
+  }
+
+  @Nullable
+  @Override
+  public String getFilterName() {
+    return null;
   }
 
   @Nullable

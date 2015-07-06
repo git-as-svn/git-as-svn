@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git;
 
+import com.sun.nio.sctp.InvalidStreamException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.RenameDetector;
 import org.eclipse.jgit.lib.*;
@@ -32,6 +33,10 @@ import svnserver.auth.User;
 import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
+import svnserver.repository.git.filter.GitFilter;
+import svnserver.repository.git.filter.GitFilterHelper;
+import svnserver.repository.git.filter.GitFilterLink;
+import svnserver.repository.git.filter.GitFilterRaw;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
@@ -40,8 +45,6 @@ import svnserver.repository.locks.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -96,9 +99,11 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<String, Boolean> binaryCache;
   @NotNull
+  private final Map<String, GitFilter> gitFilters;
+  @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
-  private final Map<ObjectId, GitProperty> filePropertyCache = new ConcurrentHashMap<>();
+  private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
 
   public GitRepository(@NotNull Repository repository,
@@ -115,6 +120,7 @@ public class GitRepository implements VcsRepository {
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
+    this.gitFilters = GitFilterHelper.createFilters(cacheDb);
     linkedRepositories = new ArrayList<>(linked);
 
     this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
@@ -292,8 +298,8 @@ public class GitRepository implements VcsRepository {
   }
 
   private CacheRevision createCache(@Nullable RevCommit oldCommit, @NotNull RevCommit newCommit, @NotNull Map<String, RevCommit> branches, int revisionId) throws IOException, SVNException {
-    final GitFile oldTree = oldCommit == null ? new GitFile(this, null, "", GitProperty.emptyArray, revisionId - 1) : new GitFile(this, oldCommit, revisionId - 1);
-    final GitFile newTree = new GitFile(this, newCommit, revisionId);
+    final GitFile oldTree = oldCommit == null ? new GitFileEmptyTree(this, "", revisionId - 1) : GitFileTreeEntry.create(this, oldCommit, revisionId - 1);
+    final GitFile newTree = GitFileTreeEntry.create(this, newCommit, revisionId);
     final Map<String, CacheChange> fileChange = new TreeMap<>();
     for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
       fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
@@ -394,9 +400,9 @@ public class GitRepository implements VcsRepository {
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
       for (GitTreeEntry entry : entryProvider.get()) {
-        final GitProperty property = parseGitProperty(entry.getFileName(), entry.getObjectId());
-        if (property != null) {
-          propList.add(property);
+        final GitProperty[] parseProps = parseGitProperty(entry.getFileName(), entry.getObjectId());
+        if (parseProps.length > 0) {
+          propList.addAll(Arrays.asList(parseProps));
         }
       }
       if (!propList.isEmpty()) {
@@ -409,20 +415,44 @@ public class GitRepository implements VcsRepository {
     return props;
   }
 
-  @Nullable
-  private GitProperty parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  @NotNull
+  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) throws IOException, SVNException {
+    if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
+      return gitFilters.get(GitFilterRaw.NAME);
+    }
+    if (fileMode == FileMode.SYMLINK) {
+      return gitFilters.get(GitFilterLink.NAME);
+    }
+    for (int i = props.length - 1; i >= 0; --i) {
+      final String filterName = props[i].getFilterName();
+      if (filterName != null) {
+        final GitFilter filter = gitFilters.get(filterName);
+        if (filter == null) {
+          throw new InvalidStreamException("Unknown filter requested: " + filterName);
+        }
+        return filter;
+      }
+    }
+    return gitFilters.get(GitFilterRaw.NAME);
+  }
+
+  @NotNull
+  private GitProperty[] parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
     final GitPropertyFactory factory = PropertyMapping.getFactory(fileName);
     if (factory == null)
-      return null;
+      return GitProperty.emptyArray;
 
     return cachedParseGitProperty(objectId, factory);
   }
 
-  @Nullable
-  private GitProperty cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
-    GitProperty property = filePropertyCache.get(objectId.getObject());
+  @NotNull
+  private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
+    GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
       property = factory.create(loadContent(objectId));
+      if (property.length == 0) {
+        property = GitProperty.emptyArray;
+      }
       filePropertyCache.put(objectId.getObject(), property);
     }
     return property;
@@ -465,36 +495,15 @@ public class GitRepository implements VcsRepository {
     return repository;
   }
 
-  public boolean isObjectBinary(@Nullable GitObject<? extends ObjectId> objectId) throws IOException {
-    if (objectId == null) return false;
-    final String key = objectId.getObject().name();
+  public boolean isObjectBinary(@Nullable GitFilter filter, @Nullable GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+    if (objectId == null || filter == null) return false;
+    final String key = filter.getName() + " " + objectId.getObject().name();
     Boolean result = binaryCache.get(key);
     if (result == null) {
-      final ObjectReader reader = objectId.getRepo().newObjectReader();
-      try (InputStream stream = reader.open(objectId.getObject()).openStream()) {
+      try (InputStream stream = filter.inputStream(objectId)) {
         result = SVNFileUtil.detectMimeType(stream) != null;
       }
       binaryCache.putIfAbsent(key, result);
-    }
-    return result;
-  }
-
-  @NotNull
-  public String getObjectMD5(@NotNull GitObject<? extends ObjectId> objectId, char type, @NotNull VcsSupplier<InputStream> streamFactory) throws IOException, SVNException {
-    final String key = type + objectId.getObject().name();
-    String result = md5Cache.get(key);
-    if (result == null) {
-      final byte[] buffer = new byte[64 * 1024];
-      final MessageDigest md5 = getMd5();
-      try (InputStream stream = streamFactory.get()) {
-        while (true) {
-          int size = stream.read(buffer);
-          if (size < 0) break;
-          md5.update(buffer, 0, size);
-        }
-      }
-      result = StringHelper.toHex(md5.digest());
-      md5Cache.putIfAbsent(key, result);
     }
     return result;
   }
@@ -530,14 +539,6 @@ public class GitRepository implements VcsRepository {
     }
   }
 
-  private static MessageDigest getMd5() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   @NotNull
   private GitRevision getRevision(@NotNull ObjectId revisionId) throws SVNException {
     lock.readLock().lock();
@@ -554,14 +555,14 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsDeltaConsumer createFile() throws IOException, SVNException {
-    return new GitDeltaConsumer(this, null);
+  public VcsDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), null);
   }
 
   @NotNull
   @Override
-  public VcsDeltaConsumer modifyFile(@NotNull VcsFile file) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, (GitFile) file);
+  public VcsDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), (GitFile) file);
   }
 
   @Override
@@ -699,12 +700,32 @@ public class GitRepository implements VcsRepository {
       treeStack.push(file);
     }
 
-    public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties) throws IOException, SVNException {
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> properties, @NotNull String filterName) throws IOException, SVNException {
       final GitFile dir = treeStack.element();
       final GitFile node = name == null ? dir : dir.getEntry(name);
       if (node == null) {
         throw new IllegalStateException("Invalid state: can't find entry " + name + " in created commit.");
       }
+
+      if (!node.isDirectory()) {
+        assert (node.getFilter() != null);
+        if (!filterName.equals(node.getFilter().getName())) {
+          // todo #77: Replace by IllegalStateException
+          final String delta = "Invalid writer filter:\n"
+              + "Expected: " + node.getFilter().getName() + "\n"
+              + "Actual: " + filterName + "\n";
+          propertyMismatch.compute(delta, (key, value) -> {
+            if (value == null) {
+              value = new TreeSet<>();
+            }
+            value.add(node.getFullPath());
+            return value;
+          });
+          errorCount++;
+          return;
+        }
+      }
+
       final Map<String, String> expected = node.getProperties();
       if (!properties.equals(expected)) {
         if (errorCount < MAX_PROPERTY_ERRROS) {
@@ -717,15 +738,12 @@ public class GitRepository implements VcsRepository {
           for (Map.Entry<String, String> entry : properties.entrySet()) {
             delta.append("  ").append(entry.getKey()).append(" = \"").append(entry.getValue()).append("\"\n");
           }
-          propertyMismatch.compute(delta.toString(), new BiFunction<String, Set<String>, Set<String>>() {
-            @Override
-            public Set<String> apply(@NotNull String key, @Nullable Set<String> value) {
-              if (value == null) {
-                value = new TreeSet<>();
-              }
-              value.add(node.getFullPath());
-              return value;
+          propertyMismatch.compute(delta.toString(), (key, value) -> {
+            if (value == null) {
+              value = new TreeSet<>();
             }
+            value.add(node.getFullPath());
+            return value;
           });
           errorCount++;
         }
@@ -809,7 +827,7 @@ public class GitRepository implements VcsRepository {
       }
     }
 
-    private void checkLockFile(@NotNull GitFile file) throws SVNException {
+    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
       final String fullPath = file.getFullPath();
       if (file.isDirectory()) {
         final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);
@@ -844,7 +862,6 @@ public class GitRepository implements VcsRepository {
     @Override
     public void openDir(@NotNull String name) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
-      // todo: ???
       final GitTreeEntry originalDir = current.getEntries().remove(name);
       if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
@@ -855,7 +872,7 @@ public class GitRepository implements VcsRepository {
 
     @Override
     public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
-      validateActions.add(validator -> validator.checkProperties(null, props));
+      validateActions.add(validator -> validator.checkProperties(null, props, ""));
     }
 
     @Override
@@ -892,7 +909,7 @@ public class GitRepository implements VcsRepository {
         return;
       }
       current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
-      validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties()));
+      validateActions.add(validator -> validator.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer.getFilterName()));
     }
 
     private FileMode getFileMode(@NotNull Map<String, String> props) {
@@ -947,7 +964,7 @@ public class GitRepository implements VcsRepository {
     }
 
     private void validateProperties(@NotNull RevCommit commit) throws IOException, SVNException {
-      final GitFile root = new GitFile(GitRepository.this, commit, 0);
+      final GitFile root = GitFileTreeEntry.create(GitRepository.this, commit, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
       for (VcsConsumer<GitPropertyValidator> validateAction : validateActions) {
         validateAction.accept(validator);
