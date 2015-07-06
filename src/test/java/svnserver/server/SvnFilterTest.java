@@ -8,6 +8,7 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -22,7 +23,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 import static svnserver.SvnTestHelper.*;
@@ -97,6 +100,14 @@ public class SvnFilterTest {
       checkFileContent(repo, "/data.x", compressed);
       // Add filter to file.
       createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", null);
+      // After commit .gitattributes file data.z must change property svn:mime-type and content automagically.
+      {
+        final Set<String> changed = new HashSet<>();
+        repo.log(new String[]{""}, repo.getLatestRevision(), repo.getLatestRevision(), true, false, logEntry -> changed.addAll(logEntry.getChangedPaths().keySet()));
+        Assert.assertTrue(changed.contains("/.gitattributes"));
+        Assert.assertTrue(changed.contains("/data.z"));
+        Assert.assertEquals(changed.size(), 2);
+      }
       // On file read now we must have uncompressed content.
       checkFileProp(repo, "/data.z", null);
       checkFileProp(repo, "/data.x", propsBinary);
@@ -104,6 +115,15 @@ public class SvnFilterTest {
       checkFileContent(repo, "/data.x", compressed);
       // Modify filter.
       modifyFile(repo, "/.gitattributes", "*.x\t\t\tfilter=gzip\n", repo.getLatestRevision());
+      // After commit .gitattributes file data.z must change property svn:mime-type and content automagically.
+      {
+        final Set<String> changed = new HashSet<>();
+        repo.log(new String[]{""}, repo.getLatestRevision(), repo.getLatestRevision(), true, false, logEntry -> changed.addAll(logEntry.getChangedPaths().keySet()));
+        Assert.assertTrue(changed.contains("/.gitattributes"));
+        Assert.assertTrue(changed.contains("/data.z"));
+        Assert.assertTrue(changed.contains("/data.x"));
+        Assert.assertEquals(changed.size(), 3);
+      }
       // Check result.
       checkFileProp(repo, "/data.z", propsBinary);
       checkFileProp(repo, "/data.x", null);

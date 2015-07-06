@@ -78,10 +78,18 @@ public final class GitLogPair {
         if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
       }
       // Probably properties modified
-      if (!Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())) {
+      final boolean sameProperties = Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())
+          && Objects.equals(getFilterName(newEntry), getFilterName(oldEntry));
+      if (!sameProperties) {
         return isPropertyModified();
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static String getFilterName(@NotNull GitFile file) {
+    final GitFilter filter = file.getFilter();
+    return filter == null ? null : filter.getName();
   }
 }
