@@ -289,12 +289,15 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final Map<String, FileUpdater> files;
     @NotNull
     private final Map<String, String> locks;
+    @NotNull
+    private final VcsWriter writer;
     private boolean keepLocks;
     private boolean aborted = false;
 
     public EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
       this.keepLocks = params.keepLocks;
+      this.writer = context.getRepository().createWriter();
       final VcsFile entry = context.getRepository().getLatestRevision().getFile("");
       if (entry == null) {
         throw new IllegalStateException("Repository root entry not found.");
@@ -438,10 +441,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find path: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }
-        deltaConsumer = context.getRepository().modifyFile(parent.entry, args.name, file);
+        deltaConsumer = writer.modifyFile(parent.entry, args.name, file);
       } else {
         log.info("Add file: {}", parent);
-        deltaConsumer = context.getRepository().createFile(parent.entry, args.name);
+        deltaConsumer = writer.createFile(parent.entry, args.name);
       }
       files.put(args.token, new FileUpdater(deltaConsumer));
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, false));
@@ -463,7 +466,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.info("Modify file: {} (rev: {})", parent, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
-      final VcsDeltaConsumer deltaConsumer = context.getRepository().modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
+      final VcsDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
       if (parent.head && (rev >= 0)) {
         checkUpToDate(vcsFile, rev, true);
@@ -548,7 +551,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           if (pass >= MAX_PASS_COUNT) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
           }
-          final VcsRevision newRevision = updateDir(context.getRepository().createCommitBuilder(lockManager, locks), rootEntry).commit(context.getUser(), message);
+          final VcsRevision newRevision = updateDir(writer.createCommitBuilder(lockManager, locks), rootEntry).commit(context.getUser(), message);
           if (newRevision != null) {
             if (keepLocks) {
               lockManager.renewLocks(oldLocks.toArray(new LockDesc[oldLocks.size()]));

@@ -8,7 +8,10 @@
 package svnserver.repository.git;
 
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,7 +44,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private final Map<String, String> props;
   @NotNull
-  private final GitRepository gitRepository;
+  private final GitWriter writer;
   @NotNull
   private final GitEntry entry;
   @Nullable
@@ -57,14 +60,13 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   private GitFilter newFilter;
 
-  // todo: Wrap output stream for saving big blob to temporary files.
   @NotNull
   private TemporaryOutputStream temporaryStream;
   @Nullable
   private String md5;
 
-  public GitDeltaConsumer(@NotNull GitRepository gitRepository, @NotNull GitEntry entry, @Nullable GitFile file) throws IOException, SVNException {
-    this.gitRepository = gitRepository;
+  public GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file) throws IOException, SVNException {
+    this.writer = writer;
     this.entry = entry;
     if (file != null) {
       this.originalMd5 = file.getMd5();
@@ -101,7 +103,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (oldFilter == null) {
         throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
-      migrateFilter(gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
+      migrateFilter(writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
     }
     return objectId;
   }
@@ -112,7 +114,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     }
     final GitObject<ObjectId> beforeId = objectId;
     if (!newFilter.equals(filter)) {
-      final Repository repo = gitRepository.getRepository();
+      final Repository repo = writer.getRepository().getRepository();
 
       try (
           final TemporaryOutputStream content = new TemporaryOutputStream();
@@ -122,13 +124,10 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
              OutputStream outputStream = filter.outputStream(content)) {
           IOUtils.copy(inputStream, outputStream);
         }
-
-        final ObjectInserter inserter = repo.newObjectInserter();
         try (InputStream inputStream = content.toInputStream()) {
-          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream));
+          objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, content.size(), inputStream));
           newFilter = filter;
         }
-        inserter.flush();
       }
     }
     return !beforeId.equals(objectId);
@@ -146,7 +145,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window != null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      newFilter = gitRepository.getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
+      newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
       window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream), true);
     } catch (IOException e) {
@@ -168,13 +167,11 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       if (window == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      final Repository repo = gitRepository.getRepository();
-      final ObjectInserter inserter = repo.newObjectInserter();
+      final Repository repo = writer.getRepository().getRepository();
       md5 = window.textDeltaEnd();
       try (InputStream stream = temporaryStream.toInputStream()) {
-        objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
+        objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
       }
-      inserter.flush();
       log.info("Created blob {} for file: {}", objectId.getObject().getName(), path);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
