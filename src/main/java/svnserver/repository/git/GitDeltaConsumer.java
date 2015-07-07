@@ -114,18 +114,22 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     if (!newFilter.equals(filter)) {
       final Repository repo = gitRepository.getRepository();
 
-      final TemporaryOutputStream content = new TemporaryOutputStream();
-      try (InputStream inputStream = newFilter.inputStream(objectId);
-           OutputStream outputStream = filter.outputStream(content)) {
-        IOUtils.copy(inputStream, outputStream);
-      }
+      try (
+          final TemporaryOutputStream content = new TemporaryOutputStream();
+          final TemporaryOutputStream.Holder holder = content.holder()
+      ) {
+        try (InputStream inputStream = newFilter.inputStream(objectId);
+             OutputStream outputStream = filter.outputStream(content)) {
+          IOUtils.copy(inputStream, outputStream);
+        }
 
-      final ObjectInserter inserter = repo.newObjectInserter();
-      try (InputStream inputStream = content.toInputStream()) {
-        objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream));
-        newFilter = filter;
+        final ObjectInserter inserter = repo.newObjectInserter();
+        try (InputStream inputStream = content.toInputStream()) {
+          objectId = new GitObject<>(repo, inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream));
+          newFilter = filter;
+        }
+        inserter.flush();
       }
-      inserter.flush();
     }
     return !beforeId.equals(objectId);
   }
@@ -160,7 +164,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
   @Override
   public void textDeltaEnd(String path) throws SVNException {
-    try {
+    try (TemporaryOutputStream.Holder holder = temporaryStream.holder()) {
       if (window == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
