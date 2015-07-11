@@ -49,7 +49,7 @@ public class SvnServerParserTest {
   @Test
   public void testSimpleParseSmallBuffer() throws IOException {
     try (InputStream stream = new ByteArrayInputStream("( word 22 10:string 1:x 1:  8:Тест ( sublist ) ) ".getBytes(StandardCharsets.UTF_8))) {
-      final SvnServerParser parser = new SvnServerParser(stream, 1);
+      final SvnServerParser parser = new SvnServerParser(stream, 10);
       Assert.assertEquals(parser.readToken(), ListBeginToken.instance);
       Assert.assertEquals(parser.readToken(), new WordToken("word"));
       Assert.assertEquals(parser.readToken(), new NumberToken(22));

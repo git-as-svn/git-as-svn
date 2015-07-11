@@ -25,15 +25,17 @@ import java.util.Arrays;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnServerParser {
-  private static final int DEFAULT_BUFFER_SIZE = 1024;
+  private static final int DEFAULT_BUFFER_SIZE = 32 * 1024;
   // Buffer size limit for out-of-memory prevention.
   private static final int MAX_BUFFER_SIZE = 10 * 1024 * 1024;
   @NotNull
-  private final byte[] buffer;
-  @NotNull
   private final InputStream stream;
-  private int position;
   private int depth = 0;
+
+  @NotNull
+  private final byte[] buffer;
+  private int offset = 0;
+  private int limit = 0;
 
   public SvnServerParser(@NotNull InputStream stream, int bufferSize) {
     this.stream = stream;
@@ -102,15 +104,7 @@ public class SvnServerParser {
   @SuppressWarnings("OverlyComplexMethod")
   @NotNull
   public SvnServerToken readToken() throws IOException {
-    position = 0;
-    int read;
-    do {
-      read = stream.read();
-      // Конец потока.
-      if (read < 0) {
-        throw new EOFException();
-      }
-    } while (isSpace(read));
+    byte read = skipSpaces();
     if (read == '(') {
       depth++;
       return ListBeginToken.instance;
@@ -124,29 +118,55 @@ public class SvnServerParser {
     }
     // Чтение чисел и строк.
     if (isDigit(read)) {
-      int number = read - (int) '0';
-      while (true) {
-        read = stream.read();
-        if (read == -1)
-          throw new EOFException();
-        if (!isDigit(read)) {
-          break;
-        }
-        number = number * 10 + (read - (int) '0');
-      }
-      if (isSpace(read)) {
-        return new NumberToken(number);
-      }
-      if (read == ':') {
-        return readString(number);
-      }
-      throw new IOException("Unexpected character in stream: " + read + " (need ' ', '\\n' or ':')");
+      return readNumberToken(read);
     }
     // Обычная строчка.
     if (isAlpha(read)) {
-      return readWord(read);
+      return readWord();
     }
     throw new IOException("Unexpected character in stream: " + read + " (need 'a'..'z', 'A'..'Z', '0'..'9', ' ' or '\n')");
+  }
+
+  private SvnServerToken readNumberToken(byte first) throws IOException {
+    int result = first - '0';
+    while (true) {
+      while (offset < limit) {
+        final byte data = buffer[offset];
+        offset++;
+        if ((data < '0') || (data > '9')) {
+          if (data == ':') {
+            return readString(result);
+          }
+          if (isSpace(data)) {
+            return new NumberToken(result);
+          }
+          throw new IOException("Unexpected character in stream: " + data + " (need ' ', '\\n' or ':')");
+        }
+        result = result * 10 + (data - '0');
+      }
+      if (limit < 0) {
+        throw new EOFException();
+      }
+      offset = 0;
+      limit = stream.read(buffer);
+    }
+  }
+
+  private byte skipSpaces() throws IOException {
+    while (true) {
+      while (offset < limit) {
+        final byte data = buffer[offset];
+        offset++;
+        if (!isSpace(data)) {
+          return data;
+        }
+      }
+      if (limit < 0) {
+        throw new EOFException();
+      }
+      offset = 0;
+      limit = stream.read(buffer);
+    }
   }
 
   private static boolean isSpace(int data) {
@@ -160,29 +180,31 @@ public class SvnServerParser {
 
   @NotNull
   private StringToken readString(int length) throws IOException {
-    int need = length;
-    byte[] localBuffer = buffer;
-    while (need > 0) {
-      // Если буфер мал - увеличиваем.
-      if (localBuffer.length == position) {
-        localBuffer = enlargeBuffer(localBuffer);
-      }
-      // Читаем.
-      final int readed = stream.read(localBuffer, position, Math.min(need, localBuffer.length - position));
-      if (readed < 0) {
-        throw new EOFException();
-      }
-      need -= readed;
-      position += readed;
-    }
-    return new StringToken(Arrays.copyOf(localBuffer, length));
-  }
-
-  private static byte[] enlargeBuffer(byte[] buffer) throws IOException {
-    if (buffer.length >= MAX_BUFFER_SIZE) {
+    if (length >= MAX_BUFFER_SIZE) {
       throw new IOException("Data is too long. Buffer overflow: " + buffer.length);
     }
-    return Arrays.copyOf(buffer, Math.min(MAX_BUFFER_SIZE, buffer.length * 2));
+    if (limit < 0) {
+      throw new EOFException();
+    }
+    final byte[] token = new byte[length];
+    if (length <= limit - offset) {
+      System.arraycopy(buffer, offset, token, 0, length);
+      offset += length;
+    } else {
+      int position = limit - offset;
+      System.arraycopy(buffer, offset, token, 0, position);
+      limit = 0;
+      offset = 0;
+      while (position < length) {
+        int size = stream.read(token, position, length - position);
+        if (size < 0) {
+          limit = -1;
+          throw new EOFException();
+        }
+        position += size;
+      }
+    }
+    return new StringToken(Arrays.copyOf(token, length));
   }
 
   private static boolean isAlpha(int data) {
@@ -191,27 +213,39 @@ public class SvnServerParser {
   }
 
   @NotNull
-  private WordToken readWord(int first) throws IOException {
-    byte[] localBuffer = buffer;
-    localBuffer[position] = (byte) first;
-    position++;
-    while (true) {
-      final int read = stream.read();
-      if (read < 0) {
+  private WordToken readWord() throws IOException {
+    int begin = offset - 1;
+    while (offset < limit) {
+      final byte data = buffer[offset];
+      offset++;
+      if (isSpace(data)) {
+        return new WordToken(new String(buffer, begin, offset - begin - 1, StandardCharsets.US_ASCII));
+      }
+      if (!(isAlpha(data) || isDigit(data) || (data == '-'))) {
+        throw new IOException("Unexpected character in stream: " + data + " (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')");
+      }
+    }
+    System.arraycopy(buffer, begin, buffer, 0, limit - begin);
+    limit = offset - begin;
+    offset = limit;
+    while (limit < buffer.length) {
+      int size = stream.read(buffer, limit, buffer.length - limit);
+      if (size < 0) {
         throw new EOFException();
       }
-      if (isSpace(read)) {
-        return new WordToken(new String(localBuffer, 0, position, StandardCharsets.US_ASCII));
+      limit += size;
+      while (offset < limit) {
+        final byte data = buffer[offset];
+        offset++;
+        if (isSpace(data)) {
+          return new WordToken(new String(buffer, 0, offset - 1, StandardCharsets.US_ASCII));
+        }
+        if (!(isAlpha(data) || isDigit(data) || (data == '-'))) {
+          throw new IOException("Unexpected character in stream: " + data + " (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')");
+        }
       }
-      if (!(isAlpha(read) || isDigit(read) || (read == '-'))) {
-        throw new IOException("Unexpected character in stream: " + read + " (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')");
-      }
-      if (localBuffer.length == position) {
-        localBuffer = enlargeBuffer(localBuffer);
-      }
-      localBuffer[position] = (byte) read;
-      position++;
     }
+    throw new IOException("Data is too long. Buffer overflow: " + buffer.length);
   }
 
   public void skipItems() throws IOException {
