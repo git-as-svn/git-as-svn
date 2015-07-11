@@ -188,7 +188,7 @@ public class GitWriter implements VcsWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories is not supported: " + fullPath));
       }
       final ObjectId subtreeId = last.buildTree(inserter);
-      log.info("Create tree {} for dir: {}", subtreeId.name(), fullPath);
+      log.debug("Create tree {} for dir: {}", subtreeId.name(), fullPath);
       if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), subtreeId), last.getName())) != null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
       }
@@ -235,7 +235,7 @@ public class GitWriter implements VcsWriter {
     public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
       final GitTreeUpdate root = treeStack.element();
       ObjectId treeId = root.buildTree(inserter);
-      log.info("Create tree {} for commit.", treeId.name());
+      log.debug("Create tree {} for commit.", treeId.name());
 
       final CommitBuilder commitBuilder = new CommitBuilder();
       final PersonIdent ident = createIdent(userInfo);
@@ -249,6 +249,7 @@ public class GitWriter implements VcsWriter {
       commitBuilder.setTreeId(treeId);
       final ObjectId commitId = inserter.insert(commitBuilder);
       inserter.flush();
+      log.info("Create commit {}: {}", commitId.name(), message);
 
       if (filterMigration(new RevWalk(repo.getRepository()).parseTree(treeId)) != 0) {
         log.info("Need recreate tree after filter migration.");
@@ -259,7 +260,6 @@ public class GitWriter implements VcsWriter {
         log.info("Validate properties");
         validateProperties(new RevWalk(repo.getRepository()).parseTree(treeId));
 
-        log.info("Create commit {}: {}", commitId.name(), message);
         log.info("Try to push commit in branch: {}", branch);
         if (!pushMode.push(repo.getRepository(), commitId, branch)) {
           log.info("Non fast forward push rejected");

@@ -384,7 +384,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      log.info("Modify file: {} (rev: {})", args.name, rev);
+      log.info("Modify dir: {} (rev: {})", args.name, rev);
       final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
       final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
       if ((rev >= 0) && (parent.head)) {
@@ -464,7 +464,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      log.info("Modify file: {} (rev: {})", parent, rev);
+      log.info("Modify file: {} (rev: {})", args.name, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
       final VcsDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
