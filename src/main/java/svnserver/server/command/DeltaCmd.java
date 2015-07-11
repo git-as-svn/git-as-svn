@@ -117,7 +117,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull DeltaParams args) throws IOException, SVNException {
-    log.info("Enter report mode");
+    log.debug("Enter report mode");
     ReportPipeline pipeline = new ReportPipeline(args);
     pipeline.reportCommand(context);
   }
@@ -665,7 +665,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final SvnServerWriter writer = context.getWriter();
       parser.readToken(ListBeginToken.class);
       final String cmd = parser.readText();
-      log.info("Report command: {}", cmd);
+      log.debug("Report command: {}", cmd);
       final BaseCmd command = commands.get(cmd);
       if (command != null) {
         Object param = MessageParser.parse(command.getArguments(), parser);

@@ -598,7 +598,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final SvnServerWriter writer = context.getWriter();
       parser.readToken(ListBeginToken.class);
       final String cmd = parser.readText();
-      log.info("Editor command: {}", cmd);
+      log.debug("Editor command: {}", cmd);
 
       BaseCmd command = exitCommands.get(cmd);
       if (command == null) {

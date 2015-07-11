@@ -37,11 +37,7 @@ import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -201,7 +197,7 @@ public class SvnServer extends Thread {
         final String cmd = parser.readText();
         BaseCmd command = commands.get(cmd);
         if (command != null) {
-          log.info("Receive command: {}", cmd);
+          log.debug("Receive command: {}", cmd);
           Object param = MessageParser.parse(command.getArguments(), parser);
           parser.readToken(ListEndToken.class);
           //noinspection unchecked
