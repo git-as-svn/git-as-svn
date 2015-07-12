@@ -31,16 +31,16 @@ public class LfsLocalStorageTest {
     try {
       LfsLocalStorage storage = new LfsLocalStorage(tempDir);
       // Check file is not exists
-      Assert.assertNull(storage.getReader("61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
+      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter()) {
         writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals(writer.finish(), "61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+        Assert.assertEquals(writer.finish(), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       }
 
       // Read old file.
-      final LfsReader reader = storage.getReader("61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       Assert.assertNotNull(reader);
       Assert.assertEquals("9fe77772b085e3533101d59d33a51f19", reader.getMd5());
       Assert.assertEquals(15, reader.getSize());
@@ -59,18 +59,18 @@ public class LfsLocalStorageTest {
     try {
       LfsLocalStorage storage = new LfsLocalStorage(tempDir);
       // Check file is not exists
-      Assert.assertNull(storage.getReader("61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
+      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter()) {
         writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals(writer.finish(), "61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+        Assert.assertEquals(writer.finish(), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       }
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter()) {
         writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals(writer.finish(), "61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+        Assert.assertEquals(writer.finish(), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       }
     } finally {
       TestHelper.deleteDirectory(tempDir);

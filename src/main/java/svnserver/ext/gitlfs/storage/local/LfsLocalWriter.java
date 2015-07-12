@@ -102,14 +102,22 @@ public class LfsLocalWriter extends LfsWriter {
     writeHeader();
     randomAccessFile.close();
 
-    final String hex = Hex.encodeHexString(digestSha.digest());
-    final File newName = LfsLocalStorage.getPath(root, hex);
+    final String oid = LfsLocalStorage.OID_PREFIX + Hex.encodeHexString(digestSha.digest());
+    final File newName = LfsLocalStorage.getPath(root, oid);
+    if (newName == null) {
+      throw new IllegalStateException();
+    }
     //noinspection ResultOfMethodCallIgnored
     newName.getParentFile().mkdirs();
+    if (newName.exists()) {
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
+      return oid;
+    }
     if (!file.renameTo(newName)) {
       throw new IOException("Can't rename file: " + file.getPath() + " -> " + newName.getPath());
     }
-    return hex;
+    return oid;
   }
 
   @Override

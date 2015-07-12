@@ -34,10 +34,10 @@ public class LfsPointer {
   private final static byte[] PREFIX = "version ".getBytes(StandardCharsets.UTF_8);
 
   @NotNull
-  public static Map<String, String> createPointer(@NotNull String sha256, long size) {
+  public static Map<String, String> createPointer(@NotNull String oid, long size) {
     final Map<String, String> pointer = new TreeMap<>();
     pointer.put("version", VERSION);
-    pointer.put("oid", "sha256:" + sha256);
+    pointer.put("oid", oid);
     pointer.put("size", Long.toString(size));
     return pointer;
   }

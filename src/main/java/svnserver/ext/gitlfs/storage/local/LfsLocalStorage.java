@@ -29,6 +29,8 @@ public class LfsLocalStorage implements LfsStorage {
   @NotNull
   static final byte[] HEADER = "LFS\0".getBytes(StandardCharsets.UTF_8);
   @NotNull
+  static final String OID_PREFIX = "sha256:";
+  @NotNull
   private final File root;
 
   public LfsLocalStorage(@NotNull File root) {
@@ -37,9 +39,13 @@ public class LfsLocalStorage implements LfsStorage {
 
   @Nullable
   @Override
-  public LfsReader getReader(@NotNull String sha256) throws IOException {
+  public LfsReader getReader(@NotNull String oid) throws IOException {
     try {
-      return new LfsLocalReader(getPath(root, sha256));
+      final File path = getPath(root, oid);
+      if (path == null) {
+        return null;
+      }
+      return new LfsLocalReader(path);
     } catch (FileNotFoundException ignored) {
       return null;
     }
@@ -51,8 +57,11 @@ public class LfsLocalStorage implements LfsStorage {
     return new LfsLocalWriter(root);
   }
 
-  static File getPath(@NotNull File root, @NotNull String sha256) {
-    return new File(root, sha256.substring(0, 2) + "/" + sha256 + ".lfs");
+  @Nullable
+  static File getPath(@NotNull File root, @NotNull String oid) {
+    if (!oid.startsWith(OID_PREFIX)) return null;
+    final int offset = OID_PREFIX.length();
+    return new File(root, oid.substring(offset, offset + 2) + "/" + oid.substring(offset) + ".lfs");
   }
 
   public static MessageDigest createDigestMd5() {

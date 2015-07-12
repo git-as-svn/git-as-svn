@@ -21,12 +21,12 @@ public interface LfsStorage {
   /**
    * Create reader for object by SHA-256 hash.
    *
-   * @param sha256 Object hash.
+   * @param oid Object hash.
    * @return Object reader or null if object not exists.
    * @throws IOException .
    */
   @Nullable
-  LfsReader getReader(@NotNull String sha256) throws IOException;
+  LfsReader getReader(@NotNull String oid) throws IOException;
 
   /**
    * Create writer for object.
