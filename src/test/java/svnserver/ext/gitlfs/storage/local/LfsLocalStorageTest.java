@@ -46,7 +46,7 @@ public class LfsLocalStorageTest {
       Assert.assertEquals(15, reader.getSize());
 
       try (final InputStream stream = reader.openStream()) {
-        Assert.assertEquals("Hello, world!!!", IOUtils.toString(stream, StandardCharsets.UTF_8));
+        Assert.assertEquals(IOUtils.toString(stream, StandardCharsets.UTF_8), "Hello, world!!!");
       }
     } finally {
       TestHelper.deleteDirectory(tempDir);

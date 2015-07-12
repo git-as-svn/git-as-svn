@@ -14,6 +14,7 @@ import svnserver.ext.gitlfs.storage.LfsReader;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Local storage writer.
@@ -49,7 +50,7 @@ public class LfsLocalReader implements LfsReader {
     final FileInputStream stream = new FileInputStream(file);
     //noinspection ResultOfMethodCallIgnored
     stream.skip(offset);
-    return stream;
+    return new GZIPInputStream(stream);
   }
 
   @Override

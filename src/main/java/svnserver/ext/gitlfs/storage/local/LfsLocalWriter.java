@@ -14,9 +14,11 @@ import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.util.UUID;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Local storage writer.
@@ -31,6 +33,8 @@ public class LfsLocalWriter extends LfsWriter {
 
   @Nullable
   private RandomAccessFile randomAccessFile;
+  @Nullable
+  private OutputStream gzipStream;
   @NotNull
   private final MessageDigest digestMd5;
   @NotNull
@@ -51,6 +55,7 @@ public class LfsLocalWriter extends LfsWriter {
     size = -1;
     writeHeader();
     size = 0;
+    gzipStream = new GZIPOutputStream(new OutputStreamWrapper(randomAccessFile));
   }
 
   private void writeHeader() throws IOException {
@@ -66,10 +71,10 @@ public class LfsLocalWriter extends LfsWriter {
 
   @Override
   public void write(int b) throws IOException {
-    if (randomAccessFile == null) {
+    if (gzipStream == null) {
       throw new IllegalStateException();
     }
-    randomAccessFile.write(b);
+    gzipStream.write(b);
     digestMd5.update((byte) b);
     digestSha.update((byte) b);
     size += 1;
@@ -77,10 +82,10 @@ public class LfsLocalWriter extends LfsWriter {
 
   @Override
   public void write(@NotNull byte[] b, int off, int len) throws IOException {
-    if (randomAccessFile == null) {
+    if (gzipStream == null) {
       throw new IllegalStateException();
     }
-    randomAccessFile.write(b, off, len);
+    gzipStream.write(b, off, len);
     digestMd5.update(b, off, len);
     digestSha.update(b, off, len);
     size += len;
@@ -89,9 +94,10 @@ public class LfsLocalWriter extends LfsWriter {
   @NotNull
   @Override
   public String finish() throws IOException {
-    if (randomAccessFile == null) {
+    if (randomAccessFile == null || gzipStream == null) {
       throw new IllegalStateException();
     }
+    gzipStream.close();
     randomAccessFile.seek(0);
     writeHeader();
     randomAccessFile.close();
@@ -112,6 +118,26 @@ public class LfsLocalWriter extends LfsWriter {
       //noinspection ResultOfMethodCallIgnored
       file.delete();
       randomAccessFile = null;
+      gzipStream = null;
+    }
+  }
+
+  private static class OutputStreamWrapper extends OutputStream {
+    @NotNull
+    private final RandomAccessFile randomAccessFile;
+
+    public OutputStreamWrapper(@NotNull RandomAccessFile randomAccessFile) {
+      this.randomAccessFile = randomAccessFile;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      randomAccessFile.write(b);
+    }
+
+    @Override
+    public void write(@NotNull byte[] b, int off, int len) throws IOException {
+      randomAccessFile.write(b, off, len);
     }
   }
 }
