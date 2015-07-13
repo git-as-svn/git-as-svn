@@ -24,21 +24,29 @@ import java.util.TreeMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsPointer {
+  public static final int POINTER_MAX_SIZE = 1024;
   @NotNull
-  private final static String[] REQUIRED = {
-      "oid",
-      "size",
+  public static final String OID = "oid";
+  @NotNull
+  public static final String SIZE = "size";
+  @NotNull
+  public static final String VERSION = "version";
+
+  @NotNull
+  private static final String[] REQUIRED = {
+      OID,
+      SIZE,
   };
-  private final static String VERSION = "https://git-lfs.github.com/spec/v1";
+  private static final String VERSION_URL = "https://git-lfs.github.com/spec/v1";
   @NotNull
-  private final static byte[] PREFIX = "version ".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] PREFIX = "version ".getBytes(StandardCharsets.UTF_8);
 
   @NotNull
   public static Map<String, String> createPointer(@NotNull String oid, long size) {
     final Map<String, String> pointer = new TreeMap<>();
-    pointer.put("version", VERSION);
-    pointer.put("oid", oid);
-    pointer.put("size", Long.toString(size));
+    pointer.put(VERSION, VERSION_URL);
+    pointer.put(OID, oid);
+    pointer.put(SIZE, Long.toString(size));
     return pointer;
   }
 
@@ -48,11 +56,11 @@ public class LfsPointer {
     final StringBuilder buffer = new StringBuilder();
     // Write version.
     {
-      String version = data.remove("version");
+      String version = data.remove(VERSION);
       if (version == null) {
-        version = VERSION;
+        version = VERSION_URL;
       }
-      buffer.append("version").append(' ').append(version).append('\n');
+      buffer.append(VERSION).append(' ').append(version).append('\n');
     }
     for (Map.Entry<String, String> entry : data.entrySet()) {
       buffer.append(entry.getKey()).append(' ').append(entry.getValue()).append('\n');
@@ -68,8 +76,19 @@ public class LfsPointer {
    */
   @Nullable
   public static Map<String, String> parsePointer(@NotNull byte[] blob) {
+    return parsePointer(blob, 0, blob.length);
+  }
+
+  /**
+   * Read pointer data.
+   *
+   * @param blob Blob data.
+   * @return Return pointer info or null if blob is not a pointer data.
+   */
+  @Nullable
+  public static Map<String, String> parsePointer(@NotNull byte[] blob, final int offset, final int length) {
     // Check prefix
-    if (blob.length < PREFIX.length) return null;
+    if (length < PREFIX.length) return null;
     for (int i = 0; i < PREFIX.length; ++i) {
       if (blob[i] != PREFIX[i]) return null;
     }
@@ -77,17 +96,17 @@ public class LfsPointer {
     final TreeMap<String, String> result = new TreeMap<>();
     final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
     String lastKey = null;
-    int keyOffset = 0;
+    int keyOffset = offset;
     int required = 0;
     while (true) {
-      if (keyOffset >= blob.length) {
+      if (keyOffset >= length) {
         break;
       }
       int valueOffset = keyOffset;
       // Key
       while (true) {
         valueOffset++;
-        if (valueOffset < blob.length) {
+        if (valueOffset < length) {
           final byte c = blob[valueOffset];
           if (c == ' ') break;
           // Keys MUST only use the characters [a-z] [0-9] . -.
@@ -102,7 +121,7 @@ public class LfsPointer {
       // Value
       while (true) {
         endOffset++;
-        if (endOffset >= blob.length) return null;
+        if (endOffset >= length) return null;
         // Values MUST NOT contain return or newline characters.
         if (blob[endOffset] == '\n') break;
       }
@@ -117,7 +136,7 @@ public class LfsPointer {
       if (required < REQUIRED.length && REQUIRED[required].equals(key)) {
         required++;
       }
-      if (keyOffset > 0) {
+      if (keyOffset > offset) {
         if (lastKey != null && key.compareTo(lastKey) <= 0) {
           return null;
         }
@@ -132,7 +151,13 @@ public class LfsPointer {
     if (required < REQUIRED.length) {
       return null;
     }
-
+    try {
+      if (Long.parseLong(result.get(SIZE)) < 0) {
+        return null;
+      }
+    } catch (NumberFormatException ignored) {
+      return null;
+    }
     return result;
   }
 }
