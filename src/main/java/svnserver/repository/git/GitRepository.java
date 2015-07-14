@@ -121,17 +121,28 @@ public class GitRepository implements VcsRepository {
 
     this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
     this.gitBranch = Constants.R_HEADS + branch;
-    loadRevisions();
-    cacheRevisions();
+    final String repositoryId = loadRepositoryId(repository, svnBranch);
+    this.uuid = UUID.nameUUIDFromBytes((repositoryId + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
 
-    updateRevisions();
-    this.uuid = UUID.nameUUIDFromBytes((getRepositoryId() + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
-    log.info("Repository ready (branch: {})", gitBranch);
+    log.info("Repository registered (branch: {})", gitBranch);
   }
 
   @NotNull
-  private String getRepositoryId() throws IOException {
-    return LayoutHelper.loadRepositoryId(repository.newObjectReader(), revisions.get(0).getCacheCommit());
+  private static String loadRepositoryId(@NotNull Repository repository, @NotNull String refName) throws IOException {
+    final Ref ref = repository.getRef(refName);
+    if (ref == null) {
+      throw new IllegalStateException();
+    }
+
+    ObjectId oid = ref.getObjectId();
+    final RevWalk revWalk = new RevWalk(repository);
+    while (true) {
+      final RevCommit revCommit = revWalk.parseCommit(oid);
+      if (revCommit.getParentCount() == 0) {
+        return LayoutHelper.loadRepositoryId(repository.newObjectReader(), oid);
+      }
+      oid = revCommit.getParent(0);
+    }
   }
 
   /**

@@ -117,6 +117,7 @@ public class SvnServer extends Thread {
     commands.put("get-locks", new GetLocksCmd());
 
     repositoryMapping = config.getRepositoryMapping().create(basePath, cacheDb);
+    repositoryMapping.initRevisions();
     acl = new ACL(config.getAcl());
 
     serverSocket = new ServerSocket();
