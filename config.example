@@ -44,6 +44,12 @@ acl:
       allowed:
         - '@developers'
 
+shared:
+  # Submodule list.
+  # You can define extra submodule path. Every path defined in "repositores" already included in submodule list.
+  - !submodules [
+  ]
+
 # Simple in-memory user database
 userDB: !localUsers
   users:

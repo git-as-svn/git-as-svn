@@ -7,15 +7,10 @@
  */
 package svnserver.config;
 
-import org.jetbrains.annotations.NotNull;
-import svnserver.auth.UserDB;
-
-import java.io.File;
-
 /**
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * Shared between repositories configuration
+ *
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDBConfig {
-  @NotNull
-  UserDB create(@NotNull File basePath);
+public interface SharedConfig {
 }

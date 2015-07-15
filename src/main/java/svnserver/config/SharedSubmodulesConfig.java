@@ -7,15 +7,16 @@
  */
 package svnserver.config;
 
-import org.jetbrains.annotations.NotNull;
-import svnserver.auth.UserDB;
+import svnserver.config.serializer.ConfigType;
 
-import java.io.File;
+import java.util.ArrayList;
 
 /**
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * Submodules configuration list
+ *
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDBConfig {
-  @NotNull
-  UserDB create(@NotNull File basePath);
+@ConfigType("submodules")
+public class SharedSubmodulesConfig extends ArrayList<String> implements SharedConfig {
+
 }
