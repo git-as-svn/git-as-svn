@@ -8,7 +8,6 @@
 package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -19,6 +18,7 @@ import svnserver.auth.Authenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.config.Config;
+import svnserver.context.SharedContext;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerToken;
@@ -69,8 +69,6 @@ public class SvnServer extends Thread {
   @NotNull
   private final Config config;
   @NotNull
-  private final DB cacheDb;
-  @NotNull
   private final ServerSocket serverSocket;
   @NotNull
   private final ExecutorService poolExecutor;
@@ -80,12 +78,14 @@ public class SvnServer extends Thread {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   @NotNull
   private final AtomicLong lastSessionId = new AtomicLong();
+  @NotNull
+  private final SharedContext context;
 
   public SvnServer(@NotNull File basePath, @NotNull Config config) throws IOException, SVNException {
     setDaemon(true);
     this.config = config;
 
-    cacheDb = config.getCacheConfig().createCache(basePath);
+    context = SharedContext.create(basePath, config.getCacheConfig().createCache(basePath), config.getShared());
     userDB = config.getUserDB().create(basePath);
 
     commands.put("commit", new CommitCmd());
@@ -116,7 +116,7 @@ public class SvnServer extends Thread {
     commands.put("get-lock", new GetLockCmd());
     commands.put("get-locks", new GetLocksCmd());
 
-    repositoryMapping = config.getRepositoryMapping().create(basePath, cacheDb);
+    repositoryMapping = config.getRepositoryMapping().create(context);
     repositoryMapping.initRevisions();
     acl = new ACL(config.getAcl());
 
@@ -330,7 +330,7 @@ public class SvnServer extends Thread {
       forceShutdown();
     }
     join(millis);
-    cacheDb.close();
+    context.close();
     log.info("Server shutdowned");
   }
 

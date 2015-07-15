@@ -19,7 +19,6 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -27,6 +26,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.StringHelper;
+import svnserver.context.SharedContext;
 import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
@@ -69,8 +69,6 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Repository repository;
   @NotNull
-  private final List<Repository> linkedRepositories;
-  @NotNull
   private final GitPushMode pushMode;
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
@@ -92,7 +90,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final String svnBranch;
   @NotNull
-  private final DB cacheDb;
+  private final SharedContext context;
   @NotNull
   private final Map<String, Boolean> binaryCache;
   @NotNull
@@ -103,21 +101,20 @@ public class GitRepository implements VcsRepository {
   private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
 
-  public GitRepository(@NotNull Repository repository,
-                       @NotNull List<Repository> linked,
+  public GitRepository(@NotNull SharedContext context,
+                       @NotNull Repository repository,
                        @NotNull GitPushMode pushMode,
                        @NotNull String branch,
                        boolean renameDetection,
-                       @NotNull LockManagerFactory lockManagerFactory,
-                       @NotNull DB cacheDb) throws IOException, SVNException {
-    this.cacheDb = cacheDb;
-    this.binaryCache = cacheDb.getHashMap("cache.binary");
+                       @NotNull LockManagerFactory lockManagerFactory) throws IOException, SVNException {
+    this.context = context;
+    context.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
     this.repository = repository;
+    this.binaryCache = context.getCacheDB().getHashMap("cache.binary");
     this.pushMode = pushMode;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
-    this.gitFilters = GitFilterHelper.createFilters(cacheDb);
-    linkedRepositories = new ArrayList<>(linked);
+    this.gitFilters = GitFilterHelper.createFilters(context);
 
     this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
     this.gitBranch = Constants.R_HEADS + branch;
@@ -125,6 +122,11 @@ public class GitRepository implements VcsRepository {
     this.uuid = UUID.nameUUIDFromBytes((repositoryId + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
 
     log.info("Repository registered (branch: {})", gitBranch);
+  }
+
+  @Override
+  public void close() throws IOException {
+    context.sure(GitSubmodules.class).unregister(repository);
   }
 
   @NotNull
@@ -332,7 +334,7 @@ public class GitRepository implements VcsRepository {
       lockManager.validateLocks();
       return Boolean.TRUE;
     });
-    cacheDb.commit();
+    context.getCacheDB().commit();
   }
 
   private boolean isTreeEmpty(RevTree tree) throws IOException {
@@ -635,14 +637,7 @@ public class GitRepository implements VcsRepository {
 
   @Nullable
   public GitObject<RevCommit> loadLinkedCommit(@NotNull ObjectId objectId) throws IOException {
-    for (Repository repo : linkedRepositories) {
-      if (repo.hasObject(objectId)) {
-        final RevWalk revWalk = new RevWalk(repo);
-        return new GitObject<>(repo, revWalk.parseCommit(objectId));
-
-      }
-    }
-    return null;
+    return context.sure(GitSubmodules.class).findCommit(objectId);
   }
 
   @NotNull

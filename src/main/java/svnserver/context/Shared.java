@@ -5,23 +5,21 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.context;
 
+import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
-import svnserver.context.SharedContext;
-
-import java.io.IOException;
 
 /**
- * Shared between repositories configuration
+ * Interface for objects in SharedContext.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface SharedConfig {
+@ThreadSafe
+public interface Shared {
   /**
-   * Add shared data to context.
-   *
-   * @param context Shared context.
+   * Initialize item.
+   * Can be executed multiple times.
    */
-  void create(@NotNull SharedContext context) throws IOException;
+  void init(@NotNull SharedContext context);
 }

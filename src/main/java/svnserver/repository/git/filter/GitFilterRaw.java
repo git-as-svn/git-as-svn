@@ -14,6 +14,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.context.SharedContext;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
@@ -31,8 +32,8 @@ public final class GitFilterRaw implements GitFilter {
   @NotNull
   public static final String NAME = "raw";
 
-  public GitFilterRaw(@NotNull DB cacheDb) {
-    this.cacheDb = cacheDb;
+  public GitFilterRaw(@NotNull SharedContext context) {
+    this.cacheDb = context.getCacheDB();
   }
 
   @NotNull

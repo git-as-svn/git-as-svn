@@ -7,8 +7,12 @@
  */
 package svnserver.config;
 
+import org.jetbrains.annotations.NotNull;
 import svnserver.config.serializer.ConfigType;
+import svnserver.context.SharedContext;
+import svnserver.repository.git.GitSubmodules;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -19,4 +23,8 @@ import java.util.ArrayList;
 @ConfigType("submodules")
 public class SharedSubmodulesConfig extends ArrayList<String> implements SharedConfig {
 
+  @Override
+  public void create(@NotNull SharedContext context) throws IOException {
+    context.add(GitSubmodules.class, new GitSubmodules(context.getBasePath(), this));
+  }
 }
