@@ -10,6 +10,8 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.serializer.ConfigType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,6 +39,9 @@ public final class Config {
 
   @NotNull
   private AclConfig acl = new AclConfig();
+
+  @NotNull
+  private List<SharedConfig> shared = new ArrayList<>();
 
   private int port = 3690;
   private boolean reuseAddress = false;
@@ -103,5 +108,10 @@ public final class Config {
 
   public void setCacheConfig(@NotNull CacheConfig cacheConfig) {
     this.cacheConfig = cacheConfig;
+  }
+
+  @NotNull
+  public List<SharedConfig> getShared() {
+    return shared;
   }
 }

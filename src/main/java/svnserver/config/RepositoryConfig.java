@@ -8,12 +8,10 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.context.SharedContext;
 import svnserver.repository.VcsRepository;
 
-import javax.xml.bind.annotation.XmlSeeAlso;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -21,10 +19,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-@XmlSeeAlso({
-    GitRepositoryConfig.class
-})
 public interface RepositoryConfig {
   @NotNull
-  VcsRepository create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException;
+  VcsRepository create(@NotNull SharedContext context) throws IOException, SVNException;
 }

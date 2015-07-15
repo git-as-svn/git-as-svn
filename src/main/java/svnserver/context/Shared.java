@@ -5,21 +5,21 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.context;
 
+import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.SharedContext;
-import svnserver.repository.VcsRepositoryMapping;
-
-import java.io.IOException;
 
 /**
- * Repository mapping config.
+ * Interface for objects in SharedContext.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface RepositoryMappingConfig {
-  @NotNull
-  VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException;
+@ThreadSafe
+public interface Shared {
+  /**
+   * Initialize item.
+   * Can be executed multiple times.
+   */
+  void init(@NotNull SharedContext context);
 }
