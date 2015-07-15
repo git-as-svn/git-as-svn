@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.context.Shared;
 
 import java.io.IOException;
 
@@ -17,7 +18,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface LfsStorage {
+public interface LfsStorage extends Shared {
   /**
    * Create reader for object by SHA-256 hash.
    *

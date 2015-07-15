@@ -21,5 +21,6 @@ public interface Shared {
    * Initialize item.
    * Can be executed multiple times.
    */
-  void init(@NotNull SharedContext context);
+  default void init(@NotNull SharedContext context) {
+  }
 }

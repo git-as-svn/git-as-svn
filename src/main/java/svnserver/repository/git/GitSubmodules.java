@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svnserver.context.Shared;
-import svnserver.context.SharedContext;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,10 +48,6 @@ public class GitSubmodules implements Shared {
       log.info("Linked repository path: {}", file);
       repositories.add(new FileRepository(file));
     }
-  }
-
-  @Override
-  public void init(@NotNull SharedContext context) {
   }
 
   @Nullable

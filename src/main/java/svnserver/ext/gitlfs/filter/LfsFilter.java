@@ -12,10 +12,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -42,20 +42,8 @@ public class LfsFilter implements GitFilter {
   @NotNull
   private final DB cacheDb;
 
-  public LfsFilter(@NotNull SharedContext context) {
-    this.storage = new LfsStorage() {
-      @Nullable
-      @Override
-      public LfsReader getReader(@NotNull String oid) throws IOException {
-        throw new UnsupportedOperationException();
-      }
-
-      @NotNull
-      @Override
-      public LfsWriter getWriter() throws IOException {
-        throw new UnsupportedOperationException();
-      }
-    };
+  public LfsFilter(@NotNull SharedContext context) throws IOException, SVNException {
+    this.storage = LfsConfig.getStorage(context);
     this.cacheDb = context.getCacheDB();
   }
 
