@@ -54,7 +54,7 @@ public class LfsMemoryWriter extends LfsWriter {
 
   @NotNull
   @Override
-  public String finish() throws IOException {
+  public String finish(@Nullable String expectedOid) throws IOException {
     if (stream == null) {
       throw new IllegalStateException();
     }
@@ -62,6 +62,9 @@ public class LfsMemoryWriter extends LfsWriter {
       final byte[] content = stream.toByteArray();
       String result = Hex.encodeHexString(MessageDigest.getInstance("SHA-256").digest(content));
       final String oid = OID_PREFIX + result;
+      if (expectedOid != null && !expectedOid.equals(oid)) {
+        throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + oid);
+      }
       storage.putIfAbsent(oid, content);
       stream = null;
       return oid;

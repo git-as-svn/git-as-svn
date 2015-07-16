@@ -188,7 +188,7 @@ public class LfsFilter implements GitFilter {
 
     @Override
     public void close() throws IOException {
-      final Map<String, String> pointer = LfsPointer.createPointer(writer.finish(), size);
+      final Map<String, String> pointer = LfsPointer.createPointer(writer.finish(null), size);
       writer.close();
       stream.write(LfsPointer.serializePointer(pointer));
       stream.close();

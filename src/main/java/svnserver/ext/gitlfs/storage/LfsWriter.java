@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,5 +20,5 @@ import java.io.OutputStream;
  */
 public abstract class LfsWriter extends OutputStream {
   @NotNull
-  public abstract String finish() throws IOException;
+  public abstract String finish(@Nullable String expectedOid) throws IOException;
 }

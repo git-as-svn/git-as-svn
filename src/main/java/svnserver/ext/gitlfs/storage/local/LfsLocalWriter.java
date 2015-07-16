@@ -98,7 +98,7 @@ public class LfsLocalWriter extends LfsWriter {
 
   @NotNull
   @Override
-  public String finish() throws IOException {
+  public String finish(@Nullable String expectedOid) throws IOException {
     if (randomAccessFile == null || gzipStream == null) {
       throw new IllegalStateException();
     }
@@ -108,6 +108,9 @@ public class LfsLocalWriter extends LfsWriter {
     randomAccessFile.close();
 
     final String oid = LfsLocalStorage.OID_PREFIX + Hex.encodeHexString(sha);
+    if (expectedOid != null && !expectedOid.equals(oid)) {
+      throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + oid);
+    }
     final File newName = LfsLocalStorage.getPath(root, oid);
     if (newName == null) {
       throw new IllegalStateException();
