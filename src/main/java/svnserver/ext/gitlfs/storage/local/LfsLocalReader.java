@@ -52,10 +52,16 @@ public class LfsLocalReader implements LfsReader {
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
+    return new GZIPInputStream(openGzipStream());
+  }
+
+  @NotNull
+  @Override
+  public InputStream openGzipStream() throws IOException {
     final FileInputStream stream = new FileInputStream(file);
     //noinspection ResultOfMethodCallIgnored
     stream.skip(offset);
-    return new GZIPInputStream(stream);
+    return stream;
   }
 
   @Override

@@ -33,10 +33,6 @@ public class LfsServer implements Shared {
 
   private boolean inited = false;
 
-  public LfsServer(@NotNull SharedContext context) {
-
-  }
-
   @Override
   public void init(@NotNull SharedContext context) throws IOException, SVNException {
     if (inited) return;
@@ -100,8 +96,14 @@ public class LfsServer implements Shared {
             final String oid = LfsStorage.OID_PREFIX + pathInfo.substring(1);
             final LfsReader reader = storage.getReader(oid);
             if (reader != null) {
-              resp.addHeader("Content-Type", "application/octet-stream");
-              IOUtils.copy(reader.openStream(), resp.getOutputStream());
+              resp.setContentType("application/octet-stream");
+              if (acceptsGZipEncoding(req)) {
+                resp.addHeader("Content-Encoding", "gzip");
+                IOUtils.copy(reader.openGzipStream(), resp.getOutputStream());
+              } else {
+                resp.setContentLengthLong(reader.getSize());
+                IOUtils.copy(reader.openStream(), resp.getOutputStream());
+              }
               resp.getOutputStream().close();
             }
           }
@@ -109,18 +111,9 @@ public class LfsServer implements Shared {
         super.doGet(req, resp);
       }
 
-      @NotNull
-      private String joinUrl(String url, String path) {
-        return URI.create(url).resolve(path).toString();
-      }
-
-      @NotNull
-      private String getUrl(@NotNull HttpServletRequest req) {
-        String host = req.getHeader("Host");
-        if (host == null) {
-          host = req.getServerName() + ":" + req.getServerPort();
-        }
-        return req.getScheme() + "://" + host + req.getRequestURI();
+      private boolean acceptsGZipEncoding(@NotNull HttpServletRequest req) {
+        final String acceptEncoding = req.getHeader("Accept-Encoding");
+        return acceptEncoding != null && acceptEncoding.contains("gzip");
       }
     });
     inited = true;

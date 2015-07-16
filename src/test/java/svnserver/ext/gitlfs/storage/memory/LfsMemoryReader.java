@@ -12,11 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Local storage writer.
@@ -35,6 +34,17 @@ public class LfsMemoryReader implements LfsReader {
   @Override
   public InputStream openStream() throws IOException {
     return new ByteArrayInputStream(content);
+  }
+
+  @NotNull
+  @Override
+  public InputStream openGzipStream() throws IOException {
+    try (final ByteArrayOutputStream tempStream = new ByteArrayOutputStream()) {
+      try (OutputStream outputStream = new GZIPOutputStream(tempStream)) {
+        outputStream.write(content);
+      }
+      return new ByteArrayInputStream(tempStream.toByteArray());
+    }
   }
 
   @Override

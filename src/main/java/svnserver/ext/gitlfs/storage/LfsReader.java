@@ -25,6 +25,12 @@ public interface LfsReader {
   InputStream openStream() throws IOException;
 
   /**
+   * Open gzip-compressed object stream.
+   */
+  @NotNull
+  InputStream openGzipStream() throws IOException;
+
+  /**
    * Object size.
    */
   long getSize();
