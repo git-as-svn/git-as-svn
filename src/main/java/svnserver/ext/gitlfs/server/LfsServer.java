@@ -37,7 +37,9 @@ import java.util.regex.Pattern;
  */
 public class LfsServer implements Shared {
   @NotNull
-  private static Pattern OID_PATH_INFO = Pattern.compile("^\\/([0-9a-f]{64})$");
+  private static Pattern OID_PATH_INFO = Pattern.compile("^/([0-9a-f]{64})$");
+  @NotNull
+  private static String MIME_TYPE = "application/vnd.git-lfs+json";
 
   private boolean inited = false;
 
@@ -50,17 +52,17 @@ public class LfsServer implements Shared {
       @Override
       protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (req.getPathInfo() != null) {
-          // todo: Error
+          super.doPost(req, resp);
           return;
         }
-        if (!"application/vnd.git-lfs+json".equals(req.getContentType())) {
-          // todo: Error
+        if (!MIME_TYPE.equals(req.getContentType())) {
+          sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
           return;
         }
 
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
           return;
         }
         String oid = null;
@@ -78,10 +80,10 @@ public class LfsServer implements Shared {
           json.endObject();
         }
         if (oid == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "OID not defined", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
           return;
         }
-        resp.addHeader("Content-Type", "application/vnd.git-lfs+json");
+        resp.addHeader("Content-Type", MIME_TYPE);
         final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
         if (reader != null) {
           // Already uploaded
@@ -120,26 +122,26 @@ public class LfsServer implements Shared {
 
       @Override
       protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!"application/vnd.git-lfs+json".equals(req.getHeader("Accept"))) {
-          // todo: Error
+        if (!MIME_TYPE.equals(req.getHeader("Accept"))) {
+          sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
           return;
         }
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
           return;
         }
         final String oid = getOid(req.getPathInfo());
         if (oid == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
           return;
         }
         final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
         if (reader == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
           return;
         }
-        resp.addHeader("Content-Type", "application/vnd.git-lfs+json");
+        resp.addHeader("Content-Type", MIME_TYPE);
         JsonWriter writer = new JsonWriter(resp.getWriter());
         writer.setIndent("\t");
         writer.beginObject();
@@ -178,12 +180,12 @@ public class LfsServer implements Shared {
       protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
           return;
         }
         final String oid = getOid(req.getPathInfo());
         if (oid == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
           return;
         }
         final LfsWriter writer = storage.getWriter();
@@ -197,17 +199,17 @@ public class LfsServer implements Shared {
       protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
           return;
         }
         final String oid = getOid(req.getPathInfo());
         if (oid == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
           return;
         }
         final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
         if (reader == null) {
-          // todo: Error
+          sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
           return;
         }
         resp.setContentType("application/octet-stream");
@@ -227,6 +229,19 @@ public class LfsServer implements Shared {
       }
     });
     inited = true;
+  }
+
+  private static void sendError(@NotNull HttpServletResponse resp, int sc, @NotNull String message, @Nullable String documentationUrl) throws IOException {
+    resp.setStatus(sc);
+    resp.setContentType(MIME_TYPE);
+    JsonWriter writer = new JsonWriter(resp.getWriter());
+    writer.setIndent("\t");
+    writer.beginObject();
+    writer.name("message").value(message);
+    if (documentationUrl != null) {
+      writer.name("documentation_url").value(documentationUrl);
+    }
+    writer.endObject();
   }
 
   @Nullable
