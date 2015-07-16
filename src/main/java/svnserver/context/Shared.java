@@ -9,6 +9,7 @@ package svnserver.context;
 
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
 
@@ -23,7 +24,7 @@ public interface Shared {
    * Initialize item.
    * Can be executed multiple times.
    */
-  default void init(@NotNull SharedContext context) {
+  default void init(@NotNull SharedContext context) throws IOException, SVNException {
   }
 
   /**

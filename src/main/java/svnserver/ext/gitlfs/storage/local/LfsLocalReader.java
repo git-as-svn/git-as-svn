@@ -11,6 +11,7 @@ import com.sun.nio.sctp.InvalidStreamException;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import svnserver.ext.gitlfs.storage.LfsReader;
+import svnserver.ext.gitlfs.storage.LfsStorage;
 
 import java.io.*;
 import java.util.Arrays;
@@ -26,6 +27,8 @@ public class LfsLocalReader implements LfsReader {
   private final File file;
   @NotNull
   private final byte[] md5;
+  @NotNull
+  private final byte[] sha;
   private final long size;
   private final long offset;
 
@@ -40,6 +43,8 @@ public class LfsLocalReader implements LfsReader {
       size = stream.readLong();
       md5 = new byte[stream.readByte()];
       stream.readFully(md5);
+      sha = new byte[stream.readByte()];
+      stream.readFully(sha);
       offset = stream.getFilePointer();
     }
   }
@@ -62,5 +67,15 @@ public class LfsLocalReader implements LfsReader {
   @Override
   public String getMd5() {
     return Hex.encodeHexString(md5);
+  }
+
+  @NotNull
+  @Override
+  public String getOid(boolean hashOnly) {
+    if (hashOnly) {
+      return Hex.encodeHexString(sha);
+    } else {
+      return LfsStorage.OID_PREFIX + Hex.encodeHexString(sha);
+    }
   }
 }

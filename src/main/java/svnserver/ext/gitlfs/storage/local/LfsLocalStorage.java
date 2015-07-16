@@ -29,8 +29,6 @@ public class LfsLocalStorage implements LfsStorage {
   @NotNull
   static final byte[] HEADER = "LFS\0".getBytes(StandardCharsets.UTF_8);
   @NotNull
-  static final String OID_PREFIX = "sha256:";
-  @NotNull
   private final File root;
 
   public LfsLocalStorage(@NotNull File root) {

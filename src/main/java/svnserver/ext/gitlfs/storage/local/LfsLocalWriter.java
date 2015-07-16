@@ -58,7 +58,8 @@ public class LfsLocalWriter extends LfsWriter {
     gzipStream = new GZIPOutputStream(new OutputStreamWrapper(randomAccessFile));
   }
 
-  private void writeHeader() throws IOException {
+  @NotNull
+  private byte[] writeHeader() throws IOException {
     if (randomAccessFile == null) {
       throw new IllegalStateException();
     }
@@ -67,6 +68,10 @@ public class LfsLocalWriter extends LfsWriter {
     final byte[] md5 = digestMd5.digest();
     randomAccessFile.writeByte(md5.length);
     randomAccessFile.write(md5);
+    final byte[] sha = digestSha.digest();
+    randomAccessFile.writeByte(sha.length);
+    randomAccessFile.write(sha);
+    return sha;
   }
 
   @Override
@@ -99,10 +104,10 @@ public class LfsLocalWriter extends LfsWriter {
     }
     gzipStream.close();
     randomAccessFile.seek(0);
-    writeHeader();
+    final byte[] sha = writeHeader();
     randomAccessFile.close();
 
-    final String oid = LfsLocalStorage.OID_PREFIX + Hex.encodeHexString(digestSha.digest());
+    final String oid = LfsLocalStorage.OID_PREFIX + Hex.encodeHexString(sha);
     final File newName = LfsLocalStorage.getPath(root, oid);
     if (newName == null) {
       throw new IllegalStateException();

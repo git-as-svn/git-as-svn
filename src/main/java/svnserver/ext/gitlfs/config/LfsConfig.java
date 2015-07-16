@@ -9,8 +9,10 @@ package svnserver.ext.gitlfs.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 
@@ -23,7 +25,7 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("lfs")
-public class LfsConfig {
+public class LfsConfig implements SharedConfig {
   @NotNull
   private String path = "lfs";
 
@@ -38,11 +40,18 @@ public class LfsConfig {
 
   @NotNull
   public static LfsStorage getStorage(@NotNull SharedContext context) throws IOException, SVNException {
-    return context.getOrCreate(LfsStorage.class, () -> new LfsConfig().create(context));
+    return context.getOrCreate(LfsStorage.class, () -> new LfsConfig().createStorage(context));
+  }
+
+  @Override
+  public void create(@NotNull SharedContext context) throws IOException {
+    context.add(LfsStorage.class, createStorage(context));
+    context.add(LfsServer.class, new LfsServer(context));
   }
 
   @NotNull
-  public LfsStorage create(@NotNull SharedContext context) {
+  private LfsStorage createStorage(@NotNull SharedContext context) {
     return new LfsLocalStorage(new File(context.getBasePath(), path));
   }
+
 }

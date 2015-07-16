@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.storage.memory;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import svnserver.ext.gitlfs.storage.LfsReader;
+import svnserver.ext.gitlfs.storage.LfsStorage;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -51,4 +52,21 @@ public class LfsMemoryReader implements LfsReader {
     }
   }
 
+  @NotNull
+  @Override
+  public String getOid(boolean hashOnly) {
+    if (hashOnly) {
+      return getSha();
+    } else {
+      return LfsStorage.OID_PREFIX + getSha();
+    }
+  }
+
+  private String getSha() {
+    try {
+      return Hex.encodeHexString(MessageDigest.getInstance("SHA-256").digest(content));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 }

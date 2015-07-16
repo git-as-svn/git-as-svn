@@ -34,4 +34,10 @@ public interface LfsReader {
    */
   @NotNull
   String getMd5();
+
+  /**
+   * Object id.
+   */
+  @NotNull
+  String getOid(boolean hashOnly);
 }

@@ -19,6 +19,9 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface LfsStorage extends Shared {
+  @NotNull
+  String OID_PREFIX = "sha256:";
+
   /**
    * Create reader for object by SHA-256 hash.
    *
