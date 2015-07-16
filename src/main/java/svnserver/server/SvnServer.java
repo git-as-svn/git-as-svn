@@ -125,6 +125,8 @@ public class SvnServer extends Thread {
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
     poolExecutor = Executors.newCachedThreadPool();
     log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
+
+    context.ready();
   }
 
   public int getPort() {

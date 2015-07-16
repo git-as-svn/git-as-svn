@@ -49,6 +49,14 @@ shared:
   # You can define extra submodule path. Every path defined in "repositores" already included in submodule list.
   - !submodules [
   ]
+  # Web server settings.
+  # This web server used for some additional functionality like Git LFS support.
+  # Subversion WebDAV access (via http/https) IS NOT SUPPORTED now.
+  - !web
+    listen:
+    - !http
+      host: localhost
+      port: 8123
 
 # Simple in-memory user database
 userDB: !localUsers

@@ -5,30 +5,33 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.context;
+package svnserver.ext.web.server;
 
-import org.apache.http.annotation.ThreadSafe;
+import org.eclipse.jetty.server.Server;
 import org.jetbrains.annotations.NotNull;
+import svnserver.context.Shared;
+import svnserver.context.SharedContext;
 
 import java.io.IOException;
 
 /**
- * Interface for objects in SharedContext.
+ * Web server component
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ThreadSafe
-public interface Shared {
-  /**
-   * Initialize item.
-   * Can be executed multiple times.
-   */
-  default void init(@NotNull SharedContext context) {
+public class WebServer implements Shared {
+  private final Server server;
+
+  public WebServer(@NotNull Server server) {
+    this.server = server;
   }
 
-  /**
-   * Run on server ready to work,
-   */
-  default void ready(@NotNull SharedContext context) throws IOException {
+  @Override
+  public void ready(@NotNull SharedContext context) throws IOException {
+    try {
+      server.start();
+    } catch (Exception e) {
+      throw new IOException("Can't start http server", e);
+    }
   }
 }

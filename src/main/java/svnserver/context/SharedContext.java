@@ -51,6 +51,12 @@ public class SharedContext implements AutoCloseable {
     return context;
   }
 
+  public void ready() throws IOException {
+    for (Shared item : new ArrayList<>(map.values())) {
+      item.ready(this);
+    }
+  }
+
   @Override
   public void close() throws IOException {
     cacheDB.close();
