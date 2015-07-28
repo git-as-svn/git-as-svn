@@ -74,20 +74,16 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
   }
 
   static void writeLock(@NotNull SvnServerWriter writer, @Nullable LockDesc lockDesc) throws IOException {
-    writer
-        .listBegin();
-
     if (lockDesc != null)
       writer
+          .listBegin()
           .string(lockDesc.getPath())
           .string(lockDesc.getToken())
           .string(lockDesc.getOwner())
           .listBegin().stringNullable(lockDesc.getComment()).listEnd()
           .string(lockDesc.getCreatedString())
           .listBegin()
+          .listEnd()
           .listEnd();
-
-    writer
-        .listEnd();
   }
 }
