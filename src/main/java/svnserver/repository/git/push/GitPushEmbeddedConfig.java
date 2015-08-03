@@ -21,9 +21,9 @@ public class GitPushEmbeddedConfig implements GitPusherConfig {
   @NotNull
   public static final GitPushEmbeddedConfig instance = new GitPushEmbeddedConfig();
   @NotNull
-  private String preReceive = "pre-commit";
+  private String preReceive = "pre-receive";
   @NotNull
-  private String postReceive = "post-commit";
+  private String postReceive = "post-receive";
   @NotNull
   private String update = "update";
 
