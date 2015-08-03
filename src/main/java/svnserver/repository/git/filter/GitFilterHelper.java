@@ -94,7 +94,7 @@ public class GitFilterHelper {
     }
   }
 
-  private static MessageDigest createDigestMd5() {
+  public static MessageDigest createDigestMd5() {
     try {
       return MessageDigest.getInstance("MD5");
     } catch (NoSuchAlgorithmException e) {

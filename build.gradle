@@ -1,3 +1,5 @@
+import org.ajoberstar.grgit.Grgit
+
 buildscript {
   repositories {
     mavenCentral()
@@ -39,6 +41,9 @@ dependencies {
   compile "org.atteo.classindex:classindex:3.1"
   compile "org.mapdb:mapdb:1.0.6"
   compile "com.unboundid:unboundid-ldapsdk:2.3.8"
+  compile "org.eclipse.jetty:jetty-server:9.3.0.v20150612"
+  compile "org.eclipse.jetty:jetty-servlet:9.3.0.v20150612"
+  compile "com.google.code.gson:gson:2.3.1"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
@@ -80,7 +85,7 @@ jar {
 
 processResources {
   expand([
-      "revision": org.ajoberstar.grgit.Grgit.open(project.file(rootProject.projectDir)).head().id,
+      "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
       "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
   ])
 }

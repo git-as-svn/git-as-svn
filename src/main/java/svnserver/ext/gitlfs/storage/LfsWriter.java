@@ -5,31 +5,20 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.context;
+package svnserver.ext.gitlfs.storage;
 
-import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
- * Interface for objects in SharedContext.
+ * Interface for writing LFS file.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ThreadSafe
-public interface Shared {
-  /**
-   * Initialize item.
-   * Can be executed multiple times.
-   */
-  default void init(@NotNull SharedContext context) throws IOException, SVNException {
-  }
-
-  /**
-   * Run on server ready to work,
-   */
-  default void ready(@NotNull SharedContext context) throws IOException {
-  }
+public abstract class LfsWriter extends OutputStream {
+  @NotNull
+  public abstract String finish(@Nullable String expectedOid) throws IOException;
 }

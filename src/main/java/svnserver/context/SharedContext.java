@@ -40,7 +40,7 @@ public class SharedContext implements AutoCloseable {
     this.cacheDB = cacheDb;
   }
 
-  public static SharedContext create(@NotNull File basePath, @NotNull DB cacheDb, @NotNull List<SharedConfig> shared) throws IOException {
+  public static SharedContext create(@NotNull File basePath, @NotNull DB cacheDb, @NotNull List<SharedConfig> shared) throws IOException, SVNException {
     final SharedContext context = new SharedContext(basePath, cacheDb);
     for (SharedConfig config : shared) {
       config.create(context);
@@ -49,6 +49,12 @@ public class SharedContext implements AutoCloseable {
       item.init(context);
     }
     return context;
+  }
+
+  public void ready() throws IOException {
+    for (Shared item : new ArrayList<>(map.values())) {
+      item.ready(this);
+    }
   }
 
   @Override
