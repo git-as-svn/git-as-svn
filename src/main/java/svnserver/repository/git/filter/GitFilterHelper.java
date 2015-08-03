@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
+import svnserver.context.SharedContext;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
@@ -102,13 +103,13 @@ public class GitFilterHelper {
   }
 
   @NotNull
-  public static Map<String, GitFilter> createFilters(@NotNull DB cacheDb) {
+  public static Map<String, GitFilter> createFilters(@NotNull SharedContext context) {
     final Map<String, GitFilter> result = new HashMap<>();
     for (Class<? extends GitFilter> type : ClassIndex.getSubclasses(GitFilter.class)) {
       if (Modifier.isAbstract(type.getModifiers())) continue;
       if (!Modifier.isPublic(type.getModifiers())) continue;
       try {
-        final GitFilter filter = type.getConstructor(DB.class).newInstance(cacheDb);
+        final GitFilter filter = type.getConstructor(SharedContext.class).newInstance(context);
         final GitFilter oldFilter = result.put(filter.getName(), filter);
         if (oldFilter != null) {
           throw new RuntimeException("Found two classes mapped for same file: " + oldFilter.getClass() + " and " + type);

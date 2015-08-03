@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
+import java.io.IOException;
+
 /**
  * Resolving repository by URL.
  *
@@ -21,4 +23,10 @@ public interface VcsRepositoryMapping {
   @Nullable
   RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException;
 
+  /**
+   * Update revision information in all mapped repositories.
+   *
+   * @throws IOException
+   */
+  void initRevisions() throws IOException, SVNException;
 }

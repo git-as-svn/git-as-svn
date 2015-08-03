@@ -14,7 +14,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mapdb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -26,6 +25,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.*;
+import svnserver.context.SharedContext;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
@@ -37,7 +37,6 @@ import svnserver.tester.SvnTester;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -231,15 +230,14 @@ public final class SvnTestServer implements SvnTester {
 
     @NotNull
     @Override
-    public VcsRepositoryMapping create(@NotNull File basePath, @NotNull DB cacheDb) throws IOException, SVNException {
+    public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
       return RepositoryListMapping.create(prefix, new GitRepository(
+          context,
           repository,
-          Collections.emptyList(),
           GitPushMode.SIMPLE,
           branch,
           true,
-          new PersistentLockFactory(cacheDb),
-          cacheDb
+          new PersistentLockFactory(context.getCacheDB())
       ));
     }
   }

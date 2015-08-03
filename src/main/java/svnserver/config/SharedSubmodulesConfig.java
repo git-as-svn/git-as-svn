@@ -8,18 +8,23 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
-import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.git.GitSubmodules;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
- * Repository mapping config.
+ * Submodules configuration list
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface RepositoryMappingConfig {
-  @NotNull
-  VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException;
+@ConfigType("submodules")
+public class SharedSubmodulesConfig extends ArrayList<String> implements SharedConfig {
+
+  @Override
+  public void create(@NotNull SharedContext context) throws IOException {
+    context.add(GitSubmodules.class, new GitSubmodules(context.getBasePath(), this));
+  }
 }

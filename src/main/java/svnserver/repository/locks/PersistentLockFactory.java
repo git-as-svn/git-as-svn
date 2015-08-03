@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class PersistentLockFactory implements LockManagerFactory {
   @NotNull
-  private final static Serializer<LockDesc> serializer = new CustomSerializer();
+  private static final Serializer<LockDesc> serializer = new CustomSerializer();
 
   @NotNull
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -68,7 +68,7 @@ public final class PersistentLockFactory implements LockManagerFactory {
   }
 
   public static class CustomSerializer implements Serializer<LockDesc>, Serializable {
-    private final static byte VERSION = 1;
+    private static final byte VERSION = 1;
 
     @Override
     public void serialize(@NotNull DataOutput out, @NotNull LockDesc value) throws IOException {

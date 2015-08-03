@@ -8,18 +8,20 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.SharedContext;
-import svnserver.repository.VcsRepositoryMapping;
 
 import java.io.IOException;
 
 /**
- * Repository mapping config.
+ * Shared between repositories configuration
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface RepositoryMappingConfig {
-  @NotNull
-  VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException;
+public interface SharedConfig {
+  /**
+   * Add shared data to context.
+   *
+   * @param context Shared context.
+   */
+  void create(@NotNull SharedContext context) throws IOException;
 }

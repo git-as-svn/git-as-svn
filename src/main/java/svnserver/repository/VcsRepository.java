@@ -20,7 +20,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface VcsRepository {
+public interface VcsRepository extends AutoCloseable {
   /**
    * Repository identificator.
    *
@@ -90,4 +90,7 @@ public interface VcsRepository {
    */
   @NotNull
   VcsWriter createWriter() throws SVNException, IOException;
+
+  @Override
+  void close() throws IOException;
 }

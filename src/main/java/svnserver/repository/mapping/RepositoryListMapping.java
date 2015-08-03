@@ -9,6 +9,8 @@ package svnserver.repository.mapping;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
@@ -16,6 +18,7 @@ import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -28,6 +31,8 @@ import java.util.TreeMap;
 public class RepositoryListMapping implements VcsRepositoryMapping {
   @NotNull
   private final NavigableMap<String, VcsRepository> mapping;
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(RepositoryListMapping.class);
 
   public RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
     this.mapping = new TreeMap<>(mapping);
@@ -44,6 +49,14 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
       );
     }
     return null;
+  }
+
+  @Override
+  public void initRevisions() throws IOException, SVNException {
+    for (Map.Entry<String, VcsRepository> entry : mapping.entrySet()) {
+      log.info("Repository initialize: {}", entry.getKey());
+      entry.getValue().updateRevisions();
+    }
   }
 
   @Nullable
