@@ -17,8 +17,9 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
-import svnserver.repository.git.GitPushMode;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.push.GitPushEmbeddedConfig;
+import svnserver.repository.git.push.GitPushNativeConfig;
 import svnserver.repository.locks.PersistentLockFactory;
 
 import java.io.File;
@@ -39,14 +40,14 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private String path = ".git";
   @NotNull
-  private GitPushMode pushMode = GitPushMode.NATIVE;
+  private GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
   @NotNull
   private GitCreateMode createMode = GitCreateMode.ERROR;
   private boolean renameDetection = true;
 
   @NotNull
-  public GitPushMode getPushMode() {
-    return pushMode;
+  public GitPusherConfig getPusher() {
+    return pusher;
   }
 
   public boolean isRenameDetection() {
@@ -67,6 +68,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   @Override
   public VcsRepository create(@NotNull SharedContext context) throws IOException, SVNException {
-    return new GitRepository(context, createRepository(context.getBasePath()), getPushMode(), branch, isRenameDetection(), new PersistentLockFactory(context.getCacheDB()));
+    return new GitRepository(context, createRepository(context.getBasePath()), getPusher().create(), branch, isRenameDetection(), new PersistentLockFactory(context.getCacheDB()));
   }
 }

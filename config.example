@@ -18,10 +18,14 @@
 repositoryMapping: !listMapping
   repositories:
     example: !git
-      # Allowed push modes:
-      # - SIMPLE - use embedded push (hooks ignored, fast, no dependencies)
-      # - NATIVE - use console git for push (hooks worked, can be slow on some commits, requie installed console git)
-      pushMode: SIMPLE
+      # Allowed pushers:
+      # !push-embedded - use embedded push (fast, no dependencies)
+      #   preReceive: "pre-receive"   - name of pre-receive hook
+      #   postReceive: "post-receive" - name of post-receive hook
+      # !push-native {} - use console git for push (hooks worked, can be slow on some commits, require installed console git)
+      pusher: !push-embedded
+        preReceive: pre-receive
+        postReceive: post-receive
       # Allowed create modes:
       # - ERROR - exit with error, if repository not exists
       # - EMPTY - create empty repository
@@ -46,7 +50,7 @@ acl:
 
 shared:
   # Submodule list.
-  # You can define extra submodule path. Every path defined in "repositores" already included in submodule list.
+  # You can define extra submodule path. Every path defined in "repositories" already included in submodule list.
   - !submodules [
   ]
 
