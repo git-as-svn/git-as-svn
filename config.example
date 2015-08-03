@@ -20,10 +20,12 @@ repositoryMapping: !listMapping
     example: !git
       # Allowed pushers:
       # !push-embedded - use embedded push (fast, no dependencies)
+      #   update: "update"            - name of update hook
       #   preReceive: "pre-receive"   - name of pre-receive hook
       #   postReceive: "post-receive" - name of post-receive hook
       # !push-native {} - use console git for push (hooks worked, can be slow on some commits, require installed console git)
       pusher: !push-embedded
+        update: update
         preReceive: pre-receive
         postReceive: post-receive
       # Allowed create modes:

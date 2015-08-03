@@ -28,7 +28,7 @@ import svnserver.config.*;
 import svnserver.context.SharedContext;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.git.push.GitPushEmbedded;
+import svnserver.repository.git.push.GitPushEmbeddedConfig;
 import svnserver.repository.locks.PersistentLockFactory;
 import svnserver.repository.mapping.RepositoryListMapping;
 import svnserver.server.SvnServer;
@@ -234,7 +234,7 @@ public final class SvnTestServer implements SvnTester {
       return RepositoryListMapping.create(prefix, new GitRepository(
           context,
           repository,
-          new GitPushEmbedded("", ""),
+          GitPushEmbeddedConfig.instance.create(),
           branch,
           true,
           new PersistentLockFactory(context.getCacheDB())
