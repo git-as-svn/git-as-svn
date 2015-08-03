@@ -24,6 +24,8 @@ public class GitPushEmbeddedConfig implements GitPusherConfig {
   private String preReceive = "pre-commit";
   @NotNull
   private String postReceive = "post-commit";
+  @NotNull
+  private String update = "update";
 
   @NotNull
   public String getPreReceive() {
@@ -39,13 +41,22 @@ public class GitPushEmbeddedConfig implements GitPusherConfig {
     return postReceive;
   }
 
-  public void setPostReceivet(@NotNull String postReceive) {
+  public void setPostReceive(@NotNull String postReceive) {
     this.postReceive = postReceive;
+  }
+
+  @NotNull
+  public String getUpdate() {
+    return update;
+  }
+
+  public void setUpdate(@NotNull String update) {
+    this.update = update;
   }
 
   @NotNull
   @Override
   public GitPusher create() {
-    return new GitPushEmbedded(getPreReceive(), getPostReceive());
+    return new GitPushEmbedded(getPreReceive(), getPostReceive(), getUpdate());
   }
 }

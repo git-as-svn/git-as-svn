@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * Git push mode.
@@ -39,10 +40,19 @@ public class GitPushEmbedded implements GitPusher {
   private final String preReceive;
   @NotNull
   private final String postReceive;
+  @NotNull
+  private final String update;
 
-  public GitPushEmbedded(@NotNull String preReceive, @NotNull String postReceive) {
+  @FunctionalInterface
+  public interface HookRunner {
+    @NotNull
+    Process exec(@NotNull ProcessBuilder processBuilder) throws IOException;
+  }
+
+  public GitPushEmbedded(@NotNull String preReceive, @NotNull String postReceive, @NotNull String update) {
     this.preReceive = preReceive;
     this.postReceive = postReceive;
+    this.update = update;
   }
 
   @Override
@@ -50,14 +60,15 @@ public class GitPushEmbedded implements GitPusher {
     final RefUpdate refUpdate = repository.updateRef(branch);
     refUpdate.getOldObjectId();
     refUpdate.setNewObjectId(ReceiveId);
-    runHook(repository, refUpdate, preReceive, userInfo);
+    runReceiveHook(repository, refUpdate, preReceive, userInfo);
+    runUpdateHook(repository, refUpdate, update, userInfo);
     final RefUpdate.Result result = refUpdate.update();
     switch (result) {
       case REJECTED:
         return false;
       case NEW:
       case FAST_FORWARD:
-        runHook(repository, refUpdate, postReceive, userInfo);
+        runReceiveHook(repository, refUpdate, postReceive, userInfo);
         return true;
       default:
         log.error("Unexpected push error: {}", result);
@@ -65,7 +76,33 @@ public class GitPushEmbedded implements GitPusher {
     }
   }
 
-  private void runHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull String hook, @NotNull User userInfo) throws IOException, SVNException {
+  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull String hook, @NotNull User userInfo) throws IOException, SVNException {
+    runHook(repository, hook, userInfo, processBuilder -> {
+      final Process process = processBuilder.start();
+      try (Writer stdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {
+        stdin.write(getObjectId(refUpdate.getOldObjectId()));
+        stdin.write(' ');
+        stdin.write(getObjectId(refUpdate.getNewObjectId()));
+        stdin.write(' ');
+        stdin.write(refUpdate.getName());
+        stdin.write('\n');
+      }
+      return process;
+    });
+  }
+
+  private void runUpdateHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull String hook, @NotNull User userInfo) throws IOException, SVNException {
+    runHook(repository, hook, userInfo, processBuilder -> {
+      processBuilder.command().addAll(Arrays.asList(
+          refUpdate.getName(),
+          getObjectId(refUpdate.getOldObjectId()),
+          getObjectId(refUpdate.getNewObjectId())
+      ));
+      return processBuilder.start();
+    });
+  }
+
+  private void runHook(@NotNull Repository repository, @NotNull String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws IOException, SVNException {
     if (hook.isEmpty()) {
       return;
     }
@@ -77,15 +114,7 @@ public class GitPushEmbedded implements GitPusher {
             .redirectErrorStream(true);
         processBuilder.environment().put("LANG", "en_US.utf8");
         updateEnvironment(processBuilder.environment(), userInfo);
-        final Process process = processBuilder.start();
-        try (Writer stdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {
-          stdin.write(getObjectId(refUpdate.getOldObjectId()));
-          stdin.write(' ');
-          stdin.write(getObjectId(refUpdate.getNewObjectId()));
-          stdin.write(' ');
-          stdin.write(refUpdate.getName());
-          stdin.write('\n');
-        }
+        final Process process = runner.exec(processBuilder);
         final String hookMessage = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
         int exitCode = process.waitFor();
         if (exitCode != 0) {
