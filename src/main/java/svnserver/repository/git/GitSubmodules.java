@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import svnserver.config.ConfigHelper;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 
@@ -42,7 +43,7 @@ public class GitSubmodules implements Shared {
 
   public GitSubmodules(@NotNull File basePath, @NotNull Collection<String> paths) throws IOException {
     for (String path : paths) {
-      final File file = new File(basePath, path).getAbsoluteFile();
+      final File file = ConfigHelper.joinPath(basePath, path).getAbsoluteFile();
       if (!file.exists()) {
         throw new FileNotFoundException(file.getPath());
       }
