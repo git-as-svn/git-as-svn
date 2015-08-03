@@ -37,6 +37,7 @@ import svnserver.repository.git.filter.GitFilterRaw;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
+import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockManagerFactory;
 import svnserver.repository.locks.LockManagerRead;
 import svnserver.repository.locks.LockManagerWrite;
@@ -69,7 +70,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Repository repository;
   @NotNull
-  private final GitPushMode pushMode;
+  private final GitPusher pusher;
   @NotNull
   private final List<GitRevision> revisions = new ArrayList<>();
   @NotNull
@@ -103,7 +104,7 @@ public class GitRepository implements VcsRepository {
 
   public GitRepository(@NotNull SharedContext context,
                        @NotNull Repository repository,
-                       @NotNull GitPushMode pushMode,
+                       @NotNull GitPusher pusher,
                        @NotNull String branch,
                        boolean renameDetection,
                        @NotNull LockManagerFactory lockManagerFactory) throws IOException, SVNException {
@@ -111,7 +112,7 @@ public class GitRepository implements VcsRepository {
     context.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
     this.repository = repository;
     this.binaryCache = context.getCacheDB().getHashMap("cache.binary");
-    this.pushMode = pushMode;
+    this.pusher = pusher;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
     this.gitFilters = GitFilterHelper.createFilters(context);
@@ -565,7 +566,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   @Override
   public VcsWriter createWriter() throws SVNException, IOException {
-    return new GitWriter(this, pushMode, pushLock, gitBranch);
+    return new GitWriter(this, pusher, pushLock, gitBranch);
   }
 
   @Override

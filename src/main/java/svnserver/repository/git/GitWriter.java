@@ -23,6 +23,7 @@ import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
 import svnserver.repository.git.prop.PropertyMapping;
+import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockManagerWrite;
 
@@ -45,15 +46,15 @@ public class GitWriter implements VcsWriter {
   @NotNull
   private final ObjectInserter inserter;
   @NotNull
-  private final GitPushMode pushMode;
+  private final GitPusher pusher;
   @NotNull
   private final Object pushLock;
   @NotNull
   private final String gitBranch;
 
-  public GitWriter(@NotNull GitRepository repo, @NotNull GitPushMode pushMode, @NotNull Object pushLock, @NotNull String gitBranch) {
+  public GitWriter(@NotNull GitRepository repo, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch) {
     this.repo = repo;
-    this.pushMode = pushMode;
+    this.pusher = pusher;
     this.pushLock = pushLock;
     this.gitBranch = gitBranch;
     this.inserter = repo.getRepository().newObjectInserter();
@@ -261,7 +262,7 @@ public class GitWriter implements VcsWriter {
         validateProperties(new RevWalk(repo.getRepository()).parseTree(treeId));
 
         log.info("Try to push commit in branch: {}", branch);
-        if (!pushMode.push(repo.getRepository(), commitId, branch)) {
+        if (!pusher.push(repo.getRepository(), commitId, branch, userInfo)) {
           log.info("Non fast forward push rejected");
           return null;
         }
