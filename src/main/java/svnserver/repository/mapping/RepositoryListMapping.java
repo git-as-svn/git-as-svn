@@ -16,7 +16,9 @@ import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 
-import java.util.*;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 /**
  * Simple repository mapping by predefined list.
@@ -24,15 +26,6 @@ import java.util.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class RepositoryListMapping implements VcsRepositoryMapping {
-  /**
-   * Replacing for make accessible repository with slash on old svn clients.
-   * For example repository:
-   * svn://localhost/foo/bar/
-   * Can be accessed as:
-   * svn://localhost/foo_bar/
-   */
-  @NotNull
-  private static final String SLASH_REPLACE = "_";
   @NotNull
   private final NavigableMap<String, VcsRepository> mapping;
 
@@ -73,24 +66,12 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
     private final Map<String, VcsRepository> mapping = new TreeMap<>();
 
     public Builder add(@NotNull String prefix, @NotNull VcsRepository repository) {
-      for (String alias : createAliases(StringHelper.normalize(prefix))) {
-        mapping.put(alias, repository);
-      }
+      mapping.put(StringHelper.normalize(prefix), repository);
       return this;
     }
 
     public RepositoryListMapping build() {
       return new RepositoryListMapping(mapping);
     }
-  }
-
-  @NotNull
-  private static Collection<String> createAliases(@NotNull String prefix) {
-    Set<String> result = new HashSet<>();
-    result.add(prefix);
-    if (!prefix.isEmpty()) {
-      result.add(prefix.charAt(0) + prefix.substring(1).replaceAll("/", SLASH_REPLACE));
-    }
-    return result;
   }
 }
