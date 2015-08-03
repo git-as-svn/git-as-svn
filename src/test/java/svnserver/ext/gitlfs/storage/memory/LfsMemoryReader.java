@@ -9,13 +9,15 @@ package svnserver.ext.gitlfs.storage.memory;
 
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Local storage writer.
@@ -36,15 +38,10 @@ public class LfsMemoryReader implements LfsReader {
     return new ByteArrayInputStream(content);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public InputStream openGzipStream() throws IOException {
-    try (final ByteArrayOutputStream tempStream = new ByteArrayOutputStream()) {
-      try (OutputStream outputStream = new GZIPOutputStream(tempStream)) {
-        outputStream.write(content);
-      }
-      return new ByteArrayInputStream(tempStream.toByteArray());
-    }
+    return null;
   }
 
   @Override

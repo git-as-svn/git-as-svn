@@ -21,11 +21,13 @@ import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.web.server.WebServer;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -196,7 +198,7 @@ public class LfsServer implements Shared {
       }
 
       @Override
-      protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+      protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
           sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
@@ -213,14 +215,26 @@ public class LfsServer implements Shared {
           return;
         }
         resp.setContentType("application/octet-stream");
+        sendContent(req, resp, reader);
+      }
+
+      private void sendContent(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull LfsReader reader) throws IOException {
+        final ServletOutputStream output = resp.getOutputStream();
         if (acceptsGZipEncoding(req)) {
-          resp.addHeader("Content-Encoding", "gzip");
-          IOUtils.copy(reader.openGzipStream(), resp.getOutputStream());
-        } else {
-          resp.setContentLengthLong(reader.getSize());
-          IOUtils.copy(reader.openStream(), resp.getOutputStream());
+          try (InputStream stream = reader.openGzipStream()) {
+            if (stream != null) {
+              // Send already compressed stream
+              resp.addHeader("Content-Encoding", "gzip");
+              IOUtils.copy(stream, output);
+              output.close();
+              return;
+            }
+          }
         }
-        resp.getOutputStream().close();
+        // Send uncompressed stream
+        resp.setContentLengthLong(reader.getSize());
+        IOUtils.copy(reader.openStream(), output);
+        output.close();
       }
 
       private boolean acceptsGZipEncoding(@NotNull HttpServletRequest req) {

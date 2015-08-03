@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,8 +27,10 @@ public interface LfsReader {
 
   /**
    * Open gzip-compressed object stream.
+   *
+   * @return Can return null if not supported.
    */
-  @NotNull
+  @Nullable
   InputStream openGzipStream() throws IOException;
 
   /**
