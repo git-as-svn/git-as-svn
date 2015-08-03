@@ -57,10 +57,10 @@ public class LfsServer implements Shared {
           super.doPost(req, resp);
           return;
         }
-        if (!MIME_TYPE.equals(req.getContentType())) {
+        /*if (!MIME_TYPE.equals(req.getContentType())) {
           sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
           return;
-        }
+        }*/
 
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
@@ -124,10 +124,10 @@ public class LfsServer implements Shared {
 
       @Override
       protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!MIME_TYPE.equals(req.getHeader("Accept"))) {
+        /*if (!MIME_TYPE.equals(req.getHeader("Accept"))) {
           sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
           return;
-        }
+        }*/
         final LfsStorage storage = context.get(LfsStorage.class);
         if (storage == null) {
           sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
