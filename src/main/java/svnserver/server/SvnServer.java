@@ -232,15 +232,21 @@ public class SvnServer extends Thread {
         .number(2)
         .listBegin()
         .listEnd()
-        .listBegin()
-        .word("edit-pipeline")  // This is required.
-        .word("svndiff1")  // We support svndiff1
-        .word("absent-entries")  // We support absent-dir and absent-dir editor commands
+        .listBegin();
+    // Begin capabilities block.
+    writer
+        .word("edit-pipeline")         // This is required.
+        .word("absent-entries")        // We support absent-dir and absent-dir editor commands
             //.word("commit-revprops") // We don't currently have _any_ revprop support
             //.word("mergeinfo")       // Nope, not yet
         .word("depth")
         .word("inherited-props")       // Need for .gitattributes and .gitignore
-        .word("log-revprops")          // svn log --with-all-revprops
+        .word("log-revprops");         // svn log --with-all-revprops
+    if (config.isCompressionEnabled()) {
+      writer.word("svndiff1");         // We support svndiff1 (compression)
+    }
+    // End capabilities block.
+    writer
         .listEnd()
         .listEnd()
         .listEnd();
@@ -343,4 +349,7 @@ public class SvnServer extends Thread {
     poolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
   }
 
+  public boolean isCompressionEnabled() {
+    return config.isCompressionEnabled();
+  }
 }

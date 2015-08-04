@@ -98,6 +98,7 @@ public final class SvnTestServer implements SvnTester {
     }
 
     final Config config = new Config(BIND_HOST, 0);
+    config.setCompressionEnabled(false);
     config.setCacheConfig(new MemoryCacheConfig());
     config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix));
     if (userDBConfig != null) {

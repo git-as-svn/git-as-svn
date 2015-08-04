@@ -447,7 +447,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
             final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             try (InputStream source = openStream(oldFile);
                  InputStream target = newFile.openStream()) {
-              final boolean compress = context.hasCapability("svndiff1");
+              final boolean compress = context.isCompressionEnabled();
               final String validateMd5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
                 private boolean header = true;
 

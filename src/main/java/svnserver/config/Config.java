@@ -44,7 +44,9 @@ public final class Config {
   private List<SharedConfig> shared = new ArrayList<>();
 
   private int port = 3690;
+
   private boolean reuseAddress = false;
+  private boolean compressionEnabled = true;
   private long shutdownTimeout = TimeUnit.SECONDS.toMillis(5);
 
   @SuppressWarnings("UnusedDeclaration")
@@ -113,5 +115,13 @@ public final class Config {
   @NotNull
   public List<SharedConfig> getShared() {
     return shared;
+  }
+
+  public boolean isCompressionEnabled() {
+    return compressionEnabled;
+  }
+
+  public void setCompressionEnabled(boolean compressionEnabled) {
+    this.compressionEnabled = compressionEnabled;
   }
 }
