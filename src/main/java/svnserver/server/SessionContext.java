@@ -64,6 +64,10 @@ public final class SessionContext {
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
   }
 
+  public boolean isCompressionEnabled() {
+    return server.isCompressionEnabled() && hasCapability("svndiff1");
+  }
+
   public boolean hasCapability(@NotNull String capability) {
     return capabilities.contains(capability);
   }

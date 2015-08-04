@@ -15,6 +15,10 @@
 #
 # realm: Example realm
 
+# Enable/disable SVN traffic compression
+#
+# compressionEnabled: true
+
 repositoryMapping: !listMapping
   repositories:
     example: !git
