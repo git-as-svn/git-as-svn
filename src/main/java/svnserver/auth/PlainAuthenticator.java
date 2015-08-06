@@ -21,12 +21,12 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-final class PlainAuthenticator implements Authenticator {
+public final class PlainAuthenticator implements Authenticator {
 
   @NotNull
   private final PasswordChecker passwordChecker;
 
-  PlainAuthenticator(@NotNull PasswordChecker passwordChecker) {
+  public PlainAuthenticator(@NotNull PasswordChecker passwordChecker) {
     this.passwordChecker = passwordChecker;
   }
 

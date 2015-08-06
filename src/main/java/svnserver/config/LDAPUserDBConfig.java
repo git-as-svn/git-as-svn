@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.auth.LDAPUserDB;
 import svnserver.auth.UserDB;
 import svnserver.config.serializer.ConfigType;
-
-import java.io.File;
+import svnserver.context.SharedContext;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -107,7 +106,7 @@ public final class LDAPUserDBConfig implements UserDBConfig {
 
   @NotNull
   @Override
-  public UserDB create(@NotNull File basePath) {
-    return new LDAPUserDB(this, basePath);
+  public UserDB create(@NotNull SharedContext context) {
+    return new LDAPUserDB(this, context.getBasePath());
   }
 }

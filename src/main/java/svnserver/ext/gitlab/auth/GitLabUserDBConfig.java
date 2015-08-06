@@ -5,16 +5,25 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.ext.gitlab.auth;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.UserDB;
+import svnserver.config.UserDBConfig;
+import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
 /**
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * GitLab authentication configuration.
+ *
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDBConfig {
+@SuppressWarnings("FieldCanBeLocal")
+@ConfigType("gitlabUsers")
+public final class GitLabUserDBConfig implements UserDBConfig {
   @NotNull
-  UserDB create(@NotNull SharedContext context);
+  @Override
+  public UserDB create(@NotNull SharedContext context) {
+    return new GitLabUserDB(context);
+  }
 }
