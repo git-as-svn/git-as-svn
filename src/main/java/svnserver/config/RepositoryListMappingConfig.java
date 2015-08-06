@@ -10,6 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.serializer.ConfigType;
+import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
@@ -34,7 +35,8 @@ public class RepositoryListMappingConfig implements RepositoryMappingConfig {
   public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
     final RepositoryListMapping.Builder builder = new RepositoryListMapping.Builder();
     for (Map.Entry<String, RepositoryConfig> entry : repositories.entrySet()) {
-      builder.add(entry.getKey(), entry.getValue().create(context));
+      final LocalContext local = new LocalContext(context, entry.getKey());
+      builder.add(entry.getKey(), entry.getValue().create(local));
     }
     return builder.build();
   }

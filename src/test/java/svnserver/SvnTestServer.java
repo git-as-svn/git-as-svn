@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.*;
+import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
@@ -235,13 +236,14 @@ public final class SvnTestServer implements SvnTester {
     @NotNull
     @Override
     public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
+      final LocalContext local = new LocalContext(context, "test");
       return RepositoryListMapping.create(prefix, new GitRepository(
-          context,
+          local,
           repository,
           new GitPushEmbedded("", "", ""),
           branch,
           true,
-          new PersistentLockFactory(context.getCacheDB())
+          new PersistentLockFactory(local)
       ));
     }
   }

@@ -14,6 +14,7 @@ import svnserver.config.ConfigHelper;
 import svnserver.config.GitRepositoryConfig;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.config.serializer.ConfigType;
+import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.repository.VcsRepositoryMapping;
@@ -42,7 +43,8 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
     final File basePath = ConfigHelper.joinPath(context.getBasePath(), path);
     for (GitlabProject project : gitlab.connect().getAllProjects()) {
       final File repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
-      builder.add(project.getPathWithNamespace(), template.create(context, repoPath));
+      final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
+      builder.add(project.getPathWithNamespace(), template.create(local, repoPath));
     }
     return builder.build();
   }
