@@ -24,7 +24,7 @@ public class RecursiveMatcher implements NameMatcher {
 
   @Override
   public boolean isMatch(@NotNull String name, boolean isDir) {
-    return true;
+    return isDir;
   }
 
   @Nullable

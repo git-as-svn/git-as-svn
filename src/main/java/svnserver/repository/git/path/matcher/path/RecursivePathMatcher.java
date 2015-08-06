@@ -27,14 +27,16 @@ public final class RecursivePathMatcher implements PathMatcher {
   private final int[] indexes;
   @NotNull
   private final NameMatcher[] nameMatchers;
+  private final boolean selfMatch;
 
   public RecursivePathMatcher(@NotNull NameMatcher[] nameMatchers) {
-    this(nameMatchers, START_ARRAY);
+    this(nameMatchers, START_ARRAY, isMatch(nameMatchers, START_ARRAY));
   }
 
-  private RecursivePathMatcher(@NotNull NameMatcher[] nameMatchers, @NotNull int[] indexes) {
+  private RecursivePathMatcher(@NotNull NameMatcher[] nameMatchers, @NotNull int[] indexes, boolean selfMatch) {
     this.nameMatchers = nameMatchers;
     this.indexes = indexes;
+    this.selfMatch = selfMatch;
   }
 
   @Nullable
@@ -42,6 +44,7 @@ public final class RecursivePathMatcher implements PathMatcher {
   public PathMatcher createChild(@NotNull String name, boolean isDir) {
     final int[] childs = new int[indexes.length * 2];
     boolean changed = false;
+    boolean childMatch = false;
     int count = 0;
     for (int index : indexes) {
       if (nameMatchers[index].isMatch(name, isDir)) {
@@ -57,6 +60,8 @@ public final class RecursivePathMatcher implements PathMatcher {
         } else {
           if (index + 1 == nameMatchers.length) {
             return AlwaysMatcher.INSTANCE;
+          } else if (index + 2 == nameMatchers.length && nameMatchers[index + 1].isRecursive()) {
+            childMatch = true;
           }
           childs[count++] = index + 1;
           changed = true;
@@ -68,12 +73,23 @@ public final class RecursivePathMatcher implements PathMatcher {
     if (!changed) {
       return this;
     }
-    return count == 0 ? null : new RecursivePathMatcher(nameMatchers, Arrays.copyOf(childs, count));
+    return count == 0 ? null : new RecursivePathMatcher(nameMatchers, Arrays.copyOf(childs, count), childMatch);
+  }
+
+  private static boolean isMatch(@NotNull NameMatcher[] nameMatchers, @NotNull int[] indexes) {
+    if (nameMatchers.length > 0 && nameMatchers[nameMatchers.length - 1].isRecursive()) {
+      for (int index : indexes) {
+        if (index == nameMatchers.length - 1) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
   public boolean isMatch() {
-    return false;
+    return selfMatch;
   }
 
   @Override

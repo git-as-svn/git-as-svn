@@ -42,11 +42,13 @@ public class WildcardTest {
   public static Object[][] normalizePatternData() {
     return new Object[][]{
         // Simple mask
+        new Object[]{"/", new String[]{"**/"}},
+        new Object[]{"*/", new String[]{"*/", "**/"}},
         new Object[]{"*", new String[]{"*"}},
         new Object[]{"**", new String[]{}},
         new Object[]{"**/", new String[]{"**/"}},
         new Object[]{"foo", new String[]{"**/", "foo"}},
-        new Object[]{"foo/", new String[]{"foo/"}},
+        new Object[]{"foo/", new String[]{"**/", "foo/"}},
         new Object[]{"/foo", new String[]{"foo"}},
 
         // Convert path file mask
@@ -109,9 +111,16 @@ public class WildcardTest {
   public static Object[][] pathMatcherData() {
     return new Object[][]{
         // Simple pattern
-        new Object[]{"/", "foo/bar", true},
+        new Object[]{"/", "foo/bar", null},
         new Object[]{"*", "foo/bar", true},
-        new Object[]{"*/", "foo/bar", true},
+        new Object[]{"*/", "foo/bar", null},
+        new Object[]{"/", "foo/bar/", true},
+        new Object[]{"*", "foo/bar/", true},
+        new Object[]{"*/", "foo/bar/", true},
+        new Object[]{"**/", "foo/bar/", true},
+        new Object[]{"foo/**/", "foo/bar/", true},
+        new Object[]{"foo/**/", "foo/bar/xxx", null},
+        new Object[]{"foo/**/", "foo/bar/xxx/", true},
         new Object[]{"f*o", "foo/bar", true},
         new Object[]{"/f*o", "foo/bar", true},
         new Object[]{"f*o/", "foo/bar", true},
@@ -120,12 +129,14 @@ public class WildcardTest {
         new Object[]{"/foo", "foo/", true},
         new Object[]{"foo", "foo/", true},
         new Object[]{"foo/", "foo/", true},
-        new Object[]{"foo/", "foo", null},
+        new Object[]{"foo/", "foo", false},
         new Object[]{"bar", "foo/bar", true},
         new Object[]{"b*r", "foo/bar", true},
         new Object[]{"/bar", "foo/bar", null},
-        new Object[]{"bar/", "foo/bar", null},
-        new Object[]{"b*r/", "foo/bar", null},
+        new Object[]{"bar/", "foo/bar", false},
+        new Object[]{"b*r/", "foo/bar", false},
+        new Object[]{"bar/", "foo/bar/", true},
+        new Object[]{"b*r/", "foo/bar/", true},
         new Object[]{"b[a-z]r", "foo/bar", true},
         new Object[]{"b[a-z]r", "foo/b0r", false},
         new Object[]{"/t*e*t", "test", true},

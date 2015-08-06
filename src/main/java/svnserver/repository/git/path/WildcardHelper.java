@@ -115,8 +115,15 @@ public class WildcardHelper {
    */
   public static List<String> normalizePattern(@NotNull List<String> tokens) {
     // Add "any path" prefix for simple mask
-    if (tokens.size() == 1 && !tokens.get(0).endsWith("/")) {
-      tokens.add(0, "**/");
+    if (tokens.size() == 1) {
+      switch (tokens.get(0)) {
+        case "/":
+          tokens.set(0, "**/");
+          break;
+        default:
+          tokens.add(0, "**/");
+          break;
+      }
     }
     if (tokens.size() == 0 || !tokens.get(0).equals("/")) {
       tokens.add(0, "/");
