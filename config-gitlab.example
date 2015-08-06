@@ -1,0 +1,29 @@
+!config:
+realm: Example realm
+compressionEnabled: true
+
+repositoryMapping: !gitlabMapping
+  path: /var/git/repositories/
+  template:
+    branch: master
+    renameDetection: true
+
+acl: {}
+
+shared:
+  # Web server settings.
+  - !web
+    listen:
+    - !http
+      host: localhost
+      port: 8123
+  # Git LFS server
+  - !lfs
+    path: lfs
+  # GitLab server
+  - !gitlab
+    url: http://localhost/
+    token: yKZBNG2JzyzvUBoevdM4
+
+# Simple in-memory user database
+userDB: !gitlabUsers {}
