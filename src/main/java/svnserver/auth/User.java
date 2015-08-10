@@ -10,12 +10,14 @@ package svnserver.auth;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * User. Just user.
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class User {
+public class User {
   @NotNull
   private final String userName;
   @NotNull
@@ -46,6 +48,17 @@ public final class User {
 
   public boolean isAnonymous() {
     return email == null;
+  }
+
+  /**
+   * Set user information to environment variables
+   *
+   * @param env Environment variables
+   */
+  public void updateEnvironment(@NotNull Map<String, String> env) {
+    env.put("GAS_EMAIL", getEmail());
+    env.put("GAS_NAME", getRealName());
+    env.put("GAS_LOGIN", getUserName());
   }
 
   @Override

@@ -49,6 +49,7 @@ public class GitPushNative implements GitPusher {
           .directory(repository.getDirectory())
           .redirectErrorStream(true);
       processBuilder.environment().put("LANG", "en_US.utf8");
+      userInfo.updateEnvironment(processBuilder.environment());
       final Process process = processBuilder.start();
       final StringBuilder resultBuilder = new StringBuilder();
       final StringBuilder hookBuilder = new StringBuilder();

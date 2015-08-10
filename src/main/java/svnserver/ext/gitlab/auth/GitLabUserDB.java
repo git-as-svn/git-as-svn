@@ -18,6 +18,7 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * GitLab user authentiation.
@@ -45,9 +46,24 @@ public class GitLabUserDB implements UserDB, PasswordChecker {
   public User check(@NotNull String username, @NotNull String password) throws SVNException, IOException {
     try {
       final GitlabSession session = context.connect(username, password);
-      return new User(session.getUsername(), session.getName(), session.getEmail());
+      return new GitLabUser(session);
     } catch (IOException e) {
       return null;
+    }
+  }
+
+  private static class GitLabUser extends User {
+    private final GitlabSession session;
+
+    public GitLabUser(GitlabSession session) {
+      super(session.getUsername(), session.getName(), session.getEmail());
+      this.session = session;
+    }
+
+    @Override
+    public void updateEnvironment(@NotNull Map<String, String> env) {
+      super.updateEnvironment(env);
+      env.put("GL_ID", "user-" + (int) session.getId());
     }
   }
 }

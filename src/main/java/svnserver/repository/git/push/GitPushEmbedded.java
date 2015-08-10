@@ -113,7 +113,7 @@ public class GitPushEmbedded implements GitPusher {
             .directory(repository.getDirectory())
             .redirectErrorStream(true);
         processBuilder.environment().put("LANG", "en_US.utf8");
-        updateEnvironment(processBuilder.environment(), userInfo);
+        userInfo.updateEnvironment(processBuilder.environment());
         final Process process = runner.exec(processBuilder);
         final String hookMessage = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
         int exitCode = process.waitFor();
