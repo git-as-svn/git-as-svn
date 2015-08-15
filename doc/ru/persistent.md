@@ -27,30 +27,6 @@
 
  * svn (tree) - дерево, которое соответсвует svn layout-у данного коммита;
  * commit.ref (commit) - ссылка на оригинальный коммит (для коммитов, которые связаны с удалением/созданием веток может отсутствовать);
- * commit.yml (file) - информация о коммите;
-  
-#### commit.yml
-Данный файл сожердит информацию о коммите:
-
-    # Информация о ветке текущего коммита
-    branch:
-      # Имя ветки в svn
-      svn: branches/persistent-cache
-      # Имя ветки в git
-      git: ref/heads/persistent-cache
-    # Информация об изменении файлов в данном коммите
-    changes:
-    - path: README.md
-      kind: FILE
-      change: D
-      content-modified: true
-      property-modified: true
-      copy-from:
-        path: README.md
-        commit: 368c0a94a93f6bf671a2ddfffc7eb34336f64572
-    - path: LICENSE
-      kind: FILE
-      change: A
 
 ### Revision 0
 Ревизия 0 несколько отличается от остальных коммитов.
