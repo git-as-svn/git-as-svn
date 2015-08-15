@@ -35,8 +35,8 @@ public class CacheChange {
   }
 
   public CacheChange(@Nullable ObjectId oldFile, @Nullable ObjectId newFile) {
-    this.oldFile = oldFile;
-    this.newFile = newFile;
+    this.oldFile = oldFile != null ? oldFile.copy() : null;
+    this.newFile = newFile != null ? newFile.copy() : null;
   }
 
   @Nullable

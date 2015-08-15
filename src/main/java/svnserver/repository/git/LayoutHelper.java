@@ -13,11 +13,10 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.repository.git.cache.CacheHelper;
-import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.layout.RefMappingDirect;
 import svnserver.repository.git.layout.RefMappingGroup;
 import svnserver.repository.git.layout.RefMappingPrefix;
@@ -43,8 +42,6 @@ public class LayoutHelper {
   private static final String OLD_CACHE_REF = "refs/git-as-svn/v0";
   @NotNull
   private static final String PREFIX_REF = "refs/git-as-svn/v1/";
-  @NotNull
-  private static final String ENTRY_COMMIT_YML = "commit.yml";
   @NotNull
   private static final String ENTRY_COMMIT_REF = "commit.ref";
   @NotNull
@@ -109,11 +106,10 @@ public class LayoutHelper {
     return result;
   }
 
-  public static ObjectId createCacheCommit(@NotNull ObjectInserter inserter, @NotNull ObjectId parent, @NotNull RevCommit commit, @NotNull CacheRevision cacheRevision) throws IOException {
+  public static ObjectId createCacheCommit(@NotNull ObjectInserter inserter, @NotNull ObjectId parent, @NotNull RevCommit commit, int revisionId, @NotNull Map<String, ObjectId> revBranches) throws IOException {
     final TreeFormatter treeBuilder = new TreeFormatter();
     treeBuilder.append(ENTRY_COMMIT_REF, commit);
-    treeBuilder.append(ENTRY_COMMIT_YML, FileMode.REGULAR_FILE, CacheHelper.save(inserter, cacheRevision));
-    treeBuilder.append("svn", FileMode.TREE, createSvnLayoutTree(inserter, cacheRevision.getBranches()));
+    treeBuilder.append("svn", FileMode.TREE, createSvnLayoutTree(inserter, revBranches));
 
     new ObjectChecker().checkTree(treeBuilder.toByteArray());
     final ObjectId rootTree = inserter.insert(treeBuilder);
@@ -121,10 +117,28 @@ public class LayoutHelper {
     final CommitBuilder commitBuilder = new CommitBuilder();
     commitBuilder.setAuthor(commit.getAuthorIdent());
     commitBuilder.setCommitter(commit.getCommitterIdent());
-    commitBuilder.setMessage("#" + cacheRevision.getRevisionId() + ": " + commit.getFullMessage());
+    commitBuilder.setMessage("#" + revisionId + ": " + commit.getFullMessage());
     commitBuilder.addParentId(parent);
     commitBuilder.setTreeId(rootTree);
     return inserter.insert(commitBuilder);
+  }
+
+  @Nullable
+  public static RevCommit loadOriginalCommit(@NotNull ObjectReader reader, @Nullable ObjectId cacheCommit) throws IOException {
+    final RevWalk revWalk = new RevWalk(reader);
+    if (cacheCommit != null) {
+      final RevCommit revCommit = revWalk.parseCommit(cacheCommit);
+      revWalk.parseTree(revCommit.getTree());
+
+      final CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, reader, revCommit.getTree());
+      while (!treeParser.eof()) {
+        if (treeParser.getEntryPathString().equals(ENTRY_COMMIT_REF)) {
+          return revWalk.parseCommit(treeParser.getEntryObjectId());
+        }
+        treeParser.next();
+      }
+    }
+    return null;
   }
 
   /**
@@ -237,11 +251,6 @@ public class LayoutHelper {
 
   public static String getAnonimousBranch(RevCommit commit) {
     return PREFIX_ANONIMOUS + commit.getId().abbreviate(6).name() + '/';
-  }
-
-  @NotNull
-  public static CacheRevision loadCacheRevision(@NotNull ObjectReader objectReader, @NotNull RevCommit commit) throws IOException {
-    return CacheHelper.load(TreeWalk.forPath(objectReader, ENTRY_COMMIT_YML, commit.getTree()));
   }
 
   @NotNull
