@@ -44,6 +44,7 @@ dependencies {
   compile "org.eclipse.jetty:jetty-server:9.3.0.v20150612"
   compile "org.eclipse.jetty:jetty-servlet:9.3.0.v20150612"
   compile "com.google.code.gson:gson:2.3.1"
+  compile "com.esotericsoftware:kryo:3.0.3"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"

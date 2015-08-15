@@ -7,11 +7,18 @@
  */
 package svnserver.repository.git.cache;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoException;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -24,6 +31,8 @@ import java.util.TreeMap;
 public class CacheRevision {
   @NotNull
   public static final CacheRevision empty = new CacheRevision();
+  @NotNull
+  private static final Kryo kryo = createKryo();
 
   @Nullable
   private final ObjectId gitCommitId;
@@ -42,7 +51,7 @@ public class CacheRevision {
       @NotNull Map<String, CacheChange> fileChange
   ) {
     if (svnCommit != null) {
-      this.gitCommitId = svnCommit.getId();
+      this.gitCommitId = svnCommit.copy();
     } else {
       this.gitCommitId = null;
     }
@@ -63,5 +72,50 @@ public class CacheRevision {
   @NotNull
   public Map<String, CacheChange> getFileChange() {
     return Collections.unmodifiableMap(fileChange);
+  }
+
+  private static Kryo createKryo() {
+    final Kryo kryo = new Kryo();
+    kryo.register(ObjectId.class, new Serializer<ObjectId>() {
+
+      @Override
+      public void write(@NotNull Kryo kryo, @NotNull Output output, @Nullable ObjectId object) {
+        output.writeString(object != null ? object.name() : null);
+      }
+
+      @Override
+      public ObjectId read(Kryo kryo, Input input, Class<ObjectId> type) {
+        final String id = input.readString();
+        return id != null ? ObjectId.fromString(id) : null;
+      }
+    });
+    return kryo;
+  }
+
+  @Nullable
+  public static CacheRevision deserialize(@Nullable byte[] bytes) {
+    if (bytes != null) {
+      try (final Input input = new Input(bytes)) {
+        return kryo.readObjectOrNull(input, CacheRevision.class);
+      } catch (KryoException ignored) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static byte[] serialize(@NotNull CacheRevision cache) throws IOException {
+    try (final ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+      try (Output output = new Output(stream)) {
+        kryo.writeObject(output, cache);
+      }
+      try (final Input input = new Input(stream.toByteArray())) {
+        kryo.readObjectOrNull(input, CacheRevision.class);
+      } catch (KryoException e) {
+        throw new IOException("Can't read serialized object", e);
+      }
+      return stream.toByteArray();
+    }
   }
 }

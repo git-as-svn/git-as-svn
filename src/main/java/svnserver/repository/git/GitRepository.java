@@ -19,6 +19,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mapdb.HTreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -307,19 +308,24 @@ public class GitRepository implements VcsRepository {
   }
 
   private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
-    // todo: Cache data
-    final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
-    final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
-    final GitFile newTree = getSubversionTree(reader, newCommit, revisionId);
-    final Map<String, CacheChange> fileChange = new TreeMap<>();
-    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
-      fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
+    final HTreeMap<String, byte[]> cache = context.getCacheDB().getHashMap("cache-revision");
+    CacheRevision result = CacheRevision.deserialize(cache.get(newCommit.name()));
+    if (result == null) {
+      final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
+      final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
+      final GitFile newTree = getSubversionTree(reader, newCommit, revisionId);
+      final Map<String, CacheChange> fileChange = new TreeMap<>();
+      for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
+        fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
+      }
+      result = new CacheRevision(
+          baseCommit,
+          collectRename(oldTree, newTree),
+          fileChange
+      );
+      cache.put(newCommit.name(), CacheRevision.serialize(result));
     }
-    return new CacheRevision(
-        baseCommit,
-        collectRename(oldTree, newTree),
-        fileChange
-    );
+    return result;
   }
 
   @NotNull
