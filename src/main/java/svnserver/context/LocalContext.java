@@ -5,25 +5,35 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.repository.git.push;
+package svnserver.context;
 
+import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
-import svnserver.config.GitPusherConfig;
-import svnserver.config.serializer.ConfigType;
 
 /**
- * Git push by native git client.
+ * Simple context object.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("pushNative")
-public class GitPushNativeConfig implements GitPusherConfig {
+@ThreadSafe
+public class LocalContext extends Context<Local> {
   @NotNull
-  public static final GitPushNativeConfig instance = new GitPushNativeConfig();
+  private final SharedContext shared;
+  @NotNull
+  private final String name;
+
+  public LocalContext(@NotNull SharedContext shared, @NotNull String name) {
+    this.shared = shared;
+    this.name = name;
+  }
 
   @NotNull
-  @Override
-  public GitPusher create() {
-    return GitPushNative.instance;
+  public String getName() {
+    return name;
+  }
+
+  @NotNull
+  public SharedContext getShared() {
+    return shared;
   }
 }

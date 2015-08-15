@@ -5,38 +5,46 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.ext.gitlab.mapping;
 
+import org.gitlab.api.models.GitlabProject;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.ConfigHelper;
+import svnserver.config.GitRepositoryConfig;
+import svnserver.config.RepositoryMappingConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Repository list mapping.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("listMapping")
-public class RepositoryListMappingConfig implements RepositoryMappingConfig {
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+@ConfigType("gitlabMapping")
+public class GitLabMappingConfig implements RepositoryMappingConfig {
   @NotNull
-  private Map<String, RepositoryConfig> repositories = new TreeMap<>();
+  private GitRepositoryConfig template = new GitRepositoryConfig();
+  @NotNull
+  private String path = "/var/git/repositories/";
 
   @NotNull
   @Override
   public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
+    GitLabContext gitlab = context.sure(GitLabContext.class);
     final RepositoryListMapping.Builder builder = new RepositoryListMapping.Builder();
-    for (Map.Entry<String, RepositoryConfig> entry : repositories.entrySet()) {
-      final LocalContext local = new LocalContext(context, entry.getKey());
-      builder.add(entry.getKey(), entry.getValue().create(local));
+    final File basePath = ConfigHelper.joinPath(context.getBasePath(), path);
+    for (GitlabProject project : gitlab.connect().getAllProjects()) {
+      final File repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
+      final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
+      builder.add(project.getPathWithNamespace(), template.create(local, repoPath));
     }
     return builder.build();
   }

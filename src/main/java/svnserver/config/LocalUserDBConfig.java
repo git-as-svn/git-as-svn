@@ -13,8 +13,7 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.auth.UserWithPassword;
 import svnserver.config.serializer.ConfigType;
-
-import java.io.File;
+import svnserver.context.SharedContext;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -34,7 +33,7 @@ public final class LocalUserDBConfig implements UserDBConfig {
 
   @NotNull
   @Override
-  public UserDB create(@NotNull File basePath) {
+  public UserDB create(@NotNull SharedContext context) {
     final LocalUserDB result = new LocalUserDB();
     for (UserEntry user : users)
       result.add(new UserWithPassword(new User(user.username, user.realName, user.email), user.password));

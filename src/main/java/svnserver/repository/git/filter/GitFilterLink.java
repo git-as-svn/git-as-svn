@@ -13,7 +13,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
@@ -35,8 +35,8 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   private final DB cacheDb;
 
-  public GitFilterLink(@NotNull SharedContext context) {
-    this.cacheDb = context.getCacheDB();
+  public GitFilterLink(@NotNull LocalContext context) {
+    this.cacheDb = context.getShared().getCacheDB();
   }
 
   @NotNull

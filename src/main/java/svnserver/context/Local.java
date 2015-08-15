@@ -5,16 +5,15 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.context;
 
-import org.jetbrains.annotations.NotNull;
-import svnserver.auth.UserDB;
-import svnserver.context.SharedContext;
+import org.apache.http.annotation.ThreadSafe;
 
 /**
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * Interface for objects in LocalContext.
+ *
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDBConfig {
-  @NotNull
-  UserDB create(@NotNull SharedContext context);
+@ThreadSafe
+public interface Local {
 }

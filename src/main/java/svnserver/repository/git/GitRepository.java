@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.StringHelper;
+import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.*;
 import svnserver.repository.git.cache.CacheChange;
@@ -91,7 +92,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final String svnBranch;
   @NotNull
-  private final SharedContext context;
+  private final LocalContext context;
   @NotNull
   private final Map<String, Boolean> binaryCache;
   @NotNull
@@ -102,16 +103,17 @@ public class GitRepository implements VcsRepository {
   private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
 
-  public GitRepository(@NotNull SharedContext context,
+  public GitRepository(@NotNull LocalContext context,
                        @NotNull Repository repository,
                        @NotNull GitPusher pusher,
                        @NotNull String branch,
                        boolean renameDetection,
                        @NotNull LockManagerFactory lockManagerFactory) throws IOException, SVNException {
     this.context = context;
-    context.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
+    final SharedContext shared = context.getShared();
+    shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
     this.repository = repository;
-    this.binaryCache = context.getCacheDB().getHashMap("cache.binary");
+    this.binaryCache = shared.getCacheDB().getHashMap("cache.binary");
     this.pusher = pusher;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
@@ -127,7 +129,7 @@ public class GitRepository implements VcsRepository {
 
   @Override
   public void close() throws IOException {
-    context.sure(GitSubmodules.class).unregister(repository);
+    context.getShared().sure(GitSubmodules.class).unregister(repository);
   }
 
   @NotNull
@@ -335,7 +337,7 @@ public class GitRepository implements VcsRepository {
       lockManager.validateLocks();
       return Boolean.TRUE;
     });
-    context.getCacheDB().commit();
+    context.getShared().getCacheDB().commit();
   }
 
   private boolean isTreeEmpty(RevTree tree) throws IOException {
@@ -638,7 +640,7 @@ public class GitRepository implements VcsRepository {
 
   @Nullable
   public GitObject<RevCommit> loadLinkedCommit(@NotNull ObjectId objectId) throws IOException {
-    return context.sure(GitSubmodules.class).findCommit(objectId);
+    return context.getShared().sure(GitSubmodules.class).findCommit(objectId);
   }
 
   @NotNull

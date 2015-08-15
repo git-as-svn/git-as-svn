@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.mapdb.Serializer;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.context.LocalContext;
 import svnserver.repository.VcsRepository;
 
 import java.io.DataInput;
@@ -38,9 +39,9 @@ public final class PersistentLockFactory implements LockManagerFactory {
   @NotNull
   private final DB db;
 
-  public PersistentLockFactory(@NotNull DB db) {
-    this.db = db;
-    this.map = db.createTreeMap("locks").valueSerializer(serializer).makeOrGet();
+  public PersistentLockFactory(@NotNull LocalContext context) {
+    this.db = context.getShared().getCacheDB();
+    this.map = db.createTreeMap("locks:" + context.getName()).valueSerializer(serializer).makeOrGet();
   }
 
   @NotNull

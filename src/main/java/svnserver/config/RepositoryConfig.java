@@ -9,7 +9,7 @@ package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.repository.VcsRepository;
 
 import java.io.IOException;
@@ -21,5 +21,5 @@ import java.io.IOException;
  */
 public interface RepositoryConfig {
   @NotNull
-  VcsRepository create(@NotNull SharedContext context) throws IOException, SVNException;
+  VcsRepository create(@NotNull LocalContext context) throws IOException, SVNException;
 }

@@ -4,17 +4,9 @@
  * and at http://www.gnu.org/licenses/gpl-2.0.html. No part of git-as-svn,
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
+ * <p>
+ * Package with GitLab integration.
+ *
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-package svnserver.config;
-
-import org.jetbrains.annotations.NotNull;
-import svnserver.auth.UserDB;
-import svnserver.context.SharedContext;
-
-/**
- * @author Marat Radchenko <marat@slonopotamus.org>
- */
-public interface UserDBConfig {
-  @NotNull
-  UserDB create(@NotNull SharedContext context);
-}
+package svnserver.ext.gitlab;

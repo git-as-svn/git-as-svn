@@ -14,7 +14,7 @@ import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -42,9 +42,9 @@ public class LfsFilter implements GitFilter {
   @NotNull
   private final DB cacheDb;
 
-  public LfsFilter(@NotNull SharedContext context) throws IOException, SVNException {
-    this.storage = LfsConfig.getStorage(context);
-    this.cacheDb = context.getCacheDB();
+  public LfsFilter(@NotNull LocalContext context) throws IOException, SVNException {
+    this.storage = LfsConfig.getStorage(context.getShared());
+    this.cacheDb = context.getShared().getCacheDB();
   }
 
   @NotNull

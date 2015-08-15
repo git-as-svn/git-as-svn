@@ -11,7 +11,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
@@ -29,8 +29,8 @@ public class GitFilterGzip implements GitFilter {
   @NotNull
   private final DB cacheDb;
 
-  public GitFilterGzip(@NotNull SharedContext context) {
-    this.cacheDb = context.getCacheDB();
+  public GitFilterGzip(@NotNull LocalContext context) {
+    this.cacheDb = context.getShared().getCacheDB();
   }
 
   @NotNull

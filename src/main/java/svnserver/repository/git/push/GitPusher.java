@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Interface for pushing new commit to the repository.
@@ -34,10 +33,4 @@ public interface GitPusher {
    * @throws IOException
    */
   boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull String branch, @NotNull User userInfo) throws SVNException, IOException;
-
-  default void updateEnvironment(Map<String, String> environment, User userInfo) {
-    environment.put("GAS_EMAIL", userInfo.getEmail());
-    environment.put("GAS_NAME", userInfo.getRealName());
-    environment.put("GAS_LOGIN", userInfo.getUserName());
-  }
 }

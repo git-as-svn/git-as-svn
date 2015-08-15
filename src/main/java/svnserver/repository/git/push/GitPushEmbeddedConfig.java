@@ -16,7 +16,7 @@ import svnserver.config.serializer.ConfigType;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("push-embedded")
+@ConfigType("pushEmbedded")
 public class GitPushEmbeddedConfig implements GitPusherConfig {
   @NotNull
   public static final GitPushEmbeddedConfig instance = new GitPushEmbeddedConfig();
