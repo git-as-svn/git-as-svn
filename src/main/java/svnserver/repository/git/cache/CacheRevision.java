@@ -25,29 +25,22 @@ public class CacheRevision {
   @NotNull
   public static final CacheRevision empty = new CacheRevision();
 
-  private final int revisionId;
   @Nullable
   private final ObjectId gitCommitId;
   @NotNull
   private final Map<String, String> renames = new TreeMap<>();
   @NotNull
   private final Map<String, CacheChange> fileChange = new TreeMap<>();
-  @NotNull
-  private final Map<String, ObjectId> branches = new TreeMap<>();
 
   protected CacheRevision() {
-    this.revisionId = 0;
     this.gitCommitId = null;
   }
 
   public CacheRevision(
-      int revisionId,
       @Nullable RevCommit svnCommit,
       @NotNull Map<String, String> renames,
-      @NotNull Map<String, CacheChange> fileChange,
-      @NotNull Map<String, ? extends ObjectId> branches
+      @NotNull Map<String, CacheChange> fileChange
   ) {
-    this.revisionId = revisionId;
     if (svnCommit != null) {
       this.gitCommitId = svnCommit.getId();
     } else {
@@ -55,11 +48,6 @@ public class CacheRevision {
     }
     this.renames.putAll(renames);
     this.fileChange.putAll(fileChange);
-    this.branches.putAll(branches);
-  }
-
-  public int getRevisionId() {
-    return revisionId;
   }
 
   @Nullable
@@ -75,10 +63,5 @@ public class CacheRevision {
   @NotNull
   public Map<String, CacheChange> getFileChange() {
     return Collections.unmodifiableMap(fileChange);
-  }
-
-  @NotNull
-  public Map<String, ObjectId> getBranches() {
-    return Collections.unmodifiableMap(branches);
   }
 }
