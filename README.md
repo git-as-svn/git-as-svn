@@ -15,6 +15,13 @@ Subversion frontend server for git repository (in Java).
  * http://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
  * http://svn.apache.org/repos/asf/subversion/trunk/notes/
 
+## GitLab integration
+
+Now we support limited GitLab integration (see config-gitlab.example):
+
+ * Load repository list from GitLab on startup (no dynamically update yet)
+ * Authentication via GitLab API
+
 # How to use
 
 ## Run from binaries
