@@ -22,6 +22,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.Depth;
+import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsFile;
 import svnserver.server.SessionContext;
@@ -328,6 +329,19 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final String tokenId;
       final HeaderEntry header;
       VcsFile oldFile;
+      try {
+        newFile.getEntries();
+      } catch (SvnForbiddenException ignored) {
+        getWriter(context)
+            .listBegin()
+            .word("absent-dir")
+            .listBegin()
+            .string(newFile.getFileName())
+            .string(parentTokenId)
+            .listEnd()
+            .listEnd();
+        return;
+      }
       if (rootDir && wcPath.isEmpty()) {
         tokenId = parentTokenId;
         oldFile = prevFile;
@@ -546,8 +560,20 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
       if (newFile.isDirectory())
         updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir, wcDepth, requestedDepth);
-      else
-        updateFile(context, wcPath, oldFile, newFile, parentTokenId);
+      else {
+        try {
+          updateFile(context, wcPath, oldFile, newFile, parentTokenId);
+        } catch (SvnForbiddenException ignored) {
+          getWriter(context)
+              .listBegin()
+              .word("absent-file")
+              .listBegin()
+              .string(newFile.getFileName())
+              .string(parentTokenId)
+              .listEnd()
+              .listEnd();
+        }
+      }
     }
 
     private void removeEntry(@NotNull SessionContext context, @NotNull String wcPath, int rev, @NotNull String parentTokenId) throws IOException, SVNException {

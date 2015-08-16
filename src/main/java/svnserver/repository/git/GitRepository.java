@@ -432,11 +432,14 @@ public class GitRepository implements VcsRepository {
     GitProperty[] props = directoryPropertyCache.get(treeEntry.getObjectId().getObject());
     if (props == null) {
       final List<GitProperty> propList = new ArrayList<>();
-      for (GitTreeEntry entry : entryProvider.get()) {
-        final GitProperty[] parseProps = parseGitProperty(entry.getFileName(), entry.getObjectId());
-        if (parseProps.length > 0) {
-          propList.addAll(Arrays.asList(parseProps));
+      try {
+        for (GitTreeEntry entry : entryProvider.get()) {
+          final GitProperty[] parseProps = parseGitProperty(entry.getFileName(), entry.getObjectId());
+          if (parseProps.length > 0) {
+            propList.addAll(Arrays.asList(parseProps));
+          }
         }
+      } catch (SvnForbiddenException ignored) {
       }
       if (!propList.isEmpty()) {
         props = propList.toArray(new GitProperty[propList.size()]);
@@ -654,7 +657,7 @@ public class GitRepository implements VcsRepository {
     if (tree.getFileMode().equals(FileMode.GITLINK)) {
       GitObject<RevCommit> linkedCommit = loadLinkedCommit(tree.getObjectId().getObject());
       if (linkedCommit == null) {
-        return null;
+        throw new SvnForbiddenException();
       }
       return new GitObject<>(linkedCommit.getRepo(), linkedCommit.getObject().getTree());
     } else {
