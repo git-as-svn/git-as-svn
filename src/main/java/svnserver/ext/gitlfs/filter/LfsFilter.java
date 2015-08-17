@@ -25,6 +25,7 @@ import svnserver.ext.gitlfs.server.LfsServerEntry;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.git.GitObject;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.filter.GitFilterHelper;
@@ -64,6 +65,15 @@ public class LfsFilter implements GitFilter {
   }
 
   @NotNull
+  private LfsReader getReader(@NotNull Map<String, String> pointer) throws IOException {
+    final LfsReader reader = storage.getReader(pointer.get(Constants.OID));
+    if (reader == null) {
+      throw new SvnForbiddenException();
+    }
+    return reader;
+  }
+
+  @NotNull
   @Override
   public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     final ObjectLoader loader = objectId.openObject();
@@ -73,12 +83,9 @@ public class LfsFilter implements GitFilter {
     if (length < header.length) {
       final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
       if (pointer != null) {
-        final LfsReader reader = storage.getReader(pointer.get(Constants.OID));
-        if (reader != null) {
-          String md5 = reader.getMd5();
-          if (md5 != null) {
-            return md5;
-          }
+        String md5 = getReader(pointer).getMd5();
+        if (md5 != null) {
+          return md5;
         }
       }
     }
@@ -94,10 +101,7 @@ public class LfsFilter implements GitFilter {
     if (length < header.length) {
       final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
       if (pointer != null) {
-        final LfsReader reader = storage.getReader(pointer.get(Constants.OID));
-        if (reader != null) {
-          return reader.getSize();
-        }
+        return getReader(pointer).getSize();
       }
     }
     return loader.getSize();
@@ -113,10 +117,7 @@ public class LfsFilter implements GitFilter {
     if (length < header.length) {
       final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
       if (pointer != null) {
-        final LfsReader reader = storage.getReader(pointer.get(Constants.OID));
-        if (reader != null) {
-          return reader.openStream();
-        }
+        return getReader(pointer).openStream();
       }
     }
     return new TemporaryInputStream(header, length, stream);
