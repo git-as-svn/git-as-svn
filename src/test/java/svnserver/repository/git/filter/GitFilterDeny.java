@@ -9,6 +9,9 @@ package svnserver.repository.git.filter;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.git.GitObject;
@@ -54,7 +57,7 @@ public final class GitFilterDeny implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream) throws IOException {
+  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException {
     throw new SvnForbiddenException();
   }
 }

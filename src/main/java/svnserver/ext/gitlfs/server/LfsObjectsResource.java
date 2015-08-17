@@ -10,7 +10,6 @@ package svnserver.ext.gitlfs.server;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.httpclient.HttpStatus;
 import org.jetbrains.annotations.NotNull;
-import ru.bozaro.gitlfs.client.Constants;
 import ru.bozaro.gitlfs.common.data.*;
 import ru.bozaro.gitlfs.common.data.Error;
 import svnserver.auth.User;
