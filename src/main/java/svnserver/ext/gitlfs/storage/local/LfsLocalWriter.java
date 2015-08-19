@@ -10,13 +10,16 @@ package svnserver.ext.gitlfs.storage.local;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.ext.gitlfs.filter.LfsPointer;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.zip.GZIPOutputStream;
 
@@ -27,59 +30,52 @@ import java.util.zip.GZIPOutputStream;
  */
 public class LfsLocalWriter extends LfsWriter {
   @NotNull
-  private final File root;
+  private final File dataRoot;
   @NotNull
-  private final File file;
+  private final File metaRoot;
+  @NotNull
+  private final File dataTemp;
+  @NotNull
+  private final File metaTemp;
+  private final boolean compress;
 
   @Nullable
-  private RandomAccessFile randomAccessFile;
-  @Nullable
-  private OutputStream gzipStream;
+  private OutputStream dataStream;
   @NotNull
   private final MessageDigest digestMd5;
   @NotNull
   private final MessageDigest digestSha;
   private long size;
 
-  public LfsLocalWriter(@NotNull File root) throws IOException {
-    this.root = root;
-    final File tmp = new File(root, "tmp");
-    //noinspection ResultOfMethodCallIgnored
-    tmp.mkdirs();
-    file = new File(tmp, UUID.randomUUID().toString() + ".lfs");
-    file.deleteOnExit();
+  public LfsLocalWriter(@NotNull File dataRoot, @NotNull File metaRoot, boolean compress) throws IOException {
+    this.dataRoot = dataRoot;
+    this.metaRoot = metaRoot;
+    this.compress = compress;
 
-    randomAccessFile = new RandomAccessFile(file, "rw");
+    final String prefix = UUID.randomUUID().toString();
+    dataTemp = new File(new File(dataRoot, "tmp"), prefix + ".tmp");
+    //noinspection ResultOfMethodCallIgnored
+    dataTemp.getParentFile().mkdirs();
+    dataTemp.deleteOnExit();
+
+    metaTemp = new File(new File(metaRoot, "tmp"), prefix + ".tmp");
+
     digestMd5 = LfsLocalStorage.createDigestMd5();
     digestSha = LfsLocalStorage.createDigestSha256();
-    size = -1;
-    writeHeader();
     size = 0;
-    gzipStream = new GZIPOutputStream(new OutputStreamWrapper(randomAccessFile));
-  }
-
-  @NotNull
-  private byte[] writeHeader() throws IOException {
-    if (randomAccessFile == null) {
-      throw new IllegalStateException();
+    if (compress) {
+      dataStream = new GZIPOutputStream(new FileOutputStream(dataTemp));
+    } else {
+      dataStream = new FileOutputStream(dataTemp);
     }
-    randomAccessFile.write(LfsLocalStorage.HEADER);
-    randomAccessFile.writeLong(size);
-    final byte[] md5 = digestMd5.digest();
-    randomAccessFile.writeByte(md5.length);
-    randomAccessFile.write(md5);
-    final byte[] sha = digestSha.digest();
-    randomAccessFile.writeByte(sha.length);
-    randomAccessFile.write(sha);
-    return sha;
   }
 
   @Override
   public void write(int b) throws IOException {
-    if (gzipStream == null) {
+    if (dataStream == null) {
       throw new IllegalStateException();
     }
-    gzipStream.write(b);
+    dataStream.write(b);
     digestMd5.update((byte) b);
     digestSha.update((byte) b);
     size += 1;
@@ -87,10 +83,10 @@ public class LfsLocalWriter extends LfsWriter {
 
   @Override
   public void write(@NotNull byte[] b, int off, int len) throws IOException {
-    if (gzipStream == null) {
+    if (dataStream == null) {
       throw new IllegalStateException();
     }
-    gzipStream.write(b, off, len);
+    dataStream.write(b, off, len);
     digestMd5.update(b, off, len);
     digestSha.update(b, off, len);
     size += len;
@@ -99,61 +95,69 @@ public class LfsLocalWriter extends LfsWriter {
   @NotNull
   @Override
   public String finish(@Nullable String expectedOid) throws IOException {
-    if (randomAccessFile == null || gzipStream == null) {
+    if (dataStream == null) {
       throw new IllegalStateException();
     }
-    gzipStream.close();
-    randomAccessFile.seek(0);
-    final byte[] sha = writeHeader();
-    randomAccessFile.close();
+    dataStream.close();
+    dataStream = null;
+
+    final byte[] sha = digestSha.digest();
+    final byte[] md5 = digestMd5.digest();
 
     final String oid = LfsLocalStorage.OID_PREFIX + Hex.encodeHexString(sha);
     if (expectedOid != null && !expectedOid.equals(oid)) {
       throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + oid);
     }
-    final File newName = LfsLocalStorage.getPath(root, oid);
-    if (newName == null) {
+
+    // Write file data
+    final File dataPath = LfsLocalStorage.getPath(dataRoot, oid, compress ? ".gz" : "");
+    if (dataPath == null) {
       throw new IllegalStateException();
     }
     //noinspection ResultOfMethodCallIgnored
-    newName.getParentFile().mkdirs();
-    if (newName.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      file.delete();
-      return oid;
+    dataPath.getParentFile().mkdirs();
+    if (!dataTemp.renameTo(dataPath) && !dataPath.isFile()) {
+      throw new IOException("Can't rename file: " + dataTemp.getPath() + " -> " + dataPath.getPath());
     }
-    if (!file.renameTo(newName)) {
-      throw new IOException("Can't rename file: " + file.getPath() + " -> " + newName.getPath());
+    //noinspection ResultOfMethodCallIgnored
+    dataTemp.delete();
+
+    // Write metadata
+    final File metaPath = LfsLocalStorage.getPath(metaRoot, oid, ".meta");
+    if (metaPath == null) {
+      throw new IllegalStateException();
+    }
+    if (!metaPath.exists()) {
+      //noinspection ResultOfMethodCallIgnored
+      metaPath.getParentFile().mkdirs();
+      //noinspection ResultOfMethodCallIgnored
+      metaTemp.getParentFile().mkdirs();
+
+      try (FileOutputStream stream = new FileOutputStream(metaTemp)) {
+        final Map<String, String> meta = new HashMap<>();
+        meta.put(LfsPointer.HASH_MD5, Hex.encodeHexString(md5));
+        meta.put(LfsPointer.SIZE, String.valueOf(size));
+        meta.put(LfsPointer.OID, oid);
+        stream.write(LfsPointer.serializePointer(meta));
+        stream.close();
+        if (!metaTemp.renameTo(metaPath) && !metaPath.isFile()) {
+          throw new IOException("Can't rename file: " + metaTemp.getPath() + " -> " + metaPath.getPath());
+        }
+      } finally {
+        //noinspection ResultOfMethodCallIgnored
+        metaTemp.delete();
+      }
     }
     return oid;
   }
 
   @Override
   public void close() throws IOException {
-    if (randomAccessFile != null) {
+    if (dataStream != null) {
+      dataStream.close();
+      dataStream = null;
       //noinspection ResultOfMethodCallIgnored
-      file.delete();
-      randomAccessFile = null;
-      gzipStream = null;
-    }
-  }
-
-  private static class OutputStreamWrapper extends OutputStream {
-    @NotNull
-    private final RandomAccessFile randomAccessFile;
-
-    public OutputStreamWrapper(@NotNull RandomAccessFile randomAccessFile) {
-      this.randomAccessFile = randomAccessFile;
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-      randomAccessFile.write(b);
-    }
-
-    @Override
-    public void write(@NotNull byte[] b, int off, int len) throws IOException {
-      randomAccessFile.write(b, off, len);
+      dataTemp.delete();
     }
   }
 }

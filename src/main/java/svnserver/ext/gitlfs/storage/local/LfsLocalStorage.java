@@ -14,7 +14,6 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -29,37 +28,34 @@ public class LfsLocalStorage implements LfsStorage {
   @NotNull
   static final byte[] HEADER = "LFS\0".getBytes(StandardCharsets.UTF_8);
   @NotNull
-  private final File root;
+  private final File dataRoot;
+  @NotNull
+  private final File metaRoot;
+  private final boolean compress;
 
-  public LfsLocalStorage(@NotNull File root) {
-    this.root = root;
+  public LfsLocalStorage(@NotNull File dataRoot, @NotNull File metaRoot, boolean compress) {
+    this.dataRoot = dataRoot;
+    this.metaRoot = metaRoot;
+    this.compress = compress;
   }
 
   @Nullable
   @Override
   public LfsReader getReader(@NotNull String oid) throws IOException {
-    try {
-      final File path = getPath(root, oid);
-      if (path == null) {
-        return null;
-      }
-      return new LfsLocalReader(path);
-    } catch (FileNotFoundException ignored) {
-      return null;
-    }
+    return LfsLocalReader.create(dataRoot, metaRoot, oid);
   }
 
   @NotNull
   @Override
   public LfsWriter getWriter() throws IOException {
-    return new LfsLocalWriter(root);
+    return new LfsLocalWriter(dataRoot, metaRoot, compress);
   }
 
   @Nullable
-  static File getPath(@NotNull File root, @NotNull String oid) {
+  static File getPath(@NotNull File root, @NotNull String oid, @NotNull String suffix) {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
-    return new File(root, oid.substring(offset, offset + 2) + "/" + oid.substring(offset) + ".lfs");
+    return new File(root, oid.substring(offset, offset + 2) + "/" + oid.substring(offset) + suffix);
   }
 
   public static MessageDigest createDigestMd5() {

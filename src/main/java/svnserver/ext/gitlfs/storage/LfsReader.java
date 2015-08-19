@@ -41,7 +41,7 @@ public interface LfsReader {
   /**
    * MD5 object checksum.
    */
-  @NotNull
+  @Nullable
   String getMd5();
 
   /**

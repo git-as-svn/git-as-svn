@@ -65,7 +65,10 @@ public class LfsFilter implements GitFilter {
       if (pointer != null) {
         final LfsReader reader = storage.getReader(pointer.get(LfsPointer.OID));
         if (reader != null) {
-          return reader.getMd5();
+          String md5 = reader.getMd5();
+          if (md5 != null) {
+            return md5;
+          }
         }
       }
     }

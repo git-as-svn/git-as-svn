@@ -51,7 +51,8 @@ public class LfsConfig implements SharedConfig {
 
   @NotNull
   private LfsStorage createStorage(@NotNull SharedContext context) {
-    return new LfsLocalStorage(new File(context.getBasePath(), path));
+    File dataRoot = new File(context.getBasePath(), path);
+    return new LfsLocalStorage(dataRoot, dataRoot, true);
   }
 
 }

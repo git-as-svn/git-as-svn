@@ -7,14 +7,18 @@
  */
 package svnserver.ext.gitlfs.storage.local;
 
-import com.sun.nio.sctp.InvalidStreamException;
-import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import svnserver.ext.gitlfs.filter.LfsPointer;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
-import java.io.*;
-import java.util.Arrays;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -23,65 +27,81 @@ import java.util.zip.GZIPInputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsLocalReader implements LfsReader {
+  @Nullable
+  private final File dataPath;
+  @Nullable
+  private final File gzipPath;
   @NotNull
-  private final File file;
-  @NotNull
-  private final byte[] md5;
-  @NotNull
-  private final byte[] sha;
-  private final long size;
-  private final long offset;
+  private final Map<String, String> meta;
 
-  public LfsLocalReader(@NotNull File file) throws IOException {
-    this.file = file;
-    try (RandomAccessFile stream = new RandomAccessFile(file, "r")) {
-      byte[] header = new byte[LfsLocalStorage.HEADER.length];
-      stream.readFully(header);
-      if (!Arrays.equals(header, LfsLocalStorage.HEADER)) {
-        throw new InvalidStreamException("Invalid stream header: " + file.getPath());
-      }
-      size = stream.readLong();
-      md5 = new byte[stream.readByte()];
-      stream.readFully(md5);
-      sha = new byte[stream.readByte()];
-      stream.readFully(sha);
-      offset = stream.getFilePointer();
+  @Nullable
+  public static LfsLocalReader create(@NotNull File dataRoot, @NotNull File metaRoot, @NotNull String oid) throws IOException {
+    final File metaPath = LfsLocalStorage.getPath(metaRoot, oid, ".meta");
+    if (metaPath == null || !metaPath.isFile()) {
+      return null;
     }
+    final Map<String, String> meta;
+    try (InputStream stream = new FileInputStream(metaPath)) {
+      meta = LfsPointer.parsePointer(IOUtils.toByteArray(stream));
+    }
+    if (meta == null) {
+      throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());
+    }
+    if (!meta.get(LfsPointer.OID).equals(oid)) {
+      throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(LfsPointer.OID));
+    }
+
+    File dataPath = LfsLocalStorage.getPath(dataRoot, oid, "");
+    File gzipPath = LfsLocalStorage.getPath(dataRoot, oid, ".gz");
+    if (dataPath != null && !dataPath.isFile()) {
+      dataPath = null;
+    }
+    if (gzipPath != null && !gzipPath.isFile()) {
+      gzipPath = null;
+    }
+    if (dataPath == null && gzipPath == null) return null;
+    return new LfsLocalReader(meta, dataPath, gzipPath);
+  }
+
+  private LfsLocalReader(@NotNull Map<String, String> meta, @Nullable File dataPath, @Nullable File gzipPath) throws IOException {
+    this.meta = meta;
+    this.dataPath = dataPath;
+    this.gzipPath = gzipPath;
   }
 
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    return new GZIPInputStream(openGzipStream());
+    if (dataPath != null) {
+      return new FileInputStream(dataPath);
+    }
+    if (gzipPath != null) {
+      return new GZIPInputStream(new FileInputStream(gzipPath));
+    }
+    throw new IllegalStateException();
   }
 
-  @NotNull
+  @Nullable
   @Override
   public InputStream openGzipStream() throws IOException {
-    final FileInputStream stream = new FileInputStream(file);
-    //noinspection ResultOfMethodCallIgnored
-    stream.skip(offset);
-    return stream;
+    return gzipPath != null ? new FileInputStream(gzipPath) : null;
   }
 
   @Override
   public long getSize() {
-    return size;
+    return Long.parseLong(meta.get(LfsPointer.SIZE));
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getMd5() {
-    return Hex.encodeHexString(md5);
+    return meta.get(LfsPointer.HASH_MD5);
   }
 
   @NotNull
   @Override
   public String getOid(boolean hashOnly) {
-    if (hashOnly) {
-      return Hex.encodeHexString(sha);
-    } else {
-      return LfsStorage.OID_PREFIX + Hex.encodeHexString(sha);
-    }
+    final String oid = meta.get(LfsPointer.OID);
+    return hashOnly ? oid.substring(LfsStorage.OID_PREFIX.length()) : oid;
   }
 }

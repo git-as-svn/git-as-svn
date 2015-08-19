@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage.local;
 
 import org.apache.commons.io.IOUtils;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import svnserver.TestHelper;
 import svnserver.ext.gitlfs.storage.LfsReader;
@@ -25,11 +26,19 @@ import java.nio.charset.StandardCharsets;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsLocalStorageTest {
-  @Test
-  public void simple() throws IOException {
+  @DataProvider(name = "compressProvider")
+  public static Object[][] compressProvider() {
+    return new Object[][]{
+        {true},
+        {false},
+    };
+  }
+
+  @Test(dataProvider = "compressProvider")
+  public void simple(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(tempDir);
+      LfsLocalStorage storage = new LfsLocalStorage(new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
@@ -53,11 +62,11 @@ public class LfsLocalStorageTest {
     }
   }
 
-  @Test
-  public void alreadyAdded() throws IOException {
+  @Test(dataProvider = "compressProvider")
+  public void alreadyAdded(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(tempDir);
+      LfsLocalStorage storage = new LfsLocalStorage(new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 

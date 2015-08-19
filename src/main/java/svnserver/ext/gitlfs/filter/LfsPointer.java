@@ -33,6 +33,9 @@ public class LfsPointer {
   public static final String VERSION = "version";
 
   @NotNull
+  public static final String HASH_MD5 = "hash-md5";
+
+  @NotNull
   private static final String[] REQUIRED = {
       OID,
       SIZE,
