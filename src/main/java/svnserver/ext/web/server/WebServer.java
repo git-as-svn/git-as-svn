@@ -57,6 +57,10 @@ public class WebServer implements Shared {
     }
   }
 
+  public void removeServlet(@NotNull String pathSpec) {
+    // todo: Add remove servlet by pathSpec
+  }
+
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
     return context.getOrCreate(WebServer.class, () -> new WebServer(null));
   }

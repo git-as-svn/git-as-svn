@@ -16,6 +16,8 @@ import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.config.LfsConfig;
+import svnserver.ext.gitlfs.server.LfsServer;
+import svnserver.ext.gitlfs.server.LfsServerEntry;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -43,8 +45,12 @@ public class LfsFilter implements GitFilter {
   private final DB cacheDb;
 
   public LfsFilter(@NotNull LocalContext context) throws IOException, SVNException {
-    this.storage = LfsConfig.getStorage(context.getShared());
+    this.storage = LfsConfig.getStorage(context);
     this.cacheDb = context.getShared().getCacheDB();
+    final LfsServer lfsServer = context.getShared().get(LfsServer.class);
+    if (lfsServer != null) {
+      context.add(LfsServerEntry.class, new LfsServerEntry(lfsServer, context.getName(), storage));
+    }
   }
 
   @NotNull

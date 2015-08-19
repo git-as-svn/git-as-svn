@@ -17,6 +17,7 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
+import svnserver.repository.git.GitLocation;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.push.GitPushEmbeddedConfig;
 import svnserver.repository.locks.PersistentLockFactory;
@@ -71,6 +72,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
 
   @NotNull
   public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
+    context.add(GitLocation.class, new GitLocation(fullPath));
     return new GitRepository(context, createRepository(fullPath), getPusher().create(), branch, isRenameDetection(), new PersistentLockFactory(context));
   }
 }

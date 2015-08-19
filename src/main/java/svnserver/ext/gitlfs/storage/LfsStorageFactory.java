@@ -5,18 +5,18 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.context;
+package svnserver.ext.gitlfs.storage;
 
-import org.apache.http.annotation.ThreadSafe;
+import org.jetbrains.annotations.NotNull;
+import svnserver.context.LocalContext;
+import svnserver.context.Shared;
 
 /**
- * Interface for objects in LocalContext.
+ * GIT LFS storage factory for Local context.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ThreadSafe
-public interface Local extends AutoCloseable {
-  @Override
-  default void close() throws Exception {
-  }
+public interface LfsStorageFactory extends Shared {
+  @NotNull
+  LfsStorage createStorage(@NotNull LocalContext context);
 }

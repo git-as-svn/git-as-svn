@@ -9,8 +9,10 @@ package svnserver.ext.gitlfs.storage.memory;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.IOException;
@@ -39,5 +41,13 @@ public class LfsMemoryStorage implements LfsStorage {
   @Override
   public LfsWriter getWriter() throws IOException {
     return new LfsMemoryWriter(storage);
+  }
+
+  public static class Factory implements LfsStorageFactory {
+    @NotNull
+    @Override
+    public LfsStorage createStorage(@NotNull LocalContext context) {
+      return new LfsMemoryStorage();
+    }
   }
 }

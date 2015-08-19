@@ -43,206 +43,12 @@ public class LfsServer implements Shared {
   @NotNull
   private static String MIME_TYPE = "application/vnd.git-lfs+json";
 
-  private boolean inited = false;
+  @Nullable
+  private WebServer webServer;
 
   @Override
   public void init(@NotNull SharedContext context) throws IOException, SVNException {
-    if (inited) return;
-
-    final WebServer server = WebServer.get(context);
-    server.addServlet("/lfs/objects/*", new HttpServlet() {
-      @Override
-      protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (req.getPathInfo() != null) {
-          super.doPost(req, resp);
-          return;
-        }
-        /*if (!MIME_TYPE.equals(req.getContentType())) {
-          sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
-          return;
-        }*/
-
-        final LfsStorage storage = context.get(LfsStorage.class);
-        if (storage == null) {
-          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
-          return;
-        }
-        String oid = null;
-        try (final BufferedReader reader = req.getReader()) {
-          final JsonReader json = new JsonReader(reader);
-          json.beginObject();
-          while (json.hasNext()) {
-            final String name = json.nextName();
-            if ("oid".equals(name)) {
-              oid = json.nextString();
-            } else {
-              json.skipValue();
-            }
-          }
-          json.endObject();
-        }
-        if (oid == null) {
-          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "OID not defined", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
-          return;
-        }
-        resp.addHeader("Content-Type", MIME_TYPE);
-        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
-        if (reader != null) {
-          // Already uploaded
-          resp.setStatus(HttpServletResponse.SC_OK);
-          JsonWriter writer = new JsonWriter(resp.getWriter());
-          writer.setIndent("\t");
-          writer.beginObject();
-          writer.name("oid").value(reader.getOid(true));
-          writer.name("size").value(reader.getSize());
-          writer.name("_links").beginObject();
-          writer.name("download").beginObject();
-          writer.name("href").value(joinUrl(getUrl(req), "storage/" + reader.getOid(true)));
-          writer.name("header").beginObject();
-          writer.endObject();// header
-          writer.endObject();// download
-          writer.endObject();// _links
-          writer.endObject();
-          writer.close();
-        } else {
-          // Can be uploaded
-          resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-          JsonWriter writer = new JsonWriter(resp.getWriter());
-          writer.setIndent("\t");
-          writer.beginObject();
-          writer.name("_links").beginObject();
-          writer.name("upload").beginObject();
-          writer.name("href").value(joinUrl(getUrl(req), "storage/" + oid));
-          writer.name("header").beginObject();
-          writer.endObject();// header
-          writer.endObject();// download
-          writer.endObject();// _links
-          writer.endObject();
-          writer.close();
-        }
-      }
-
-      @Override
-      protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /*if (!MIME_TYPE.equals(req.getHeader("Accept"))) {
-          sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
-          return;
-        }*/
-        final LfsStorage storage = context.get(LfsStorage.class);
-        if (storage == null) {
-          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
-          return;
-        }
-        final String oid = getOid(req.getPathInfo());
-        if (oid == null) {
-          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
-          return;
-        }
-        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
-        if (reader == null) {
-          sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
-          return;
-        }
-        resp.addHeader("Content-Type", MIME_TYPE);
-        JsonWriter writer = new JsonWriter(resp.getWriter());
-        writer.setIndent("\t");
-        writer.beginObject();
-        writer.name("oid").value(reader.getOid(true));
-        writer.name("size").value(reader.getSize());
-        writer.name("_links").beginObject();
-        writer.name("self").beginObject();
-        writer.name("href").value(getUrl(req));
-        writer.endObject();// self
-        writer.name("download").beginObject();
-        writer.name("href").value(joinUrl(getUrl(req), "../storage/" + reader.getOid(true)));
-        writer.name("header").beginObject();
-        writer.endObject();// header
-        writer.endObject();// download
-        writer.endObject();// _links
-        writer.endObject();
-        writer.close();
-      }
-
-      @NotNull
-      private String joinUrl(String url, String path) {
-        return URI.create(url).resolve(path).toString();
-      }
-
-      @NotNull
-      private String getUrl(@NotNull HttpServletRequest req) {
-        String host = req.getHeader("Host");
-        if (host == null) {
-          host = req.getServerName() + ":" + req.getServerPort();
-        }
-        return req.getScheme() + "://" + host + req.getRequestURI();
-      }
-    });
-    server.addServlet("/lfs/storage/*", new HttpServlet() {
-      @Override
-      protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        final LfsStorage storage = context.get(LfsStorage.class);
-        if (storage == null) {
-          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
-          return;
-        }
-        final String oid = getOid(req.getPathInfo());
-        if (oid == null) {
-          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
-          return;
-        }
-        final LfsWriter writer = storage.getWriter();
-        IOUtils.copy(req.getInputStream(), writer);
-        writer.finish(LfsStorage.OID_PREFIX + oid);
-
-        resp.setStatus(HttpServletResponse.SC_OK);
-      }
-
-      @Override
-      protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-        final LfsStorage storage = context.get(LfsStorage.class);
-        if (storage == null) {
-          sendError(resp, HttpServletResponse.SC_NOT_IMPLEMENTED, "LFS storage not found", null);
-          return;
-        }
-        final String oid = getOid(req.getPathInfo());
-        if (oid == null) {
-          sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
-          return;
-        }
-        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
-        if (reader == null) {
-          sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
-          return;
-        }
-        resp.setContentType("application/octet-stream");
-        sendContent(req, resp, reader);
-      }
-
-      private void sendContent(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull LfsReader reader) throws IOException {
-        final ServletOutputStream output = resp.getOutputStream();
-        if (acceptsGZipEncoding(req)) {
-          try (InputStream stream = reader.openGzipStream()) {
-            if (stream != null) {
-              // Send already compressed stream
-              resp.addHeader("Content-Encoding", "gzip");
-              IOUtils.copy(stream, output);
-              output.close();
-              return;
-            }
-          }
-        }
-        // Send uncompressed stream
-        resp.setContentLengthLong(reader.getSize());
-        IOUtils.copy(reader.openStream(), output);
-        output.close();
-      }
-
-      private boolean acceptsGZipEncoding(@NotNull HttpServletRequest req) {
-        final String acceptEncoding = req.getHeader("Accept-Encoding");
-        return acceptEncoding != null && acceptEncoding.contains("gzip");
-      }
-    });
-    inited = true;
+    this.webServer = WebServer.get(context);
   }
 
   private static void sendError(@NotNull HttpServletResponse resp, int sc, @NotNull String message, @Nullable String documentationUrl) throws IOException {
@@ -266,5 +72,205 @@ public class LfsServer implements Shared {
       return matcher.group(1);
     }
     return null;
+  }
+
+  public void register(@NotNull String name, @NotNull LfsStorage storage) {
+    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
+    webServer.addServlet("/" + name + ".git/info/lfs/objects/*", new LfsObjectsServlet(storage));
+    webServer.addServlet("/" + name + ".git/info/lfs/storage/*", new LfsStorageServlet(storage));
+  }
+
+  public void unregister(@NotNull String name) {
+    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
+    webServer.removeServlet("/" + name + ".git/info/lfs/storage/*");
+    webServer.removeServlet("/" + name + ".git/info/lfs/objects/*");
+  }
+
+  private class LfsObjectsServlet extends HttpServlet {
+    @NotNull
+    private final LfsStorage storage;
+
+    public LfsObjectsServlet(@NotNull LfsStorage storage) {
+      this.storage = storage;
+    }
+
+    @Override
+    protected void doPost(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+      if (req.getPathInfo() != null) {
+        super.doPost(req, resp);
+        return;
+      }
+      /*if (!MIME_TYPE.equals(req.getContentType())) {
+        sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
+        return;
+      }*/
+
+      String oid = null;
+      try (final BufferedReader reader = req.getReader()) {
+        final JsonReader json = new JsonReader(reader);
+        json.beginObject();
+        while (json.hasNext()) {
+          final String name = json.nextName();
+          if ("oid".equals(name)) {
+            oid = json.nextString();
+          } else {
+            json.skipValue();
+          }
+        }
+        json.endObject();
+      }
+      if (oid == null) {
+        sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "OID not defined", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
+        return;
+      }
+      resp.addHeader("Content-Type", MIME_TYPE);
+      final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
+      if (reader != null) {
+        // Already uploaded
+        resp.setStatus(HttpServletResponse.SC_OK);
+        JsonWriter writer = new JsonWriter(resp.getWriter());
+        writer.setIndent("\t");
+        writer.beginObject();
+        writer.name("oid").value(reader.getOid(true));
+        writer.name("size").value(reader.getSize());
+        writer.name("_links").beginObject();
+        writer.name("download").beginObject();
+        writer.name("href").value(joinUrl(getUrl(req), "storage/" + reader.getOid(true)));
+        writer.name("header").beginObject();
+        writer.endObject();// header
+        writer.endObject();// download
+        writer.endObject();// _links
+        writer.endObject();
+        writer.close();
+      } else {
+        // Can be uploaded
+        resp.setStatus(HttpServletResponse.SC_ACCEPTED);
+        JsonWriter writer = new JsonWriter(resp.getWriter());
+        writer.setIndent("\t");
+        writer.beginObject();
+        writer.name("_links").beginObject();
+        writer.name("upload").beginObject();
+        writer.name("href").value(joinUrl(getUrl(req), "storage/" + oid));
+        writer.name("header").beginObject();
+        writer.endObject();// header
+        writer.endObject();// download
+        writer.endObject();// _links
+        writer.endObject();
+        writer.close();
+      }
+    }
+
+    @Override
+    protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+      /*if (!MIME_TYPE.equals(req.getHeader("Accept"))) {
+        sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
+        return;
+      }*/
+      final String oid = getOid(req.getPathInfo());
+      if (oid == null) {
+        sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
+        return;
+      }
+      final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
+      if (reader == null) {
+        sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
+        return;
+      }
+      resp.addHeader("Content-Type", MIME_TYPE);
+      JsonWriter writer = new JsonWriter(resp.getWriter());
+      writer.setIndent("\t");
+      writer.beginObject();
+      writer.name("oid").value(reader.getOid(true));
+      writer.name("size").value(reader.getSize());
+      writer.name("_links").beginObject();
+      writer.name("self").beginObject();
+      writer.name("href").value(getUrl(req));
+      writer.endObject();// self
+      writer.name("download").beginObject();
+      writer.name("href").value(joinUrl(getUrl(req), "../storage/" + reader.getOid(true)));
+      writer.name("header").beginObject();
+      writer.endObject();// header
+      writer.endObject();// download
+      writer.endObject();// _links
+      writer.endObject();
+      writer.close();
+    }
+
+    @NotNull
+    private String joinUrl(String url, String path) {
+      return URI.create(url).resolve(path).toString();
+    }
+
+    @NotNull
+    private String getUrl(@NotNull HttpServletRequest req) {
+      String host = req.getHeader("Host");
+      if (host == null) {
+        host = req.getServerName() + ":" + req.getServerPort();
+      }
+      return req.getScheme() + "://" + host + req.getRequestURI();
+    }
+  }
+
+  private class LfsStorageServlet extends HttpServlet {
+    @NotNull
+    private final LfsStorage storage;
+
+    public LfsStorageServlet(@NotNull LfsStorage storage) {
+      this.storage = storage;
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+      final String oid = getOid(req.getPathInfo());
+      if (oid == null) {
+        sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
+        return;
+      }
+      final LfsWriter writer = storage.getWriter();
+      IOUtils.copy(req.getInputStream(), writer);
+      writer.finish(LfsStorage.OID_PREFIX + oid);
+
+      resp.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Override
+    protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+      final String oid = getOid(req.getPathInfo());
+      if (oid == null) {
+        sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
+        return;
+      }
+      final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + oid);
+      if (reader == null) {
+        sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
+        return;
+      }
+      resp.setContentType("application/octet-stream");
+      sendContent(req, resp, reader);
+    }
+
+    private void sendContent(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull LfsReader reader) throws IOException {
+      final ServletOutputStream output = resp.getOutputStream();
+      if (acceptsGZipEncoding(req)) {
+        try (InputStream stream = reader.openGzipStream()) {
+          if (stream != null) {
+            // Send already compressed stream
+            resp.addHeader("Content-Encoding", "gzip");
+            IOUtils.copy(stream, output);
+            output.close();
+            return;
+          }
+        }
+      }
+      // Send uncompressed stream
+      resp.setContentLengthLong(reader.getSize());
+      IOUtils.copy(reader.openStream(), output);
+      output.close();
+    }
+
+    private boolean acceptsGZipEncoding(@NotNull HttpServletRequest req) {
+      final String acceptEncoding = req.getHeader("Accept-Encoding");
+      return acceptEncoding != null && acceptEncoding.contains("gzip");
+    }
   }
 }

@@ -5,18 +5,28 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.context;
+package svnserver.repository.git;
 
-import org.apache.http.annotation.ThreadSafe;
+import org.jetbrains.annotations.NotNull;
+import svnserver.context.Local;
+
+import java.io.File;
 
 /**
- * Interface for objects in LocalContext.
+ * Git repository location.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ThreadSafe
-public interface Local extends AutoCloseable {
-  @Override
-  default void close() throws Exception {
+public class GitLocation implements Local {
+  @NotNull
+  private final File fullPath;
+
+  public GitLocation(@NotNull File fullPath) {
+    this.fullPath = fullPath;
+  }
+
+  @NotNull
+  public File getFullPath() {
+    return fullPath;
   }
 }

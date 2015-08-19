@@ -9,7 +9,7 @@ package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.context.Shared;
+import svnserver.context.Local;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface LfsStorage extends Shared {
+public interface LfsStorage extends Local {
   @NotNull
   String OID_PREFIX = "sha256:";
 
