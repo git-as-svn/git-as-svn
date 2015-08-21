@@ -8,6 +8,7 @@
 package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.context.Shared;
 
 import java.util.Collection;
 
@@ -16,8 +17,8 @@ import java.util.Collection;
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public interface UserDB {
+public interface UserDB extends PasswordChecker, Shared {
 
   @NotNull
-  public Collection<Authenticator> authenticators();
+  Collection<Authenticator> authenticators();
 }

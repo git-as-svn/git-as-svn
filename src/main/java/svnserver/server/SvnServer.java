@@ -59,8 +59,6 @@ public class SvnServer extends Thread {
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
   @NotNull
-  private final UserDB userDB;
-  @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
   private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
@@ -86,7 +84,7 @@ public class SvnServer extends Thread {
     this.config = config;
 
     context = SharedContext.create(basePath, config.getCacheConfig().createCache(basePath), config.getShared());
-    userDB = config.getUserDB().create(context);
+    context.add(UserDB.class, config.getUserDB().create(context));
 
     commands.put("commit", new CommitCmd());
     commands.put("diff", new DeltaCmd(DiffParams.class));
@@ -262,7 +260,7 @@ public class SvnServer extends Thread {
   @NotNull
   private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
-    final Collection<Authenticator> authenticators = userDB.authenticators();
+    final Collection<Authenticator> authenticators = context.sure(UserDB.class).authenticators();
     writer
         .listBegin()
         .word("success")

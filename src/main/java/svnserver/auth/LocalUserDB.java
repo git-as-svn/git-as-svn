@@ -39,4 +39,17 @@ public final class LocalUserDB implements UserDB {
   public Collection<Authenticator> authenticators() {
     return authenticators;
   }
+
+  @Nullable
+  @Override
+  public User check(@NotNull String username, @NotNull String password) {
+    final UserWithPassword userWithPassword = users.get(username);
+    if (userWithPassword == null)
+      return null;
+
+    if (!userWithPassword.getPassword().equals(password))
+      return null;
+
+    return userWithPassword.getUser();
+  }
 }

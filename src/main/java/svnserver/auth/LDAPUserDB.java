@@ -9,7 +9,6 @@ package svnserver.auth;
 
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
-import com.unboundid.util.ssl.TrustAllTrustManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,7 +48,7 @@ import java.util.Collections;
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class LDAPUserDB implements UserDB, PasswordChecker {
+public final class LDAPUserDB implements UserDB {
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(LDAPUserDB.class);
