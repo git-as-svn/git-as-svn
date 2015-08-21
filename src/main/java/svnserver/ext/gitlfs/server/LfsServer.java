@@ -74,6 +74,18 @@ public class LfsServer implements Shared {
     return null;
   }
 
+  public static boolean checkMimeType(@NotNull String contentType, @NotNull String mimeType) {
+    String actualType = contentType;
+    int separator = actualType.indexOf(';');
+    if (separator >= 0) {
+      while (separator > 1 && actualType.charAt(separator - 1) == ' ') {
+        separator--;
+      }
+      actualType = actualType.substring(0, separator);
+    }
+    return mimeType.equals(actualType);
+  }
+
   public void register(@NotNull String name, @NotNull LfsStorage storage) {
     if (webServer == null) throw new IllegalStateException("Object is non-initialized");
     webServer.addServlet("/" + name + ".git/info/lfs/objects/*", new LfsObjectsServlet(storage));
@@ -100,10 +112,10 @@ public class LfsServer implements Shared {
         super.doPost(req, resp);
         return;
       }
-      /*if (!MIME_TYPE.equals(req.getContentType())) {
+      if (!checkMimeType(req.getContentType(), MIME_TYPE)) {
         sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
         return;
-      }*/
+      }
 
       String oid = null;
       try (final BufferedReader reader = req.getReader()) {
@@ -162,10 +174,10 @@ public class LfsServer implements Shared {
 
     @Override
     protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-      /*if (!MIME_TYPE.equals(req.getHeader("Accept"))) {
+      if (!checkMimeType(req.getContentType(), MIME_TYPE)) {
         sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
         return;
-      }*/
+      }
       final String oid = getOid(req.getPathInfo());
       if (oid == null) {
         sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
