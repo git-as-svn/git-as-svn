@@ -12,8 +12,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.server.LfsServer;
@@ -120,8 +122,8 @@ public class LfsFilter implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream) throws IOException, SVNException {
-    return new TemporaryOutputStream(storage.getWriter(), stream);
+  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException {
+    return new TemporaryOutputStream(storage.getWriter(user), stream);
   }
 
   private static class TemporaryInputStream extends InputStream {

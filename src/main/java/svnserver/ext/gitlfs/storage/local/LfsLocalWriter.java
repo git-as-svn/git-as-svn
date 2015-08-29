@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.storage.local;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.auth.User;
 import svnserver.ext.gitlfs.filter.LfsPointer;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
@@ -18,6 +19,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -38,6 +41,8 @@ public class LfsLocalWriter extends LfsWriter {
   @NotNull
   private final File metaTemp;
   private final boolean compress;
+  @Nullable
+  private final User user;
 
   @Nullable
   private OutputStream dataStream;
@@ -47,10 +52,11 @@ public class LfsLocalWriter extends LfsWriter {
   private final MessageDigest digestSha;
   private long size;
 
-  public LfsLocalWriter(@NotNull File dataRoot, @NotNull File metaRoot, boolean compress) throws IOException {
+  public LfsLocalWriter(@NotNull File dataRoot, @NotNull File metaRoot, boolean compress, @Nullable User user) throws IOException {
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;
     this.compress = compress;
+    this.user = user;
 
     final String prefix = UUID.randomUUID().toString();
     dataTemp = new File(new File(dataRoot, "tmp"), prefix + ".tmp");
@@ -134,11 +140,19 @@ public class LfsLocalWriter extends LfsWriter {
       metaTemp.getParentFile().mkdirs();
 
       try (FileOutputStream stream = new FileOutputStream(metaTemp)) {
-        final Map<String, String> meta = new HashMap<>();
-        meta.put(LfsPointer.HASH_MD5, Hex.encodeHexString(md5));
-        meta.put(LfsPointer.SIZE, String.valueOf(size));
-        meta.put(LfsPointer.OID, oid);
-        stream.write(LfsPointer.serializePointer(meta));
+        final Map<String, String> map = new HashMap<>();
+        map.put(LfsPointer.HASH_MD5, Hex.encodeHexString(md5));
+        map.put(LfsPointer.SIZE, String.valueOf(size));
+        map.put(LfsPointer.OID, oid);
+        map.put(LfsPointer.CREATE_TIME, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date()));
+        if (user != null) {
+          if (user.getEmail() != null) {
+            map.put(LfsPointer.META_EMAIL, user.getEmail());
+          }
+          map.put(LfsPointer.META_USER_NAME, user.getUserName());
+          map.put(LfsPointer.META_REAL_NAME, user.getRealName());
+        }
+        stream.write(LfsPointer.serializePointer(map));
         stream.close();
         if (!metaTemp.renameTo(metaPath) && !metaPath.isFile()) {
           throw new IOException("Can't rename file: " + metaTemp.getPath() + " -> " + metaPath.getPath());

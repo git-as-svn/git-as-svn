@@ -12,8 +12,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
 
@@ -63,7 +65,7 @@ public final class GitFilterRaw implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream) {
+  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) {
     return stream;
   }
 }

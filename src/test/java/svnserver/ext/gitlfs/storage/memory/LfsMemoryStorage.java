@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage.memory;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -39,7 +40,7 @@ public class LfsMemoryStorage implements LfsStorage {
 
   @NotNull
   @Override
-  public LfsWriter getWriter() throws IOException {
+  public LfsWriter getWriter(@Nullable User user) throws IOException {
     return new LfsMemoryWriter(storage);
   }
 

@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.TemporaryOutputStream;
+import svnserver.auth.User;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.git.filter.GitFilter;
 
@@ -48,6 +49,8 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private final GitEntry entry;
   @Nullable
+  private final User user;
+  @Nullable
   private SVNDeltaProcessor window;
   @Nullable
   private final GitObject<ObjectId> originalId;
@@ -65,9 +68,10 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   private String md5;
 
-  public GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file) throws IOException, SVNException {
+  public GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @Nullable User user) throws IOException, SVNException {
     this.writer = writer;
     this.entry = entry;
+    this.user = user;
     if (file != null) {
       this.originalMd5 = file.getMd5();
       this.originalId = file.getObjectId();
@@ -121,7 +125,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
           final TemporaryOutputStream.Holder holder = content.holder()
       ) {
         try (InputStream inputStream = newFilter.inputStream(objectId);
-             OutputStream outputStream = filter.outputStream(content)) {
+             OutputStream outputStream = filter.outputStream(content, user)) {
           IOUtils.copy(inputStream, outputStream);
         }
         try (InputStream inputStream = content.toInputStream()) {
@@ -147,7 +151,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
       newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
-      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream), true);
+      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream, user), true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }

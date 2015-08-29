@@ -10,7 +10,9 @@ package svnserver.repository.git.filter;
 import org.atteo.classindex.IndexSubclasses;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.User;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
@@ -74,8 +76,9 @@ public interface GitFilter {
    * Create stream wrapper for object.
    *
    * @param stream Stream with real blob data.
+   * @param user   User information.
    * @return Return output stream for writing original file data.
    */
   @NotNull
-  OutputStream outputStream(@NotNull OutputStream stream) throws IOException, SVNException;
+  OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException;
 }

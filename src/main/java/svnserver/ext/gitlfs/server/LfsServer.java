@@ -209,6 +209,19 @@ public class LfsServer implements Shared {
         sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", null);
         return;
       }
+      if (req.getPathInfo() == null) {
+        // Write git-lfs-authenticate content.
+        JsonWriter writer = new JsonWriter(resp.getWriter());
+        writer.setIndent("\t");
+        writer.beginObject();
+        writer.name("header").beginObject();
+        writer.name(HttpHeaders.AUTHORIZATION).value(AUTH_TOKEN + createToken(user));
+        writer.endObject();// header
+        writer.name("url").value(getUrl(req));
+        writer.endObject();
+        writer.close();
+        return;
+      }
       if (!checkMimeType(req.getContentType(), MIME_TYPE)) {
         sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
         return;
@@ -332,7 +345,7 @@ public class LfsServer implements Shared {
         sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
         return;
       }
-      final LfsWriter writer = storage.getWriter();
+      final LfsWriter writer = storage.getWriter(user);
       IOUtils.copy(req.getInputStream(), writer);
       writer.finish(LfsStorage.OID_PREFIX + oid);
 

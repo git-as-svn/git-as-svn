@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.auth.User;
 import svnserver.context.Local;
 
 import java.io.IOException;
@@ -39,5 +40,5 @@ public interface LfsStorage extends Local {
    * @throws IOException
    */
   @NotNull
-  LfsWriter getWriter() throws IOException;
+  LfsWriter getWriter(@Nullable User user) throws IOException;
 }
