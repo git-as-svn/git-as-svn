@@ -5,7 +5,7 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.auth;
+package svnserver.auth.ldap;
 
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
@@ -16,8 +16,14 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.Authenticator;
+import svnserver.auth.PlainAuthenticator;
+import svnserver.auth.User;
+import svnserver.auth.UserDB;
+import svnserver.auth.ldap.config.LdapBind;
+import svnserver.auth.ldap.config.LdapUserDBConfig;
 import svnserver.config.ConfigHelper;
-import svnserver.config.LDAPUserDBConfig;
+import svnserver.context.SharedContext;
 
 import javax.naming.NamingException;
 import javax.net.SocketFactory;
@@ -38,35 +44,113 @@ import java.security.KeyStoreException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Authenticates a user by binding to the directory with the DN of the entry for that user and the password
- * presented by the user. If this simple bind succeeds the user is considered to be authenticated.
+ * LDAP authentication.
  *
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class LDAPUserDB implements UserDB {
-
+public class LdapUserDB implements UserDB {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(LDAPUserDB.class);
+  private static final Logger log = LoggerFactory.getLogger(LdapUserDB.class);
 
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
-
   @NotNull
-  private final LDAPUserDBConfig config;
+  private final LDAPConnectionPool pool;
+  @NotNull
+  private final LdapUserDBConfig config;
   @NotNull
   private final String baseDn;
-  @NotNull
-  private final String ldapHost;
-  private final int ldapPort;
-  @Nullable
-  private final SocketFactory socketFactory;
 
-  public LDAPUserDB(@NotNull LDAPUserDBConfig config, @NotNull File basePath) {
+  @FunctionalInterface
+  private interface LdapCheck {
+    boolean check(@NotNull String userDN) throws LDAPException;
+  }
+
+  public LdapUserDB(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
+    try {
+      URI ldapUri = URI.create(config.getConnectionUrl());
+      this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
+      final LDAPConnection ldap = createConnection(context, config);
+      final LdapBind bind = config.getBind();
+      if (bind != null) {
+        bind.bind(ldap);
+      }
+      this.pool = new LDAPConnectionPool(ldap, 1, config.getMaxConnections());
+      this.config = config;
+    } catch (LDAPException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @NotNull
+  @Override
+  public Collection<Authenticator> authenticators() {
+    return authenticators;
+  }
+
+  @Nullable
+  @Override
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+    return findUser(userName, userDN -> pool.bindAndRevertAuthentication(userDN, password).getResultCode() == ResultCode.SUCCESS);
+  }
+
+  @Nullable
+  @Override
+  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+    return findUser(userName, userDN -> true);
+  }
+
+  @Nullable
+  @Override
+  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+    return null;
+  }
+
+  @Nullable
+  private String getAttribute(@NotNull SearchResultEntry entry, @NotNull String name) throws NamingException {
+    Attribute attribute = entry.getAttribute(name);
+    return attribute == null ? null : attribute.getValue();
+  }
+
+  private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
+    try {
+      Filter filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
+      if (!config.getSearchFilter().isEmpty()) {
+        filter = Filter.createANDFilter(
+            Filter.create(config.getSearchFilter()),
+            filter
+        );
+      }
+      final SearchResult search = pool.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute());
+      if (search.getEntryCount() == 1) {
+        final SearchResultEntry entry = search.getSearchEntries().get(0);
+        final String login = getAttribute(entry, config.getLoginAttribute());
+        if (login == null) {
+          throw new IllegalStateException("Can't get login for user: " + userName);
+        }
+        if (ldapCheck.check(entry.getDN())) {
+          final String realName = getAttribute(entry, config.getNameAttribute());
+          final String email = getAttribute(entry, config.getEmailAttribute());
+          return new User(login, realName != null ? realName : login, email);
+        }
+      }
+      return null;
+    } catch (LDAPException e) {
+      if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
+        return null;
+      }
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
+    } catch (NamingException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
+    }
+  }
+
+  @NotNull
+  private static LDAPConnection createConnection(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) throws LDAPException {
     URI ldapUri = URI.create(config.getConnectionUrl());
     SocketFactory factory;
     int defaultPort;
@@ -76,25 +160,24 @@ public final class LDAPUserDB implements UserDB {
         defaultPort = 389;
         break;
       case "ldaps":
-        factory = createSslFactory(config, basePath);
+        factory = createSslFactory(context, config);
         defaultPort = 636;
         break;
       default:
         throw new IllegalStateException("Unknown ldap scheme: " + ldapUri.getScheme());
     }
-    this.socketFactory = factory;
-    this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
-    this.config = config;
-    this.ldapPort = ldapUri.getPort() > 0 ? ldapUri.getPort() : defaultPort;
-    this.ldapHost = ldapUri.getHost();
+    int ldapPort = ldapUri.getPort() > 0 ? ldapUri.getPort() : defaultPort;
+    String ldapHost = ldapUri.getHost();
+    return new LDAPConnection(factory, ldapHost, ldapPort);
   }
 
-  private static SocketFactory createSslFactory(@NotNull LDAPUserDBConfig config, @NotNull File basePath) {
+  @NotNull
+  private static SocketFactory createSslFactory(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
     try {
       final TrustManager trustManager;
       final String certPem = config.getLdapCertPem();
       if (certPem != null) {
-        final File certFile = ConfigHelper.joinPath(basePath, certPem);
+        final File certFile = ConfigHelper.joinPath(context.getBasePath(), certPem);
         log.info("Loading CA certificate from: {}", certFile.getAbsolutePath());
         trustManager = createTrustManager(Files.readAllBytes(certFile.toPath()));
         return new SSLUtil(null, trustManager).createSSLSocketFactory();
@@ -107,69 +190,6 @@ public final class LDAPUserDB implements UserDB {
     } catch (IOException e) {
       throw new IllegalStateException("Can't load certificate file", e);
     }
-  }
-
-  @Nullable
-  @Override
-  public User check(@NotNull String username, @NotNull String password) throws SVNException {
-    try {
-      LDAPConnection ldap = new LDAPConnection(socketFactory, ldapHost, ldapPort);
-      try {
-        ldap.bind(new DIGESTMD5BindRequest(username, password));
-        SearchResult search = ldap.search(
-            baseDn,
-            config.isUserSubtree() ? SearchScope.SUB : SearchScope.ONE,
-            MessageFormat.format(config.getUserSearch(), username),
-            config.getNameAttribute(), config.getEmailAttribute()
-        );
-        if (search.getEntryCount() == 0) {
-          log.debug("Failed to find LDAP entry for {}", username);
-          return null;
-        } else if (search.getEntryCount() > 1) {
-          log.error("Multiple LDAP entries found for {}", username);
-          return null;
-        }
-        final SearchResultEntry entry = search.getSearchEntries().get(0);
-        final String realName = getAttribute(entry, config.getNameAttribute());
-        final String email = getAttribute(entry, config.getEmailAttribute());
-        return new User(username, realName != null ? realName : username, email);
-      } finally {
-        ldap.close();
-      }
-    } catch (LDAPException e) {
-      if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
-        return null;
-      }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
-    } catch (NamingException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
-    }
-  }
-
-  @Nullable
-  @Override
-  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
-    // todo: test
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
-    // todo: test
-    return null;
-  }
-
-  @Nullable
-  private String getAttribute(@NotNull SearchResultEntry entry, @NotNull String name) throws NamingException {
-    Attribute attribute = entry.getAttribute(name);
-    return attribute == null ? null : attribute.getValue();
-  }
-
-  @NotNull
-  @Override
-  public Collection<Authenticator> authenticators() {
-    return authenticators;
   }
 
   @NotNull

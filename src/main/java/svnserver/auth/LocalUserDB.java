@@ -44,8 +44,8 @@ public final class LocalUserDB implements UserDB {
 
   @Nullable
   @Override
-  public User check(@NotNull String username, @NotNull String password) {
-    final UserWithPassword userWithPassword = users.get(username);
+  public User check(@NotNull String userName, @NotNull String password) {
+    final UserWithPassword userWithPassword = users.get(userName);
     if (userWithPassword == null)
       return null;
 
@@ -65,6 +65,6 @@ public final class LocalUserDB implements UserDB {
   @Nullable
   @Override
   public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
-    return lookupByUserName(external);
+    return null;
   }
 }

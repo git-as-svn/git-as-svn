@@ -48,9 +48,9 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
 
   @Nullable
   @Override
-  public User check(@NotNull String username, @NotNull String password) throws SVNException, IOException {
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
     try {
-      return new GitLabUser(context.connect(username, password));
+      return new GitLabUser(context.connect(userName, password));
     } catch (IOException e) {
       return null;
     }

@@ -5,19 +5,19 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.auth;
+package svnserver.auth.ldap.config;
 
+import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
-
-import java.io.IOException;
 
 /**
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * LDAP bind configuration.
+ *
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@FunctionalInterface
-public interface PasswordChecker {
-  @Nullable
-  User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException;
+public interface LdapBind {
+  @NotNull
+  BindResult bind(@NotNull LDAPConnection connection) throws LDAPException;
 }
