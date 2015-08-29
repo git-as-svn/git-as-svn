@@ -9,7 +9,9 @@ package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,5 +53,18 @@ public final class LocalUserDB implements UserDB {
       return null;
 
     return userWithPassword.getUser();
+  }
+
+  @Nullable
+  @Override
+  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+    final UserWithPassword user = users.get(userName);
+    return user == null ? null : user.getUser();
+  }
+
+  @Nullable
+  @Override
+  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+    return lookupByUserName(external);
   }
 }

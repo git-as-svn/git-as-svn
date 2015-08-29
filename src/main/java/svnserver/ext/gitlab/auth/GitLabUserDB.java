@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlab.auth;
 
-import org.gitlab.api.models.GitlabSession;
+import org.gitlab.api.models.GitlabUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -25,7 +25,12 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabUserDB implements UserDB, PasswordChecker {
+public class GitLabUserDB implements UserDB, UserLookupVisitor {
+  @NotNull
+  private final static String PREFIX_USER = "user-";
+  @NotNull
+  private final static String PREFIX_KEY = "key-";
+
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
@@ -45,25 +50,73 @@ public class GitLabUserDB implements UserDB, PasswordChecker {
   @Override
   public User check(@NotNull String username, @NotNull String password) throws SVNException, IOException {
     try {
-      final GitlabSession session = context.connect(username, password);
-      return new GitLabUser(session);
+      return new GitLabUser(context.connect(username, password));
     } catch (IOException e) {
       return null;
     }
   }
 
-  private static class GitLabUser extends User {
-    private final GitlabSession session;
+  @Nullable
+  @Override
+  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+    try {
+      return new GitLabUser(context.connect().getUserViaSudo(userName));
+    } catch (IOException e) {
+      return null;
+    }
+  }
 
-    public GitLabUser(GitlabSession session) {
-      super(session.getUsername(), session.getName(), session.getEmail());
-      this.session = session;
+  @Nullable
+  @Override
+  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+    final Integer userId = removePrefix(external, PREFIX_USER);
+    if (userId != null) {
+      try {
+        return new GitLabUser(context.connect().getUser(userId));
+      } catch (IOException e) {
+        return null;
+      }
+    }
+    // todo: [#9591 (gitlabhq)](/gitlabhq/gitlabhq/pull/9591)
+    /*
+    final Integer keyId = removePrefix(external, PREFIX_KEY);
+    if (keyId != null) {
+      try {
+        return new GitLabUser(context.connect().getUserByKey(keyId));
+      } catch (IOException e) {
+        return null;
+      }
+    }
+    */
+    return null;
+  }
+
+  @Nullable
+  private Integer removePrefix(@NotNull String glId, @NotNull String prefix) {
+    if (glId.startsWith(prefix)) {
+      int result = 0;
+      for (int i = prefix.length(); i < glId.length(); ++i) {
+        final char c = glId.charAt(i);
+        if (c < '0' || c > '9') return null;
+        result = result * 10 + (c - '0');
+      }
+      return result;
+    }
+    return null;
+  }
+
+  private static class GitLabUser extends User {
+    private final int id;
+
+    public GitLabUser(GitlabUser user) {
+      super(user.getUsername(), user.getName(), user.getEmail());
+      this.id = user.getId();
     }
 
     @Override
     public void updateEnvironment(@NotNull Map<String, String> env) {
       super.updateEnvironment(env);
-      env.put("GL_ID", "user-" + (int) session.getId());
+      env.put("GL_ID", PREFIX_USER + id);
     }
   }
 }

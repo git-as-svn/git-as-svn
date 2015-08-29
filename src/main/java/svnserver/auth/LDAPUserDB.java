@@ -147,6 +147,20 @@ public final class LDAPUserDB implements UserDB {
   }
 
   @Nullable
+  @Override
+  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+    // todo: test
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+    // todo: test
+    return null;
+  }
+
+  @Nullable
   private String getAttribute(@NotNull SearchResultEntry entry, @NotNull String name) throws NamingException {
     Attribute attribute = entry.getAttribute(name);
     return attribute == null ? null : attribute.getValue();
