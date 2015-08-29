@@ -62,6 +62,12 @@ public class LfsServer implements Shared {
   private WebServer webServer;
   @NotNull
   private SharedContext context;
+  @Nullable
+  private String privateToken;
+
+  public LfsServer(@Nullable String privateToken) {
+    this.privateToken = privateToken;
+  }
 
   @Override
   public void init(@NotNull SharedContext context) throws IOException, SVNException {
@@ -217,7 +223,7 @@ public class LfsServer implements Shared {
         writer.name("header").beginObject();
         writer.name(HttpHeaders.AUTHORIZATION).value(AUTH_TOKEN + createToken(user));
         writer.endObject();// header
-        writer.name("url").value(getUrl(req));
+        writer.name("url").value(joinUrl(getUrl(req), "."));
         writer.endObject();
         writer.close();
         return;
@@ -274,11 +280,29 @@ public class LfsServer implements Shared {
 
   @Nullable
   private User getAuthInfo(@NotNull HttpServletRequest req) {
+    final UserDB userDB = context.sure(UserDB.class);
+    // Check privateToken authorization.
+    final String token = req.getParameter("privateToken");
+    if (privateToken != null && privateToken.equals(token)) {
+      try {
+        final String username = req.getParameter("username");
+        if (username != null) {
+          return userDB.lookupByUserName(username);
+        }
+        final String external = req.getParameter("external");
+        if (external != null) {
+          return userDB.lookupByExternal(external);
+        }
+      } catch (SVNException | IOException e) {
+        log.error("Can't get user information", e);
+        return null;
+      }
+    }
+    // Check HTTP authorization.
     final String authorization = req.getHeader(HttpHeaders.AUTHORIZATION);
     if (authorization == null) {
       return null;
     }
-    final UserDB userDB = context.sure(UserDB.class);
     if (authorization.startsWith(AUTH_BASIC)) {
       final String raw = new String(Base64.decode(authorization.substring(AUTH_BASIC.length())), StandardCharsets.UTF_8);
       final int separator = raw.indexOf(':');

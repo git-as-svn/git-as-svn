@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
@@ -32,6 +33,8 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @NotNull
   private String path = "lfs";
   private boolean compress = true;
+  @Nullable
+  private String token;
 
   @NotNull
   public String getPath() {
@@ -58,7 +61,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(LfsStorageFactory.class, this);
-    context.add(LfsServer.class, new LfsServer());
+    context.add(LfsServer.class, new LfsServer(token));
   }
 
   @NotNull
