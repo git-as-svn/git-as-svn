@@ -12,12 +12,14 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jose4j.jwe.JsonWebEncryption;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 
 import javax.servlet.Servlet;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 /**
  * Web server component
@@ -29,15 +31,31 @@ public class WebServer implements Shared {
   private final Server server;
   @Nullable
   private final ServletHandler handler;
+  @NotNull
+  private final String realm;
+  @NotNull
+  private final Supplier<JsonWebEncryption> tokenFactory;
 
-  public WebServer(@Nullable Server server) {
+  public WebServer(@Nullable Server server, @NotNull String realm, @NotNull Supplier<JsonWebEncryption> tokenFactory) {
     this.server = server;
+    this.realm = realm;
+    this.tokenFactory = tokenFactory;
     if (server != null) {
       handler = new ServletHandler();
       server.setHandler(handler);
     } else {
       handler = null;
     }
+  }
+
+  @NotNull
+  public String getRealm() {
+    return realm;
+  }
+
+  @NotNull
+  public JsonWebEncryption createToken() {
+    return tokenFactory.get();
   }
 
   @Override
@@ -62,6 +80,6 @@ public class WebServer implements Shared {
   }
 
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
-    return context.getOrCreate(WebServer.class, () -> new WebServer(null));
+    return context.getOrCreate(WebServer.class, () -> new WebServer(null, "Git as Subversion server", JsonWebEncryption::new));
   }
 }
