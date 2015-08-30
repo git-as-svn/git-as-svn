@@ -14,7 +14,6 @@ import org.jose4j.jwe.ContentEncryptionAlgorithmIdentifiers;
 import org.jose4j.jwe.JsonWebEncryption;
 import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
 import org.jose4j.keys.AesKey;
-import org.jose4j.lang.ByteUtil;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
@@ -25,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,11 +36,14 @@ import java.util.List;
 @ConfigType("web")
 public class WebServerConfig implements SharedConfig {
   @NotNull
+  private final static String defaultSecret = generateDefaultSecret();
+
+  @NotNull
   private List<ListenConfig> listen = new ArrayList<>();
   @NotNull
   private String realm = "Git as Subversion server";
   @NotNull
-  private String secret = new String(Hex.encodeHex(ByteUtil.randomBytes(16)));
+  private String secret = defaultSecret;
 
   @NotNull
   public List<ListenConfig> getListen() {
@@ -75,5 +78,12 @@ public class WebServerConfig implements SharedConfig {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  private static String generateDefaultSecret() {
+    final SecureRandom random = new SecureRandom();
+    final byte bytes[] = new byte[0x10];
+    random.nextBytes(bytes);
+    return new String(Hex.encodeHex(bytes));
   }
 }
