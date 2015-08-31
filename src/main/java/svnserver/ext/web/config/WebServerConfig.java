@@ -10,20 +10,13 @@ package svnserver.ext.web.config;
 import org.apache.commons.codec.binary.Hex;
 import org.eclipse.jetty.server.Server;
 import org.jetbrains.annotations.NotNull;
-import org.jose4j.jwe.ContentEncryptionAlgorithmIdentifiers;
-import org.jose4j.jwe.JsonWebEncryption;
-import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
-import org.jose4j.keys.AesKey;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 import svnserver.ext.web.server.WebServer;
+import svnserver.ext.web.token.EncryptionFactoryAes;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +34,7 @@ public class WebServerConfig implements SharedConfig {
   @NotNull
   private List<ListenConfig> listen = new ArrayList<>();
   @NotNull
-  private String realm = "Git as Subversion server";
+  private String realm = WebServer.DEFAULT_REALM;
   @NotNull
   private String secret = defaultSecret;
 
@@ -52,14 +45,7 @@ public class WebServerConfig implements SharedConfig {
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    context.add(WebServer.class, new WebServer(createJettyServer(), realm, () -> {
-      final Key key = new AesKey(secretToKey(secret));
-      final JsonWebEncryption jwe = new JsonWebEncryption();
-      jwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.A128KW);
-      jwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_128_CBC_HMAC_SHA_256);
-      jwe.setKey(key);
-      return jwe;
-    }));
+    context.add(WebServer.class, new WebServer(createJettyServer(), realm, new EncryptionFactoryAes(secret)));
   }
 
   @NotNull
@@ -71,18 +57,9 @@ public class WebServerConfig implements SharedConfig {
     return server;
   }
 
-  @NotNull
-  private static byte[] secretToKey(@NotNull String secret) {
-    try {
-      return MessageDigest.getInstance("MD5").digest(secret.getBytes(StandardCharsets.UTF_8));
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   private static String generateDefaultSecret() {
     final SecureRandom random = new SecureRandom();
-    final byte bytes[] = new byte[0x10];
+    final byte bytes[] = new byte[EncryptionFactoryAes.KEY_SIZE];
     random.nextBytes(bytes);
     return new String(Hex.encodeHex(bytes));
   }

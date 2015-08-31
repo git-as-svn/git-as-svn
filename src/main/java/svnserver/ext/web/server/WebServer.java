@@ -16,10 +16,10 @@ import org.jose4j.jwe.JsonWebEncryption;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
+import svnserver.ext.web.token.EncryptionFactory;
 
 import javax.servlet.Servlet;
 import java.io.IOException;
-import java.util.function.Supplier;
 
 /**
  * Web server component
@@ -27,6 +27,8 @@ import java.util.function.Supplier;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class WebServer implements Shared {
+  @NotNull
+  public final static String DEFAULT_REALM = "Git as Subversion server";
   @Nullable
   private final Server server;
   @Nullable
@@ -34,9 +36,9 @@ public class WebServer implements Shared {
   @NotNull
   private final String realm;
   @NotNull
-  private final Supplier<JsonWebEncryption> tokenFactory;
+  private final EncryptionFactory tokenFactory;
 
-  public WebServer(@Nullable Server server, @NotNull String realm, @NotNull Supplier<JsonWebEncryption> tokenFactory) {
+  public WebServer(@Nullable Server server, @NotNull String realm, @NotNull EncryptionFactory tokenFactory) {
     this.server = server;
     this.realm = realm;
     this.tokenFactory = tokenFactory;
@@ -54,8 +56,8 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public JsonWebEncryption createToken() {
-    return tokenFactory.get();
+  public JsonWebEncryption createEncryption() {
+    return tokenFactory.create();
   }
 
   @Override
@@ -80,6 +82,6 @@ public class WebServer implements Shared {
   }
 
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
-    return context.getOrCreate(WebServer.class, () -> new WebServer(null, "Git as Subversion server", JsonWebEncryption::new));
+    return context.getOrCreate(WebServer.class, () -> new WebServer(null, DEFAULT_REALM, JsonWebEncryption::new));
   }
 }

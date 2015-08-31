@@ -14,8 +14,6 @@ import org.apache.http.HttpHeaders;
 import org.eclipse.jgit.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jose4j.jwe.JsonWebEncryption;
-import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -27,6 +25,7 @@ import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.web.server.WebServer;
+import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -183,7 +182,7 @@ public class LfsServer implements Shared {
         writer.name("download").beginObject();
         writer.name("href").value(joinUrl(getUrl(req), "storage/" + reader.getOid(true)));
         writer.name("header").beginObject();
-        writer.name(HttpHeaders.AUTHORIZATION).value(AUTH_TOKEN + createToken(user));
+        writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
         writer.endObject();// header
         writer.endObject();// download
         writer.endObject();// _links
@@ -199,7 +198,7 @@ public class LfsServer implements Shared {
         writer.name("upload").beginObject();
         writer.name("href").value(joinUrl(getUrl(req), "storage/" + oid));
         writer.name("header").beginObject();
-        writer.name(HttpHeaders.AUTHORIZATION).value(AUTH_TOKEN + createToken(user));
+        writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
         writer.endObject();// header
         writer.endObject();// download
         writer.endObject();// _links
@@ -255,7 +254,7 @@ public class LfsServer implements Shared {
       writer.name("download").beginObject();
       writer.name("href").value(joinUrl(getUrl(req), "../storage/" + reader.getOid(true)));
       writer.name("header").beginObject();
-      writer.name(HttpHeaders.AUTHORIZATION).value(AUTH_TOKEN + createToken(user));
+      writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
       writer.endObject();// header
       writer.endObject();// download
       writer.endObject();// _links
@@ -280,6 +279,7 @@ public class LfsServer implements Shared {
 
   @Nullable
   private User getAuthInfo(@NotNull HttpServletRequest req) {
+    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
     final UserDB userDB = context.sure(UserDB.class);
     // Check privateToken authorization.
     final String token = req.getParameter("privateToken");
@@ -318,35 +318,15 @@ public class LfsServer implements Shared {
       return null;
     }
     if (authorization.startsWith(AUTH_TOKEN)) {
-      return parseToken(authorization.substring(AUTH_TOKEN.length()));
+      return TokenHelper.parseToken(webServer.createEncryption(), authorization.substring(AUTH_TOKEN.length()));
     }
     return null;
   }
 
-  @Nullable
-  private User parseToken(@NotNull String token) {
-    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
-    final UserDB userDB = context.sure(UserDB.class);
-    try {
-      final JsonWebEncryption jwe = webServer.createToken();
-      jwe.setCompactSerialization(token);
-      return userDB.lookupByUserName(jwe.getPayload());
-    } catch (Exception e) {
-      log.error("Token parsing error", e);
-      return null;
-    }
-  }
-
   @NotNull
   private String createToken(@NotNull User user) {
-    try {
-      if (webServer == null) throw new IllegalStateException("Object is non-initialized");
-      final JsonWebEncryption jwe = webServer.createToken();
-      jwe.setPayload(user.getUserName());
-      return jwe.getCompactSerialization();
-    } catch (JoseException e) {
-      throw new IllegalStateException(e);
-    }
+    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
+    return TokenHelper.createToken(webServer.createEncryption(), user);
   }
 
   private class LfsStorageServlet extends HttpServlet {

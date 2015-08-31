@@ -56,7 +56,9 @@ public class User {
    * @param env Environment variables
    */
   public void updateEnvironment(@NotNull Map<String, String> env) {
-    env.put("GAS_EMAIL", getEmail());
+    if (getEmail() != null) {
+      env.put("GAS_EMAIL", getEmail());
+    }
     env.put("GAS_NAME", getRealName());
     env.put("GAS_LOGIN", getUserName());
   }
@@ -64,5 +66,25 @@ public class User {
   @Override
   public String toString() {
     return userName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    User user = (User) o;
+
+    if (!userName.equals(user.userName)) return false;
+    if (!realName.equals(user.realName)) return false;
+    return !(email != null ? !email.equals(user.email) : user.email != null);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = userName.hashCode();
+    result = 31 * result + realName.hashCode();
+    result = 31 * result + (email != null ? email.hashCode() : 0);
+    return result;
   }
 }
