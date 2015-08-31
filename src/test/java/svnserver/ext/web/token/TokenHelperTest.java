@@ -10,6 +10,7 @@ package svnserver.ext.web.token;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jose4j.jwe.JsonWebEncryption;
+import org.jose4j.jwt.NumericDate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import svnserver.auth.User;
@@ -23,7 +24,7 @@ public class TokenHelperTest {
   @Test
   public void simple() {
     final User expected = new User("foo", "bar", "foo@example.com");
-    final String token = TokenHelper.createToken(createToken("secret"), expected);
+    final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token);
     Assert.assertNotNull(actual);
     Assert.assertEquals(actual, expected);
@@ -32,7 +33,7 @@ public class TokenHelperTest {
   @Test
   public void anonymous() {
     final User expected = new User("foo", "bar", null);
-    final String token = TokenHelper.createToken(createToken("secret"), expected);
+    final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token);
     Assert.assertNotNull(actual);
     Assert.assertEquals(actual, expected);
@@ -41,8 +42,16 @@ public class TokenHelperTest {
   @Test
   public void invalidToken() {
     final User expected = new User("foo", "bar", "foo@example.com");
-    final String token = TokenHelper.createToken(createToken("big secret"), expected);
+    final String token = TokenHelper.createToken(createToken("big secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("small secret"), token);
+    Assert.assertNull(actual);
+  }
+
+  @Test
+  public void expiredToken() {
+    final User expected = new User("foo", "bar", "foo@example.com");
+    final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() - 2000));
+    final User actual = TokenHelper.parseToken(createToken("secret"), token);
     Assert.assertNull(actual);
   }
 

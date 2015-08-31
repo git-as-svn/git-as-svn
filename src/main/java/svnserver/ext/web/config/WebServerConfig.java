@@ -45,7 +45,7 @@ public class WebServerConfig implements SharedConfig {
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    context.add(WebServer.class, new WebServer(createJettyServer(), realm, new EncryptionFactoryAes(secret)));
+    context.add(WebServer.class, new WebServer(context,createJettyServer(), realm, new EncryptionFactoryAes(secret)));
   }
 
   @NotNull

@@ -18,11 +18,11 @@ import org.testng.annotations.Test;
 public class LfsServerTest {
   @Test
   public void checkMimeTypeTest() {
-    Assert.assertTrue(LfsServer.checkMimeType("text/html", "text/html"));
-    Assert.assertTrue(LfsServer.checkMimeType("text/html; charset=UTF-8", "text/html"));
-    Assert.assertTrue(LfsServer.checkMimeType("text/html ; charset=UTF-8", "text/html"));
-    Assert.assertFalse(LfsServer.checkMimeType("text/htma", "text/html"));
-    Assert.assertFalse(LfsServer.checkMimeType("text/htma; charset=UTF-8", "text/html"));
-    Assert.assertFalse(LfsServer.checkMimeType("text/htma ; charset=UTF-8", "text/html"));
+    Assert.assertTrue(LfsAbstractServlet.checkMimeType("text/html", "text/html"));
+    Assert.assertTrue(LfsAbstractServlet.checkMimeType("text/html; charset=UTF-8", "text/html"));
+    Assert.assertTrue(LfsAbstractServlet.checkMimeType("text/html ; charset=UTF-8", "text/html"));
+    Assert.assertFalse(LfsAbstractServlet.checkMimeType("text/htma", "text/html"));
+    Assert.assertFalse(LfsAbstractServlet.checkMimeType("text/htma; charset=UTF-8", "text/html"));
+    Assert.assertFalse(LfsAbstractServlet.checkMimeType("text/htma ; charset=UTF-8", "text/html"));
   }
 }

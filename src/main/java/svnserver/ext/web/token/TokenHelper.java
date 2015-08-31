@@ -39,10 +39,10 @@ public class TokenHelper {
   private static final Pattern hex = Pattern.compile("^[0-9a-fA-F]+$");
 
   @NotNull
-  public static String createToken(@NotNull JsonWebEncryption jwe, @NotNull User user) {
+  public static String createToken(@NotNull JsonWebEncryption jwe, @NotNull User user, @NotNull NumericDate expireAt) {
     try {
       JwtClaims claims = new JwtClaims();
-      claims.setExpirationTimeMinutesInTheFuture(1); // time when the token will expire (1 minutes from now)
+      claims.setExpirationTime(expireAt);
       claims.setGeneratedJwtId(); // a unique identifier for the token
       claims.setIssuedAtToNow();  // when the token was issued/created (now)
       claims.setNotBeforeMinutesInThePast(0.5f); // time before which the token is not yet valid (30 seconds ago)

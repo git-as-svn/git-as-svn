@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.storage.local;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.DateHelper;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.filter.LfsPointer;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -19,8 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -144,7 +144,7 @@ public class LfsLocalWriter extends LfsWriter {
         map.put(LfsPointer.HASH_MD5, Hex.encodeHexString(md5));
         map.put(LfsPointer.SIZE, String.valueOf(size));
         map.put(LfsPointer.OID, oid);
-        map.put(LfsPointer.CREATE_TIME, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date()));
+        map.put(LfsPointer.CREATE_TIME, DateHelper.toISO8601(Instant.now()));
         if (user != null) {
           if (user.getEmail() != null) {
             map.put(LfsPointer.META_EMAIL, user.getEmail());
