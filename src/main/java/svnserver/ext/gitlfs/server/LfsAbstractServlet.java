@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,14 +83,19 @@ public abstract class LfsAbstractServlet extends HttpServlet {
     if (sc == HttpServletResponse.SC_UNAUTHORIZED) {
       resp.addHeader("WWW-Authenticate", "Basic realm=\"" + getWebServer().getRealm() + "\"");
     }
-    JsonWriter writer = new JsonWriter(resp.getWriter());
-    writer.setIndent("\t");
-    writer.beginObject();
-    writer.name("message").value(message);
-    if (documentationUrl != null) {
-      writer.name("documentation_url").value(documentationUrl);
+    try (StringWriter writer = new StringWriter()) {
+      JsonWriter json = new JsonWriter(writer);
+      json.setIndent("\t");
+      json.beginObject();
+      json.name("message").value(message);
+      if (documentationUrl != null) {
+        json.name("documentation_url").value(documentationUrl);
+      }
+      json.endObject();
+      json.flush();
+      json.close();
+      resp.getWriter().println(writer.toString());
     }
-    writer.endObject();
   }
 
   public static boolean checkMimeType(@Nullable String contentType, @NotNull String mimeType) {

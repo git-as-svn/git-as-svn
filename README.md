@@ -22,6 +22,19 @@ Now we support limited GitLab integration (see config-gitlab.example):
  * Load repository list from GitLab on startup (no dynamically update yet)
  * Authentication via GitLab API
 
+### git-lfs-authenticate
+
+For support SSO git-lfs authentication you need to create file ```/usr/local/bin/git-lfs-authenticate``` with content:
+
+```
+#!/bin/sh
+# TOKEN - token parameter in !lfs section
+# BASE  - base url
+TOKEN=secret
+BASE=http://localhost:8123
+curl -s -d "token=${TOKEN}" -d "external=${GL_ID}" ${BASE}/$1/info/lfs/auth
+```
+
 # How to use
 
 ## Run from binaries

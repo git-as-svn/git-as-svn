@@ -26,7 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 
 /**
@@ -92,20 +92,19 @@ public class LfsAuthServlet extends LfsAbstractServlet {
     final String accessToken = TokenHelper.createToken(getWebServer().createEncryption(), user, expireAt);
 
     // Write git-lfs-authenticate content.
-    final PrintWriter out = resp.getWriter();
-    JsonWriter writer = new JsonWriter(out);
-    writer.setIndent("\t");
-    writer.beginObject();
-    final String usr = joinUrl(getUrl(req), ".");
-    writer.name("href").value(createHref(req));
-    writer.name("header").beginObject();
-    writer.name(HttpHeaders.AUTHORIZATION).value(WebServer.AUTH_TOKEN + accessToken);
-    writer.endObject();// header
-    writer.name("expires_at").value(DateHelper.toISO8601(expireAt.getValueInMillis()));
-    writer.endObject();
-    writer.flush();
-    out.println();
-    writer.close();
+    try (StringWriter writer = new StringWriter()) {
+      JsonWriter json = new JsonWriter(writer);
+      json.setIndent("\t");
+      json.beginObject();
+      json.name("href").value(createHref(req));
+      json.name("header").beginObject();
+      json.name(HttpHeaders.AUTHORIZATION).value(WebServer.AUTH_TOKEN + accessToken);
+      json.endObject();// header
+      json.name("expires_at").value(DateHelper.toISO8601(expireAt.getValueInMillis()));
+      json.endObject();
+      json.close();
+      resp.getWriter().println(writer.toString());
+    }
   }
 
   @NotNull
