@@ -112,10 +112,6 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
       sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", null);
       return;
     }
-    if (!checkMimeType(req.getContentType(), MIME_TYPE)) {
-      sendError(resp, HttpServletResponse.SC_NOT_ACCEPTABLE, "Not Acceptable", null);
-      return;
-    }
     final String oid = getOid(req.getPathInfo());
     if (oid == null) {
       sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
