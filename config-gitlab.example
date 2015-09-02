@@ -13,6 +13,7 @@ acl: {}
 shared:
   # Web server settings.
   - !web
+    baseUrl: http://git-as-svn.local/
     listen:
     - !http
       host: localhost
@@ -20,6 +21,7 @@ shared:
   # Git LFS server
   - !lfs
     path: lfs
+    # token: secret
   # GitLab server
   - !gitlab
     url: http://localhost/

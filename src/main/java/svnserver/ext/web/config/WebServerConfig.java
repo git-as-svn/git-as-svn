@@ -10,6 +10,7 @@ package svnserver.ext.web.config;
 import org.apache.commons.codec.binary.Hex;
 import org.eclipse.jetty.server.Server;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
@@ -37,6 +38,18 @@ public class WebServerConfig implements SharedConfig {
   private String realm = WebServer.DEFAULT_REALM;
   @NotNull
   private String secret = defaultSecret;
+  @Nullable
+  private String baseUrl = null;
+
+  @NotNull
+  public String getRealm() {
+    return realm;
+  }
+
+  @Nullable
+  public String getBaseUrl() {
+    return baseUrl;
+  }
 
   @NotNull
   public List<ListenConfig> getListen() {
@@ -45,7 +58,7 @@ public class WebServerConfig implements SharedConfig {
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    context.add(WebServer.class, new WebServer(context,createJettyServer(), realm, new EncryptionFactoryAes(secret)));
+    context.add(WebServer.class, new WebServer(context, createJettyServer(), this, new EncryptionFactoryAes(secret)));
   }
 
   @NotNull

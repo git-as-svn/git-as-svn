@@ -8,7 +8,6 @@
 package svnserver.ext.gitlfs.server;
 
 import com.google.gson.stream.JsonWriter;
-import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.auth.User;
@@ -115,14 +114,5 @@ public abstract class LfsAbstractServlet extends HttpServlet {
   @NotNull
   public static String joinUrl(String url, String path) {
     return URI.create(url).resolve(path).toString();
-  }
-
-  @NotNull
-  public static String getUrl(@NotNull HttpServletRequest req) {
-    String host = req.getHeader(HttpHeaders.HOST);
-    if (host == null) {
-      host = req.getServerName() + ":" + req.getServerPort();
-    }
-    return req.getScheme() + "://" + host + req.getRequestURI();
   }
 }

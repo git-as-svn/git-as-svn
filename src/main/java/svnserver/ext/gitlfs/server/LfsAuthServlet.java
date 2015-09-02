@@ -109,7 +109,7 @@ public class LfsAuthServlet extends LfsAbstractServlet {
 
   @NotNull
   private String createHref(@NotNull HttpServletRequest req) {
-    final URI uri = URI.create(getUrl(req)).resolve(".");
+    final URI uri = URI.create(getWebServer().getUrl(req)).resolve(".");
     final String href = uri.toString();
     if (uri.getPath() != null && uri.getPath().endsWith("/")) {
       return href.substring(0, href.length() - 1);

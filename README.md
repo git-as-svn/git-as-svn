@@ -22,7 +22,7 @@ Now we support limited GitLab integration (see config-gitlab.example):
  * Load repository list from GitLab on startup (no dynamically update yet)
  * Authentication via GitLab API
 
-### git-lfs-authenticate
+### LFS for Git SSH users (git-lfs-authenticate)
 
 For support SSO git-lfs authentication you need to create file ```/usr/local/bin/git-lfs-authenticate``` with content:
 
@@ -34,6 +34,55 @@ TOKEN=secret
 BASE=http://localhost:8123
 curl -s -d "token=${TOKEN}" -d "external=${GL_ID}" ${BASE}/$1/info/lfs/auth
 ```
+
+### LFS for Git HTTP users
+
+#### Password caching (client side)
+
+You need to enable caching passwords. Otherwise, git-lfs will ask for the password for each lfs-stored file.
+
+Turn on the credential helper so that Git will save your password in memory for some time. By default, Git will cache your password for 15 minutes.
+```
+$ git config --global credential.helper cache
+# Set git to use the credential memory cache
+```
+
+To change the default password cache timeout, enter the following:
+```
+$ git config --global credential.helper 'cache --timeout=3600'
+# Set the cache to timeout after 1 hour (setting is in seconds)
+```
+
+More info: https://help.github.com/articles/caching-your-github-password-in-git/
+
+#### Reverse proxy
+
+You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/nginx/conf/gitlab-http.conf``` file:
+
+ * Add git-as-svn upstream server:
+```
+ upstream gitsvn {
+   server localhost:8123  fail_timeout=5s;
+ } 
+```
+ * Add resource redirection:
+```
+   location ~ ^.*\.git/info/lfs/ {
+     proxy_read_timeout      300;
+     proxy_connect_timeout   300;
+     proxy_redirect          off;
+ 
+     proxy_set_header    Host                $http_host;
+     proxy_set_header    X-Real-IP           $remote_addr;
+     proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+     proxy_set_header    X-Forwarded-Proto   $scheme;
+     proxy_set_header    X-Frame-Options     SAMEORIGIN;
+ 
+     proxy_pass http://gitsvn;
+   }
+```
+
+Also you need to set ```baseUrl``` parameter in ```!web``` section of git-as-svn configuration file.
 
 # How to use
 

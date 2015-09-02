@@ -78,7 +78,7 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
       writer.name("size").value(reader.getSize());
       writer.name("_links").beginObject();
       writer.name("download").beginObject();
-      writer.name("href").value(joinUrl(getUrl(req), "storage/" + reader.getOid(true)));
+      writer.name("href").value(joinUrl(getWebServer().getUrl(req), "storage/" + reader.getOid(true)));
       writer.name("header").beginObject();
       writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
       writer.endObject();// header
@@ -94,7 +94,7 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
       writer.beginObject();
       writer.name("_links").beginObject();
       writer.name("upload").beginObject();
-      writer.name("href").value(joinUrl(getUrl(req), "storage/" + oid));
+      writer.name("href").value(joinUrl(getWebServer().getUrl(req), "storage/" + oid));
       writer.name("header").beginObject();
       writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
       writer.endObject();// header
@@ -130,10 +130,10 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
     writer.name("size").value(reader.getSize());
     writer.name("_links").beginObject();
     writer.name("self").beginObject();
-    writer.name("href").value(getUrl(req));
+    writer.name("href").value(getWebServer().getUrl(req));
     writer.endObject();// self
     writer.name("download").beginObject();
-    writer.name("href").value(joinUrl(getUrl(req), "../storage/" + reader.getOid(true)));
+    writer.name("href").value(joinUrl(getWebServer().getUrl(req), "../storage/" + reader.getOid(true)));
     writer.name("header").beginObject();
     writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
     writer.endObject();// header

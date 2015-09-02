@@ -22,12 +22,14 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
+import svnserver.ext.web.config.WebServerConfig;
 import svnserver.ext.web.token.EncryptionFactory;
 import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -53,14 +55,14 @@ public class WebServer implements Shared {
   @Nullable
   private final ServletHandler handler;
   @NotNull
-  private final String realm;
+  private final WebServerConfig config;
   @NotNull
   private final EncryptionFactory tokenFactory;
 
-  public WebServer(@NotNull SharedContext context, @Nullable Server server, @NotNull String realm, @NotNull EncryptionFactory tokenFactory) {
+  public WebServer(@NotNull SharedContext context, @Nullable Server server, @NotNull WebServerConfig config, @NotNull EncryptionFactory tokenFactory) {
     this.context = context;
     this.server = server;
-    this.realm = realm;
+    this.config = config;
     this.tokenFactory = tokenFactory;
     if (server != null) {
       handler = new ServletHandler();
@@ -72,7 +74,7 @@ public class WebServer implements Shared {
 
   @NotNull
   public String getRealm() {
-    return realm;
+    return config.getRealm();
   }
 
   @NotNull
@@ -102,7 +104,7 @@ public class WebServer implements Shared {
   }
 
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
-    return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, DEFAULT_REALM, JsonWebEncryption::new));
+    return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
   @Nullable
@@ -131,5 +133,17 @@ public class WebServer implements Shared {
       return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()));
     }
     return null;
+  }
+
+  @NotNull
+  public String getUrl(@NotNull HttpServletRequest req) {
+    if (config.getBaseUrl() != null) {
+      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI()).toString();
+    }
+    String host = req.getHeader(HttpHeaders.HOST);
+    if (host == null) {
+      host = req.getServerName() + ":" + req.getServerPort();
+    }
+    return req.getScheme() + "://" + host + req.getRequestURI();
   }
 }

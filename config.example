@@ -63,6 +63,7 @@ shared:
   # This web server used for some additional functionality like Git LFS support.
   # Subversion WebDAV access (via http/https) IS NOT SUPPORTED now.
   - !web
+    baseUrl: http://git-as-svn.local/
     listen:
     - !http
       host: localhost
