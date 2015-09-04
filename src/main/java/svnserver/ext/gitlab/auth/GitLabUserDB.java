@@ -77,12 +77,12 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
         return null;
       }
     }
-    // todo: [#9591 (gitlabhq)](/gitlabhq/gitlabhq/pull/9591)
+    // todo: [#72 (java-gitlab-api)](/timols/java-gitlab-api/pull/72)
     /*
     final Integer keyId = removePrefix(external, PREFIX_KEY);
     if (keyId != null) {
       try {
-        return new GitLabUser(context.connect().getUserByKey(keyId));
+        return new GitLabUser(context.connect().getSSHKey(keyId).getUser());
       } catch (IOException e) {
         return null;
       }
