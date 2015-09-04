@@ -5,21 +5,28 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.auth;
+package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.context.Shared;
+import svnserver.context.Local;
 
-import java.util.Collection;
+import java.io.File;
 
 /**
- * User storage.
+ * Git repository location.
  *
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
+public class GitLocation implements Local {
+  @NotNull
+  private final File fullPath;
+
+  public GitLocation(@NotNull File fullPath) {
+    this.fullPath = fullPath;
+  }
 
   @NotNull
-  Collection<Authenticator> authenticators();
-
+  public File getFullPath() {
+    return fullPath;
+  }
 }

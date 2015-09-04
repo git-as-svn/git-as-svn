@@ -5,21 +5,19 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.auth;
+package svnserver.auth.ldap.config;
 
+import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.jetbrains.annotations.NotNull;
-import svnserver.context.Shared;
-
-import java.util.Collection;
 
 /**
- * User storage.
+ * LDAP bind configuration.
  *
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
-
+public interface LdapBind {
   @NotNull
-  Collection<Authenticator> authenticators();
-
+  BindResult bind(@NotNull LDAPConnection connection) throws LDAPException;
 }

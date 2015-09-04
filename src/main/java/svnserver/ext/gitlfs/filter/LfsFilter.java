@@ -12,10 +12,14 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.config.LfsConfig;
+import svnserver.ext.gitlfs.server.LfsServer;
+import svnserver.ext.gitlfs.server.LfsServerEntry;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -43,8 +47,12 @@ public class LfsFilter implements GitFilter {
   private final DB cacheDb;
 
   public LfsFilter(@NotNull LocalContext context) throws IOException, SVNException {
-    this.storage = LfsConfig.getStorage(context.getShared());
+    this.storage = LfsConfig.getStorage(context);
     this.cacheDb = context.getShared().getCacheDB();
+    final LfsServer lfsServer = context.getShared().get(LfsServer.class);
+    if (lfsServer != null) {
+      context.add(LfsServerEntry.class, new LfsServerEntry(lfsServer, context, storage));
+    }
   }
 
   @NotNull
@@ -65,7 +73,10 @@ public class LfsFilter implements GitFilter {
       if (pointer != null) {
         final LfsReader reader = storage.getReader(pointer.get(LfsPointer.OID));
         if (reader != null) {
-          return reader.getMd5();
+          String md5 = reader.getMd5();
+          if (md5 != null) {
+            return md5;
+          }
         }
       }
     }
@@ -111,8 +122,8 @@ public class LfsFilter implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream) throws IOException, SVNException {
-    return new TemporaryOutputStream(storage.getWriter(), stream);
+  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException {
+    return new TemporaryOutputStream(storage.getWriter(user), stream);
   }
 
   private static class TemporaryInputStream extends InputStream {

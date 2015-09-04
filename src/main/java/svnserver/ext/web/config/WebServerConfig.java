@@ -7,14 +7,18 @@
  */
 package svnserver.ext.web.config;
 
+import org.apache.commons.codec.binary.Hex;
 import org.eclipse.jetty.server.Server;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 import svnserver.ext.web.server.WebServer;
+import svnserver.ext.web.token.EncryptionFactoryAes;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +30,26 @@ import java.util.List;
 @ConfigType("web")
 public class WebServerConfig implements SharedConfig {
   @NotNull
+  private final static String defaultSecret = generateDefaultSecret();
+
+  @NotNull
   private List<ListenConfig> listen = new ArrayList<>();
+  @NotNull
+  private String realm = WebServer.DEFAULT_REALM;
+  @NotNull
+  private String secret = defaultSecret;
+  @Nullable
+  private String baseUrl = null;
+
+  @NotNull
+  public String getRealm() {
+    return realm;
+  }
+
+  @Nullable
+  public String getBaseUrl() {
+    return baseUrl;
+  }
 
   @NotNull
   public List<ListenConfig> getListen() {
@@ -35,7 +58,7 @@ public class WebServerConfig implements SharedConfig {
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    context.add(WebServer.class, new WebServer(createJettyServer()));
+    context.add(WebServer.class, new WebServer(context, createJettyServer(), this, new EncryptionFactoryAes(secret)));
   }
 
   @NotNull
@@ -45,5 +68,12 @@ public class WebServerConfig implements SharedConfig {
       server.addConnector(listenConfig.createConnector(server));
     }
     return server;
+  }
+
+  private static String generateDefaultSecret() {
+    final SecureRandom random = new SecureRandom();
+    final byte bytes[] = new byte[EncryptionFactoryAes.KEY_SIZE];
+    random.nextBytes(bytes);
+    return new String(Hex.encodeHex(bytes));
   }
 }

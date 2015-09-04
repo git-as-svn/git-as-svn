@@ -5,21 +5,18 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.auth;
+package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 
-import java.util.Collection;
-
 /**
- * User storage.
+ * GIT LFS storage factory for Local context.
  *
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
-
+public interface LfsStorageFactory extends Shared {
   @NotNull
-  Collection<Authenticator> authenticators();
-
+  LfsStorage createStorage(@NotNull LocalContext context);
 }

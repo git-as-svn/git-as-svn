@@ -19,5 +19,5 @@ import java.io.IOException;
 @FunctionalInterface
 public interface PasswordChecker {
   @Nullable
-  User check(@NotNull String username, @NotNull String password) throws SVNException, IOException;
+  User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException;
 }

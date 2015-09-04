@@ -5,21 +5,19 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.auth;
+package svnserver.ext.web.token;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.context.Shared;
-
-import java.util.Collection;
+import org.jose4j.jwe.JsonWebEncryption;
 
 /**
- * User storage.
+ * WJT token encryption factory.
  *
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
-
+@FunctionalInterface
+public interface EncryptionFactory {
   @NotNull
-  Collection<Authenticator> authenticators();
+  JsonWebEncryption create();
 
 }

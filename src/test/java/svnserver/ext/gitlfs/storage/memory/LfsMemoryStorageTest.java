@@ -30,7 +30,7 @@ public class LfsMemoryStorageTest {
     Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
     // Write new file
-    try (final LfsWriter writer = storage.getWriter()) {
+    try (final LfsWriter writer = storage.getWriter(null)) {
       writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
     }
@@ -53,13 +53,13 @@ public class LfsMemoryStorageTest {
     Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
     // Write new file
-    try (final LfsWriter writer = storage.getWriter()) {
+    try (final LfsWriter writer = storage.getWriter(null)) {
       writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
     }
 
     // Write new file
-    try (final LfsWriter writer = storage.getWriter()) {
+    try (final LfsWriter writer = storage.getWriter(null)) {
       writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
     }

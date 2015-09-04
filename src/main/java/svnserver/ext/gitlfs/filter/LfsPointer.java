@@ -33,6 +33,17 @@ public class LfsPointer {
   public static final String VERSION = "version";
 
   @NotNull
+  public static final String HASH_MD5 = "hash-md5";
+  @NotNull
+  public static final String CREATE_TIME = "create-time";
+  @NotNull
+  public static final String META_EMAIL = "author-email";
+  @NotNull
+  public static final String META_USER_NAME = "author-login";
+  @NotNull
+  public static final String META_REAL_NAME = "author-name";
+
+  @NotNull
   private static final String[] REQUIRED = {
       OID,
       SIZE,

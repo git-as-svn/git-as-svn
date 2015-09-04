@@ -297,7 +297,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     public EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
       this.keepLocks = params.keepLocks;
-      this.writer = context.getRepository().createWriter();
+      this.writer = context.getRepository().createWriter(context.getUser());
       final VcsFile entry = context.getRepository().getLatestRevision().getFile("");
       if (entry == null) {
         throw new IllegalStateException("Repository root entry not found.");

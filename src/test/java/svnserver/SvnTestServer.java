@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.*;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
@@ -109,7 +109,7 @@ public final class SvnTestServer implements SvnTester {
           new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
       }));
     }
-    config.getShared().add(context -> context.add(LfsStorage.class, new LfsMemoryStorage()));
+    config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
     server = new SvnServer(tempDirectory, config);
     server.start();
     log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);

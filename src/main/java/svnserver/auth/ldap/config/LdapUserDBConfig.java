@@ -5,12 +5,13 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.auth.ldap.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.auth.LDAPUserDB;
 import svnserver.auth.UserDB;
+import svnserver.auth.ldap.LdapUserDB;
+import svnserver.config.UserDBConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
@@ -19,8 +20,7 @@ import svnserver.context.SharedContext;
  */
 @SuppressWarnings("FieldCanBeLocal")
 @ConfigType("ldapUsers")
-public final class LDAPUserDBConfig implements UserDBConfig {
-
+public final class LdapUserDBConfig implements UserDBConfig {
   /**
    * This is a URL whose format is defined by the JNDI provider.
    * It is usually an LDAP URL that specifies the domain name of the directory server to connect to,
@@ -28,57 +28,64 @@ public final class LDAPUserDBConfig implements UserDBConfig {
    */
   @NotNull
   private String connectionUrl = "ldap://localhost:389/ou=groups,dc=mycompany,dc=com";
+
   /**
-   * The search scope. Set to <code>true</code> if you wish to search the entire subtree rooted at the
-   * <code>userBase</code> entry. The default value of <code>false</code> requests a single-level search
-   * including only the top level.
+   * Bind configuration.
    */
-  private boolean userSubtree;
+  @Nullable
+  private LdapBind bind;
+
   /**
-   * Pattern specifying the LDAP search filter to use after substitution of the username.
+   * Common part of search filter.
    */
   @NotNull
-  private String userSearch = "(samaccountname={0})";
+  private String searchFilter = "";
+
+  /**
+   * LDAP attribute, containing user login.
+   */
+  @NotNull
+  private String loginAttribute = "sAMAccountName";
+
   /**
    * LDAP attribute, containing user name.
    */
   @NotNull
   private String nameAttribute = "name";
+
   /**
    * LDAP attribute, containing user email.
    */
   @NotNull
   private String emailAttribute = "mail";
+
   /**
    * Certificate for validation LDAP server with SSL connection.
    */
   @Nullable
   private String ldapCertPem;
 
+  /**
+   * Maximum LDAP connections.
+   */
+  private int maxConnections = 10;
+
   @NotNull
-  public String getConnectionUrl() {
-    return connectionUrl;
+  public String getLoginAttribute() {
+    return loginAttribute;
   }
 
-  public void setConnectionUrl(@NotNull String connectionUrl) {
-    this.connectionUrl = connectionUrl;
-  }
-
-  public boolean isUserSubtree() {
-    return userSubtree;
-  }
-
-  public void setUserSubtree(boolean userSubtree) {
-    this.userSubtree = userSubtree;
+  public void setLoginAttribute(@NotNull String loginAttribute) {
+    this.loginAttribute = loginAttribute;
   }
 
   @NotNull
-  public String getUserSearch() {
-    return userSearch;
+  public String getEmailAttribute() {
+    return emailAttribute;
   }
 
-  public void setUserSearch(@NotNull String userSearch) {
-    this.userSearch = userSearch;
+  public void setEmailAttribute(@NotNull String emailAttribute) {
+    this.emailAttribute = emailAttribute;
   }
 
   @NotNull
@@ -91,8 +98,30 @@ public final class LDAPUserDBConfig implements UserDBConfig {
   }
 
   @NotNull
-  public String getEmailAttribute() {
-    return emailAttribute;
+  public String getSearchFilter() {
+    return searchFilter;
+  }
+
+  public void setSearchFilter(@NotNull String searchFilter) {
+    this.searchFilter = searchFilter;
+  }
+
+  @Nullable
+  public LdapBind getBind() {
+    return bind;
+  }
+
+  public void setBind(@Nullable LdapBind bind) {
+    this.bind = bind;
+  }
+
+  @NotNull
+  public String getConnectionUrl() {
+    return connectionUrl;
+  }
+
+  public void setConnectionUrl(@NotNull String connectionUrl) {
+    this.connectionUrl = connectionUrl;
   }
 
   @Nullable
@@ -104,9 +133,17 @@ public final class LDAPUserDBConfig implements UserDBConfig {
     this.ldapCertPem = ldapCertPem;
   }
 
+  public int getMaxConnections() {
+    return maxConnections;
+  }
+
+  public void setMaxConnections(int maxConnections) {
+    this.maxConnections = maxConnections;
+  }
+
   @NotNull
   @Override
   public UserDB create(@NotNull SharedContext context) {
-    return new LDAPUserDB(this, context.getBasePath());
+    return new LdapUserDB(context, this);
   }
 }

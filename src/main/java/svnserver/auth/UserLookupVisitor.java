@@ -8,18 +8,20 @@
 package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.context.Shared;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 
-import java.util.Collection;
+import java.io.IOException;
 
 /**
- * User storage.
+ * User lookup visitor.
  *
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
+public interface UserLookupVisitor {
+  @Nullable
+  User lookupByUserName(@NotNull String userName) throws SVNException, IOException;
 
-  @NotNull
-  Collection<Authenticator> authenticators();
-
+  @Nullable
+  User lookupByExternal(@NotNull String external) throws SVNException, IOException;
 }

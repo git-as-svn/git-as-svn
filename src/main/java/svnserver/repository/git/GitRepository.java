@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.StringHelper;
+import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.*;
@@ -581,8 +582,8 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsWriter createWriter() throws SVNException, IOException {
-    return new GitWriter(this, pusher, pushLock, gitBranch);
+  public VcsWriter createWriter(@Nullable User user) throws SVNException, IOException {
+    return new GitWriter(this, pusher, pushLock, gitBranch, user);
   }
 
   @Override

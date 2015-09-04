@@ -15,5 +15,8 @@ import org.apache.http.annotation.ThreadSafe;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-public interface Local {
+public interface Local extends AutoCloseable {
+  @Override
+  default void close() throws Exception {
+  }
 }
