@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.server;
 
 import org.jetbrains.annotations.NotNull;
 import svnserver.context.Local;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
 /**
@@ -20,16 +21,16 @@ public class LfsServerEntry implements Local {
   @NotNull
   private final LfsServer server;
   @NotNull
-  private final String name;
+  private final LocalContext context;
 
-  public LfsServerEntry(@NotNull LfsServer server, @NotNull String name, @NotNull LfsStorage storage) {
+  public LfsServerEntry(@NotNull LfsServer server, @NotNull LocalContext context, @NotNull LfsStorage storage) {
     this.server = server;
-    this.name = name;
-    server.register(name, storage);
+    this.context = context;
+    server.register(context, storage);
   }
 
   @Override
   public void close() throws Exception {
-    server.unregister(name);
+    server.unregister(context);
   }
 }

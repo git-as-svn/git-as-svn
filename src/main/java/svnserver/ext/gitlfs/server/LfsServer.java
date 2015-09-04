@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -23,6 +24,15 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsServer implements Shared {
+  @NotNull
+  public static final String SERVLET_BASE = ".git/info/lfs";
+  @NotNull
+  public static final String SERVLET_AUTH = ".git/auth/lfs";
+  @NotNull
+  public static final String SERVLET_OBJECTS = SERVLET_BASE + "/objects/";
+  @NotNull
+  public static final String SERVLET_STORAGE = SERVLET_BASE + "/storage/";
+
   @NotNull
   private final SharedContext context;
   @Nullable
@@ -40,21 +50,23 @@ public class LfsServer implements Shared {
     this.webServer = WebServer.get(context);
   }
 
-  public void register(@NotNull String name, @NotNull LfsStorage storage) {
+  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) {
     if (webServer == null) throw new IllegalStateException("Object is non-initialized");
+    final String name = localContext.getName();
     if (privateToken != null) {
-      webServer.addServlet("/" + name + ".git/info/lfs/auth", new LfsAuthServlet(context, storage, privateToken));
+      webServer.addServlet("/" + name + SERVLET_AUTH, new LfsAuthServlet(localContext, storage, privateToken));
     }
-    webServer.addServlet("/" + name + ".git/info/lfs/objects/*", new LfsObjectsServlet(context, storage));
-    webServer.addServlet("/" + name + ".git/info/lfs/storage/*", new LfsStorageServlet(context, storage));
+    webServer.addServlet("/" + name + SERVLET_OBJECTS + "*", new LfsObjectsServlet(localContext, storage));
+    webServer.addServlet("/" + name + SERVLET_STORAGE + "*", new LfsStorageServlet(localContext, storage));
   }
 
-  public void unregister(@NotNull String name) {
+  public void unregister(@NotNull LocalContext localContext) {
     if (webServer == null) throw new IllegalStateException("Object is non-initialized");
-    webServer.removeServlet("/" + name + ".git/info/lfs/storage/*");
-    webServer.removeServlet("/" + name + ".git/info/lfs/objects/*");
+    final String name = localContext.getName();
+    webServer.removeServlet("/" + name + SERVLET_STORAGE + "*");
+    webServer.removeServlet("/" + name + SERVLET_OBJECTS + "*");
     if (privateToken != null) {
-      webServer.removeServlet("/" + name + ".git/info/lfs/auth");
+      webServer.removeServlet("/" + name + SERVLET_AUTH);
     }
   }
 }

@@ -51,7 +51,7 @@ public class LfsFilter implements GitFilter {
     this.cacheDb = context.getShared().getCacheDB();
     final LfsServer lfsServer = context.getShared().get(LfsServer.class);
     if (lfsServer != null) {
-      context.add(LfsServerEntry.class, new LfsServerEntry(lfsServer, context.getName(), storage));
+      context.add(LfsServerEntry.class, new LfsServerEntry(lfsServer, context, storage));
     }
   }
 

@@ -11,7 +11,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.User;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -29,7 +29,7 @@ import java.io.InputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsStorageServlet extends LfsAbstractServlet {
-  public LfsStorageServlet(@NotNull SharedContext context, @NotNull LfsStorage storage) {
+  public LfsStorageServlet(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     super(context, storage);
   }
 

@@ -12,7 +12,7 @@ import com.google.gson.stream.JsonWriter;
 import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.User;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
@@ -28,7 +28,7 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsObjectsServlet extends LfsAbstractServlet {
-  public LfsObjectsServlet(@NotNull SharedContext context, @NotNull LfsStorage storage) {
+  public LfsObjectsServlet(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     super(context, storage);
   }
 
@@ -69,16 +69,17 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
     resp.addHeader("Content-Type", MIME_TYPE);
     final LfsReader reader = getStorage().getReader(LfsStorage.OID_PREFIX + oid);
     if (reader != null) {
+      final String id = reader.getOid(true);
       // Already uploaded
       resp.setStatus(HttpServletResponse.SC_OK);
       JsonWriter writer = new JsonWriter(resp.getWriter());
       writer.setIndent("\t");
       writer.beginObject();
-      writer.name("oid").value(reader.getOid(true));
+      writer.name("oid").value(id);
       writer.name("size").value(reader.getSize());
       writer.name("_links").beginObject();
       writer.name("download").beginObject();
-      writer.name("href").value(joinUrl(getWebServer().getUrl(req), "storage/" + reader.getOid(true)));
+      writer.name("href").value(createHref(req, LfsServer.SERVLET_STORAGE + id));
       writer.name("header").beginObject();
       writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
       writer.endObject();// header
@@ -94,7 +95,7 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
       writer.beginObject();
       writer.name("_links").beginObject();
       writer.name("upload").beginObject();
-      writer.name("href").value(joinUrl(getWebServer().getUrl(req), "storage/" + oid));
+      writer.name("href").value(createHref(req, LfsServer.SERVLET_STORAGE + oid));
       writer.name("header").beginObject();
       writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
       writer.endObject();// header
@@ -126,14 +127,15 @@ public class LfsObjectsServlet extends LfsAbstractServlet {
     JsonWriter writer = new JsonWriter(resp.getWriter());
     writer.setIndent("\t");
     writer.beginObject();
-    writer.name("oid").value(reader.getOid(true));
+    final String id = reader.getOid(true);
+    writer.name("oid").value(id);
     writer.name("size").value(reader.getSize());
     writer.name("_links").beginObject();
     writer.name("self").beginObject();
-    writer.name("href").value(getWebServer().getUrl(req));
+    writer.name("href").value(createHref(req, LfsServer.SERVLET_OBJECTS + id));
     writer.endObject();// self
     writer.name("download").beginObject();
-    writer.name("href").value(joinUrl(getWebServer().getUrl(req), "../storage/" + reader.getOid(true)));
+    writer.name("href").value(createHref(req, LfsServer.SERVLET_STORAGE + id));
     writer.name("header").beginObject();
     writer.name(HttpHeaders.AUTHORIZATION).value(req.getHeader(HttpHeaders.AUTHORIZATION));
     writer.endObject();// header

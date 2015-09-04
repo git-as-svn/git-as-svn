@@ -32,7 +32,7 @@ For support SSO git-lfs authentication you need to create file ```/usr/local/bin
 # BASE  - base url
 TOKEN=secret
 BASE=http://localhost:8123
-curl -s -d "token=${TOKEN}" -d "external=${GL_ID}" ${BASE}/$1/info/lfs/auth
+curl -s -d "token=${TOKEN}" -d "external=${GL_ID}" ${BASE}/$1/auth/lfs
 ```
 
 ### LFS for Git HTTP users

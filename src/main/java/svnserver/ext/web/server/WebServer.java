@@ -95,6 +95,7 @@ public class WebServer implements Shared {
 
   public void addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
     if (handler != null) {
+      log.info("Registered servlet for path: {}", pathSpec);
       handler.addServletWithMapping(new ServletHolder(servlet), pathSpec);
     }
   }

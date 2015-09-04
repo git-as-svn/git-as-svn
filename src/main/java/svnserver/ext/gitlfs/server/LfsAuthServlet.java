@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.DateHelper;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.TokenHelper;
@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URI;
 
 /**
  * LFS storage pointer servlet.
@@ -40,7 +39,7 @@ public class LfsAuthServlet extends LfsAbstractServlet {
   @NotNull
   private final String privateToken;
 
-  public LfsAuthServlet(@NotNull SharedContext context, @NotNull LfsStorage storage, @NotNull String privateToken) {
+  public LfsAuthServlet(@NotNull LocalContext context, @NotNull LfsStorage storage, @NotNull String privateToken) {
     super(context, storage);
     this.privateToken = privateToken;
   }
@@ -96,7 +95,7 @@ public class LfsAuthServlet extends LfsAbstractServlet {
       JsonWriter json = new JsonWriter(writer);
       json.setIndent("\t");
       json.beginObject();
-      json.name("href").value(createHref(req));
+      json.name("href").value(createHref(req, LfsServer.SERVLET_BASE));
       json.name("header").beginObject();
       json.name(HttpHeaders.AUTHORIZATION).value(WebServer.AUTH_TOKEN + accessToken);
       json.endObject();// header
@@ -105,15 +104,5 @@ public class LfsAuthServlet extends LfsAbstractServlet {
       json.close();
       resp.getWriter().println(writer.toString());
     }
-  }
-
-  @NotNull
-  private String createHref(@NotNull HttpServletRequest req) {
-    final URI uri = URI.create(getWebServer().getUrl(req)).resolve(".");
-    final String href = uri.toString();
-    if (uri.getPath() != null && uri.getPath().endsWith("/")) {
-      return href.substring(0, href.length() - 1);
-    }
-    return href;
   }
 }

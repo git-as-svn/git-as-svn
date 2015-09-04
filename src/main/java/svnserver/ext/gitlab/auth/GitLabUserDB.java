@@ -27,9 +27,9 @@ import java.util.Map;
  */
 public class GitLabUserDB implements UserDB, UserLookupVisitor {
   @NotNull
-  private final static String PREFIX_USER = "user-";
+  private static final String PREFIX_USER = "user-";
   @NotNull
-  private final static String PREFIX_KEY = "key-";
+  private static final String PREFIX_KEY = "key-";
 
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));

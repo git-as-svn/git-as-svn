@@ -11,6 +11,7 @@ import com.google.gson.stream.JsonWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.auth.User;
+import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
@@ -36,23 +37,28 @@ public abstract class LfsAbstractServlet extends HttpServlet {
   private static final Pattern OID_PATH_INFO = Pattern.compile("^/([0-9a-f]{64})$");
 
   @NotNull
-  private final SharedContext context;
+  private final LocalContext context;
   @NotNull
   private final LfsStorage storage;
 
-  public LfsAbstractServlet(@NotNull SharedContext context, @NotNull LfsStorage storage) {
+  public LfsAbstractServlet(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     this.context = context;
     this.storage = storage;
   }
 
   @NotNull
-  public SharedContext getShared() {
+  public LocalContext getContext() {
     return context;
   }
 
   @NotNull
+  public SharedContext getShared() {
+    return context.getShared();
+  }
+
+  @NotNull
   public WebServer getWebServer() {
-    return context.sure(WebServer.class);
+    return context.getShared().sure(WebServer.class);
   }
 
   @NotNull
@@ -112,7 +118,7 @@ public abstract class LfsAbstractServlet extends HttpServlet {
   }
 
   @NotNull
-  public static String joinUrl(String url, String path) {
-    return URI.create(url).resolve(path).toString();
+  protected String createHref(@NotNull HttpServletRequest req, @NotNull String path) {
+    return URI.create(getWebServer().getUrl(req)).resolve("/" + context.getName() + path).toString();
   }
 }
