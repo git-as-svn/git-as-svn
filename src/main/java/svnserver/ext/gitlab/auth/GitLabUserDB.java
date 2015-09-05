@@ -77,8 +77,6 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
         return null;
       }
     }
-    // todo: [#72 (java-gitlab-api)](/timols/java-gitlab-api/pull/72)
-    /*
     final Integer keyId = removePrefix(external, PREFIX_KEY);
     if (keyId != null) {
       try {
@@ -87,7 +85,6 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
         return null;
       }
     }
-    */
     return null;
   }
 
