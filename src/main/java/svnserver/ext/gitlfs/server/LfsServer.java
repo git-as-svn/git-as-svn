@@ -10,13 +10,17 @@ package svnserver.ext.gitlfs.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
-import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
+import javax.servlet.Servlet;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * LFS server.
@@ -33,40 +37,47 @@ public class LfsServer implements Shared {
   @NotNull
   public static final String SERVLET_STORAGE = SERVLET_BASE + "/storage/";
 
-  @NotNull
-  private final SharedContext context;
-  @Nullable
-  private WebServer webServer;
   @Nullable
   private String privateToken;
 
-  public LfsServer(@NotNull SharedContext context, @Nullable String privateToken) {
-    this.context = context;
+  public LfsServer(@Nullable String privateToken) {
     this.privateToken = privateToken;
   }
 
-  @Override
-  public void init(@NotNull SharedContext context) throws IOException, SVNException {
-    this.webServer = WebServer.get(context);
-  }
-
-  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) {
-    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
+  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
+    final WebServer webServer = WebServer.get(localContext.getShared());
     final String name = localContext.getName();
+    final Map<String, Servlet> servlets = new TreeMap<>();
     if (privateToken != null) {
-      webServer.addServlet("/" + name + SERVLET_AUTH, new LfsAuthServlet(localContext, storage, privateToken));
+      servlets.put("/" + name + SERVLET_AUTH, new LfsAuthServlet(localContext, storage, privateToken));
     }
-    webServer.addServlet("/" + name + SERVLET_OBJECTS + "*", new LfsObjectsServlet(localContext, storage));
-    webServer.addServlet("/" + name + SERVLET_STORAGE + "*", new LfsStorageServlet(localContext, storage));
+    servlets.put("/" + name + SERVLET_OBJECTS + "*", new LfsObjectsServlet(localContext, storage));
+    servlets.put("/" + name + SERVLET_STORAGE + "*", new LfsStorageServlet(localContext, storage));
+    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, webServer.addServlets(servlets)));
   }
 
-  public void unregister(@NotNull LocalContext localContext) {
-    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
-    final String name = localContext.getName();
-    webServer.removeServlet("/" + name + SERVLET_STORAGE + "*");
-    webServer.removeServlet("/" + name + SERVLET_OBJECTS + "*");
-    if (privateToken != null) {
-      webServer.removeServlet("/" + name + SERVLET_AUTH);
+  public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
+    LfsServerHolder holder = localContext.remove(LfsServerHolder.class);
+    if (holder != null) {
+      holder.close();
+    }
+  }
+
+  private static class LfsServerHolder implements Local {
+    @NotNull
+    private final WebServer webServer;
+    @NotNull
+    private final Collection<WebServer.ServletInfo> servlets;
+
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
+      this.webServer = webServer;
+      this.servlets = servlets;
+    }
+
+    @Override
+    public void close() {
+      webServer.removeServlets(servlets);
+      servlets.clear();
     }
   }
 }

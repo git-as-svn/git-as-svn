@@ -47,6 +47,12 @@ public abstract class Context<S extends AutoCloseable> implements AutoCloseable 
     return (T) map.get(type);
   }
 
+  @Nullable
+  public <T extends S> T remove(@NotNull Class<T> type) {
+    //noinspection unchecked
+    return (T) map.remove(type);
+  }
+
   @NotNull
   public <T extends S> T sure(@NotNull Class<T> type) {
     final T result = get(type);

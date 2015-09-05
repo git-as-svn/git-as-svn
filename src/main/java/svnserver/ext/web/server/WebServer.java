@@ -11,6 +11,7 @@ import org.apache.http.HttpHeaders;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jgit.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Web server component
@@ -58,6 +64,8 @@ public class WebServer implements Shared {
   private final WebServerConfig config;
   @NotNull
   private final EncryptionFactory tokenFactory;
+  @NotNull
+  private final List<ServletInfo> servlets = new CopyOnWriteArrayList<>();
 
   public WebServer(@NotNull SharedContext context, @Nullable Server server, @NotNull WebServerConfig config, @NotNull EncryptionFactory tokenFactory) {
     this.context = context;
@@ -93,15 +101,60 @@ public class WebServer implements Shared {
     }
   }
 
-  public void addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
-    if (handler != null) {
-      log.info("Registered servlet for path: {}", pathSpec);
-      handler.addServletWithMapping(new ServletHolder(servlet), pathSpec);
+  @NotNull
+  public ServletInfo addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
+    log.info("Registered servlet for path: {}", pathSpec);
+    final ServletInfo servletInfo = new ServletInfo(pathSpec, servlet);
+    servlets.add(servletInfo);
+    updateServlets();
+    return servletInfo;
+  }
+
+  @NotNull
+  public Collection<ServletInfo> addServlets(@NotNull Map<String, Servlet> servletMap) {
+    List<ServletInfo> servletInfos = new ArrayList<>();
+    for (Map.Entry<String, Servlet> entry : servletMap.entrySet()) {
+      log.info("Registered servlet for path: {}", entry.getKey());
+      final ServletInfo servletInfo = new ServletInfo(entry.getKey(), entry.getValue());
+      servletInfos.add(servletInfo);
+    }
+    servlets.addAll(servletInfos);
+    updateServlets();
+    return servletInfos;
+  }
+
+  public void removeServlet(@NotNull ServletInfo servletInfo) {
+    if (servlets.remove(servletInfo)) {
+      log.info("Unregistered servlet for path: {}", servletInfo.path);
+      updateServlets();
     }
   }
 
-  public void removeServlet(@NotNull String pathSpec) {
-    // todo: Add remove servlet by pathSpec
+  public void removeServlets(@NotNull Collection<ServletInfo> servletInfos) {
+    boolean modified = false;
+    for (ServletInfo servlet : servletInfos) {
+      if (servlets.remove(servlet)) {
+        log.info("Unregistered servlet for path: {}", servlet.path);
+        modified = true;
+      }
+    }
+    if (modified) {
+      updateServlets();
+    }
+  }
+
+  private void updateServlets() {
+    if (handler != null) {
+      final ServletInfo[] snapshot = servlets.toArray(new ServletInfo[servlets.size()]);
+      final ServletHolder[] holders = new ServletHolder[snapshot.length];
+      final ServletMapping[] mappings = new ServletMapping[snapshot.length];
+      for (int i = 0; i < snapshot.length; ++i) {
+        holders[i] = snapshot[i].holder;
+        mappings[i] = snapshot[i].mapping;
+      }
+      handler.setServlets(holders);
+      handler.setServletMappings(mappings);
+    }
   }
 
   @Override
@@ -154,5 +207,22 @@ public class WebServer implements Shared {
       host = req.getServerName() + ":" + req.getServerPort();
     }
     return req.getScheme() + "://" + host + req.getRequestURI();
+  }
+
+  public static final class ServletInfo {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final ServletHolder holder;
+    @NotNull
+    private final ServletMapping mapping;
+
+    private ServletInfo(@NotNull String pathSpec, @NotNull Servlet servlet) {
+      path = pathSpec;
+      holder = new ServletHolder(servlet);
+      mapping = new ServletMapping();
+      mapping.setServletName(holder.getName());
+      mapping.setPathSpec(pathSpec);
+    }
   }
 }

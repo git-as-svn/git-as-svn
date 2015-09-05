@@ -61,7 +61,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(LfsStorageFactory.class, this);
-    context.add(LfsServer.class, new LfsServer(context, token));
+    context.add(LfsServer.class, new LfsServer(token));
   }
 
   @NotNull
