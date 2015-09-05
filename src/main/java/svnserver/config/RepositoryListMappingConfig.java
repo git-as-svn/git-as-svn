@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.repository.VcsAccess;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
 
@@ -28,15 +29,23 @@ import java.util.TreeMap;
 public class RepositoryListMappingConfig implements RepositoryMappingConfig {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull
-  private Map<String, RepositoryConfig> repositories = new TreeMap<>();
+  private Map<String, Entry> repositories = new TreeMap<>();
+
+  public static class Entry {
+    @NotNull
+    private AccessConfig access = new AclConfig();
+    @NotNull
+    private RepositoryConfig repository;
+  }
 
   @NotNull
   @Override
   public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
     final RepositoryListMapping.Builder builder = new RepositoryListMapping.Builder();
-    for (Map.Entry<String, RepositoryConfig> entry : repositories.entrySet()) {
+    for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
-      builder.add(entry.getKey(), entry.getValue().create(local));
+      local.add(VcsAccess.class, entry.getValue().access.create(local));
+      builder.add(entry.getKey(), entry.getValue().repository.create(local));
     }
     return builder.build();
   }

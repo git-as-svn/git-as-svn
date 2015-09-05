@@ -5,21 +5,20 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.ext.gitlab.mapping;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.LocalContext;
+import svnserver.auth.User;
 import svnserver.repository.VcsAccess;
 
-import java.io.IOException;
-
 /**
- * Access configuration.
+ * Access control by GitLab server.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface AccessConfig {
-  @NotNull
-  VcsAccess create(@NotNull LocalContext context) throws IOException, SVNException;
+public class GitLabAccess implements VcsAccess {
+  @Override
+  public void check(@NotNull User user, @NotNull String path) throws SVNException {
+  }
 }

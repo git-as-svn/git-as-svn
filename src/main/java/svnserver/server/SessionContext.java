@@ -18,6 +18,7 @@ import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.VcsAccess;
 import svnserver.repository.VcsFile;
 import svnserver.repository.VcsRepository;
 import svnserver.server.msg.ClientInfo;
@@ -47,6 +48,8 @@ public final class SessionContext {
   @NotNull
   private final User user;
   @NotNull
+  private final VcsAccess acl;
+  @NotNull
   private String parent;
 
   public SessionContext(@NotNull SvnServerParser parser,
@@ -60,6 +63,7 @@ public final class SessionContext {
     this.server = server;
     this.user = user;
     this.repositoryInfo = repositoryInfo;
+    this.acl = getRepository().getContext().sure(VcsAccess.class);
     setParent(clientInfo.getUrl());
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
   }
@@ -148,7 +152,12 @@ public final class SessionContext {
     return getRepository().getRevisionInfo(rev).getFile(path);
   }
 
+  @NotNull
+  public VcsAccess getAcl() {
+    return acl;
+  }
+
   public void checkAcl(@NotNull String path) throws SVNException {
-    server.getAcl().check(user, path);
+    getAcl().check(user, path);
   }
 }

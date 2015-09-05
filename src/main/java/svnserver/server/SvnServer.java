@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.auth.ACL;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
@@ -71,8 +70,6 @@ public class SvnServer extends Thread {
   @NotNull
   private final ExecutorService poolExecutor;
   @NotNull
-  private final ACL acl;
-  @NotNull
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   @NotNull
   private final AtomicLong lastSessionId = new AtomicLong();
@@ -116,7 +113,6 @@ public class SvnServer extends Thread {
 
     repositoryMapping = config.getRepositoryMapping().create(context);
     repositoryMapping.initRevisions();
-    acl = new ACL(config.getAcl());
 
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
@@ -213,11 +209,6 @@ public class SvnServer extends Thread {
         BaseCmd.sendError(writer, e.getErrorMessage());
       }
     }
-  }
-
-  @NotNull
-  public ACL getAcl() {
-    return acl;
   }
 
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {

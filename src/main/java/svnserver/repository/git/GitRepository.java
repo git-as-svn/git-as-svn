@@ -129,6 +129,12 @@ public class GitRepository implements VcsRepository {
     log.info("Repository registered (branch: {})", gitBranch);
   }
 
+  @NotNull
+  @Override
+  public LocalContext getContext() {
+    return context;
+  }
+
   @Override
   public void close() throws IOException {
     context.getShared().sure(GitSubmodules.class).unregister(repository);

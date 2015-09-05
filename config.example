@@ -21,38 +21,38 @@
 
 repositoryMapping: !listMapping
   repositories:
-    example: !git
-      # Allowed pushers:
-      # !pushEmbedded - use embedded push (fast, no dependencies)
-      #   update: "update"            - name of update hook
-      #   preReceive: "pre-receive"   - name of pre-receive hook
-      #   postReceive: "post-receive" - name of post-receive hook
-      # !pushNative {} - use console git for push (hooks worked, can be slow on some commits, require installed console git)
-      pusher: !pushEmbedded
-        update: update
-        preReceive: pre-receive
-        postReceive: post-receive
-      # Allowed create modes:
-      # - ERROR - exit with error, if repository not exists
-      # - EMPTY - create empty repository
-      # - EXAMPLE - create repository with example data
-      createMode: EXAMPLE
-      branch: master
-      path: example.git
-      renameDetection: true
+    example:
+      access: !acl
+        groups:
+          - name: developers
+            users:
+              - test
 
-acl:
-  groups:
-    - name: developers
-      users:
-        - test
-
-  access:
-    - path: /
-      # Use 'asterisk' (*) to allow access for all users
-      # use 'at' (@) for groups
-      allowed:
-        - '@developers'
+        access:
+          - path: /
+            # Use 'asterisk' (*) to allow access for all users
+            # use 'at' (@) for groups
+            allowed:
+              - '@developers'
+      repository: !git
+        # Allowed pushers:
+        # !pushEmbedded - use embedded push (fast, no dependencies)
+        #   update: "update"            - name of update hook
+        #   preReceive: "pre-receive"   - name of pre-receive hook
+        #   postReceive: "post-receive" - name of post-receive hook
+        # !pushNative {} - use console git for push (hooks worked, can be slow on some commits, require installed console git)
+        pusher: !pushEmbedded
+          update: update
+          preReceive: pre-receive
+          postReceive: post-receive
+        # Allowed create modes:
+        # - ERROR - exit with error, if repository not exists
+        # - EMPTY - create empty repository
+        # - EXAMPLE - create repository with example data
+        createMode: EXAMPLE
+        branch: master
+        path: example.git
+        renameDetection: true
 
 shared:
   # Submodule list.

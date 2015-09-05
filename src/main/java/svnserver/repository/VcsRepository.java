@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
+import svnserver.context.LocalContext;
 import svnserver.repository.locks.LockManagerRead;
 import svnserver.repository.locks.LockManagerWrite;
 import svnserver.repository.locks.LockWorker;
@@ -30,6 +31,14 @@ public interface VcsRepository extends AutoCloseable {
    */
   @NotNull
   String getUuid();
+
+  /**
+   * Get repository context.
+   *
+   * @return Repository context.
+   */
+  @NotNull
+  LocalContext getContext();
 
   /**
    * Get latest revision number.
