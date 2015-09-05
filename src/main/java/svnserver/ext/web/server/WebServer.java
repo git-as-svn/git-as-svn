@@ -42,7 +42,7 @@ public class WebServer implements Shared {
   private static final Logger log = LoggerFactory.getLogger(WebServer.class);
 
   @NotNull
-  public final static String DEFAULT_REALM = "Git as Subversion server";
+  public static final String DEFAULT_REALM = "Git as Subversion server";
   @NotNull
   public static final String AUTH_BASIC = "Basic ";
   @NotNull
@@ -102,6 +102,14 @@ public class WebServer implements Shared {
 
   public void removeServlet(@NotNull String pathSpec) {
     // todo: Add remove servlet by pathSpec
+  }
+
+  @Override
+  public void close() throws Exception {
+    if (server != null) {
+      server.stop();
+      server.join();
+    }
   }
 
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {

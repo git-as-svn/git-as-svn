@@ -19,7 +19,7 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-public interface Shared {
+public interface Shared extends AutoCloseable {
   /**
    * Initialize item.
    * Can be executed multiple times.
@@ -31,5 +31,9 @@ public interface Shared {
    * Run on server ready to work,
    */
   default void ready(@NotNull SharedContext context) throws IOException {
+  }
+
+  @Override
+  default void close() throws Exception {
   }
 }

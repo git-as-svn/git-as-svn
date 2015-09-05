@@ -7,21 +7,34 @@
  */
 package svnserver.ext.gitlab.mapping;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
+import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.models.GitlabProject;
+import org.gitlab.api.models.GitlabSystemHook;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.config.ConfigHelper;
 import svnserver.config.GitRepositoryConfig;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.config.serializer.ConfigType;
-import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
+import svnserver.ext.web.server.WebServer;
 import svnserver.repository.VcsRepositoryMapping;
-import svnserver.repository.mapping.RepositoryListMapping;
 
-import java.io.File;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Reader;
+import java.net.URL;
+import java.util.List;
 
 /**
  * Repository list mapping.
@@ -36,16 +49,113 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
   private String path = "/var/git/repositories/";
 
   @NotNull
+  public GitRepositoryConfig getTemplate() {
+    return template;
+  }
+
+  @NotNull
+  public String getPath() {
+    return path;
+  }
+
+  @NotNull
   @Override
   public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
-    GitLabContext gitlab = context.sure(GitLabContext.class);
-    final RepositoryListMapping.Builder builder = new RepositoryListMapping.Builder();
-    final File basePath = ConfigHelper.joinPath(context.getBasePath(), path);
-    for (GitlabProject project : gitlab.connect().getAllProjects()) {
-      final File repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
-      final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
-      builder.add(project.getPathWithNamespace(), template.create(local, repoPath));
+    final GitLabContext gitlab = context.sure(GitLabContext.class);
+    final GitlabAPI api = gitlab.connect();
+    // Get repositories.
+
+    final GitLabMapping mapping = new GitLabMapping(context, this);
+    for (GitlabProject project : api.getAllProjects()) {
+      mapping.addRepository(project);
     }
-    return builder.build();
+    // Web hook for repository list update.
+    final WebServer webServer = WebServer.get(context);
+    final URL hookUrl = new URL(gitlab.getHookUrl());
+    webServer.addServlet(hookUrl.getPath(), new GitLabHookServlet(mapping));
+    if (!isHookInstalled(api, hookUrl.toString())) {
+      api.addSystemHook(hookUrl.toString());
+    }
+    return mapping;
+  }
+
+  private boolean isHookInstalled(@NotNull GitlabAPI api, @NotNull String hookUrl) throws IOException {
+    final List<GitlabSystemHook> hooks = api.getSystemHooks();
+    for (GitlabSystemHook hook : hooks) {
+      if (hook.getUrl().equals(hookUrl)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static class GitLabHookServlet extends HttpServlet {
+    @NotNull
+    private static final Logger log = LoggerFactory.getLogger(GitLabHookServlet.class);
+    @NotNull
+    private final GitLabMapping mapping;
+
+    public GitLabHookServlet(@NotNull GitLabMapping mapping) {
+      this.mapping = mapping;
+    }
+
+    private static class HookEvent {
+      @SerializedName("event_name")
+      private String eventName;
+      @SerializedName("path_with_namespace")
+      private String pathWithNamespace;
+      @SerializedName("project_id")
+      private Integer projectId;
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+      final HookEvent event = parseEvent(req);
+      if (event == null || event.eventName == null) {
+        resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
+        return;
+      }
+      try {
+        switch (event.eventName) {
+          case "project_create":
+            if (event.projectId == null || event.pathWithNamespace == null) {
+              resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
+              return;
+            }
+            final GitlabAPI api = mapping.getContext().sure(GitLabContext.class).connect();
+            final GitLabProject project = mapping.addRepository(api.getProject(event.projectId));
+            if (project != null) {
+              project.initRevisions();
+            }
+            return;
+          case "project_destroy":
+            if (event.projectId == null || event.pathWithNamespace == null) {
+              resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
+              return;
+            }
+            mapping.removeRepository(event.projectId, event.pathWithNamespace);
+            break;
+          default:
+            // Ignore hook.
+            return;
+        }
+        super.doPost(req, resp);
+      } catch (FileNotFoundException inored) {
+        log.warn("Event repository not exists: " + event.projectId);
+      } catch (SVNException e) {
+        log.error("Event processing error: " + event.eventName, e);
+        resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+      }
+    }
+
+    @Nullable
+    private HookEvent parseEvent(@NotNull HttpServletRequest req) {
+      try (final Reader reader = req.getReader()) {
+        return new Gson().fromJson(reader, HookEvent.class);
+      } catch (IOException | JsonParseException e) {
+        log.warn("Can't read hook data", e);
+        return null;
+      }
+    }
   }
 }

@@ -15,7 +15,7 @@ import svnserver.context.SharedContext;
 import java.io.IOException;
 
 /**
- * GitLab access settings.
+ * Gitlab access settings.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
@@ -23,6 +23,8 @@ import java.io.IOException;
 public class GitLabConfig implements SharedConfig {
   @NotNull
   private String url = "http://localhost/";
+  @NotNull
+  private String hookUrl = "http://localhost:8123/hooks/gitlab";
   @NotNull
   private String token = "";
 
@@ -44,8 +46,17 @@ public class GitLabConfig implements SharedConfig {
     this.token = token;
   }
 
+  @NotNull
+  public String getHookUrl() {
+    return hookUrl;
+  }
+
+  public void setHookUrl(@NotNull String hookUrl) {
+    this.hookUrl = hookUrl;
+  }
+
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    context.add(GitLabContext.class, new GitLabContext(getUrl(), getToken()));
+    context.add(GitLabContext.class, new GitLabContext(this));
   }
 }
