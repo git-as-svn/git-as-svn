@@ -21,5 +21,6 @@ build
 hs_err_pid*
 
 # Local run
+lfs/
 example.git
 *.mapdb*
