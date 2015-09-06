@@ -94,20 +94,27 @@ public final class ACL implements VcsAccess {
   }
 
   @Override
-  public void check(@NotNull User user, @NotNull String path) throws SVNException {
-    String toCheck = path;
+  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException {
+    if (path != null) {
+      String toCheck = path;
 
-    while (!toCheck.isEmpty()) {
-      if (doCheck(user, toCheck))
+      while (!toCheck.isEmpty()) {
+        if (doCheck(user, toCheck))
+          return;
+
+        toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
+      }
+
+      if (doCheck(user, "/"))
         return;
 
-      toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access " + path));
     }
+  }
 
-    if (doCheck(user, "/"))
-      return;
-
-    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access " + path));
+  @Override
+  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
+    checkRead(user, path);
   }
 
   private boolean doCheck(@NotNull User user, @NotNull String path) {

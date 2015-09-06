@@ -412,6 +412,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final VcsFile source;
+      context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       if (args.copyParams.copyFrom != null) {
         log.info("Copy dir: {} from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
         source = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
@@ -435,6 +436,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final VcsDeltaConsumer deltaConsumer;
+      context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       if (args.copyParams.copyFrom != null) {
         log.info("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
         final VcsFile file = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
@@ -453,6 +455,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       log.info("Delete entry: {} (rev: {})", args.name, rev);
       final VcsFile entry = parent.getEntry(StringHelper.baseName(args.name));
       if (parent.head && (rev >= 0) && (parent.source != null)) {
@@ -624,6 +627,5 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         parser.skipItems();
       }
     }
-
   }
 }

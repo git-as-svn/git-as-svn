@@ -588,7 +588,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsWriter createWriter(@Nullable User user) throws SVNException, IOException {
+  public VcsWriter createWriter(@NotNull User user) throws SVNException, IOException {
     return new GitWriter(this, pusher, pushLock, gitBranch, user);
   }
 

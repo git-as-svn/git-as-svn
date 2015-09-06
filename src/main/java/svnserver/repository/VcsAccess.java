@@ -8,6 +8,7 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.Local;
@@ -18,5 +19,21 @@ import svnserver.context.Local;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface VcsAccess extends Local {
-  void check(@NotNull User user, @NotNull String path) throws SVNException;
+  /**
+   * Check read access for user.
+   *
+   * @param user User.
+   * @param path Checked path. If path is null - checks for at least some part of the repository.
+   * @throws SVNException
+   */
+  void checkRead(@NotNull User user, @Nullable String path) throws SVNException;
+
+  /**
+   * Check write access for user.
+   *
+   * @param user User.
+   * @param path Checked path. If path is null - checks for at least some part of the repository.
+   * @throws SVNException
+   */
+  void checkWrite(@NotNull User user, @Nullable String path) throws SVNException;
 }

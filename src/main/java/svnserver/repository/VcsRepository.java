@@ -8,7 +8,6 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
@@ -100,7 +99,7 @@ public interface VcsRepository extends AutoCloseable {
    * Create commit writer.
    */
   @NotNull
-  VcsWriter createWriter(@Nullable User user) throws SVNException, IOException;
+  VcsWriter createWriter(@NotNull User user) throws SVNException, IOException;
 
   @Override
   void close() throws IOException;

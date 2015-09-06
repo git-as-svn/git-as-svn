@@ -3,7 +3,7 @@ realm: Example realm
 compressionEnabled: true
 
 repositoryMapping: !gitlabMapping
-  path: /var/git/repositories/
+  path: /home/bozaro/github/gitlab-development-kit/repositories/
   template:
     branch: master
     renameDetection: true
@@ -21,11 +21,12 @@ shared:
   # Git LFS server
   - !lfs
     path: lfs
-    # token: secret
+    token: secret
   # GitLab server
   - !gitlab
-    url: http://localhost/
-    token: yKZBNG2JzyzvUBoevdM4
+    url: http://localhost:3000/
+    hookUrl: http://localhost:8123/
+    token: qytzQc6uYiQfsoqJxGuG
 
 # Simple in-memory user database
 userDB: !gitlabUsers {}

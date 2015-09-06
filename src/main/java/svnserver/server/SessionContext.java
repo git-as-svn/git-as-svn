@@ -148,16 +148,15 @@ public final class SessionContext {
   @Nullable
   public VcsFile getFile(int rev, @NotNull SVNURL url) throws SVNException, IOException {
     final String path = getRepositoryPath(url);
-    checkAcl(path);
+    checkRead(path);
     return getRepository().getRevisionInfo(rev).getFile(path);
   }
 
-  @NotNull
-  public VcsAccess getAcl() {
-    return acl;
+  public void checkRead(@NotNull String path) throws SVNException {
+    acl.checkRead(user, path);
   }
 
-  public void checkAcl(@NotNull String path) throws SVNException {
-    getAcl().check(user, path);
+  public void checkWrite(@NotNull String path) throws SVNException {
+    acl.checkWrite(user, path);
   }
 }

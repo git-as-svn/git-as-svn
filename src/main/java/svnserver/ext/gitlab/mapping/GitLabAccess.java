@@ -8,6 +8,7 @@
 package svnserver.ext.gitlab.mapping;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.repository.VcsAccess;
@@ -19,6 +20,10 @@ import svnserver.repository.VcsAccess;
  */
 public class GitLabAccess implements VcsAccess {
   @Override
-  public void check(@NotNull User user, @NotNull String path) throws SVNException {
+  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException {
+  }
+
+  @Override
+  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
   }
 }
