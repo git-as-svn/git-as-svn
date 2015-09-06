@@ -242,7 +242,7 @@ public final class SvnTestServer implements SvnTester {
       return RepositoryListMapping.create(prefix, new GitRepository(
           local,
           repository,
-          new GitPushEmbedded("", "", ""),
+          new GitPushEmbedded(local, "", "", ""),
           branch,
           true,
           new PersistentLockFactory(local)
