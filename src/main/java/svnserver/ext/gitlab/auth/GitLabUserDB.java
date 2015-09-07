@@ -18,6 +18,7 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * GitLab user authentiation.
@@ -85,6 +86,14 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
       }
     }
     return null;
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
+    final String externalId = userInfo.getExternalId();
+    if (externalId != null) {
+      env.put("GL_ID", PREFIX_USER + externalId);
+    }
   }
 
   @Nullable
