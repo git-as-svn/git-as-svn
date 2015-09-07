@@ -152,11 +152,11 @@ public final class SessionContext {
     return getRepository().getRevisionInfo(rev).getFile(path);
   }
 
-  public void checkRead(@NotNull String path) throws SVNException {
+  public void checkRead(@NotNull String path) throws SVNException, IOException {
     acl.checkRead(user, path);
   }
 
-  public void checkWrite(@NotNull String path) throws SVNException {
+  public void checkWrite(@NotNull String path) throws SVNException, IOException {
     acl.checkWrite(user, path);
   }
 }

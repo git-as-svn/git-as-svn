@@ -84,7 +84,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
       final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
       final File repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
       final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
-      local.add(VcsAccess.class, new GitLabAccess());
+      local.add(VcsAccess.class, new GitLabAccess(local, project.getId()));
       final VcsRepository repository = config.getTemplate().create(local, repoPath);
       final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
       if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {

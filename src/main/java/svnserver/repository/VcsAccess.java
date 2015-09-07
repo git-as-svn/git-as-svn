@@ -13,6 +13,8 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.Local;
 
+import java.io.IOException;
+
 /**
  * Repository access checker.
  *
@@ -26,7 +28,7 @@ public interface VcsAccess extends Local {
    * @param path Checked path. If path is null - checks for at least some part of the repository.
    * @throws SVNException
    */
-  void checkRead(@NotNull User user, @Nullable String path) throws SVNException;
+  void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException;
 
   /**
    * Check write access for user.
@@ -35,5 +37,5 @@ public interface VcsAccess extends Local {
    * @param path Checked path. If path is null - checks for at least some part of the repository.
    * @throws SVNException
    */
-  void checkWrite(@NotNull User user, @Nullable String path) throws SVNException;
+  void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException;
 }
