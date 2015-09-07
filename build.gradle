@@ -52,6 +52,7 @@ dependencies {
   compile "org.gitlab:java-gitlab-api:1.1.7-ad3ec37"
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
+  compile "com.google.guava:guava:18.0"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"

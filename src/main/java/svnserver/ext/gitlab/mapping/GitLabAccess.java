@@ -7,6 +7,9 @@
  */
 package svnserver.ext.gitlab.mapping;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.models.GitlabAccessLevel;
 import org.gitlab.api.models.GitlabPermission;
@@ -23,6 +26,8 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.repository.VcsAccess;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Access control by GitLab server.
@@ -31,12 +36,22 @@ import java.io.IOException;
  */
 public class GitLabAccess implements VcsAccess {
   @NotNull
-  private final LocalContext local;
-  private final int projectId;
+  private final LoadingCache<String, GitlabProject> cache;
 
-  public GitLabAccess(@NotNull LocalContext local, int projectId) {
-    this.local = local;
-    this.projectId = projectId;
+  public GitLabAccess(@NotNull LocalContext local, @NotNull GitLabMappingConfig config, int projectId) {
+    this.cache = CacheBuilder.newBuilder()
+        .maximumSize(config.getCacheMaximumSize())
+        .expireAfterWrite(config.getCacheTimeSec(), TimeUnit.SECONDS)
+        .build(
+            new CacheLoader<String, GitlabProject>() {
+              @Override
+              public GitlabProject load(@NotNull String userId) throws Exception {
+                final GitlabAPI api = GitLabContext.sure(local.getShared()).connect();
+                final String tailUrl = GitlabProject.URL + "/" + projectId + "?sudo=" + userId;
+                return api.retrieve().to(tailUrl, GitlabProject.class);
+              }
+            }
+        );
   }
 
   @Override
@@ -50,16 +65,15 @@ public class GitLabAccess implements VcsAccess {
   }
 
   private void check(@NotNull User user, @NotNull GitlabAccessLevel accessLevel) throws IOException, SVNException {
-    final GitlabAPI api = GitLabContext.sure(local.getShared()).connect();
-    final GitlabAccessLevel userLevel = getProjectAccess(api, user);
+    final GitlabAccessLevel userLevel = getProjectAccess(user);
     if (userLevel == null || userLevel.accessValue <= accessLevel.accessValue) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access this project"));
     }
   }
 
   @Nullable
-  private GitlabAccessLevel getProjectAccess(@NotNull GitlabAPI api, @NotNull User user) throws IOException {
-    final GitlabPermission permissions = getProjectViaSudo(api, user).getPermissions();
+  private GitlabAccessLevel getProjectAccess(@NotNull User user) throws IOException {
+    final GitlabPermission permissions = getProjectViaSudo(user).getPermissions();
     if (permissions == null) return null;
     final GitlabProjectAccessLevel projectAccess = permissions.getProjectAccess();
     if (projectAccess == null) return null;
@@ -67,9 +81,14 @@ public class GitLabAccess implements VcsAccess {
   }
 
   @NotNull
-  private GitlabProject getProjectViaSudo(@NotNull GitlabAPI api, @NotNull User user) throws IOException {
-    final String userId = user.getExternalId() != null ? user.getExternalId() : user.getUserName();
-    final String tailUrl = GitlabProject.URL + "/" + projectId + "?sudo=" + userId;
-    return api.retrieve().to(tailUrl, GitlabProject.class);
+  private GitlabProject getProjectViaSudo(@NotNull User user) throws IOException {
+    try {
+      return cache.get(user.getExternalId() != null ? user.getExternalId() : user.getUserName());
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof IOException) {
+        throw (IOException) e.getCause();
+      }
+      throw new IllegalStateException(e);
+    }
   }
 }

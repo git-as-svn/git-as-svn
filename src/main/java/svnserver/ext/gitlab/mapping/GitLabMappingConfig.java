@@ -47,6 +47,8 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
   private GitRepositoryConfig template = new GitRepositoryConfig();
   @NotNull
   private String path = "/var/git/repositories/";
+  private int cacheTimeSec = 15;
+  private int cacheMaximumSize = 1000;
 
   @NotNull
   public GitRepositoryConfig getTemplate() {
@@ -56,6 +58,14 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
   @NotNull
   public String getPath() {
     return path;
+  }
+
+  public int getCacheTimeSec() {
+    return cacheTimeSec;
+  }
+
+  public int getCacheMaximumSize() {
+    return cacheMaximumSize;
   }
 
   @NotNull
