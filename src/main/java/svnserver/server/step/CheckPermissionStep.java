@@ -29,7 +29,7 @@ public final class CheckPermissionStep implements Step {
 
   @Override
   public void process(@NotNull SessionContext context) throws IOException, SVNException {
-    context.checkAcl(context.getRepositoryPath(""));
+    context.checkRead(context.getRepositoryPath(""));
 
     context.getWriter()
         .listBegin()

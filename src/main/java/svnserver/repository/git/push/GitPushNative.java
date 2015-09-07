@@ -16,6 +16,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
+import svnserver.auth.UserDB;
+import svnserver.context.LocalContext;
+import svnserver.context.SharedContext;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,16 +32,17 @@ import java.nio.charset.StandardCharsets;
  */
 public class GitPushNative implements GitPusher {
   @NotNull
-  public static final GitPushNative instance = new GitPushNative();
-
-  @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitPushNativeConfig.class);
   @NotNull
   private static final String HOOK_MESSAGE_PREFIX = "remote:";
   @NotNull
   private static final String SYSTEM_MESSAGE_PREFIX = "!";
 
-  private GitPushNative() {
+  @NotNull
+  private final SharedContext context;
+
+  public GitPushNative(@NotNull LocalContext context) {
+    this.context = context.getShared();
   }
 
   @Override
@@ -50,6 +54,7 @@ public class GitPushNative implements GitPusher {
           .redirectErrorStream(true);
       processBuilder.environment().put("LANG", "en_US.utf8");
       userInfo.updateEnvironment(processBuilder.environment());
+      context.sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
       final Process process = processBuilder.start();
       final StringBuilder resultBuilder = new StringBuilder();
       final StringBuilder hookBuilder = new StringBuilder();

@@ -10,6 +10,7 @@ package svnserver.repository.git.push;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.GitPusherConfig;
 import svnserver.config.serializer.ConfigType;
+import svnserver.context.LocalContext;
 
 /**
  * Git push by native git client.
@@ -23,7 +24,7 @@ public class GitPushNativeConfig implements GitPusherConfig {
 
   @NotNull
   @Override
-  public GitPusher create() {
-    return GitPushNative.instance;
+  public GitPusher create(@NotNull LocalContext context) {
+    return new GitPushNative(context);
   }
 }

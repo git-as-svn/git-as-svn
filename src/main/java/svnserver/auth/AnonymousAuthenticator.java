@@ -22,9 +22,6 @@ import java.io.IOException;
 final class AnonymousAuthenticator implements Authenticator {
 
   @NotNull
-  private static final User anonymous = new User("ANONYMOUS", "ANONYMOUS", null);
-
-  @NotNull
   @Override
   public String getMethodName() {
     return "ANONYMOUS";
@@ -33,6 +30,6 @@ final class AnonymousAuthenticator implements Authenticator {
   @Nullable
   @Override
   public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException {
-    return anonymous;
+    return User.getAnonymous();
   }
 }

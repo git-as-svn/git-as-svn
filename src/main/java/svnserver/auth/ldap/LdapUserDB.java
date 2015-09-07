@@ -135,7 +135,10 @@ public class LdapUserDB implements UserDB {
         if (ldapCheck.check(entry.getDN())) {
           final String realName = getAttribute(entry, config.getNameAttribute());
           final String email = getAttribute(entry, config.getEmailAttribute());
-          return new User(login, realName != null ? realName : login, email);
+          if (email == null) {
+            throw new IllegalStateException("Users without email not allower: " + userName);
+          }
+          return User.create(login, realName != null ? realName : login, email, null);
         }
       }
       return null;

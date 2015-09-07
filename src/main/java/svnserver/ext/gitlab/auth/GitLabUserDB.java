@@ -50,7 +50,7 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
   @Override
   public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
     try {
-      return new GitLabUser(context.connect(userName, password));
+      return createUser(context.connect(userName, password));
     } catch (IOException e) {
       return null;
     }
@@ -60,7 +60,7 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
   @Override
   public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
     try {
-      return new GitLabUser(context.connect().getUserViaSudo(userName));
+      return createUser(context.connect().getUserViaSudo(userName));
     } catch (IOException e) {
       return null;
     }
@@ -72,7 +72,7 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
     final Integer userId = removePrefix(external, PREFIX_USER);
     if (userId != null) {
       try {
-        return new GitLabUser(context.connect().getUser(userId));
+        return createUser(context.connect().getUser(userId));
       } catch (IOException e) {
         return null;
       }
@@ -80,12 +80,20 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
     final Integer keyId = removePrefix(external, PREFIX_KEY);
     if (keyId != null) {
       try {
-        return new GitLabUser(context.connect().getSSHKey(keyId).getUser());
+        return createUser(context.connect().getSSHKey(keyId).getUser());
       } catch (IOException e) {
         return null;
       }
     }
     return null;
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
+    final String externalId = userInfo.getExternalId();
+    if (externalId != null) {
+      env.put("GL_ID", PREFIX_USER + externalId);
+    }
   }
 
   @Nullable
@@ -102,18 +110,7 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
     return null;
   }
 
-  private static class GitLabUser extends User {
-    private final int id;
-
-    public GitLabUser(GitlabUser user) {
-      super(user.getUsername(), user.getName(), user.getEmail());
-      this.id = user.getId();
-    }
-
-    @Override
-    public void updateEnvironment(@NotNull Map<String, String> env) {
-      super.updateEnvironment(env);
-      env.put("GL_ID", PREFIX_USER + id);
-    }
+  private User createUser(@NotNull GitlabUser user) {
+    return User.create(user.getUsername(), user.getName(), user.getEmail(), user.getId().toString());
   }
 }

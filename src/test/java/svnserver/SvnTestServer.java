@@ -29,6 +29,7 @@ import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
+import svnserver.repository.VcsAccess;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.push.GitPushEmbedded;
@@ -237,10 +238,11 @@ public final class SvnTestServer implements SvnTester {
     @Override
     public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
       final LocalContext local = new LocalContext(context, "test");
+      local.add(VcsAccess.class, new AclConfig().create(local));
       return RepositoryListMapping.create(prefix, new GitRepository(
           local,
           repository,
-          new GitPushEmbedded("", "", ""),
+          new GitPushEmbedded(local, "", "", ""),
           branch,
           true,
           new PersistentLockFactory(local)

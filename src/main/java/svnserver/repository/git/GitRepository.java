@@ -129,6 +129,12 @@ public class GitRepository implements VcsRepository {
     log.info("Repository registered (branch: {})", gitBranch);
   }
 
+  @NotNull
+  @Override
+  public LocalContext getContext() {
+    return context;
+  }
+
   @Override
   public void close() throws IOException {
     context.getShared().sure(GitSubmodules.class).unregister(repository);
@@ -582,7 +588,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsWriter createWriter(@Nullable User user) throws SVNException, IOException {
+  public VcsWriter createWriter(@NotNull User user) throws SVNException, IOException {
     return new GitWriter(this, pusher, pushLock, gitBranch, user);
   }
 

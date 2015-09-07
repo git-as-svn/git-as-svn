@@ -22,8 +22,17 @@ import svnserver.auth.User;
  */
 public class TokenHelperTest {
   @Test
-  public void simple() {
-    final User expected = new User("foo", "bar", "foo@example.com");
+  public void simpleWithoutExternal() {
+    final User expected = User.create("foo", "bar", "foo@example.com", null);
+    final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
+    final User actual = TokenHelper.parseToken(createToken("secret"), token);
+    Assert.assertNotNull(actual);
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void simpleWithExternal() {
+    final User expected = User.create("foo", "bar", "foo@example.com", "user-1");
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token);
     Assert.assertNotNull(actual);
@@ -32,7 +41,7 @@ public class TokenHelperTest {
 
   @Test
   public void anonymous() {
-    final User expected = new User("foo", "bar", null);
+    final User expected = User.getAnonymous();
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token);
     Assert.assertNotNull(actual);
@@ -41,7 +50,7 @@ public class TokenHelperTest {
 
   @Test
   public void invalidToken() {
-    final User expected = new User("foo", "bar", "foo@example.com");
+    final User expected = User.create("foo", "bar", "foo@example.com", null);
     final String token = TokenHelper.createToken(createToken("big secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("small secret"), token);
     Assert.assertNull(actual);
@@ -49,7 +58,7 @@ public class TokenHelperTest {
 
   @Test
   public void expiredToken() {
-    final User expected = new User("foo", "bar", "foo@example.com");
+    final User expected = User.create("foo", "bar", "foo@example.com", null);
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() - 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token);
     Assert.assertNull(actual);

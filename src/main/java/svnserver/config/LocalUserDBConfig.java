@@ -36,7 +36,7 @@ public final class LocalUserDBConfig implements UserDBConfig {
   public UserDB create(@NotNull SharedContext context) {
     final LocalUserDB result = new LocalUserDB();
     for (UserEntry user : users)
-      result.add(new UserWithPassword(new User(user.username, user.realName, user.email), user.password));
+      result.add(new UserWithPassword(User.create(user.username, user.realName, user.email, null), user.password));
     return result;
   }
 

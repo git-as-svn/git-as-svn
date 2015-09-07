@@ -51,10 +51,10 @@ public class GitWriter implements VcsWriter {
   private final Object pushLock;
   @NotNull
   private final String gitBranch;
-  @Nullable
+  @NotNull
   private final User user;
 
-  public GitWriter(@NotNull GitRepository repo, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @Nullable User user) {
+  public GitWriter(@NotNull GitRepository repo, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @NotNull User user) {
     this.repo = repo;
     this.pusher = pusher;
     this.pushLock = pushLock;

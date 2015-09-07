@@ -10,8 +10,6 @@ package svnserver.ext.gitlab.mapping;
 import org.gitlab.api.models.GitlabProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
@@ -19,6 +17,7 @@ import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.VcsAccess;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
@@ -35,8 +34,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitLabMapping implements VcsRepositoryMapping {
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitLabMapping.class);
   @NotNull
   private final NavigableMap<String, GitLabProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -83,6 +80,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
       final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
       final File repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
       final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
+      local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));
       final VcsRepository repository = config.getTemplate().create(local, repoPath);
       final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
       if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {
