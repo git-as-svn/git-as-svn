@@ -35,9 +35,8 @@ public class LfsStorageServlet extends LfsAbstractServlet {
 
   @Override
   protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    final User user = getAuthInfo(req);
+    final User user = checkWriteAccess(req, resp);
     if (user == null) {
-      sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", null);
       return;
     }
     final String oid = getOid(req.getPathInfo());
@@ -54,9 +53,7 @@ public class LfsStorageServlet extends LfsAbstractServlet {
 
   @Override
   protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-    final User user = getAuthInfo(req);
-    if (user == null) {
-      sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", null);
+    if (checkReadAccess(req, resp) == null) {
       return;
     }
     final String oid = getOid(req.getPathInfo());

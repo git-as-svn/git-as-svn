@@ -169,13 +169,24 @@ public class WebServer implements Shared {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
+  /**
+   * Return current user information.
+   *
+   * @param req HTTP request.
+   * @return Return value:
+   * <ul>
+   * <li>no authorization header - anonymous user;</li>
+   * <li>invalid authorization header - null;</li>
+   * <li>valid authorization header - user information.</li>
+   * </ul>
+   */
   @Nullable
   public User getAuthInfo(@NotNull HttpServletRequest req) {
     final UserDB userDB = context.sure(UserDB.class);
     // Check HTTP authorization.
     final String authorization = req.getHeader(HttpHeaders.AUTHORIZATION);
     if (authorization == null) {
-      return null;
+      return User.getAnonymous();
     }
     if (authorization.startsWith(AUTH_BASIC)) {
       final String raw = new String(Base64.decode(authorization.substring(AUTH_BASIC.length())), StandardCharsets.UTF_8);

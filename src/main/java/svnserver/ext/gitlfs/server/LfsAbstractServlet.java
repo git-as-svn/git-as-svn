@@ -10,11 +10,13 @@ package svnserver.ext.gitlfs.server;
 import com.google.gson.stream.JsonWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
+import svnserver.repository.VcsAccess;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -40,6 +42,11 @@ public abstract class LfsAbstractServlet extends HttpServlet {
   private final LocalContext context;
   @NotNull
   private final LfsStorage storage;
+
+  @FunctionalInterface
+  private interface Checker {
+    void check(@NotNull VcsAccess access, @NotNull User user) throws SVNException, IOException;
+  }
 
   public LfsAbstractServlet(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     this.context = context;
@@ -68,8 +75,33 @@ public abstract class LfsAbstractServlet extends HttpServlet {
   }
 
   @Nullable
-  public User getAuthInfo(@NotNull HttpServletRequest req) {
-    return getWebServer().getAuthInfo(req);
+  public User checkReadAccess(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
+    return checkAccess(req, resp, (access, user) -> access.checkRead(user, null));
+  }
+
+  @Nullable
+  public User checkWriteAccess(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
+    return checkAccess(req, resp, (access, user) -> access.checkWrite(user, null));
+  }
+
+  @Nullable
+  private User checkAccess(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull Checker checker) throws IOException {
+    final VcsAccess access = context.sure(VcsAccess.class);
+    User user = getWebServer().getAuthInfo(req);
+    if (user == null) {
+      user = User.getAnonymous();
+    }
+    try {
+      checker.check(access, user);
+      return user;
+    } catch (SVNException ignored) {
+    }
+    if (user.isAnonymous()) {
+      sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", null);
+    } else {
+      sendError(resp, HttpServletResponse.SC_FORBIDDEN, "Access forbidden", null);
+    }
+    return null;
   }
 
   @Nullable

@@ -114,6 +114,9 @@ public final class ACL implements VcsAccess {
 
   @Override
   public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
+    if (user.isAnonymous()){
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user have not write access"));
+    }
     checkRead(user, path);
   }
 
