@@ -9,6 +9,7 @@ package svnserver.ext.web.server;
 
 import org.apache.http.HttpHeaders;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletMapping;
@@ -73,8 +74,10 @@ public class WebServer implements Shared {
     this.config = config;
     this.tokenFactory = tokenFactory;
     if (server != null) {
-      handler = new ServletHandler();
-      server.setHandler(handler);
+      final ServletContextHandler contextHandler = new ServletContextHandler();
+      contextHandler.setContextPath("/");
+      server.setHandler(contextHandler);
+      handler = contextHandler.getServletHandler();
     } else {
       handler = null;
     }
