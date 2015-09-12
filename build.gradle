@@ -9,11 +9,12 @@ buildscript {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
     classpath "org.ajoberstar:gradle-git:0.9.0"
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.0"
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = "2.0"
+  gradleVersion = "2.7"
 }
 
 repositories {
@@ -28,6 +29,7 @@ apply plugin: "license"
 apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "project-report"
+apply plugin: "com.google.protobuf"
 
 license {
   header rootProject.file('license_header.txt')
@@ -52,6 +54,7 @@ dependencies {
   compile "org.gitlab:java-gitlab-api:1.1.7-ad3ec37"
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
+  compile "com.google.protobuf:protobuf-java:2.6.1"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
