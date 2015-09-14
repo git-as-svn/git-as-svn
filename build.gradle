@@ -17,9 +17,6 @@ task wrapper(type: Wrapper) {
 }
 
 repositories {
-  maven {
-    url ".m2/repository"
-  }
   mavenLocal()
   mavenCentral()
 }
@@ -49,7 +46,7 @@ dependencies {
   compile "org.eclipse.jetty:jetty-server:9.3.0.v20150612"
   compile "org.eclipse.jetty:jetty-servlet:9.3.0.v20150612"
   compile "com.google.code.gson:gson:2.3.1"
-  compile "org.gitlab:java-gitlab-api:1.1.7-ad3ec37"
+  compile "org.gitlab:java-gitlab-api:1.1.9"
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:18.0"
