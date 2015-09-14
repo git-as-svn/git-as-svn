@@ -231,7 +231,18 @@ public class SvnLockTest {
       Assert.assertNotNull(oldLock);
       unlock(repo, oldLock, false, null);
 
-      final SVNLock newLock = lock(repo, "example.txt", latestRevision, false, null);
+      // todo #79: Workaround for SvnKit bug: SVNUUIDGenerator.generateUUID() generates non-unique value because bug in SVNUUIDGenerator.timestamp()
+      SVNLock newLock;
+      for (int pass = 0; ; ++pass) {
+        Assert.assertTrue(pass < MAX_RELOCK_COUNT);
+        newLock = lock(repo, "example.txt", latestRevision, false, null);
+        Assert.assertNotNull(newLock);
+        if (!newLock.getID().equals(oldLock.getID())) {
+          break;
+        }
+        unlock(repo, newLock, false, null);
+      }
+
       try {
         final Map<String, String> locks = new HashMap<>();
         locks.put(oldLock.getPath(), oldLock.getID());
