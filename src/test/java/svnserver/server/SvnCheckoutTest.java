@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.*;
+import svnserver.StringHelper;
 import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
@@ -109,7 +110,7 @@ public class SvnCheckoutTest {
         svnLog.setRevisionRanges(Arrays.asList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
         svnLog.setDiscoverChangedPaths(true);
         final SVNLogEntry logEntry = svnLog.run();
-        log.info("Update to revision #{}: {}", revision, logEntry.getMessage());
+        log.info("Update to revision #{}: {}", revision, StringHelper.getFirstLine(logEntry.getMessage()));
 
         final TreeMap<String, SVNLogEntryPath> paths = new TreeMap<>(logEntry.getChangedPaths());
         final List<String> targets = new ArrayList<>();
