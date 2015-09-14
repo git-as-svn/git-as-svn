@@ -225,7 +225,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         .listBegin()
         .listEnd()
         .listEnd();
-    log.info("Enter editor mode");
+    log.debug("Enter editor mode");
     EditorPipeline pipeline = new EditorPipeline(context, args);
     pipeline.editorCommand(context);
   }
@@ -384,7 +384,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      log.info("Modify dir: {} (rev: {})", args.name, rev);
+      log.debug("Modify dir: {} (rev: {})", args.name, rev);
       final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
       final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
       if ((rev >= 0) && (parent.head)) {
@@ -414,13 +414,13 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final VcsFile source;
       context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       if (args.copyParams.copyFrom != null) {
-        log.info("Copy dir: {} from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
+        log.debug("Copy dir: {} from {} (rev: {})", args.name, args.copyParams.copyFrom, args.copyParams.rev);
         source = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
         if (source == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Directory not found: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }
       } else {
-        log.info("Add dir: {}", args.name);
+        log.debug("Add dir: {}", args.name);
         source = null;
       }
       final EntryUpdater updater = new EntryUpdater(parent.entry, source, false);
@@ -438,14 +438,14 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final VcsDeltaConsumer deltaConsumer;
       context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       if (args.copyParams.copyFrom != null) {
-        log.info("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
+        log.debug("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
         final VcsFile file = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find path: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
         }
         deltaConsumer = writer.modifyFile(parent.entry, args.name, file);
       } else {
-        log.info("Add file: {}", parent);
+        log.debug("Add file: {}", parent);
         deltaConsumer = writer.createFile(parent.entry, args.name);
       }
       files.put(args.token, new FileUpdater(deltaConsumer));
@@ -456,7 +456,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
-      log.info("Delete entry: {} (rev: {})", args.name, rev);
+      log.debug("Delete entry: {} (rev: {})", args.name, rev);
       final VcsFile entry = parent.getEntry(StringHelper.baseName(args.name));
       if (parent.head && (rev >= 0) && (parent.source != null)) {
         checkUpToDate(entry, rev, true);
@@ -467,7 +467,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      log.info("Modify file: {} (rev: {})", args.name, rev);
+      log.debug("Modify file: {} (rev: {})", args.name, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
       final VcsDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
