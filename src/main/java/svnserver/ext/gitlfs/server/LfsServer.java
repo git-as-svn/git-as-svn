@@ -7,6 +7,8 @@
  */
 package svnserver.ext.gitlfs.server;
 
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -31,8 +33,6 @@ public class LfsServer implements Shared {
   @NotNull
   public static final String SERVLET_BASE = ".git/info/lfs";
   @NotNull
-  public static final String SERVLET_AUTH = ".git/auth/lfs";
-  @NotNull
   public static final String SERVLET_OBJECTS = SERVLET_BASE + "/objects/";
   @NotNull
   public static final String SERVLET_STORAGE = SERVLET_BASE + "/storage/";
@@ -48,11 +48,13 @@ public class LfsServer implements Shared {
     final WebServer webServer = WebServer.get(localContext.getShared());
     final String name = localContext.getName();
     final Map<String, Servlet> servlets = new TreeMap<>();
-    if (privateToken != null) {
-      servlets.put("/" + name + SERVLET_AUTH, new LfsAuthServlet(localContext, storage, privateToken));
-    }
-    servlets.put("/" + name + SERVLET_OBJECTS + "*", new LfsObjectsServlet(localContext, storage));
-    servlets.put("/" + name + SERVLET_STORAGE + "*", new LfsStorageServlet(localContext, storage));
+
+    final ResourceConfig rc = WebServer.createResourceConfig(localContext);
+    rc.register(new LfsAuthResource(localContext, storage, privateToken));
+    rc.register(new LfsObjectsResource(localContext, storage));
+    rc.register(new LfsStorageResource(localContext, storage));
+    servlets.put("/" + name + ".git/*", new ServletContainer(rc));
+
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, webServer.addServlets(servlets)));
   }
 
