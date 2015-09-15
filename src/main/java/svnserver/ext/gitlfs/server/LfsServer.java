@@ -19,6 +19,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 
 /**
  * LFS server.
@@ -28,11 +29,13 @@ import java.io.IOException;
 public class LfsServer implements Shared {
   @NotNull
   public static final String SERVLET_BASE = "info/lfs";
-
+  @NotNull
+  private final String pathFormat;
   @Nullable
-  private String privateToken;
+  private final String privateToken;
 
-  public LfsServer(@Nullable String privateToken) {
+  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken) {
+    this.pathFormat = pathFormat;
     this.privateToken = privateToken;
   }
 
@@ -45,7 +48,8 @@ public class LfsServer implements Shared {
     rc.register(new LfsObjectsResource(localContext, storage));
     rc.register(new LfsStorageResource(localContext, storage));
 
-    final WebServer.ServletInfo servletInfo = webServer.addServlet("/" + name + ".git/*", new ServletContainer(rc));
+    final String pathSpec = "/" + MessageFormat.format(pathFormat, name) + "/*";
+    final WebServer.ServletInfo servletInfo = webServer.addServlet(pathSpec.replaceAll("/+", "/"), new ServletContainer(rc));
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletInfo));
   }
 
