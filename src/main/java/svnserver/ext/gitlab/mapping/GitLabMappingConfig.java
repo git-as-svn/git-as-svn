@@ -7,9 +7,6 @@
  */
 package svnserver.ext.gitlab.mapping;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.models.GitlabProject;
 import org.gitlab.api.models.GitlabSystemHook;
@@ -109,41 +106,32 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
       this.mapping = mapping;
     }
 
-    private static class HookEvent {
-      @SerializedName("event_name")
-      private String eventName;
-      @SerializedName("path_with_namespace")
-      private String pathWithNamespace;
-      @SerializedName("project_id")
-      private Integer projectId;
-    }
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-      final HookEvent event = parseEvent(req);
-      if (event == null || event.eventName == null) {
+      final GitLabHookEvent event = parseEvent(req);
+      if (event == null || event.getEventName() == null) {
         resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
         return;
       }
       try {
-        switch (event.eventName) {
+        switch (event.getEventName()) {
           case "project_create":
-            if (event.projectId == null || event.pathWithNamespace == null) {
+            if (event.getProjectId() == null || event.getPathWithNamespace() == null) {
               resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
               return;
             }
             final GitlabAPI api = mapping.getContext().sure(GitLabContext.class).connect();
-            final GitLabProject project = mapping.addRepository(api.getProject(event.projectId));
+            final GitLabProject project = mapping.addRepository(api.getProject(event.getProjectId()));
             if (project != null) {
               project.initRevisions();
             }
             return;
           case "project_destroy":
-            if (event.projectId == null || event.pathWithNamespace == null) {
+            if (event.getProjectId() == null || event.getPathWithNamespace() == null) {
               resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
               return;
             }
-            mapping.removeRepository(event.projectId, event.pathWithNamespace);
+            mapping.removeRepository(event.getProjectId(), event.getPathWithNamespace());
             break;
           default:
             // Ignore hook.
@@ -151,18 +139,18 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
         }
         super.doPost(req, resp);
       } catch (FileNotFoundException inored) {
-        log.warn("Event repository not exists: " + event.projectId);
+        log.warn("Event repository not exists: " + event.getProjectId());
       } catch (SVNException e) {
-        log.error("Event processing error: " + event.eventName, e);
+        log.error("Event processing error: " + event.getEventName(), e);
         resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
       }
     }
 
     @Nullable
-    private HookEvent parseEvent(@NotNull HttpServletRequest req) {
+    private GitLabHookEvent parseEvent(@NotNull HttpServletRequest req) {
       try (final Reader reader = req.getReader()) {
-        return new Gson().fromJson(reader, HookEvent.class);
-      } catch (IOException | JsonParseException e) {
+        return GitLabHookEvent.parseEvent(reader);
+      } catch (IOException e) {
         log.warn("Can't read hook data", e);
         return null;
       }
