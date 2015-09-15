@@ -57,6 +57,8 @@ public abstract class LfsAbstractResource {
 
   @NotNull
   protected URI createHref(@NotNull UriInfo ui, @NotNull String path) {
-    return getWebServer().getUrl(ui.getRequestUri()).resolve("/" + context.getName() + path);
+    return getWebServer().getUrl(ui.getRequestUri())
+        .resolve(ui.getBaseUri().getPath())
+        .resolve(path);
   }
 }

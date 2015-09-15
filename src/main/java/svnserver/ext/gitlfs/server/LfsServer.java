@@ -18,11 +18,7 @@ import svnserver.context.Shared;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
-import javax.servlet.Servlet;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * LFS server.
@@ -31,11 +27,7 @@ import java.util.TreeMap;
  */
 public class LfsServer implements Shared {
   @NotNull
-  public static final String SERVLET_BASE = ".git/info/lfs";
-  @NotNull
-  public static final String SERVLET_OBJECTS = SERVLET_BASE + "/objects/";
-  @NotNull
-  public static final String SERVLET_STORAGE = SERVLET_BASE + "/storage/";
+  public static final String SERVLET_BASE = "info/lfs";
 
   @Nullable
   private String privateToken;
@@ -47,15 +39,14 @@ public class LfsServer implements Shared {
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
     final WebServer webServer = WebServer.get(localContext.getShared());
     final String name = localContext.getName();
-    final Map<String, Servlet> servlets = new TreeMap<>();
 
     final ResourceConfig rc = WebServer.createResourceConfig(localContext);
     rc.register(new LfsAuthResource(localContext, storage, privateToken));
     rc.register(new LfsObjectsResource(localContext, storage));
     rc.register(new LfsStorageResource(localContext, storage));
-    servlets.put("/" + name + ".git/*", new ServletContainer(rc));
 
-    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, webServer.addServlets(servlets)));
+    final WebServer.ServletInfo servletInfo = webServer.addServlet("/" + name + ".git/*", new ServletContainer(rc));
+    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletInfo));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
@@ -69,17 +60,16 @@ public class LfsServer implements Shared {
     @NotNull
     private final WebServer webServer;
     @NotNull
-    private final Collection<WebServer.ServletInfo> servlets;
+    private final WebServer.ServletInfo servlet;
 
-    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull WebServer.ServletInfo servlet) {
       this.webServer = webServer;
-      this.servlets = servlets;
+      this.servlet = servlet;
     }
 
     @Override
     public void close() {
-      webServer.removeServlets(servlets);
-      servlets.clear();
+      webServer.removeServlet(servlet);
     }
   }
 }

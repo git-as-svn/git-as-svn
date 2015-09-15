@@ -36,8 +36,15 @@ import java.util.TreeMap;
  */
 @Path("/info/lfs/objects/")
 public class LfsObjectsResource extends LfsAbstractResource {
+  @NotNull
+  private final String pathStorage;
+  @NotNull
+  private final String pathObjects;
+
   public LfsObjectsResource(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     super(context, storage);
+    pathStorage = "./" + LfsStorageResource.class.getAnnotation(Path.class).value();
+    pathObjects = "./" + LfsObjectsResource.class.getAnnotation(Path.class).value();
   }
 
   @POST
@@ -63,7 +70,7 @@ public class LfsObjectsResource extends LfsAbstractResource {
           reader.getSize(),
           ImmutableMap.<String, Link>builder()
               .put("download", new Link(
-                  createHref(ui, LfsServer.SERVLET_STORAGE + id),
+                  createHref(ui, pathStorage + id),
                   authHeader(req)
               ))
               .build()
@@ -77,7 +84,7 @@ public class LfsObjectsResource extends LfsAbstractResource {
           null,
           ImmutableMap.<String, Link>builder()
               .put("upload", new Link(
-                  createHref(ui, LfsServer.SERVLET_STORAGE + oid),
+                  createHref(ui, pathStorage + oid),
                   authHeader(req)
               ))
               .build()
@@ -102,11 +109,11 @@ public class LfsObjectsResource extends LfsAbstractResource {
         reader.getSize(),
         ImmutableMap.<String, Link>builder()
             .put("self", new Link(
-                createHref(ui, LfsServer.SERVLET_OBJECTS + oid),
+                createHref(ui, pathObjects + oid),
                 null
             ))
             .put("download", new Link(
-                createHref(ui, LfsServer.SERVLET_STORAGE + oid),
+                createHref(ui, pathStorage + oid),
                 authHeader(req)
             ))
             .build()
