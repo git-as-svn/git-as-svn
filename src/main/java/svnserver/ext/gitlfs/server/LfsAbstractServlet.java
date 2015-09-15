@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.server;
 
 import com.google.gson.stream.JsonWriter;
+import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -87,7 +88,7 @@ public abstract class LfsAbstractServlet extends HttpServlet {
   @Nullable
   private User checkAccess(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull Checker checker) throws IOException {
     final VcsAccess access = context.sure(VcsAccess.class);
-    User user = getWebServer().getAuthInfo(req);
+    User user = getWebServer().getAuthInfo(req.getHeader(HttpHeaders.AUTHORIZATION));
     if (user == null) {
       user = User.getAnonymous();
     }

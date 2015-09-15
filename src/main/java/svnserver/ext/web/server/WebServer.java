@@ -19,6 +19,7 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jgit.util.Base64;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
+import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.web.config.WebServerConfig;
@@ -181,7 +183,7 @@ public class WebServer implements Shared {
   /**
    * Return current user information.
    *
-   * @param req HTTP request.
+   * @param authorization HTTP authorization header value.
    * @return Return value:
    * <ul>
    * <li>no authorization header - anonymous user;</li>
@@ -190,10 +192,9 @@ public class WebServer implements Shared {
    * </ul>
    */
   @Nullable
-  public User getAuthInfo(@NotNull HttpServletRequest req) {
+  public User getAuthInfo(@Nullable final String authorization) {
     final UserDB userDB = context.sure(UserDB.class);
     // Check HTTP authorization.
-    final String authorization = req.getHeader(HttpHeaders.AUTHORIZATION);
     if (authorization == null) {
       return User.getAnonymous();
     }
@@ -254,10 +255,18 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public static ResourceConfig createResourceConfig() {
+  public static ResourceConfig createResourceConfig(@NotNull LocalContext localContext) {
     final ResourceConfig rc = new ResourceConfig();
     rc.register(WebServer.createJsonProvider());
     rc.register(new WebExceptionMapper());
+    rc.register(new AuthenticationFilterReader(localContext));
+    rc.register(new AuthenticationFilterWriter(localContext));
+    rc.register(new AbstractBinder() {
+      @Override
+      protected void configure() {
+        bindFactory(UserInjectionFactory.class).to(User.class);
+      }
+    });
     return rc;
   }
 
