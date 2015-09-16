@@ -7,12 +7,15 @@
  */
 package svnserver.ext.api;
 
-import com.google.protobuf.*;
+import com.google.protobuf.BlockingService;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Message;
+import com.google.protobuf.Service;
+import org.atteo.classindex.ClassIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svnserver.ext.api.formatter.FormatBinary;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -26,6 +29,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 /**
  * Servlet wrapper for Protobuf RPC
@@ -58,9 +62,20 @@ public abstract class ProtobufRpcServlet extends HttpServlet {
   @NotNull
   private final transient Service service;
   @NotNull
-  private static final ProtobufFormat[] formats = {
-      new FormatBinary(),
-  };
+  private static final ProtobufFormat[] formats = collectFormats();
+
+  private static ProtobufFormat[] collectFormats() {
+    return StreamSupport
+        .stream(ClassIndex.getSubclasses(ProtobufFormat.class).spliterator(), false)
+        .map(type -> {
+          try {
+            return type.newInstance();
+          } catch (IllegalAccessException | InstantiationException e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .toArray(ProtobufFormat[]::new);
+  }
 
   private static class MethodInfo {
     @NotNull

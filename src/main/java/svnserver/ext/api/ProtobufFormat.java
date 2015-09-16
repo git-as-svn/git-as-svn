@@ -8,6 +8,7 @@
 package svnserver.ext.api;
 
 import com.google.protobuf.Message;
+import org.atteo.classindex.IndexSubclasses;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,15 +21,30 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface ProtobufFormat {
+@IndexSubclasses
+public abstract class ProtobufFormat {
   @NotNull
-  String getMimeType();
+  private final String mimeType;
+  @NotNull
+  private final String suffix;
+
+  public ProtobufFormat(@NotNull String mimeType, @NotNull String suffix) {
+    this.mimeType = mimeType;
+    this.suffix = suffix;
+  }
 
   @NotNull
-  String getSuffix();
+  public final String getMimeType() {
+    return mimeType;
+  }
 
-  void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException;
+  @NotNull
+  public final String getSuffix() {
+    return suffix;
+  }
+
+  public abstract void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException;
 
   @Nullable
-  Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException;
+  public abstract Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException;
 }

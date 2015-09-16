@@ -7,7 +7,9 @@
  */
 package svnserver.ext.api.formatter;
 
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
+import com.googlecode.protobuf.format.AbstractCharBasedFormatter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.ext.api.ProtobufFormat;
@@ -17,23 +19,28 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Binary serialization.
+ * JSON serialization.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class FormatBinary extends ProtobufFormat {
-  public FormatBinary() {
-    super("application/x-protobuf", "");
+public abstract class BaseFormat extends ProtobufFormat {
+  @NotNull
+  private final AbstractCharBasedFormatter format;
+
+  public BaseFormat(@NotNull AbstractCharBasedFormatter format, @NotNull String mimeType, @NotNull String suffix) {
+    super(mimeType, suffix);
+    this.format = format;
   }
 
   @Override
   public void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException {
-    message.writeTo(output.getOutputStream());
+    format.print(message, output.getWriter());
   }
 
-  @Nullable
   @Override
+  @Nullable
   public Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException {
-    return builder.mergeFrom(input.getInputStream()).build();
+    format.merge(input.getReader(), ExtensionRegistry.getEmptyRegistry(), builder);
+    return builder.build();
   }
 }
