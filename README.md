@@ -68,7 +68,8 @@ You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/
  * Add git-as-svn upstream server:
 ```
  upstream gitsvn {
-   server localhost:8123  fail_timeout=5s;
+   server      localhost:8123  fail_timeout=5s;
+   keepalive   100;
  } 
 ```
  * Add resource redirection:
@@ -78,12 +79,15 @@ You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/
      proxy_connect_timeout   300;
      proxy_redirect          off;
  
+     proxy_http_version  1.1;
+     proxy_set_header    Connection          "";
+ 
      proxy_set_header    Host                $http_host;
      proxy_set_header    X-Real-IP           $remote_addr;
      proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
      proxy_set_header    X-Forwarded-Proto   $scheme;
      proxy_set_header    X-Frame-Options     SAMEORIGIN;
- 
+
      proxy_pass http://gitsvn;
    }
 ```
