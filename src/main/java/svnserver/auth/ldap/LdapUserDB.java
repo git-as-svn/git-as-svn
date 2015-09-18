@@ -70,6 +70,12 @@ public class LdapUserDB implements UserDB {
     boolean check(@NotNull String userDN) throws LDAPException;
   }
 
+  @FunctionalInterface
+  private interface LdapTask<T> {
+    @Nullable
+    T exec(@NotNull LDAPConnection connection) throws LDAPException;
+  }
+
   public LdapUserDB(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
     try {
       URI ldapUri = URI.create(config.getConnectionUrl());
@@ -95,7 +101,7 @@ public class LdapUserDB implements UserDB {
   @Nullable
   @Override
   public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
-    return findUser(userName, userDN -> pool.bindAndRevertAuthentication(userDN, password).getResultCode() == ResultCode.SUCCESS);
+    return findUser(userName, userDN -> doTask(connection -> connection.bind(userDN, password).getResultCode() == ResultCode.SUCCESS));
   }
 
   @Nullable
@@ -116,16 +122,27 @@ public class LdapUserDB implements UserDB {
     return attribute == null ? null : attribute.getValue();
   }
 
+  private <T> T doTask(@NotNull LdapTask<T> task) throws LDAPException {
+    final LDAPConnection connection = pool.getConnection();
+    try {
+      return task.exec(connection);
+    } finally {
+      connection.close();
+    }
+  }
+
   private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
     try {
-      Filter filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
+      final Filter filter;
       if (!config.getSearchFilter().isEmpty()) {
         filter = Filter.createANDFilter(
             Filter.create(config.getSearchFilter()),
-            filter
+            Filter.createEqualityFilter(config.getLoginAttribute(), userName)
         );
+      } else {
+        filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
       }
-      final SearchResult search = pool.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute());
+      final SearchResult search = doTask((connection) -> connection.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute()));
       if (search.getEntryCount() == 1) {
         final SearchResultEntry entry = search.getSearchEntries().get(0);
         final String login = getAttribute(entry, config.getLoginAttribute());
