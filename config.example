@@ -105,11 +105,11 @@ userDB: !localUsers
 
 # LDAP bind (default - anonymous bind):
 #
-# bind: ldapBindSimple
+# bind: !ldapBindSimple
 #   username: somebody
 #   password: secret
 #
-# bind: ldapBindDn
+# bind: !ldapBindDn
 #   bindDn: cn=somebody,ou=groups,dc=mycompany,dc=com
 #   password: secret
 #
@@ -125,9 +125,3 @@ userDB: !localUsers
 # LDAP attribute, containing user email.
 #
 # emailAttribute: mail
-
-# The search scope. Set to `true` if you wish to search the entire subtree rooted at the
-# userBase entry. The default value of `false` requests a single-level search
-# including only the top level.
-#
-# userSubtree: false

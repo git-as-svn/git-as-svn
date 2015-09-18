@@ -220,6 +220,11 @@ public final class SvnTestServer implements SvnTester {
     server.startShutdown();
   }
 
+  @NotNull
+  public SharedContext getContext() {
+    return server.getContext();
+  }
+
   private static class TestRepositoryConfig implements RepositoryMappingConfig {
     @NotNull
     private final Repository repository;

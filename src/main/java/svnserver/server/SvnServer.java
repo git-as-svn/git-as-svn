@@ -127,6 +127,11 @@ public class SvnServer extends Thread {
     return serverSocket.getLocalPort();
   }
 
+  @NotNull
+  public SharedContext getContext() {
+    return context;
+  }
+
   @Override
   public void run() {
     log.info("Server is ready on port: {}", serverSocket.getLocalPort());

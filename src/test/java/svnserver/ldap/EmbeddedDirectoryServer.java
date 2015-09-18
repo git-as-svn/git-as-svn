@@ -114,6 +114,7 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
     config.setLoginAttribute("uid");
     config.setEmailAttribute("mail");
     config.setNameAttribute("givenName");
+    config.setMaxConnections(3);
     return config;
   }
 }

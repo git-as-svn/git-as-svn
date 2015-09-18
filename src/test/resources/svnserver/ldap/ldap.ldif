@@ -57,6 +57,7 @@ sn: User
 cn: Simple User
 uid: simple
 userPassword: simple
+mail: simple@mail.example.com
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: top
