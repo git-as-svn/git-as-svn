@@ -8,7 +8,6 @@
 package svnserver.ext.gitlfs.server;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwt.NumericDate;
@@ -23,6 +22,7 @@ import svnserver.ext.web.token.TokenHelper;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
@@ -33,7 +33,7 @@ import java.util.Date;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@Path("/")
+@Path("/auth/lfs")
 public class LfsAuthResource extends LfsAbstractResource {
   @Nullable
   private final String privateToken;
@@ -44,27 +44,25 @@ public class LfsAuthResource extends LfsAbstractResource {
   }
 
   @POST
-  @Path(value = "/auth/lfs")
   @Produces(MediaType.APPLICATION_JSON)
   public Auth createTokenPost(
       @Context UriInfo ui,
-      @PathParam("oid") String oid,
       @QueryParam("token") @FormParam("token") String token,
       @QueryParam("username") @FormParam("username") String username,
-      @QueryParam("external") @FormParam("external") String external
+      @QueryParam("external") @FormParam("external") String external,
+      @QueryParam("anonymous") @FormParam("anonymous") boolean anonymous
   ) {
-    return createToken(ui, oid, token, username, external);
+    return createToken(ui, token, username, external, anonymous);
   }
 
   @GET
-  @Path(value = "/auth/lfs")
   @Produces(MediaType.APPLICATION_JSON)
   public Auth createToken(
       @Context UriInfo ui,
-      @PathParam("oid") String oid,
       @QueryParam("token") String token,
       @QueryParam("username") String username,
-      @QueryParam("external") String external
+      @QueryParam("external") String external,
+      @QueryParam("anonymous") boolean anonymous
   ) {
     if (privateToken == null) {
       throw new NotSupportedException("Secret token is not defined in server configuration");
@@ -79,10 +77,13 @@ public class LfsAuthResource extends LfsAbstractResource {
     final UserDB userDB = getShared().sure(UserDB.class);
     final User user;
     try {
-      if (external == null && username == null) {
+      if (anonymous) {
+        user = User.getAnonymous();
+      } else if (external == null && username == null) {
         throw new BadRequestException("Parameter \"username\" or \"external\" is not defined");
+      } else {
+        user = username != null ? userDB.lookupByUserName(username) : userDB.lookupByExternal(external);
       }
-      user = username != null ? userDB.lookupByUserName(username) : userDB.lookupByExternal(external);
     } catch (SVNException | IOException e) {
       throw new InternalServerErrorException("Can't get user information. See log for more details", e);
     }

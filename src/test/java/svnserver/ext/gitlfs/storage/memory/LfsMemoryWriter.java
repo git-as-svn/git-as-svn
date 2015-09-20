@@ -10,12 +10,11 @@ package svnserver.ext.gitlfs.storage.memory;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.HashHelper;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -58,19 +57,15 @@ public class LfsMemoryWriter extends LfsWriter {
     if (stream == null) {
       throw new IllegalStateException();
     }
-    try {
-      final byte[] content = stream.toByteArray();
-      String result = Hex.encodeHexString(MessageDigest.getInstance("SHA-256").digest(content));
-      final String oid = OID_PREFIX + result;
-      if (expectedOid != null && !expectedOid.equals(oid)) {
-        throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + oid);
-      }
-      storage.putIfAbsent(oid, content);
-      stream = null;
-      return oid;
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
+    final byte[] content = stream.toByteArray();
+    String result = Hex.encodeHexString(HashHelper.sha256().digest(content));
+    final String oid = OID_PREFIX + result;
+    if (expectedOid != null && !expectedOid.equals(oid)) {
+      throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + oid);
     }
+    storage.putIfAbsent(oid, content);
+    stream = null;
+    return oid;
   }
 
   @Override

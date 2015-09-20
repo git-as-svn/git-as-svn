@@ -5,36 +5,25 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.gitlfs.storage.memory;
+package svnserver.ext.gitlfs.storage.network;
 
-import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.HashHelper;
 import svnserver.ext.gitlfs.storage.LfsReader;
-import svnserver.ext.gitlfs.storage.LfsStorage;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Local storage writer.
+ * Network storage reader.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsMemoryReader implements LfsReader {
-  @NotNull
-  private final byte[] content;
-
-  public LfsMemoryReader(@NotNull byte[] content) {
-    this.content = content;
-  }
-
+public class LfsHttpReader implements LfsReader {
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    return new ByteArrayInputStream(content);
+    return null;
   }
 
   @Nullable
@@ -45,26 +34,18 @@ public class LfsMemoryReader implements LfsReader {
 
   @Override
   public long getSize() {
-    return content.length;
+    return 0;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getMd5() {
-    return Hex.encodeHexString(HashHelper.md5().digest(content));
+    return null;
   }
 
   @NotNull
   @Override
   public String getOid(boolean hashOnly) {
-    if (hashOnly) {
-      return getSha();
-    } else {
-      return LfsStorage.OID_PREFIX + getSha();
-    }
-  }
-
-  private String getSha() {
-    return Hex.encodeHexString(HashHelper.sha256().digest(content));
+    return null;
   }
 }

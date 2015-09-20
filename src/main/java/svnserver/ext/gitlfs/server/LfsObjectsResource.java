@@ -49,16 +49,16 @@ public class LfsObjectsResource extends LfsAbstractResource {
 
   @POST
   @SecureWriter
-  @Path(value = "/{oid:[0-9a-f]{64}}")
+  @Path(value = "")
   @Consumes(MIME_TYPE)
   @Produces(MIME_TYPE)
   public Meta postMeta(Meta meta,
-                       @PathParam(value = "oid") String oid,
                        @Context UriInfo ui,
                        @Context HttpServletRequest req,
                        @Context HttpServletResponse res
   ) throws IOException {
-    if (!oid.equals(meta.getOid())) {
+    final String oid = meta.getOid();
+    if (oid == null) {
       throw new BadRequestException();
     }
 

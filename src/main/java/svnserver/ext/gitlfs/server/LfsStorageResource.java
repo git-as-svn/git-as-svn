@@ -8,7 +8,6 @@
 package svnserver.ext.gitlfs.server;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
@@ -23,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -44,12 +44,11 @@ public class LfsStorageResource extends LfsAbstractResource {
   @Path(value = "/{oid:[0-9a-f]{64}}")
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   public Response putContent(@PathParam(value = "oid") String oid,
-                             InputStream stream,
                              @Context User user,
-                             @Context HttpServletRequest req
+                             InputStream stream
   ) throws IOException {
     final LfsWriter writer = getStorage().getWriter(user);
-    IOUtils.copy(req.getInputStream(), writer);
+    IOUtils.copy(stream, writer);
     writer.finish(LfsStorage.OID_PREFIX + oid);
     return Response.ok().build();
   }
@@ -76,7 +75,7 @@ public class LfsStorageResource extends LfsAbstractResource {
       try (InputStream stream = reader.openGzipStream()) {
         if (stream != null) {
           // Send already compressed stream
-          resp.addHeader("Content-Encoding", "gzip");
+          resp.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
           IOUtils.copy(stream, output);
           output.close();
           return;

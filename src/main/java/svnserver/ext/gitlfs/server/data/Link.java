@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.server.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.httpclient.HttpMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,5 +45,13 @@ public class Link {
   @Nullable
   public Map<String, String> getHeader() {
     return header;
+  }
+
+  public void addRequestHeader(@NotNull HttpMethod request) {
+    if (header != null) {
+      for (Map.Entry<String, String> entry : header.entrySet()) {
+        request.addRequestHeader(entry.getKey(), entry.getValue());
+      }
+    }
   }
 }
