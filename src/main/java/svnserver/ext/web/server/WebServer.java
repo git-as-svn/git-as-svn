@@ -7,12 +7,19 @@
  */
 package svnserver.ext.web.server;
 
-import org.apache.http.HttpHeaders;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jgit.util.Base64;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwe.JsonWebEncryption;
@@ -21,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
+import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.web.config.WebServerConfig;
@@ -29,6 +37,7 @@ import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +61,7 @@ public class WebServer implements Shared {
   @NotNull
   public static final String AUTH_BASIC = "Basic ";
   @NotNull
-  public static final String AUTH_TOKEN = "Token ";
+  public static final String AUTH_TOKEN = "Bearer ";
 
   @NotNull
   private final SharedContext context;
@@ -73,8 +82,10 @@ public class WebServer implements Shared {
     this.config = config;
     this.tokenFactory = tokenFactory;
     if (server != null) {
-      handler = new ServletHandler();
-      server.setHandler(handler);
+      final ServletContextHandler contextHandler = new ServletContextHandler();
+      contextHandler.setContextPath("/");
+      server.setHandler(contextHandler);
+      handler = contextHandler.getServletHandler();
     } else {
       handler = null;
     }
@@ -172,7 +183,7 @@ public class WebServer implements Shared {
   /**
    * Return current user information.
    *
-   * @param req HTTP request.
+   * @param authorization HTTP authorization header value.
    * @return Return value:
    * <ul>
    * <li>no authorization header - anonymous user;</li>
@@ -181,15 +192,14 @@ public class WebServer implements Shared {
    * </ul>
    */
   @Nullable
-  public User getAuthInfo(@NotNull HttpServletRequest req) {
+  public User getAuthInfo(@Nullable final String authorization) {
     final UserDB userDB = context.sure(UserDB.class);
     // Check HTTP authorization.
-    final String authorization = req.getHeader(HttpHeaders.AUTHORIZATION);
     if (authorization == null) {
       return User.getAnonymous();
     }
     if (authorization.startsWith(AUTH_BASIC)) {
-      final String raw = new String(Base64.decode(authorization.substring(AUTH_BASIC.length())), StandardCharsets.UTF_8);
+      final String raw = new String(Base64.decode(authorization.substring(AUTH_BASIC.length()).trim()), StandardCharsets.UTF_8);
       final int separator = raw.indexOf(':');
       if (separator > 0) {
         final String username = raw.substring(0, separator);
@@ -203,7 +213,7 @@ public class WebServer implements Shared {
       return null;
     }
     if (authorization.startsWith(AUTH_TOKEN)) {
-      return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()));
+      return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()).trim());
     }
     return null;
   }
@@ -218,6 +228,46 @@ public class WebServer implements Shared {
       host = req.getServerName() + ":" + req.getServerPort();
     }
     return req.getScheme() + "://" + host + req.getRequestURI();
+  }
+
+  @NotNull
+  public URI getUrl(@NotNull URI baseUri) {
+    if (config.getBaseUrl() != null) {
+      return URI.create(config.getBaseUrl()).resolve(baseUri.getPath());
+    }
+    return baseUri;
+  }
+
+  @NotNull
+  public static ObjectMapper createJsonMapper() {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    return mapper;
+  }
+
+  @NotNull
+  public static JacksonJsonProvider createJsonProvider() {
+    JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
+    provider.setMapper(createJsonMapper());
+    return provider;
+  }
+
+  @NotNull
+  public static ResourceConfig createResourceConfig(@NotNull LocalContext localContext) {
+    final ResourceConfig rc = new ResourceConfig();
+    rc.register(WebServer.createJsonProvider());
+    rc.register(new WebExceptionMapper());
+    rc.register(new AuthenticationFilterReader(localContext));
+    rc.register(new AuthenticationFilterWriter(localContext));
+    rc.register(new AbstractBinder() {
+      @Override
+      protected void configure() {
+        bindFactory(UserInjectionFactory.class).to(User.class);
+      }
+    });
+    return rc;
   }
 
   public static final class ServletInfo {

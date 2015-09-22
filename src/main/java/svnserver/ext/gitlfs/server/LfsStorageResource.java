@@ -8,18 +8,23 @@
 package svnserver.ext.gitlfs.server;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpHeaders;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.ext.web.annotations.SecureReader;
+import svnserver.ext.web.annotations.SecureWriter;
 
-import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,46 +33,40 @@ import java.io.InputStream;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsStorageServlet extends LfsAbstractServlet {
-  public LfsStorageServlet(@NotNull LocalContext context, @NotNull LfsStorage storage) {
+@Path("/info/lfs/storage/")
+public class LfsStorageResource extends LfsAbstractResource {
+  public LfsStorageResource(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     super(context, storage);
   }
 
-  @Override
-  protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    final User user = checkWriteAccess(req, resp);
-    if (user == null) {
-      return;
-    }
-    final String oid = getOid(req.getPathInfo());
-    if (oid == null) {
-      sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
-      return;
-    }
+  @PUT
+  @SecureWriter
+  @Path(value = "/{oid:[0-9a-f]{64}}")
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  public Response putContent(@PathParam(value = "oid") String oid,
+                             @Context User user,
+                             InputStream stream
+  ) throws IOException {
     final LfsWriter writer = getStorage().getWriter(user);
-    IOUtils.copy(req.getInputStream(), writer);
+    IOUtils.copy(stream, writer);
     writer.finish(LfsStorage.OID_PREFIX + oid);
-
-    resp.setStatus(HttpServletResponse.SC_OK);
+    return Response.ok().build();
   }
 
-  @Override
-  protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-    if (checkReadAccess(req, resp) == null) {
-      return;
-    }
-    final String oid = getOid(req.getPathInfo());
-    if (oid == null) {
-      sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Can't detect OID in URL", "https://github.com/github/git-lfs/blob/master/docs/api/http-v1-original.md");
-      return;
-    }
+  @GET
+  @SecureReader
+  @Path(value = "/{oid:[0-9a-f]{64}}")
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  public void getContent(@PathParam(value = "oid") String oid,
+                         @Context HttpServletRequest req,
+                         @Context HttpServletResponse res
+  ) throws IOException {
     final LfsReader reader = getStorage().getReader(LfsStorage.OID_PREFIX + oid);
     if (reader == null) {
-      sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Object not found", null);
-      return;
+      throw new NotFoundException();
     }
-    resp.setContentType("application/octet-stream");
-    sendContent(req, resp, reader);
+    res.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+    sendContent(req, res, reader);
   }
 
   private void sendContent(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull LfsReader reader) throws IOException {
@@ -76,7 +75,7 @@ public class LfsStorageServlet extends LfsAbstractServlet {
       try (InputStream stream = reader.openGzipStream()) {
         if (stream != null) {
           // Send already compressed stream
-          resp.addHeader("Content-Encoding", "gzip");
+          resp.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
           IOUtils.copy(stream, output);
           output.close();
           return;

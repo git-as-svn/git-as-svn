@@ -10,14 +10,13 @@ package svnserver.ext.gitlfs.storage.memory;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.HashHelper;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Local storage writer.
@@ -52,11 +51,7 @@ public class LfsMemoryReader implements LfsReader {
   @NotNull
   @Override
   public String getMd5() {
-    try {
-      return Hex.encodeHexString(MessageDigest.getInstance("MD5").digest(content));
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
+    return Hex.encodeHexString(HashHelper.md5().digest(content));
   }
 
   @NotNull
@@ -70,10 +65,6 @@ public class LfsMemoryReader implements LfsReader {
   }
 
   private String getSha() {
-    try {
-      return Hex.encodeHexString(MessageDigest.getInstance("SHA-256").digest(content));
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
+    return Hex.encodeHexString(HashHelper.sha256().digest(content));
   }
 }

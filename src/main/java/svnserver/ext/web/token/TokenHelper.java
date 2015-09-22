@@ -19,11 +19,10 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import svnserver.HashHelper;
 import svnserver.auth.User;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -92,9 +91,9 @@ public class TokenHelper {
       if (secret.length() == length * 2 && hex.matcher(secret).find()) {
         return Hex.decodeHex(secret.toCharArray());
       }
-      final byte[] hash = MessageDigest.getInstance("SHA-256").digest(secret.getBytes(StandardCharsets.UTF_8));
+      final byte[] hash = HashHelper.sha256().digest(secret.getBytes(StandardCharsets.UTF_8));
       return Arrays.copyOf(hash, length);
-    } catch (DecoderException | NoSuchAlgorithmException e) {
+    } catch (DecoderException e) {
       throw new IllegalStateException(e);
     }
   }

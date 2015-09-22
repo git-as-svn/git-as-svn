@@ -10,9 +10,11 @@ package svnserver.ext.gitlfs.storage.local;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.pointer.Constants;
+import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.DateHelper;
+import svnserver.HashHelper;
 import svnserver.auth.User;
-import svnserver.ext.gitlfs.filter.LfsPointer;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
@@ -66,8 +68,8 @@ public class LfsLocalWriter extends LfsWriter {
 
     metaTemp = new File(new File(metaRoot, "tmp"), prefix + ".tmp");
 
-    digestMd5 = LfsLocalStorage.createDigestMd5();
-    digestSha = LfsLocalStorage.createDigestSha256();
+    digestMd5 = HashHelper.md5();
+    digestSha = HashHelper.sha256();
     size = 0;
     if (compress) {
       dataStream = new GZIPOutputStream(new FileOutputStream(dataTemp));
@@ -141,18 +143,18 @@ public class LfsLocalWriter extends LfsWriter {
 
       try (FileOutputStream stream = new FileOutputStream(metaTemp)) {
         final Map<String, String> map = new HashMap<>();
-        map.put(LfsPointer.HASH_MD5, Hex.encodeHexString(md5));
-        map.put(LfsPointer.SIZE, String.valueOf(size));
-        map.put(LfsPointer.OID, oid);
-        map.put(LfsPointer.CREATE_TIME, DateHelper.toISO8601(Instant.now()));
-        if (user != null) {
+        map.put(Constants.SIZE, String.valueOf(size));
+        map.put(Constants.OID, oid);
+        map.put(LfsLocalStorage.HASH_MD5, Hex.encodeHexString(md5));
+        map.put(LfsLocalStorage.CREATE_TIME, DateHelper.toISO8601(Instant.now()));
+        if ((user != null) && (!user.isAnonymous())) {
           if (user.getEmail() != null) {
-            map.put(LfsPointer.META_EMAIL, user.getEmail());
+            map.put(LfsLocalStorage.META_EMAIL, user.getEmail());
           }
-          map.put(LfsPointer.META_USER_NAME, user.getUserName());
-          map.put(LfsPointer.META_REAL_NAME, user.getRealName());
+          map.put(LfsLocalStorage.META_USER_NAME, user.getUserName());
+          map.put(LfsLocalStorage.META_REAL_NAME, user.getRealName());
         }
-        stream.write(LfsPointer.serializePointer(map));
+        stream.write(Pointer.serializePointer(map));
         stream.close();
         if (!metaTemp.renameTo(metaPath) && !metaPath.isFile()) {
           throw new IOException("Can't rename file: " + metaTemp.getPath() + " -> " + metaPath.getPath());

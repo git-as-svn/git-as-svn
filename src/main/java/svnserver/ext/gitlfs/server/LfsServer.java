@@ -7,6 +7,8 @@
  */
 package svnserver.ext.gitlfs.server;
 
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -16,11 +18,8 @@ import svnserver.context.Shared;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
-import javax.servlet.Servlet;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
+import java.text.MessageFormat;
 
 /**
  * LFS server.
@@ -29,31 +28,29 @@ import java.util.TreeMap;
  */
 public class LfsServer implements Shared {
   @NotNull
-  public static final String SERVLET_BASE = ".git/info/lfs";
+  public static final String SERVLET_BASE = "info/lfs";
   @NotNull
-  public static final String SERVLET_AUTH = ".git/auth/lfs";
-  @NotNull
-  public static final String SERVLET_OBJECTS = SERVLET_BASE + "/objects/";
-  @NotNull
-  public static final String SERVLET_STORAGE = SERVLET_BASE + "/storage/";
-
+  private final String pathFormat;
   @Nullable
-  private String privateToken;
+  private final String privateToken;
 
-  public LfsServer(@Nullable String privateToken) {
+  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken) {
+    this.pathFormat = pathFormat;
     this.privateToken = privateToken;
   }
 
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
     final WebServer webServer = WebServer.get(localContext.getShared());
     final String name = localContext.getName();
-    final Map<String, Servlet> servlets = new TreeMap<>();
-    if (privateToken != null) {
-      servlets.put("/" + name + SERVLET_AUTH, new LfsAuthServlet(localContext, storage, privateToken));
-    }
-    servlets.put("/" + name + SERVLET_OBJECTS + "*", new LfsObjectsServlet(localContext, storage));
-    servlets.put("/" + name + SERVLET_STORAGE + "*", new LfsStorageServlet(localContext, storage));
-    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, webServer.addServlets(servlets)));
+
+    final ResourceConfig rc = WebServer.createResourceConfig(localContext);
+    rc.register(new LfsAuthResource(localContext, storage, privateToken));
+    rc.register(new LfsObjectsResource(localContext, storage));
+    rc.register(new LfsStorageResource(localContext, storage));
+
+    final String pathSpec = "/" + MessageFormat.format(pathFormat, name) + "/*";
+    final WebServer.ServletInfo servletInfo = webServer.addServlet(pathSpec.replaceAll("/+", "/"), new ServletContainer(rc));
+    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletInfo));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
@@ -67,17 +64,16 @@ public class LfsServer implements Shared {
     @NotNull
     private final WebServer webServer;
     @NotNull
-    private final Collection<WebServer.ServletInfo> servlets;
+    private final WebServer.ServletInfo servlet;
 
-    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull WebServer.ServletInfo servlet) {
       this.webServer = webServer;
-      this.servlets = servlets;
+      this.servlet = servlet;
     }
 
     @Override
     public void close() {
-      webServer.removeServlets(servlets);
-      servlets.clear();
+      webServer.removeServlet(servlet);
     }
   }
 }
