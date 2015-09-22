@@ -108,8 +108,8 @@ task deployJars(dependsOn: jar) << {
   def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
   copy {
     from fullArtifacts.intersect(projectArtifacts)
-    from "config.example"
-    from "README.md"
+    from "*.example"
+    from "*.md"
     from "LICENSE"
     into "${project.buildDir}/deploy"
   }
