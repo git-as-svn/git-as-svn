@@ -13,26 +13,25 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.common.client.AuthAccess;
+import ru.bozaro.gitlfs.common.client.AuthProvider;
+import ru.bozaro.gitlfs.common.client.Client;
+import ru.bozaro.gitlfs.common.client.StreamProvider;
+import ru.bozaro.gitlfs.common.data.Auth;
+import ru.bozaro.gitlfs.common.data.Meta;
 import svnserver.auth.User;
-import svnserver.ext.gitlfs.server.LfsAbstractResource;
-import svnserver.ext.gitlfs.server.data.Auth;
-import svnserver.ext.gitlfs.server.data.Link;
-import svnserver.ext.gitlfs.server.data.Meta;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.web.client.HttpError;
 import svnserver.ext.web.server.WebServer;
 
-import javax.ws.rs.core.HttpHeaders;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -49,13 +48,7 @@ public class LfsHttpStorage implements LfsStorage {
   @NotNull
   private final ObjectMapper mapper;
   @NotNull
-  private final LoadingCache<User, Link> tokens;
-
-  @FunctionalInterface
-  public interface Request<T> {
-    @Nullable
-    T exec(@NotNull Link link) throws IOException;
-  }
+  private final LoadingCache<User, Auth> tokens;
 
   public LfsHttpStorage(@NotNull URL authUrl, @NotNull String authToken) {
     this.authUrl = authUrl;
@@ -63,8 +56,8 @@ public class LfsHttpStorage implements LfsStorage {
     this.mapper = WebServer.createJsonMapper();
     this.tokens = CacheBuilder.newBuilder()
         .maximumSize(MAX_CACHE)
-        .build(new CacheLoader<User, Link>() {
-          public Link load(@NotNull User user) throws IOException {
+        .build(new CacheLoader<User, Auth>() {
+          public Auth load(@NotNull User user) throws IOException {
             return getTokenUncached(user);
           }
         });
@@ -75,19 +68,9 @@ public class LfsHttpStorage implements LfsStorage {
       post.addParameter(key, value);
     }
   }
-/*
-  private Link
 
   @NotNull
-
-  private String getToken() {
-    HttpClient client = new HttpClient();
-    PostMethod post = new PostMethod(new URL(lfs, "objects").toString());
-    return null;
-  }*/
-
-  @NotNull
-  private Link getTokenUncached(@NotNull User user) throws IOException {
+  private Auth getTokenUncached(@NotNull User user) throws IOException {
     final PostMethod post = new PostMethod(authUrl.toString());
     post.addParameter("token", authToken);
     if (!user.isAnonymous()) {
@@ -107,9 +90,9 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   @NotNull
-  private Link getToken(@NotNull User user) throws IOException {
+  private Auth getToken(@NotNull User user) throws IOException {
     try {
-      return tokens.get(User.getAnonymous());
+      return tokens.get(user);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
@@ -124,56 +107,25 @@ public class LfsHttpStorage implements LfsStorage {
     }
   }
 
-  @Nullable
-  public Meta getMeta(@NotNull Link link, @NotNull String hash) throws IOException {
-    final GetMethod get = new GetMethod(link.getHref().toString() + "/objects/" + hash);
-    get.addRequestHeader(HttpHeaders.ACCEPT, LfsAbstractResource.MIME_TYPE);
-    link.addRequestHeader(get);
-
-    final HttpClient client = new HttpClient();
-    client.executeMethod(get);
-    if (get.getStatusCode() == HttpStatus.SC_OK) {
-      return mapper.readValue(get.getResponseBodyAsStream(), Meta.class);
-    }
-    throw new HttpError(get, "Metadata request failed for object: " + hash);
+  public void invalidate(@NotNull User user) {
+    tokens.invalidate(user);
   }
 
   @Nullable
-  public Meta postMeta(@NotNull Link link, @NotNull String hash, long size) throws IOException {
-    final PostMethod put = new PostMethod(link.getHref().toString() + "/objects");
-    put.addRequestHeader(HttpHeaders.ACCEPT, LfsAbstractResource.MIME_TYPE);
-    link.addRequestHeader(put);
-    final byte[] content = mapper.writeValueAsBytes(new Meta(hash, size, Collections.emptyMap()));
-    put.setRequestEntity(new ByteArrayRequestEntity(content, LfsAbstractResource.MIME_TYPE));
-
-    final HttpClient client = new HttpClient();
-    client.executeMethod(put);
-    if (put.getStatusCode() == HttpStatus.SC_OK) {
-      return mapper.readValue(put.getResponseBodyAsStream(), Meta.class);
-    }
-    if (put.getStatusCode() == HttpStatus.SC_ACCEPTED) {
-      return mapper.readValue(put.getResponseBodyAsStream(), Meta.class);
-    }
-    throw new HttpError(put, "Metadata request failed for object: " + hash);
+  public Meta getMeta(@NotNull String hash) throws IOException {
+    final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
+    return lfsClient.getMeta(hash);
   }
 
-  public <T> T makeRequest(@NotNull User user, @NotNull Request<T> request) throws IOException {
-    for (int pass = 0; ; pass++) {
-      final Link link = getToken(user);
-      try {
-        return request.exec(link);
-      } catch (HttpError e) {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          return null;
-        }
-        if (e.getStatusCode() == HttpStatus.SC_UNAUTHORIZED && pass == 0) {
-          if (tokens.getIfPresent(user) == link)
-            tokens.invalidate(user);
-          continue;
-        }
-        throw e;
-      }
-    }
+  public boolean putObject(@NotNull User user, StreamProvider streamProvider, String sha, long size) throws IOException {
+    final Client lfsClient = new Client(new UserAuthProvider(user), new HttpClient());
+    return lfsClient.putObject(streamProvider, sha, size);
+  }
+
+  @NotNull
+  public InputStream getObject(@NotNull Meta meta) throws IOException {
+    final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
+    return lfsClient.getObject(meta);
   }
 
   @Nullable
@@ -182,11 +134,12 @@ public class LfsHttpStorage implements LfsStorage {
     try {
       if (!oid.startsWith(OID_PREFIX)) return null;
       final String hash = oid.substring(OID_PREFIX.length());
-      final Meta meta = makeRequest(User.getAnonymous(), (link) -> getMeta(link, hash));
+      final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
+      final Meta meta = lfsClient.getMeta(hash);
       if (meta == null) {
         return null;
       }
-      throw new NoSuchMethodError();
+      return new LfsHttpReader(this, meta);
     } catch (HttpError e) {
       e.log();
       throw e;
@@ -197,5 +150,25 @@ public class LfsHttpStorage implements LfsStorage {
   @Override
   public LfsWriter getWriter(@Nullable User user) throws IOException {
     return new LfsHttpWriter(this, user == null ? User.getAnonymous() : user);
+  }
+
+  private final class UserAuthProvider implements AuthProvider {
+    @NotNull
+    private final User user;
+
+    public UserAuthProvider(@NotNull User user) {
+      this.user = user;
+    }
+
+    @NotNull
+    @Override
+    public Auth getAuth(@NotNull AuthAccess mode) throws IOException {
+      return getToken(user);
+    }
+
+    @Override
+    public void invalidateAuth(@NotNull AuthAccess mode, @NotNull Auth auth) {
+      tokens.invalidate(user);
+    }
   }
 }

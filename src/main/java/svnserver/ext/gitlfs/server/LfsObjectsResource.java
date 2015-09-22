@@ -9,9 +9,9 @@ package svnserver.ext.gitlfs.server;
 
 import jersey.repackaged.com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
+import ru.bozaro.gitlfs.common.data.Link;
+import ru.bozaro.gitlfs.common.data.Meta;
 import svnserver.context.LocalContext;
-import svnserver.ext.gitlfs.server.data.Link;
-import svnserver.ext.gitlfs.server.data.Meta;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.annotations.SecureReader;
@@ -122,7 +122,7 @@ public class LfsObjectsResource extends LfsAbstractResource {
 
   @NotNull
   protected Map<String, String> authHeader(HttpServletRequest req) {
-    final String auth = req.getParameter(HttpHeaders.AUTHORIZATION);
+    final String auth = req.getHeader(HttpHeaders.AUTHORIZATION);
     final Map<String, String> result = new TreeMap<>();
     if (auth != null) {
       result.put(HttpHeaders.AUTHORIZATION, auth);

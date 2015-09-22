@@ -13,12 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.HashHelper;
 import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
-import svnserver.ext.gitlfs.server.data.Meta;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.MessageDigest;
 
 /**
@@ -50,9 +48,9 @@ public class LfsHttpWriter extends LfsWriter {
   }
 
   @Override
-  public void write(byte[] b, int off, int len) throws IOException {
-    content.write(b, off, len);
-    digestSha.update(b, off, len);
+  public void write(@NotNull byte[] buffer, int off, int len) throws IOException {
+    content.write(buffer, off, len);
+    digestSha.update(buffer, off, len);
   }
 
   @NotNull
@@ -63,13 +61,7 @@ public class LfsHttpWriter extends LfsWriter {
     if (expectedOid != null && !expectedOid.equals(oid)) {
       throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + LfsLocalStorage.OID_PREFIX + sha);
     }
-    final Meta meta = owner.makeRequest(user, (link) -> owner.postMeta(link, sha, content.size()));
-    // todo: Upload
-    try (TemporaryOutputStream.Holder holder = content.holder()) {
-      try (InputStream stream = content.toInputStream()) {
-
-      }
-    }
-    return null;
+    owner.putObject(user, content::toInputStream, sha, content.size());
+    return oid;
   }
 }
