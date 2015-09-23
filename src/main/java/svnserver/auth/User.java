@@ -20,8 +20,9 @@ import java.util.Objects;
  */
 public final class User {
   @NotNull
-  private static final User anonymousUser = new User("anonymous", "anonymous", null, null);
+  private static final User anonymousUser = new User("anonymous", "anonymous", null, null, true);
 
+  private final boolean isAnonymous;
   @NotNull
   private final String userName;
   @NotNull
@@ -31,15 +32,16 @@ public final class User {
   @Nullable
   private final String externalId;
 
-  public static User create(@NotNull String userName, @NotNull String realName, @NotNull String email, @Nullable String externalId) {
-    return new User(userName, realName, email, externalId);
+  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
+    return new User(userName, realName, email, externalId, false);
   }
 
-  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
+  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous) {
     this.userName = userName;
     this.realName = realName;
     this.email = email;
     this.externalId = externalId;
+    this.isAnonymous = isAnonymous;
   }
 
   @Nullable
@@ -63,7 +65,7 @@ public final class User {
   }
 
   public boolean isAnonymous() {
-    return email == null;
+    return isAnonymous;
   }
 
   /**
@@ -94,7 +96,8 @@ public final class User {
     return Objects.equals(externalId, user.externalId)
         && Objects.equals(email, user.email)
         && userName.equals(user.userName)
-        && realName.equals(user.realName);
+        && realName.equals(user.realName)
+        && (isAnonymous == user.isAnonymous);
   }
 
   @Override

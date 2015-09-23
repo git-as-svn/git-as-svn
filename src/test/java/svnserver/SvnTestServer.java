@@ -55,6 +55,8 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public static final String USER_NAME = "tester";
   @NotNull
+  public static final String USER_NAME_NO_MAIL = "nomail";
+  @NotNull
   public static final String REAL_NAME = "Test User";
   @NotNull
   public static final String EMAIL = "foo@bar.org";
@@ -107,7 +109,8 @@ public final class SvnTestServer implements SvnTester {
       config.setUserDB(userDBConfig);
     } else {
       config.setUserDB(new LocalUserDBConfig(new LocalUserDBConfig.UserEntry[]{
-          new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD)
+          new LocalUserDBConfig.UserEntry(USER_NAME, REAL_NAME, EMAIL, PASSWORD),
+          new LocalUserDBConfig.UserEntry(USER_NAME_NO_MAIL, REAL_NAME, null, PASSWORD),
       }));
     }
     config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
@@ -211,8 +214,13 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public SVNRepository openSvnRepository() throws SVNException {
+    return openSvnRepository(USER_NAME, PASSWORD);
+  }
+
+  @NotNull
+  public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
     final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
-    repo.setAuthenticationManager(new BasicAuthenticationManager(USER_NAME, PASSWORD));
+    repo.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
     return repo;
   }
 
