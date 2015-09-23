@@ -66,6 +66,13 @@ public final class LdapUserDBConfig implements UserDBConfig {
   private String ldapCertPem;
 
   /**
+   * Email addresses suffix for users without LDAP email.
+   * If empty - don't generate emails.
+   */
+  @NotNull
+  private String fakeMailSuffix = "";
+
+  /**
    * Maximum LDAP connections.
    */
   private int maxConnections = 10;
@@ -139,6 +146,15 @@ public final class LdapUserDBConfig implements UserDBConfig {
 
   public void setMaxConnections(int maxConnections) {
     this.maxConnections = maxConnections;
+  }
+
+  @NotNull
+  public String getFakeMailSuffix() {
+    return fakeMailSuffix;
+  }
+
+  public void setFakeMailSuffix(@NotNull String fakeMailSuffix) {
+    this.fakeMailSuffix = fakeMailSuffix;
   }
 
   @NotNull

@@ -64,6 +64,8 @@ public class LdapUserDB implements UserDB {
   private final LdapUserDBConfig config;
   @NotNull
   private final String baseDn;
+  @Nullable
+  private final String fakeMailSuffix;
 
   @FunctionalInterface
   private interface LdapCheck {
@@ -86,6 +88,7 @@ public class LdapUserDB implements UserDB {
         bind.bind(ldap);
       }
       this.pool = new LDAPConnectionPool(ldap, 1, config.getMaxConnections());
+      this.fakeMailSuffix = createFakeMailSuffix(config);
       this.config = config;
     } catch (LDAPException e) {
       throw new IllegalStateException(e);
@@ -151,7 +154,10 @@ public class LdapUserDB implements UserDB {
         }
         if (ldapCheck.check(entry.getDN())) {
           final String realName = getAttribute(entry, config.getNameAttribute());
-          final String email = getAttribute(entry, config.getEmailAttribute());
+          String email = getAttribute(entry, config.getEmailAttribute());
+          if (email == null && fakeMailSuffix != null) {
+            email = login + fakeMailSuffix;
+          }
           return User.create(login, realName != null ? realName : login, email, null);
         }
       }
@@ -164,6 +170,15 @@ public class LdapUserDB implements UserDB {
     } catch (NamingException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
     }
+  }
+
+  @Nullable
+  private static String createFakeMailSuffix(@NotNull LdapUserDBConfig config) {
+    final String suffix = config.getFakeMailSuffix();
+    if (suffix.isEmpty()) {
+      return null;
+    }
+    return suffix.indexOf('@') < 0 ? '@' + suffix : suffix;
   }
 
   @NotNull
