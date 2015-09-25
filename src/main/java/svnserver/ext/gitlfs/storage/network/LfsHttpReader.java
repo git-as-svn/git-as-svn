@@ -10,7 +10,9 @@ package svnserver.ext.gitlfs.storage.network;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.common.client.exceptions.UnauthorizedException;
+import ru.bozaro.gitlfs.common.data.Links;
 import ru.bozaro.gitlfs.common.data.Meta;
+import ru.bozaro.gitlfs.common.data.ObjectRes;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -27,24 +29,14 @@ public class LfsHttpReader implements LfsReader {
   @NotNull
   private final LfsHttpStorage owner;
   @NotNull
-  private final String oid;
-  private final long size;
+  private final Meta meta;
   @NotNull
-  private Meta meta;
+  private Links links;
 
-  public LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta) throws IOException {
+  public LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta, @NotNull Links links) throws IOException {
     this.owner = owner;
+    this.links = links;
     this.meta = meta;
-    final Long size = meta.getSize();
-    if (size == null) {
-      throw new IOException("Metadata doesn't contains size data");
-    }
-    final String oid = meta.getOid();
-    if (oid == null) {
-      throw new IOException("Metadata doesn't contains object hash");
-    }
-    this.size = size;
-    this.oid = oid;
   }
 
   @NotNull
@@ -52,13 +44,13 @@ public class LfsHttpReader implements LfsReader {
   public InputStream openStream() throws IOException {
     for (int pass = 0; ; ++pass) {
       try {
-        return owner.getObject(meta);
+        return owner.getObject(links);
       } catch (UnauthorizedException e) {
         if (pass != 0) throw e;
         owner.invalidate(User.getAnonymous());
-        final Meta newMeta = owner.getMeta(oid);
+        final ObjectRes newMeta = owner.getMeta(meta.getOid());
         if (newMeta != null) {
-          this.meta = newMeta;
+          this.links = newMeta;
         }
       }
     }
@@ -72,7 +64,7 @@ public class LfsHttpReader implements LfsReader {
 
   @Override
   public long getSize() {
-    return size;
+    return meta.getSize();
   }
 
   @Nullable
@@ -84,6 +76,6 @@ public class LfsHttpReader implements LfsReader {
   @NotNull
   @Override
   public String getOid(boolean hashOnly) {
-    return hashOnly ? oid.substring(LfsStorage.OID_PREFIX.length()) : oid;
+    return hashOnly ? meta.getOid().substring(LfsStorage.OID_PREFIX.length()) : meta.getOid();
   }
 }
