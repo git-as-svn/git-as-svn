@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwt.NumericDate;
 import org.tmatesoft.svn.core.SVNException;
-import ru.bozaro.gitlfs.common.data.Auth;
+import ru.bozaro.gitlfs.common.data.Link;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
@@ -45,7 +45,7 @@ public class LfsAuthResource extends LfsAbstractResource {
 
   @POST
   @Produces(MediaType.APPLICATION_JSON)
-  public Auth createTokenPost(
+  public Link createTokenPost(
       @Context UriInfo ui,
       @QueryParam("token") @FormParam("token") String token,
       @QueryParam("username") @FormParam("username") String username,
@@ -57,7 +57,7 @@ public class LfsAuthResource extends LfsAbstractResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Auth createToken(
+  public Link createToken(
       @Context UriInfo ui,
       @QueryParam("token") String token,
       @QueryParam("username") String username,
@@ -97,7 +97,7 @@ public class LfsAuthResource extends LfsAbstractResource {
     expireAt.addSeconds(60);
     final String accessToken = TokenHelper.createToken(getWebServer().createEncryption(), user, expireAt);
 
-    return new Auth(
+    return new Link(
         createHref(ui, LfsServer.SERVLET_BASE),
         ImmutableMap.<String, String>builder()
             .put(HttpHeaders.AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)

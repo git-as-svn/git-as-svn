@@ -8,11 +8,15 @@
 package svnserver.ext.web.server;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.VcsAccess;
 
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
@@ -26,7 +30,7 @@ import java.io.IOException;
  */
 public abstract class AuthenticationFilter implements ContainerRequestFilter {
   @FunctionalInterface
-  protected interface Checker {
+  public interface Checker {
     void check(@NotNull VcsAccess access, @NotNull User user) throws SVNException, IOException;
   }
 
@@ -43,23 +47,33 @@ public abstract class AuthenticationFilter implements ContainerRequestFilter {
   @Override
   public void filter(ContainerRequestContext requestContext) throws IOException {
     final WebServer server = context.getShared().sure(WebServer.class);
-    final VcsAccess access = context.sure(VcsAccess.class);
-
     User user = server.getAuthInfo(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION));
+    try {
+      checkAccess(context, user, checker);
+      requestContext.setProperty(User.class.getName(), user);
+    } catch (ClientErrorException e) {
+      requestContext.abortWith(e.getResponse());
+    }
+  }
+
+  @Nullable
+  public static Response checkAccess(@NotNull LocalContext context, @Nullable User user, @NotNull Checker checker) throws IOException, ClientErrorException {
+    final VcsAccess access = context.sure(VcsAccess.class);
     if (user == null) {
       user = User.getAnonymous();
     }
     try {
       checker.check(access, user);
-      requestContext.setProperty(User.class.getName(), user);
+      return null;
     } catch (SVNException ignored) {
       if (user.isAnonymous()) {
-        requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+        final WebServer server = context.getShared().sure(WebServer.class);
+        throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED)
             .header("WWW-Authenticate", "Basic realm=\"" + server.getRealm() + "\"")
             .entity("Unauthorized")
             .build());
       } else {
-        requestContext.abortWith(Response.status(Response.Status.FORBIDDEN)
+        throw new ForbiddenException(Response.status(Response.Status.FORBIDDEN)
             .entity("Access forbidden")
             .build());
       }

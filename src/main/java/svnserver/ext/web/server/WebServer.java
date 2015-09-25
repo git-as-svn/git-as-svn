@@ -261,6 +261,7 @@ public class WebServer implements Shared {
     rc.register(new WebExceptionMapper());
     rc.register(new AuthenticationFilterReader(localContext));
     rc.register(new AuthenticationFilterWriter(localContext));
+    rc.register(new AuthenticationFilterUnchecked(localContext));
     rc.register(new AbstractBinder() {
       @Override
       protected void configure() {

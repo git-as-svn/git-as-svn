@@ -16,12 +16,13 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.bozaro.gitlfs.common.client.AuthAccess;
 import ru.bozaro.gitlfs.common.client.AuthProvider;
 import ru.bozaro.gitlfs.common.client.Client;
 import ru.bozaro.gitlfs.common.client.StreamProvider;
-import ru.bozaro.gitlfs.common.data.Auth;
-import ru.bozaro.gitlfs.common.data.Meta;
+import ru.bozaro.gitlfs.common.data.Link;
+import ru.bozaro.gitlfs.common.data.Links;
+import ru.bozaro.gitlfs.common.data.ObjectRes;
+import ru.bozaro.gitlfs.common.data.Operation;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -48,7 +49,7 @@ public class LfsHttpStorage implements LfsStorage {
   @NotNull
   private final ObjectMapper mapper;
   @NotNull
-  private final LoadingCache<User, Auth> tokens;
+  private final LoadingCache<User, Link> tokens;
 
   public LfsHttpStorage(@NotNull URL authUrl, @NotNull String authToken) {
     this.authUrl = authUrl;
@@ -56,8 +57,8 @@ public class LfsHttpStorage implements LfsStorage {
     this.mapper = WebServer.createJsonMapper();
     this.tokens = CacheBuilder.newBuilder()
         .maximumSize(MAX_CACHE)
-        .build(new CacheLoader<User, Auth>() {
-          public Auth load(@NotNull User user) throws IOException {
+        .build(new CacheLoader<User, Link>() {
+          public Link load(@NotNull User user) throws IOException {
             return getTokenUncached(user);
           }
         });
@@ -70,7 +71,7 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   @NotNull
-  private Auth getTokenUncached(@NotNull User user) throws IOException {
+  private Link getTokenUncached(@NotNull User user) throws IOException {
     final PostMethod post = new PostMethod(authUrl.toString());
     post.addParameter("token", authToken);
     if (!user.isAnonymous()) {
@@ -84,13 +85,13 @@ public class LfsHttpStorage implements LfsStorage {
     final HttpClient client = new HttpClient();
     client.executeMethod(post);
     if (post.getStatusCode() == HttpStatus.SC_OK) {
-      return mapper.readValue(post.getResponseBodyAsStream(), Auth.class);
+      return mapper.readValue(post.getResponseBodyAsStream(), Link.class);
     }
     throw new HttpError(post, "Token request failed");
   }
 
   @NotNull
-  private Auth getToken(@NotNull User user) throws IOException {
+  private Link getToken(@NotNull User user) throws IOException {
     try {
       return tokens.get(user);
     } catch (ExecutionException e) {
@@ -112,7 +113,7 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   @Nullable
-  public Meta getMeta(@NotNull String hash) throws IOException {
+  public ObjectRes getMeta(@NotNull String hash) throws IOException {
     final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
     return lfsClient.getMeta(hash);
   }
@@ -123,7 +124,7 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   @NotNull
-  public InputStream getObject(@NotNull Meta meta) throws IOException {
+  public InputStream getObject(@NotNull Links meta) throws IOException {
     final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
     return lfsClient.getObject(meta);
   }
@@ -135,11 +136,11 @@ public class LfsHttpStorage implements LfsStorage {
       if (!oid.startsWith(OID_PREFIX)) return null;
       final String hash = oid.substring(OID_PREFIX.length());
       final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
-      final Meta meta = lfsClient.getMeta(hash);
-      if (meta == null) {
+      final ObjectRes meta = lfsClient.getMeta(hash);
+      if (meta == null || meta.getMeta() == null) {
         return null;
       }
-      return new LfsHttpReader(this, meta);
+      return new LfsHttpReader(this, meta.getMeta(), meta);
     } catch (HttpError e) {
       e.log();
       throw e;
@@ -162,12 +163,12 @@ public class LfsHttpStorage implements LfsStorage {
 
     @NotNull
     @Override
-    public Auth getAuth(@NotNull AuthAccess mode) throws IOException {
+    public Link getAuth(@NotNull Operation mode) throws IOException {
       return getToken(user);
     }
 
     @Override
-    public void invalidateAuth(@NotNull AuthAccess mode, @NotNull Auth auth) {
+    public void invalidateAuth(@NotNull Operation mode, @NotNull Link auth) {
       tokens.invalidate(user);
     }
   }
