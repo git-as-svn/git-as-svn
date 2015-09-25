@@ -49,6 +49,9 @@ public abstract class AuthenticationFilter implements ContainerRequestFilter {
     final WebServer server = context.getShared().sure(WebServer.class);
     User user = server.getAuthInfo(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION));
     try {
+      if (user == null) {
+        user = User.getAnonymous();
+      }
       checkAccess(context, user, checker);
       requestContext.setProperty(User.class.getName(), user);
     } catch (ClientErrorException e) {
@@ -57,11 +60,8 @@ public abstract class AuthenticationFilter implements ContainerRequestFilter {
   }
 
   @Nullable
-  public static Response checkAccess(@NotNull LocalContext context, @Nullable User user, @NotNull Checker checker) throws IOException, ClientErrorException {
+  public static Response checkAccess(@NotNull LocalContext context, @NotNull User user, @NotNull Checker checker) throws IOException, ClientErrorException {
     final VcsAccess access = context.sure(VcsAccess.class);
-    if (user == null) {
-      user = User.getAnonymous();
-    }
     try {
       checker.check(access, user);
       return null;
