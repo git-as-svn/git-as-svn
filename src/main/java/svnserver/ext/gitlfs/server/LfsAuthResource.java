@@ -17,6 +17,7 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.web.annotations.SecureWriter;
 import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.TokenHelper;
 
@@ -26,6 +27,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Date;
 
 /**
@@ -47,18 +49,27 @@ public class LfsAuthResource extends LfsAbstractResource {
   @Produces(MediaType.APPLICATION_JSON)
   public Link createTokenPost(
       @Context UriInfo ui,
+      @QueryParam("url") @FormParam("url") URI uri,
       @QueryParam("token") @FormParam("token") String token,
       @QueryParam("username") @FormParam("username") String username,
       @QueryParam("external") @FormParam("external") String external,
       @QueryParam("anonymous") @FormParam("anonymous") boolean anonymous
   ) {
-    return createToken(ui, token, username, external, anonymous);
+    return createToken(ui, uri, token, username, external, anonymous);
+  }
+
+  @GET
+  @Path("/test")
+  @SecureWriter
+  public String test() {
+    return "Hello";
   }
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public Link createToken(
       @Context UriInfo ui,
+      @QueryParam("url") URI uri,
       @QueryParam("token") String token,
       @QueryParam("username") String username,
       @QueryParam("external") String external,
@@ -98,7 +109,7 @@ public class LfsAuthResource extends LfsAbstractResource {
     final String accessToken = TokenHelper.createToken(getWebServer().createEncryption(), user, expireAt);
 
     return new Link(
-        createHref(ui, LfsServer.SERVLET_BASE),
+        uri != null ? uri : createHref(ui, LfsServer.SERVLET_BASE),
         ImmutableMap.<String, String>builder()
             .put(HttpHeaders.AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
             .build(),
