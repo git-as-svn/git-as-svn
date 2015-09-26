@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Git-lfs batch API support.
+
 ## 1.0.12-alpha: Initial support of GitLab integration and embedded git-lfs server
 
  * Initial git-lfs support (embedded git-lfs server).
