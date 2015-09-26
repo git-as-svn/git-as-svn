@@ -18,6 +18,8 @@ shared:
     - !http
       host: localhost
       port: 8123
+      # Use X-Forwarded-* headers
+      forwarded: true
   # Git LFS server
   - !lfs
     path: lfs

@@ -68,6 +68,8 @@ shared:
     - !http
       host: localhost
       port: 8123
+      # Use X-Forwarded-* headers
+      forwarded: true
   # Git LFS server
   - !lfs
     # Secret token for git-lfs-authenticate script
