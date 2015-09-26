@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlfs.server;
 
-import jersey.repackaged.com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.httpclient.HttpStatus;
 import org.jetbrains.annotations.NotNull;
 import ru.bozaro.gitlfs.common.client.Constants;
