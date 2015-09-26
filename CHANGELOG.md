@@ -4,6 +4,7 @@
 
  * Git-lfs batch API support.
  * Add support for LDAP users without email.
+ * Add HTTP-requests logging.
 
 ## 1.0.12-alpha: Initial support of GitLab integration and embedded git-lfs server
 

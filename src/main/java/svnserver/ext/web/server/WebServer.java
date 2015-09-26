@@ -12,7 +12,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.RequestLog;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -84,8 +89,26 @@ public class WebServer implements Shared {
     if (server != null) {
       final ServletContextHandler contextHandler = new ServletContextHandler();
       contextHandler.setContextPath("/");
-      server.setHandler(contextHandler);
       handler = contextHandler.getServletHandler();
+
+      //final ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+      //securityHandler.addConstraintMapping(new );
+      //contextHandler.setSecurityHandler(securityHandler);
+
+      final RequestLogHandler logHandler = new RequestLogHandler();
+      logHandler.setRequestLog(new RequestLog() {
+        @Override
+        public void log(Request request, Response response) {
+          final User user = (User) request.getAttribute(User.class.getName());
+          final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
+          log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
+        }
+      });
+
+      final HandlerCollection handlers = new HandlerCollection();
+      handlers.addHandler(contextHandler);
+      handlers.addHandler(logHandler);
+      server.setHandler(handlers);
     } else {
       handler = null;
     }
