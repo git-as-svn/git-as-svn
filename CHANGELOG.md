@@ -6,6 +6,7 @@
  * Add support for LDAP users without email.
  * Add support for X-Forwarded-* headers.
  * Add HTTP-requests logging.
+ * Change .gitignore mapping: ignored folder now mask all content as ignored.
 
 ## 1.0.12-alpha: Initial support of GitLab integration and embedded git-lfs server
 
