@@ -16,11 +16,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -205,8 +207,11 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public SvnOperationFactory createOperationFactory(@NotNull String userName, @NotNull String password) {
-    final SvnOperationFactory factory = new SvnOperationFactory();
-    factory.setOptions(new DefaultSVNOptions(getTempDirectory(), true));
+    final SVNWCContext wcContext = new SVNWCContext(new DefaultSVNOptions(getTempDirectory(), true), null);
+    wcContext.setSqliteTemporaryDbInMemory(true);
+    wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
+
+    final SvnOperationFactory factory = new SvnOperationFactory(wcContext);
     factory.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
     svnFactories.add(factory);
     return factory;

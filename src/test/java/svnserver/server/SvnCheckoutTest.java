@@ -12,9 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -87,11 +85,7 @@ public class SvnCheckoutTest {
       checkout.setSource(SvnTarget.fromURL(server.getUrl().appendPath(basePath, false)));
       checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
       checkout.setRevision(SVNRevision.create(revisions.get(0)));
-      checkout.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
       checkout.run();
-
-      final SVNWCContext wcContext = factory.getWcContext();
-      wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
 
       factory.setEventHandler(new ISVNEventHandler() {
         @Override
@@ -107,7 +101,7 @@ public class SvnCheckoutTest {
       for (long revision : revisions.subList(1, revisions.size())) {
         final SvnLog svnLog = factory.createLog();
         svnLog.setSingleTarget(SvnTarget.fromURL(server.getUrl()));
-        svnLog.setRevisionRanges(Arrays.asList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
+        svnLog.setRevisionRanges(Collections.singletonList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
         svnLog.setDiscoverChangedPaths(true);
         final SVNLogEntry logEntry = svnLog.run();
         log.info("Update to revision #{}: {}", revision, StringHelper.getFirstLine(logEntry.getMessage()));
