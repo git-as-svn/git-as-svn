@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git.push;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.CharStreams;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
@@ -24,10 +24,7 @@ import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -122,7 +119,7 @@ public class GitPushEmbedded implements GitPusher {
         userInfo.updateEnvironment(processBuilder.environment());
         context.sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
         final Process process = runner.exec(processBuilder);
-        final String hookMessage = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+        final String hookMessage = CharStreams.toString(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
         int exitCode = process.waitFor();
         if (exitCode != 0) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Commit blocked by hook with output:\n" + hookMessage));

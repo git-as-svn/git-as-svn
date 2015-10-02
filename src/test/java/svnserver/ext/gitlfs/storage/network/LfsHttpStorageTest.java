@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlfs.storage.network;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.CharStreams;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -41,6 +41,7 @@ import javax.ws.rs.Path;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -109,7 +110,7 @@ public class LfsHttpStorageTest {
       Assert.assertEquals(15, reader.getSize());
 
       try (final InputStream stream = reader.openStream()) {
-        Assert.assertEquals(IOUtils.toString(stream, StandardCharsets.UTF_8), "Hello, world!!!");
+        Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
       }
     } finally {
       jetty.stop();
@@ -143,7 +144,7 @@ public class LfsHttpStorageTest {
       }
 
       try (final InputStream stream = reader.openStream()) {
-        Assert.assertEquals(IOUtils.toString(stream, StandardCharsets.UTF_8), "Hello, world!!!");
+        Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
       }
     } finally {
       TestHelper.deleteDirectory(tempDir);

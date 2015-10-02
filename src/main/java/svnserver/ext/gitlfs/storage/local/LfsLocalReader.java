@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlfs.storage.local;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.pointer.Constants;
@@ -43,7 +43,7 @@ public class LfsLocalReader implements LfsReader {
     }
     final Map<String, String> meta;
     try (InputStream stream = new FileInputStream(metaPath)) {
-      meta = Pointer.parsePointer(IOUtils.toByteArray(stream));
+      meta = Pointer.parsePointer(ByteStreams.toByteArray(stream));
     }
     if (meta == null) {
       throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());

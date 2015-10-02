@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlfs.server;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
@@ -48,7 +48,7 @@ public class LfsStorageResource extends LfsAbstractResource {
                              InputStream stream
   ) throws IOException {
     final LfsWriter writer = getStorage().getWriter(user);
-    IOUtils.copy(stream, writer);
+    ByteStreams.copy(stream, writer);
     writer.finish(LfsStorage.OID_PREFIX + oid);
     return Response.ok().build();
   }
@@ -76,7 +76,7 @@ public class LfsStorageResource extends LfsAbstractResource {
         if (stream != null) {
           // Send already compressed stream
           resp.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
-          IOUtils.copy(stream, output);
+          ByteStreams.copy(stream, output);
           output.close();
           return;
         }
@@ -84,7 +84,7 @@ public class LfsStorageResource extends LfsAbstractResource {
     }
     // Send uncompressed stream
     resp.setContentLengthLong(reader.getSize());
-    IOUtils.copy(reader.openStream(), output);
+    ByteStreams.copy(reader.openStream(), output);
     output.close();
   }
 

@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.ByteStreams;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -126,7 +126,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       ) {
         try (InputStream inputStream = newFilter.inputStream(objectId);
              OutputStream outputStream = filter.outputStream(content, user)) {
-          IOUtils.copy(inputStream, outputStream);
+          ByteStreams.copy(inputStream, outputStream);
         }
         try (InputStream inputStream = content.toInputStream()) {
           objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, content.size(), inputStream));
