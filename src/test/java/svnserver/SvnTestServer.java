@@ -212,7 +212,7 @@ public final class SvnTestServer implements SvnTester {
     wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
 
     final SvnOperationFactory factory = new SvnOperationFactory(wcContext);
-    factory.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
+    factory.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
     svnFactories.add(factory);
     return factory;
   }
@@ -225,7 +225,7 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
     final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
-    repo.setAuthenticationManager(new BasicAuthenticationManager(userName, password));
+    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
     return repo;
   }
 

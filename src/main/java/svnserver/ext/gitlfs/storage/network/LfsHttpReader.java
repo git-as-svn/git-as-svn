@@ -9,7 +9,7 @@ package svnserver.ext.gitlfs.storage.network;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.bozaro.gitlfs.common.client.exceptions.UnauthorizedException;
+import ru.bozaro.gitlfs.client.exceptions.UnauthorizedException;
 import ru.bozaro.gitlfs.common.data.Links;
 import ru.bozaro.gitlfs.common.data.Meta;
 import ru.bozaro.gitlfs.common.data.ObjectRes;

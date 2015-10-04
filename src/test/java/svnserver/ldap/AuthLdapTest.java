@@ -79,7 +79,7 @@ public class AuthLdapTest {
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig())
     ) {
       final SVNRepository repo = server.openSvnRepository();
-      repo.setAuthenticationManager(new BasicAuthenticationManager(login, password));
+      repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(login, password.toCharArray()));
       repo.getLatestRevision();
     }
   }

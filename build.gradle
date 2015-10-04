@@ -49,13 +49,12 @@ dependencies {
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:18.0"
 
-  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.2.0"
-  compile "ru.bozaro.gitlfs:gitlfs-client:0.2.0"
+  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.3.0"
+  compile "ru.bozaro.gitlfs:gitlfs-client:0.3.0"
 
   compile "org.glassfish.jersey.containers:jersey-container-servlet:2.21"
   compile "org.glassfish.jersey.containers:jersey-container-simple-http:2.21"
   compile "org.glassfish.jersey.containers:jersey-container-simple-http:2.21"
-  compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.6.2"
   compile "org.glassfish.jersey.media:jersey-media-json-jackson:2.21"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
