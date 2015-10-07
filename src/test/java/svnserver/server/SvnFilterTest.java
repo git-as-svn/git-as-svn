@@ -7,6 +7,7 @@
  */
 package svnserver.server;
 
+import com.google.common.base.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -34,6 +35,10 @@ import static svnserver.SvnTestHelper.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnFilterTest {
+  @NotNull
+  private final static byte[] CONTENT_FOO = (Strings.repeat("Some data\n", 100) + "Foo file\n").getBytes(StandardCharsets.UTF_8);
+  @NotNull
+  private final static byte[] CONTENT_BAR = (Strings.repeat("Some data\n", 100) + "Bar file\n").getBytes(StandardCharsets.UTF_8);
   @NotNull
   private final static Map<String, String> propsBinary = new HashMap<String, String>() {{
     put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
@@ -140,17 +145,14 @@ public class SvnFilterTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
-      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
-
       // Add filter to file.
       createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", null);
       // On file read now we must have uncompressed content.
-      createFile(repo, "/data.z", foo, null);
-      checkFileContent(repo, "/data.z", foo);
+      createFile(repo, "/data.z", CONTENT_FOO, null);
+      checkFileContent(repo, "/data.z", CONTENT_FOO);
       // Modify file.
-      modifyFile(repo, "/data.z", bar, repo.getLatestRevision());
-      checkFileContent(repo, "/data.z", bar);
+      modifyFile(repo, "/data.z", CONTENT_BAR, repo.getLatestRevision());
+      checkFileContent(repo, "/data.z", CONTENT_BAR);
     }
   }
 
@@ -164,16 +166,13 @@ public class SvnFilterTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
-      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
-
       // Create file.
       {
         final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
         editor.openRoot(-1);
 
         editor.addFile("data.z", null, -1);
-        sendDeltaAndClose(editor, "data.z", null, foo);
+        sendDeltaAndClose(editor, "data.z", null, CONTENT_FOO);
 
         editor.addFile(".gitattributes", null, -1);
         sendDeltaAndClose(editor, ".gitattributes", null, "*.z\t\t\tfilter=gzip\n");
@@ -182,7 +181,7 @@ public class SvnFilterTest {
         editor.closeEdit();
       }
       // On file read now we must have uncompressed content.
-      checkFileContent(repo, "/data.z", foo);
+      checkFileContent(repo, "/data.z", CONTENT_FOO);
 
       // Modify file.
       {
@@ -191,7 +190,7 @@ public class SvnFilterTest {
         editor.openRoot(-1);
 
         editor.openFile("data.z", rev);
-        sendDeltaAndClose(editor, "data.z", foo, bar);
+        sendDeltaAndClose(editor, "data.z", CONTENT_FOO, CONTENT_BAR);
 
         editor.openFile(".gitattributes", rev);
         sendDeltaAndClose(editor, ".gitattributes", "*.z\t\t\tfilter=gzip\n", "");
@@ -200,7 +199,7 @@ public class SvnFilterTest {
         editor.closeEdit();
       }
       // On file read now we must have uncompressed content.
-      checkFileContent(repo, "/data.z", bar);
+      checkFileContent(repo, "/data.z", CONTENT_BAR);
     }
   }
 
@@ -214,9 +213,6 @@ public class SvnFilterTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
-      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
-
       // Create file.
       {
         final ISVNEditor editor = repo.getCommitEditor("Complex commit", null, false, null);
@@ -226,13 +222,13 @@ public class SvnFilterTest {
         sendDeltaAndClose(editor, ".gitattributes", null, "*.z\t\t\tfilter=gzip\n");
 
         editor.addFile("data.z", null, -1);
-        sendDeltaAndClose(editor, "data.z", null, foo);
+        sendDeltaAndClose(editor, "data.z", null, CONTENT_FOO);
 
         editor.closeDir();
         editor.closeEdit();
       }
       // On file read now we must have uncompressed content.
-      checkFileContent(repo, "/data.z", foo);
+      checkFileContent(repo, "/data.z", CONTENT_FOO);
 
       // Modify file.
       {
@@ -244,13 +240,13 @@ public class SvnFilterTest {
         sendDeltaAndClose(editor, ".gitattributes", "*.z\t\t\tfilter=gzip\n", "");
 
         editor.openFile("data.z", rev);
-        sendDeltaAndClose(editor, "data.z", foo, bar);
+        sendDeltaAndClose(editor, "data.z", CONTENT_FOO, CONTENT_BAR);
 
         editor.closeDir();
         editor.closeEdit();
       }
       // On file read now we must have uncompressed content.
-      checkFileContent(repo, "/data.z", bar);
+      checkFileContent(repo, "/data.z", CONTENT_BAR);
     }
   }
 
@@ -264,12 +260,10 @@ public class SvnFilterTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
-
       // Add filter to file.
       createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", null);
       // Create source file.
-      createFile(repo, "/data.txt", foo, null);
+      createFile(repo, "/data.txt", CONTENT_FOO, null);
       // Copy source file with "raw" filter to destination with "gzip" filter.
       {
         final long rev = repo.getLatestRevision();
@@ -281,7 +275,7 @@ public class SvnFilterTest {
         editor.closeEdit();
       }
       // On file read now we must have uncompressed content.
-      checkFileContent(repo, "/data.z", foo);
+      checkFileContent(repo, "/data.z", CONTENT_FOO);
     }
   }
 
@@ -295,25 +289,22 @@ public class SvnFilterTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      final byte[] foo = "Foo file".getBytes(StandardCharsets.UTF_8);
-      final byte[] bar = "Test bar".getBytes(StandardCharsets.UTF_8);
-
       // Add filter to file.
       createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", null);
       // Create source file.
-      createFile(repo, "/data.txt", foo, null);
+      createFile(repo, "/data.txt", CONTENT_FOO, null);
       // Copy source file with "raw" filter to destination with "gzip" filter.
       {
         final long rev = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Copy file commit", null, false, null);
         editor.openRoot(-1);
         editor.addFile("data.z", "data.txt", rev);
-        sendDeltaAndClose(editor, "data.z", foo, bar);
+        sendDeltaAndClose(editor, "data.z", CONTENT_FOO, CONTENT_BAR);
         editor.closeDir();
         editor.closeEdit();
       }
       // On file read now we must have uncompressed content.
-      checkFileContent(repo, "/data.z", bar);
+      checkFileContent(repo, "/data.z", CONTENT_BAR);
     }
   }
 

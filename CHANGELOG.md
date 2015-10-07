@@ -7,6 +7,7 @@
  * Add support for X-Forwarded-* headers.
  * Add HTTP-requests logging.
  * Change .gitignore mapping: ignored folder now mask all content as ignored.
+ * Fix git-lfs file commit.
 
 ## 1.0.12-alpha: Initial support of GitLab integration and embedded git-lfs server
 

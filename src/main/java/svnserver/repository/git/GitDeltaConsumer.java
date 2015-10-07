@@ -151,7 +151,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
       newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
-      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream, user), true);
+      window.applyTextDelta((oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream, user), true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
