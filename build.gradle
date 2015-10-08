@@ -150,6 +150,7 @@ task deployDeb(type: Deb, dependsOn: deployJars) {
 
 task deployZip(type: Zip, dependsOn: deployJars) {
   from "build/deploy"
+  archiveName "${project.name}_${project.version}.zip"
 }
 
 def createLauncherClassPath() {

@@ -14,7 +14,7 @@ deploy:
     secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
   file_glob: true
   file:
-    - build/distributions/git-as-svn-*.zip
+    - build/distributions/git-as-svn_*.zip
     - build/distributions/git-as-svn_*.deb
   skip_cleanup: true
   on:
