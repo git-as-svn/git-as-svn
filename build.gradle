@@ -1,7 +1,10 @@
 import org.ajoberstar.grgit.Grgit
 
+project.version = "1.0.13"
+
 buildscript {
   repositories {
+    jcenter()
     mavenLocal()
     mavenCentral()
   }
@@ -9,6 +12,7 @@ buildscript {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
     classpath "org.ajoberstar:gradle-git:0.9.0"
+    classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0"
   }
 }
 
@@ -25,6 +29,7 @@ apply plugin: "license"
 apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "project-report"
+apply plugin: "nebula.deb"
 
 license {
   header rootProject.file('license_header.txt')
@@ -87,6 +92,7 @@ test {
 }
 
 jar {
+  archiveName "${project.name}.jar"
   manifest {
     attributes(
         "Main-Class": "svnserver.server.Main",
@@ -107,7 +113,7 @@ task deployJars(dependsOn: jar) << {
   def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
   copy {
     from fullArtifacts.intersect(projectArtifacts)
-    from (project.projectDir) {
+    from(project.projectDir) {
       include "*.example"
       include "*.md"
       include "LICENSE"
@@ -117,6 +123,28 @@ task deployJars(dependsOn: jar) << {
   copy {
     from fullArtifacts.minus(projectArtifacts)
     into "${project.buildDir}/deploy/vendors"
+  }
+}
+
+task deployDeb(type: Deb, dependsOn: deployJars) {
+  license "GPL-2+"
+
+  requires("java8-runtime-headless")
+
+  customField([
+      "Commit-ID": Grgit.open(project.file(rootProject.projectDir)).head().id
+  ])
+
+  from("build/deploy") {
+    include "**/*.jar"
+    into "/usr/share/git-as-svn"
+  }
+
+  from(rootProject.projectDir) {
+    include "*.md"
+    include "*.example"
+    include "LICENSE"
+    into "/usr/share/doc/git-as-svn"
   }
 }
 
