@@ -60,7 +60,11 @@ final class GitTortoise implements GitProperty {
     final Map<String, String> result = new HashMap<>();
     for (Map.Entry<String, Profile.Section> sectionEntry : ini.entrySet()) {
       for (Map.Entry<String, String> configEntry : sectionEntry.getValue().entrySet()) {
-        result.put(sectionEntry.getKey() + ":" + configEntry.getKey(), configEntry.getValue());
+        String value = configEntry.getValue();
+        if (value.startsWith("\"") && value.endsWith("\"")) {
+          value = value.substring(1, value.length() - 1);
+        }
+        result.put(sectionEntry.getKey() + ":" + configEntry.getKey(), value);
       }
     }
     return result;

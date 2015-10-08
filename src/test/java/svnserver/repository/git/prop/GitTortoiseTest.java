@@ -35,4 +35,28 @@ public class GitTortoiseTest {
     Assert.assertEquals(props.get("bugtraq:logregex"), "(BUG-\\d+)");
     Assert.assertEquals(props.get("bugtraq:warnifnoissue"), "false");
   }
+
+  @Test
+  public void testTortoiseAttributes() throws IOException {
+    final GitProperty attr = new GitTortoise(
+        "[bugtraq]\n" +
+            "\turl = https://tortoisegit.org/issue/%BUGID%\n" +
+            "\tlogregex = \"[Ii]ssues?:?(\\\\s*(,|and)?\\\\s*#?\\\\d+)+\\n(\\\\d+)\"\n" +
+            "\twarnifnoissue = false\n" +
+            "\n" +
+            "[tgit]\n" +
+            "\twarnnosignedoffby = true\n" +
+            "\tprojectlanguage = 1033\n" +
+            "\ticon = src/Resources/Tortoise.ico"
+    );
+    final Map<String, String> props = new HashMap<>();
+    attr.apply(props);
+    Assert.assertEquals(props.size(), 6);
+    Assert.assertEquals(props.get("bugtraq:url"), "https://tortoisegit.org/issue/%BUGID%");
+    Assert.assertEquals(props.get("bugtraq:logregex"), "[Ii]ssues?:?(\\s*(,|and)?\\s*#?\\d+)+\n(\\d+)");
+    Assert.assertEquals(props.get("bugtraq:warnifnoissue"), "false");
+    Assert.assertEquals(props.get("tgit:warnnosignedoffby"), "true");
+    Assert.assertEquals(props.get("tgit:projectlanguage"), "1033");
+    Assert.assertEquals(props.get("tgit:icon"), "src/Resources/Tortoise.ico");
+  }
 }
