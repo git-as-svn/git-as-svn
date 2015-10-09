@@ -128,6 +128,8 @@ task deployJars(dependsOn: jar) << {
 
 task deployDeb(type: Deb, dependsOn: deployJars) {
   license "GPL-2+"
+  user "root"
+  permissionGroup "root"
 
   requires("java8-runtime-headless")
 
@@ -135,12 +137,27 @@ task deployDeb(type: Deb, dependsOn: deployJars) {
       "Commit-ID": Grgit.open(project.file(rootProject.projectDir)).head().id
   ])
 
+  configurationFile("/etc/default/git-as-svn")
+
   from("build/deploy") {
     include "**/*.jar"
     into "/usr/share/git-as-svn"
   }
 
-  from(rootProject.projectDir) {
+  from("deploy/deb/etc/default") {
+    include "git-as-svn"
+    into "/etc/default/git-as-svn"
+  }
+
+  from("deploy/deb/var/cache") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    permissionGroup "git"
+    into "/var/cache"
+  }
+
+  from(".") {
     include "*.md"
     include "*.example"
     include "LICENSE"
