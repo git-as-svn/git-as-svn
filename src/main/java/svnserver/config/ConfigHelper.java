@@ -7,6 +7,7 @@
  */
 package svnserver.config;
 
+import com.google.common.io.Files;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -20,6 +21,6 @@ public class ConfigHelper {
   @NotNull
   public static File joinPath(@NotNull File basePath, @NotNull String localPath) {
     final File path = new File(localPath);
-    return path.isAbsolute() ? path : new File(basePath, localPath);
+    return path.isAbsolute() ? path : new File(Files.simplifyPath(basePath + "/" + localPath));
   }
 }
