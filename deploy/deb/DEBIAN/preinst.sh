@@ -10,6 +10,7 @@ fi
 if ! getent passwd git >/dev/null; then
 	# Adding system user: git
 	adduser \
+	  --system \
 	  --disabled-login \
 	  --ingroup git \
 	  --home /home/git \
