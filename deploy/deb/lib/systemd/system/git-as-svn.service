@@ -3,6 +3,7 @@ Description=Git as Subversion server
 After=network.target syslog.target
 
 [Service]
+User=git
 EnvironmentFile=-/etc/default/git-as-svn
 ExecStart=/usr/bin/git-as-svn $GAS_ARGS
 KillMode=process
@@ -10,4 +11,3 @@ Restart=on-failure
 
 [Install]
 WantedBy=default.target
-
