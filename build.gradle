@@ -149,6 +149,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   ])
 
   configurationFile("/etc/default/git-as-svn")
+  configurationFile("/etc/git-as-svn/git-as-svn.conf")
 
   //user "root"
   //permissionGroup "root"
@@ -160,7 +161,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     exclude "**/.keep"
     exclude "DEBIAN"
     exclude "var/cache/git-as-svn"
-    exclude "var/lib/git"
+    exclude "var/db/git"
     into "/"
   }
 
@@ -175,11 +176,11 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "var/cache"
   }
 
-  from("deploy/deb/var/lib") {
+  from("deploy/deb/var/db") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
-    into "var/lib"
+    into "var/db"
   }
 
   from(configurations.archives.artifacts*.file + configurations.runtime.files) {
