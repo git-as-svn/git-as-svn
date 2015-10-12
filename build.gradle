@@ -1,5 +1,7 @@
 import org.ajoberstar.grgit.Grgit
 
+project.version = "1.0.13"
+
 buildscript {
   repositories {
     mavenLocal()
@@ -13,7 +15,7 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = "2.0"
+  gradleVersion = "2.7"
 }
 
 repositories {
@@ -24,6 +26,7 @@ repositories {
 apply plugin: "license"
 apply plugin: "idea"
 apply plugin: "java"
+apply plugin: "application"
 apply plugin: "project-report"
 
 license {
@@ -64,6 +67,8 @@ dependencies {
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
+mainClassName = "svnserver.server.Main"
+applicationDefaultJvmArgs = ["-Xmx512m"]
 
 idea {
   project {
@@ -88,11 +93,31 @@ test {
 }
 
 jar {
+  archiveName "${project.name}.jar"
   manifest {
     attributes(
         "Main-Class": "svnserver.server.Main",
         "Class-Path": "${-> createLauncherClassPath()}"
     )
+  }
+}
+
+task createDocs(type: Copy) {
+  from(project.projectDir) {
+    include "*.example"
+    include "*.md"
+    include "LICENSE"
+  }
+  into file("$buildDir/doc")
+}
+
+distributions {
+  main {
+    contents {
+      from(createDocs) {
+        into "doc"
+      }
+    }
   }
 }
 
@@ -103,31 +128,17 @@ processResources {
   ])
 }
 
-task deployJars(dependsOn: jar) << {
-  def projectArtifacts = configurations.archives.artifacts*.file
-  def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
-  copy {
-    from fullArtifacts.intersect(projectArtifacts)
-    from (project.projectDir) {
-      include "*.example"
-      include "*.md"
-      include "LICENSE"
-    }
-    into "${project.buildDir}/deploy"
-  }
-  copy {
-    from fullArtifacts.minus(projectArtifacts)
-    into "${project.buildDir}/deploy/vendors"
-  }
+distZip {
+  archiveName "${project.name}_${project.version}.zip"
 }
 
-task deployZip(type: Zip, dependsOn: deployJars) {
-  from "build/deploy"
+distTar {
+  archiveName "${project.name}_${project.version}.tar"
 }
 
 def createLauncherClassPath() {
   def projectArtifacts = configurations.archives.artifacts*.file
   def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
-  def vendorJars = fullArtifacts.minus(projectArtifacts).collect { "vendors/${it.name}" }
+  def vendorJars = fullArtifacts.minus(projectArtifacts).collect { it.name }
   return vendorJars.join(" ")
 }
