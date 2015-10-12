@@ -55,7 +55,7 @@ repositoryMapping: !listMapping
         # - EXAMPLE - create repository with example data
         createMode: EXAMPLE
         branch: master
-        path: example.git
+        path: /var/db/git/repositories/example.git
         renameDetection: true
 
 shared:

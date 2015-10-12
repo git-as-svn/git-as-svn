@@ -1,11 +1,11 @@
 [Unit]
 Description=Git as Subversion server
 After=network.target syslog.target
-ConditionFileNotEmpty=-/etc/git-as-svn/git-as-svn.conf
+ConditionFileNotEmpty=/etc/git-as-svn/git-as-svn.conf
 
 [Service]
 User=git
-EnvironmentFile=-/etc/default/git-as-svn
+EnvironmentFile=/etc/default/git-as-svn
 ExecStart=/usr/bin/git-as-svn --config /etc/git-as-svn/git-as-svn.conf $GAS_ARGS
 KillMode=process
 Restart=on-failure

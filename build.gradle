@@ -176,6 +176,11 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "var/cache"
   }
 
+  from("config.example") {
+    rename ".*", "git-as-svn.conf.example"
+    into "etc/git-as-svn"
+  }
+
   from("deploy/deb/var/db") {
     exclude "**/.keep"
     createDirectoryEntry = true
