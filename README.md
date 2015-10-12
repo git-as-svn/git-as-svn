@@ -138,7 +138,7 @@ For quick run you need:
  * Install Java 1.8 or later
  * Download binaries archive from: https://github.com/bozaro/git-as-svn/releases/latest
  * After unpacking archive you can run server executing:<br/>
-   `java -jar git-as-svn.jar --config config.example --show-config`
+   `bin/git-as-svn --config doc/config.example --show-config`
  * Test connection:<br/>
    `svn ls svn://localhost/example`<br/>
    with login/password: test/test
@@ -154,12 +154,10 @@ To build from sources you need install JDK 1.8 or later and run build script.
 
 For Linux:
 
-    ./gradlew deployZip
+    ./gradlew assembleDist
 
 For Windows:
 
-    call gradlew.bat deployZip
+    call gradlew.bat assembleDist
 
-When build completes you can run server executing:
-
-    java -jar build/deploy/git-as-svn.jar --config config.example --show-config
+When build completes you can see a binary server at ```build/distributions``` directory.
