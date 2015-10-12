@@ -1,2 +1,2 @@
 #!/bin/sh
-`dirname $0`/../share/git-as-svn/bin/git-as-svn $@
+/share/git-as-svn/bin/git-as-svn $@

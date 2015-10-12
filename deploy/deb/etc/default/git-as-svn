@@ -1,25 +1,10 @@
 # defaults for git-as-svn server
 
-# pulled in from the init script; makes things easier.
-NAME=git-as-svn
-
 # location of java
-JAVA=/usr/bin/java
+#JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
 # arguments to pass to java
-JAVA_ARGS="-Xmx256m"
+JAVA_OPTS="-Xmx256m"
 
-PIDFILE=/var/run/$NAME/$NAME.pid
-
-# user and group to be invoked as (default to git)
-GAS_USER=git
-GAS_GROUP=git
-
-# location of the git-as-svn jar file
-GAS_JAR=/usr/share/$NAME/$NAME.jar
-
-# git-as-svn home location
-GAS_HOME=/var/lib/$NAME
-
-# arguments to pass to git-as-svn
+# additional arguments to pass to git-as-svn
 GAS_ARGS=""
