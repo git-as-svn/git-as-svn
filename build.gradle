@@ -161,7 +161,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     exclude "**/.keep"
     exclude "DEBIAN"
     exclude "var/cache/git-as-svn"
-    exclude "var/db/git"
+    exclude "var/git"
     into "/"
   }
 
@@ -181,11 +181,11 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "etc/git-as-svn"
   }
 
-  from("deploy/deb/var/db") {
+  from("deploy/deb/var") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
-    into "var/db"
+    into "var"
   }
 
   from(configurations.archives.artifacts*.file + configurations.runtime.files) {

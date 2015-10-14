@@ -55,7 +55,7 @@ repositoryMapping: !listMapping
         # - EXAMPLE - create repository with example data
         createMode: EXAMPLE
         branch: master
-        path: /var/db/git/repositories/example.git
+        path: /var/git/repositories/example.git
         renameDetection: true
 
 shared:
@@ -78,7 +78,7 @@ shared:
   - !lfs
     # Secret token for git-lfs-authenticate script
     # token: secret
-    path: /var/db/git/lfs
+    path: /var/git/lfs
 
 # Simple in-memory user database
 userDB: !localUsers
