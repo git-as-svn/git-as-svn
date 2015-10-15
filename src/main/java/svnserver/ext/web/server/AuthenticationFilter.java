@@ -10,6 +10,8 @@ package svnserver.ext.web.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.server.ForbiddenError;
+import ru.bozaro.gitlfs.server.UnauthorizedError;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.VcsAccess;
@@ -52,7 +54,7 @@ public abstract class AuthenticationFilter implements ContainerRequestFilter {
       if (user == null) {
         user = User.getAnonymous();
       }
-      checkAccess(context, user, checker);
+      checkAccessResource(context, user, checker);
       requestContext.setProperty(User.class.getName(), user);
     } catch (ClientErrorException e) {
       requestContext.abortWith(e.getResponse());
@@ -60,7 +62,23 @@ public abstract class AuthenticationFilter implements ContainerRequestFilter {
   }
 
   @Nullable
-  public static Response checkAccess(@NotNull LocalContext context, @NotNull User user, @NotNull Checker checker) throws IOException, ClientErrorException {
+  public static Response checkAccessResource(@NotNull LocalContext context, @NotNull User user, @NotNull Checker checker) throws IOException, ClientErrorException {
+    try {
+      return checkAccess(context, user, checker);
+    } catch (ForbiddenError e) {
+      throw new NotAuthorizedException(Response.status(Response.Status.FORBIDDEN)
+          .entity("Access forbidden")
+          .build());
+    } catch (UnauthorizedError e) {
+      throw new ForbiddenException(Response.status(Response.Status.UNAUTHORIZED)
+          .header("WWW-Authenticate", e.getAuthenticate())
+          .entity("Unauthorized")
+          .build());
+    }
+  }
+
+  @Nullable
+  public static Response checkAccess(@NotNull LocalContext context, @NotNull User user, @NotNull Checker checker) throws IOException, UnauthorizedError, ForbiddenError {
     final VcsAccess access = context.sure(VcsAccess.class);
     try {
       checker.check(access, user);
@@ -68,14 +86,9 @@ public abstract class AuthenticationFilter implements ContainerRequestFilter {
     } catch (SVNException ignored) {
       if (user.isAnonymous()) {
         final WebServer server = context.getShared().sure(WebServer.class);
-        throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED)
-            .header("WWW-Authenticate", "Basic realm=\"" + server.getRealm() + "\"")
-            .entity("Unauthorized")
-            .build());
+        throw new UnauthorizedError("Basic realm=\"" + server.getRealm() + "\"");
       } else {
-        throw new ForbiddenException(Response.status(Response.Status.FORBIDDEN)
-            .entity("Access forbidden")
-            .build());
+        throw new ForbiddenError();
       }
     }
   }
