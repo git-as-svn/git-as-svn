@@ -46,7 +46,7 @@ public class LfsObjectsResource extends LfsAbstractResource {
 
   public LfsObjectsResource(@NotNull LocalContext context, @NotNull LfsStorage storage) {
     super(context, storage);
-    pathStorage = "./" + LfsStorageResource.class.getAnnotation(Path.class).value();
+    pathStorage = LfsServer.SERVLET_CONTENT + "/";
     pathObjects = "./" + LfsObjectsResource.class.getAnnotation(Path.class).value();
   }
 
@@ -61,7 +61,7 @@ public class LfsObjectsResource extends LfsAbstractResource {
                             @Context HttpServletRequest req,
                             @Context HttpServletResponse res
   ) throws IOException {
-    AuthenticationFilter.checkAccess(getContext(), user, batch.getOperation().visit(new AccessVisitor()));
+    AuthenticationFilter.checkAccessResource(getContext(), user, batch.getOperation().visit(new AccessVisitor()));
     return batch.getOperation().visit(new Operation.Visitor<PostBatchTask>() {
       @Override
       public PostBatchTask visitDownload() {
