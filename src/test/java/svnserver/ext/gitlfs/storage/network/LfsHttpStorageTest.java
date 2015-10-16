@@ -25,7 +25,6 @@ import svnserver.auth.UserDB;
 import svnserver.auth.UserWithPassword;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.ext.gitlfs.server.LfsAuthResource;
 import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -37,7 +36,6 @@ import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.EncryptionFactoryAes;
 import svnserver.repository.VcsAccess;
 
-import javax.ws.rs.Path;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,7 +89,7 @@ public class LfsHttpStorageTest {
 
     try {
       URL url = new URL("http", http.getHost(), http.getLocalPort(), "/");
-      final URL authUrl = new URL(url, "example.git" + LfsAuthResource.class.getAnnotation(Path.class).value());
+      final URL authUrl = new URL(url, "example.git/" + LfsServer.SERVLET_AUTH);
       LfsHttpStorage storage = new LfsHttpStorage(authUrl, "t0ken");
 
       // Check file is not exists

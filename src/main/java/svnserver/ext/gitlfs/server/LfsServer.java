@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +19,10 @@ import svnserver.context.Shared;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
+import javax.servlet.Servlet;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.Collection;
 
 /**
  * LFS server.
@@ -29,6 +32,8 @@ import java.text.MessageFormat;
 public class LfsServer implements Shared {
   @NotNull
   public static final String SERVLET_BASE = "info/lfs";
+  @NotNull
+  public static final String SERVLET_AUTH = "auth/lfs";
   @NotNull
   private final String pathFormat;
   @Nullable
@@ -44,13 +49,17 @@ public class LfsServer implements Shared {
     final String name = localContext.getName();
 
     final ResourceConfig rc = WebServer.createResourceConfig(localContext);
-    rc.register(new LfsAuthResource(localContext, storage, privateToken));
     rc.register(new LfsObjectsResource(localContext, storage));
     rc.register(new LfsStorageResource(localContext, storage));
 
-    final String pathSpec = "/" + MessageFormat.format(pathFormat, name) + "/*";
-    final WebServer.ServletInfo servletInfo = webServer.addServlet(pathSpec.replaceAll("/+", "/"), new ServletContainer(rc));
-    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletInfo));
+    final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
+    final Collection<WebServer.ServletInfo> servletsInfo = webServer.addServlets(
+        ImmutableMap.<String, Servlet>builder()
+            .put(pathSpec + "*", new ServletContainer(rc))
+            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
+            .build()
+    );
+    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
@@ -64,16 +73,16 @@ public class LfsServer implements Shared {
     @NotNull
     private final WebServer webServer;
     @NotNull
-    private final WebServer.ServletInfo servlet;
+    private final Collection<WebServer.ServletInfo> servlets;
 
-    public LfsServerHolder(@NotNull WebServer webServer, @NotNull WebServer.ServletInfo servlet) {
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
       this.webServer = webServer;
-      this.servlet = servlet;
+      this.servlets = servlets;
     }
 
     @Override
     public void close() {
-      webServer.removeServlet(servlet);
+      webServer.removeServlets(servlets);
     }
   }
 }
