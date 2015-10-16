@@ -13,9 +13,6 @@ import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-
 /**
  * Base LFS servlet.
  *
@@ -53,12 +50,5 @@ public abstract class LfsAbstractResource {
   @NotNull
   public LfsStorage getStorage() {
     return storage;
-  }
-
-  @NotNull
-  protected URI createHref(@NotNull UriInfo ui, @NotNull String path) {
-    return getWebServer().getUrl(ui.getRequestUri())
-        .resolve(ui.getBaseUri().getPath())
-        .resolve(path);
   }
 }

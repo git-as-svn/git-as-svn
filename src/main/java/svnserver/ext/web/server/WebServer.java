@@ -10,8 +10,7 @@ package svnserver.ext.web.server;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.apache.http.HttpHeaders;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
@@ -24,8 +23,6 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jgit.util.Base64;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwe.JsonWebEncryption;
@@ -35,7 +32,6 @@ import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
-import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.web.config.WebServerConfig;
@@ -45,8 +41,6 @@ import svnserver.ext.web.token.TokenHelper;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
@@ -275,32 +269,8 @@ public class WebServer implements Shared {
     return mapper;
   }
 
-  @NotNull
-  public static JacksonJsonProvider createJsonProvider() {
-    JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
-    provider.setMapper(createJsonMapper());
-    return provider;
-  }
-
-  @NotNull
-  public static ResourceConfig createResourceConfig(@NotNull LocalContext localContext) {
-    final ResourceConfig rc = new ResourceConfig();
-    rc.register(WebServer.createJsonProvider());
-    rc.register(new WebExceptionMapper());
-    rc.register(new AuthenticationFilterReader(localContext));
-    rc.register(new AuthenticationFilterWriter(localContext));
-    rc.register(new AuthenticationFilterUnchecked(localContext));
-    rc.register(new AbstractBinder() {
-      @Override
-      protected void configure() {
-        bindFactory(UserInjectionFactory.class).to(User.class);
-      }
-    });
-    return rc;
-  }
-
   public void sendError(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull ServerError error) throws IOException {
-    resp.setContentType(MediaType.TEXT_HTML);
+    resp.setContentType("text/html");
     resp.setStatus(error.getStatusCode());
     resp.getWriter().write(new ErrorWriter(req).content(error));
   }

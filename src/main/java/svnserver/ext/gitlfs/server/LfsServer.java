@@ -8,13 +8,12 @@
 package svnserver.ext.gitlfs.server;
 
 import com.google.common.collect.ImmutableMap;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ContentServlet;
+import ru.bozaro.gitlfs.server.PointerServlet;
 import svnserver.auth.User;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
@@ -40,6 +39,8 @@ public class LfsServer implements Shared {
   @NotNull
   public static final String SERVLET_CONTENT = SERVLET_BASE + "/storage";
   @NotNull
+  public static final String SERVLET_POINTER = SERVLET_BASE + "/objects";
+  @NotNull
   private final String pathFormat;
   @Nullable
   private final String privateToken;
@@ -53,15 +54,12 @@ public class LfsServer implements Shared {
     final WebServer webServer = WebServer.get(localContext.getShared());
     final String name = localContext.getName();
 
-    final ResourceConfig rc = WebServer.createResourceConfig(localContext);
-    rc.register(new LfsObjectsResource(localContext, storage));
-
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
     final ContentManager<User> manager = new LfsContentManager(localContext, storage);
     final Collection<WebServer.ServletInfo> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
-            .put(pathSpec + "*", new ServletContainer(rc))
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
+            .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet<>(manager, pathSpec + SERVLET_CONTENT))
             .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet<>(manager))
             .build()
     );
