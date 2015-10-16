@@ -10,12 +10,12 @@ package svnserver.ext.web.server;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.apache.http.HttpHeaders;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -23,17 +23,15 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jgit.util.Base64;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwe.JsonWebEncryption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
-import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.web.config.WebServerConfig;
@@ -42,8 +40,9 @@ import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -242,15 +241,15 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public String getUrl(@NotNull HttpServletRequest req) {
+  public URI getUrl(@NotNull HttpServletRequest req) {
     if (config.getBaseUrl() != null) {
-      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI()).toString();
+      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI());
     }
     String host = req.getHeader(HttpHeaders.HOST);
     if (host == null) {
       host = req.getServerName() + ":" + req.getServerPort();
     }
-    return req.getScheme() + "://" + host + req.getRequestURI();
+    return URI.create(req.getScheme() + "://" + host + req.getRequestURI());
   }
 
   @NotNull
@@ -270,28 +269,10 @@ public class WebServer implements Shared {
     return mapper;
   }
 
-  @NotNull
-  public static JacksonJsonProvider createJsonProvider() {
-    JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
-    provider.setMapper(createJsonMapper());
-    return provider;
-  }
-
-  @NotNull
-  public static ResourceConfig createResourceConfig(@NotNull LocalContext localContext) {
-    final ResourceConfig rc = new ResourceConfig();
-    rc.register(WebServer.createJsonProvider());
-    rc.register(new WebExceptionMapper());
-    rc.register(new AuthenticationFilterReader(localContext));
-    rc.register(new AuthenticationFilterWriter(localContext));
-    rc.register(new AuthenticationFilterUnchecked(localContext));
-    rc.register(new AbstractBinder() {
-      @Override
-      protected void configure() {
-        bindFactory(UserInjectionFactory.class).to(User.class);
-      }
-    });
-    return rc;
+  public void sendError(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull ServerError error) throws IOException {
+    resp.setContentType("text/html");
+    resp.setStatus(error.getStatusCode());
+    resp.getWriter().write(new ErrorWriter(req).content(error));
   }
 
   public static final class ServletInfo {
@@ -308,6 +289,26 @@ public class WebServer implements Shared {
       mapping = new ServletMapping();
       mapping.setServletName(holder.getName());
       mapping.setPathSpec(pathSpec);
+    }
+  }
+
+  private static class ErrorWriter extends ErrorHandler {
+
+    private final HttpServletRequest req;
+
+    public ErrorWriter(HttpServletRequest req) {
+      this.req = req;
+    }
+
+    @NotNull
+    public String content(@NotNull ServerError error) {
+      try {
+        final StringWriter writer = new StringWriter();
+        writeErrorPage(req, writer, error.getStatusCode(), error.getMessage(), false);
+        return writer.toString();
+      } catch (IOException e) {
+        return e.getMessage();
+      }
     }
   }
 }
