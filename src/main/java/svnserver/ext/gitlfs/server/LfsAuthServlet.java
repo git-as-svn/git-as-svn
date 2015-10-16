@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwt.NumericDate;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.client.Constants;
 import ru.bozaro.gitlfs.common.JsonHelper;
 import ru.bozaro.gitlfs.common.data.Link;
 import ru.bozaro.gitlfs.server.ServerError;
@@ -25,9 +26,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
@@ -37,7 +35,6 @@ import java.util.Date;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@Path("/auth/lfs")
 public class LfsAuthServlet extends HttpServlet {
   @NotNull
   private final LocalContext context;
@@ -72,7 +69,7 @@ public class LfsAuthServlet extends HttpServlet {
           getStringParam(req, "external"),
           getBoolParam(req, "anonymous", false)
       );
-      resp.setContentType(MediaType.APPLICATION_JSON);
+      resp.setContentType("application/json");
       JsonHelper.createMapper().writeValue(resp.getOutputStream(), token);
     } catch (ServerError e) {
       getWebServer().sendError(req, resp, e);
@@ -123,7 +120,7 @@ public class LfsAuthServlet extends HttpServlet {
     return new Link(
         uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl),
         ImmutableMap.<String, String>builder()
-            .put(HttpHeaders.AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
+            .put(Constants.HEADER_AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
             .build(),
         new Date(expireAt.getValueInMillis())
     );

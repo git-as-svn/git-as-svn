@@ -105,7 +105,7 @@ public class LfsHttpStorageTest {
       final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       Assert.assertNotNull(reader);
       Assert.assertNull(reader.getMd5());
-      Assert.assertEquals(15, reader.getSize());
+      Assert.assertEquals(reader.getSize(), 15);
 
       try (final InputStream stream = reader.openStream()) {
         Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");

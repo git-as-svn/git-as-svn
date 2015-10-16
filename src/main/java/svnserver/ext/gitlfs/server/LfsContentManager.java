@@ -3,6 +3,7 @@ package svnserver.ext.gitlfs.server;
 import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.client.Constants;
 import ru.bozaro.gitlfs.common.data.Meta;
 import ru.bozaro.gitlfs.common.data.Operation;
@@ -14,8 +15,8 @@ import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
-import svnserver.ext.web.server.AuthenticationFilter;
 import svnserver.ext.web.server.WebServer;
+import svnserver.repository.VcsAccess;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.FileNotFoundException;
@@ -29,6 +30,11 @@ import java.util.Objects;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsContentManager implements ContentManager<User> {
+  @FunctionalInterface
+  public interface Checker {
+    void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
+  }
+
   @NotNull
   private final LocalContext context;
   @NotNull
@@ -39,11 +45,36 @@ public class LfsContentManager implements ContentManager<User> {
     this.storage = storage;
   }
 
-  @Override
-  public User checkAccess(@NotNull HttpServletRequest request, @NotNull Operation operation) throws IOException, UnauthorizedError, ForbiddenError {
+  private User getAuthInfo(@NotNull HttpServletRequest request) {
     final WebServer server = context.getShared().sure(WebServer.class);
     final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION));
-    AuthenticationFilter.checkAccess(context, user == null ? User.getAnonymous() : user, operation.visit(new AccessVisitor()));
+    return user == null ? User.getAnonymous() : user;
+  }
+
+  @Override
+  public User checkAccess(@NotNull HttpServletRequest request, @NotNull Operation operation) throws IOException, UnauthorizedError, ForbiddenError {
+    final VcsAccess access = context.sure(VcsAccess.class);
+    final User user = getAuthInfo(request);
+    try {
+      operation.visit(new Operation.Visitor<Checker>() {
+        @Override
+        public Checker visitDownload() {
+          return access::checkRead;
+        }
+
+        @Override
+        public Checker visitUpload() {
+          return access::checkWrite;
+        }
+      }).check(user, null);
+    } catch (SVNException ignored) {
+      if (user.isAnonymous()) {
+        final WebServer server1 = context.getShared().sure(WebServer.class);
+        throw new UnauthorizedError("Basic realm=\"" + server1.getRealm() + "\"");
+      } else {
+        throw new ForbiddenError();
+      }
+    }
     return user;
   }
 
@@ -85,15 +116,4 @@ public class LfsContentManager implements ContentManager<User> {
     }
   }
 
-  private static class AccessVisitor implements Operation.Visitor<AuthenticationFilter.Checker> {
-    @Override
-    public AuthenticationFilter.Checker visitDownload() {
-      return (access, user) -> access.checkRead(user, null);
-    }
-
-    @Override
-    public AuthenticationFilter.Checker visitUpload() {
-      return (access, user) -> access.checkWrite(user, null);
-    }
-  }
 }
