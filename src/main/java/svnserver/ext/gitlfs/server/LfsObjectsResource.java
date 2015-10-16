@@ -93,8 +93,8 @@ public class LfsObjectsResource extends LfsAbstractResource {
       return new ObjectRes(
           id,
           reader.getSize(),
-          ImmutableMap.<String, Link>builder()
-              .put("download", new Link(
+          ImmutableMap.<LinkType, Link>builder()
+              .put(LinkType.Download, new Link(
                   createHref(ui, pathStorage + id),
                   authHeader(req),
                   null
@@ -108,8 +108,8 @@ public class LfsObjectsResource extends LfsAbstractResource {
       return new ObjectRes(
           null,
           0,
-          ImmutableMap.<String, Link>builder()
-              .put("upload", new Link(
+          ImmutableMap.<LinkType, Link>builder()
+              .put(LinkType.Upload, new Link(
                   createHref(ui, pathStorage + oid),
                   authHeader(req),
                   null
@@ -134,13 +134,13 @@ public class LfsObjectsResource extends LfsAbstractResource {
     return new ObjectRes(
         reader.getOid(true),
         reader.getSize(),
-        ImmutableMap.<String, Link>builder()
-            .put("self", new Link(
+        ImmutableMap.<LinkType, Link>builder()
+            .put(LinkType.Self, new Link(
                 createHref(ui, pathObjects + oid),
                 Collections.emptyMap(),
                 null
             ))
-            .put("download", new Link(
+            .put(LinkType.Download, new Link(
                 createHref(ui, pathStorage + oid),
                 authHeader(req),
                 null
@@ -185,16 +185,16 @@ public class LfsObjectsResource extends LfsAbstractResource {
         final LfsReader reader = getStorage().getReader(LfsStorage.OID_PREFIX + meta.getOid());
         final BatchItem item;
         if (reader != null) {
-          item = new BatchItem(meta, ImmutableMap.<String, Link>builder()
-              .put(Constants.LINK_DOWNLOAD, new Link(
+          item = new BatchItem(meta, ImmutableMap.<LinkType, Link>builder()
+              .put(LinkType.Download, new Link(
                   createHref(ui, pathStorage + meta.getOid()),
                   authHeader(req),
                   null
               ))
               .build());
         } else if (upload) {
-          item = new BatchItem(meta, ImmutableMap.<String, Link>builder()
-              .put(Constants.LINK_UPLOAD, new Link(
+          item = new BatchItem(meta, ImmutableMap.<LinkType, Link>builder()
+              .put(LinkType.Upload, new Link(
                   createHref(ui, pathStorage + meta.getOid()),
                   authHeader(req),
                   null
