@@ -16,6 +16,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -31,6 +32,7 @@ import org.jose4j.jwe.JsonWebEncryption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
@@ -42,8 +44,11 @@ import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -242,15 +247,15 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public String getUrl(@NotNull HttpServletRequest req) {
+  public URI getUrl(@NotNull HttpServletRequest req) {
     if (config.getBaseUrl() != null) {
-      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI()).toString();
+      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI());
     }
     String host = req.getHeader(HttpHeaders.HOST);
     if (host == null) {
       host = req.getServerName() + ":" + req.getServerPort();
     }
-    return req.getScheme() + "://" + host + req.getRequestURI();
+    return URI.create(req.getScheme() + "://" + host + req.getRequestURI());
   }
 
   @NotNull
@@ -294,6 +299,12 @@ public class WebServer implements Shared {
     return rc;
   }
 
+  public void sendError(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull ServerError error) throws IOException {
+    resp.setContentType(MediaType.TEXT_HTML);
+    resp.setStatus(error.getStatusCode());
+    resp.getWriter().write(new ErrorWriter(req).content(error));
+  }
+
   public static final class ServletInfo {
     @NotNull
     private final String path;
@@ -308,6 +319,26 @@ public class WebServer implements Shared {
       mapping = new ServletMapping();
       mapping.setServletName(holder.getName());
       mapping.setPathSpec(pathSpec);
+    }
+  }
+
+  private static class ErrorWriter extends ErrorHandler {
+
+    private final HttpServletRequest req;
+
+    public ErrorWriter(HttpServletRequest req) {
+      this.req = req;
+    }
+
+    @NotNull
+    public String content(@NotNull ServerError error) {
+      try {
+        final StringWriter writer = new StringWriter();
+        writeErrorPage(req, writer, error.getStatusCode(), error.getMessage(), false);
+        return writer.toString();
+      } catch (IOException e) {
+        return e.getMessage();
+      }
     }
   }
 }
