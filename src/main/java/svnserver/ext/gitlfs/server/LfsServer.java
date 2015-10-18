@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ContentServlet;
 import ru.bozaro.gitlfs.server.PointerServlet;
-import svnserver.auth.User;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
@@ -55,12 +54,12 @@ public class LfsServer implements Shared {
     final String name = localContext.getName();
 
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
-    final ContentManager<User> manager = new LfsContentManager(localContext, storage);
+    final ContentManager manager = new LfsContentManager(localContext, storage);
     final Collection<WebServer.ServletInfo> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
-            .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet<>(manager, pathSpec + SERVLET_CONTENT))
-            .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet<>(manager))
+            .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(manager, pathSpec + SERVLET_CONTENT))
+            .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(manager))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));

@@ -23,6 +23,7 @@ import ru.bozaro.gitlfs.common.data.Link;
 import ru.bozaro.gitlfs.common.data.Links;
 import ru.bozaro.gitlfs.common.data.ObjectRes;
 import ru.bozaro.gitlfs.common.data.Operation;
+import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -126,7 +127,7 @@ public class LfsHttpStorage implements LfsStorage {
   @NotNull
   public InputStream getObject(@NotNull Links meta) throws IOException {
     final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
-    return lfsClient.getObject(meta);
+    return lfsClient.getObject(meta, TemporaryOutputStream::new).toInputStream();
   }
 
   @Nullable

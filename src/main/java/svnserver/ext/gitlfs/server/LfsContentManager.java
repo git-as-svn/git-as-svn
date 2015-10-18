@@ -11,9 +11,8 @@ import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import ru.bozaro.gitlfs.client.Constants;
+import ru.bozaro.gitlfs.common.Constants;
 import ru.bozaro.gitlfs.common.data.Meta;
-import ru.bozaro.gitlfs.common.data.Operation;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ForbiddenError;
 import ru.bozaro.gitlfs.server.UnauthorizedError;
@@ -36,7 +35,7 @@ import java.util.Objects;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsContentManager implements ContentManager<User> {
+public class LfsContentManager implements ContentManager {
   @FunctionalInterface
   public interface Checker {
     void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
@@ -58,22 +57,54 @@ public class LfsContentManager implements ContentManager<User> {
     return user == null ? User.getAnonymous() : user;
   }
 
+  @NotNull
   @Override
-  public User checkAccess(@NotNull HttpServletRequest request, @NotNull Operation operation) throws IOException, UnauthorizedError, ForbiddenError {
+  public Downloader checkDownloadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
     final VcsAccess access = context.sure(VcsAccess.class);
+    checkAccess(request, access::checkRead);
+    return new Downloader() {
+      @NotNull
+      @Override
+      public InputStream openObject(@NotNull String hash) throws IOException {
+        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+        if (reader == null) {
+          throw new FileNotFoundException(hash);
+        }
+        return reader.openStream();
+      }
+
+      @Nullable
+      @Override
+      public InputStream openObjectGzipped(@NotNull String hash) throws IOException {
+        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+        if (reader == null) {
+          throw new FileNotFoundException(hash);
+        }
+        return reader.openGzipStream();
+      }
+    };
+  }
+
+  @NotNull
+  @Override
+  public Uploader checkUploadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
+    final VcsAccess access = context.sure(VcsAccess.class);
+    final User user = checkAccess(request, access::checkWrite);
+    return new Uploader() {
+      @Override
+      public void saveObject(@NotNull Meta meta, @NotNull InputStream content) throws IOException {
+        try (final LfsWriter writer = storage.getWriter(Objects.requireNonNull(user))) {
+          ByteStreams.copy(content, writer);
+          writer.finish(LfsStorage.OID_PREFIX + meta.getOid());
+        }
+      }
+    };
+  }
+
+  public User checkAccess(@NotNull HttpServletRequest request, @NotNull Checker checker) throws IOException, UnauthorizedError, ForbiddenError {
     final User user = getAuthInfo(request);
     try {
-      operation.visit(new Operation.Visitor<Checker>() {
-        @Override
-        public Checker visitDownload() {
-          return access::checkRead;
-        }
-
-        @Override
-        public Checker visitUpload() {
-          return access::checkWrite;
-        }
-      }).check(user, null);
+      checker.check(user, null);
     } catch (SVNException ignored) {
       if (user.isAnonymous()) {
         final WebServer server1 = context.getShared().sure(WebServer.class);
@@ -94,33 +125,4 @@ public class LfsContentManager implements ContentManager<User> {
     }
     return new Meta(reader.getOid(true), reader.getSize());
   }
-
-  @NotNull
-  @Override
-  public InputStream openObject(User context, @NotNull String hash) throws IOException {
-    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
-    if (reader == null) {
-      throw new FileNotFoundException(hash);
-    }
-    return reader.openStream();
-  }
-
-  @Nullable
-  @Override
-  public InputStream openObjectGzipped(User context, @NotNull String hash) throws IOException {
-    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
-    if (reader == null) {
-      throw new FileNotFoundException(hash);
-    }
-    return reader.openGzipStream();
-  }
-
-  @Override
-  public void saveObject(User user, @NotNull Meta meta, @NotNull InputStream content) throws IOException {
-    try (final LfsWriter writer = storage.getWriter(Objects.requireNonNull(user))) {
-      ByteStreams.copy(content, writer);
-      writer.finish(LfsStorage.OID_PREFIX + meta.getOid());
-    }
-  }
-
 }

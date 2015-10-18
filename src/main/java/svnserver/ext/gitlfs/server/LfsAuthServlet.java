@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwt.NumericDate;
 import org.tmatesoft.svn.core.SVNException;
-import ru.bozaro.gitlfs.client.Constants;
+import ru.bozaro.gitlfs.common.Constants;
 import ru.bozaro.gitlfs.common.JsonHelper;
 import ru.bozaro.gitlfs.common.data.Link;
 import ru.bozaro.gitlfs.server.ServerError;
