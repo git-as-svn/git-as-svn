@@ -7,6 +7,7 @@
  */
 package svnserver;
 
+import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,6 +51,11 @@ public class TemporaryOutputStream extends OutputStream {
 
   public TemporaryOutputStream() {
     this(MAX_MEMORY_SIZE);
+  }
+
+  public TemporaryOutputStream(@NotNull InputStream stream) throws IOException {
+    this(MAX_MEMORY_SIZE);
+    ByteStreams.copy(stream, this);
   }
 
   public TemporaryOutputStream(int maxMemorySize) {
