@@ -73,7 +73,7 @@ curl -s -d "token=${TOKEN}" -d "external=${GL_ID}" ${BASE}/$1/auth/lfs
 Also you need some GitLab patches:
 
  * [#230 (gitlab-shell)](https://github.com/gitlabhq/gitlab-shell/pull/230): Add git-lfs-authenticate to server white list (merged to 7.14.1);
- * [#237 (gitlab-shell)](https://github.com/gitlabhq/gitlab-shell/pull/237): Execute git-lfs-authenticate command with original arguments (merged to 8.1.0?);
+ * [#237 (gitlab-shell)](https://github.com/gitlabhq/gitlab-shell/pull/237): Execute git-lfs-authenticate command with original arguments (merged to 8.2.0);
  * [#9591 (gitlabhq)](https://github.com/gitlabhq/gitlabhq/pull/9591): Add API for lookup user information by SSH key ID (merged to 8.0.0).
  * [#9728 (gitlabhq)](https://github.com/gitlabhq/gitlabhq/pull/9728): Show "Empty Repository Page" for repository without branches (merged to 8.2.0).
 
