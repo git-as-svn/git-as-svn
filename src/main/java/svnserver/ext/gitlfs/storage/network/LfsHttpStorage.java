@@ -125,9 +125,9 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   @NotNull
-  public InputStream getObject(@NotNull Links meta) throws IOException {
+  public InputStream getObject(@NotNull Links links) throws IOException {
     final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), new HttpClient());
-    return lfsClient.getObject(meta, TemporaryOutputStream::new).toInputStream();
+    return lfsClient.getObject(null, links, TemporaryOutputStream::new).toInputStream();
   }
 
   @Nullable

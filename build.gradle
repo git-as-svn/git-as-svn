@@ -52,9 +52,9 @@ dependencies {
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:18.0"
 
-  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.5.0"
-  compile "ru.bozaro.gitlfs:gitlfs-client:0.5.0"
-  compile "ru.bozaro.gitlfs:gitlfs-server:0.5.0"
+  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
+  compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
+  compile "ru.bozaro.gitlfs:gitlfs-server:0.6.0"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
