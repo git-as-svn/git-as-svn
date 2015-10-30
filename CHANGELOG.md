@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.0.13-alpha: Embedded git-lfs server
 
  * Git-lfs batch API support.
  * Add support for LDAP users without email.
