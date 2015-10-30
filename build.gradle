@@ -51,6 +51,7 @@ dependencies {
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:18.0"
+  compile "uk.co.caprica:juds:0.94.1"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
