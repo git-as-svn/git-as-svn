@@ -1,3 +1,4 @@
 #!/bin/sh -e
-
-/bin/systemctl daemon-reload
+if [ -f /bin/systemctl ]; then
+    /bin/systemctl daemon-reload
+fi
