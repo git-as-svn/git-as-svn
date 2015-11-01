@@ -6,11 +6,15 @@ buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      url "https://bozaro.github.io/gradle-ospackage-plugin/repository"
+    }
   }
 
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
     classpath "org.ajoberstar:gradle-git:0.9.0"
+    classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0-dev.17+postinst.ac6901a"
   }
 }
 
@@ -28,6 +32,7 @@ apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "application"
 apply plugin: "project-report"
+apply plugin: "nebula.deb"
 
 license {
   header rootProject.file('license_header.txt')
@@ -122,6 +127,75 @@ processResources {
       "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
   ])
 }
+
+task startScriptsDeb(type: CreateStartScripts) {
+  outputDir = file('build/sample')
+  classpath = startScripts.classpath
+  mainClassName = startScripts.mainClassName
+  applicationName = startScripts.applicationName
+  defaultJvmOpts = project.applicationDefaultJvmArgs
+  optsEnvironmentVar
+}
+
+task distDeb(type: Deb, dependsOn: startScriptsDeb) {
+  license "GPL-2+"
+
+  requires("java8-runtime-headless")
+
+  customField([
+      "Commit-ID": Grgit.open(project.file(rootProject.projectDir)).head().id
+  ])
+
+  configurationFile("/etc/default/git-as-svn")
+  configurationFile("/etc/git-as-svn/git-as-svn.conf")
+
+  //user "root"
+  //permissionGroup "root"
+
+  preInstall file("deploy/deb/DEBIAN/preinst.sh")
+  postInstall file("deploy/deb/DEBIAN/postinst.sh")
+
+  from("deploy/deb") {
+    exclude "**/.keep"
+    exclude "DEBIAN"
+    exclude "var/cache/git-as-svn"
+    exclude "var/git"
+    into "/"
+  }
+
+  from("${project.buildDir}/scripts") {
+    into "/usr/share/git-as-svn/bin"
+  }
+
+  from("deploy/deb/var/cache") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var/cache"
+  }
+
+  from("config.example") {
+    rename ".*", "git-as-svn.conf.example"
+    into "etc/git-as-svn"
+  }
+
+  from("deploy/deb/var") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var"
+  }
+
+  from(configurations.archives.artifacts*.file + configurations.runtime.files) {
+    into "usr/share/git-as-svn/lib"
+  }
+
+  from(createDocs) {
+    into "usr/share/doc/git-as-svn"
+  }
+}
+
+assembleDist.dependsOn(distDeb)
 
 distZip {
   archiveName "${project.name}_${project.version}.zip"

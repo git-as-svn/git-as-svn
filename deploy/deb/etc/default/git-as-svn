@@ -1,0 +1,10 @@
+# defaults for git-as-svn server
+
+# location of java
+#JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+# arguments to pass to java
+JAVA_OPTS="-Xmx256m"
+
+# additional arguments to pass to git-as-svn
+GAS_ARGS=""

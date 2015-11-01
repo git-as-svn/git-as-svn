@@ -19,6 +19,10 @@
 #
 # compressionEnabled: true
 
+# Set cache location
+cacheConfig: !persistentCache
+  path: /var/cache/git-as-svn/git-as-svn.mapdb
+
 repositoryMapping: !listMapping
   repositories:
     example:
@@ -51,7 +55,7 @@ repositoryMapping: !listMapping
         # - EXAMPLE - create repository with example data
         createMode: EXAMPLE
         branch: master
-        path: example.git
+        path: /var/git/repositories/example.git
         renameDetection: true
 
 shared:
@@ -63,7 +67,7 @@ shared:
   # This web server used for some additional functionality like Git LFS support.
   # Subversion WebDAV access (via http/https) IS NOT SUPPORTED now.
   - !web
-    baseUrl: http://git-as-svn.local/
+    # baseUrl: http://git-as-svn.local/
     listen:
     - !http
       host: localhost
@@ -74,7 +78,7 @@ shared:
   - !lfs
     # Secret token for git-lfs-authenticate script
     # token: secret
-    path: lfs
+    path: /var/git/lfs
 
 # Simple in-memory user database
 userDB: !localUsers
