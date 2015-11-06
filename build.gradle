@@ -149,11 +149,9 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   configurationFile("/etc/default/git-as-svn")
   configurationFile("/etc/git-as-svn/git-as-svn.conf")
 
-  //user "root"
-  //permissionGroup "root"
-
   preInstall file("deploy/deb/DEBIAN/preinst.sh")
   postInstall file("deploy/deb/DEBIAN/postinst.sh")
+  preUninstall file("deploy/deb/DEBIAN/prerm.sh")
 
   from("deploy/deb") {
     exclude "**/.keep"
