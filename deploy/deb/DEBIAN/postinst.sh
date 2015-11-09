@@ -7,4 +7,6 @@ if [ -f /bin/systemctl ]; then
     /bin/systemctl daemon-reload
     /bin/systemctl enable git-as-svn
     /bin/systemctl start git-as-svn
+else
+    /etc/init.d/git-as-svn restart
 fi

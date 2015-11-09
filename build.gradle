@@ -82,6 +82,11 @@ idea {
   }
 }
 
+run {
+  args "-c"
+  args "${projectDir}/config-local.example"
+}
+
 tasks.withType(JavaCompile) {
   options.encoding = "UTF-8"
 }
@@ -140,6 +145,8 @@ task startScriptsDeb(type: CreateStartScripts) {
 task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   license "GPL-2+"
 
+  requires("adduser")
+  requires("daemon | systemd")
   requires("java8-runtime-headless")
 
   customField([
@@ -158,6 +165,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     exclude "DEBIAN"
     exclude "var/cache/git-as-svn"
     exclude "var/git"
+    exclude "var/log/git-as-svn"
     into "/"
   }
 
@@ -165,11 +173,18 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "/usr/share/git-as-svn/bin"
   }
 
-  from("deploy/deb/var/cache") {
+  from("deploy/deb/var/cache/git-as-svn") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
-    into "var/cache"
+    into "var/cache/git-as-svn"
+  }
+
+  from("deploy/deb/var/log/git-as-svn") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var/log/git-as-svn"
   }
 
   from("config.example") {
