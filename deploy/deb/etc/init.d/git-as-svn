@@ -35,12 +35,6 @@ fi
 
 SU=/bin/su
 
-# Exit if the package is not installed
-if [ ! -x "$DAEMON" ]; then
-    echo "daemon package not installed" >&2
-    exit 1
-fi
-
 # load environments
 if [ -r /etc/default/locale ]; then
   . /etc/default/locale
@@ -56,6 +50,12 @@ fi
 # Define LSB log_* functions.
 # Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
 . /lib/lsb/init-functions
+
+# Exit if the package is not installed
+if [ ! -x "$DAEMON" ]; then
+    echo "daemon package not installed" >&2
+    exit 1
+fi
 
 # Make sure we run as root, since setting the max open files through
 # ulimit requires root access
