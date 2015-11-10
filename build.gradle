@@ -146,7 +146,6 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   license "GPL-2+"
 
   requires("adduser")
-  requires("daemon | systemd")
   requires("java8-runtime-headless")
 
   customField([
@@ -159,6 +158,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   preInstall file("deploy/deb/DEBIAN/preinst.sh")
   postInstall file("deploy/deb/DEBIAN/postinst.sh")
   preUninstall file("deploy/deb/DEBIAN/prerm.sh")
+  postUninstall file("deploy/deb/DEBIAN/postrm.sh")
 
   from("deploy/deb") {
     exclude "**/.keep"
