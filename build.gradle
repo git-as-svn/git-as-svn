@@ -44,7 +44,6 @@ dependencies {
   compile "org.eclipse.jgit:org.eclipse.jgit:3.6.2.201501210735-r"
   compile "org.tmatesoft.svnkit:svnkit:1.8.11"
   compile "org.yaml:snakeyaml:1.14"
-  compile "org.slf4j:slf4j-simple:1.7.7"
   compile "com.beust:jcommander:1.35"
   compile "org.ini4j:ini4j:0.5.2"
   compile "org.atteo.classindex:classindex:3.1"
@@ -60,6 +59,10 @@ dependencies {
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.6.0"
+
+  compile "org.slf4j:slf4j-api:1.7.12"
+  runtime "org.apache.logging.log4j:log4j-core:2.4.1"
+  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
@@ -127,10 +130,13 @@ distributions {
 }
 
 processResources {
-  expand([
-      "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
-      "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
-  ])
+  from(sourceSets.main.resources.srcDirs) {
+    include "**/VersionInfo.properties"
+    expand([
+        "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
+        "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
+    ])
+  }
 }
 
 task startScriptsDeb(type: CreateStartScripts) {
