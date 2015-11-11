@@ -1,6 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
-project.version = "1.0.13"
+project.version = "1.0.14"
 
 buildscript {
   repositories {
