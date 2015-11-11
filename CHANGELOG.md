@@ -1,5 +1,10 @@
 # Changes
 
+## 1.0.14-alpha: Debian packaging
+
+ * Add debian packaging.
+ * Add configurable file logging.
+
 ## 1.0.13-alpha: Embedded git-lfs server
 
  * Git-lfs batch API support.
