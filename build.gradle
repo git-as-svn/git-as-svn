@@ -44,7 +44,6 @@ dependencies {
   compile "org.eclipse.jgit:org.eclipse.jgit:3.6.2.201501210735-r"
   compile "org.tmatesoft.svnkit:svnkit:1.8.11"
   compile "org.yaml:snakeyaml:1.14"
-  compile "org.slf4j:slf4j-simple:1.7.7"
   compile "com.beust:jcommander:1.35"
   compile "org.ini4j:ini4j:0.5.2"
   compile "org.atteo.classindex:classindex:3.1"
@@ -60,6 +59,10 @@ dependencies {
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.6.0"
+
+  compile "org.slf4j:slf4j-api:1.7.12"
+  runtime "org.apache.logging.log4j:log4j-core:2.4.1"
+  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
@@ -80,6 +83,11 @@ idea {
     downloadJavadoc = true
     downloadSources = true
   }
+}
+
+run {
+  args "-c"
+  args "${projectDir}/config-local.example"
 }
 
 tasks.withType(JavaCompile) {
@@ -122,10 +130,13 @@ distributions {
 }
 
 processResources {
-  expand([
-      "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
-      "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
-  ])
+  from(sourceSets.main.resources.srcDirs) {
+    include "**/VersionInfo.properties"
+    expand([
+        "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
+        "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
+    ])
+  }
 }
 
 task startScriptsDeb(type: CreateStartScripts) {
@@ -140,6 +151,7 @@ task startScriptsDeb(type: CreateStartScripts) {
 task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   license "GPL-2+"
 
+  requires("adduser")
   requires("java8-runtime-headless")
 
   customField([
@@ -149,17 +161,17 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   configurationFile("/etc/default/git-as-svn")
   configurationFile("/etc/git-as-svn/git-as-svn.conf")
 
-  //user "root"
-  //permissionGroup "root"
+  preInstall file("src/main/debian/DEBIAN/preinst.sh")
+  postInstall file("src/main/debian/DEBIAN/postinst.sh")
+  preUninstall file("src/main/debian/DEBIAN/prerm.sh")
+  postUninstall file("src/main/debian/DEBIAN/postrm.sh")
 
-  preInstall file("deploy/deb/DEBIAN/preinst.sh")
-  postInstall file("deploy/deb/DEBIAN/postinst.sh")
-
-  from("deploy/deb") {
+  from("src/main/debian") {
     exclude "**/.keep"
     exclude "DEBIAN"
     exclude "var/cache/git-as-svn"
     exclude "var/git"
+    exclude "var/log/git-as-svn"
     into "/"
   }
 
@@ -167,11 +179,18 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "/usr/share/git-as-svn/bin"
   }
 
-  from("deploy/deb/var/cache") {
+  from("src/main/debian/var/cache/git-as-svn") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
-    into "var/cache"
+    into "var/cache/git-as-svn"
+  }
+
+  from("src/main/debian/var/log/git-as-svn") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var/log/git-as-svn"
   }
 
   from("config.example") {
@@ -179,7 +198,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "etc/git-as-svn"
   }
 
-  from("deploy/deb/var") {
+  from("src/main/debian/var") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
