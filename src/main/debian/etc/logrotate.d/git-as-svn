@@ -1,9 +1,0 @@
-/var/log/git-as-svn/git-as-svn.log {
-        weekly
-        copytruncate
-        missingok
-        rotate 52
-        compress
-        delaycompress
-        notifempty
-}
