@@ -161,12 +161,12 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
   configurationFile("/etc/default/git-as-svn")
   configurationFile("/etc/git-as-svn/git-as-svn.conf")
 
-  preInstall file("deploy/deb/DEBIAN/preinst.sh")
-  postInstall file("deploy/deb/DEBIAN/postinst.sh")
-  preUninstall file("deploy/deb/DEBIAN/prerm.sh")
-  postUninstall file("deploy/deb/DEBIAN/postrm.sh")
+  preInstall file("src/main/debian/DEBIAN/preinst.sh")
+  postInstall file("src/main/debian/DEBIAN/postinst.sh")
+  preUninstall file("src/main/debian/DEBIAN/prerm.sh")
+  postUninstall file("src/main/debian/DEBIAN/postrm.sh")
 
-  from("deploy/deb") {
+  from("src/main/debian") {
     exclude "**/.keep"
     exclude "DEBIAN"
     exclude "var/cache/git-as-svn"
@@ -179,14 +179,14 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "/usr/share/git-as-svn/bin"
   }
 
-  from("deploy/deb/var/cache/git-as-svn") {
+  from("src/main/debian/var/cache/git-as-svn") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
     into "var/cache/git-as-svn"
   }
 
-  from("deploy/deb/var/log/git-as-svn") {
+  from("src/main/debian/var/log/git-as-svn") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
@@ -198,7 +198,7 @@ task distDeb(type: Deb, dependsOn: startScriptsDeb) {
     into "etc/git-as-svn"
   }
 
-  from("deploy/deb/var") {
+  from("src/main/debian/var") {
     exclude "**/.keep"
     createDirectoryEntry = true
     user "git"
