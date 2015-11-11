@@ -11,7 +11,7 @@
 				<OnStartupTriggeringPolicy />
 				<SizeBasedTriggeringPolicy size="10 MB" />
 			</Policies>
-			<DefaultRolloverStrategy max="4" />
+			<DefaultRolloverStrategy max="10" />
 		</RollingFile>
 		<Console name="STDOUT" target="SYSTEM_OUT">
 			<PatternLayout pattern="%5p [%t] (%F:%L) - %m%n" />
