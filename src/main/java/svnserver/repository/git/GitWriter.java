@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.StringHelper;
 import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
@@ -51,10 +52,10 @@ public class GitWriter implements VcsWriter {
   private final Object pushLock;
   @NotNull
   private final String gitBranch;
-  @Nullable
+  @NotNull
   private final User user;
 
-  public GitWriter(@NotNull GitRepository repo, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @Nullable User user) {
+  public GitWriter(@NotNull GitRepository repo, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @NotNull User user) {
     this.repo = repo;
     this.pusher = pusher;
     this.pushLock = pushLock;
@@ -253,7 +254,7 @@ public class GitWriter implements VcsWriter {
       commitBuilder.setTreeId(treeId);
       final ObjectId commitId = inserter.insert(commitBuilder);
       inserter.flush();
-      log.info("Create commit {}: {}", commitId.name(), message);
+      log.info("Create commit {}: {}", commitId.name(), StringHelper.getFirstLine(message));
 
       if (filterMigration(new RevWalk(repo.getRepository()).parseTree(treeId)) != 0) {
         log.info("Need recreate tree after filter migration.");

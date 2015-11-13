@@ -7,16 +7,23 @@
  */
 package svnserver.ext.gitlfs.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.server.ContentManager;
+import ru.bozaro.gitlfs.server.ContentServlet;
+import ru.bozaro.gitlfs.server.PointerServlet;
+import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
-import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
+import javax.servlet.Servlet;
 import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Collection;
 
 /**
  * LFS server.
@@ -25,48 +32,60 @@ import java.io.IOException;
  */
 public class LfsServer implements Shared {
   @NotNull
-  public static final String SERVLET_BASE = ".git/info/lfs";
+  public static final String SERVLET_BASE = "info/lfs";
   @NotNull
-  public static final String SERVLET_AUTH = ".git/auth/lfs";
+  public static final String SERVLET_AUTH = "auth/lfs";
   @NotNull
-  public static final String SERVLET_OBJECTS = SERVLET_BASE + "/objects/";
+  public static final String SERVLET_CONTENT = SERVLET_BASE + "/storage";
   @NotNull
-  public static final String SERVLET_STORAGE = SERVLET_BASE + "/storage/";
-
+  public static final String SERVLET_POINTER = SERVLET_BASE + "/objects";
   @NotNull
-  private final SharedContext context;
+  private final String pathFormat;
   @Nullable
-  private WebServer webServer;
-  @Nullable
-  private String privateToken;
+  private final String privateToken;
 
-  public LfsServer(@NotNull SharedContext context, @Nullable String privateToken) {
-    this.context = context;
+  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken) {
+    this.pathFormat = pathFormat;
     this.privateToken = privateToken;
   }
 
-  @Override
-  public void init(@NotNull SharedContext context) throws IOException, SVNException {
-    this.webServer = WebServer.get(context);
+  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
+    final WebServer webServer = WebServer.get(localContext.getShared());
+    final String name = localContext.getName();
+
+    final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
+    final ContentManager manager = new LfsContentManager(localContext, storage);
+    final Collection<WebServer.ServletInfo> servletsInfo = webServer.addServlets(
+        ImmutableMap.<String, Servlet>builder()
+            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
+            .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(manager, pathSpec + SERVLET_CONTENT))
+            .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(manager))
+            .build()
+    );
+    localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
   }
 
-  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) {
-    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
-    final String name = localContext.getName();
-    if (privateToken != null) {
-      webServer.addServlet("/" + name + SERVLET_AUTH, new LfsAuthServlet(localContext, storage, privateToken));
+  public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
+    LfsServerHolder holder = localContext.remove(LfsServerHolder.class);
+    if (holder != null) {
+      holder.close();
     }
-    webServer.addServlet("/" + name + SERVLET_OBJECTS + "*", new LfsObjectsServlet(localContext, storage));
-    webServer.addServlet("/" + name + SERVLET_STORAGE + "*", new LfsStorageServlet(localContext, storage));
   }
 
-  public void unregister(@NotNull LocalContext localContext) {
-    if (webServer == null) throw new IllegalStateException("Object is non-initialized");
-    final String name = localContext.getName();
-    webServer.removeServlet("/" + name + SERVLET_STORAGE + "*");
-    webServer.removeServlet("/" + name + SERVLET_OBJECTS + "*");
-    if (privateToken != null) {
-      webServer.removeServlet("/" + name + SERVLET_AUTH);
+  private static class LfsServerHolder implements Local {
+    @NotNull
+    private final WebServer webServer;
+    @NotNull
+    private final Collection<WebServer.ServletInfo> servlets;
+
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
+      this.webServer = webServer;
+      this.servlets = servlets;
+    }
+
+    @Override
+    public void close() {
+      webServer.removeServlets(servlets);
     }
   }
 }

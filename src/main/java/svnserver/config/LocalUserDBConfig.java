@@ -8,6 +8,7 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.auth.LocalUserDB;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
@@ -36,7 +37,7 @@ public final class LocalUserDBConfig implements UserDBConfig {
   public UserDB create(@NotNull SharedContext context) {
     final LocalUserDB result = new LocalUserDB();
     for (UserEntry user : users)
-      result.add(new UserWithPassword(new User(user.username, user.realName, user.email), user.password));
+      result.add(new UserWithPassword(User.create(user.username, user.realName, user.email, null), user.password));
     return result;
   }
 
@@ -51,8 +52,8 @@ public final class LocalUserDBConfig implements UserDBConfig {
     @NotNull
     private String realName = "";
 
-    @NotNull
-    private String email = "";
+    @Nullable
+    private String email = null;
 
     @NotNull
     private String password = "";
@@ -61,7 +62,7 @@ public final class LocalUserDBConfig implements UserDBConfig {
     public UserEntry() {
     }
 
-    public UserEntry(@NotNull String username, @NotNull String realName, @NotNull String email, @NotNull String password) {
+    public UserEntry(@NotNull String username, @NotNull String realName, @Nullable String email, @NotNull String password) {
       this.username = username;
       this.realName = realName;
       this.email = email;

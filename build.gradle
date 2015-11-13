@@ -1,15 +1,21 @@
 import org.ajoberstar.grgit.Grgit
 
+project.version = "1.0.14"
+
 buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      url "https://bozaro.github.io/gradle-ospackage-plugin/repository"
+    }
   }
 
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
     classpath "org.ajoberstar:gradle-git:0.9.0"
     classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.0"
+    classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0-dev.17+postinst.ac6901a"
   }
 }
 
@@ -18,9 +24,6 @@ task wrapper(type: Wrapper) {
 }
 
 repositories {
-  maven {
-    url ".m2/repository"
-  }
   mavenLocal()
   mavenCentral()
 }
@@ -28,8 +31,10 @@ repositories {
 apply plugin: "license"
 apply plugin: "idea"
 apply plugin: "java"
+apply plugin: "application"
 apply plugin: "project-report"
 apply plugin: "com.google.protobuf"
+apply plugin: "nebula.deb"
 
 license {
   header rootProject.file('license_header.txt')
@@ -39,23 +44,29 @@ license {
 dependencies {
   compile "org.jetbrains:annotations:13.0"
   compile "org.eclipse.jgit:org.eclipse.jgit:3.6.2.201501210735-r"
-  compile "org.tmatesoft.svnkit:svnkit:1.8.5"
+  compile "org.tmatesoft.svnkit:svnkit:1.8.11"
   compile "org.yaml:snakeyaml:1.14"
-  compile "org.slf4j:slf4j-simple:1.7.7"
   compile "com.beust:jcommander:1.35"
-  compile "commons-io:commons-io:2.4"
   compile "org.ini4j:ini4j:0.5.2"
   compile "org.atteo.classindex:classindex:3.1"
   compile "org.mapdb:mapdb:1.0.6"
   compile "com.unboundid:unboundid-ldapsdk:3.0.0"
   compile "org.eclipse.jetty:jetty-server:9.3.0.v20150612"
   compile "org.eclipse.jetty:jetty-servlet:9.3.0.v20150612"
-  compile "com.google.code.gson:gson:2.3.1"
-  compile "org.gitlab:java-gitlab-api:1.1.7-ad3ec37"
+  compile "org.gitlab:java-gitlab-api:1.1.9"
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
+  compile "com.google.guava:guava:18.0"
   compile "com.google.protobuf:protobuf-java:2.6.1"
   compile "com.googlecode.protobuf-java-format:protobuf-java-format:1.4"
+
+  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
+  compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
+  compile "ru.bozaro.gitlfs:gitlfs-server:0.6.0"
+
+  compile "org.slf4j:slf4j-api:1.7.12"
+  runtime "org.apache.logging.log4j:log4j-core:2.4.1"
+  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1"
 
   testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
@@ -63,6 +74,8 @@ dependencies {
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
+mainClassName = "svnserver.server.Main"
+applicationDefaultJvmArgs = ["-Xmx512m"]
 
 idea {
   project {
@@ -76,6 +89,11 @@ idea {
   }
 }
 
+run {
+  args "-c"
+  args "${projectDir}/config-local.example"
+}
+
 tasks.withType(JavaCompile) {
   options.encoding = "UTF-8"
 }
@@ -87,6 +105,7 @@ test {
 }
 
 jar {
+  archiveName "${project.name}.jar"
   manifest {
     attributes(
         "Main-Class": "svnserver.server.Main",
@@ -95,36 +114,123 @@ jar {
   }
 }
 
+task createDocs(type: Copy) {
+  from(project.projectDir) {
+    include "*.example"
+    include "*.md"
+    include "LICENSE"
+  }
+  into file("$buildDir/doc")
+}
+
+distributions {
+  main {
+    contents {
+      from(createDocs) {
+        into "doc"
+      }
+    }
+  }
+}
+
 processResources {
-  expand([
-      "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
-      "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
+  from(sourceSets.main.resources.srcDirs) {
+    include "**/VersionInfo.properties"
+    expand([
+        "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
+        "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
+    ])
+  }
+}
+
+task startScriptsDeb(type: CreateStartScripts) {
+  outputDir = file('build/sample')
+  classpath = startScripts.classpath
+  mainClassName = startScripts.mainClassName
+  applicationName = startScripts.applicationName
+  defaultJvmOpts = project.applicationDefaultJvmArgs
+  optsEnvironmentVar
+}
+
+task distDeb(type: Deb, dependsOn: startScriptsDeb) {
+  license "GPL-2+"
+
+  requires("adduser")
+  requires("java8-runtime-headless")
+
+  customField([
+      "Commit-ID": Grgit.open(project.file(rootProject.projectDir)).head().id
   ])
+
+  configurationFile("/etc/default/git-as-svn")
+  configurationFile("/etc/git-as-svn/git-as-svn.conf")
+
+  preInstall file("src/main/debian/DEBIAN/preinst.sh")
+  postInstall file("src/main/debian/DEBIAN/postinst.sh")
+  preUninstall file("src/main/debian/DEBIAN/prerm.sh")
+  postUninstall file("src/main/debian/DEBIAN/postrm.sh")
+
+  from("src/main/debian") {
+    exclude "**/.keep"
+    exclude "DEBIAN"
+    exclude "var/cache/git-as-svn"
+    exclude "var/git"
+    exclude "var/log/git-as-svn"
+    into "/"
+  }
+
+  from("${project.buildDir}/scripts") {
+    into "/usr/share/git-as-svn/bin"
+  }
+
+  from("src/main/debian/var/cache/git-as-svn") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var/cache/git-as-svn"
+  }
+
+  from("src/main/debian/var/log/git-as-svn") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var/log/git-as-svn"
+  }
+
+  from("config.example") {
+    rename ".*", "git-as-svn.conf.example"
+    into "etc/git-as-svn"
+  }
+
+  from("src/main/debian/var") {
+    exclude "**/.keep"
+    createDirectoryEntry = true
+    user "git"
+    into "var"
+  }
+
+  from(configurations.archives.artifacts*.file + configurations.runtime.files) {
+    into "usr/share/git-as-svn/lib"
+  }
+
+  from(createDocs) {
+    into "usr/share/doc/git-as-svn"
+  }
 }
 
-task deployJars(dependsOn: jar) << {
-  def projectArtifacts = configurations.archives.artifacts*.file
-  def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
-  copy {
-    from fullArtifacts.intersect(projectArtifacts)
-    from "config.example"
-    from "README.md"
-    from "LICENSE"
-    into "${project.buildDir}/deploy"
-  }
-  copy {
-    from fullArtifacts.minus(projectArtifacts)
-    into "${project.buildDir}/deploy/vendors"
-  }
+assembleDist.dependsOn(distDeb)
+
+distZip {
+  archiveName "${project.name}_${project.version}.zip"
 }
 
-task deployZip(type: Zip, dependsOn: deployJars) {
-  from "build/deploy"
+distTar {
+  archiveName "${project.name}_${project.version}.tar"
 }
 
 def createLauncherClassPath() {
   def projectArtifacts = configurations.archives.artifacts*.file
   def fullArtifacts = configurations.archives.artifacts*.file + configurations.runtime.files
-  def vendorJars = fullArtifacts.minus(projectArtifacts).collect { "vendors/${it.name}" }
+  def vendorJars = fullArtifacts.minus(projectArtifacts).collect { it.name }
   return vendorJars.join(" ")
 }

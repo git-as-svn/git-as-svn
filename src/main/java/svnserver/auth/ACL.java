@@ -12,16 +12,17 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.config.AccessConfig;
+import svnserver.config.AclAccessConfig;
 import svnserver.config.AclConfig;
 import svnserver.config.GroupConfig;
+import svnserver.repository.VcsAccess;
 
 import java.util.*;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class ACL {
+public final class ACL implements VcsAccess {
   @NotNull
   public static final String EveryoneMarker = "*";
 
@@ -53,7 +54,7 @@ public final class ACL {
     if (config.getAccess().length == 0)
       throw new IllegalArgumentException("Empty ACL");
 
-    for (AccessConfig access : config.getAccess()) {
+    for (AclAccessConfig access : config.getAccess()) {
       final String path = access.getPath();
 
       if (!path.startsWith("/"))
@@ -92,20 +93,31 @@ public final class ACL {
       throw new IllegalArgumentException("Duplicate ACL entry " + path + ": " + allowed);
   }
 
-  public void check(@NotNull User user, @NotNull String path) throws SVNException {
-    String toCheck = path;
+  @Override
+  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException {
+    if (path != null) {
+      String toCheck = path;
 
-    while (!toCheck.isEmpty()) {
-      if (doCheck(user, toCheck))
+      while (!toCheck.isEmpty()) {
+        if (doCheck(user, toCheck))
+          return;
+
+        toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
+      }
+
+      if (doCheck(user, "/"))
         return;
 
-      toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access " + path));
     }
+  }
 
-    if (doCheck(user, "/"))
-      return;
-
-    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access " + path));
+  @Override
+  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
+    if (user.isAnonymous()){
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user have not write access"));
+    }
+    checkRead(user, path);
   }
 
   private boolean doCheck(@NotNull User user, @NotNull String path) {

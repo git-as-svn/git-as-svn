@@ -32,6 +32,8 @@ import java.io.IOException;
 public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @NotNull
   private String path = "lfs";
+  @NotNull
+  private String pathFormat = "{0}.git";
   private boolean compress = true;
   @Nullable
   private String token;
@@ -43,6 +45,15 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
 
   public void setPath(@NotNull String path) {
     this.path = path;
+  }
+
+  @NotNull
+  public String getPathFormat() {
+    return pathFormat;
+  }
+
+  public void setPathFormat(@NotNull String pathFormat) {
+    this.pathFormat = pathFormat;
   }
 
   public boolean isCompress() {
@@ -61,7 +72,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(LfsStorageFactory.class, this);
-    context.add(LfsServer.class, new LfsServer(context, token));
+    context.add(LfsServer.class, new LfsServer(pathFormat, token));
   }
 
   @NotNull

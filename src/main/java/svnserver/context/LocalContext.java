@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-public class LocalContext extends Context<Local> {
+public class LocalContext extends Context<Local>  {
   @NotNull
   private final SharedContext shared;
   @NotNull

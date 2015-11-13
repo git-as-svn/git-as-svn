@@ -12,9 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -22,6 +20,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.*;
+import svnserver.StringHelper;
 import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
@@ -86,11 +85,7 @@ public class SvnCheckoutTest {
       checkout.setSource(SvnTarget.fromURL(server.getUrl().appendPath(basePath, false)));
       checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
       checkout.setRevision(SVNRevision.create(revisions.get(0)));
-      checkout.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
       checkout.run();
-
-      final SVNWCContext wcContext = factory.getWcContext();
-      wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
 
       factory.setEventHandler(new ISVNEventHandler() {
         @Override
@@ -106,10 +101,10 @@ public class SvnCheckoutTest {
       for (long revision : revisions.subList(1, revisions.size())) {
         final SvnLog svnLog = factory.createLog();
         svnLog.setSingleTarget(SvnTarget.fromURL(server.getUrl()));
-        svnLog.setRevisionRanges(Arrays.asList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
+        svnLog.setRevisionRanges(Collections.singletonList(SvnRevisionRange.create(SVNRevision.create(revision - 1), SVNRevision.create(revision))));
         svnLog.setDiscoverChangedPaths(true);
         final SVNLogEntry logEntry = svnLog.run();
-        log.info("Update to revision #{}: {}", revision, logEntry.getMessage());
+        log.info("Update to revision #{}: {}", revision, StringHelper.getFirstLine(logEntry.getMessage()));
 
         final TreeMap<String, SVNLogEntryPath> paths = new TreeMap<>(logEntry.getChangedPaths());
         final List<String> targets = new ArrayList<>();

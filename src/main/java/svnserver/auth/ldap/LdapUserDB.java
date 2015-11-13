@@ -64,10 +64,18 @@ public class LdapUserDB implements UserDB {
   private final LdapUserDBConfig config;
   @NotNull
   private final String baseDn;
+  @Nullable
+  private final String fakeMailSuffix;
 
   @FunctionalInterface
   private interface LdapCheck {
     boolean check(@NotNull String userDN) throws LDAPException;
+  }
+
+  @FunctionalInterface
+  private interface LdapTask<T> {
+    @Nullable
+    T exec(@NotNull LDAPConnection connection) throws LDAPException;
   }
 
   public LdapUserDB(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
@@ -80,6 +88,7 @@ public class LdapUserDB implements UserDB {
         bind.bind(ldap);
       }
       this.pool = new LDAPConnectionPool(ldap, 1, config.getMaxConnections());
+      this.fakeMailSuffix = createFakeMailSuffix(config);
       this.config = config;
     } catch (LDAPException e) {
       throw new IllegalStateException(e);
@@ -95,7 +104,7 @@ public class LdapUserDB implements UserDB {
   @Nullable
   @Override
   public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
-    return findUser(userName, userDN -> pool.bindAndRevertAuthentication(userDN, password).getResultCode() == ResultCode.SUCCESS);
+    return findUser(userName, userDN -> doTask(connection -> connection.bind(userDN, password).getResultCode() == ResultCode.SUCCESS));
   }
 
   @Nullable
@@ -116,16 +125,27 @@ public class LdapUserDB implements UserDB {
     return attribute == null ? null : attribute.getValue();
   }
 
+  private <T> T doTask(@NotNull LdapTask<T> task) throws LDAPException {
+    final LDAPConnection connection = pool.getConnection();
+    try {
+      return task.exec(connection);
+    } finally {
+      connection.close();
+    }
+  }
+
   private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
     try {
-      Filter filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
+      final Filter filter;
       if (!config.getSearchFilter().isEmpty()) {
         filter = Filter.createANDFilter(
             Filter.create(config.getSearchFilter()),
-            filter
+            Filter.createEqualityFilter(config.getLoginAttribute(), userName)
         );
+      } else {
+        filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
       }
-      final SearchResult search = pool.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute());
+      final SearchResult search = doTask((connection) -> connection.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute()));
       if (search.getEntryCount() == 1) {
         final SearchResultEntry entry = search.getSearchEntries().get(0);
         final String login = getAttribute(entry, config.getLoginAttribute());
@@ -134,8 +154,11 @@ public class LdapUserDB implements UserDB {
         }
         if (ldapCheck.check(entry.getDN())) {
           final String realName = getAttribute(entry, config.getNameAttribute());
-          final String email = getAttribute(entry, config.getEmailAttribute());
-          return new User(login, realName != null ? realName : login, email);
+          String email = getAttribute(entry, config.getEmailAttribute());
+          if (email == null && fakeMailSuffix != null) {
+            email = login + fakeMailSuffix;
+          }
+          return User.create(login, realName != null ? realName : login, email, null);
         }
       }
       return null;
@@ -147,6 +170,15 @@ public class LdapUserDB implements UserDB {
     } catch (NamingException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
     }
+  }
+
+  @Nullable
+  private static String createFakeMailSuffix(@NotNull LdapUserDBConfig config) {
+    final String suffix = config.getFakeMailSuffix();
+    if (suffix.isEmpty()) {
+      return null;
+    }
+    return suffix.indexOf('@') < 0 ? '@' + suffix : suffix;
   }
 
   @NotNull

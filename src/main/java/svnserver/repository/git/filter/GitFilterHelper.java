@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.HashHelper;
 import svnserver.StringHelper;
 import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
@@ -21,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,7 +70,7 @@ public class GitFilterHelper {
   private static Metadata createMetadata(@NotNull GitObject<? extends ObjectId> objectId, @NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize) throws IOException, SVNException {
     final byte[] buffer = new byte[BUFFER_SIZE];
     try (final InputStream stream = filter.inputStream(objectId)) {
-      final MessageDigest digest = cacheMd5 != null ? createDigestMd5() : null;
+      final MessageDigest digest = cacheMd5 != null ? HashHelper.md5() : null;
       long totalSize = 0;
       while (true) {
         int bytes = stream.read(buffer);
@@ -91,14 +91,6 @@ public class GitFilterHelper {
         cacheSize.putIfAbsent(objectId.getObject().name(), totalSize);
       }
       return new Metadata(totalSize, md5);
-    }
-  }
-
-  public static MessageDigest createDigestMd5() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
     }
   }
 

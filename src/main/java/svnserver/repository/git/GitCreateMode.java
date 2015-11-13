@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.ByteStreams;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +87,7 @@ public enum GitCreateMode {
     if (stream == null) {
       throw new FileNotFoundException(resourceName);
     }
-    return inserter.insert(Constants.OBJ_BLOB, IOUtils.toByteArray(stream));
+    return inserter.insert(Constants.OBJ_BLOB, ByteStreams.toByteArray(stream));
   }
 
 }

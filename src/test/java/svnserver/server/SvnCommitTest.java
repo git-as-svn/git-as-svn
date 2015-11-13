@@ -10,6 +10,7 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -167,6 +168,30 @@ public class SvnCommitTest {
       final long lastRevision = repo.getLatestRevision();
       modifyFile(repo, "/README.md", "New content 1", lastRevision);
       modifyFile(repo, "/build.gradle", "New content 2", lastRevision);
+    }
+  }
+
+  /**
+   * Check commit without e-mail.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void commitWithoutEmail() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo1 = server.openSvnRepository();
+      createFile(repo1, "/README.md", "Old content 1", null);
+      createFile(repo1, "/build.gradle", "Old content 2", null);
+
+      final SVNRepository repo2 = server.openSvnRepository(SvnTestServer.USER_NAME_NO_MAIL, SvnTestServer.PASSWORD);
+      final long lastRevision = repo2.getLatestRevision();
+      checkFileContent(repo2, "/README.md", "Old content 1");
+      try {
+        modifyFile(repo2, "/README.md", "New content 1", lastRevision);
+        Assert.fail("Users with undefined email can't create commits");
+      } catch (SVNAuthenticationException e) {
+        Assert.assertTrue(e.getMessage().contains("Users with undefined email can't create commits"));
+      }
     }
   }
 }

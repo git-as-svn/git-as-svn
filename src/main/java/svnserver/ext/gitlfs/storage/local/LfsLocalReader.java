@@ -7,10 +7,11 @@
  */
 package svnserver.ext.gitlfs.storage.local;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.ext.gitlfs.filter.LfsPointer;
+import ru.bozaro.gitlfs.pointer.Constants;
+import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
@@ -42,13 +43,13 @@ public class LfsLocalReader implements LfsReader {
     }
     final Map<String, String> meta;
     try (InputStream stream = new FileInputStream(metaPath)) {
-      meta = LfsPointer.parsePointer(IOUtils.toByteArray(stream));
+      meta = Pointer.parsePointer(ByteStreams.toByteArray(stream));
     }
     if (meta == null) {
       throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());
     }
-    if (!meta.get(LfsPointer.OID).equals(oid)) {
-      throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(LfsPointer.OID));
+    if (!meta.get(Constants.OID).equals(oid)) {
+      throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
     }
 
     File dataPath = LfsLocalStorage.getPath(dataRoot, oid, "");
@@ -89,19 +90,19 @@ public class LfsLocalReader implements LfsReader {
 
   @Override
   public long getSize() {
-    return Long.parseLong(meta.get(LfsPointer.SIZE));
+    return Long.parseLong(meta.get(Constants.SIZE));
   }
 
   @Nullable
   @Override
   public String getMd5() {
-    return meta.get(LfsPointer.HASH_MD5);
+    return meta.get(LfsLocalStorage.HASH_MD5);
   }
 
   @NotNull
   @Override
   public String getOid(boolean hashOnly) {
-    final String oid = meta.get(LfsPointer.OID);
+    final String oid = meta.get(Constants.OID);
     return hashOnly ? oid.substring(LfsStorage.OID_PREFIX.length()) : oid;
   }
 }

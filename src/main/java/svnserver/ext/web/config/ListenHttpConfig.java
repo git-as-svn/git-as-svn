@@ -21,6 +21,7 @@ public class ListenHttpConfig implements ListenConfig {
   @NotNull
   private String host = "localhost";
   private int port = 80;
+  private boolean forwarded;
 
   @NotNull
   public String getHost() {
@@ -39,10 +40,21 @@ public class ListenHttpConfig implements ListenConfig {
     this.port = port;
   }
 
+  public boolean isForwarded() {
+    return forwarded;
+  }
+
+  public void setForwarded(boolean forwarded) {
+    this.forwarded = forwarded;
+  }
+
   @NotNull
   @Override
   public Connector createConnector(@NotNull Server server) {
     HttpConfiguration config = new HttpConfiguration();
+    if (forwarded) {
+      config.addCustomizer(new ForwardedRequestCustomizer());
+    }
     ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(config));
     http.setPort(getPort());
     http.setHost(getHost());

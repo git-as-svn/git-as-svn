@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.SvnTestServer;
 
@@ -56,9 +57,9 @@ public class ReplayTest {
       log.info("Start replay");
       for (long revision = 1; revision <= lastRevision; revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
-        log.info("  replay commit #{}: {}", revision, message.getString());
+        log.info("  replay commit #{}: {}", revision, StringHelper.getFirstLine(message.getString()));
         replayRangeRevision(srcRepo, dstRepo, revision);
-        log.info("  compare revisions #{}: {}", revision, message.getString());
+        log.info("  compare revisions #{}: {}", revision, StringHelper.getFirstLine(message.getString()));
         compareRevision(srcRepo, revision, dstRepo, dstRepo.getLatestRevision());
       }
       log.info("End replay");
@@ -95,9 +96,9 @@ public class ReplayTest {
       for (long revision = 1; revision <= lastRevision; revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
         final SVNPropertyValue srcHash = srcRepo.getRevisionPropertyValue(revision, SvnConstants.PROP_GIT);
-        log.info("  replay commit #{} {}: {}", revision, new String(srcHash.getBytes()), message.getString());
+        log.info("  replay commit #{} {}: {}", revision, new String(srcHash.getBytes()), StringHelper.getFirstLine(message.getString()));
         replayMethod.replay(srcRepo, dstRepo, revision);
-        log.info("  compare revisions #{}: {}", revision, message.getString());
+        log.info("  compare revisions #{}: {}", revision, StringHelper.getFirstLine(message.getString()));
         compareRevision(srcRepo, revision, dstRepo, revision);
         final SVNPropertyValue dstHash = dstRepo.getRevisionPropertyValue(revision, SvnConstants.PROP_GIT);
         compareGitRevision(srcGit, srcHash, dstGit, dstHash);

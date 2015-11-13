@@ -10,6 +10,7 @@ package svnserver.repository.git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.git.filter.GitFilter;
 
 import java.io.IOException;
@@ -70,21 +71,26 @@ public final class GitLogPair {
   }
 
   public boolean isModified() throws IOException, SVNException {
-    if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
-      // Type modified.
-      if (!Objects.equals(newEntry.getFileMode(), oldEntry.getFileMode())) return true;
-      // Content modified.
-      if ((!newEntry.isDirectory()) && (!oldEntry.isDirectory())) {
-        if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
+    try {
+      if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
+        // Type modified.
+        if (!Objects.equals(newEntry.getFileMode(), oldEntry.getFileMode())) return true;
+        // Content modified.
+        if ((!newEntry.isDirectory()) && (!oldEntry.isDirectory())) {
+          if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
+        }
+        // Probably properties modified
+        final boolean sameProperties = Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())
+            && Objects.equals(getFilterName(newEntry), getFilterName(oldEntry));
+        if (!sameProperties) {
+          return isPropertyModified();
+        }
       }
-      // Probably properties modified
-      final boolean sameProperties = Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())
-          && Objects.equals(getFilterName(newEntry), getFilterName(oldEntry));
-      if (!sameProperties) {
-        return isPropertyModified();
-      }
+      return false;
+    } catch (SvnForbiddenException e) {
+      // By default - entry is modified.
+      return true;
     }
-    return false;
   }
 
   @Nullable

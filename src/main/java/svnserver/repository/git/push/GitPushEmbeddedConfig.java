@@ -10,6 +10,7 @@ package svnserver.repository.git.push;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.GitPusherConfig;
 import svnserver.config.serializer.ConfigType;
+import svnserver.context.LocalContext;
 
 /**
  * Git push by embedded git client.
@@ -56,7 +57,7 @@ public class GitPushEmbeddedConfig implements GitPusherConfig {
 
   @NotNull
   @Override
-  public GitPusher create() {
-    return new GitPushEmbedded(getPreReceive(), getPostReceive(), getUpdate());
+  public GitPusher create(@NotNull LocalContext context) {
+    return new GitPushEmbedded(context, getPreReceive(), getPostReceive(), getUpdate());
   }
 }

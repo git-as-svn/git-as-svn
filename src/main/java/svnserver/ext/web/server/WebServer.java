@@ -7,10 +7,21 @@
  */
 package svnserver.ext.web.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.http.HttpHeaders;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.RequestLog;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jgit.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +29,7 @@ import org.jose4j.jwe.JsonWebEncryption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.Shared;
@@ -28,9 +40,16 @@ import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Web server component
@@ -42,11 +61,11 @@ public class WebServer implements Shared {
   private static final Logger log = LoggerFactory.getLogger(WebServer.class);
 
   @NotNull
-  public final static String DEFAULT_REALM = "Git as Subversion server";
+  public static final String DEFAULT_REALM = "Git as Subversion server";
   @NotNull
   public static final String AUTH_BASIC = "Basic ";
   @NotNull
-  public static final String AUTH_TOKEN = "Token ";
+  public static final String AUTH_TOKEN = "Bearer ";
 
   @NotNull
   private final SharedContext context;
@@ -58,6 +77,8 @@ public class WebServer implements Shared {
   private final WebServerConfig config;
   @NotNull
   private final EncryptionFactory tokenFactory;
+  @NotNull
+  private final List<ServletInfo> servlets = new CopyOnWriteArrayList<>();
 
   public WebServer(@NotNull SharedContext context, @Nullable Server server, @NotNull WebServerConfig config, @NotNull EncryptionFactory tokenFactory) {
     this.context = context;
@@ -65,8 +86,28 @@ public class WebServer implements Shared {
     this.config = config;
     this.tokenFactory = tokenFactory;
     if (server != null) {
-      handler = new ServletHandler();
-      server.setHandler(handler);
+      final ServletContextHandler contextHandler = new ServletContextHandler();
+      contextHandler.setContextPath("/");
+      handler = contextHandler.getServletHandler();
+
+      //final ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+      //securityHandler.addConstraintMapping(new );
+      //contextHandler.setSecurityHandler(securityHandler);
+
+      final RequestLogHandler logHandler = new RequestLogHandler();
+      logHandler.setRequestLog(new RequestLog() {
+        @Override
+        public void log(Request request, Response response) {
+          final User user = (User) request.getAttribute(User.class.getName());
+          final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
+          log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
+        }
+      });
+
+      final HandlerCollection handlers = new HandlerCollection();
+      handlers.addHandler(contextHandler);
+      handlers.addHandler(logHandler);
+      server.setHandler(handlers);
     } else {
       handler = null;
     }
@@ -93,31 +134,94 @@ public class WebServer implements Shared {
     }
   }
 
-  public void addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
-    if (handler != null) {
-      log.info("Registered servlet for path: {}", pathSpec);
-      handler.addServletWithMapping(new ServletHolder(servlet), pathSpec);
+  @NotNull
+  public ServletInfo addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
+    log.info("Registered servlet for path: {}", pathSpec);
+    final ServletInfo servletInfo = new ServletInfo(pathSpec, servlet);
+    servlets.add(servletInfo);
+    updateServlets();
+    return servletInfo;
+  }
+
+  @NotNull
+  public Collection<ServletInfo> addServlets(@NotNull Map<String, Servlet> servletMap) {
+    List<ServletInfo> servletInfos = new ArrayList<>();
+    for (Map.Entry<String, Servlet> entry : servletMap.entrySet()) {
+      log.info("Registered servlet for path: {}", entry.getKey());
+      final ServletInfo servletInfo = new ServletInfo(entry.getKey(), entry.getValue());
+      servletInfos.add(servletInfo);
+    }
+    servlets.addAll(servletInfos);
+    updateServlets();
+    return servletInfos;
+  }
+
+  public void removeServlet(@NotNull ServletInfo servletInfo) {
+    if (servlets.remove(servletInfo)) {
+      log.info("Unregistered servlet for path: {}", servletInfo.path);
+      updateServlets();
     }
   }
 
-  public void removeServlet(@NotNull String pathSpec) {
-    // todo: Add remove servlet by pathSpec
+  public void removeServlets(@NotNull Collection<ServletInfo> servletInfos) {
+    boolean modified = false;
+    for (ServletInfo servlet : servletInfos) {
+      if (servlets.remove(servlet)) {
+        log.info("Unregistered servlet for path: {}", servlet.path);
+        modified = true;
+      }
+    }
+    if (modified) {
+      updateServlets();
+    }
+  }
+
+  private void updateServlets() {
+    if (handler != null) {
+      final ServletInfo[] snapshot = servlets.toArray(new ServletInfo[servlets.size()]);
+      final ServletHolder[] holders = new ServletHolder[snapshot.length];
+      final ServletMapping[] mappings = new ServletMapping[snapshot.length];
+      for (int i = 0; i < snapshot.length; ++i) {
+        holders[i] = snapshot[i].holder;
+        mappings[i] = snapshot[i].mapping;
+      }
+      handler.setServlets(holders);
+      handler.setServletMappings(mappings);
+    }
+  }
+
+  @Override
+  public void close() throws Exception {
+    if (server != null) {
+      server.stop();
+      server.join();
+    }
   }
 
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
+  /**
+   * Return current user information.
+   *
+   * @param authorization HTTP authorization header value.
+   * @return Return value:
+   * <ul>
+   * <li>no authorization header - anonymous user;</li>
+   * <li>invalid authorization header - null;</li>
+   * <li>valid authorization header - user information.</li>
+   * </ul>
+   */
   @Nullable
-  public User getAuthInfo(@NotNull HttpServletRequest req) {
+  public User getAuthInfo(@Nullable final String authorization) {
     final UserDB userDB = context.sure(UserDB.class);
     // Check HTTP authorization.
-    final String authorization = req.getHeader(HttpHeaders.AUTHORIZATION);
     if (authorization == null) {
-      return null;
+      return User.getAnonymous();
     }
     if (authorization.startsWith(AUTH_BASIC)) {
-      final String raw = new String(Base64.decode(authorization.substring(AUTH_BASIC.length())), StandardCharsets.UTF_8);
+      final String raw = new String(Base64.decode(authorization.substring(AUTH_BASIC.length()).trim()), StandardCharsets.UTF_8);
       final int separator = raw.indexOf(':');
       if (separator > 0) {
         final String username = raw.substring(0, separator);
@@ -131,20 +235,80 @@ public class WebServer implements Shared {
       return null;
     }
     if (authorization.startsWith(AUTH_TOKEN)) {
-      return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()));
+      return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()).trim());
     }
     return null;
   }
 
   @NotNull
-  public String getUrl(@NotNull HttpServletRequest req) {
+  public URI getUrl(@NotNull HttpServletRequest req) {
     if (config.getBaseUrl() != null) {
-      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI()).toString();
+      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI());
     }
     String host = req.getHeader(HttpHeaders.HOST);
     if (host == null) {
       host = req.getServerName() + ":" + req.getServerPort();
     }
-    return req.getScheme() + "://" + host + req.getRequestURI();
+    return URI.create(req.getScheme() + "://" + host + req.getRequestURI());
+  }
+
+  @NotNull
+  public URI getUrl(@NotNull URI baseUri) {
+    if (config.getBaseUrl() != null) {
+      return URI.create(config.getBaseUrl()).resolve(baseUri.getPath());
+    }
+    return baseUri;
+  }
+
+  @NotNull
+  public static ObjectMapper createJsonMapper() {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    return mapper;
+  }
+
+  public void sendError(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull ServerError error) throws IOException {
+    resp.setContentType("text/html");
+    resp.setStatus(error.getStatusCode());
+    resp.getWriter().write(new ErrorWriter(req).content(error));
+  }
+
+  public static final class ServletInfo {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final ServletHolder holder;
+    @NotNull
+    private final ServletMapping mapping;
+
+    private ServletInfo(@NotNull String pathSpec, @NotNull Servlet servlet) {
+      path = pathSpec;
+      holder = new ServletHolder(servlet);
+      mapping = new ServletMapping();
+      mapping.setServletName(holder.getName());
+      mapping.setPathSpec(pathSpec);
+    }
+  }
+
+  private static class ErrorWriter extends ErrorHandler {
+
+    private final HttpServletRequest req;
+
+    public ErrorWriter(HttpServletRequest req) {
+      this.req = req;
+    }
+
+    @NotNull
+    public String content(@NotNull ServerError error) {
+      try {
+        final StringWriter writer = new StringWriter();
+        writeErrorPage(req, writer, error.getStatusCode(), error.getMessage(), false);
+        return writer.toString();
+      } catch (IOException e) {
+        return e.getMessage();
+      }
+    }
   }
 }

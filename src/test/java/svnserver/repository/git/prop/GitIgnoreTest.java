@@ -35,6 +35,7 @@ public class GitIgnoreTest {
             "*/.idea/vcs.xml\n" +
             "**/temp\n" +
             "**/foo/bar\n" +
+            "qqq/**/bar\n" +
             "data/**/*.sample\n"
     );
     checkProps(attr, ".idea\n", "*.class\n#*\ndeploy\nspace end \ntemp\n");
@@ -44,12 +45,16 @@ public class GitIgnoreTest {
     // Rule: */build/
     checkProps(attr, "build\n", null, "build");
     checkProps(attr, "build\n", null, "server");
-    checkProps(attr, null, null, "server", "build");
+    checkProps(attr, null, "*\n", "server", "build");
+    checkProps(attr, null, null, "server", "build", "data");
+    checkProps(attr, null, null, "server", "data", "build");
+    checkProps(attr, null, "*\n", "deploy", "build");
     // Rule: **/foo/bar
     checkProps(attr, "build\nbar\n", null, "foo");
-    checkProps(attr, null, null, "foo", "bar");
+    checkProps(attr, null, "*\n", "foo", "bar");
     checkProps(attr, "bar\n", null, "server", "foo");
-    checkProps(attr, null, null, "server", "foo", "bar");
+    checkProps(attr, null, "*\n", "server", "foo", "bar");
+    checkProps(attr, null, "*\n", "qqq", "foo", "bar");
     // Rule: all/**/*.sample
     checkProps(attr, "build\n", "*.sample\n", "data");
     checkProps(attr, null, null, "data", "data");

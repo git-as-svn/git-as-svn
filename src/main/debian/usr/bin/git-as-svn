@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/share/git-as-svn/bin/git-as-svn $@

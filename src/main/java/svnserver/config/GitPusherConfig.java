@@ -8,7 +8,7 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.context.SharedContext;
+import svnserver.context.LocalContext;
 import svnserver.repository.git.push.GitPusher;
 
 /**
@@ -18,5 +18,5 @@ import svnserver.repository.git.push.GitPusher;
  */
 public interface GitPusherConfig {
   @NotNull
-  GitPusher create();
+  GitPusher create(@NotNull LocalContext context);
 }

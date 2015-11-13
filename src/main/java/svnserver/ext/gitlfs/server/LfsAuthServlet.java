@@ -7,82 +7,109 @@
  */
 package svnserver.ext.gitlfs.server;
 
-import com.google.gson.stream.JsonWriter;
-import org.apache.http.HttpHeaders;
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwt.NumericDate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.DateHelper;
+import ru.bozaro.gitlfs.common.Constants;
+import ru.bozaro.gitlfs.common.JsonHelper;
+import ru.bozaro.gitlfs.common.data.Link;
+import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
-import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.net.URI;
+import java.util.Date;
 
 /**
  * LFS storage pointer servlet.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsAuthServlet extends LfsAbstractServlet {
+public class LfsAuthServlet extends HttpServlet {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(LfsAuthServlet.class);
+  private final LocalContext context;
   @NotNull
+  private final String baseLfsUrl;
+  @Nullable
   private final String privateToken;
 
-  public LfsAuthServlet(@NotNull LocalContext context, @NotNull LfsStorage storage, @NotNull String privateToken) {
-    super(context, storage);
+  public LfsAuthServlet(@NotNull LocalContext context, @NotNull String baseLfsUrl, @Nullable String privateToken) {
+    this.context = context;
+    this.baseLfsUrl = baseLfsUrl;
     this.privateToken = privateToken;
   }
 
   @Override
-  protected void doPost(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-    doWork(req, resp);
+  protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+    createToken(req, resp);
   }
 
   @Override
-  protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-    doWork(req, resp);
+  protected void doPost(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+    createToken(req, resp);
   }
 
-  private void doWork(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
-    final UserDB userDB = getShared().sure(UserDB.class);
+  protected void createToken(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
+    try {
+      final Link token = createToken(
+          req,
+          getUriParam(req, "url"),
+          getStringParam(req, "token"),
+          getStringParam(req, "username"),
+          getStringParam(req, "external"),
+          getBoolParam(req, "anonymous", false)
+      );
+      resp.setContentType("application/json");
+      JsonHelper.createMapper().writeValue(resp.getOutputStream(), token);
+    } catch (ServerError e) {
+      getWebServer().sendError(req, resp, e);
+    }
+  }
+
+  public Link createToken(
+      @NotNull HttpServletRequest req,
+      @Nullable URI uri,
+      @Nullable String token,
+      @Nullable String username,
+      @Nullable String external,
+      boolean anonymous
+  ) throws ServerError {
+    if (privateToken == null) {
+      throw new ServerError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Secret token is not defined in server configuration");
+    }
     // Check privateToken authorization.
-    final String token = req.getParameter("token");
     if (token == null) {
-      sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Parameter \"token\" is not defined", null);
-      return;
+      throw new ServerError(HttpServletResponse.SC_FORBIDDEN, "Parameter \"token\" is not defined");
     }
     if (!privateToken.equals(token)) {
-      sendError(resp, HttpServletResponse.SC_FORBIDDEN, "Invalid token", null);
-      return;
+      throw new ServerError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
     }
+    final UserDB userDB = context.getShared().sure(UserDB.class);
     final User user;
     try {
-      final String username = req.getParameter("username");
-      final String external = req.getParameter("external");
-      if (external == null && username == null) {
-        sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Parameter \"username\" or \"external\" is not defined", null);
-        return;
+      if (anonymous) {
+        user = User.getAnonymous();
+      } else if (external == null && username == null) {
+        throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter \"username\" or \"external\" is not defined");
+      } else {
+        user = username != null ? userDB.lookupByUserName(username) : userDB.lookupByExternal(external);
       }
-      user = username != null ? userDB.lookupByUserName(username) : userDB.lookupByExternal(external);
     } catch (SVNException | IOException e) {
-      sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Can't get user information. See log for more details", null);
-      log.error("Can't get user information", e);
-      return;
+      throw new ServerError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Can't get user information. See log for more details", e);
     }
     if (user == null) {
-      sendError(resp, HttpServletResponse.SC_NOT_FOUND, "User not found", null);
-      return;
+      //throw new NotFoundException();
+      throw new ServerError(HttpServletResponse.SC_NOT_FOUND, "User not found");
     }
 
     // Calculate expire time and token.
@@ -90,19 +117,35 @@ public class LfsAuthServlet extends LfsAbstractServlet {
     expireAt.addSeconds(60);
     final String accessToken = TokenHelper.createToken(getWebServer().createEncryption(), user, expireAt);
 
-    // Write git-lfs-authenticate content.
-    try (StringWriter writer = new StringWriter()) {
-      JsonWriter json = new JsonWriter(writer);
-      json.setIndent("\t");
-      json.beginObject();
-      json.name("href").value(createHref(req, LfsServer.SERVLET_BASE));
-      json.name("header").beginObject();
-      json.name(HttpHeaders.AUTHORIZATION).value(WebServer.AUTH_TOKEN + accessToken);
-      json.endObject();// header
-      json.name("expires_at").value(DateHelper.toISO8601(expireAt.getValueInMillis()));
-      json.endObject();
-      json.close();
-      resp.getWriter().println(writer.toString());
-    }
+    return new Link(
+        uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl),
+        ImmutableMap.<String, String>builder()
+            .put(Constants.HEADER_AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
+            .build(),
+        new Date(expireAt.getValueInMillis())
+    );
+  }
+
+  @NotNull
+  public WebServer getWebServer() {
+    return context.getShared().sure(WebServer.class);
+  }
+
+  @Nullable
+  public static String getStringParam(@NotNull HttpServletRequest req, @NotNull String name) {
+    return req.getParameter(name);
+  }
+
+  @Nullable
+  private URI getUriParam(@NotNull HttpServletRequest req, @NotNull String name) {
+    final String value = getStringParam(req, name);
+    if (value == null) return null;
+    return URI.create(value);
+  }
+
+  public static boolean getBoolParam(@NotNull HttpServletRequest req, @NotNull String name, boolean defaultValue) {
+    final String value = getStringParam(req, name);
+    if (value == null) return defaultValue;
+    return !(value.equals("0") || value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no"));
   }
 }

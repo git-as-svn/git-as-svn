@@ -11,24 +11,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * User. Just user.
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class User {
+public final class User {
+  @NotNull
+  private static final User anonymousUser = new User("anonymous", "anonymous", null, null, true);
+
+  private final boolean isAnonymous;
   @NotNull
   private final String userName;
   @NotNull
   private final String realName;
   @Nullable
   private final String email;
+  @Nullable
+  private final String externalId;
 
-  public User(@NotNull String userName, @NotNull String realName, @Nullable String email) {
+  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
+    return new User(userName, realName, email, externalId, false);
+  }
+
+  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous) {
     this.userName = userName;
     this.realName = realName;
     this.email = email;
+    this.externalId = externalId;
+    this.isAnonymous = isAnonymous;
+  }
+
+  @Nullable
+  public String getExternalId() {
+    return externalId;
   }
 
   @NotNull
@@ -47,7 +65,7 @@ public class User {
   }
 
   public boolean isAnonymous() {
-    return email == null;
+    return isAnonymous;
   }
 
   /**
@@ -75,9 +93,11 @@ public class User {
 
     User user = (User) o;
 
-    if (!userName.equals(user.userName)) return false;
-    if (!realName.equals(user.realName)) return false;
-    return !(email != null ? !email.equals(user.email) : user.email != null);
+    return Objects.equals(externalId, user.externalId)
+        && Objects.equals(email, user.email)
+        && userName.equals(user.userName)
+        && realName.equals(user.realName)
+        && (isAnonymous == user.isAnonymous);
   }
 
   @Override
@@ -86,5 +106,9 @@ public class User {
     result = 31 * result + realName.hashCode();
     result = 31 * result + (email != null ? email.hashCode() : 0);
     return result;
+  }
+
+  public static User getAnonymous() {
+    return anonymousUser;
   }
 }

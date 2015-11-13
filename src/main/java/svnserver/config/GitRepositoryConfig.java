@@ -73,6 +73,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
     context.add(GitLocation.class, new GitLocation(fullPath));
-    return new GitRepository(context, createRepository(fullPath), getPusher().create(), branch, isRenameDetection(), new PersistentLockFactory(context));
+    return new GitRepository(context, createRepository(fullPath), getPusher().create(context), branch, isRenameDetection(), new PersistentLockFactory(context));
   }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import svnserver.context.Shared;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * User storage.
@@ -22,4 +23,6 @@ public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
   @NotNull
   Collection<Authenticator> authenticators();
 
+  default void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
+  }
 }

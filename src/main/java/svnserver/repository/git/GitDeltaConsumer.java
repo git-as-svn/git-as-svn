@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.ByteStreams;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -126,7 +126,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       ) {
         try (InputStream inputStream = newFilter.inputStream(objectId);
              OutputStream outputStream = filter.outputStream(content, user)) {
-          IOUtils.copy(inputStream, outputStream);
+          ByteStreams.copy(inputStream, outputStream);
         }
         try (InputStream inputStream = content.toInputStream()) {
           objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, content.size(), inputStream));
@@ -151,7 +151,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
 
       newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
-      window.applyTextDelta(objectId != null ? objectId.openObject().openStream() : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream, user), true);
+      window.applyTextDelta((oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream, user), true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }

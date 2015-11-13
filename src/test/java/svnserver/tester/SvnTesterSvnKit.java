@@ -55,7 +55,7 @@ public class SvnTesterSvnKit implements SvnTester {
   @Override
   public SVNRepository openSvnRepository() throws SVNException {
     SVNRepository repo = SVNRepositoryFactory.create(url);
-    repo.setAuthenticationManager(new BasicAuthenticationManager(USER_NAME, PASSWORD));
+    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(USER_NAME, PASSWORD.toCharArray()));
     return repo;
   }
 

@@ -23,27 +23,29 @@ import java.io.IOException;
  */
 public class GitLabContext implements Shared {
   @NotNull
-  private final String url;
-  @NotNull
-  private final String token;
+  private final GitLabConfig config;
 
-  public GitLabContext(@NotNull String url, @NotNull String token) {
-    this.url = url;
-    this.token = token;
+  public GitLabContext(@NotNull GitLabConfig config) {
+    this.config = config;
   }
 
   @NotNull
   public GitlabAPI connect() {
-    return GitlabAPI.connect(url, token);
+    return GitlabAPI.connect(config.getUrl(), config.getToken());
   }
 
   @NotNull
   public GitlabSession connect(@NotNull String username, @NotNull String password) throws IOException {
-    return GitlabAPI.connect(url, username, password);
+    return GitlabAPI.connect(config.getUrl(), username, password);
   }
 
   @NotNull
   public static GitLabContext sure(@NotNull SharedContext context) throws IOException, SVNException {
     return context.sure(GitLabContext.class);
+  }
+
+  @NotNull
+  public String getHookUrl() {
+    return config.getHookUrl();
   }
 }

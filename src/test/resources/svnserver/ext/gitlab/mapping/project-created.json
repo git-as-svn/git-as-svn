@@ -1,0 +1,18 @@
+/**
+ * This file is part of git-as-svn. It is subject to the license terms
+ * in the LICENSE file found in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/gpl-2.0.html. No part of git-as-svn,
+ * including this file, may be copied, modified, propagated, or distributed
+ * except according to the terms contained in the LICENSE file.
+ */
+{
+  "created_at": "2012-07-21T07:30:54Z",
+  "event_name": "project_create",
+  "name": "StoreCloud",
+  "owner_email": "johnsmith@gmail.com",
+  "owner_name": "John Smith",
+  "path": "storecloud",
+  "path_with_namespace": "jsmith/storecloud",
+  "project_id": 74,
+  "project_visibility": "private",
+}

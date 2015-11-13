@@ -19,11 +19,10 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import svnserver.HashHelper;
 import svnserver.auth.User;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -46,10 +45,12 @@ public class TokenHelper {
       claims.setGeneratedJwtId(); // a unique identifier for the token
       claims.setIssuedAtToNow();  // when the token was issued/created (now)
       claims.setNotBeforeMinutesInThePast(0.5f); // time before which the token is not yet valid (30 seconds ago)
-      claims.setSubject(user.getUserName()); // the subject/principal is whom the token is about
-      setClaim(claims, "email", user.getEmail());
-      setClaim(claims, "name", user.getRealName());
-
+      if (!user.isAnonymous()) {
+        claims.setSubject(user.getUserName()); // the subject/principal is whom the token is about
+        setClaim(claims, "email", user.getEmail());
+        setClaim(claims, "name", user.getRealName());
+        setClaim(claims, "external", user.getExternalId());
+      }
       jwe.setPayload(claims.toJson());
       return jwe.getCompactSerialization();
     } catch (JoseException e) {
@@ -69,10 +70,14 @@ public class TokenHelper {
       if (claims.getNotBefore() == null || claims.getNotBefore().isAfter(now)) {
         return null;
       }
-      return new User(
+      if (claims.getSubject() == null) {
+        return User.getAnonymous();
+      }
+      return User.create(
           claims.getSubject(),
           claims.getClaimValue("name", String.class),
-          claims.getClaimValue("email", String.class)
+          claims.getClaimValue("email", String.class),
+          claims.getClaimValue("external", String.class)
       );
     } catch (JoseException | MalformedClaimException | InvalidJwtException e) {
       log.warn("Token parsing error: " + e.getMessage());
@@ -86,9 +91,9 @@ public class TokenHelper {
       if (secret.length() == length * 2 && hex.matcher(secret).find()) {
         return Hex.decodeHex(secret.toCharArray());
       }
-      final byte[] hash = MessageDigest.getInstance("SHA-256").digest(secret.getBytes(StandardCharsets.UTF_8));
+      final byte[] hash = HashHelper.sha256().digest(secret.getBytes(StandardCharsets.UTF_8));
       return Arrays.copyOf(hash, length);
-    } catch (DecoderException | NoSuchAlgorithmException e) {
+    } catch (DecoderException e) {
       throw new IllegalStateException(e);
     }
   }

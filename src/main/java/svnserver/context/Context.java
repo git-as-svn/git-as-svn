@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsSupplier;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-public abstract class Context<S> {
+public abstract class Context<S extends AutoCloseable> implements AutoCloseable {
   @NotNull
   private final ConcurrentHashMap<Class<? extends S>, S> map = new ConcurrentHashMap<>();
 
@@ -44,6 +45,12 @@ public abstract class Context<S> {
   public <T extends S> T get(@NotNull Class<T> type) {
     //noinspection unchecked
     return (T) map.get(type);
+  }
+
+  @Nullable
+  public <T extends S> T remove(@NotNull Class<T> type) {
+    //noinspection unchecked
+    return (T) map.remove(type);
   }
 
   @NotNull
@@ -68,5 +75,12 @@ public abstract class Context<S> {
       return newObj;
     }
     return result;
+  }
+
+  @Override
+  public void close() throws Exception {
+    for (S item : new ArrayList<>(map.values())) {
+      item.close();
+    }
   }
 }

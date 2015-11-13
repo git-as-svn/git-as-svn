@@ -19,40 +19,44 @@
 #
 # compressionEnabled: true
 
+# Set cache location
+cacheConfig: !persistentCache
+  path: /var/cache/git-as-svn/git-as-svn.mapdb
+
 repositoryMapping: !listMapping
   repositories:
-    example: !git
-      # Allowed pushers:
-      # !pushEmbedded - use embedded push (fast, no dependencies)
-      #   update: "update"            - name of update hook
-      #   preReceive: "pre-receive"   - name of pre-receive hook
-      #   postReceive: "post-receive" - name of post-receive hook
-      # !pushNative {} - use console git for push (hooks worked, can be slow on some commits, require installed console git)
-      pusher: !pushEmbedded
-        update: update
-        preReceive: pre-receive
-        postReceive: post-receive
-      # Allowed create modes:
-      # - ERROR - exit with error, if repository not exists
-      # - EMPTY - create empty repository
-      # - EXAMPLE - create repository with example data
-      createMode: EXAMPLE
-      branch: master
-      path: example.git
-      renameDetection: true
+    example:
+      access: !acl
+        groups:
+          - name: developers
+            users:
+              - test
 
-acl:
-  groups:
-    - name: developers
-      users:
-        - test
-
-  access:
-    - path: /
-      # Use 'asterisk' (*) to allow access for all users
-      # use 'at' (@) for groups
-      allowed:
-        - '@developers'
+        access:
+          - path: /
+            # Use 'asterisk' (*) to allow access for all users
+            # use 'at' (@) for groups
+            allowed:
+              - '@developers'
+      repository: !git
+        # Allowed pushers:
+        # !pushEmbedded - use embedded push (fast, no dependencies)
+        #   update: "update"            - name of update hook
+        #   preReceive: "pre-receive"   - name of pre-receive hook
+        #   postReceive: "post-receive" - name of post-receive hook
+        # !pushNative {} - use console git for push (hooks worked, can be slow on some commits, require installed console git)
+        pusher: !pushEmbedded
+          update: update
+          preReceive: pre-receive
+          postReceive: post-receive
+        # Allowed create modes:
+        # - ERROR - exit with error, if repository not exists
+        # - EMPTY - create empty repository
+        # - EXAMPLE - create repository with example data
+        createMode: EXAMPLE
+        branch: master
+        path: /var/git/repositories/example.git
+        renameDetection: true
 
 shared:
   # Submodule list.
@@ -63,16 +67,18 @@ shared:
   # This web server used for some additional functionality like Git LFS support.
   # Subversion WebDAV access (via http/https) IS NOT SUPPORTED now.
   - !web
-    baseUrl: http://git-as-svn.local/
+    # baseUrl: http://git-as-svn.local/
     listen:
     - !http
       host: localhost
       port: 8123
+      # Use X-Forwarded-* headers
+      forwarded: true
   # Git LFS server
   - !lfs
     # Secret token for git-lfs-authenticate script
     # token: secret
-    path: lfs
+    path: /var/git/lfs
 
 # Simple in-memory user database
 userDB: !localUsers
@@ -105,11 +111,11 @@ userDB: !localUsers
 
 # LDAP bind (default - anonymous bind):
 #
-# bind: ldapBindSimple
+# bind: !ldapBindSimple
 #   username: somebody
 #   password: secret
 #
-# bind: ldapBindDn
+# bind: !ldapBindDn
 #   bindDn: cn=somebody,ou=groups,dc=mycompany,dc=com
 #   password: secret
 #
@@ -125,9 +131,3 @@ userDB: !localUsers
 # LDAP attribute, containing user email.
 #
 # emailAttribute: mail
-
-# The search scope. Set to `true` if you wish to search the entire subtree rooted at the
-# userBase entry. The default value of `false` requests a single-level search
-# including only the top level.
-#
-# userSubtree: false

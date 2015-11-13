@@ -87,7 +87,6 @@ final class GitIgnore implements GitProperty {
     final String maskLocal = matcher.getSvnMaskLocal();
     if (maskLocal != null) {
       local.add(maskLocal);
-      return;
     }
     matchers.add(matcher);
   }

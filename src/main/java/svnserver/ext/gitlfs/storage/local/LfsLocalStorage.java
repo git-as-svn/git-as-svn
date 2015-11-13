@@ -16,9 +16,6 @@ import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Local directory storage for LFS files.
@@ -27,7 +24,16 @@ import java.security.NoSuchAlgorithmException;
  */
 public class LfsLocalStorage implements LfsStorage {
   @NotNull
-  static final byte[] HEADER = "LFS\0".getBytes(StandardCharsets.UTF_8);
+  public static final String HASH_MD5 = "hash-md5";
+  @NotNull
+  public static final String CREATE_TIME = "create-time";
+  @NotNull
+  public static final String META_EMAIL = "author-email";
+  @NotNull
+  public static final String META_USER_NAME = "author-login";
+  @NotNull
+  public static final String META_REAL_NAME = "author-name";
+
   @NotNull
   private final File dataRoot;
   @NotNull
@@ -57,21 +63,5 @@ public class LfsLocalStorage implements LfsStorage {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
     return new File(root, oid.substring(offset, offset + 2) + "/" + oid.substring(offset) + suffix);
-  }
-
-  public static MessageDigest createDigestMd5() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  public static MessageDigest createDigestSha256() {
-    try {
-      return MessageDigest.getInstance("SHA-256");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
   }
 }

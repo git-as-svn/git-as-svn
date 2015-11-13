@@ -1,14 +1,49 @@
-# Overview
-
+# About project
 [![Join the chat at https://gitter.im/bozaro/git-as-svn](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bozaro/git-as-svn?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 [![Build Status](https://travis-ci.org/bozaro/git-as-svn.svg?branch=master)](https://travis-ci.org/bozaro/git-as-svn)
+
+## What is it?
+This project is an implementation of the Subversion server (svn protocol) for git repository.
+
+It allows you to work with a git repository using the console svn, TortoiseSVN, SvnKit and similar tools.
 
 Subversion frontend server for git repository (in Java).
 
-## Python proof-of-concept implementation:
+## Why do we need it?
+This project was born out of division teams working on another project into two camps:
 
- * http://git.q42.co.uk/git_svn_server.git
+ * People who have tasted the Git and do not want to use Subversion (eg programmers); 
+ * People who do not get from Git practical use and do not want to work with him, but love Subversion (eg designers).
+
+To divide the project into two repository desire was not for various reasons.
+
+At this point, saw the project (http://git.q42.co.uk/git_svn_server.git with Proof-of-concept implementation svn server
+for git repository. After this realization svn server on top of git and didn't seem completely crazy idea (now it's
+just a crazy idea) and started this project.
+
+## Project status
+Implementation status:
+
+ * git submodules - partial
+   * git submodules transparently mapped to svn
+   * git submodules modification with svn not supported
+ * git-lfs
+ * svn properties - partial
+   * some files one-way mapped to svn properties (example: .gitignore)
+   * custom properties not supported
+   * the commit requires that the properties of the commited file / directory exactly match the data in the repository
+ * svn checkout, update, switch, diff - works
+ * svn commit - works
+ * svn copy, svn move - allowed copy and move commands, but copy information lost in repository
+ * svn cat, ls - works
+ * svn replay (svnsync) - works
+
+## System requirements
+Server-side:
+ * Java 8+
+ * git repository
+
+On the client side it is strongly recommended to use the tool with support for Subversion 1.8+.
 
 ## SVN protocol description
 
@@ -34,6 +69,13 @@ TOKEN=secret
 BASE=http://localhost:8123
 curl -s -d "token=${TOKEN}" -d "external=${GL_ID}" ${BASE}/$1/auth/lfs
 ```
+
+Also you need some GitLab patches:
+
+ * [#230 (gitlab-shell)](https://github.com/gitlabhq/gitlab-shell/pull/230): Add git-lfs-authenticate to server white list (merged to 7.14.1);
+ * [#237 (gitlab-shell)](https://github.com/gitlabhq/gitlab-shell/pull/237): Execute git-lfs-authenticate command with original arguments (merged to 8.2.0);
+ * [#9591 (gitlabhq)](https://github.com/gitlabhq/gitlabhq/pull/9591): Add API for lookup user information by SSH key ID (merged to 8.0.0).
+ * [#9728 (gitlabhq)](https://github.com/gitlabhq/gitlabhq/pull/9728): Show "Empty Repository Page" for repository without branches (merged to 8.2.0).
 
 ### LFS for Git HTTP users
 
@@ -62,7 +104,8 @@ You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/
  * Add git-as-svn upstream server:
 ```
  upstream gitsvn {
-   server localhost:8123  fail_timeout=5s;
+   server      localhost:8123  fail_timeout=5s;
+   keepalive   100;
  } 
 ```
  * Add resource redirection:
@@ -72,12 +115,15 @@ You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/
      proxy_connect_timeout   300;
      proxy_redirect          off;
  
+     proxy_http_version  1.1;
+     proxy_set_header    Connection          "";
+ 
      proxy_set_header    Host                $http_host;
      proxy_set_header    X-Real-IP           $remote_addr;
      proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
      proxy_set_header    X-Forwarded-Proto   $scheme;
      proxy_set_header    X-Frame-Options     SAMEORIGIN;
- 
+
      proxy_pass http://gitsvn;
    }
 ```
@@ -93,7 +139,7 @@ For quick run you need:
  * Install Java 1.8 or later
  * Download binaries archive from: https://github.com/bozaro/git-as-svn/releases/latest
  * After unpacking archive you can run server executing:<br/>
-   `java -jar git-as-svn.jar --config config.example --show-config`
+   `bin/git-as-svn --config doc/config.example --show-config`
  * Test connection:<br/>
    `svn ls svn://localhost/example`<br/>
    with login/password: test/test
@@ -109,12 +155,10 @@ To build from sources you need install JDK 1.8 or later and run build script.
 
 For Linux:
 
-    ./gradlew deployZip
+    ./gradlew assembleDist
 
 For Windows:
 
-    call gradlew.bat deployZip
+    call gradlew.bat assembleDist
 
-When build completes you can run server executing:
-
-    java -jar build/deploy/git-as-svn.jar --config config.example --show-config
+When build completes you can see a binary server at ```build/distributions``` directory.

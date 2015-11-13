@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git.push;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.CharStreams;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
@@ -19,12 +19,12 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
+import svnserver.auth.UserDB;
 import svnserver.config.ConfigHelper;
+import svnserver.context.LocalContext;
+import svnserver.context.SharedContext;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -36,6 +36,8 @@ import java.util.Arrays;
 public class GitPushEmbedded implements GitPusher {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitPushEmbedded.class);
+  @NotNull
+  private final SharedContext context;
   @NotNull
   private final String preReceive;
   @NotNull
@@ -49,7 +51,8 @@ public class GitPushEmbedded implements GitPusher {
     Process exec(@NotNull ProcessBuilder processBuilder) throws IOException;
   }
 
-  public GitPushEmbedded(@NotNull String preReceive, @NotNull String postReceive, @NotNull String update) {
+  public GitPushEmbedded(@NotNull LocalContext context, @NotNull String preReceive, @NotNull String postReceive, @NotNull String update) {
+    this.context = context.getShared();
     this.preReceive = preReceive;
     this.postReceive = postReceive;
     this.update = update;
@@ -114,8 +117,9 @@ public class GitPushEmbedded implements GitPusher {
             .redirectErrorStream(true);
         processBuilder.environment().put("LANG", "en_US.utf8");
         userInfo.updateEnvironment(processBuilder.environment());
+        context.sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
         final Process process = runner.exec(processBuilder);
-        final String hookMessage = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+        final String hookMessage = CharStreams.toString(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
         int exitCode = process.waitFor();
         if (exitCode != 0) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Commit blocked by hook with output:\n" + hookMessage));

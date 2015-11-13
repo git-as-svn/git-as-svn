@@ -202,7 +202,7 @@ public class SvnTesterExternalListener implements ITestListener {
     @NotNull
     @Override
     public SvnTester create() throws Exception {
-      return new SvnTesterExternal(url, new BasicAuthenticationManager(USER_NAME, PASSWORD));
+      return new SvnTesterExternal(url, BasicAuthenticationManager.newInstance(USER_NAME, PASSWORD.toCharArray()));
     }
 
     @Override

@@ -7,6 +7,7 @@
  */
 package svnserver;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,5 +87,13 @@ public final class StringHelper {
   public static boolean isParentPath(@NotNull String parentPath, @NotNull String childPath) {
     return childPath.equals(parentPath)
         || childPath.startsWith(parentPath) && (childPath.charAt(parentPath.length()) == '/');
+  }
+
+  @Contract("null -> null; !null -> !null")
+  public static String getFirstLine(@Nullable String message) {
+    if (message == null)
+      return null;
+    int eol = message.indexOf('\n');
+    return (eol >= 0) ? message.substring(0, eol) : message;
   }
 }
