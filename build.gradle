@@ -86,6 +86,11 @@ idea {
     jdkName = sourceCompatibility.name
     downloadJavadoc = true
     downloadSources = true
+
+    sourceDirs += file("src/generated/main/java")
+    testSourceDirs += file("src/generated/test/java")
+    generatedSourceDirs += file("src/generated/main/java")
+    generatedSourceDirs += file("src/generated/test/java")
   }
 }
 
