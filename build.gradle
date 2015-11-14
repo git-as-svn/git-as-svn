@@ -14,7 +14,7 @@ buildscript {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
     classpath "org.ajoberstar:gradle-git:0.9.0"
-    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.0"
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.1"
     classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0-dev.17+postinst.ac6901a"
   }
 }
@@ -114,6 +114,10 @@ jar {
   }
 }
 
+protobuf {
+  generatedFilesBaseDir = "$projectDir/src/generated"
+}
+
 task createDocs(type: Copy) {
   from(project.projectDir) {
     include "*.example"
@@ -137,6 +141,7 @@ processResources {
   from(sourceSets.main.resources.srcDirs) {
     include "**/VersionInfo.properties"
     expand([
+        "version" : project.version,
         "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
         "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
     ])
