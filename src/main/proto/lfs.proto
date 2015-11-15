@@ -1,5 +1,7 @@
 option java_package = "svnserver.api.lfs";
 
+option java_outer_classname = "LfsProto";
+
 option java_multiple_files = true;
 
 option java_generic_services = true;
