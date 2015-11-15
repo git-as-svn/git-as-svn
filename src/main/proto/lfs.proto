@@ -1,0 +1,38 @@
+option java_package = "svnserver.api.lfs";
+
+option java_multiple_files = true;
+
+option java_generic_services = true;
+
+service Lfs {
+	rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
+}
+
+message Error {
+	enum Kind {
+		UNAUTHORIZED = 2;
+		USER_NOT_FOUND = 3;
+	}
+	required Kind kind = 1;
+	required string description = 2;
+}
+
+message AuthenticateRequest {
+	enum Mode {
+		USERNAME = 1;
+		EXTERNAL = 2;
+		ANONYMOUS = 3;
+	}
+	required Mode mode = 1;
+	optional string identificator = 2;
+	optional string url = 3;
+}
+
+message AuthenticateResponse {
+	message Success {
+		required string json = 1;
+	}
+
+	optional Error error = 1;
+	optional Success success = 2;
+}

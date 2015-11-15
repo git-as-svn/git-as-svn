@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class CoreApiImpl implements Core.BlockingInterface {
+public class CoreRpc implements Core.BlockingInterface {
 
   @Override
   public VersionResponse version(RpcController controller, VersionRequest request) throws ServiceException {

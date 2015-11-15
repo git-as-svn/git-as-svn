@@ -199,7 +199,7 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
+  public static WebServer get(@NotNull SharedContext context) throws IOException {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
