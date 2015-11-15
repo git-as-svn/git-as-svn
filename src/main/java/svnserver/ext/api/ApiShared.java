@@ -10,7 +10,7 @@ package svnserver.ext.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.api.core.CoreApi;
+import svnserver.api.core.Core;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.api.rpc.CoreApiImpl;
@@ -37,7 +37,7 @@ public class ApiShared implements Shared {
   public synchronized void init(@NotNull SharedContext context) throws IOException, SVNException {
     if (servletInfo == null) {
       WebServer webServer = WebServer.get(context);
-      servletInfo = webServer.addServlet(path + "/*", new ProtobufRpcServlet(CoreApi.newReflectiveBlockingService(new CoreApiImpl())));
+      servletInfo = webServer.addServlet(path + "/*", new ProtobufRpcServlet(Core.newReflectiveBlockingService(new CoreApiImpl())));
     }
   }
 

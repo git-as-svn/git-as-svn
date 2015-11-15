@@ -7,13 +7,12 @@
  */
 package svnserver.ext.api.rpc;
 
-import com.google.common.base.Supplier;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.ServiceException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.VersionInfo;
-import svnserver.api.core.CoreApi;
+import svnserver.api.core.Core;
 import svnserver.api.core.VersionRequest;
 import svnserver.api.core.VersionResponse;
 
@@ -24,7 +23,7 @@ import java.util.function.Consumer;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class CoreApiImpl implements CoreApi.BlockingInterface {
+public class CoreApiImpl implements Core.BlockingInterface {
 
   @Override
   public VersionResponse version(RpcController controller, VersionRequest request) throws ServiceException {
