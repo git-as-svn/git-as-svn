@@ -7,15 +7,34 @@
  */
 package svnserver.ext.api.formatter;
 
-import com.googlecode.protobuf.format.SmileFormat;
+import com.google.protobuf.Message;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import svnserver.ext.api.ProtobufFormat;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+import com.google.protobuf.TextFormat;
 /**
  * Text serialization.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class FormatText extends BaseFormat {
+public class FormatText extends ProtobufFormat {
   public FormatText() {
-    super(new SmileFormat(), "text/plain", ".txt");
+    super("text/plain", ".txt");
+  }
+
+  @Override
+  public void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException {
+    TextFormat.print(message, output.getWriter());
+  }
+
+  @Override
+  @Nullable
+  public Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException {
+    return null;
   }
 }

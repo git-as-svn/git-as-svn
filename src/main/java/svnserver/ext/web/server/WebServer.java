@@ -198,6 +198,7 @@ public class WebServer implements Shared {
     }
   }
 
+  @NotNull
   public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
@@ -275,7 +276,7 @@ public class WebServer implements Shared {
     resp.getWriter().write(new ErrorWriter(req).content(error));
   }
 
-  public static final class ServletInfo {
+  public final class ServletInfo {
     @NotNull
     private final String path;
     @NotNull
@@ -289,6 +290,10 @@ public class WebServer implements Shared {
       mapping = new ServletMapping();
       mapping.setServletName(holder.getName());
       mapping.setPathSpec(pathSpec);
+    }
+
+    public void removeServlet() {
+      WebServer.this.removeServlet(this);
     }
   }
 

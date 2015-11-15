@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,7 +37,7 @@ import java.util.stream.StreamSupport;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public abstract class ProtobufRpcServlet extends HttpServlet {
+public class ProtobufRpcServlet extends HttpServlet {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(ProtobufRpcServlet.class);
 
@@ -67,6 +68,7 @@ public abstract class ProtobufRpcServlet extends HttpServlet {
   private static ProtobufFormat[] collectFormats() {
     return StreamSupport
         .stream(ClassIndex.getSubclasses(ProtobufFormat.class).spliterator(), false)
+        .filter(type -> !Modifier.isAbstract(type.getModifiers()))
         .map(type -> {
           try {
             return type.newInstance();
