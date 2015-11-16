@@ -30,6 +30,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 
 /**
@@ -59,9 +60,7 @@ public class ProtobufRpcServlet extends HttpServlet {
   }
 
   @NotNull
-  private final transient Map<String, MethodInfo> methods;
-  @NotNull
-  private final transient Service service;
+  private final transient ConcurrentHashMap<String, ServiceInfo> services = new ConcurrentHashMap<>();
   @NotNull
   private static final ProtobufFormat[] formats = collectFormats();
 
@@ -79,6 +78,51 @@ public class ProtobufRpcServlet extends HttpServlet {
         .toArray(ProtobufFormat[]::new);
   }
 
+  public final class Holder {
+    @NotNull
+    private final ServiceInfo service;
+
+    private Holder(@NotNull ServiceInfo service) {
+      this.service = service;
+    }
+
+    public void removeService() {
+      ProtobufRpcServlet.this.removeService(this);
+    }
+  }
+
+  private static class ServiceInfo {
+    @NotNull
+    private final Service service;
+    @NotNull
+    private final Map<String, MethodInfo> methods;
+    @NotNull
+    private final String name;
+
+    public ServiceInfo(@NotNull Service service) {
+      this.service = service;
+      this.name = service.getDescriptorForType().getName().toLowerCase();
+
+      final Map<String, MethodInfo> methods = new HashMap<>();
+      for (Descriptors.MethodDescriptor method : service.getDescriptorForType().getMethods()) {
+        for (ProtobufFormat format : formats) {
+          methods.put(method.getName().toLowerCase() + format.getSuffix(), new MethodInfo(format, method, collectFields(method.getInputType().getFields())));
+        }
+      }
+      this.methods = methods;
+    }
+
+    @NotNull
+    public String getName() {
+      return name;
+    }
+
+    @Nullable
+    private MethodInfo getMethod(@NotNull String path) {
+      return methods.get(path);
+    }
+  }
+
   private static class MethodInfo {
     @NotNull
     private final ProtobufFormat format;
@@ -94,24 +138,20 @@ public class ProtobufRpcServlet extends HttpServlet {
     }
   }
 
-  public ProtobufRpcServlet(@NotNull final BlockingService service) {
-    this(new BlockingServiceWrapper(service));
-  }
-
-  public ProtobufRpcServlet(@NotNull Service service) {
-    this.service = service;
-    this.methods = collectMethods(service);
+  @NotNull
+  public Holder addService(@NotNull final BlockingService service) {
+    return addService(new BlockingServiceWrapper(service));
   }
 
   @NotNull
-  private static Map<String, MethodInfo> collectMethods(@NotNull Service service) {
-    final Map<String, MethodInfo> methods = new HashMap<>();
-    for (Descriptors.MethodDescriptor method : service.getDescriptorForType().getMethods()) {
-      for (ProtobufFormat format : formats) {
-        methods.put('/' + method.getName() + format.getSuffix(), new MethodInfo(format, method, collectFields(method.getInputType().getFields())));
-      }
-    }
-    return methods;
+  public Holder addService(@NotNull final Service service) {
+    final ServiceInfo serviceInfo = new ServiceInfo(service);
+    services.put(serviceInfo.getName(), serviceInfo);
+    return new Holder(serviceInfo);
+  }
+
+  public boolean removeService(@NotNull final Holder holder) {
+    return services.remove(holder.service.getName(), holder);
   }
 
   @NotNull
@@ -220,17 +260,28 @@ public class ProtobufRpcServlet extends HttpServlet {
 
   @Override
   protected void service(@NotNull HttpServletRequest req, @NotNull final HttpServletResponse res) throws ServletException, IOException {
-    final String methodName = req.getPathInfo();
-    if ((methodName == null) || (methodName.equals("/"))) {
-      writeResult(formats[0], res, service.getDescriptorForType().getFile().toProto());
-      return;
+    final String pathInfo = req.getPathInfo();
+    if (pathInfo != null) {
+      final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
+      final int separator = pathInfo.indexOf('/', begin);
+      if (separator > 0) {
+        ServiceInfo serviceInfo = services.get(pathInfo.substring(begin, separator));
+        if (serviceInfo != null) {
+          service(req, res, pathInfo.substring(separator + 1), serviceInfo);
+          return;
+        }
+      }
     }
-    final MethodInfo method = methods.get(methodName);
+    res.sendError(HttpServletResponse.SC_NOT_FOUND, "Service not found: " + pathInfo);
+  }
+
+  private void service(@NotNull HttpServletRequest req, @NotNull final HttpServletResponse res, @NotNull final String methodPath, @NotNull ServiceInfo serviceInfo) throws ServletException, IOException {
+    final MethodInfo method = serviceInfo.getMethod(methodPath);
     if (method == null) {
-      res.sendError(HttpServletResponse.SC_NOT_FOUND, "Method not found: " + methodName);
+      res.sendError(HttpServletResponse.SC_NOT_FOUND, "Method not found: " + methodPath);
       return;
     }
-    final Message msgRequestType = service.getRequestPrototype(method.method);
+    final Message msgRequestType = serviceInfo.service.getRequestPrototype(method.method);
     final Message msgRequest;
     final Message.Builder builder = msgRequestType.toBuilder();
     if ("GET".equals(req.getMethod())) {
@@ -242,7 +293,7 @@ public class ProtobufRpcServlet extends HttpServlet {
         return;
       }
     }
-    service.callMethod(method.method, RpcControllerFake.instance, msgRequest, msgResponce -> {
+    serviceInfo.service.callMethod(method.method, RpcControllerFake.instance, msgRequest, msgResponce -> {
       try {
         if (msgResponce != null) {
           writeResult(method.format, res, msgResponce);

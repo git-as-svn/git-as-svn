@@ -27,7 +27,7 @@ public class ApiShared implements Shared {
   @NotNull
   private final String path;
   @Nullable
-  private WebServer.ServletInfo servletInfo = null;
+  private WebServer.Holder servletInfo = null;
 
   public ApiShared(@NotNull String path) {
     this.path = path;
@@ -37,7 +37,9 @@ public class ApiShared implements Shared {
   public synchronized void init(@NotNull SharedContext context) throws IOException, SVNException {
     if (servletInfo == null) {
       WebServer webServer = WebServer.get(context);
-      servletInfo = webServer.addServlet(path + "/*", new ProtobufRpcServlet(Core.newReflectiveBlockingService(new CoreRpc())));
+      final ProtobufRpcServlet servlet = new ProtobufRpcServlet();
+      servlet.addService(Core.newReflectiveBlockingService(new CoreRpc()));
+      servletInfo = webServer.addServlet(path + "/*", servlet);
     }
   }
 

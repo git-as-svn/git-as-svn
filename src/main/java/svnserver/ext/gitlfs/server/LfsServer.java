@@ -55,7 +55,7 @@ public class LfsServer implements Shared {
 
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
     final ContentManager manager = new LfsContentManager(localContext, storage);
-    final Collection<WebServer.ServletInfo> servletsInfo = webServer.addServlets(
+    final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(manager, pathSpec + SERVLET_CONTENT))
@@ -76,9 +76,9 @@ public class LfsServer implements Shared {
     @NotNull
     private final WebServer webServer;
     @NotNull
-    private final Collection<WebServer.ServletInfo> servlets;
+    private final Collection<WebServer.Holder> servlets;
 
-    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.Holder> servlets) {
       this.webServer = webServer;
       this.servlets = servlets;
     }
