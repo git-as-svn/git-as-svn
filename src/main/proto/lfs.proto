@@ -12,8 +12,10 @@ service Lfs {
 
 message Error {
 	enum Kind {
+		UNKNOWN_ERROR = 1;
 		UNAUTHORIZED = 2;
-		USER_NOT_FOUND = 3;
+		BAD_REQUEST = 3;
+		USER_NOT_FOUND = 4;
 	}
 	required Kind kind = 1;
 	required string description = 2;
