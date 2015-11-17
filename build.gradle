@@ -14,6 +14,7 @@ buildscript {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0"
     classpath "org.ajoberstar:gradle-git:0.9.0"
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.1"
     classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0-dev.17+postinst.ac6901a"
   }
 }
@@ -32,6 +33,7 @@ apply plugin: "idea"
 apply plugin: "java"
 apply plugin: "application"
 apply plugin: "project-report"
+apply plugin: "com.google.protobuf"
 apply plugin: "nebula.deb"
 
 license {
@@ -55,6 +57,8 @@ dependencies {
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:18.0"
+  compile "com.google.protobuf:protobuf-java:2.6.1"
+  compile "com.googlecode.protobuf-java-format:protobuf-java-format:1.4"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
@@ -82,6 +86,11 @@ idea {
     jdkName = sourceCompatibility.name
     downloadJavadoc = true
     downloadSources = true
+
+    sourceDirs += file("src/generated/main/java")
+    testSourceDirs += file("src/generated/test/java")
+    generatedSourceDirs += file("src/generated/main/java")
+    generatedSourceDirs += file("src/generated/test/java")
   }
 }
 
@@ -110,6 +119,10 @@ jar {
   }
 }
 
+protobuf {
+  generatedFilesBaseDir = "$projectDir/src/generated"
+}
+
 task createDocs(type: Copy) {
   from(project.projectDir) {
     include "*.example"
@@ -133,6 +146,7 @@ processResources {
   from(sourceSets.main.resources.srcDirs) {
     include "**/VersionInfo.properties"
     expand([
+        "version" : project.version,
         "revision": Grgit.open(project.file(rootProject.projectDir)).head().id,
         "tag"     : (System.getenv("TRAVIS_TAG") ?: ""),
     ])

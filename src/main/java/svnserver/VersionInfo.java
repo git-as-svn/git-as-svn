@@ -7,6 +7,7 @@
  */
 package svnserver;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,8 @@ import java.util.Properties;
  */
 public class VersionInfo {
   private static VersionInfo s_instance = new VersionInfo();
+  @NotNull
+  private final String version;
   @Nullable
   private final String revision;
   @Nullable
@@ -33,11 +36,17 @@ public class VersionInfo {
       }
       final Properties props = new Properties();
       props.load(stream);
-      revision = getProperty(props, "revision");
-      tag = getProperty(props, "tag");
+      version = getProperty(props, "version", "unknown");
+      revision = getProperty(props, "revision", null);
+      tag = getProperty(props, "tag", null);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  @NotNull
+  public static String getVersion() {
+    return s_instance.version;
   }
 
   @Nullable
@@ -64,9 +73,9 @@ public class VersionInfo {
     }
   }
 
-  @Nullable
-  private static String getProperty(@NotNull Properties props, @NotNull String name) {
+  @Contract("_, _, null -> _; _, _, !null -> !null")
+  private static String getProperty(@NotNull Properties props, @NotNull String name, @Nullable String defaultValue) {
     final String value = props.getProperty(name);
-    return (value != null && !value.startsWith("${")) ? value : null;
+    return (value != null && !value.startsWith("${")) ? value : defaultValue;
   }
 }

@@ -14,14 +14,18 @@ import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ContentServlet;
 import ru.bozaro.gitlfs.server.PointerServlet;
+import svnserver.api.lfs.Lfs;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
+import svnserver.ext.api.ServiceRegistry;
+import svnserver.ext.gitlfs.api.LfsRpc;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
 import javax.servlet.Servlet;
 import java.io.IOException;
+import java.net.URI;
 import java.text.MessageFormat;
 import java.util.Collection;
 
@@ -55,7 +59,7 @@ public class LfsServer implements Shared {
 
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
     final ContentManager manager = new LfsContentManager(localContext, storage);
-    final Collection<WebServer.ServletInfo> servletsInfo = webServer.addServlets(
+    final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(manager, pathSpec + SERVLET_CONTENT))
@@ -63,6 +67,7 @@ public class LfsServer implements Shared {
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
+    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext)));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
@@ -76,9 +81,9 @@ public class LfsServer implements Shared {
     @NotNull
     private final WebServer webServer;
     @NotNull
-    private final Collection<WebServer.ServletInfo> servlets;
+    private final Collection<WebServer.Holder> servlets;
 
-    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.ServletInfo> servlets) {
+    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.Holder> servlets) {
       this.webServer = webServer;
       this.servlets = servlets;
     }

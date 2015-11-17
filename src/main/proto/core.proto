@@ -1,0 +1,20 @@
+option java_package = "svnserver.api.core";
+
+option java_outer_classname = "CoreProto";
+
+option java_multiple_files = true;
+
+option java_generic_services = true;
+
+service Core {
+	rpc Version (VersionRequest) returns (VersionResponse);
+}
+
+message VersionRequest {
+}
+
+message VersionResponse {
+	required string version = 1;
+	optional string tag = 2;
+	optional string revision = 3;
+}

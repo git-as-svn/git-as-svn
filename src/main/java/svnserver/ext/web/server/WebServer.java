@@ -78,7 +78,7 @@ public class WebServer implements Shared {
   @NotNull
   private final EncryptionFactory tokenFactory;
   @NotNull
-  private final List<ServletInfo> servlets = new CopyOnWriteArrayList<>();
+  private final List<Holder> servlets = new CopyOnWriteArrayList<>();
 
   public WebServer(@NotNull SharedContext context, @Nullable Server server, @NotNull WebServerConfig config, @NotNull EncryptionFactory tokenFactory) {
     this.context = context;
@@ -135,20 +135,20 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public ServletInfo addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
+  public Holder addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
     log.info("Registered servlet for path: {}", pathSpec);
-    final ServletInfo servletInfo = new ServletInfo(pathSpec, servlet);
+    final Holder servletInfo = new Holder(pathSpec, servlet);
     servlets.add(servletInfo);
     updateServlets();
     return servletInfo;
   }
 
   @NotNull
-  public Collection<ServletInfo> addServlets(@NotNull Map<String, Servlet> servletMap) {
-    List<ServletInfo> servletInfos = new ArrayList<>();
+  public Collection<Holder> addServlets(@NotNull Map<String, Servlet> servletMap) {
+    List<Holder> servletInfos = new ArrayList<>();
     for (Map.Entry<String, Servlet> entry : servletMap.entrySet()) {
       log.info("Registered servlet for path: {}", entry.getKey());
-      final ServletInfo servletInfo = new ServletInfo(entry.getKey(), entry.getValue());
+      final Holder servletInfo = new Holder(entry.getKey(), entry.getValue());
       servletInfos.add(servletInfo);
     }
     servlets.addAll(servletInfos);
@@ -156,16 +156,16 @@ public class WebServer implements Shared {
     return servletInfos;
   }
 
-  public void removeServlet(@NotNull ServletInfo servletInfo) {
+  public void removeServlet(@NotNull Holder servletInfo) {
     if (servlets.remove(servletInfo)) {
       log.info("Unregistered servlet for path: {}", servletInfo.path);
       updateServlets();
     }
   }
 
-  public void removeServlets(@NotNull Collection<ServletInfo> servletInfos) {
+  public void removeServlets(@NotNull Collection<Holder> servletInfos) {
     boolean modified = false;
-    for (ServletInfo servlet : servletInfos) {
+    for (Holder servlet : servletInfos) {
       if (servlets.remove(servlet)) {
         log.info("Unregistered servlet for path: {}", servlet.path);
         modified = true;
@@ -178,7 +178,7 @@ public class WebServer implements Shared {
 
   private void updateServlets() {
     if (handler != null) {
-      final ServletInfo[] snapshot = servlets.toArray(new ServletInfo[servlets.size()]);
+      final Holder[] snapshot = servlets.toArray(new Holder[servlets.size()]);
       final ServletHolder[] holders = new ServletHolder[snapshot.length];
       final ServletMapping[] mappings = new ServletMapping[snapshot.length];
       for (int i = 0; i < snapshot.length; ++i) {
@@ -198,7 +198,8 @@ public class WebServer implements Shared {
     }
   }
 
-  public static WebServer get(@NotNull SharedContext context) throws IOException, SVNException {
+  @NotNull
+  public static WebServer get(@NotNull SharedContext context) throws IOException {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
@@ -275,7 +276,7 @@ public class WebServer implements Shared {
     resp.getWriter().write(new ErrorWriter(req).content(error));
   }
 
-  public static final class ServletInfo {
+  public final class Holder {
     @NotNull
     private final String path;
     @NotNull
@@ -283,12 +284,16 @@ public class WebServer implements Shared {
     @NotNull
     private final ServletMapping mapping;
 
-    private ServletInfo(@NotNull String pathSpec, @NotNull Servlet servlet) {
+    private Holder(@NotNull String pathSpec, @NotNull Servlet servlet) {
       path = pathSpec;
       holder = new ServletHolder(servlet);
       mapping = new ServletMapping();
       mapping.setServletName(holder.getName());
       mapping.setPathSpec(pathSpec);
+    }
+
+    public void removeServlet() {
+      WebServer.this.removeServlet(this);
     }
   }
 

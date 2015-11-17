@@ -10,13 +10,11 @@ package svnserver.context;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.VcsSupplier;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Base context object.
@@ -63,7 +61,7 @@ public abstract class Context<S extends AutoCloseable> implements AutoCloseable 
   }
 
   @NotNull
-  public <T extends S> T getOrCreate(@NotNull Class<T> type, @NotNull VcsSupplier<T> supplier) throws IOException, SVNException {
+  public <T extends S> T getOrCreate(@NotNull Class<T> type, @NotNull Supplier<T> supplier) {
     final T result = get(type);
     if (result == null) {
       final T newObj = supplier.get();
