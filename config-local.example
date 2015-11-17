@@ -57,6 +57,9 @@ repositoryMapping: !listMapping
         branch: master
         path: build/example.git
         renameDetection: true
+        extensions:
+          - !api
+            path: /api
 
 shared:
   # Submodule list.

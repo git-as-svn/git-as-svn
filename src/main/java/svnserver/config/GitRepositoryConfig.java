@@ -24,6 +24,8 @@ import svnserver.repository.locks.PersistentLockFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Repository configuration.
@@ -43,6 +45,9 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
   @NotNull
   private GitCreateMode createMode = GitCreateMode.ERROR;
+  @NotNull
+  private List<LocalConfig> extensions = new ArrayList<>();
+
   private boolean renameDetection = true;
 
   @NotNull
@@ -73,6 +78,10 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
     context.add(GitLocation.class, new GitLocation(fullPath));
-    return new GitRepository(context, createRepository(fullPath), getPusher().create(context), branch, isRenameDetection(), new PersistentLockFactory(context));
+    GitRepository repository = new GitRepository(context, createRepository(fullPath), getPusher().create(context), branch, isRenameDetection(), new PersistentLockFactory(context));
+    for (LocalConfig extension : extensions) {
+      extension.create(context);
+    }
+    return repository;
   }
 }

@@ -9,8 +9,9 @@ package svnserver.ext.api;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.api.core.Core;
+import svnserver.context.Local;
+import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.api.rpc.CoreRpc;
@@ -23,29 +24,38 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class ApiShared implements Shared {
+public class ApiProvider implements Shared, Local {
   @NotNull
   private final String path;
   @Nullable
   private WebServer.Holder servletInfo = null;
 
-  public ApiShared(@NotNull String path) {
+  public ApiProvider(@NotNull String path) {
     this.path = path;
   }
 
+  public synchronized void init(@NotNull LocalContext context) throws IOException {
+    if (servletInfo == null) {
+      WebServer webServer = WebServer.get(context.getShared());
+      final ProtobufRpcServlet servlet = new ProtobufRpcServlet(ServiceRegistry.get(context));
+      servletInfo = webServer.addServlet("/" + path + "/*", servlet);
+    }
+  }
+
   @Override
-  public synchronized void init(@NotNull SharedContext context) throws IOException, SVNException {
+  public synchronized void init(@NotNull SharedContext context) throws IOException {
     if (servletInfo == null) {
       WebServer webServer = WebServer.get(context);
-      final ProtobufRpcServlet servlet = new ProtobufRpcServlet();
-      servlet.addService(Core.newReflectiveBlockingService(new CoreRpc()));
+      final ServiceRegistry registry = ServiceRegistry.get(context);
+      registry.addService(Core.newReflectiveBlockingService(new CoreRpc()));
+
+      final ProtobufRpcServlet servlet = new ProtobufRpcServlet(registry);
       servletInfo = webServer.addServlet(path + "/*", servlet);
     }
   }
 
   @Override
   public void ready(@NotNull SharedContext context) throws IOException {
-
   }
 
   @Override

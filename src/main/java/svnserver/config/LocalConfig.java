@@ -5,28 +5,23 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.config;
+package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.config.SharedConfig;
-import svnserver.config.serializer.ConfigType;
-import svnserver.context.SharedContext;
-import svnserver.ext.api.ApiShared;
+import svnserver.context.LocalContext;
 
 import java.io.IOException;
 
 /**
- * API configuration.
+ * Local repository extension configuration
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("api")
-public class ApiSharedConfig implements SharedConfig {
-  @NotNull
-  private String path = "/api";
-
-  @Override
-  public void create(@NotNull SharedContext context) throws IOException {
-    context.add(ApiShared.class, new ApiShared(path));
-  }
+public interface LocalConfig {
+  /**
+   * Add repository specific data to context.
+   *
+   * @param context Local context.
+   */
+  void create(@NotNull LocalContext context) throws IOException;
 }

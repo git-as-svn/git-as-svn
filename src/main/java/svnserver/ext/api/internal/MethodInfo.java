@@ -159,6 +159,7 @@ public class MethodInfo {
         final StringBuilder builder = new StringBuilder();
         for (Descriptors.EnumValueDescriptor value : field.getEnumType().getValues()) {
           values.put(value.getName().toLowerCase(), value);
+          values.put(Integer.toString(value.getNumber()), value);
           if (builder.length() > 0) builder.append(", ");
           builder.append(value.getName());
         }

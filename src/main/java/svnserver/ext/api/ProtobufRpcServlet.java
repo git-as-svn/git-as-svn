@@ -7,9 +7,7 @@
  */
 package svnserver.ext.api;
 
-import com.google.protobuf.BlockingService;
 import com.google.protobuf.Message;
-import com.google.protobuf.Service;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -35,37 +32,11 @@ import java.util.concurrent.ExecutionException;
 public class ProtobufRpcServlet extends HttpServlet {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(ProtobufRpcServlet.class);
-
   @NotNull
-  private final transient ConcurrentHashMap<String, ServiceInfo> services = new ConcurrentHashMap<>();
+  private final ServiceRegistry registry;
 
-  public final class Holder {
-    @NotNull
-    private final ServiceInfo service;
-
-    private Holder(@NotNull ServiceInfo service) {
-      this.service = service;
-    }
-
-    public void removeService() {
-      ProtobufRpcServlet.this.removeService(this);
-    }
-  }
-
-  @NotNull
-  public Holder addService(@NotNull final BlockingService service) {
-    return addService(new BlockingServiceWrapper(service));
-  }
-
-  @NotNull
-  public Holder addService(@NotNull final Service service) {
-    final ServiceInfo serviceInfo = new ServiceInfo(service);
-    services.put(serviceInfo.getName(), serviceInfo);
-    return new Holder(serviceInfo);
-  }
-
-  public boolean removeService(@NotNull final Holder holder) {
-    return services.remove(holder.service.getName(), holder);
+  public ProtobufRpcServlet(@NotNull ServiceRegistry registry) {
+    this.registry = registry;
   }
 
   @Override
@@ -75,7 +46,7 @@ public class ProtobufRpcServlet extends HttpServlet {
       final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
       final int separator = pathInfo.indexOf('/', begin);
       if (separator > 0) {
-        ServiceInfo serviceInfo = services.get(pathInfo.substring(begin, separator));
+        ServiceInfo serviceInfo = registry.getService(pathInfo.substring(begin, separator));
         if (serviceInfo != null) {
           service(req, res, pathInfo.substring(separator + 1), serviceInfo);
           return;

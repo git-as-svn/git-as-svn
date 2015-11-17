@@ -14,14 +14,18 @@ import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ContentServlet;
 import ru.bozaro.gitlfs.server.PointerServlet;
+import svnserver.api.lfs.Lfs;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
+import svnserver.ext.api.ServiceRegistry;
+import svnserver.ext.gitlfs.api.LfsRpc;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
 import javax.servlet.Servlet;
 import java.io.IOException;
+import java.net.URI;
 import java.text.MessageFormat;
 import java.util.Collection;
 
@@ -63,6 +67,7 @@ public class LfsServer implements Shared {
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
+    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext)));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
