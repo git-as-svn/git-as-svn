@@ -12,9 +12,10 @@ import org.atteo.classindex.IndexSubclasses;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 /**
  * Protobuf formatter.
@@ -43,8 +44,8 @@ public abstract class ProtobufFormat {
     return suffix;
   }
 
-  public abstract void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException;
+  public abstract void write(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException;
 
   @Nullable
-  public abstract Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException;
+  public abstract Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException;
 }

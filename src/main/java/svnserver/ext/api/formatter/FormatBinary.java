@@ -12,9 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.ext.api.ProtobufFormat;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 /**
  * Binary serialization.
@@ -27,13 +28,13 @@ public class FormatBinary extends ProtobufFormat {
   }
 
   @Override
-  public void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException {
-    message.writeTo(output.getOutputStream());
+  public void write(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException {
+    message.writeTo(stream);
   }
 
   @Nullable
   @Override
-  public Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException {
-    return builder.mergeFrom(input.getInputStream()).build();
+  public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
+    return builder.mergeFrom(stream).build();
   }
 }

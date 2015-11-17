@@ -8,15 +8,17 @@
 package svnserver.ext.api.formatter;
 
 import com.google.protobuf.Message;
+import com.google.protobuf.TextFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.ext.api.ProtobufFormat;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 
-import com.google.protobuf.TextFormat;
 /**
  * Text serialization.
  *
@@ -28,13 +30,15 @@ public class FormatText extends ProtobufFormat {
   }
 
   @Override
-  public void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException {
-    TextFormat.print(message, output.getWriter());
+  public void write(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException {
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, charset)) {
+      TextFormat.print(message, writer);
+    }
   }
 
-  @Override
   @Nullable
-  public Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException {
+  @Override
+  public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
     return null;
   }
 }

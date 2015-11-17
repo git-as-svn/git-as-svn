@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
  * Fake RpcController implementation.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
- *
  */
 public class RpcControllerFake implements RpcController {
   @NotNull

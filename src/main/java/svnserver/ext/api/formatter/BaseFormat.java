@@ -14,11 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.ext.api.ProtobufFormat;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 /**
  * JSON serialization.
@@ -35,18 +34,14 @@ public abstract class BaseFormat extends ProtobufFormat {
   }
 
   @Override
-  public void write(@NotNull Message message, @NotNull HttpServletResponse output) throws IOException {
-    formatter.print(message, output.getOutputStream(), getCharset(output.getCharacterEncoding()));
+  public void write(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException {
+    formatter.print(message, stream, charset);
   }
 
-  @Override
   @Nullable
-  public Message read(@NotNull Message.Builder builder, @NotNull HttpServletRequest input) throws IOException {
-    formatter.merge(input.getInputStream(), getCharset(input.getCharacterEncoding()), ExtensionRegistry.getEmptyRegistry(), builder);
+  @Override
+  public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset defaultCharset) throws IOException {
+    formatter.merge(stream, defaultCharset, ExtensionRegistry.getEmptyRegistry(), builder);
     return builder.build();
-  }
-
-  private Charset getCharset(@Nullable String charset) {
-    return charset == null ? StandardCharsets.ISO_8859_1 : Charset.forName(charset);
   }
 }
