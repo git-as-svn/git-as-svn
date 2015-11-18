@@ -7,15 +7,12 @@
  */
 package svnserver.ext.socket.config;
 
-import com.etsy.net.JUDS;
-import com.etsy.net.UnixDomainSocket;
-import com.etsy.net.UnixDomainSocketClient;
-import com.etsy.net.UnixDomainSocketServer;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.newsclub.net.unix.AFUNIXServerSocket;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 
@@ -43,20 +40,21 @@ public class SocketRpc implements Shared {
   @NotNull
   private final File socketFile;
   @NotNull
-  private final UnixDomainSocketServer socket;
+  private final AFUNIXServerSocket socket;
   @NotNull
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   @NotNull
   private final Thread thread;
   @NotNull
-  private final ConcurrentHashSet<UnixDomainSocket> connections = new ConcurrentHashSet<>();
+  private final ConcurrentHashSet<Socket> connections = new ConcurrentHashSet<>();
   @NotNull
   private final ExecutorService poolExecutor;
 
   public SocketRpc(@NotNull SharedContext context, @NotNull File socketFile) throws IOException {
     this.context = context;
     this.socketFile = socketFile;
-    this.socket = new UnixDomainSocketServer(socketFile.getAbsolutePath(), JUDS.SOCK_STREAM);
+    this.socket = AFUNIXServerSocket.newInstance();
+    socket.bind(new AFUNIXSocketAddress(socketFile));
     this.poolExecutor = Executors.newCachedThreadPool();
     thread = new Thread(SocketRpc.this::run, "unix-socket-listener");
     thread.run();
@@ -65,7 +63,7 @@ public class SocketRpc implements Shared {
   private void run() {
     log.info("Server API on unix socket: {}", socketFile);
     while (!stopped.get()) {
-      final UnixDomainSocket client;
+      final Socket client;
       try {
         client = socket.accept();
       } catch (IOException e) {
@@ -78,7 +76,7 @@ public class SocketRpc implements Shared {
       }
       poolExecutor.execute(() -> {
         log.info("New connection");
-        try {
+        try (Socket holder = client) {
           connections.add(client);
           serveClient(client);
         } catch (EOFException | SocketException ignore) {
@@ -87,14 +85,13 @@ public class SocketRpc implements Shared {
           log.info("Client error:", e);
         } finally {
           connections.remove(client);
-          client.close();
           log.info("Connection closed");
         }
       });
     }
   }
 
-  private void serveClient(UnixDomainSocket client) throws IOException {
+  private void serveClient(Socket client) throws IOException {
 
   }
 

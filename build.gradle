@@ -59,7 +59,7 @@ dependencies {
   compile "com.google.guava:guava:18.0"
   compile "com.google.protobuf:protobuf-java:2.6.1"
   compile "com.googlecode.protobuf-java-format:protobuf-java-format:1.4"
-  compile "uk.co.caprica:juds:0.94.1"
+  compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
