@@ -12,6 +12,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import svnserver.TestHelper;
+import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
@@ -39,7 +40,7 @@ public class LfsLocalStorageTest {
   public void simple(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
@@ -67,7 +68,7 @@ public class LfsLocalStorageTest {
   public void alreadyAdded(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 

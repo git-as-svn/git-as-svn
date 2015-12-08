@@ -35,8 +35,11 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @NotNull
   private String pathFormat = "{0}.git";
   private boolean compress = true;
+  private boolean saveMeta = true;
   @Nullable
   private String token;
+  @NotNull
+  private LfsLayout layout = LfsLayout.OneLevel;
 
   @NotNull
   public String getPath() {
@@ -64,6 +67,23 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
     this.compress = compress;
   }
 
+  public boolean isSaveMeta() {
+    return saveMeta;
+  }
+
+  public void setSaveMeta(boolean saveMeta) {
+    this.saveMeta = saveMeta;
+  }
+
+  @NotNull
+  public LfsLayout getLayout() {
+    return layout;
+  }
+
+  public void setLayout(@NotNull LfsLayout layout) {
+    this.layout = layout;
+  }
+
   @NotNull
   public static LfsStorage getStorage(@NotNull LocalContext context) throws IOException, SVNException {
     return context.getShared().getOrCreate(LfsStorageFactory.class, LfsConfig::new).createStorage(context);
@@ -78,8 +98,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @NotNull
   public LfsStorage createStorage(@NotNull LocalContext context) {
     File dataRoot = new File(context.getShared().getBasePath(), path);
-    File metaRoot = new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta");
-    return new LfsLocalStorage(dataRoot, metaRoot, isCompress());
+    File metaRoot = isSaveMeta() ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
+    return new LfsLocalStorage(getLayout(), dataRoot, metaRoot, isCompress());
   }
-
 }

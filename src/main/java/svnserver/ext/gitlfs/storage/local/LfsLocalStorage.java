@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.storage.local;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.auth.User;
+import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -35,12 +36,15 @@ public class LfsLocalStorage implements LfsStorage {
   public static final String META_REAL_NAME = "author-name";
 
   @NotNull
-  private final File dataRoot;
+  private final LfsLayout layout;
   @NotNull
+  private final File dataRoot;
+  @Nullable
   private final File metaRoot;
   private final boolean compress;
 
-  public LfsLocalStorage(@NotNull File dataRoot, @NotNull File metaRoot, boolean compress) {
+  public LfsLocalStorage(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress) {
+    this.layout = layout;
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;
     this.compress = compress;
@@ -49,19 +53,19 @@ public class LfsLocalStorage implements LfsStorage {
   @Nullable
   @Override
   public LfsReader getReader(@NotNull String oid) throws IOException {
-    return LfsLocalReader.create(dataRoot, metaRoot, oid);
+    return LfsLocalReader.create(layout, dataRoot, metaRoot, oid);
   }
 
   @NotNull
   @Override
   public LfsWriter getWriter(@Nullable User user) throws IOException {
-    return new LfsLocalWriter(dataRoot, metaRoot, compress, user);
+    return new LfsLocalWriter(layout, dataRoot, metaRoot, compress, user);
   }
 
   @Nullable
-  static File getPath(@NotNull File root, @NotNull String oid, @NotNull String suffix) {
+  static File getPath(@NotNull LfsLayout layout, @NotNull File root, @NotNull String oid, @NotNull String suffix) {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
-    return new File(root, oid.substring(offset, offset + 2) + "/" + oid.substring(offset) + suffix);
+    return new File(root, layout.getPath(oid.substring(offset)) + suffix);
   }
 }

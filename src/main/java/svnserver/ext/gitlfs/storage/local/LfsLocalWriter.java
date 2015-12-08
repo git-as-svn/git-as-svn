@@ -15,6 +15,7 @@ import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.DateHelper;
 import svnserver.HashHelper;
 import svnserver.auth.User;
+import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
@@ -34,9 +35,10 @@ import java.util.zip.GZIPOutputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsLocalWriter extends LfsWriter {
+  private final LfsLayout layout;
   @NotNull
   private final File dataRoot;
-  @NotNull
+  @Nullable
   private final File metaRoot;
   @NotNull
   private final File dataTemp;
@@ -54,7 +56,8 @@ public class LfsLocalWriter extends LfsWriter {
   private final MessageDigest digestSha;
   private long size;
 
-  public LfsLocalWriter(@NotNull File dataRoot, @NotNull File metaRoot, boolean compress, @Nullable User user) throws IOException {
+  public LfsLocalWriter(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress, @Nullable User user) throws IOException {
+    this.layout = layout;
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;
     this.compress = compress;
@@ -118,7 +121,7 @@ public class LfsLocalWriter extends LfsWriter {
     }
 
     // Write file data
-    final File dataPath = LfsLocalStorage.getPath(dataRoot, oid, compress ? ".gz" : "");
+    final File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, compress ? ".gz" : "");
     if (dataPath == null) {
       throw new IllegalStateException();
     }
@@ -131,37 +134,39 @@ public class LfsLocalWriter extends LfsWriter {
     dataTemp.delete();
 
     // Write metadata
-    final File metaPath = LfsLocalStorage.getPath(metaRoot, oid, ".meta");
-    if (metaPath == null) {
-      throw new IllegalStateException();
-    }
-    if (!metaPath.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      metaPath.getParentFile().mkdirs();
-      //noinspection ResultOfMethodCallIgnored
-      metaTemp.getParentFile().mkdirs();
-
-      try (FileOutputStream stream = new FileOutputStream(metaTemp)) {
-        final Map<String, String> map = new HashMap<>();
-        map.put(Constants.SIZE, String.valueOf(size));
-        map.put(Constants.OID, oid);
-        map.put(LfsLocalStorage.HASH_MD5, Hex.encodeHexString(md5));
-        map.put(LfsLocalStorage.CREATE_TIME, DateHelper.toISO8601(Instant.now()));
-        if ((user != null) && (!user.isAnonymous())) {
-          if (user.getEmail() != null) {
-            map.put(LfsLocalStorage.META_EMAIL, user.getEmail());
-          }
-          map.put(LfsLocalStorage.META_USER_NAME, user.getUserName());
-          map.put(LfsLocalStorage.META_REAL_NAME, user.getRealName());
-        }
-        stream.write(Pointer.serializePointer(map));
-        stream.close();
-        if (!metaTemp.renameTo(metaPath) && !metaPath.isFile()) {
-          throw new IOException("Can't rename file: " + metaTemp.getPath() + " -> " + metaPath.getPath());
-        }
-      } finally {
+    if (metaRoot != null) {
+      final File metaPath = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta");
+      if (metaPath == null) {
+        throw new IllegalStateException();
+      }
+      if (!metaPath.exists()) {
         //noinspection ResultOfMethodCallIgnored
-        metaTemp.delete();
+        metaPath.getParentFile().mkdirs();
+        //noinspection ResultOfMethodCallIgnored
+        metaTemp.getParentFile().mkdirs();
+
+        try (FileOutputStream stream = new FileOutputStream(metaTemp)) {
+          final Map<String, String> map = new HashMap<>();
+          map.put(Constants.SIZE, String.valueOf(size));
+          map.put(Constants.OID, oid);
+          map.put(LfsLocalStorage.HASH_MD5, Hex.encodeHexString(md5));
+          map.put(LfsLocalStorage.CREATE_TIME, DateHelper.toISO8601(Instant.now()));
+          if ((user != null) && (!user.isAnonymous())) {
+            if (user.getEmail() != null) {
+              map.put(LfsLocalStorage.META_EMAIL, user.getEmail());
+            }
+            map.put(LfsLocalStorage.META_USER_NAME, user.getUserName());
+            map.put(LfsLocalStorage.META_REAL_NAME, user.getRealName());
+          }
+          stream.write(Pointer.serializePointer(map));
+          stream.close();
+          if (!metaTemp.renameTo(metaPath) && !metaPath.isFile()) {
+            throw new IOException("Can't rename file: " + metaTemp.getPath() + " -> " + metaPath.getPath());
+          }
+        } finally {
+          //noinspection ResultOfMethodCallIgnored
+          metaTemp.delete();
+        }
       }
     }
     return oid;
