@@ -1,5 +1,9 @@
 # Changes
 
+## 1.0.15-alhpa: GitLab 8.2 LFS storage layout support
+
+ * Add support for GitLab 8.2 LFS storage layout #109.
+
 ## 1.0.14-alpha: Debian packaging
 
  * Add debian packaging.
