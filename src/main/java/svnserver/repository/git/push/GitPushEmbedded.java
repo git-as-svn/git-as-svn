@@ -38,11 +38,11 @@ public class GitPushEmbedded implements GitPusher {
   private static final Logger log = LoggerFactory.getLogger(GitPushEmbedded.class);
   @NotNull
   private final SharedContext context;
-  @NotNull
+  @Nullable
   private final String preReceive;
-  @NotNull
+  @Nullable
   private final String postReceive;
-  @NotNull
+  @Nullable
   private final String update;
 
   @FunctionalInterface
@@ -51,7 +51,7 @@ public class GitPushEmbedded implements GitPusher {
     Process exec(@NotNull ProcessBuilder processBuilder) throws IOException;
   }
 
-  public GitPushEmbedded(@NotNull LocalContext context, @NotNull String preReceive, @NotNull String postReceive, @NotNull String update) {
+  public GitPushEmbedded(@NotNull LocalContext context, @Nullable String preReceive, @Nullable String postReceive, @Nullable String update) {
     this.context = context.getShared();
     this.preReceive = preReceive;
     this.postReceive = postReceive;
@@ -94,7 +94,7 @@ public class GitPushEmbedded implements GitPusher {
     });
   }
 
-  private void runUpdateHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull String hook, @NotNull User userInfo) throws IOException, SVNException {
+  private void runUpdateHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
     runHook(repository, hook, userInfo, processBuilder -> {
       processBuilder.command().addAll(Arrays.asList(
           refUpdate.getName(),
@@ -105,8 +105,8 @@ public class GitPushEmbedded implements GitPusher {
     });
   }
 
-  private void runHook(@NotNull Repository repository, @NotNull String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws IOException, SVNException {
-    if (hook.isEmpty()) {
+  private void runHook(@NotNull Repository repository, @Nullable String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws IOException, SVNException {
+    if (hook == null || hook.isEmpty()) {
       return;
     }
     final File script = ConfigHelper.joinPath(ConfigHelper.joinPath(repository.getDirectory(), "hooks"), hook);
