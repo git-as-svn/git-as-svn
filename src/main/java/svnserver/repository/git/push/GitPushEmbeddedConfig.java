@@ -8,6 +8,7 @@
 package svnserver.repository.git.push;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.config.GitPusherConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
@@ -21,37 +22,37 @@ import svnserver.context.LocalContext;
 public class GitPushEmbeddedConfig implements GitPusherConfig {
   @NotNull
   public static final GitPushEmbeddedConfig instance = new GitPushEmbeddedConfig();
-  @NotNull
+  @Nullable
   private String preReceive = "pre-receive";
-  @NotNull
+  @Nullable
   private String postReceive = "post-receive";
-  @NotNull
+  @Nullable
   private String update = "update";
 
-  @NotNull
+  @Nullable
   public String getPreReceive() {
     return preReceive;
   }
 
-  public void setPreReceive(@NotNull String preCommit) {
+  public void setPreReceive(@Nullable String preCommit) {
     this.preReceive = preCommit;
   }
 
-  @NotNull
+  @Nullable
   public String getPostReceive() {
     return postReceive;
   }
 
-  public void setPostReceive(@NotNull String postReceive) {
+  public void setPostReceive(@Nullable String postReceive) {
     this.postReceive = postReceive;
   }
 
-  @NotNull
+  @Nullable
   public String getUpdate() {
     return update;
   }
 
-  public void setUpdate(@NotNull String update) {
+  public void setUpdate(@Nullable String update) {
     this.update = update;
   }
 

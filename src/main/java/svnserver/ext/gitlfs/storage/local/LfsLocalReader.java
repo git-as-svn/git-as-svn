@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
+import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -36,24 +38,34 @@ public class LfsLocalReader implements LfsReader {
   private final Map<String, String> meta;
 
   @Nullable
-  public static LfsLocalReader create(@NotNull File dataRoot, @NotNull File metaRoot, @NotNull String oid) throws IOException {
-    final File metaPath = LfsLocalStorage.getPath(metaRoot, oid, ".meta");
-    if (metaPath == null || !metaPath.isFile()) {
-      return null;
-    }
+  public static LfsLocalReader create(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
     final Map<String, String> meta;
-    try (InputStream stream = new FileInputStream(metaPath)) {
-      meta = Pointer.parsePointer(ByteStreams.toByteArray(stream));
-    }
-    if (meta == null) {
-      throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());
-    }
-    if (!meta.get(Constants.OID).equals(oid)) {
-      throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
+    File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
+    File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
+    if (metaRoot != null) {
+      final File metaPath = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta");
+      if (metaPath == null || !metaPath.isFile()) {
+        return null;
+      }
+      try (InputStream stream = new FileInputStream(metaPath)) {
+        meta = Pointer.parsePointer(ByteStreams.toByteArray(stream));
+      }
+      if (meta == null) {
+        throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());
+      }
+      if (!meta.get(Constants.OID).equals(oid)) {
+        throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
+      }
+    } else {
+      if (dataPath == null || !dataPath.isFile()) {
+        return null;
+      }
+      gzipPath = null;
+      meta = new HashMap<>();
+      meta.put(Constants.OID, oid);
+      meta.put(Constants.SIZE, Long.toString(dataPath.length()));
     }
 
-    File dataPath = LfsLocalStorage.getPath(dataRoot, oid, "");
-    File gzipPath = LfsLocalStorage.getPath(dataRoot, oid, ".gz");
     if (dataPath != null && !dataPath.isFile()) {
       dataPath = null;
     }

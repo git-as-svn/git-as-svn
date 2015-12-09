@@ -25,6 +25,7 @@ import svnserver.auth.UserDB;
 import svnserver.auth.UserWithPassword;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -119,7 +120,7 @@ public class LfsHttpStorageTest {
   public void simple(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
