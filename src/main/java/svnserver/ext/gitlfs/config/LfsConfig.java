@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.config;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.config.ConfigHelper;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
@@ -97,7 +98,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
 
   @NotNull
   public LfsStorage createStorage(@NotNull LocalContext context) {
-    File dataRoot = new File(context.getShared().getBasePath(), path);
+    File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), getPath());
     File metaRoot = isSaveMeta() ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
     return new LfsLocalStorage(getLayout(), dataRoot, metaRoot, isCompress());
   }
