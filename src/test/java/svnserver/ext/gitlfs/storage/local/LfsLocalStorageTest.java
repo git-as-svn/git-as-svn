@@ -65,6 +65,34 @@ public class LfsLocalStorageTest {
   }
 
   @Test(dataProvider = "compressProvider")
+  public void nometa(boolean compress) throws IOException {
+    final File tempDir = TestHelper.createTempDir("git-as-svn");
+    try {
+      LfsLocalStorage storage = new LfsLocalStorage(LfsLayout.GitLab, new File(tempDir, "data"), null, compress);
+      // Check file is not exists
+      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
+
+      // Write new file
+      try (final LfsWriter writer = storage.getWriter(null)) {
+        writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
+        Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+      }
+
+      // Read old file.
+      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+      Assert.assertNotNull(reader);
+      Assert.assertNull(reader.getMd5());
+      Assert.assertEquals(15, reader.getSize());
+
+      try (final InputStream stream = reader.openStream()) {
+        Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
+      }
+    } finally {
+      TestHelper.deleteDirectory(tempDir);
+    }
+  }
+
+  @Test(dataProvider = "compressProvider")
   public void alreadyAdded(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {

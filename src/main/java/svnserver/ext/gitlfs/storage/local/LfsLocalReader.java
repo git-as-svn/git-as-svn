@@ -40,6 +40,8 @@ public class LfsLocalReader implements LfsReader {
   @Nullable
   public static LfsLocalReader create(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
     final Map<String, String> meta;
+    File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
+    File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
     if (metaRoot != null) {
       final File metaPath = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta");
       if (metaPath == null || !metaPath.isFile()) {
@@ -55,12 +57,15 @@ public class LfsLocalReader implements LfsReader {
         throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
       }
     } else {
+      if (dataPath == null || !dataPath.isFile()) {
+        return null;
+      }
+      gzipPath = null;
       meta = new HashMap<>();
       meta.put(Constants.OID, oid);
+      meta.put(Constants.SIZE, Long.toString(dataPath.length()));
     }
 
-    File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
-    File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
     if (dataPath != null && !dataPath.isFile()) {
       dataPath = null;
     }

@@ -9,11 +9,14 @@ package svnserver.ext.gitlfs.storage.local;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.server.SvnServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +27,9 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsLocalStorage implements LfsStorage {
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(LfsLocalStorage.class);
+
   @NotNull
   public static final String HASH_MD5 = "hash-md5";
   @NotNull
@@ -47,7 +53,10 @@ public class LfsLocalStorage implements LfsStorage {
     this.layout = layout;
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;
-    this.compress = compress;
+    this.compress = compress && (metaRoot != null);
+    if (compress && (metaRoot == null)){
+      log.error("Compression not supported for local LFS storage without metadata. Compression is disabled");
+    }
   }
 
   @Nullable
@@ -66,6 +75,8 @@ public class LfsLocalStorage implements LfsStorage {
   static File getPath(@NotNull LfsLayout layout, @NotNull File root, @NotNull String oid, @NotNull String suffix) {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
-    return new File(root, layout.getPath(oid.substring(offset)) + suffix);
+    File file = new File(root, layout.getPath(oid.substring(offset)) + suffix);
+    log.warn(file.getAbsolutePath());
+    return file;
   }
 }

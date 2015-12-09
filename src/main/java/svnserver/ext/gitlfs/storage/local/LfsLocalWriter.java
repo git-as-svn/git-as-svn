@@ -74,7 +74,7 @@ public class LfsLocalWriter extends LfsWriter {
     digestMd5 = HashHelper.md5();
     digestSha = HashHelper.sha256();
     size = 0;
-    if (compress) {
+    if (this.compress) {
       dataStream = new GZIPOutputStream(new FileOutputStream(dataTemp));
     } else {
       dataStream = new FileOutputStream(dataTemp);
