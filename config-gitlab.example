@@ -22,8 +22,12 @@ shared:
       forwarded: true
   # Git LFS server
   - !lfs
-    path: lfs
-    token: secret
+    # Secret token for git-lfs-authenticate script
+    # token: secret
+    path: /mnt/storage/lfs-objects
+    saveMeta: false
+    compress: false
+    layout: GitLab
   # GitLab server
   - !gitlab
     url: http://localhost:3000/
