@@ -615,7 +615,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           //noinspection unchecked
           command.process(context, param);
         } catch (Throwable e) {
-          log.warn("Found error in cmd {}: {}", cmd, e.getMessage());
+          log.warn("Found error in cmd " + cmd, e);
           aborted = true;
           throw e;
         }
