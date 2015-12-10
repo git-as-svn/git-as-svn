@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<book version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<info>
+		<title>Git-as-svn manual</title>
+		<author>
+			<personname>
+				<firstname>Artem</firstname>
+				<surname>Navrotskiy</surname>
+			</personname>
+		</author>
+		<pubdate>2015</pubdate>
+		<copyright>
+			<year>2014-2015</year>
+			<holder>Artem Navrotskiy</holder>
+		</copyright>
+		<productname>git-as-svn</productname>
+	</info>
+	<xi:include href="ch_gitlab.xml" />
+</book>
