@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs.server;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import ru.bozaro.gitlfs.server.ForbiddenError;
 import ru.bozaro.gitlfs.server.UnauthorizedError;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
+import svnserver.ext.gitlfs.LfsAuthHelper;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -28,6 +30,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -58,10 +62,26 @@ public class LfsContentManager implements ContentManager {
   }
 
   @NotNull
+  Map<String, String> createHeader(@NotNull HttpServletRequest request, @NotNull User user) throws IOException {
+    final String auth = request.getHeader(Constants.HEADER_AUTHORIZATION);
+    if (auth == null) {
+      return Collections.emptyMap();
+    }
+    if (auth.startsWith(WebServer.AUTH_TOKEN)) {
+      return ImmutableMap.<String, String>builder()
+          .put(Constants.HEADER_AUTHORIZATION, auth)
+          .build();
+    } else {
+      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getDefaultExpire());
+    }
+  }
+
+  @NotNull
   @Override
   public Downloader checkDownloadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
     final VcsAccess access = context.sure(VcsAccess.class);
-    checkAccess(request, access::checkRead);
+    final User user = checkAccess(request, access::checkRead);
+    final Map<String, String> header = createHeader(request, user);
     return new Downloader() {
       @NotNull
       @Override
@@ -82,6 +102,12 @@ public class LfsContentManager implements ContentManager {
         }
         return reader.openGzipStream();
       }
+
+      @NotNull
+      @Override
+      public Map<String, String> createHeader(@NotNull Map<String, String> defaultHeader) {
+        return header;
+      }
     };
   }
 
@@ -90,6 +116,7 @@ public class LfsContentManager implements ContentManager {
   public Uploader checkUploadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
     final VcsAccess access = context.sure(VcsAccess.class);
     final User user = checkAccess(request, access::checkWrite);
+    final Map<String, String> header = createHeader(request, user);
     return new Uploader() {
       @Override
       public void saveObject(@NotNull Meta meta, @NotNull InputStream content) throws IOException {
@@ -97,6 +124,12 @@ public class LfsContentManager implements ContentManager {
           ByteStreams.copy(content, writer);
           writer.finish(LfsStorage.OID_PREFIX + meta.getOid());
         }
+      }
+
+      @NotNull
+      @Override
+      public Map<String, String> createHeader(@NotNull Map<String, String> defaultHeader) {
+        return header;
       }
     };
   }
