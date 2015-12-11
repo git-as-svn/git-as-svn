@@ -3,6 +3,7 @@
 ## Unreleased
 
  * Generate token in LFS server instead pass original authentication data #105.
+ * Ignore unknown GitLab hook data.
 
 ## 1.0.15-alhpa: GitLab 8.2 LFS storage layout support
 
