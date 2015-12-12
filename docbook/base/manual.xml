@@ -15,5 +15,6 @@
 		</copyright>
 		<productname>git-as-svn</productname>
 	</info>
+	<xi:include href="ch_about.xml" />
 	<xi:include href="ch_gitlab.xml" />
 </book>
