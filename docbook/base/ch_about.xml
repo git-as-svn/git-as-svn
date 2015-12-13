@@ -249,6 +249,10 @@
             </listitem>
 
             <listitem>
+              <para>svn lock, unlock</para>
+            </listitem>
+
+            <listitem>
               <para>svn replay (svnsync)</para>
             </listitem>
           </itemizedlist>

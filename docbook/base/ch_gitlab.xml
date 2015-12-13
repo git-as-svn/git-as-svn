@@ -1,8 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook">
-	<title>GitLab integration</title>
-	<section>
-		<title />
-		<para />
-	</section>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+         xmlns:ns6="http://www.w3.org/1999/xlink"
+         xmlns:ns5="http://www.w3.org/1998/Math/MathML"
+         xmlns:ns4="http://www.w3.org/2000/svg"
+         xmlns:ns3="http://www.w3.org/1999/xhtml"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Интеграция с GitLab</title>
+
+  <section>
+    <title>Список исправлений для GitLab</title>
+
+    <para>Для интеграции с GitLab нужно установить следующие исправления на
+    GitLab:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><link
+        ns6:href="https://github.com/gitlabhq/gitlab-shell/pull/230">#230
+        (gitlab-shell)</link>: Add git-lfs-authenticate to server white list
+        (merged to 7.14.1);</para>
+      </listitem>
+
+      <listitem>
+        <para><link
+        ns6:href="https://github.com/gitlabhq/gitlab-shell/pull/237">#237
+        (gitlab-shell)</link>: Execute git-lfs-authenticate command with
+        original arguments (merged to 8.2.0);</para>
+      </listitem>
+
+      <listitem>
+        <para><link
+        ns6:href="https://github.com/gitlabhq/gitlabhq/pull/9591">#9591
+        (gitlabhq)</link>: Add API for lookup user information by SSH key ID
+        (merged to 8.0.0);</para>
+      </listitem>
+
+      <listitem>
+        <para><link
+        ns6:href="https://github.com/gitlabhq/gitlabhq/pull/9728">#9728
+        (gitlabhq)</link>: Show "Empty Repository Page" for repository without
+        branches (merged to 8.2.0).</para>
+      </listitem>
+    </itemizedlist>
+  </section>
 </chapter>
