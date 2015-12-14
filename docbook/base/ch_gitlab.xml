@@ -43,4 +43,78 @@
       </listitem>
     </itemizedlist>
   </section>
+
+  <section>
+    <title>Точки стыка интеграции с GitLab</title>
+
+    <para>В случае с GitLab есть несколько точек стыка:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Список репозиториев</para>
+
+        <para>Git as Subversion автоматически получает список репозиториев в
+        момент старта через GitLab API.</para>
+
+        <para>Далее этот список поддерживается в актуальном состоянии при
+        помощи System Hook, который так же регистрируется
+        автоматически.</para>
+      </listitem>
+
+      <listitem>
+        <para>Авторизация и аутентификация пользователей</para>
+
+        <para>Для аутентификации пользователей и определения наличия прав на
+        репозиторий так же используется GitLab API.</para>
+      </listitem>
+
+      <listitem>
+        <para>Git Hooks</para>
+
+        <para>При коммите через Git as Subversion выполняются хуки от GitLab.
+        Эти хуки, в частности, позволяют видеть информацию о новых коммитах
+        без задержки через WEB-интерфейс GitLab.</para>
+
+        <para>Для того, чтобы этот функционал работал, Git as Subversion
+        должен передаеть идентификатор GitLab-пользователя (GL_ID), полученный
+        при его авторзации.</para>
+
+        <important>
+          <para>Из-за этого в случае интеграции с GitLab авторизация
+          пользователей должна так же проходить через GitLab.</para>
+        </important>
+      </listitem>
+
+      <listitem>
+        <para>Git LFS</para>
+
+        <para>В случае использования GitLFS надо так же указать путь до
+        GitLab-хранилища.</para>
+
+        <para>GitLab с версии 8.2 использует общее хранилище LFS-файлов для
+        всех репозиториев. Файлы хранятся в отдельном каталоге в сыром
+        виде.</para>
+
+        <para>Интеграция с LFS хранилищем GitLab происходит на уровне файлов.
+        Никакое API от GitLab при этом не испльзуется.</para>
+      </listitem>
+
+      <listitem>
+        <para>Git LFS авторизация для SSH-пользователей</para>
+
+        <para>GitLab не предоставляет скрипт git-lfs-authenticate, который
+        отвечает за SSO авторизацию SSH-пользователей на Git LFS сервере. Для
+        настройки данного скрипта см. <xref
+        linkend="git-lfs-authenticate"/>.</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Пример конфигурационного файла</title>
+
+    <programlisting language="yaml" linenumbering="numbered"><xi:include
+        href="../../config-gitlab.example" parse="text"
+        xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+  </section>
 </chapter>
