@@ -25,6 +25,7 @@ import svnserver.context.LocalContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.repository.VcsAccess;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,17 @@ public class GitLabAccess implements VcsAccess {
 
   @Override
   public void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException {
-    check(user, GitlabAccessLevel.Reporter);
+    try {
+      if (user.isAnonymous()) {
+        if (!getProjectAsAdmin().isPublic()) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "This project has not public access"));
+        }
+      } else {
+        getProjectViaSudo(user);
+      }
+    } catch (FileNotFoundException ignored) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this project"));
+    }
   }
 
   @Override
@@ -81,9 +92,25 @@ public class GitLabAccess implements VcsAccess {
   }
 
   @NotNull
+  private GitlabProject getProjectAsAdmin() throws IOException {
+    try {
+      return cache.get("");
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof IOException) {
+        throw (IOException) e.getCause();
+      }
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @NotNull
   private GitlabProject getProjectViaSudo(@NotNull User user) throws IOException {
     try {
-      return cache.get(user.getExternalId() != null ? user.getExternalId() : user.getUserName());
+      final String key = user.getExternalId() != null ? user.getExternalId() : user.getUserName();
+      if (key == null || key.isEmpty()) {
+        throw new IllegalStateException("Found user without identificator: " + user);
+      }
+      return cache.get(key);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
