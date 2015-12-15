@@ -11,10 +11,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.gitlab.api.GitlabAPI;
-import org.gitlab.api.models.GitlabAccessLevel;
-import org.gitlab.api.models.GitlabPermission;
-import org.gitlab.api.models.GitlabProject;
-import org.gitlab.api.models.GitlabProjectAccessLevel;
+import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -48,7 +45,10 @@ public class GitLabAccess implements VcsAccess {
               @Override
               public GitlabProject load(@NotNull String userId) throws Exception {
                 final GitlabAPI api = GitLabContext.sure(local.getShared()).connect();
-                final String tailUrl = GitlabProject.URL + "/" + projectId + "?sudo=" + userId;
+                String tailUrl = GitlabProject.URL + "/" + projectId;
+                if (userId.isEmpty()) {
+                  tailUrl += "?sudo=" + userId;
+                }
                 return api.retrieve().to(tailUrl, GitlabProject.class);
               }
             }
@@ -72,23 +72,41 @@ public class GitLabAccess implements VcsAccess {
 
   @Override
   public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException {
-    check(user, GitlabAccessLevel.Developer);
-  }
+    if (user.isAnonymous()) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user has no project write access"));
+    }
+    try {
+      final GitlabProject project = getProjectViaSudo(user);
+      if (isProjectOwner(project, user)) return;
 
-  private void check(@NotNull User user, @NotNull GitlabAccessLevel accessLevel) throws IOException, SVNException {
-    final GitlabAccessLevel userLevel = getProjectAccess(user);
-    if (userLevel == null || userLevel.accessValue <= accessLevel.accessValue) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access this project"));
+      final GitlabPermission permissions = project.getPermissions();
+      if (permissions != null) {
+        if (hasAccess(permissions.getProjectAccess(), GitlabAccessLevel.Developer) ||
+            hasAccess(permissions.getProjectGroupAccess(), GitlabAccessLevel.Developer)) {
+          return;
+        }
+      }
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to write this project"));
+    } catch (FileNotFoundException ignored) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this project"));
     }
   }
 
-  @Nullable
-  private GitlabAccessLevel getProjectAccess(@NotNull User user) throws IOException {
-    final GitlabPermission permissions = getProjectViaSudo(user).getPermissions();
-    if (permissions == null) return null;
-    final GitlabProjectAccessLevel projectAccess = permissions.getProjectAccess();
-    if (projectAccess == null) return null;
-    return projectAccess.getAccessLevel();
+  private boolean isProjectOwner(@NotNull GitlabProject project, @NotNull User user) {
+    GitlabUser owner = project.getOwner();
+    //noinspection SimplifiableIfStatement
+    if (owner == null) {
+      return false;
+    }
+    return owner.getId().toString().equals(user.getExternalId())
+        || owner.getEmail().equals(user.getEmail())
+        || owner.getName().equals(user.getUserName());
+  }
+
+  private boolean hasAccess(@Nullable GitlabProjectAccessLevel access, @NotNull GitlabAccessLevel level) {
+    if (access == null) return false;
+    GitlabAccessLevel accessLevel = access.getAccessLevel();
+    return accessLevel != null && (accessLevel.accessValue >= level.accessValue);
   }
 
   @NotNull
@@ -107,7 +125,7 @@ public class GitLabAccess implements VcsAccess {
   private GitlabProject getProjectViaSudo(@NotNull User user) throws IOException {
     try {
       final String key = user.getExternalId() != null ? user.getExternalId() : user.getUserName();
-      if (key == null || key.isEmpty()) {
+      if (key.isEmpty()) {
         throw new IllegalStateException("Found user without identificator: " + user);
       }
       return cache.get(key);
