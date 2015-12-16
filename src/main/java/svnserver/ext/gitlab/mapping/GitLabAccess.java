@@ -46,7 +46,7 @@ public class GitLabAccess implements VcsAccess {
               public GitlabProject load(@NotNull String userId) throws Exception {
                 final GitlabAPI api = GitLabContext.sure(local.getShared()).connect();
                 String tailUrl = GitlabProject.URL + "/" + projectId;
-                if (userId.isEmpty()) {
+                if (!userId.isEmpty()) {
                   tailUrl += "?sudo=" + userId;
                 }
                 return api.retrieve().to(tailUrl, GitlabProject.class);
@@ -77,7 +77,9 @@ public class GitLabAccess implements VcsAccess {
     }
     try {
       final GitlabProject project = getProjectViaSudo(user);
-      if (isProjectOwner(project, user)) return;
+      if (isProjectOwner(project, user)) {
+        return;
+      }
 
       final GitlabPermission permissions = project.getPermissions();
       if (permissions != null) {
@@ -93,13 +95,15 @@ public class GitLabAccess implements VcsAccess {
   }
 
   private boolean isProjectOwner(@NotNull GitlabProject project, @NotNull User user) {
+    if (user.isAnonymous()) {
+      return false;
+    }
     GitlabUser owner = project.getOwner();
     //noinspection SimplifiableIfStatement
     if (owner == null) {
       return false;
     }
     return owner.getId().toString().equals(user.getExternalId())
-        || owner.getEmail().equals(user.getEmail())
         || owner.getName().equals(user.getUserName());
   }
 

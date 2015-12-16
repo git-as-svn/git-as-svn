@@ -58,6 +58,7 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
     final String path = context.getRepositoryPath(args.path);
     final LockTarget lockTarget = new LockTarget(path, rev);
     final String comment = args.comment.length == 0 ? null : args.comment[0];
+    context.checkWrite(path);
     final LockDesc[] lockDescs = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context, comment, args.stealLock, new LockTarget[]{lockTarget}));
     if (lockDescs.length != 1) {
       throw new IllegalStateException();
