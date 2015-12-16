@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.0.16-alpha: GitLab authentication
 
  * Rewrite GitLab authentication #110.
  * Fix some permission check issues #110.
