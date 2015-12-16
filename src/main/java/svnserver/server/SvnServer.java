@@ -210,7 +210,11 @@ public class SvnServer extends Thread {
           parser.skipItems();
         }
       } catch (SVNException e) {
-        log.error("Command execution error", e);
+        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED) {
+          log.warn("Command execution error: {}", e.getMessage());
+        } else {
+          log.error("Command execution error", e);
+        }
         BaseCmd.sendError(writer, e.getErrorMessage());
       }
     }
@@ -231,8 +235,8 @@ public class SvnServer extends Thread {
     writer
         .word("edit-pipeline")         // This is required.
         .word("absent-entries")        // We support absent-dir and absent-dir editor commands
-            //.word("commit-revprops") // We don't currently have _any_ revprop support
-            //.word("mergeinfo")       // Nope, not yet
+        //.word("commit-revprops") // We don't currently have _any_ revprop support
+        //.word("mergeinfo")       // Nope, not yet
         .word("depth")
         .word("inherited-props")       // Need for .gitattributes and .gitignore
         .word("log-revprops");         // svn log --with-all-revprops
@@ -302,7 +306,7 @@ public class SvnServer extends Thread {
         .string(repositoryInfo.getRepository().getUuid())
         .string(repositoryInfo.getBaseUrl().toString())
         .listBegin()
-            //.word("mergeinfo")
+        //.word("mergeinfo")
         .listEnd()
         .listEnd()
         .listEnd();

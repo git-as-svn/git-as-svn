@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+ * Rewrite GitLab authentication #110.
+ * Fix some permission check issues #110.
  * Generate token in LFS server instead pass original authentication data #105.
  * Ignore unknown GitLab hook data.
 
