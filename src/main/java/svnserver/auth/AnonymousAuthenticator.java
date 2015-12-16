@@ -19,7 +19,17 @@ import java.io.IOException;
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-final class AnonymousAuthenticator implements Authenticator {
+public final class AnonymousAuthenticator implements Authenticator {
+  @NotNull
+  private final static AnonymousAuthenticator instance = new AnonymousAuthenticator();
+
+  private AnonymousAuthenticator() {
+  }
+
+  @NotNull
+  public static AnonymousAuthenticator get() {
+    return instance;
+  }
 
   @NotNull
   @Override
