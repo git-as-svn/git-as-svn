@@ -4,7 +4,7 @@ compressionEnabled: true
 
 # Use GitLab repositories
 repositoryMapping: !gitlabMapping
-  path: /home/bozaro/github/gitlab-development-kit/repositories/
+  path: /var/opt/gitlab/git-data/repositories/
   template:
     branch: master
     renameDetection: true
