@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns6="http://www.w3.org/1999/xlink"
          xmlns:ns5="http://www.w3.org/1998/Math/MathML"
          xmlns:ns4="http://www.w3.org/2000/svg"
@@ -17,29 +18,29 @@
       <listitem>
         <para><link
         ns6:href="https://github.com/gitlabhq/gitlab-shell/pull/230">#230
-        (gitlab-shell)</link>: Add git-lfs-authenticate to server white list
-        (merged to 7.14.1);</para>
+        (gitlab-shell)</link><phrase>: Add git-lfs-authenticate to server
+        white list (merged to 7.14.1);</phrase></para>
       </listitem>
 
       <listitem>
         <para><link
         ns6:href="https://github.com/gitlabhq/gitlab-shell/pull/237">#237
-        (gitlab-shell)</link>: Execute git-lfs-authenticate command with
-        original arguments (merged to 8.2.0);</para>
+        (gitlab-shell)</link><phrase>: Execute git-lfs-authenticate command
+        with original arguments (merged to 8.2.0);</phrase></para>
       </listitem>
 
       <listitem>
         <para><link
         ns6:href="https://github.com/gitlabhq/gitlabhq/pull/9591">#9591
-        (gitlabhq)</link>: Add API for lookup user information by SSH key ID
-        (merged to 8.0.0);</para>
+        (gitlabhq)</link><phrase>: Add API for lookup user information by SSH
+        key ID (merged to 8.0.0);</phrase></para>
       </listitem>
 
       <listitem>
         <para><link
         ns6:href="https://github.com/gitlabhq/gitlabhq/pull/9728">#9728
-        (gitlabhq)</link>: Show "Empty Repository Page" for repository without
-        branches (merged to 8.2.0).</para>
+        (gitlabhq)</link><phrase>: Show "Empty Repository Page" for repository
+        without branches (merged to 8.2.0).</phrase></para>
       </listitem>
     </itemizedlist>
   </section>
@@ -114,7 +115,6 @@
     <title>Пример конфигурационного файла</title>
 
     <programlisting language="yaml" linenumbering="numbered"><xi:include
-        href="../../config-gitlab.example" parse="text"
-        xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+        href="../../config-gitlab.example" parse="text"/></programlisting>
   </section>
 </chapter>

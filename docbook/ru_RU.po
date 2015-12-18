@@ -1,174 +1,190 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-18 22:06+0300\n"
-"PO-Revision-Date: 2015-12-19 00:00+0300\n"
+"POT-Creation-Date: 2015-12-18 22:46+0300\n"
+"PO-Revision-Date: 2015-12-18 22:37+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
 "Language: ru_RU\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.4\n"
 
-#: base/manual.xml:4(title)
-msgid "Git-as-svn manual"
-msgstr ""
+#: base/manual.xml:10(title)
+msgid "Manual"
+msgstr "Руководство пользователя"
 
-#: base/manual.xml:7(firstname)
+#: base/manual.xml:13(firstname)
 msgid "Artem"
-msgstr ""
+msgstr "Артём"
 
-#: base/manual.xml:8(surname)
+#: base/manual.xml:14(surname)
 msgid "Navrotskiy"
-msgstr ""
+msgstr "Навроцкий"
 
-#: base/manual.xml:11(pubdate)
+#: base/manual.xml:17(pubdate)
 msgid "2015"
 msgstr ""
 
-#: base/manual.xml:13(year)
+#: base/manual.xml:20(year)
 msgid "2014-2015"
 msgstr ""
 
-#: base/manual.xml:14(holder)
+#: base/manual.xml:22(holder)
 msgid "Artem Navrotskiy"
-msgstr ""
+msgstr "Артём Навроцкий"
 
-#: base/manual.xml:16(productname)
+#: base/manual.xml:25(productname)
 msgid "git-as-svn"
 msgstr ""
 
-#: base/ch_gitlab.xml:8(title)
+#: base/ch_gitlab.xml:9(title)
 msgid "Интеграция с GitLab"
 msgstr ""
 
-#: base/ch_gitlab.xml:11(title)
+#: base/ch_gitlab.xml:12(title)
 msgid "Список исправлений для GitLab"
 msgstr ""
 
-#: base/ch_gitlab.xml:13(para)
+#: base/ch_gitlab.xml:14(para)
 msgid ""
 "Для интеграции с GitLab нужно установить следующие исправления на GitLab:"
 msgstr ""
 
-#: base/ch_gitlab.xml:18(para)
-msgid ""
-"<link ns6:href=\"https://github.com/gitlabhq/gitlab-shell/pull/230\">#230 "
-"(gitlab-shell)</link>: Add git-lfs-authenticate to server white list (merged "
-"to 7.14.1);"
+#: base/ch_gitlab.xml:20(link)
+msgid "#230 (gitlab-shell)"
 msgstr ""
 
-#: base/ch_gitlab.xml:25(para)
-msgid ""
-"<link ns6:href=\"https://github.com/gitlabhq/gitlab-shell/pull/237\">#237 "
-"(gitlab-shell)</link>: Execute git-lfs-authenticate command with original "
-"arguments (merged to 8.2.0);"
+#: base/ch_gitlab.xml:21(phrase)
+msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
+msgstr ""
+": Добавлена команда git-lfs-authenticate в белый список (включено в 7.14.1);"
+
+#: base/ch_gitlab.xml:27(link)
+msgid "#237 (gitlab-shell)"
 msgstr ""
 
-#: base/ch_gitlab.xml:32(para)
+#: base/ch_gitlab.xml:28(phrase)
 msgid ""
-"<link ns6:href=\"https://github.com/gitlabhq/gitlabhq/pull/9591\">#9591 "
-"(gitlabhq)</link>: Add API for lookup user information by SSH key ID (merged "
-"to 8.0.0);"
+": Execute git-lfs-authenticate command with original arguments (merged to "
+"8.2.0);"
+msgstr ""
+": Выполнение команды git-lfs-authenticate в оригинальными аргументами "
+"(включено в 8.2.0);"
+
+#: base/ch_gitlab.xml:34(link)
+msgid "#9591 (gitlabhq)"
 msgstr ""
 
-#: base/ch_gitlab.xml:39(para)
-msgid ""
-"<link ns6:href=\"https://github.com/gitlabhq/gitlabhq/pull/9728\">#9728 "
-"(gitlabhq)</link>: Show \"Empty Repository Page\" for repository without "
-"branches (merged to 8.2.0)."
+#: base/ch_gitlab.xml:35(phrase)
+msgid ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
+msgstr ""
+": Добавлено API для получения информации о пользователе по идентификатору "
+"SSH-ключа (включено в 8.0.0);"
+
+#: base/ch_gitlab.xml:41(link)
+msgid "#9728 (gitlabhq)"
 msgstr ""
 
-#: base/ch_gitlab.xml:48(title)
+#: base/ch_gitlab.xml:42(phrase)
+msgid ""
+": Show \"Empty Repository Page\" for repository without branches (merged to "
+"8.2.0)."
+msgstr ""
+": Исправлена ошибка во время отображения репозитория без веток (включено в "
+"8.2.0)."
+
+#: base/ch_gitlab.xml:49(title)
 msgid "Точки стыка интеграции с GitLab"
 msgstr ""
 
-#: base/ch_gitlab.xml:50(para)
+#: base/ch_gitlab.xml:51(para)
 msgid "В случае с GitLab есть несколько точек стыка:"
 msgstr ""
 
-#: base/ch_gitlab.xml:54(para)
+#: base/ch_gitlab.xml:55(para)
 msgid "Список репозиториев"
 msgstr ""
 
-#: base/ch_gitlab.xml:56(para)
+#: base/ch_gitlab.xml:57(para)
 msgid ""
 "Git as Subversion автоматически получает список репозиториев в момент старта "
 "через GitLab API."
 msgstr ""
 
-#: base/ch_gitlab.xml:59(para)
+#: base/ch_gitlab.xml:60(para)
 msgid ""
 "Далее этот список поддерживается в актуальном состоянии при помощи System "
 "Hook, который так же регистрируется автоматически."
 msgstr ""
 
-#: base/ch_gitlab.xml:65(para)
+#: base/ch_gitlab.xml:66(para)
 msgid "Авторизация и аутентификация пользователей"
 msgstr ""
 
-#: base/ch_gitlab.xml:67(para)
+#: base/ch_gitlab.xml:68(para)
 msgid ""
 "Для аутентификации пользователей и определения наличия прав на репозиторий "
 "так же используется GitLab API."
 msgstr ""
 
-#: base/ch_gitlab.xml:72(para)
+#: base/ch_gitlab.xml:73(para)
 msgid "Git Hooks"
 msgstr ""
 
-#: base/ch_gitlab.xml:74(para)
+#: base/ch_gitlab.xml:75(para)
 msgid ""
 "При коммите через Git as Subversion выполняются хуки от GitLab. Эти хуки, в "
 "частности, позволяют видеть информацию о новых коммитах без задержки через "
 "WEB-интерфейс GitLab."
 msgstr ""
 
-#: base/ch_gitlab.xml:78(para)
+#: base/ch_gitlab.xml:79(para)
 msgid ""
 "Для того, чтобы этот функционал работал, Git as Subversion должен передаеть "
 "идентификатор GitLab-пользователя (GL_ID), полученный при его авторзации."
 msgstr ""
 
-#: base/ch_gitlab.xml:83(para)
+#: base/ch_gitlab.xml:84(para)
 msgid ""
 "Из-за этого в случае интеграции с GitLab авторизация пользователей должна "
 "так же проходить через GitLab."
 msgstr ""
 
-#: base/ch_gitlab.xml:89(para)
+#: base/ch_gitlab.xml:90(para)
 msgid "Git LFS"
 msgstr ""
 
-#: base/ch_gitlab.xml:91(para)
+#: base/ch_gitlab.xml:92(para)
 msgid ""
 "В случае использования GitLFS надо так же указать путь до GitLab-хранилища."
 msgstr ""
 
-#: base/ch_gitlab.xml:94(para)
+#: base/ch_gitlab.xml:95(para)
 msgid ""
 "GitLab с версии 8.2 использует общее хранилище LFS-файлов для всех "
 "репозиториев. Файлы хранятся в отдельном каталоге в сыром виде."
 msgstr ""
 
-#: base/ch_gitlab.xml:98(para)
+#: base/ch_gitlab.xml:99(para)
 msgid ""
 "Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
 "от GitLab при этом не испльзуется."
 msgstr ""
 
-#: base/ch_gitlab.xml:103(para)
+#: base/ch_gitlab.xml:104(para)
 msgid "Git LFS авторизация для SSH-пользователей"
 msgstr ""
 
-#: base/ch_gitlab.xml:105(para)
+#: base/ch_gitlab.xml:106(para)
 msgid ""
 "GitLab не предоставляет скрипт git-lfs-authenticate, который отвечает за SSO "
 "авторизацию SSH-пользователей на Git LFS сервере. Для настройки данного "
 "скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
 msgstr ""
 
-#: base/ch_gitlab.xml:114(title)
+#: base/ch_gitlab.xml:115(title)
 msgid "Пример конфигурационного файла"
 msgstr ""
 
@@ -512,3 +528,6 @@ msgstr ""
 #: base/ch_about.xml:0(None)
 msgid "translator-credits"
 msgstr ""
+
+#~ msgid "Git-as-svn manual"
+#~ msgstr "Git-as-svn. Руководство пользователя"
