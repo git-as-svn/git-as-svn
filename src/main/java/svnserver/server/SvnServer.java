@@ -257,9 +257,9 @@ public class SvnServer extends Thread {
   @NotNull
   public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo, boolean allowAnonymous) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
-    final Set<Authenticator> authenticators = new HashSet<>(context.sure(UserDB.class).authenticators());
+    final List<Authenticator> authenticators = new ArrayList<>(context.sure(UserDB.class).authenticators());
     if (allowAnonymous) {
-      authenticators.add(AnonymousAuthenticator.get());
+      authenticators.add(0, AnonymousAuthenticator.get());
     }
     writer
         .listBegin()
@@ -316,7 +316,7 @@ public class SvnServer extends Thread {
         .string(repositoryInfo.getRepository().getUuid())
         .string(repositoryInfo.getBaseUrl().toString())
         .listBegin()
-        //.word("mergeinfo")
+            //.word("mergeinfo")
         .listEnd()
         .listEnd()
         .listEnd();
