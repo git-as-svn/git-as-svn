@@ -8,6 +8,8 @@
 package svnserver.server.step;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.server.SessionContext;
 
@@ -20,17 +22,39 @@ import java.io.IOException;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class CheckPermissionStep implements Step {
+  @FunctionalInterface
+  public interface Checker {
+    void check(@NotNull SessionContext context) throws SVNException, IOException;
+  }
+
   @NotNull
   private final Step nextStep;
+  @Nullable
+  private final Checker checker;
 
-  public CheckPermissionStep(@NotNull Step nextStep) {
+  public CheckPermissionStep(@NotNull Step nextStep, @Nullable Checker checker) {
     this.nextStep = nextStep;
+    this.checker = checker;
   }
 
   @Override
   public void process(@NotNull SessionContext context) throws IOException, SVNException {
-    context.checkRead(context.getRepositoryPath(""));
-
+    if (checker != null) {
+      try {
+        checker.check(context);
+      } catch (SVNException e) {
+        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_NOT_AUTHORIZED) {
+          throw e;
+        }
+        if (!context.getUser().isAnonymous()) {
+          throw e;
+        }
+        context.authenticate(false);
+        checker.check(context);
+        nextStep.process(context);
+        return;
+      }
+    }
     context.getWriter()
         .listBegin()
         .word("success")

@@ -175,10 +175,8 @@ public class SvnServer extends Thread {
       BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + clientInfo.getUrl()));
       return;
     }
-    final User user = authenticate(parser, writer, repositoryInfo);
-    log.info("User: {}", user);
-
-    final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo, user);
+    final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
+    context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
     final VcsRepository repository = context.getRepository();
     repository.updateRevisions();
     sendAnnounce(writer, repositoryInfo);
@@ -257,10 +255,10 @@ public class SvnServer extends Thread {
   }
 
   @NotNull
-  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException, SVNException {
+  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo, boolean allowAnonymous) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
     final Set<Authenticator> authenticators = new HashSet<>(context.sure(UserDB.class).authenticators());
-    if (hasAnonymousAuthenticator(repositoryInfo)) {
+    if (allowAnonymous) {
       authenticators.add(AnonymousAuthenticator.get());
     }
     writer
@@ -296,6 +294,7 @@ public class SvnServer extends Thread {
           .listEnd()
           .listEnd();
 
+      log.info("User: {}", user);
       return user;
     }
   }

@@ -230,6 +230,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     pipeline.editorCommand(context);
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
+    context.checkWrite(context.getRepositoryPath(""));
+  }
+
   private static class FileUpdater {
     @NotNull
     private final VcsDeltaConsumer deltaConsumer;
@@ -564,7 +569,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           }
         }
       });
-      context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
+      context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision), null));
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()

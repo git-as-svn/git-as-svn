@@ -83,7 +83,6 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
     final LockTarget[] targets = new LockTarget[args.paths.length];
     for (int i = 0; i < args.paths.length; ++i) {
       final String path = context.getRepositoryPath(args.paths[i].path);
-      context.checkWrite(path);
       final int rev = getRevision(args.paths[i].rev, latestRev);
       targets[i] = new LockTarget(path, rev);
     }
@@ -106,5 +105,12 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
         .listBegin()
         .listEnd()
         .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    for (PathRev pathRev : args.paths) {
+      context.checkWrite(context.getRepositoryPath(pathRev.path));
+    }
   }
 }

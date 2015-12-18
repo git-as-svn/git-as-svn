@@ -62,4 +62,10 @@ public final class UnlockCmd extends BaseCmd<UnlockCmd.Params> {
         .listEnd()
         .listEnd();
   }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkWrite(context.getRepositoryPath(args.path));
+  }
+
 }
