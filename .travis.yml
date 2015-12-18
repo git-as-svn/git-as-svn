@@ -5,6 +5,7 @@ jdk:
 addons:
   apt:
     packages:
+    - gnome-doc-utils
     - protobuf-compiler
 install:
 - ./gradlew assemble

@@ -1,0 +1,514 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: git-as-svn\n"
+"POT-Creation-Date: 2015-12-18 22:06+0300\n"
+"PO-Revision-Date: 2015-12-19 00:00+0300\n"
+"Last-Translator: Artem V. Navorskiy\n"
+"Language-Team: Russian\n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: base/manual.xml:4(title)
+msgid "Git-as-svn manual"
+msgstr ""
+
+#: base/manual.xml:7(firstname)
+msgid "Artem"
+msgstr ""
+
+#: base/manual.xml:8(surname)
+msgid "Navrotskiy"
+msgstr ""
+
+#: base/manual.xml:11(pubdate)
+msgid "2015"
+msgstr ""
+
+#: base/manual.xml:13(year)
+msgid "2014-2015"
+msgstr ""
+
+#: base/manual.xml:14(holder)
+msgid "Artem Navrotskiy"
+msgstr ""
+
+#: base/manual.xml:16(productname)
+msgid "git-as-svn"
+msgstr ""
+
+#: base/ch_gitlab.xml:8(title)
+msgid "Интеграция с GitLab"
+msgstr ""
+
+#: base/ch_gitlab.xml:11(title)
+msgid "Список исправлений для GitLab"
+msgstr ""
+
+#: base/ch_gitlab.xml:13(para)
+msgid ""
+"Для интеграции с GitLab нужно установить следующие исправления на GitLab:"
+msgstr ""
+
+#: base/ch_gitlab.xml:18(para)
+msgid ""
+"<link ns6:href=\"https://github.com/gitlabhq/gitlab-shell/pull/230\">#230 "
+"(gitlab-shell)</link>: Add git-lfs-authenticate to server white list (merged "
+"to 7.14.1);"
+msgstr ""
+
+#: base/ch_gitlab.xml:25(para)
+msgid ""
+"<link ns6:href=\"https://github.com/gitlabhq/gitlab-shell/pull/237\">#237 "
+"(gitlab-shell)</link>: Execute git-lfs-authenticate command with original "
+"arguments (merged to 8.2.0);"
+msgstr ""
+
+#: base/ch_gitlab.xml:32(para)
+msgid ""
+"<link ns6:href=\"https://github.com/gitlabhq/gitlabhq/pull/9591\">#9591 "
+"(gitlabhq)</link>: Add API for lookup user information by SSH key ID (merged "
+"to 8.0.0);"
+msgstr ""
+
+#: base/ch_gitlab.xml:39(para)
+msgid ""
+"<link ns6:href=\"https://github.com/gitlabhq/gitlabhq/pull/9728\">#9728 "
+"(gitlabhq)</link>: Show \"Empty Repository Page\" for repository without "
+"branches (merged to 8.2.0)."
+msgstr ""
+
+#: base/ch_gitlab.xml:48(title)
+msgid "Точки стыка интеграции с GitLab"
+msgstr ""
+
+#: base/ch_gitlab.xml:50(para)
+msgid "В случае с GitLab есть несколько точек стыка:"
+msgstr ""
+
+#: base/ch_gitlab.xml:54(para)
+msgid "Список репозиториев"
+msgstr ""
+
+#: base/ch_gitlab.xml:56(para)
+msgid ""
+"Git as Subversion автоматически получает список репозиториев в момент старта "
+"через GitLab API."
+msgstr ""
+
+#: base/ch_gitlab.xml:59(para)
+msgid ""
+"Далее этот список поддерживается в актуальном состоянии при помощи System "
+"Hook, который так же регистрируется автоматически."
+msgstr ""
+
+#: base/ch_gitlab.xml:65(para)
+msgid "Авторизация и аутентификация пользователей"
+msgstr ""
+
+#: base/ch_gitlab.xml:67(para)
+msgid ""
+"Для аутентификации пользователей и определения наличия прав на репозиторий "
+"так же используется GitLab API."
+msgstr ""
+
+#: base/ch_gitlab.xml:72(para)
+msgid "Git Hooks"
+msgstr ""
+
+#: base/ch_gitlab.xml:74(para)
+msgid ""
+"При коммите через Git as Subversion выполняются хуки от GitLab. Эти хуки, в "
+"частности, позволяют видеть информацию о новых коммитах без задержки через "
+"WEB-интерфейс GitLab."
+msgstr ""
+
+#: base/ch_gitlab.xml:78(para)
+msgid ""
+"Для того, чтобы этот функционал работал, Git as Subversion должен передаеть "
+"идентификатор GitLab-пользователя (GL_ID), полученный при его авторзации."
+msgstr ""
+
+#: base/ch_gitlab.xml:83(para)
+msgid ""
+"Из-за этого в случае интеграции с GitLab авторизация пользователей должна "
+"так же проходить через GitLab."
+msgstr ""
+
+#: base/ch_gitlab.xml:89(para)
+msgid "Git LFS"
+msgstr ""
+
+#: base/ch_gitlab.xml:91(para)
+msgid ""
+"В случае использования GitLFS надо так же указать путь до GitLab-хранилища."
+msgstr ""
+
+#: base/ch_gitlab.xml:94(para)
+msgid ""
+"GitLab с версии 8.2 использует общее хранилище LFS-файлов для всех "
+"репозиториев. Файлы хранятся в отдельном каталоге в сыром виде."
+msgstr ""
+
+#: base/ch_gitlab.xml:98(para)
+msgid ""
+"Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
+"от GitLab при этом не испльзуется."
+msgstr ""
+
+#: base/ch_gitlab.xml:103(para)
+msgid "Git LFS авторизация для SSH-пользователей"
+msgstr ""
+
+#: base/ch_gitlab.xml:105(para)
+msgid ""
+"GitLab не предоставляет скрипт git-lfs-authenticate, который отвечает за SSO "
+"авторизацию SSH-пользователей на Git LFS сервере. Для настройки данного "
+"скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
+msgstr ""
+
+#: base/ch_gitlab.xml:114(title)
+msgid "Пример конфигурационного файла"
+msgstr ""
+
+#: base/ch_about.xml:8(title)
+msgid "О проекте"
+msgstr ""
+
+#: base/ch_about.xml:11(title)
+msgid "Что это?"
+msgstr ""
+
+#: base/ch_about.xml:13(para)
+msgid ""
+"Git as Subversion — это реализация Subversion-сервера (по протоколу svn) для "
+"Git-репозиториев."
+msgstr ""
+
+#: base/ch_about.xml:16(para)
+msgid ""
+"Он позволяет работать с Git-репозиторием, используя консольный Subversion-"
+"клиент, TortoiseSVN, SvnKit и подобный инструментарий."
+msgstr ""
+
+#: base/ch_about.xml:21(title)
+msgid "Какова цель проекта?"
+msgstr ""
+
+#: base/ch_about.xml:23(para)
+msgid ""
+"Проект создан для того, чтобы позволить работать с одним и тем же "
+"репозиторием как в Git-стиле, так и в Subversion-стиле."
+msgstr ""
+
+#: base/ch_about.xml:28(glossterm)
+msgid "Git-стиль"
+msgstr ""
+
+#: base/ch_about.xml:31(para)
+msgid ""
+"Основная идея сводится к тому, что разработчик производит все изменения в "
+"локальной ветке. Эти изменения никак не влияют на работу остальных "
+"разработчиков, но тем не менее их можно протестировать на сборочной ферме, "
+"передать другому разработчику на проверку и т.д."
+msgstr ""
+
+#: base/ch_about.xml:37(para)
+msgid ""
+"Это позволяет каждому разработчику вести работу независимо, так, как ему "
+"удобно, изменяя и сохраняя промежуточные версии документов, пользуясь всеми "
+"возможностями системы (в том числе доступом к истории изменений) даже в "
+"отсутствие сетевого соединения с сервером."
+msgstr ""
+
+#: base/ch_about.xml:43(para)
+msgid ""
+"К сожалению, этот подход не работает в случае, когда изменяемые документы не "
+"поддерживают слияние (например, это характерно для двоичных файлов)."
+msgstr ""
+
+#: base/ch_about.xml:50(glossterm)
+msgid "Subversion-стиль"
+msgstr ""
+
+#: base/ch_about.xml:53(para)
+msgid ""
+"Использование централизованной системы контроля версий более удобно в случае "
+"использования документов не поддерживающих слияние (например, это характерно "
+"для двоичных файлов) за счет наличия механизма блокировок и более простого и "
+"короткого цикла публикации изменений."
+msgstr ""
+
+#: base/ch_about.xml:62(para)
+msgid ""
+"Необходимость совместить Git-стиль и Subversion-стиль работы с одим "
+"репозиторием возникает из-за того, что разные сотрудники в рамках одного "
+"проекта работают с принципиально разными данными. Если утрировать, то "
+"программисты предпочитают Git, а художники любят Subversion."
+msgstr ""
+
+#: base/ch_about.xml:69(title)
+msgid "Как оно работает?"
+msgstr ""
+
+#: base/ch_about.xml:72(title)
+msgid "Где хранятся Subversion-данные репозитория?"
+msgstr ""
+
+#: base/ch_about.xml:74(para)
+msgid ""
+"Для предоставляние Subversion репозитория нужно хранить информацию о том, "
+"какой номер Subversion-ревизии соответвует какому Git-коммиту. Вычислять эту "
+"информацию при запуске нельзя, так как первый же <command>git push --force</"
+"command> все сломает. Эти данные лежат в ветках <filename>refs/git-as-svn/*</"
+"filename>. В частности из-за этого не требуется отдельного резервного "
+"копирования для Subversion-данных."
+msgstr ""
+
+#: base/ch_about.xml:82(para)
+msgid ""
+"Так же для представления Subversion репозитория часть данных очень дорого "
+"получить на основании Git-репозитория."
+msgstr ""
+
+#: base/ch_about.xml:85(para)
+msgid "Например:"
+msgstr ""
+
+#: base/ch_about.xml:89(para)
+msgid "номер ревизии, когда файл менялся в послдений раз;"
+msgstr ""
+
+#: base/ch_about.xml:93(para)
+msgid "данные о том, откуда был скопирован файл;"
+msgstr ""
+
+#: base/ch_about.xml:97(para)
+msgid "MD5-хэш файла."
+msgstr ""
+
+#: base/ch_about.xml:101(para)
+msgid ""
+"Чтобы не заниматься их расчетом каждый запуск, эти данные кэширутся в "
+"файлах. Потеря данного кэша не критична для работы и его резервное "
+"копирование не имеет смысла."
+msgstr ""
+
+#: base/ch_about.xml:105(para)
+msgid ""
+"Данные о блокировкая файлов в данный момент так же хранятся в файла кэша."
+msgstr ""
+
+#: base/ch_about.xml:110(title)
+msgid "Как работает коммит?"
+msgstr ""
+
+#: base/ch_about.xml:112(para)
+msgid "Одна из самых важных деталей системы — сохранение изменений."
+msgstr ""
+
+#: base/ch_about.xml:115(para)
+msgid "В общих чертах, идея следующая:"
+msgstr ""
+
+#: base/ch_about.xml:119(para)
+msgid ""
+"В момент команды <command>svn commit</command> клиент отправляет на сервер "
+"свои изменения. Сервер при этом запоминает их. В этот же момент происходит "
+"первая проверка на актуальность клиентских данных."
+msgstr ""
+
+#: base/ch_about.xml:126(para)
+msgid ""
+"Сервер берет голову ветки и начинает формировать новый коммит на базе "
+"полученных от клиента данных. В этот момент происходит ещё одна проверка на "
+"актуальность клиентских данных."
+msgstr ""
+
+#: base/ch_about.xml:132(para)
+msgid "Проверяется целостность svn properties для заливаемых данных."
+msgstr ""
+
+#: base/ch_about.xml:137(para)
+msgid ""
+"Сервер пытается консольным Git-клиентом сделать push нового коммита в "
+"текущую ветку этого же репозитория. Далее по результату push-а:"
+msgstr ""
+
+#: base/ch_about.xml:143(para)
+msgid ""
+"если все хорошо — загружаем последние изменения из git-коммитов и радуемся;"
+msgstr ""
+
+#: base/ch_about.xml:148(para)
+msgid ""
+"если не fast forward — загружаем последние изменения из git-коммитов и идём "
+"к шагу 2;"
+msgstr ""
+
+#: base/ch_about.xml:153(para)
+msgid "если отбили хуки — сообщаем клиенту;"
+msgstr ""
+
+#: base/ch_about.xml:157(para)
+msgid "если другая ошибка — сообщаем клиенту."
+msgstr ""
+
+#: base/ch_about.xml:163(para)
+msgid ""
+"Таким образом, за счёт использования в данной операции консольного Git-а мы "
+"избегает гонки с заливкой напрямую через Git, и получаем хуки в качестве "
+"приятного бонуса."
+msgstr ""
+
+#: base/ch_about.xml:169(title)
+msgid "Отличие от других решений"
+msgstr ""
+
+#: base/ch_about.xml:171(para)
+msgid "Ряд способов позволяет решить схожие задачи."
+msgstr ""
+
+#: base/ch_about.xml:174(title)
+msgid "Поддержка Subversion у GitHub"
+msgstr ""
+
+#: base/ch_about.xml:176(para)
+msgid "Это, наверное, самый близкий аналог."
+msgstr ""
+
+#: base/ch_about.xml:178(para)
+msgid ""
+"Основная проблема данной реализации — неотделимость от GitHub. Так же, "
+"внезапно, данная реализация не поддерживает Git LFS."
+msgstr ""
+
+#: base/ch_about.xml:183(title)
+msgid "SubGit"
+msgstr ""
+
+#: base/ch_about.xml:185(para)
+msgid ""
+"Сайт: <link ns6:href=\"http://www.subgit.com/\">http://www.subgit.com/</link>"
+msgstr ""
+
+#: base/ch_about.xml:188(para)
+msgid ""
+"Достаточно интересная реализация при которой поддерживаются Git и Subversion-"
+"репозитории в синхронном состоянии. За счет чего обеспечивается синхронность "
+"репозиториев — не понятно."
+msgstr ""
+
+#: base/ch_about.xml:194(title)
+msgid "Subversion репозиторий и git svn"
+msgstr ""
+
+#: base/ch_about.xml:196(para)
+msgid ""
+"Данный способ позволяет использовать Git при работе с Subversion-"
+"репозиторием, но использование общего Git-репозитория между несколькими "
+"разработчиками сильно затруднено."
+msgstr ""
+
+#: base/ch_about.xml:204(title)
+msgid "Функционал"
+msgstr ""
+
+#: base/ch_about.xml:207(title)
+msgid "Что уже есть?"
+msgstr ""
+
+#: base/ch_about.xml:211(para)
+msgid "Работаю, как минимум, следующие клиенты:"
+msgstr ""
+
+#: base/ch_about.xml:215(para)
+msgid "Консольный Subversion-клиент;"
+msgstr ""
+
+#: base/ch_about.xml:219(para)
+msgid "TortoiseSVN;"
+msgstr ""
+
+#: base/ch_about.xml:223(para)
+msgid "SvnKit."
+msgstr ""
+
+#: base/ch_about.xml:229(para)
+msgid "Работают, как минимум, следующие операции:"
+msgstr ""
+
+#: base/ch_about.xml:233(para)
+msgid "svn checkout, update, switch, diff"
+msgstr ""
+
+#: base/ch_about.xml:237(para)
+msgid "svn commit"
+msgstr ""
+
+#: base/ch_about.xml:242(para)
+msgid ""
+"Операции поддерживаются, но данные об источнике копирования не сохраняются."
+msgstr ""
+
+#: base/ch_about.xml:241(para)
+msgid "svn copy, move<placeholder-1/>"
+msgstr ""
+
+#: base/ch_about.xml:248(para)
+msgid "svn cat, ls"
+msgstr ""
+
+#: base/ch_about.xml:252(para)
+msgid "svn lock, unlock"
+msgstr ""
+
+#: base/ch_about.xml:256(para)
+msgid "svn replay (svnsync)"
+msgstr ""
+
+#: base/ch_about.xml:262(para)
+msgid "Поддерживается Git LFS;"
+msgstr ""
+
+#: base/ch_about.xml:267(para)
+msgid "Данные из git submodule видны в репозитории в режиме только для чтения."
+msgstr ""
+
+#: base/ch_about.xml:266(para)
+msgid "Поддерживаются git submodules;<placeholder-1/>"
+msgstr ""
+
+#: base/ch_about.xml:273(para)
+msgid "Авторизация через LDAP;"
+msgstr ""
+
+#: base/ch_about.xml:277(para)
+msgid "Интеграция с GitLab."
+msgstr ""
+
+#: base/ch_about.xml:283(title)
+msgid "Чего еще нет?"
+msgstr ""
+
+#: base/ch_about.xml:287(para)
+msgid "Категорически не хватает документации;"
+msgstr ""
+
+#: base/ch_about.xml:291(para)
+msgid "Из Subversion доступна только одна ветка."
+msgstr ""
+
+#: base/ch_about.xml:297(title)
+msgid "Технические ограничения"
+msgstr ""
+
+#: base/ch_about.xml:301(para)
+msgid "Нельзя средствами Subversion менять svn properties."
+msgstr ""
+
+#. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
+#: base/ch_about.xml:0(None)
+msgid "translator-credits"
+msgstr ""
