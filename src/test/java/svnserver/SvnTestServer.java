@@ -84,7 +84,7 @@ public final class SvnTestServer implements SvnTester {
 
   private final boolean safeBranch;
 
-  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig) throws Exception {
+  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig, boolean anonymousRead) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
@@ -106,7 +106,7 @@ public final class SvnTestServer implements SvnTester {
     final Config config = new Config(BIND_HOST, 0);
     config.setCompressionEnabled(false);
     config.setCacheConfig(new MemoryCacheConfig());
-    config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix));
+    config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix, anonymousRead));
     if (userDBConfig != null) {
       config.setUserDB(userDBConfig);
     } else {
@@ -148,18 +148,18 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, null);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, null, true);
   }
 
   @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig) throws Exception {
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead) throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, userDBConfig);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, userDBConfig, anonymousRead);
   }
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "/master", true, null);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "/master", true, null, true);
   }
 
   @Override
@@ -245,18 +245,22 @@ public final class SvnTestServer implements SvnTester {
     private final String branch;
     @NotNull
     private final String prefix;
+    private final boolean anonymousRead;
 
-    public TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch, @NotNull String prefix) {
+    public TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch, @NotNull String prefix, boolean anonymousRead) {
       this.repository = repository;
       this.branch = branch;
       this.prefix = prefix;
+      this.anonymousRead = anonymousRead;
     }
 
     @NotNull
     @Override
     public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
       final LocalContext local = new LocalContext(context, "test");
-      local.add(VcsAccess.class, new AclConfig().create(local));
+      final AclConfig aclConfig = new AclConfig();
+      aclConfig.setAnonymousRead(anonymousRead);
+      local.add(VcsAccess.class, aclConfig.create(local));
       return RepositoryListMapping.create(prefix, new GitRepository(
           local,
           repository,

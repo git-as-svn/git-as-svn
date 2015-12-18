@@ -8,8 +8,6 @@ repositoryMapping: !gitlabMapping
     branch: master
     renameDetection: true
 
-acl: {}
-
 shared:
   # Web server settings.
   - !web

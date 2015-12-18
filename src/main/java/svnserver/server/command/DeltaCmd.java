@@ -202,7 +202,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     private void finishReport(@NotNull SessionContext context, @NotNull NoParams args) {
-      context.push(new CheckPermissionStep(this::complete));
+      context.push(new CheckPermissionStep(this::complete, null));
     }
 
     public void setPathReport(@NotNull String path, int rev, boolean startEmpty, @NotNull SVNDepth depth) throws SVNException {

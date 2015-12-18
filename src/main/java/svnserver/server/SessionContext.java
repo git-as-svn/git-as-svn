@@ -46,9 +46,9 @@ public final class SessionContext {
   @NotNull
   private final Set<String> capabilities;
   @NotNull
-  private final User user;
-  @NotNull
   private final VcsAccess acl;
+  @NotNull
+  private User user;
   @NotNull
   private String parent;
 
@@ -56,12 +56,11 @@ public final class SessionContext {
                         @NotNull SvnServerWriter writer,
                         @NotNull SvnServer server,
                         @NotNull RepositoryInfo repositoryInfo,
-                        @NotNull ClientInfo clientInfo,
-                        @NotNull User user) throws SVNException {
+                        @NotNull ClientInfo clientInfo) throws SVNException {
     this.parser = parser;
     this.writer = writer;
     this.server = server;
-    this.user = user;
+    this.user = User.getAnonymous();
     this.repositoryInfo = repositoryInfo;
     this.acl = getRepository().getContext().sure(VcsAccess.class);
     setParent(clientInfo.getUrl());
@@ -70,6 +69,13 @@ public final class SessionContext {
 
   public boolean isCompressionEnabled() {
     return server.isCompressionEnabled() && hasCapability("svndiff1");
+  }
+
+  public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
+    if (!user.isAnonymous()) {
+      throw new IllegalStateException();
+    }
+    this.user = server.authenticate(parser, writer, repositoryInfo, allowAnonymous);
   }
 
   public boolean hasCapability(@NotNull String capability) {
@@ -152,11 +158,11 @@ public final class SessionContext {
     return getRepository().getRevisionInfo(rev).getFile(path);
   }
 
-  public void checkRead(@NotNull String path) throws SVNException, IOException {
+  public void checkRead(@Nullable String path) throws SVNException, IOException {
     acl.checkRead(user, path);
   }
 
-  public void checkWrite(@NotNull String path) throws SVNException, IOException {
+  public void checkWrite(@Nullable String path) throws SVNException, IOException {
     acl.checkWrite(user, path);
   }
 }

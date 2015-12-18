@@ -68,7 +68,9 @@ dependencies {
   runtime "org.apache.logging.log4j:log4j-core:2.4.1"
   runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1"
 
-  testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
+  testCompile("org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19") {
+    exclude group: "org.slf4j", module: "slf4j-log4j12"
+  }
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
   testCompile "org.testng:testng:6.8.8"
 }

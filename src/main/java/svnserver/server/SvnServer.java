@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.AnonymousAuthenticator;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
@@ -25,6 +26,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.VcsAccess;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.server.command.*;
@@ -37,10 +39,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -176,10 +175,8 @@ public class SvnServer extends Thread {
       BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + clientInfo.getUrl()));
       return;
     }
-    final User user = authenticate(parser, writer, repositoryInfo);
-    log.info("User: {}", user);
-
-    final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo, user);
+    final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
+    context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
     final VcsRepository repository = context.getRepository();
     repository.updateRevisions();
     sendAnnounce(writer, repositoryInfo);
@@ -258,9 +255,12 @@ public class SvnServer extends Thread {
   }
 
   @NotNull
-  private User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException, SVNException {
+  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo, boolean allowAnonymous) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
-    final Collection<Authenticator> authenticators = context.sure(UserDB.class).authenticators();
+    final List<Authenticator> authenticators = new ArrayList<>(context.sure(UserDB.class).authenticators());
+    if (allowAnonymous) {
+      authenticators.add(0, AnonymousAuthenticator.get());
+    }
     writer
         .listBegin()
         .word("success")
@@ -294,7 +294,17 @@ public class SvnServer extends Thread {
           .listEnd()
           .listEnd();
 
+      log.info("User: {}", user);
       return user;
+    }
+  }
+
+  private boolean hasAnonymousAuthenticator(RepositoryInfo repositoryInfo) throws IOException {
+    try {
+      repositoryInfo.getRepository().getContext().sure(VcsAccess.class).checkRead(User.getAnonymous(), null);
+      return true;
+    } catch (SVNException e) {
+      return false;
     }
   }
 
@@ -306,7 +316,7 @@ public class SvnServer extends Thread {
         .string(repositoryInfo.getRepository().getUuid())
         .string(repositoryInfo.getBaseUrl().toString())
         .listBegin()
-        //.word("mergeinfo")
+            //.word("mergeinfo")
         .listEnd()
         .listEnd()
         .listEnd();

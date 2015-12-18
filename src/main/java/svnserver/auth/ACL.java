@@ -33,8 +33,10 @@ public final class ACL implements VcsAccess {
 
   @NotNull
   private final Map<String, Set<AclEntry>> path2acl = new HashMap<>();
+  private final boolean anonymousRead;
 
   public ACL(@NotNull AclConfig config) {
+    anonymousRead = config.isAnonymousRead();
     for (final GroupConfig group : config.getGroups()) {
       final String name = group.getName();
 
@@ -95,6 +97,9 @@ public final class ACL implements VcsAccess {
 
   @Override
   public void checkRead(@NotNull User user, @Nullable String path) throws SVNException {
+    if (user.isAnonymous() && !anonymousRead) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous access not allowed"));
+    }
     if (path != null) {
       String toCheck = path;
 
@@ -114,7 +119,7 @@ public final class ACL implements VcsAccess {
 
   @Override
   public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
-    if (user.isAnonymous()){
+    if (user.isAnonymous()) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user have not write access"));
     }
     checkRead(user, path);

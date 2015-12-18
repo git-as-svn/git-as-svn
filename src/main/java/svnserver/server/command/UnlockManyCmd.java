@@ -92,4 +92,11 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
         .listEnd()
         .listEnd();
   }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    for (PathToken pathRev : args.paths) {
+      context.checkWrite(context.getRepositoryPath(pathRev.path));
+    }
+  }
 }

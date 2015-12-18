@@ -38,7 +38,7 @@ public final class Config {
   private CacheConfig cacheConfig = new PersistentCacheConfig();
 
   @NotNull
-  private AclConfig acl = new AclConfig();
+  private AccessConfig acl = new AclConfig();
 
   @NotNull
   private List<SharedConfig> shared = new ArrayList<>();
@@ -88,11 +88,6 @@ public final class Config {
 
   public void setUserDB(@NotNull UserDBConfig userDB) {
     this.userDB = userDB;
-  }
-
-  @NotNull
-  public AclConfig getAcl() {
-    return acl;
   }
 
   public boolean getReuseAddress() {

@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Add support for anonymous authentication for public repositories
+
 ## 1.0.16-alpha: GitLab authentication
 
  * Rewrite GitLab authentication #110.
