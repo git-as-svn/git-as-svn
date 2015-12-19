@@ -11,6 +11,6 @@ for po in *.po; do
     for xml in base/*.xml; do
         xml2po -p $po $xml > $target/`basename $xml`
     done
-    fop -xml $target/manual.xml -xsl /usr/share/sgml/docbook/stylesheet/xsl/docbook-xsl/fo/docbook.xsl -pdf $target/../manual.$lang.pdf
+    fop -xml $target/manual.xml -xsl /usr/share/sgml/docbook/stylesheet/xsl/docbook-xsl/fo/docbook.xsl -pdf $target/../distributions/manual.$lang.pdf
 done
 

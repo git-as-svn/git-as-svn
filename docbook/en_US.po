@@ -1,46 +1,47 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-19 21:33+0300\n"
-"PO-Revision-Date: 2015-12-19 00:00+0300\n"
+"POT-Creation-Date: 2015-12-19 21:43+0300\n"
+"PO-Revision-Date: 2015-12-19 21:43+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.4\n"
 
 #: base/manual.xml:10(title)
 msgid "Manual"
-msgstr ""
+msgstr "Manual"
 
 #: base/manual.xml:13(firstname)
 msgid "Artem"
-msgstr ""
+msgstr "Artem"
 
 #: base/manual.xml:14(surname)
 msgid "Navrotskiy"
-msgstr ""
+msgstr "Navrotskiy"
 
 #: base/manual.xml:17(pubdate)
 msgid "2015"
-msgstr ""
+msgstr "2015"
 
 #: base/manual.xml:20(year)
 msgid "2014-2015"
-msgstr ""
+msgstr "2014-2015"
 
 #: base/manual.xml:22(holder)
 msgid "Artem Navrotskiy"
-msgstr ""
+msgstr "Artem Navrotskiy"
 
 #: base/manual.xml:25(productname)
 msgid "git-as-svn"
-msgstr ""
+msgstr "git-as-svn"
 
 #: base/ch_gitlab.xml:9(title)
 msgid "Интеграция с GitLab"
-msgstr ""
+msgstr "GitLab integration"
 
 #: base/ch_gitlab.xml:12(title)
 msgid "Список исправлений для GitLab"
@@ -53,39 +54,43 @@ msgstr ""
 
 #: base/ch_gitlab.xml:20(link)
 msgid "#230 (gitlab-shell)"
-msgstr ""
+msgstr "#230 (gitlab-shell)"
 
 #: base/ch_gitlab.xml:21(phrase)
 msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
-msgstr ""
+msgstr ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
 
 #: base/ch_gitlab.xml:27(link)
 msgid "#237 (gitlab-shell)"
-msgstr ""
+msgstr "#237 (gitlab-shell)"
 
 #: base/ch_gitlab.xml:28(phrase)
 msgid ""
 ": Execute git-lfs-authenticate command with original arguments (merged to "
 "8.2.0);"
 msgstr ""
+": Execute git-lfs-authenticate command with original arguments (merged to "
+"8.2.0);"
 
 #: base/ch_gitlab.xml:34(link)
 msgid "#9591 (gitlabhq)"
-msgstr ""
+msgstr "#9591 (gitlabhq)"
 
 #: base/ch_gitlab.xml:35(phrase)
 msgid ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
-msgstr ""
+msgstr ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
 
 #: base/ch_gitlab.xml:41(link)
 msgid "#9728 (gitlabhq)"
-msgstr ""
+msgstr "#9728 (gitlabhq)"
 
 #: base/ch_gitlab.xml:42(phrase)
 msgid ""
 ": Show \"Empty Repository Page\" for repository without branches (merged to "
 "8.2.0)."
 msgstr ""
+": Show \"Empty Repository Page\" for repository without branches (merged to "
+"8.2.0)."
 
 #: base/ch_gitlab.xml:49(title)
 msgid "Точки стыка интеграции с GitLab"
@@ -123,7 +128,7 @@ msgstr ""
 
 #: base/ch_gitlab.xml:73(para)
 msgid "Git Hooks"
-msgstr ""
+msgstr "Git Hooks"
 
 #: base/ch_gitlab.xml:75(para)
 msgid ""
@@ -146,7 +151,7 @@ msgstr ""
 
 #: base/ch_gitlab.xml:90(para)
 msgid "Git LFS"
-msgstr ""
+msgstr "Git LFS"
 
 #: base/ch_gitlab.xml:92(para)
 msgid ""
@@ -182,7 +187,7 @@ msgstr ""
 
 #: base/ch_about.xml:8(title)
 msgid "О проекте"
-msgstr ""
+msgstr "About project"
 
 #: base/ch_about.xml:11(title)
 msgid "Что это?"
@@ -212,7 +217,7 @@ msgstr ""
 
 #: base/ch_about.xml:28(glossterm)
 msgid "Git-стиль"
-msgstr ""
+msgstr "Git-style"
 
 #: base/ch_about.xml:31(para)
 msgid ""
@@ -238,7 +243,7 @@ msgstr ""
 
 #: base/ch_about.xml:50(glossterm)
 msgid "Subversion-стиль"
-msgstr ""
+msgstr "Subversion-style"
 
 #: base/ch_about.xml:53(para)
 msgid ""
@@ -294,7 +299,7 @@ msgstr ""
 
 #: base/ch_about.xml:97(para)
 msgid "MD5-хэш файла."
-msgstr ""
+msgstr "MD5 file hash."
 
 #: base/ch_about.xml:101(para)
 msgid ""
@@ -394,7 +399,7 @@ msgstr ""
 
 #: base/ch_about.xml:183(title)
 msgid "SubGit"
-msgstr ""
+msgstr "SubGit"
 
 #: base/ch_about.xml:185(para)
 msgid ""
@@ -433,15 +438,15 @@ msgstr ""
 
 #: base/ch_about.xml:215(para)
 msgid "Консольный Subversion-клиент;"
-msgstr ""
+msgstr "Subversion console client;"
 
 #: base/ch_about.xml:219(para)
 msgid "TortoiseSVN;"
-msgstr ""
+msgstr "TortoiseSVN;"
 
 #: base/ch_about.xml:223(para)
 msgid "SvnKit."
-msgstr ""
+msgstr "SvnKit."
 
 #: base/ch_about.xml:229(para)
 msgid "Работают, как минимум, следующие операции:"
@@ -449,11 +454,11 @@ msgstr ""
 
 #: base/ch_about.xml:233(para)
 msgid "svn checkout, update, switch, diff"
-msgstr ""
+msgstr "svn checkout, update, switch, diff"
 
 #: base/ch_about.xml:237(para)
 msgid "svn commit"
-msgstr ""
+msgstr "svn commit"
 
 #: base/ch_about.xml:242(para)
 msgid ""
@@ -462,23 +467,23 @@ msgstr ""
 
 #: base/ch_about.xml:241(para)
 msgid "svn copy, move<placeholder-1/>"
-msgstr ""
+msgstr "svn copy, move<placeholder-1/>"
 
 #: base/ch_about.xml:248(para)
 msgid "svn cat, ls"
-msgstr ""
+msgstr "svn cat, ls"
 
 #: base/ch_about.xml:252(para)
 msgid "svn lock, unlock"
-msgstr ""
+msgstr "svn lock, unlock"
 
 #: base/ch_about.xml:256(para)
 msgid "svn replay (svnsync)"
-msgstr ""
+msgstr "svn replay (svnsync)"
 
 #: base/ch_about.xml:262(para)
 msgid "Поддерживается Git LFS;"
-msgstr ""
+msgstr "Git LFS support;"
 
 #: base/ch_about.xml:267(para)
 msgid "Данные из git submodule видны в репозитории в режиме только для чтения."
@@ -490,11 +495,11 @@ msgstr ""
 
 #: base/ch_about.xml:273(para)
 msgid "Авторизация через LDAP;"
-msgstr ""
+msgstr "LDAP authorization;"
 
 #: base/ch_about.xml:277(para)
 msgid "Интеграция с GitLab."
-msgstr ""
+msgstr "GitLab integration."
 
 #: base/ch_about.xml:283(title)
 msgid "Чего еще нет?"
