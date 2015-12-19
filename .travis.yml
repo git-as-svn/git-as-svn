@@ -6,6 +6,7 @@ addons:
   apt:
     packages:
 #    - fop
+#    - fonts-freefont-ttf
 #    - docbook-xsl
 #    - gnome-doc-utils
     - protobuf-compiler
