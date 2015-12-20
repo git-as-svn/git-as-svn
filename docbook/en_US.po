@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-19 21:43+0300\n"
-"PO-Revision-Date: 2015-12-19 21:43+0300\n"
+"POT-Creation-Date: 2015-12-20 22:35+0300\n"
+"PO-Revision-Date: 2015-12-20 22:38+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -191,33 +191,39 @@ msgstr "About project"
 
 #: base/ch_about.xml:11(title)
 msgid "Что это?"
-msgstr ""
+msgstr "What is it?"
 
 #: base/ch_about.xml:13(para)
 msgid ""
 "Git as Subversion — это реализация Subversion-сервера (по протоколу svn) для "
 "Git-репозиториев."
 msgstr ""
+"Git as Subversion — Subversion-server implementation (svn protocol) for Git-"
+"repositories."
 
 #: base/ch_about.xml:16(para)
 msgid ""
 "Он позволяет работать с Git-репозиторием, используя консольный Subversion-"
 "клиент, TortoiseSVN, SvnKit и подобный инструментарий."
 msgstr ""
+"This project allows to work with Git-repository using Subversion console "
+"client, TortoiseSVN, SvnKit and other similar tools."
 
 #: base/ch_about.xml:21(title)
 msgid "Какова цель проекта?"
-msgstr ""
+msgstr "What is project goal?"
 
 #: base/ch_about.xml:23(para)
 msgid ""
 "Проект создан для того, чтобы позволить работать с одним и тем же "
 "репозиторием как в Git-стиле, так и в Subversion-стиле."
 msgstr ""
+"The project is designed to allow you to work with the same repository as "
+"Git, Subversion and style."
 
 #: base/ch_about.xml:28(glossterm)
 msgid "Git-стиль"
-msgstr "Git-style"
+msgstr "Git style"
 
 #: base/ch_about.xml:31(para)
 msgid ""
@@ -226,6 +232,9 @@ msgid ""
 "разработчиков, но тем не менее их можно протестировать на сборочной ферме, "
 "передать другому разработчику на проверку и т.д."
 msgstr ""
+"The basic idea is that the developer works in the local branch. His changes "
+"do not affect the work of other developers, but nonetheless they can be "
+"tested on CI farm, review by another developer and etc."
 
 #: base/ch_about.xml:37(para)
 msgid ""
@@ -234,16 +243,22 @@ msgid ""
 "возможностями системы (в том числе доступом к истории изменений) даже в "
 "отсутствие сетевого соединения с сервером."
 msgstr ""
+"This allows each developer to work independently, as best he can. He can "
+"change and saving intermediate versions of documents, taking full advantage "
+"of the version control system (including access to the change history) even "
+"without network connection to the server."
 
 #: base/ch_about.xml:43(para)
 msgid ""
 "К сожалению, этот подход не работает в случае, когда изменяемые документы не "
 "поддерживают слияние (например, это характерно для двоичных файлов)."
 msgstr ""
+"Unfortunately, this approach does not work with not mergeable documents (for "
+"example, binary files)."
 
 #: base/ch_about.xml:50(glossterm)
 msgid "Subversion-стиль"
-msgstr "Subversion-style"
+msgstr "Subversion style"
 
 #: base/ch_about.xml:53(para)
 msgid ""
@@ -252,6 +267,10 @@ msgid ""
 "для двоичных файлов) за счет наличия механизма блокировок и более простого и "
 "короткого цикла публикации изменений."
 msgstr ""
+"The use of a centralized version control system is more convenient in the "
+"case of documents do not support the merge (for example, with binary files) "
+"due to the presence of the locking mechanism and a simpler and shorter "
+"publication cycle changes."
 
 #: base/ch_about.xml:62(para)
 msgid ""
@@ -260,10 +279,14 @@ msgid ""
 "проекта работают с принципиально разными данными. Если утрировать, то "
 "программисты предпочитают Git, а художники любят Subversion."
 msgstr ""
+"The need to combine Git and Subversion style work with one repository arises "
+"from the fact that different employees in the same project are working from "
+"fundamentally different data. If you overdo, you Git programmers, and "
+"artists like Subversion."
 
 #: base/ch_about.xml:69(title)
 msgid "Как оно работает?"
-msgstr ""
+msgstr "How does it work?"
 
 #: base/ch_about.xml:72(title)
 msgid "Где хранятся Subversion-данные репозитория?"
