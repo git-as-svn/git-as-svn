@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<fop version="1.0">
+	<font-base>fonts/freefont</font-base>
+	<source-resolution>72</source-resolution>
+	<target-resolution>72</target-resolution>
+	<renderers>
+		<renderer mime="application/pdf">
+			<fonts>
+				<font kerning="yes" embed-url="FreeMonoBoldOblique.ttf">
+					<font-triplet name="mono" style="italic" weight="bold" />
+				</font>
+				<font kerning="yes" embed-url="FreeMonoBold.ttf">
+					<font-triplet name="mono" style="normal" weight="bold" />
+				</font>
+				<font kerning="yes" embed-url="FreeMonoOblique.ttf">
+					<font-triplet name="mono" style="italic" weight="normal" />
+				</font>
+				<font kerning="yes" embed-url="FreeMono.ttf">
+					<font-triplet name="mono" style="normal" weight="normal" />
+				</font>
+				<font kerning="yes" embed-url="FreeSansBoldOblique.ttf">
+					<font-triplet name="sans-serif" style="italic" weight="bold" />
+				</font>
+				<font kerning="yes" embed-url="FreeSansBold.ttf">
+					<font-triplet name="sans-serif" style="normal" weight="bold" />
+				</font>
+				<font kerning="yes" embed-url="FreeSansOblique.ttf">
+					<font-triplet name="sans-serif" style="italic" weight="normal" />
+				</font>
+				<font kerning="yes" embed-url="FreeSans.ttf">
+					<font-triplet name="sans-serif" style="normal" weight="normal" />
+				</font>
+				<font kerning="yes" embed-url="FreeSerifBoldItalic.ttf">
+					<font-triplet name="serif" style="italic" weight="bold" />
+				</font>
+				<font kerning="yes" embed-url="FreeSerifBold.ttf">
+					<font-triplet name="serif" style="normal" weight="bold" />
+				</font>
+				<font kerning="yes" embed-url="FreeSerifItalic.ttf">
+					<font-triplet name="serif" style="italic" weight="normal" />
+				</font>
+				<font kerning="yes" embed-url="FreeSerif.ttf">
+					<font-triplet name="serif" style="normal" weight="normal" />
+				</font>
+			</fonts>
+		</renderer>
+	</renderers>
+</fop>

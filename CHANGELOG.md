@@ -2,7 +2,8 @@
 
 ## Unreleased
 
- * Add support for anonymous authentication for public repositories
+ * Add support for anonymous authentication for public repositories.
+ * Add PDF manual.
 
 ## 1.0.16-alpha: GitLab authentication
 
