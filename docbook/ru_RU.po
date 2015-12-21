@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-21 09:50+0300\n"
+"POT-Creation-Date: 2015-12-21 22:18+0300\n"
 "PO-Revision-Date: 2015-12-18 22:37+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -12,30 +12,34 @@ msgstr ""
 "X-Generator: Poedit 1.8.4\n"
 
 #: base/manual.xml:10(title)
-msgid "Manual"
-msgstr "Руководство пользователя"
+msgid "Git as Subversion"
+msgstr ""
 
-#: base/manual.xml:13(firstname)
+#: base/manual.xml:12(subtitle)
+msgid "Руководство пользователя"
+msgstr ""
+
+#: base/manual.xml:15(firstname)
 msgid "Artem"
 msgstr "Артём"
 
-#: base/manual.xml:14(surname)
+#: base/manual.xml:16(surname)
 msgid "Navrotskiy"
 msgstr "Навроцкий"
 
-#: base/manual.xml:17(pubdate)
+#: base/manual.xml:19(pubdate)
 msgid "2015"
 msgstr ""
 
-#: base/manual.xml:20(year)
+#: base/manual.xml:22(year)
 msgid "2014-2015"
 msgstr ""
 
-#: base/manual.xml:22(holder)
+#: base/manual.xml:24(holder)
 msgid "Artem Navrotskiy"
 msgstr "Артём Навроцкий"
 
-#: base/manual.xml:25(productname)
+#: base/manual.xml:27(productname)
 msgid "git-as-svn"
 msgstr ""
 
@@ -275,17 +279,17 @@ msgstr ""
 
 #: base/ch_about.xml:74(para)
 msgid ""
-"Для предоставляние Subversion репозитория нужно хранить информацию о том, "
-"какой номер Subversion-ревизии соответвует какому Git-коммиту. Вычислять эту "
-"информацию при запуске нельзя, так как первый же <command>git push --force</"
-"command> все сломает. Эти данные лежат в ветках <filename>refs/git-as-svn/*</"
-"filename>. В частности из-за этого не требуется отдельного резервного "
-"копирования для Subversion-данных."
+"Для представления Subversion репозитория нужно хранить информацию о том, "
+"какой номер Subversion-ревизии соответствует какому Git-коммиту. Вычислять "
+"эту информацию каждый раз при запуске нельзя, так как тогда первый же "
+"<command>git push --force</command> нарушит порядок ревизий. Эти данные "
+"лежат в ветках <filename>refs/git-as-svn/*</filename>. В частности из-за "
+"этого не требуется отдельного резервного копирования для Subversion-данных."
 msgstr ""
 
 #: base/ch_about.xml:82(para)
 msgid ""
-"Так же для представления Subversion репозитория часть данных очень дорого "
+"Также часть данных, необходимых для Subversion репозитория, очень дорого "
 "получить на основании Git-репозитория."
 msgstr ""
 
@@ -307,7 +311,7 @@ msgstr ""
 
 #: base/ch_about.xml:101(para)
 msgid ""
-"Чтобы не заниматься их расчетом каждый запуск, эти данные кэширутся в "
+"Чтобы не заниматься их вычислением каждый запуск, эти данные кэширутся в "
 "файлах. Потеря данного кэша не критична для работы и его резервное "
 "копирование не имеет смысла."
 msgstr ""
@@ -326,14 +330,14 @@ msgid "Одна из самых важных деталей системы — �
 msgstr ""
 
 #: base/ch_about.xml:115(para)
-msgid "В общих чертах, идея следующая:"
+msgid "В общих чертах, алгоритм следующий:"
 msgstr ""
 
 #: base/ch_about.xml:119(para)
 msgid ""
 "В момент команды <command>svn commit</command> клиент отправляет на сервер "
-"свои изменения. Сервер при этом запоминает их. В этот же момент происходит "
-"первая проверка на актуальность клиентских данных."
+"свои изменения. Сервер запоминает их. В этот же момент происходит первая "
+"проверка клиентских данных на актуальность."
 msgstr ""
 
 #: base/ch_about.xml:126(para)
@@ -384,144 +388,146 @@ msgid "Отличие от других решений"
 msgstr ""
 
 #: base/ch_about.xml:171(para)
-msgid "Ряд способов позволяет решить схожие задачи."
+msgid ""
+"Проблему совмещения Git и Subversion стиля работы с системой контроля версий "
+"можно решить разными способами."
 msgstr ""
 
-#: base/ch_about.xml:174(title)
+#: base/ch_about.xml:175(title)
 msgid "Поддержка Subversion у GitHub"
 msgstr ""
 
-#: base/ch_about.xml:176(para)
+#: base/ch_about.xml:177(para)
 msgid "Это, наверное, самый близкий аналог."
 msgstr ""
 
-#: base/ch_about.xml:178(para)
+#: base/ch_about.xml:179(para)
 msgid ""
 "Основная проблема данной реализации — неотделимость от GitHub. Так же, "
 "внезапно, данная реализация не поддерживает Git LFS."
 msgstr ""
 
-#: base/ch_about.xml:183(title)
+#: base/ch_about.xml:184(title)
 msgid "SubGit"
 msgstr ""
 
-#: base/ch_about.xml:185(para)
+#: base/ch_about.xml:186(para)
 msgid ""
 "Сайт: <link ns6:href=\"http://www.subgit.com/\">http://www.subgit.com/</link>"
 msgstr ""
 
-#: base/ch_about.xml:188(para)
+#: base/ch_about.xml:189(para)
 msgid ""
 "Достаточно интересная реализация при которой поддерживаются Git и Subversion-"
 "репозитории в синхронном состоянии. За счет чего обеспечивается синхронность "
 "репозиториев — не понятно."
 msgstr ""
 
-#: base/ch_about.xml:194(title)
+#: base/ch_about.xml:195(title)
 msgid "Subversion репозиторий и git svn"
 msgstr ""
 
-#: base/ch_about.xml:196(para)
+#: base/ch_about.xml:197(para)
 msgid ""
 "Данный способ позволяет использовать Git при работе с Subversion-"
 "репозиторием, но использование общего Git-репозитория между несколькими "
 "разработчиками сильно затруднено."
 msgstr ""
 
-#: base/ch_about.xml:204(title)
+#: base/ch_about.xml:205(title)
 msgid "Функционал"
 msgstr ""
 
-#: base/ch_about.xml:207(title)
+#: base/ch_about.xml:208(title)
 msgid "Что уже есть?"
 msgstr ""
 
-#: base/ch_about.xml:211(para)
+#: base/ch_about.xml:212(para)
 msgid "Работаю, как минимум, следующие клиенты:"
 msgstr ""
 
-#: base/ch_about.xml:215(para)
+#: base/ch_about.xml:216(para)
 msgid "Консольный Subversion-клиент;"
 msgstr ""
 
-#: base/ch_about.xml:219(para)
+#: base/ch_about.xml:220(para)
 msgid "TortoiseSVN;"
 msgstr ""
 
-#: base/ch_about.xml:223(para)
+#: base/ch_about.xml:224(para)
 msgid "SvnKit."
 msgstr ""
 
-#: base/ch_about.xml:229(para)
+#: base/ch_about.xml:230(para)
 msgid "Работают, как минимум, следующие операции:"
 msgstr ""
 
-#: base/ch_about.xml:233(para)
+#: base/ch_about.xml:234(para)
 msgid "svn checkout, update, switch, diff"
 msgstr ""
 
-#: base/ch_about.xml:237(para)
+#: base/ch_about.xml:238(para)
 msgid "svn commit"
 msgstr ""
 
-#: base/ch_about.xml:242(para)
+#: base/ch_about.xml:243(para)
 msgid ""
 "Операции поддерживаются, но данные об источнике копирования не сохраняются."
 msgstr ""
 
-#: base/ch_about.xml:241(para)
+#: base/ch_about.xml:242(para)
 msgid "svn copy, move<placeholder-1/>"
 msgstr ""
 
-#: base/ch_about.xml:248(para)
+#: base/ch_about.xml:249(para)
 msgid "svn cat, ls"
 msgstr ""
 
-#: base/ch_about.xml:252(para)
+#: base/ch_about.xml:253(para)
 msgid "svn lock, unlock"
 msgstr ""
 
-#: base/ch_about.xml:256(para)
+#: base/ch_about.xml:257(para)
 msgid "svn replay (svnsync)"
 msgstr ""
 
-#: base/ch_about.xml:262(para)
+#: base/ch_about.xml:263(para)
 msgid "Поддерживается Git LFS;"
 msgstr ""
 
-#: base/ch_about.xml:267(para)
+#: base/ch_about.xml:268(para)
 msgid "Данные из git submodule видны в репозитории в режиме только для чтения."
 msgstr ""
 
-#: base/ch_about.xml:266(para)
+#: base/ch_about.xml:267(para)
 msgid "Поддерживаются git submodules;<placeholder-1/>"
 msgstr ""
 
-#: base/ch_about.xml:273(para)
+#: base/ch_about.xml:274(para)
 msgid "Авторизация через LDAP;"
 msgstr ""
 
-#: base/ch_about.xml:277(para)
+#: base/ch_about.xml:278(para)
 msgid "Интеграция с GitLab."
 msgstr ""
 
-#: base/ch_about.xml:283(title)
+#: base/ch_about.xml:284(title)
 msgid "Чего еще нет?"
 msgstr ""
 
-#: base/ch_about.xml:287(para)
+#: base/ch_about.xml:288(para)
 msgid "Категорически не хватает документации;"
 msgstr ""
 
-#: base/ch_about.xml:291(para)
+#: base/ch_about.xml:292(para)
 msgid "Из Subversion доступна только одна ветка."
 msgstr ""
 
-#: base/ch_about.xml:297(title)
+#: base/ch_about.xml:298(title)
 msgid "Технические ограничения"
 msgstr ""
 
-#: base/ch_about.xml:301(para)
+#: base/ch_about.xml:302(para)
 msgid "Нельзя средствами Subversion менять svn properties."
 msgstr ""
 
@@ -529,6 +535,9 @@ msgstr ""
 #: base/ch_about.xml:0(None)
 msgid "translator-credits"
 msgstr ""
+
+#~ msgid "Manual"
+#~ msgstr "Руководство пользователя"
 
 #~ msgid "Git-as-svn manual"
 #~ msgstr "Git-as-svn. Руководство пользователя"

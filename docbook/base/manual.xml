@@ -7,7 +7,9 @@
       xmlns:ns3="http://www.w3.org/1998/Math/MathML"
       xmlns:ns="http://docbook.org/ns/docbook">
   <info>
-    <title>Manual</title>
+    <title>Git as Subversion</title>
+
+    <subtitle>Руководство пользователя</subtitle>
 
     <author>
       <personname><firstname>Artem</firstname>
