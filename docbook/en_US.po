@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-20 22:35+0300\n"
-"PO-Revision-Date: 2015-12-20 22:38+0300\n"
+"POT-Creation-Date: 2015-12-21 07:13+0300\n"
+"PO-Revision-Date: 2015-12-21 07:12+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -45,12 +45,12 @@ msgstr "GitLab integration"
 
 #: base/ch_gitlab.xml:12(title)
 msgid "Список исправлений для GitLab"
-msgstr ""
+msgstr "Recommended GitLab patches"
 
 #: base/ch_gitlab.xml:14(para)
 msgid ""
 "Для интеграции с GitLab нужно установить следующие исправления на GitLab:"
-msgstr ""
+msgstr "For integration with GitLab install the following patches on GitLab:"
 
 #: base/ch_gitlab.xml:20(link)
 msgid "#230 (gitlab-shell)"
@@ -94,37 +94,43 @@ msgstr ""
 
 #: base/ch_gitlab.xml:49(title)
 msgid "Точки стыка интеграции с GitLab"
-msgstr ""
+msgstr "GitLab intergration points"
 
 #: base/ch_gitlab.xml:51(para)
 msgid "В случае с GitLab есть несколько точек стыка:"
-msgstr ""
+msgstr "There are some intgeration points with GitLab:"
 
 #: base/ch_gitlab.xml:55(para)
 msgid "Список репозиториев"
-msgstr ""
+msgstr "The list of repositories"
 
 #: base/ch_gitlab.xml:57(para)
 msgid ""
 "Git as Subversion автоматически получает список репозиториев в момент старта "
 "через GitLab API."
 msgstr ""
+"Git as a Subversion automatically retrieves the list of repositories on "
+"startup via the GitLab API."
 
 #: base/ch_gitlab.xml:60(para)
 msgid ""
 "Далее этот список поддерживается в актуальном состоянии при помощи System "
 "Hook, который так же регистрируется автоматически."
 msgstr ""
+"Further, this list is updated by System Hook, which is registered "
+"automatically."
 
 #: base/ch_gitlab.xml:66(para)
 msgid "Авторизация и аутентификация пользователей"
-msgstr ""
+msgstr "Authorization and authentication of users"
 
 #: base/ch_gitlab.xml:68(para)
 msgid ""
 "Для аутентификации пользователей и определения наличия прав на репозиторий "
 "так же используется GitLab API."
 msgstr ""
+"For authenticating users and repository permission control is also used "
+"GitLab API."
 
 #: base/ch_gitlab.xml:73(para)
 msgid "Git Hooks"
@@ -136,18 +142,25 @@ msgid ""
 "частности, позволяют видеть информацию о новых коммитах без задержки через "
 "WEB-интерфейс GitLab."
 msgstr ""
+"When you commit using Git as Subversion the GitLab hooks are executed. These "
+"hooks, in particular, allow to see information about new commits without "
+"delay via the GitLab WEB interface."
 
 #: base/ch_gitlab.xml:79(para)
 msgid ""
-"Для того, чтобы этот функционал работал, Git as Subversion должен передаеть "
-"идентификатор GitLab-пользователя (GL_ID), полученный при его авторзации."
+"Для того, чтобы этот функционал работал, Git as Subversion должен передать "
+"идентификатор GitLab-пользователя (GL_ID), полученный при его авторизации."
 msgstr ""
+"GitLab Hooks require GitLab user ID information (GL_ID environment variable) "
+"received at user authorization."
 
 #: base/ch_gitlab.xml:84(para)
 msgid ""
 "Из-за этого в случае интеграции с GitLab авторизация пользователей должна "
 "так же проходить через GitLab."
 msgstr ""
+"Because of this, in the case of integration with GitLab user authentication "
+"must be via GitLab."
 
 #: base/ch_gitlab.xml:90(para)
 msgid "Git LFS"
@@ -155,35 +168,43 @@ msgstr "Git LFS"
 
 #: base/ch_gitlab.xml:92(para)
 msgid ""
-"В случае использования GitLFS надо так же указать путь до GitLab-хранилища."
-msgstr ""
+"В случае использования Git LFS надо так же указать путь до GitLab LFS "
+"хранилища."
+msgstr "In the case of GitLFS need to specify the path to GitLab LFS storage."
 
 #: base/ch_gitlab.xml:95(para)
 msgid ""
 "GitLab с версии 8.2 использует общее хранилище LFS-файлов для всех "
 "репозиториев. Файлы хранятся в отдельном каталоге в сыром виде."
 msgstr ""
+"GitLab from version 8.2 uses single LFS-files storage shared between all "
+"repositories. Files are stored in a separate directory as raw data."
 
 #: base/ch_gitlab.xml:99(para)
 msgid ""
 "Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
-"от GitLab при этом не испльзуется."
+"от GitLab при этом не используется."
 msgstr ""
+"Integration with LFS repository GitLab occurs at the file level. GitLab API "
+"is not used."
 
 #: base/ch_gitlab.xml:104(para)
 msgid "Git LFS авторизация для SSH-пользователей"
-msgstr ""
+msgstr "Git LFS authorization for SSH users"
 
 #: base/ch_gitlab.xml:106(para)
 msgid ""
-"GitLab не предоставляет скрипт git-lfs-authenticate, который отвечает за SSO "
-"авторизацию SSH-пользователей на Git LFS сервере. Для настройки данного "
-"скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
+"К сожалению, GitLab не предоставляет скрипт git-lfs-authenticate, который "
+"отвечает за SSO авторизацию SSH-пользователей на Git LFS сервере. Для "
+"настройки данного скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
 msgstr ""
+"Unfortunately, GitLab does't provide the git-lfs-authenticate script, which "
+"is responsible for SSO authorization SSH-user Git on the server LFS. To "
+"configure this script, see <xref linkend=\"git-lfs-authenticate\"/>."
 
 #: base/ch_gitlab.xml:115(title)
 msgid "Пример конфигурационного файла"
-msgstr ""
+msgstr "Configuration file example"
 
 #: base/ch_about.xml:8(title)
 msgid "О проекте"
@@ -449,15 +470,15 @@ msgstr ""
 
 #: base/ch_about.xml:204(title)
 msgid "Функционал"
-msgstr ""
+msgstr "Features"
 
 #: base/ch_about.xml:207(title)
 msgid "Что уже есть?"
-msgstr ""
+msgstr "What is already there?"
 
 #: base/ch_about.xml:211(para)
 msgid "Работаю, как минимум, следующие клиенты:"
-msgstr ""
+msgstr "You can use at least the following clients:"
 
 #: base/ch_about.xml:215(para)
 msgid "Консольный Subversion-клиент;"
@@ -473,7 +494,7 @@ msgstr "SvnKit."
 
 #: base/ch_about.xml:229(para)
 msgid "Работают, как минимум, следующие операции:"
-msgstr ""
+msgstr "Supported subversion operations:"
 
 #: base/ch_about.xml:233(para)
 msgid "svn checkout, update, switch, diff"
@@ -487,6 +508,8 @@ msgstr "svn commit"
 msgid ""
 "Операции поддерживаются, но данные об источнике копирования не сохраняются."
 msgstr ""
+"Operations are supported, but the data about the source of a copy is not "
+"saved."
 
 #: base/ch_about.xml:241(para)
 msgid "svn copy, move<placeholder-1/>"
@@ -510,11 +533,11 @@ msgstr "Git LFS support;"
 
 #: base/ch_about.xml:267(para)
 msgid "Данные из git submodule видны в репозитории в режиме только для чтения."
-msgstr ""
+msgstr "Git submodule data available in read only mode."
 
 #: base/ch_about.xml:266(para)
 msgid "Поддерживаются git submodules;<placeholder-1/>"
-msgstr ""
+msgstr "Git submodules supported;<placeholder-1/>"
 
 #: base/ch_about.xml:273(para)
 msgid "Авторизация через LDAP;"
@@ -526,23 +549,23 @@ msgstr "GitLab integration."
 
 #: base/ch_about.xml:283(title)
 msgid "Чего еще нет?"
-msgstr ""
+msgstr "What is lacking?"
 
 #: base/ch_about.xml:287(para)
 msgid "Категорически не хватает документации;"
-msgstr ""
+msgstr "Strongly enough documentation;"
 
 #: base/ch_about.xml:291(para)
 msgid "Из Subversion доступна только одна ветка."
-msgstr ""
+msgstr "You can only access one branch from Subversion."
 
 #: base/ch_about.xml:297(title)
 msgid "Технические ограничения"
-msgstr ""
+msgstr "Technical limitations"
 
 #: base/ch_about.xml:301(para)
 msgid "Нельзя средствами Subversion менять svn properties."
-msgstr ""
+msgstr "It is impossible to change svn properties by Subversion client."
 
 #. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
 #: base/ch_about.xml:0(None)

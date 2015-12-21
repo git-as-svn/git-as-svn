@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-19 21:33+0300\n"
+"POT-Creation-Date: 2015-12-21 07:13+0300\n"
 "PO-Revision-Date: 2015-12-18 22:37+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -142,8 +142,8 @@ msgstr ""
 
 #: base/ch_gitlab.xml:79(para)
 msgid ""
-"Для того, чтобы этот функционал работал, Git as Subversion должен передаеть "
-"идентификатор GitLab-пользователя (GL_ID), полученный при его авторзации."
+"Для того, чтобы этот функционал работал, Git as Subversion должен передать "
+"идентификатор GitLab-пользователя (GL_ID), полученный при его авторизации."
 msgstr ""
 
 #: base/ch_gitlab.xml:84(para)
@@ -158,7 +158,8 @@ msgstr ""
 
 #: base/ch_gitlab.xml:92(para)
 msgid ""
-"В случае использования GitLFS надо так же указать путь до GitLab-хранилища."
+"В случае использования Git LFS надо так же указать путь до GitLab LFS "
+"хранилища."
 msgstr ""
 
 #: base/ch_gitlab.xml:95(para)
@@ -170,7 +171,7 @@ msgstr ""
 #: base/ch_gitlab.xml:99(para)
 msgid ""
 "Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
-"от GitLab при этом не испльзуется."
+"от GitLab при этом не используется."
 msgstr ""
 
 #: base/ch_gitlab.xml:104(para)
@@ -179,9 +180,9 @@ msgstr ""
 
 #: base/ch_gitlab.xml:106(para)
 msgid ""
-"GitLab не предоставляет скрипт git-lfs-authenticate, который отвечает за SSO "
-"авторизацию SSH-пользователей на Git LFS сервере. Для настройки данного "
-"скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
+"К сожалению, GitLab не предоставляет скрипт git-lfs-authenticate, который "
+"отвечает за SSO авторизацию SSH-пользователей на Git LFS сервере. Для "
+"настройки данного скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
 msgstr ""
 
 #: base/ch_gitlab.xml:115(title)
