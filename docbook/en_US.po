@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-21 07:13+0300\n"
-"PO-Revision-Date: 2015-12-21 07:12+0300\n"
+"POT-Creation-Date: 2015-12-21 09:50+0300\n"
+"PO-Revision-Date: 2015-12-21 09:50+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -311,7 +311,7 @@ msgstr "How does it work?"
 
 #: base/ch_about.xml:72(title)
 msgid "Где хранятся Subversion-данные репозитория?"
-msgstr ""
+msgstr "Where is the Subversion data stored?"
 
 #: base/ch_about.xml:74(para)
 msgid ""
@@ -331,15 +331,15 @@ msgstr ""
 
 #: base/ch_about.xml:85(para)
 msgid "Например:"
-msgstr ""
+msgstr "For example:"
 
 #: base/ch_about.xml:89(para)
-msgid "номер ревизии, когда файл менялся в послдений раз;"
-msgstr ""
+msgid "номер ревизии с предыдущим изменением файла;"
+msgstr "the revision number with the previous change file;"
 
 #: base/ch_about.xml:93(para)
 msgid "данные о том, откуда был скопирован файл;"
-msgstr ""
+msgstr "information about where the file was copied;"
 
 #: base/ch_about.xml:97(para)
 msgid "MD5-хэш файла."
@@ -354,8 +354,8 @@ msgstr ""
 
 #: base/ch_about.xml:105(para)
 msgid ""
-"Данные о блокировкая файлов в данный момент так же хранятся в файла кэша."
-msgstr ""
+"Данные о блокировках файлов в данный момент так же хранятся в файла кэша."
+msgstr "File locking information currently stored in the cache file."
 
 #: base/ch_about.xml:110(title)
 msgid "Как работает коммит?"
