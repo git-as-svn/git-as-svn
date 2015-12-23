@@ -1,1 +1,3 @@
 rootProject.name = "git-as-svn"
+
+include "docbook"
