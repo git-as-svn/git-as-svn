@@ -1,16 +1,22 @@
 subprojects {
   apply plugin: "docbook-reference"
 
+  def docbookDir = "${project.buildDir}/docbook"
+  def inputDir = "${project.parent.projectDir}/src/main/reference"
 
-  task translate() {
+  task translate(type: Copy) {
+    from (inputDir) {
+      exclude "**/*.xml"
+    }
+    into docbookDir
   }
 
-  fileTree("${project.parent.projectDir}/src/main/reference") {
+  fileTree(inputDir) {
     include "**/*.xml"
   }.visit {FileVisitDetails details ->
     if (details.directory) return;
     translate.dependsOn.add(tasks.create (name: "translate." + details.relativePath, type: Exec) {
-      def output = file("${project.buildDir}/docbook/${details.relativePath}")
+      def output = file("$docbookDir/${details.relativePath}")
       output.parentFile.mkdirs()
 
       inputs.file file(details.file)
@@ -27,7 +33,7 @@ subprojects {
   }
 
   reference {
-    sourceDir = project.file("${project.buildDir}/docbook")
+    sourceDir = project.file(docbookDir)
     fopUserConfig = file("../fop-userconfig.xml")
   }
 
