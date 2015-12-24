@@ -33,6 +33,8 @@ subprojects {
   }
 
   reference {
+    pdfFilename = "${project.rootProject.name}.${project.name}.pdf"
+    epubFilename = "${project.rootProject.name}.${project.name}.epub"
     sourceDir = project.file(docbookDir)
     fopUserConfig = file("../fop-userconfig.xml")
   }
