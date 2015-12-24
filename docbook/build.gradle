@@ -1,10 +1,41 @@
-apply plugin: "docbook-reference"
+subprojects {
+  apply plugin: "docbook-reference"
 
-reference {
-  sourceDir = project.file("src/reference")
-  fopUserConfig = file("fop-userconfig.xml")
+
+  task translate() {
+  }
+
+  fileTree("${project.parent.projectDir}/src/main/reference") {
+    include "**/*.xml"
+  }.visit {FileVisitDetails details ->
+    if (details.directory) return;
+    translate.dependsOn.add(tasks.create (name: "translate." + details.relativePath, type: Exec) {
+      def output = file("${project.buildDir}/docbook/${details.relativePath}")
+      output.parentFile.mkdirs()
+
+      inputs.file file(details.file)
+      inputs.file file(getPo(project))
+      outputs.file output
+
+      executable "xml2po"
+      args "-p", getPo(project)
+      args details.file.path
+      doFirst {
+        standardOutput = new FileOutputStream(output)
+      }
+    })
+  }
+
+  reference {
+    sourceDir = project.file("${project.buildDir}/docbook")
+    fopUserConfig = file("../fop-userconfig.xml")
+  }
+
+  afterEvaluate {
+    tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("translate") }
+  }
 }
 
-//afterEvaluate {
-//  tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("copyFonts") }
-//}
+def getPo(project) {
+  return "${project.parent.projectDir}/src/main/po/${project.name}.po"
+}

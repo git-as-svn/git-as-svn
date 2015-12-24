@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <fop version="1.0">
-	<font-base>src/fonts</font-base>
+	<font-base>src/main/fonts</font-base>
 	<source-resolution>72</source-resolution>
 	<target-resolution>72</target-resolution>
 	<renderers>
