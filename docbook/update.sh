@@ -12,7 +12,7 @@ for po in *.po; do
         xml2po -p $po $xml > $target/`basename $xml`
     done
     docxsl=/usr/share/xml/docbook/stylesheet/docbook-xsl
-    fop -c src/fonts/fop.xml \
+    fop -c fop-userconfig.xml \
         -xml $target/index.xml \
         -xsl $docxsl/fo/docbook.xsl \
         -param fop1.extensions 1 \

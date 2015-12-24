@@ -1,21 +1,10 @@
 apply plugin: "docbook-reference"
 
-task copyFonts(type: Copy) {
-  from "${project.projectDir}/src/fonts"
-  into "${project.buildDir}/reference/pdf/"
-}
-
 reference {
   sourceDir = project.file("src/reference")
-  fopUserConfig = file("src/fonts/fop-userconfig.xml")
-  /*classpath = sourceSets.main.runtimeClasspath
-  main "org.apache.fop.cli.Main"
-  args "-xml", "$projectDir/base/manual.xml"
-  args "-xsl", "/usr/share/xml/docbook/stylesheet/docbook-xsl/fo/docbook.xsl"
-  args "-pdf", "$buildDir/manual.pdf"
-  args "-param", "highlight.source", "1"*/
+  fopUserConfig = file("fop-userconfig.xml")
 }
 
-afterEvaluate {
-  tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("copyFonts") }
-}
+//afterEvaluate {
+//  tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("copyFonts") }
+//}
