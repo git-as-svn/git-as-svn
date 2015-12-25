@@ -41,4 +41,7 @@
 	<!-- Hide revhistory -->
 	<xsl:template match="revhistory" mode="titlepage.mode"/>
 
+	<!-- Show line numbers on program listing -->
+	<xsl:param name="linenumbering.everyNth">1</xsl:param>
+
 </xsl:stylesheet>
