@@ -34,6 +34,10 @@ allprojects {
   }
 }
 
+subprojects {
+  version = rootProject.version
+}
+
 apply plugin: "license"
 apply plugin: "idea"
 apply plugin: "java"

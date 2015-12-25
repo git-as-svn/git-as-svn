@@ -1,5 +1,3 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 subprojects {
   apply plugin: "docbook-reference"
 
@@ -16,9 +14,9 @@ subprojects {
   task fopConfig(type: Copy) {
     from ("${project.parent.projectDir}/src/main/fonts") {
       include "fop-userconfig.xml"
-      filter (ReplaceTokens, tokens: [
-        "font.base": "${project.parent.projectDir}/src/main/fonts".toString()
-      ])
+      expand (
+        fontBase: "${project.parent.projectDir}/src/main/fonts"
+      )
     }
     into ("${project.buildDir}/fonts")
   }
@@ -49,6 +47,9 @@ subprojects {
     epubFilename = "${project.rootProject.name}.${project.name}.epub"
     sourceDir = project.file(docbookDir)
     fopUserConfig = file("${project.buildDir}/fonts/fop-userconfig.xml")
+
+    // Configure which files have ${} expanded
+    expandPlaceholders = "**/*.xml"
   }
 
   referencePdf.dependsOn.add("fopConfig")
