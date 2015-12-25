@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 subprojects {
   apply plugin: "docbook-reference"
 
@@ -9,6 +11,16 @@ subprojects {
       exclude "**/*.xml"
     }
     into docbookDir
+  }
+
+  task fopConfig(type: Copy) {
+    from ("${project.parent.projectDir}/src/main/fonts") {
+      include "fop-userconfig.xml"
+      filter (ReplaceTokens, tokens: [
+        "font.base": "${project.parent.projectDir}/src/main/fonts".toString()
+      ])
+    }
+    into ("${project.buildDir}/fonts")
   }
 
   fileTree(inputDir) {
@@ -36,8 +48,10 @@ subprojects {
     pdfFilename = "${project.rootProject.name}.${project.name}.pdf"
     epubFilename = "${project.rootProject.name}.${project.name}.epub"
     sourceDir = project.file(docbookDir)
-    fopUserConfig = file("../fop-userconfig.xml")
+    fopUserConfig = file("${project.buildDir}/fonts/fop-userconfig.xml")
   }
+
+  referencePdf.dependsOn.add("fopConfig")
 
   afterEvaluate {
     tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("translate") }
