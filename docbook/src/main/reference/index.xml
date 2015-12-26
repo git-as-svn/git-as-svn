@@ -25,6 +25,8 @@
     </copyright>
 
     <productname>git-as-svn</productname>
+
+    <releaseinfo>${version}</releaseinfo>
   </info>
 
   <xi:include href="ch_about.xml"/>

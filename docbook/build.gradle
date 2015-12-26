@@ -1,0 +1,92 @@
+subprojects {
+  apply plugin: "docbook-reference"
+
+  def docbookDir = "${project.buildDir}/docbook"
+  def inputDir = "${project.parent.projectDir}/src/main/reference"
+
+  task translate(type: Copy) {
+    from (inputDir) {
+      exclude "**/*.xml"
+    }
+    into docbookDir
+  }
+
+  task fopConfig(type: Copy) {
+    from ("${project.parent.projectDir}/src/main/fonts") {
+      include "fop-userconfig.xml"
+      expand (
+        fontBase: "${project.parent.projectDir}/src/main/fonts"
+      )
+    }
+    into ("${project.buildDir}/fonts")
+  }
+
+  fileTree(inputDir) {
+    include "**/*.xml"
+  }.visit {FileVisitDetails details ->
+    if (details.directory) return;
+    translate.dependsOn.add(tasks.create (name: "translate." + details.relativePath, type: Exec) {
+      def output = file("$docbookDir/${details.relativePath}")
+      output.parentFile.mkdirs()
+
+      inputs.file file(details.file)
+      inputs.file file(getPo(project))
+      outputs.file output
+
+      executable "xml2po"
+      args "-p", getPo(project)
+      args details.file.path
+      doFirst {
+        standardOutput = new FileOutputStream(output)
+      }
+    })
+  }
+
+  reference {
+    pdfFilename = "${project.rootProject.name}.${project.name}.pdf"
+    epubFilename = "${project.rootProject.name}.${project.name}.epub"
+    sourceDir = project.file(docbookDir)
+    fopUserConfig = file("${project.buildDir}/fonts/fop-userconfig.xml")
+
+    // Configure which files have ${} expanded
+    expandPlaceholders = "**/*.xml"
+  }
+
+  task assembleDocbook(dependsOn: reference) {
+    copy {
+      from("${project.buildDir}/reference/html")
+      into("${rootProject.buildDir}/doc/html/${project.name}")
+    }
+    copy {
+      from("${project.buildDir}/reference/htmlsingle")
+      into("${rootProject.buildDir}/doc/htmlsingle/${project.name}")
+    }
+    copy {
+      from("${project.buildDir}/reference/pdf")
+      into("${rootProject.buildDir}/doc/pdf")
+    }
+    copy {
+      from("${project.buildDir}/reference/epub")
+      into("${rootProject.buildDir}/doc/epub")
+    }
+    copy {
+      from("${project.buildDir}/reference/epub")
+      from("${project.buildDir}/reference/pdf")
+      into("${rootProject.buildDir}/distributions")
+    }
+  }
+
+  rootProject.createDocs {
+    dependsOn assembleDocbook
+  }
+
+  referencePdf.dependsOn.add("fopConfig")
+
+  afterEvaluate {
+    tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("translate") }
+  }
+}
+
+def getPo(project) {
+  return "${project.parent.projectDir}/src/main/po/${project.name}.po"
+}

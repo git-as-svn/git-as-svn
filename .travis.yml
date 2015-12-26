@@ -24,7 +24,6 @@ deploy:
   file_glob: true
   file:
     - build/distributions/git-as-svn*
-    - build/distributions/*.pdf
   skip_cleanup: true
   on:
     tags: true

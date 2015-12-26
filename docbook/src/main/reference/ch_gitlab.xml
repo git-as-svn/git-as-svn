@@ -115,6 +115,6 @@
     <title>Пример конфигурационного файла</title>
 
     <programlisting language="yaml" linenumbering="numbered"><xi:include
-        href="../../config-gitlab.example" parse="text"/></programlisting>
+        href="../../../../config-gitlab.example" parse="text"/></programlisting>
   </section>
 </chapter>
