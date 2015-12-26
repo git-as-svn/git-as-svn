@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
-         xmlns:ns6="http://www.w3.org/1999/xlink"
-         xmlns:ns5="http://www.w3.org/1998/Math/MathML"
-         xmlns:ns4="http://www.w3.org/2000/svg"
-         xmlns:ns3="http://www.w3.org/1999/xhtml"
-         xmlns:ns="http://docbook.org/ns/docbook">
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:m="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook">
   <title>Интеграция с GitLab</title>
 
   <section>
@@ -17,28 +17,28 @@
     <itemizedlist>
       <listitem>
         <para><link
-        ns6:href="https://github.com/gitlabhq/gitlab-shell/pull/230">#230
+        xlink:href="https://github.com/gitlabhq/gitlab-shell/pull/230">#230
         (gitlab-shell)</link><phrase>: Add git-lfs-authenticate to server
         white list (merged to 7.14.1);</phrase></para>
       </listitem>
 
       <listitem>
         <para><link
-        ns6:href="https://github.com/gitlabhq/gitlab-shell/pull/237">#237
+        xlink:href="https://github.com/gitlabhq/gitlab-shell/pull/237">#237
         (gitlab-shell)</link><phrase>: Execute git-lfs-authenticate command
         with original arguments (merged to 8.2.0);</phrase></para>
       </listitem>
 
       <listitem>
         <para><link
-        ns6:href="https://github.com/gitlabhq/gitlabhq/pull/9591">#9591
+        xlink:href="https://github.com/gitlabhq/gitlabhq/pull/9591">#9591
         (gitlabhq)</link><phrase>: Add API for lookup user information by SSH
         key ID (merged to 8.0.0);</phrase></para>
       </listitem>
 
       <listitem>
         <para><link
-        ns6:href="https://github.com/gitlabhq/gitlabhq/pull/9728">#9728
+        xlink:href="https://github.com/gitlabhq/gitlabhq/pull/9728">#9728
         (gitlabhq)</link><phrase>: Show "Empty Repository Page" for repository
         without branches (merged to 8.2.0).</phrase></para>
       </listitem>
