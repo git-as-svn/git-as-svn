@@ -52,6 +52,29 @@ subprojects {
     expandPlaceholders = "**/*.xml"
   }
 
+  task assembleDocbook(dependsOn: reference) {
+    copy {
+      from("${project.buildDir}/reference/html")
+      into("${rootProject.buildDir}/doc/html/${project.name}")
+    }
+    copy {
+      from("${project.buildDir}/reference/htmlsingle")
+      into("${rootProject.buildDir}/doc/htmlsingle/${project.name}")
+    }
+    copy {
+      from("${project.buildDir}/reference/pdf")
+      into("${rootProject.buildDir}/doc/pdf")
+    }
+    copy {
+      from("${project.buildDir}/reference/epub")
+      into("${rootProject.buildDir}/doc/epub")
+    }
+  }
+
+  rootProject.createDocs {
+    dependsOn assembleDocbook
+  }
+
   referencePdf.dependsOn.add("fopConfig")
 
   afterEvaluate {
