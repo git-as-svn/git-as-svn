@@ -9,12 +9,6 @@
   <title>Установка</title>
 
   <section>
-    <title>Системные требования</title>
-
-    <para>TODO</para>
-  </section>
-
-  <section>
     <title>Быстрый старт</title>
 
     <para>TODO</para>
@@ -23,6 +17,31 @@
   <section>
     <title>Сборка из исходного кода</title>
 
-    <para>TODO</para>
+    <para>Данный проект изначально рассчитан на сборку в Ubuntu.</para>
+
+    <para>Для сборки из исходного кода необходимо локально устновить:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Java 1.8 (пакет openjdk-8-jdk);</para>
+      </listitem>
+
+      <listitem>
+        <para>xml2po (пакет gnome-doc-utils) — необходимо для сборки
+        документации;</para>
+      </listitem>
+
+      <listitem>
+        <para>protoc (пакет protobuf-compiler) — необходимо для сборки
+        API.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Полностью собрать дистрибутив можно командой:</para>
+
+    <programlisting language="bash">./gradlew assembleDist</programlisting>
+
+    <para>Комплект установочных файлов будет располагаться в директории:
+    <filename>build/distributions</filename></para>
   </section>
 </chapter>

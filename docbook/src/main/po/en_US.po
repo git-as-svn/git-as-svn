@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-26 23:10+0300\n"
-"PO-Revision-Date: 2015-12-26 23:10+0300\n"
+"POT-Creation-Date: 2015-12-27 22:36+0300\n"
+"PO-Revision-Date: 2015-12-27 22:40+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -45,29 +45,59 @@ msgstr "git-as-svn"
 
 #: src/main/reference/index.xml:29(releaseinfo)
 msgid "${version}"
-msgstr ""
+msgstr "${version}"
 
 #: src/main/reference/ch_install.xml:9(title)
 msgid "Установка"
-msgstr ""
+msgstr "Installation"
 
 #: src/main/reference/ch_install.xml:12(title)
-msgid "Системные требования"
-msgstr ""
+msgid "Быстрый старт"
+msgstr "Quick start"
 
 #: src/main/reference/ch_install.xml:14(para)
-#: src/main/reference/ch_install.xml:20(para)
-#: src/main/reference/ch_install.xml:26(para)
 msgid "TODO"
 msgstr ""
 
 #: src/main/reference/ch_install.xml:18(title)
-msgid "Быстрый старт"
-msgstr ""
-
-#: src/main/reference/ch_install.xml:24(title)
 msgid "Сборка из исходного кода"
+msgstr "Build from source code"
+
+#: src/main/reference/ch_install.xml:20(para)
+msgid "Данный проект изначально рассчитан на сборку в Ubuntu."
+msgstr "The project was originally designed for assembly in Ubuntu."
+
+#: src/main/reference/ch_install.xml:22(para)
+msgid "Для сборки из исходного кода необходимо локально устновить:"
+msgstr "To build from the source code you need to install locally:"
+
+#: src/main/reference/ch_install.xml:26(para)
+msgid "Java 1.8 (пакет openjdk-8-jdk);"
+msgstr "Java 1.8 (openjdk-8-jdk package);"
+
+#: src/main/reference/ch_install.xml:30(para)
+msgid "xml2po (пакет gnome-doc-utils) — необходимо для сборки документации;"
+msgstr "xml2po (gnome-doc-utils package) — required for build reference files;"
+
+#: src/main/reference/ch_install.xml:35(para)
+msgid "protoc (пакет protobuf-compiler) — необходимо для сборки API."
+msgstr "protoc (protobuf-compiler package) — required for build API."
+
+#: src/main/reference/ch_install.xml:40(para)
+msgid "Полностью собрать дистрибутив можно командой:"
+msgstr "You can build distribution by command:"
+
+#: src/main/reference/ch_install.xml:42(programlisting)
+#, no-wrap
+msgid "./gradlew assembleDist"
+msgstr "./gradlew assembleDist"
+
+#: src/main/reference/ch_install.xml:44(para)
+msgid ""
+"Комплект установочных файлов будет располагаться в директории: "
+"<filename>build/distributions</filename>"
 msgstr ""
+"Distribution files build in folder: <filename>build/distributions</filename>"
 
 #: src/main/reference/ch_gitlab.xml:9(title)
 msgid "Интеграция с GitLab"
