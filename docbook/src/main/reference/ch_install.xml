@@ -11,7 +11,53 @@
   <section>
     <title>Быстрый старт</title>
 
-    <para>TODO</para>
+    <para>Для того, чтобы посмотреть, как работает Git as Subversion
+    нужно:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Установить Java 8 или более позднюю;</para>
+      </listitem>
+
+      <listitem>
+        <para>Скачать ахрив с сайта <olink
+        targetdoc="https://github.com/bozaro/git-as-svn/releases/latest">https://github.com/bozaro/git-as-svn/releases/latest</olink>;</para>
+      </listitem>
+
+      <listitem>
+        <para>После распаковки архива перейти в распакованный каталог и
+        запустить команду:</para>
+
+        <programlisting>bin/git-as-svn --config doc/config-local.example --show-config</programlisting>
+      </listitem>
+    </orderedlist>
+
+    <para>В результате будет запущен Git as Subvesion сервер в следующей
+    конфигурации:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Сервер доступен через svn-протокол по порту 3690.</para>
+
+        <para>Для его проверки можно выполнить команду:</para>
+
+        <programlisting>svn ls svn://localhost/example</programlisting>
+      </listitem>
+
+      <listitem>
+        <para>Для доступа к сереру необходимо использовать
+        пользователя:</para>
+
+        <para>Имя пользователя: test</para>
+
+        <para>Пароль: test</para>
+      </listitem>
+
+      <listitem>
+        <para>Репозиторий и кэш будут созданы в каталоге doc/build (так как
+        пути заданы относительно конфигурационного файла).</para>
+      </listitem>
+    </orderedlist>
   </section>
 
   <section>
@@ -21,9 +67,9 @@
 
     <para>Для сборки из исходного кода необходимо локально устновить:</para>
 
-    <itemizedlist>
+    <orderedlist>
       <listitem>
-        <para>Java 1.8 (пакет openjdk-8-jdk);</para>
+        <para>Java 8 (пакет openjdk-8-jdk);</para>
       </listitem>
 
       <listitem>
@@ -35,7 +81,7 @@
         <para>protoc (пакет protobuf-compiler) — необходимо для сборки
         API.</para>
       </listitem>
-    </itemizedlist>
+    </orderedlist>
 
     <para>Полностью собрать дистрибутив можно командой:</para>
 
