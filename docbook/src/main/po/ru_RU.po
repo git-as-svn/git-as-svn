@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-24 11:31+0300\n"
+"POT-Creation-Date: 2015-12-28 22:43+0300\n"
 "PO-Revision-Date: 2015-12-18 22:37+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -41,6 +41,128 @@ msgstr "Артём Навроцкий"
 
 #: src/main/reference/index.xml:27(productname)
 msgid "git-as-svn"
+msgstr ""
+
+#: src/main/reference/index.xml:29(productnumber)
+msgid "${version}"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:9(title)
+msgid "Установка"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:12(title)
+msgid "Быстрый старт"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:14(para)
+msgid "Для того, чтобы посмотреть, как работает Git as Subversion нужно:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:19(para)
+msgid "Установить Java 8 или более позднюю;"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:23(para)
+msgid ""
+"Скачать ахрив с сайта <link xlink:href=\"https://github.com/bozaro/git-as-"
+"svn/releases/latest\">https://github.com/bozaro/git-as-svn/releases/latest</"
+"link>;"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:28(para)
+msgid ""
+"После распаковки архива перейти в распакованный каталог и запустить команду:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:31(programlisting)
+#, no-wrap
+msgid "bin/git-as-svn --config doc/config-local.example --show-config"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:35(para)
+msgid ""
+"В результате будет запущен Git as Subversion сервер в следующей конфигурации:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:40(para)
+msgid "Сервер доступен через svn-протокол по порту 3690."
+msgstr ""
+
+#: src/main/reference/ch_install.xml:42(para)
+msgid "Для его проверки можно выполнить команду:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:44(programlisting)
+#, no-wrap
+msgid "svn ls svn://localhost/example"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:48(para)
+msgid "Для доступа к сереру необходимо использовать пользователя:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:51(para)
+msgid "Имя пользователя: test"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:53(para)
+msgid "Пароль: test"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:57(para)
+msgid "Репозиторий и кэш будут созданы в каталоге <filename>build</filename>:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:62(para)
+msgid ""
+"<filename>example.git</filename> — каталог с репозиторием, доступным через "
+"svn-протокол;"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:67(para)
+msgid ""
+"<filename>git-as-svn.mapdb*</filename> — файлы с кэшем дорого вычисляемых "
+"данных."
+msgstr ""
+
+#: src/main/reference/ch_install.xml:76(title)
+msgid "Сборка из исходного кода"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:78(para)
+msgid "Данный проект изначально рассчитан на сборку в Ubuntu."
+msgstr ""
+
+#: src/main/reference/ch_install.xml:80(para)
+msgid "Для сборки из исходного кода необходимо локально устновить:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:84(para)
+msgid "Java 8 (пакет openjdk-8-jdk);"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:88(para)
+msgid "xml2po (пакет gnome-doc-utils) — необходимо для сборки документации;"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:93(para)
+msgid "protoc (пакет protobuf-compiler) — необходимо для сборки API."
+msgstr ""
+
+#: src/main/reference/ch_install.xml:98(para)
+msgid "Полностью собрать дистрибутив можно командой:"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:100(programlisting)
+#, no-wrap
+msgid "./gradlew assembleDist"
+msgstr ""
+
+#: src/main/reference/ch_install.xml:102(para)
+msgid ""
+"Комплект установочных файлов будет располагаться в директории: "
+"<filename>build/distributions</filename>"
 msgstr ""
 
 #: src/main/reference/ch_gitlab.xml:9(title)
@@ -193,41 +315,41 @@ msgstr ""
 msgid "Пример конфигурационного файла"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:8(title)
+#: src/main/reference/ch_about.xml:9(title)
 msgid "О проекте"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:11(title)
+#: src/main/reference/ch_about.xml:12(title)
 msgid "Что это?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:13(para)
+#: src/main/reference/ch_about.xml:14(para)
 msgid ""
 "Git as Subversion — это реализация Subversion-сервера (по протоколу svn) для "
 "Git-репозиториев."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:16(para)
+#: src/main/reference/ch_about.xml:17(para)
 msgid ""
 "Он позволяет работать с Git-репозиторием, используя консольный Subversion-"
 "клиент, TortoiseSVN, SvnKit и подобный инструментарий."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:21(title)
+#: src/main/reference/ch_about.xml:22(title)
 msgid "Какова цель проекта?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:23(para)
+#: src/main/reference/ch_about.xml:24(para)
 msgid ""
 "Проект создан для того, чтобы позволить работать с одним и тем же "
 "репозиторием как в Git-стиле, так и в Subversion-стиле."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:28(glossterm)
+#: src/main/reference/ch_about.xml:29(glossterm)
 msgid "Git-стиль"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:31(para)
+#: src/main/reference/ch_about.xml:32(para)
 msgid ""
 "Основная идея сводится к тому, что разработчик производит все изменения в "
 "локальной ветке. Эти изменения никак не влияют на работу остальных "
@@ -235,7 +357,7 @@ msgid ""
 "передать другому разработчику на проверку и т.д."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:37(para)
+#: src/main/reference/ch_about.xml:38(para)
 msgid ""
 "Это позволяет каждому разработчику вести работу независимо, так, как ему "
 "удобно, изменяя и сохраняя промежуточные версии документов, пользуясь всеми "
@@ -243,17 +365,17 @@ msgid ""
 "отсутствие сетевого соединения с сервером."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:43(para)
+#: src/main/reference/ch_about.xml:44(para)
 msgid ""
 "К сожалению, этот подход не работает в случае, когда изменяемые документы не "
 "поддерживают слияние (например, это характерно для двоичных файлов)."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:50(glossterm)
+#: src/main/reference/ch_about.xml:51(glossterm)
 msgid "Subversion-стиль"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:53(para)
+#: src/main/reference/ch_about.xml:54(para)
 msgid ""
 "Использование централизованной системы контроля версий более удобно в случае "
 "использования документов не поддерживающих слияние (например, это характерно "
@@ -261,7 +383,7 @@ msgid ""
 "короткого цикла публикации изменений."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:62(para)
+#: src/main/reference/ch_about.xml:63(para)
 msgid ""
 "Необходимость совместить Git-стиль и Subversion-стиль работы с одим "
 "репозиторием возникает из-за того, что разные сотрудники в рамках одного "
@@ -269,15 +391,15 @@ msgid ""
 "программисты предпочитают Git, а художники любят Subversion."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:69(title)
+#: src/main/reference/ch_about.xml:70(title)
 msgid "Как оно работает?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:72(title)
+#: src/main/reference/ch_about.xml:73(title)
 msgid "Где хранятся Subversion-данные репозитория?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:74(para)
+#: src/main/reference/ch_about.xml:75(para)
 msgid ""
 "Для представления Subversion репозитория нужно хранить информацию о том, "
 "какой номер Subversion-ревизии соответствует какому Git-коммиту. Вычислять "
@@ -287,247 +409,248 @@ msgid ""
 "этого не требуется отдельного резервного копирования для Subversion-данных."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:82(para)
+#: src/main/reference/ch_about.xml:83(para)
 msgid ""
 "Также часть данных, необходимых для Subversion репозитория, очень дорого "
 "получить на основании Git-репозитория."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:85(para)
+#: src/main/reference/ch_about.xml:86(para)
 msgid "Например:"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:89(para)
+#: src/main/reference/ch_about.xml:90(para)
 msgid "номер ревизии с предыдущим изменением файла;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:93(para)
+#: src/main/reference/ch_about.xml:94(para)
 msgid "данные о том, откуда был скопирован файл;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:97(para)
+#: src/main/reference/ch_about.xml:98(para)
 msgid "MD5-хэш файла."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:101(para)
+#: src/main/reference/ch_about.xml:102(para)
 msgid ""
 "Чтобы не заниматься их вычислением каждый запуск, эти данные кэширутся в "
 "файлах. Потеря данного кэша не критична для работы и его резервное "
 "копирование не имеет смысла."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:105(para)
+#: src/main/reference/ch_about.xml:106(para)
 msgid ""
 "Данные о блокировках файлов в данный момент так же хранятся в файла кэша."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:110(title)
+#: src/main/reference/ch_about.xml:111(title)
 msgid "Как работает коммит?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:112(para)
+#: src/main/reference/ch_about.xml:113(para)
 msgid "Одна из самых важных деталей системы — сохранение изменений."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:115(para)
+#: src/main/reference/ch_about.xml:116(para)
 msgid "В общих чертах, алгоритм следующий:"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:119(para)
+#: src/main/reference/ch_about.xml:120(para)
 msgid ""
 "В момент команды <command>svn commit</command> клиент отправляет на сервер "
 "свои изменения. Сервер запоминает их. В этот же момент происходит первая "
 "проверка клиентских данных на актуальность."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:126(para)
+#: src/main/reference/ch_about.xml:127(para)
 msgid ""
 "Сервер берет голову ветки и начинает формировать новый коммит на базе "
 "полученных от клиента данных. В этот момент происходит ещё одна проверка на "
 "актуальность клиентских данных."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:132(para)
+#: src/main/reference/ch_about.xml:133(para)
 msgid "Проверяется целостность svn properties для заливаемых данных."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:137(para)
+#: src/main/reference/ch_about.xml:138(para)
 msgid ""
 "Сервер пытается консольным Git-клиентом сделать push нового коммита в "
 "текущую ветку этого же репозитория. Далее по результату push-а:"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:143(para)
+#: src/main/reference/ch_about.xml:144(para)
 msgid ""
 "если все хорошо — загружаем последние изменения из git-коммитов и радуемся;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:148(para)
+#: src/main/reference/ch_about.xml:149(para)
 msgid ""
 "если не fast forward — загружаем последние изменения из git-коммитов и идём "
 "к шагу 2;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:153(para)
+#: src/main/reference/ch_about.xml:154(para)
 msgid "если отбили хуки — сообщаем клиенту;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:157(para)
+#: src/main/reference/ch_about.xml:158(para)
 msgid "если другая ошибка — сообщаем клиенту."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:163(para)
+#: src/main/reference/ch_about.xml:164(para)
 msgid ""
 "Таким образом, за счёт использования в данной операции консольного Git-а мы "
 "избегает гонки с заливкой напрямую через Git, и получаем хуки в качестве "
 "приятного бонуса."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:169(title)
+#: src/main/reference/ch_about.xml:170(title)
 msgid "Отличие от других решений"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:171(para)
+#: src/main/reference/ch_about.xml:172(para)
 msgid ""
 "Проблему совмещения Git и Subversion стиля работы с системой контроля версий "
 "можно решить разными способами."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:175(title)
+#: src/main/reference/ch_about.xml:176(title)
 msgid "Поддержка Subversion у GitHub"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:177(para)
+#: src/main/reference/ch_about.xml:178(para)
 msgid "Это, наверное, самый близкий аналог."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:179(para)
+#: src/main/reference/ch_about.xml:180(para)
 msgid ""
 "Основная проблема данной реализации — неотделимость от GitHub. Так же, "
 "внезапно, данная реализация не поддерживает Git LFS."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:184(title)
+#: src/main/reference/ch_about.xml:185(title)
 msgid "SubGit"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:186(para)
+#: src/main/reference/ch_about.xml:187(para)
 msgid ""
-"Сайт: <link ns6:href=\"http://www.subgit.com/\">http://www.subgit.com/</link>"
+"Сайт: <link xlink:href=\"http://www.subgit.com/\">http://www.subgit.com/</"
+"link>"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:189(para)
+#: src/main/reference/ch_about.xml:190(para)
 msgid ""
 "Достаточно интересная реализация при которой поддерживаются Git и Subversion-"
 "репозитории в синхронном состоянии. За счет чего обеспечивается синхронность "
 "репозиториев — не понятно."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:195(title)
+#: src/main/reference/ch_about.xml:196(title)
 msgid "Subversion репозиторий и git svn"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:197(para)
+#: src/main/reference/ch_about.xml:198(para)
 msgid ""
 "Данный способ позволяет использовать Git при работе с Subversion-"
 "репозиторием, но использование общего Git-репозитория между несколькими "
 "разработчиками сильно затруднено."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:205(title)
+#: src/main/reference/ch_about.xml:206(title)
 msgid "Функционал"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:208(title)
+#: src/main/reference/ch_about.xml:209(title)
 msgid "Что уже есть?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:212(para)
+#: src/main/reference/ch_about.xml:213(para)
 msgid "Работаю, как минимум, следующие клиенты:"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:216(para)
+#: src/main/reference/ch_about.xml:217(para)
 msgid "Консольный Subversion-клиент;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:220(para)
+#: src/main/reference/ch_about.xml:221(para)
 msgid "TortoiseSVN;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:224(para)
+#: src/main/reference/ch_about.xml:225(para)
 msgid "SvnKit."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:230(para)
+#: src/main/reference/ch_about.xml:231(para)
 msgid "Работают, как минимум, следующие операции:"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:234(para)
+#: src/main/reference/ch_about.xml:235(para)
 msgid "svn checkout, update, switch, diff"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:238(para)
+#: src/main/reference/ch_about.xml:239(para)
 msgid "svn commit"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:243(para)
+#: src/main/reference/ch_about.xml:244(para)
 msgid ""
 "Операции поддерживаются, но данные об источнике копирования не сохраняются."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:242(para)
+#: src/main/reference/ch_about.xml:243(para)
 msgid "svn copy, move<placeholder-1/>"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:249(para)
+#: src/main/reference/ch_about.xml:250(para)
 msgid "svn cat, ls"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:253(para)
+#: src/main/reference/ch_about.xml:254(para)
 msgid "svn lock, unlock"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:257(para)
+#: src/main/reference/ch_about.xml:258(para)
 msgid "svn replay (svnsync)"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:263(para)
+#: src/main/reference/ch_about.xml:264(para)
 msgid "Поддерживается Git LFS;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:268(para)
+#: src/main/reference/ch_about.xml:269(para)
 msgid "Данные из git submodule видны в репозитории в режиме только для чтения."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:267(para)
+#: src/main/reference/ch_about.xml:268(para)
 msgid "Поддерживаются git submodules;<placeholder-1/>"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:274(para)
+#: src/main/reference/ch_about.xml:275(para)
 msgid "Авторизация через LDAP;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:278(para)
+#: src/main/reference/ch_about.xml:279(para)
 msgid "Интеграция с GitLab."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:284(title)
+#: src/main/reference/ch_about.xml:285(title)
 msgid "Чего еще нет?"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:288(para)
+#: src/main/reference/ch_about.xml:289(para)
 msgid "Категорически не хватает документации;"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:292(para)
+#: src/main/reference/ch_about.xml:293(para)
 msgid "Из Subversion доступна только одна ветка."
 msgstr ""
 
-#: src/main/reference/ch_about.xml:298(title)
+#: src/main/reference/ch_about.xml:299(title)
 msgid "Технические ограничения"
 msgstr ""
 
-#: src/main/reference/ch_about.xml:302(para)
+#: src/main/reference/ch_about.xml:303(para)
 msgid "Нельзя средствами Subversion менять svn properties."
 msgstr ""
 

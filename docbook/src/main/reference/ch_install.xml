@@ -20,8 +20,8 @@
       </listitem>
 
       <listitem>
-        <para>Скачать ахрив с сайта <olink
-        targetdoc="https://github.com/bozaro/git-as-svn/releases/latest">https://github.com/bozaro/git-as-svn/releases/latest</olink>;</para>
+        <para>Скачать ахрив с сайта <link
+        xlink:href="https://github.com/bozaro/git-as-svn/releases/latest">https://github.com/bozaro/git-as-svn/releases/latest</link>;</para>
       </listitem>
 
       <listitem>
@@ -32,7 +32,7 @@
       </listitem>
     </orderedlist>
 
-    <para>В результате будет запущен Git as Subvesion сервер в следующей
+    <para>В результате будет запущен Git as Subversion сервер в следующей
     конфигурации:</para>
 
     <orderedlist>
@@ -54,8 +54,20 @@
       </listitem>
 
       <listitem>
-        <para>Репозиторий и кэш будут созданы в каталоге doc/build (так как
-        пути заданы относительно конфигурационного файла).</para>
+        <para>Репозиторий и кэш будут созданы в каталоге
+        <filename>build</filename>:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><filename>example.git</filename> — каталог с репозиторием,
+            доступным через svn-протокол;</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>git-as-svn.mapdb*</filename> — файлы с кэшем
+            дорого вычисляемых данных.</para>
+          </listitem>
+        </itemizedlist>
       </listitem>
     </orderedlist>
   </section>

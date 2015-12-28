@@ -106,7 +106,7 @@ idea {
 
 run {
   args "-c"
-  args "${projectDir}/config-local.example"
+  args "${projectDir}/cfg/config-local.example"
 }
 
 tasks.withType(JavaCompile) {
@@ -134,8 +134,10 @@ protobuf {
 }
 
 task createDocs(type: Copy) {
-  from(project.projectDir) {
+  from("$projectDir/cfg") {
     include "*.example"
+  }
+  from("$projectDir") {
     include "*.md"
     include "LICENSE"
   }
