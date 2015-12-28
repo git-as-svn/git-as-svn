@@ -52,7 +52,7 @@ subprojects {
     expandPlaceholders = "**/*.xml"
   }
 
-  task assembleDocbook(dependsOn: reference) {
+  task assembleDocbook(dependsOn: reference) << {
     copy {
       from("${project.buildDir}/reference/html")
       into("${rootProject.buildDir}/doc/html/${project.name}")
