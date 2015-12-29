@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-28 22:43+0300\n"
+"POT-Creation-Date: 2015-12-29 22:36+0300\n"
 "PO-Revision-Date: 2015-12-18 22:37+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -65,7 +65,7 @@ msgstr ""
 
 #: src/main/reference/ch_install.xml:23(para)
 msgid ""
-"Скачать ахрив с сайта <link xlink:href=\"https://github.com/bozaro/git-as-"
+"Скачать архив с сайта <link xlink:href=\"https://github.com/bozaro/git-as-"
 "svn/releases/latest\">https://github.com/bozaro/git-as-svn/releases/latest</"
 "link>;"
 msgstr ""
@@ -99,7 +99,7 @@ msgid "svn ls svn://localhost/example"
 msgstr ""
 
 #: src/main/reference/ch_install.xml:48(para)
-msgid "Для доступа к сереру необходимо использовать пользователя:"
+msgid "Для доступа к серверу необходимо использовать пользователя:"
 msgstr ""
 
 #: src/main/reference/ch_install.xml:51(para)
@@ -135,7 +135,7 @@ msgid "Данный проект изначально рассчитан на с
 msgstr ""
 
 #: src/main/reference/ch_install.xml:80(para)
-msgid "Для сборки из исходного кода необходимо локально устновить:"
+msgid "Для сборки из исходного кода необходимо локально установить:"
 msgstr ""
 
 #: src/main/reference/ch_install.xml:84(para)
@@ -385,7 +385,7 @@ msgstr ""
 
 #: src/main/reference/ch_about.xml:63(para)
 msgid ""
-"Необходимость совместить Git-стиль и Subversion-стиль работы с одим "
+"Необходимость совместить Git-стиль и Subversion-стиль работы с одним "
 "репозиторием возникает из-за того, что разные сотрудники в рамках одного "
 "проекта работают с принципиально разными данными. Если утрировать, то "
 "программисты предпочитают Git, а художники любят Subversion."

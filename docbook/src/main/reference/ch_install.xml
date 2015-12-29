@@ -20,7 +20,7 @@
       </listitem>
 
       <listitem>
-        <para>Скачать ахрив с сайта <link
+        <para>Скачать архив с сайта <link
         xlink:href="https://github.com/bozaro/git-as-svn/releases/latest">https://github.com/bozaro/git-as-svn/releases/latest</link>;</para>
       </listitem>
 
@@ -45,7 +45,7 @@
       </listitem>
 
       <listitem>
-        <para>Для доступа к сереру необходимо использовать
+        <para>Для доступа к серверу необходимо использовать
         пользователя:</para>
 
         <para>Имя пользователя: test</para>
@@ -77,7 +77,7 @@
 
     <para>Данный проект изначально рассчитан на сборку в Ubuntu.</para>
 
-    <para>Для сборки из исходного кода необходимо локально устновить:</para>
+    <para>Для сборки из исходного кода необходимо локально установить:</para>
 
     <orderedlist>
       <listitem>
