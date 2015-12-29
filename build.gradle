@@ -1,6 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
-project.version = "1.0.16"
+project.version = "1.0.17"
 
 buildscript {
   repositories {
@@ -108,7 +108,7 @@ idea {
 
 run {
   args "-c"
-  args "${projectDir}/config-local.example"
+  args "${projectDir}/cfg/config-local.example"
 }
 
 tasks.withType(JavaCompile) {
@@ -136,8 +136,10 @@ protobuf {
 }
 
 task createDocs(type: Copy) {
-  from(project.projectDir) {
+  from("$projectDir/cfg") {
     include "*.example"
+  }
+  from("$projectDir") {
     include "*.md"
     include "LICENSE"
   }

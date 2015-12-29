@@ -1,9 +1,9 @@
 # Changes
 
-## Unreleased
+## 1.0.17-alpha: Added documentation
 
- * Add support for anonymous authentication for public repositories.
  * Add PDF, EPUB manual.
+ * Add support for anonymous authentication for public repositories.
 
 ## 1.0.16-alpha: GitLab authentication
 

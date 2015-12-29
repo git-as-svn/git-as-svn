@@ -5,15 +5,12 @@ jdk:
 addons:
   apt:
     packages:
-    - fop
-    - docbook-xsl
     - protobuf-compiler
 before_install:
 - sudo apt-get install -qq gnome-doc-utils
 install:
 - ./gradlew assemble
 script:
-- docbook/update.sh
 - ./gradlew check
 before_deploy:
 - ./gradlew assembleDist

@@ -149,17 +149,3 @@ As result:
 
  * Server creates bare repository with example commit in directory: `example.git`
  * The server will be available on svn://localhost/example/ url (login/password: test/test)
-
-## Build from sources
-
-To build from sources you need install JDK 1.8 or later and run build script.
-
-For Linux:
-
-    ./gradlew assembleDist
-
-For Windows:
-
-    call gradlew.bat assembleDist
-
-When build completes you can see a binary server at ```build/distributions``` directory.

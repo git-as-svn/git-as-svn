@@ -1,0 +1,5 @@
+@IMPORT url("manual.css");
+
+div.part h1 {
+    border-top: none;
+}
