@@ -1,13 +1,12 @@
 language: java
-sudo: true
+sudo: false
 jdk:
 - oraclejdk8
 addons:
   apt:
     packages:
     - protobuf-compiler
-before_install:
-- sudo apt-get install -qq gnome-doc-utils
+    - gnome-doc-utils
 install:
 - ./gradlew assemble
 script:
