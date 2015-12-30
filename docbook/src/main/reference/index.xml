@@ -34,4 +34,6 @@
   <xi:include href="ch_install.xml"/>
 
   <xi:include href="ch_gitlab.xml"/>
+
+  <xi:include href="ch_props.xml"/>
 </book>

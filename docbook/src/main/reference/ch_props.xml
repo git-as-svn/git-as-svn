@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:m="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook"
+          xml:id="ch_props">
+  <title>SVN Properties</title>
+
+  <para>Основная беда <code>svn properties</code> в том, что их надо
+  поддерживать в синхронном состоянии между Git и Subversion.</para>
+
+  <para>Из-за этого произвольные <code>svn properties</code> не
+  поддерживаются. Чтобы значения <code>svn properties</code> соответствовали
+  Git-представлению, они генерируются на лету на основании содержимого
+  репозитория.</para>
+
+  <para>При этом:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>при коммите проверяется, что <code>svn properties</code>
+      файла/директории точно соответствуют тому, что должно быть по данным
+      репозитория;</para>
+    </listitem>
+
+    <listitem>
+      <para>средствами Subversion большую часть свойств изменить нельзя
+      (исключения: <code>svn:executable</code>,
+      <code>svn:special</code>);</para>
+    </listitem>
+
+    <listitem>
+      <para>если какой-либо файл влияет на <code>svn properties</code> других
+      файлов, то после его изменения <code>svn properties</code> этих файлов
+      так же поменяются.</para>
+    </listitem>
+  </itemizedlist>
+
+  <section>
+    <title>Файл .gitignores</title>
+
+    <para>Данный файл влияет на свойство <code>svn:ignore</code> и
+    <code>svn:global-ignores</code> для директории и её поддиректорий.</para>
+
+    <para>Например, файл в каталоге <filename>/foo</filename> с
+    содержимым:</para>
+
+    <programlisting>.idea/libraries
+*.class
+*/build</programlisting>
+
+    <para>Проецируется на свойства:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>для каталога <code>/foo</code>:</para>
+
+        <programlisting>svn:global-ignores: *.class</programlisting>
+      </listitem>
+
+      <listitem>
+        <para>для каталогов <code>/foo/*</code>:</para>
+
+        <programlisting>svn:ignore: build</programlisting>
+      </listitem>
+
+      <listitem>
+        <para>для каталога <code>/foo/.idea</code>:</para>
+
+        <programlisting>svn:ignore: libraries build</programlisting>
+      </listitem>
+    </itemizedlist>
+
+    <important>
+      <para>Для Subversion нет способа сделать исключения для директорий, в
+      результате, к примеру, правила <code>/foo</code> (файл или директория
+      <code>foo</code>) и <code>/foo/</code> (директория <code>foo</code>) в
+      Subversion будут работать одинаково, хотя в Git у них поведение
+      разное.</para>
+
+      <para>Правила вида "все кроме" не поддерживаются при проецировании на
+      <code>svn:global-ignores</code>.</para>
+    </important>
+  </section>
+
+  <section>
+    <title>Файл .gitattributes</title>
+
+    <para>Данный файл влияет на свойства <code>svn:eol-style</code> и
+    <code>svn:mime-type</code> файлов от данной директории и
+    <code>svn:auto-props</code> у самой директории.</para>
+
+    <para>Например, файл с содержимым:</para>
+
+    <programlisting>*.txt           text eol=native
+*.xml           eol=lf
+*.bin           binary</programlisting>
+
+    <para>Добавит к директории свойство <code>svn:auto-props</code> с
+    содержимым:</para>
+
+    <programlisting>*.txt = svn:eol-style=native
+*.xml = svn:eol-style=LF
+*.bin = svn:mime-type=application/octet-stream</programlisting>
+
+    <para>И файлам в данной директории:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>с суффиксом <filename>.txt</filename> свойство
+        <code>svn:eol-style = navtive</code></para>
+      </listitem>
+
+      <listitem>
+        <para>с суффиксом <filename>.xml</filename> свойство
+        <code>svn:eol-style = LF</code></para>
+      </listitem>
+
+      <listitem>
+        <para>с суффиксом <filename>.bin</filename> свойство
+        <code>svn:mime-type = application/octet-stream</code></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Файл .tgitconfig</title>
+
+    <para>Данный файл меняет только свойства директории, в которой он
+    расположен.</para>
+
+    <para>Свойства проецируются один-к-одному, например, файл с
+    содержимым:</para>
+
+    <programlisting>[bugtraq]
+    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%
+    logregex = #(\\d+)
+    warnifnoissue = false</programlisting>
+
+    <para>Будет преобразован в свойства:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><code>bugtraq:url =
+        https://github.com/bozaro/git-as-svn/issues/%BUGID%</code></para>
+      </listitem>
+
+      <listitem>
+        <para><code>bugtraq:logregex = #(\\d+)</code></para>
+      </listitem>
+
+      <listitem>
+        <para><code>bugtraq:warnifnoissue = false</code></para>
+      </listitem>
+    </itemizedlist>
+
+    <important>
+      <para>Если вы используете данные svn properties, то крайне рекомендуется
+      использовать TortoiseSVN 1.9 или более поздний.</para>
+
+      <para>В противном случае TortoiseSVN будет пытаться установить данные
+      параметры для всех вновь создаваемых каталогов.</para>
+    </important>
+  </section>
+</chapter>
