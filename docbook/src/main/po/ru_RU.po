@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-29 22:36+0300\n"
+"POT-Creation-Date: 2015-12-31 21:26+0300\n"
 "PO-Revision-Date: 2015-12-18 22:37+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -45,6 +45,219 @@ msgstr ""
 
 #: src/main/reference/index.xml:29(productnumber)
 msgid "${version}"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:10(title)
+msgid "SVN Properties"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:12(para)
+msgid ""
+"Основная беда <code>svn properties</code> в том, что их надо поддерживать в "
+"синхронном состоянии между Git и Subversion."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:15(para)
+msgid ""
+"Из-за этого произвольные <code>svn properties</code> не поддерживаются. "
+"Чтобы значения <code>svn properties</code> соответствовали Git-"
+"представлению, они генерируются на лету на основании содержимого репозитория."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:20(para)
+msgid "При этом:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:24(para)
+msgid ""
+"при коммите проверяется, что <code>svn properties</code> файла/директории "
+"точно соответствуют тому, что должно быть по данным репозитория;"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:30(para)
+msgid ""
+"средствами Subversion большую часть свойств изменить нельзя (исключения: "
+"<code>svn:executable</code>, <code>svn:special</code>);"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:36(para)
+msgid ""
+"если какой-либо файл влияет на <code>svn properties</code> других файлов, то "
+"после его изменения <code>svn properties</code> этих файлов так же "
+"поменяются."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:43(title)
+msgid "Файл .gitignores"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:45(para)
+msgid ""
+"Данный файл влияет на свойство <code>svn:ignore</code> и <code>svn:global-"
+"ignores</code> для директории и её поддиректорий."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:48(para)
+msgid "Например, файл в каталоге <filename>/foo</filename> с содержимым:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:51(programlisting)
+#, no-wrap
+msgid ""
+".idea/libraries\n"
+"*.class\n"
+"*/build"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:55(para)
+msgid "Проецируется на свойства:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:59(para)
+msgid "для каталога <code>/foo</code>:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:61(programlisting)
+#, no-wrap
+msgid "svn:global-ignores: *.class"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:65(para)
+msgid "для каталогов <code>/foo/*</code>:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:67(programlisting)
+#, no-wrap
+msgid "svn:ignore: build"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:71(para)
+msgid "для каталога <code>/foo/.idea</code>:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:73(programlisting)
+#, no-wrap
+msgid "svn:ignore: libraries build"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:78(para)
+msgid ""
+"Для Subversion нет способа сделать исключения для директорий, в результате, "
+"к примеру, правила <code>/foo</code> (файл или директория <code>foo</code>) "
+"и <code>/foo/</code> (директория <code>foo</code>) в Subversion будут "
+"работать одинаково, хотя в Git у них поведение разное."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:84(para)
+msgid ""
+"Правила вида \"все кроме\" не поддерживаются при проецировании на <code>svn:"
+"global-ignores</code>."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:90(title)
+msgid "Файл .gitattributes"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:92(para)
+msgid ""
+"Данный файл влияет на свойства <code>svn:eol-style</code> и <code>svn:mime-"
+"type</code> файлов от данной директории и <code>svn:auto-props</code> у "
+"самой директории."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:96(para)
+msgid "Например, файл с содержимым:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:98(programlisting)
+#, no-wrap
+msgid ""
+"*.txt           text eol=native\n"
+"*.xml           eol=lf\n"
+"*.bin           binary"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:102(para)
+msgid "Добавит к директории свойство <code>svn:auto-props</code> с содержимым:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:105(programlisting)
+#, no-wrap
+msgid ""
+"*.txt = svn:eol-style=native\n"
+"*.xml = svn:eol-style=LF\n"
+"*.bin = svn:mime-type=application/octet-stream"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:109(para)
+msgid "И файлам в данной директории:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:113(para)
+msgid ""
+"с суффиксом <filename>.txt</filename> свойство <code>svn:eol-style = "
+"navtive</code>"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:118(para)
+msgid ""
+"с суффиксом <filename>.xml</filename> свойство <code>svn:eol-style = LF</"
+"code>"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:123(para)
+msgid ""
+"с суффиксом <filename>.bin</filename> свойство <code>svn:mime-type = "
+"application/octet-stream</code>"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:130(title)
+msgid "Файл .tgitconfig"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:132(para)
+msgid "Данный файл меняет только свойства директории, в которой он расположен."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:135(para)
+msgid "Свойства проецируются один-к-одному, например, файл с содержимым:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:138(programlisting)
+#, no-wrap
+msgid ""
+"[bugtraq]\n"
+"    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%\n"
+"    logregex = #(\\\\d+)\n"
+"    warnifnoissue = false"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:143(para)
+msgid "Будет преобразован в свойства:"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:147(code)
+msgid "bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:152(code)
+msgid "bugtraq:logregex = #(\\\\d+)"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:156(code)
+msgid "bugtraq:warnifnoissue = false"
+msgstr ""
+
+#: src/main/reference/ch_props.xml:161(para)
+msgid ""
+"Если вы используете данные svn properties, то крайне рекомендуется "
+"использовать TortoiseSVN 1.9 или более поздний."
+msgstr ""
+
+#: src/main/reference/ch_props.xml:164(para)
+msgid ""
+"В противном случае TortoiseSVN будет пытаться установить данные параметры "
+"для всех вновь создаваемых каталогов."
 msgstr ""
 
 #: src/main/reference/ch_install.xml:9(title)
