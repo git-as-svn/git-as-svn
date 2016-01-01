@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
 "POT-Creation-Date: 2015-12-31 21:26+0300\n"
-"PO-Revision-Date: 2015-12-31 21:30+0300\n"
+"PO-Revision-Date: 2016-01-01 19:06+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -56,6 +56,8 @@ msgid ""
 "Основная беда <code>svn properties</code> в том, что их надо поддерживать в "
 "синхронном состоянии между Git и Subversion."
 msgstr ""
+"The main <code>svn properties</code> trouble that they should be maintained "
+"in the synchronous state between Git and Subversion."
 
 #: src/main/reference/ch_props.xml:15(para)
 msgid ""
@@ -63,6 +65,9 @@ msgid ""
 "Чтобы значения <code>svn properties</code> соответствовали Git-"
 "представлению, они генерируются на лету на основании содержимого репозитория."
 msgstr ""
+"Because of this arbitrary <code>svn properties</code> is not supported. To "
+"value <code>svn properties</ code> correspond Git-view, they are generated "
+"on the fly based on the repository content."
 
 #: src/main/reference/ch_props.xml:20(para)
 msgid "При этом:"
@@ -73,12 +78,16 @@ msgid ""
 "при коммите проверяется, что <code>svn properties</code> файла/директории "
 "точно соответствуют тому, что должно быть по данным репозитория;"
 msgstr ""
+"the commit verifies that <code>svn properties</code> file or directory "
+"exactly match what should be according to the data repository;"
 
 #: src/main/reference/ch_props.xml:30(para)
 msgid ""
 "средствами Subversion большую часть свойств изменить нельзя (исключения: "
 "<code>svn:executable</code>, <code>svn:special</code>);"
 msgstr ""
+"Subversion does not tool allows you to change most of the properties "
+"(exception: <code>svn:executable</code>, <code>svn:special</code>);"
 
 #: src/main/reference/ch_props.xml:36(para)
 msgid ""
@@ -86,6 +95,8 @@ msgid ""
 "после его изменения <code>svn properties</code> этих файлов так же "
 "поменяются."
 msgstr ""
+"if a file affects the <code>svn properties</code> other files after changing "
+"it <code>svn properties</code> of the files in the same change."
 
 #: src/main/reference/ch_props.xml:43(title)
 msgid "Файл .gitignores"
@@ -114,7 +125,7 @@ msgstr ""
 
 #: src/main/reference/ch_props.xml:55(para)
 msgid "Проецируется на свойства:"
-msgstr ""
+msgstr "Mapped to properties:"
 
 #: src/main/reference/ch_props.xml:59(para)
 msgid "для каталога <code>/foo</code>:"
@@ -266,12 +277,16 @@ msgid ""
 "Если вы используете данные svn properties, то крайне рекомендуется "
 "использовать TortoiseSVN 1.9 или более поздний."
 msgstr ""
+"If you use bugtraq svn properties, it is highly recommended that you use "
+"TortoiseSVN 1.9 or later."
 
 #: src/main/reference/ch_props.xml:164(para)
 msgid ""
 "В противном случае TortoiseSVN будет пытаться установить данные параметры "
 "для всех вновь создаваемых каталогов."
 msgstr ""
+"Otherwise TortoiseSVN will attempt to set these parameters for all newly "
+"created directories instead of use inherited properties."
 
 #: src/main/reference/ch_install.xml:9(title)
 msgid "Установка"
