@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
 "POT-Creation-Date: 2015-12-31 21:26+0300\n"
-"PO-Revision-Date: 2016-01-01 19:06+0300\n"
+"PO-Revision-Date: 2016-01-01 19:55+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -107,10 +107,14 @@ msgid ""
 "Данный файл влияет на свойство <code>svn:ignore</code> и <code>svn:global-"
 "ignores</code> для директории и её поддиректорий."
 msgstr ""
+"This file affects the property <code>svn:ignore</code> and <code>svn:global-"
+"ignores</code> for the directory and its subdirectories."
 
 #: src/main/reference/ch_props.xml:48(para)
 msgid "Например, файл в каталоге <filename>/foo</filename> с содержимым:"
 msgstr ""
+"For example, a file in the directory <filename>/foo</filename> with the "
+"contents:"
 
 #: src/main/reference/ch_props.xml:51(programlisting)
 #, no-wrap
@@ -129,7 +133,7 @@ msgstr "Mapped to properties:"
 
 #: src/main/reference/ch_props.xml:59(para)
 msgid "для каталога <code>/foo</code>:"
-msgstr ""
+msgstr "for directory <code>/foo</code>:"
 
 #: src/main/reference/ch_props.xml:61(programlisting)
 #, no-wrap
@@ -138,7 +142,7 @@ msgstr "svn:global-ignores: *.class"
 
 #: src/main/reference/ch_props.xml:65(para)
 msgid "для каталогов <code>/foo/*</code>:"
-msgstr ""
+msgstr "for directory <code>/foo/*</code>:"
 
 #: src/main/reference/ch_props.xml:67(programlisting)
 #, no-wrap
@@ -147,7 +151,7 @@ msgstr "svn:ignore: build"
 
 #: src/main/reference/ch_props.xml:71(para)
 msgid "для каталога <code>/foo/.idea</code>:"
-msgstr ""
+msgstr "for directory <code>/foo/.idea</code>:"
 
 #: src/main/reference/ch_props.xml:73(programlisting)
 #, no-wrap
@@ -161,12 +165,18 @@ msgid ""
 "и <code>/foo/</code> (директория <code>foo</code>) в Subversion будут "
 "работать одинаково, хотя в Git у них поведение разное."
 msgstr ""
+"For Subversion has no way to make an exception for directories, as a result, "
+"for example, the rules of <code>/foo</code> (file or directory <code>foo</ "
+"code>) and <code>/foo/</code> (directory <code>foo</code>) in Subversion "
+"will work the same way, though to Git they have different behavior."
 
 #: src/main/reference/ch_props.xml:84(para)
 msgid ""
 "Правила вида \"все кроме\" не поддерживаются при проецировании на <code>svn:"
 "global-ignores</code>."
 msgstr ""
+"Terms like \"all but\" not supported on mapping to the <code>svn:global-"
+"ignores</code> property."
 
 #: src/main/reference/ch_props.xml:90(title)
 msgid "Файл .gitattributes"
@@ -178,10 +188,13 @@ msgid ""
 "type</code> файлов от данной директории и <code>svn:auto-props</code> у "
 "самой директории."
 msgstr ""
+"This file affects the properties of the <code>svn:eol-style</code> and "
+"<code>svn:mime-type</code> files from this directory and <code>svn:auto-"
+"props</code> from the directory itself."
 
 #: src/main/reference/ch_props.xml:96(para)
 msgid "Например, файл с содержимым:"
-msgstr ""
+msgstr "For example, a file with contents:"
 
 #: src/main/reference/ch_props.xml:98(programlisting)
 #, no-wrap
@@ -197,6 +210,7 @@ msgstr ""
 #: src/main/reference/ch_props.xml:102(para)
 msgid "Добавит к директории свойство <code>svn:auto-props</code> с содержимым:"
 msgstr ""
+"Add property to the directory <code>svn:auto-props</code> with the contents:"
 
 #: src/main/reference/ch_props.xml:105(programlisting)
 #, no-wrap
@@ -218,18 +232,24 @@ msgid ""
 "с суффиксом <filename>.txt</filename> свойство <code>svn:eol-style = "
 "navtive</code>"
 msgstr ""
+"for suffix <filename>.txt</filename> add property <code>svn:eol-style = "
+"navtive</code>"
 
 #: src/main/reference/ch_props.xml:118(para)
 msgid ""
 "с суффиксом <filename>.xml</filename> свойство <code>svn:eol-style = LF</"
 "code>"
 msgstr ""
+"for suffix <filename>.xml</filename> add property <code>svn:eol-style = LF</"
+"code>"
 
 #: src/main/reference/ch_props.xml:123(para)
 msgid ""
 "с суффиксом <filename>.bin</filename> свойство <code>svn:mime-type = "
 "application/octet-stream</code>"
 msgstr ""
+"for suffix <filename>.bin</filename> add property <code>svn:mime-type = "
+"application/octet-stream</code>"
 
 #: src/main/reference/ch_props.xml:130(title)
 msgid "Файл .tgitconfig"
@@ -238,10 +258,13 @@ msgstr "File .tgitconfig"
 #: src/main/reference/ch_props.xml:132(para)
 msgid "Данный файл меняет только свойства директории, в которой он расположен."
 msgstr ""
+"This file only changes the properties of the directory in which it is "
+"located."
 
 #: src/main/reference/ch_props.xml:135(para)
 msgid "Свойства проецируются один-к-одному, например, файл с содержимым:"
 msgstr ""
+"Properties are mapped one-to-one, for example, a file with the contents:"
 
 #: src/main/reference/ch_props.xml:138(programlisting)
 #, no-wrap
