@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+<chapter version="5.0" xml:id="ch_props" xml:lang="ru_RU"
+         xmlns="http://docbook.org/ns/docbook"
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:svg="http://www.w3.org/2000/svg"
          xmlns:m="http://www.w3.org/1998/Math/MathML"
          xmlns:html="http://www.w3.org/1999/xhtml"
-         xmlns:db="http://docbook.org/ns/docbook"
-          xml:id="ch_props">
+         xmlns:db="http://docbook.org/ns/docbook">
   <title>SVN Properties</title>
 
   <para>Основная беда <code>svn properties</code> в том, что их надо
@@ -48,7 +48,7 @@
     <para>Например, файл в каталоге <filename>/foo</filename> с
     содержимым:</para>
 
-    <programlisting>.idea/libraries
+    <programlisting xml:lang="C">.idea/libraries
 *.class
 */build</programlisting>
 
@@ -58,19 +58,19 @@
       <listitem>
         <para>для каталога <code>/foo</code>:</para>
 
-        <programlisting>svn:global-ignores: *.class</programlisting>
+        <programlisting xml:lang="C">svn:global-ignores: *.class</programlisting>
       </listitem>
 
       <listitem>
         <para>для каталогов <code>/foo/*</code>:</para>
 
-        <programlisting>svn:ignore: build</programlisting>
+        <programlisting xml:lang="C">svn:ignore: build</programlisting>
       </listitem>
 
       <listitem>
         <para>для каталога <code>/foo/.idea</code>:</para>
 
-        <programlisting>svn:ignore: libraries build</programlisting>
+        <programlisting xml:lang="C">svn:ignore: libraries build</programlisting>
       </listitem>
     </itemizedlist>
 
@@ -95,14 +95,14 @@
 
     <para>Например, файл с содержимым:</para>
 
-    <programlisting>*.txt           text eol=native
+    <programlisting xml:lang="C">*.txt           text eol=native
 *.xml           eol=lf
 *.bin           binary</programlisting>
 
     <para>Добавит к директории свойство <code>svn:auto-props</code> с
     содержимым:</para>
 
-    <programlisting>*.txt = svn:eol-style=native
+    <programlisting xml:lang="C">*.txt = svn:eol-style=native
 *.xml = svn:eol-style=LF
 *.bin = svn:mime-type=application/octet-stream</programlisting>
 
@@ -135,7 +135,7 @@
     <para>Свойства проецируются один-к-одному, например, файл с
     содержимым:</para>
 
-    <programlisting>[bugtraq]
+    <programlisting xml:lang="C">[bugtraq]
     url = https://github.com/bozaro/git-as-svn/issues/%BUGID%
     logregex = #(\\d+)
     warnifnoissue = false</programlisting>
@@ -144,16 +144,16 @@
 
     <itemizedlist>
       <listitem>
-        <para><code>bugtraq:url =
+        <para><code xml:lang="C">bugtraq:url =
         https://github.com/bozaro/git-as-svn/issues/%BUGID%</code></para>
       </listitem>
 
       <listitem>
-        <para><code>bugtraq:logregex = #(\\d+)</code></para>
+        <para><code xml:lang="C">bugtraq:logregex = #(\\d+)</code></para>
       </listitem>
 
       <listitem>
-        <para><code>bugtraq:warnifnoissue = false</code></para>
+        <para><code xml:lang="C">bugtraq:warnifnoissue = false</code></para>
       </listitem>
     </itemizedlist>
 
