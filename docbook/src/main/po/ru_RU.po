@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-04 21:58+0300\n"
-"PO-Revision-Date: 2015-12-18 22:37+0300\n"
+"POT-Creation-Date: 2016-01-04 22:07+0300\n"
+"PO-Revision-Date: 2016-01-04 22:08+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
 "Language: ru_RU\n"
@@ -10,42 +10,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.4\n"
-
-#: ru_RU/build/main/index.l10n.xml:3(title)
-msgid "Git as Subversion"
-msgstr ""
-
-#: ru_RU/build/main/index.l10n.xml:5(subtitle)
-msgid "Руководство пользователя"
-msgstr ""
-
-#: ru_RU/build/main/index.l10n.xml:8(firstname)
-msgid "Artem"
-msgstr "Артём"
-
-#: ru_RU/build/main/index.l10n.xml:9(surname)
-msgid "Navrotskiy"
-msgstr "Навроцкий"
-
-#: ru_RU/build/main/index.l10n.xml:12(pubdate)
-msgid "2015"
-msgstr ""
-
-#: ru_RU/build/main/index.l10n.xml:15(year)
-msgid "2014-2015"
-msgstr ""
-
-#: ru_RU/build/main/index.l10n.xml:17(holder)
-msgid "Artem Navrotskiy"
-msgstr "Артём Навроцкий"
-
-#: ru_RU/build/main/index.l10n.xml:20(productname)
-msgid "git-as-svn"
-msgstr ""
-
-#: ru_RU/build/main/index.l10n.xml:22(productnumber)
-msgid "${version}"
-msgstr ""
 
 #: ru_RU/build/main/index.l10n.xml:373(phrase)
 msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
@@ -78,9 +42,3 @@ msgstr ""
 #: ru_RU/build/main/index.l10n.xml:0(None)
 msgid "translator-credits"
 msgstr ""
-
-#~ msgid "Manual"
-#~ msgstr "Руководство пользователя"
-
-#~ msgid "Git-as-svn manual"
-#~ msgstr "Git-as-svn. Руководство пользователя"
