@@ -4,6 +4,25 @@ subprojects {
   def docbookDir = "${project.buildDir}/docbook"
   def inputDir = "${project.parent.projectDir}/src/main/reference"
 
+  task docbookSingle << {
+    ant.xslt (
+        in: "${project.parent.projectDir}/src/main/reference/index.xml",
+        out: "${buildDir}/main/index.single.xml",
+        style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+    )
+  }
+
+  task docbookSinglePo << {
+    file ("${project.buildDir}/xsl").mkdirs()
+    ant.xslt (
+        in: "${project.parent.projectDir}/src/main/reference/index.xml",
+        out: "${buildDir}/main/index.po.xml",
+        style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+    ) {
+      param(name: "lang", expression: project.name)
+    }
+  }
+
   task translate(type: Copy) {
     from (inputDir) {
       exclude "**/*.xml"
