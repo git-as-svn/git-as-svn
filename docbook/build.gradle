@@ -4,30 +4,32 @@ subprojects {
   def docbookDir = "${project.buildDir}/docbook"
   def inputDir = "${project.parent.projectDir}/src/main/reference"
 
-  task docbookSingle << {
-    ant.xslt (
-        in: "${project.parent.projectDir}/src/main/reference/index.xml",
-        out: "${buildDir}/main/index.single.xml",
-        style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
-    )
-  }
-
-  task docbookSinglePo << {
-    file ("${project.buildDir}/xsl").mkdirs()
-    ant.xslt (
-        in: "${project.parent.projectDir}/src/main/reference/index.xml",
-        out: "${buildDir}/main/index.po.xml",
-        style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
-    ) {
-      param(name: "lang", expression: project.name)
+  task docbookSingle {
+    inputs.dir   "${project.parent.projectDir}/src/main/reference"
+    outputs.file "${project.buildDir}/main/index.xml"
+    doLast {
+      file ("${project.buildDir}/main").mkdirs()
+      ant.xslt (
+          in: "${project.parent.projectDir}/src/main/reference/index.xml",
+          out: "${buildDir}/main/index.xml",
+          style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+      )
     }
   }
 
-  task translate(type: Copy) {
-    from (inputDir) {
-      exclude "**/*.xml"
+  task docbookSinglePo {
+    inputs.dir   "${project.parent.projectDir}/src/main/reference"
+    outputs.file "${project.buildDir}/main/index.l10n.xml"
+    doLast {
+      file ("${project.buildDir}/main").mkdirs()
+      ant.xslt (
+          in: "${project.parent.projectDir}/src/main/reference/index.xml",
+          out: "${project.buildDir}/main/index.l10n.xml",
+          style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+      ) {
+        param(name: "lang", expression: project.name)
+      }
     }
-    into docbookDir
   }
 
   task fopConfig(type: Copy) {
@@ -40,25 +42,28 @@ subprojects {
     into ("${project.buildDir}/fonts")
   }
 
-  fileTree(inputDir) {
-    include "**/*.xml"
-  }.visit {FileVisitDetails details ->
-    if (details.directory) return;
-    translate.dependsOn.add(tasks.create (name: "translate." + details.relativePath, type: Exec) {
-      def output = file("$docbookDir/${details.relativePath}")
-      output.parentFile.mkdirs()
+  task translate(type: Exec, dependsOn: docbookSingle) {
+    def output = file("$docbookDir/index.xml")
+    def input = "${project.buildDir}/main/index.xml"
+    output.parentFile.mkdirs()
 
-      inputs.file file(details.file)
-      inputs.file file(getPo(project))
-      outputs.file output
-
-      executable "xml2po"
-      args "-p", getPo(project)
-      args details.file.path
-      doFirst {
-        standardOutput = new FileOutputStream(output)
+    copy {
+      from (inputDir) {
+        exclude "**/*.xml"
       }
-    })
+      into docbookDir
+    }
+
+    inputs.file file(input)
+    inputs.file file(getPo(project))
+    outputs.file output
+
+    executable "xml2po"
+    args "-p", getPo(project)
+    args input
+    doFirst {
+      standardOutput = new FileOutputStream(output)
+    }
   }
 
   reference {

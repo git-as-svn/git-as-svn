@@ -23,7 +23,7 @@
 	
 	<!-- Copy text nodes only for foreign language -->
 	<xsl:template match="text()">
-		<xsl:variable name="l" select="ancestor-or-self::*[@xml:lang]/@xml:lang" />
+		<xsl:variable name="l" select="ancestor-or-self::*[@xml:lang][1]/@xml:lang" />
 		<xsl:choose>
 			<xsl:when test="normalize-space() = ''">
 				<xsl:copy />

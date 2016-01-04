@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2015-12-31 21:26+0300\n"
+"POT-Creation-Date: 2016-01-04 21:58+0300\n"
 "PO-Revision-Date: 2016-01-01 19:55+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
@@ -11,611 +11,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.4\n"
 
-#: src/main/reference/index.xml:10(title)
+#: en_US/build/main/index.l10n.xml:3(title)
 msgid "Git as Subversion"
 msgstr "Git as Subversion"
 
-#: src/main/reference/index.xml:12(subtitle)
+#: en_US/build/main/index.l10n.xml:5(subtitle)
 msgid "Руководство пользователя"
 msgstr "User manual"
 
-#: src/main/reference/index.xml:15(firstname)
+#: en_US/build/main/index.l10n.xml:8(firstname)
 msgid "Artem"
 msgstr "Artem"
 
-#: src/main/reference/index.xml:16(surname)
+#: en_US/build/main/index.l10n.xml:9(surname)
 msgid "Navrotskiy"
 msgstr "Navrotskiy"
 
-#: src/main/reference/index.xml:19(pubdate)
+#: en_US/build/main/index.l10n.xml:12(pubdate)
 msgid "2015"
 msgstr "2015"
 
-#: src/main/reference/index.xml:22(year)
+#: en_US/build/main/index.l10n.xml:15(year)
 msgid "2014-2015"
 msgstr "2014-2015"
 
-#: src/main/reference/index.xml:24(holder)
+#: en_US/build/main/index.l10n.xml:17(holder)
 msgid "Artem Navrotskiy"
 msgstr "Artem Navrotskiy"
 
-#: src/main/reference/index.xml:27(productname)
+#: en_US/build/main/index.l10n.xml:20(productname)
 msgid "git-as-svn"
 msgstr "git-as-svn"
 
-#: src/main/reference/index.xml:29(productnumber)
+#: en_US/build/main/index.l10n.xml:22(productnumber)
 msgid "${version}"
 msgstr "${version}"
 
-#: src/main/reference/ch_props.xml:10(title)
-msgid "SVN Properties"
-msgstr "SVN Properties"
-
-#: src/main/reference/ch_props.xml:12(para)
-msgid ""
-"Основная беда <code>svn properties</code> в том, что их надо поддерживать в "
-"синхронном состоянии между Git и Subversion."
-msgstr ""
-"The main <code>svn properties</code> trouble that they should be maintained "
-"in the synchronous state between Git and Subversion."
-
-#: src/main/reference/ch_props.xml:15(para)
-msgid ""
-"Из-за этого произвольные <code>svn properties</code> не поддерживаются. "
-"Чтобы значения <code>svn properties</code> соответствовали Git-"
-"представлению, они генерируются на лету на основании содержимого репозитория."
-msgstr ""
-"Because of this arbitrary <code>svn properties</code> is not supported. To "
-"value <code>svn properties</ code> correspond Git-view, they are generated "
-"on the fly based on the repository content."
-
-#: src/main/reference/ch_props.xml:20(para)
-msgid "При этом:"
-msgstr "Wherein:"
-
-#: src/main/reference/ch_props.xml:24(para)
-msgid ""
-"при коммите проверяется, что <code>svn properties</code> файла/директории "
-"точно соответствуют тому, что должно быть по данным репозитория;"
-msgstr ""
-"the commit verifies that <code>svn properties</code> file or directory "
-"exactly match what should be according to the data repository;"
-
-#: src/main/reference/ch_props.xml:30(para)
-msgid ""
-"средствами Subversion большую часть свойств изменить нельзя (исключения: "
-"<code>svn:executable</code>, <code>svn:special</code>);"
-msgstr ""
-"Subversion does not tool allows you to change most of the properties "
-"(exception: <code>svn:executable</code>, <code>svn:special</code>);"
-
-#: src/main/reference/ch_props.xml:36(para)
-msgid ""
-"если какой-либо файл влияет на <code>svn properties</code> других файлов, то "
-"после его изменения <code>svn properties</code> этих файлов так же "
-"поменяются."
-msgstr ""
-"if a file affects the <code>svn properties</code> other files after changing "
-"it <code>svn properties</code> of the files in the same change."
-
-#: src/main/reference/ch_props.xml:43(title)
-msgid "Файл .gitignores"
-msgstr "File .gitignores"
-
-#: src/main/reference/ch_props.xml:45(para)
-msgid ""
-"Данный файл влияет на свойство <code>svn:ignore</code> и <code>svn:global-"
-"ignores</code> для директории и её поддиректорий."
-msgstr ""
-"This file affects the property <code>svn:ignore</code> and <code>svn:global-"
-"ignores</code> for the directory and its subdirectories."
-
-#: src/main/reference/ch_props.xml:48(para)
-msgid "Например, файл в каталоге <filename>/foo</filename> с содержимым:"
-msgstr ""
-"For example, a file in the directory <filename>/foo</filename> with the "
-"contents:"
-
-#: src/main/reference/ch_props.xml:51(programlisting)
-#, no-wrap
-msgid ""
-".idea/libraries\n"
-"*.class\n"
-"*/build"
-msgstr ""
-".idea/libraries\n"
-"*.class\n"
-"*/build"
-
-#: src/main/reference/ch_props.xml:55(para)
-msgid "Проецируется на свойства:"
-msgstr "Mapped to properties:"
-
-#: src/main/reference/ch_props.xml:59(para)
-msgid "для каталога <code>/foo</code>:"
-msgstr "for directory <code>/foo</code>:"
-
-#: src/main/reference/ch_props.xml:61(programlisting)
-#, no-wrap
-msgid "svn:global-ignores: *.class"
-msgstr "svn:global-ignores: *.class"
-
-#: src/main/reference/ch_props.xml:65(para)
-msgid "для каталогов <code>/foo/*</code>:"
-msgstr "for directory <code>/foo/*</code>:"
-
-#: src/main/reference/ch_props.xml:67(programlisting)
-#, no-wrap
-msgid "svn:ignore: build"
-msgstr "svn:ignore: build"
-
-#: src/main/reference/ch_props.xml:71(para)
-msgid "для каталога <code>/foo/.idea</code>:"
-msgstr "for directory <code>/foo/.idea</code>:"
-
-#: src/main/reference/ch_props.xml:73(programlisting)
-#, no-wrap
-msgid "svn:ignore: libraries build"
-msgstr "svn:ignore: libraries build"
-
-#: src/main/reference/ch_props.xml:78(para)
-msgid ""
-"Для Subversion нет способа сделать исключения для директорий, в результате, "
-"к примеру, правила <code>/foo</code> (файл или директория <code>foo</code>) "
-"и <code>/foo/</code> (директория <code>foo</code>) в Subversion будут "
-"работать одинаково, хотя в Git у них поведение разное."
-msgstr ""
-"For Subversion has no way to make an exception for directories, as a result, "
-"for example, the rules of <code>/foo</code> (file or directory <code>foo</ "
-"code>) and <code>/foo/</code> (directory <code>foo</code>) in Subversion "
-"will work the same way, though to Git they have different behavior."
-
-#: src/main/reference/ch_props.xml:84(para)
-msgid ""
-"Правила вида \"все кроме\" не поддерживаются при проецировании на <code>svn:"
-"global-ignores</code>."
-msgstr ""
-"Terms like \"all but\" not supported on mapping to the <code>svn:global-"
-"ignores</code> property."
-
-#: src/main/reference/ch_props.xml:90(title)
-msgid "Файл .gitattributes"
-msgstr "File .gitattributes"
-
-#: src/main/reference/ch_props.xml:92(para)
-msgid ""
-"Данный файл влияет на свойства <code>svn:eol-style</code> и <code>svn:mime-"
-"type</code> файлов от данной директории и <code>svn:auto-props</code> у "
-"самой директории."
-msgstr ""
-"This file affects the properties of the <code>svn:eol-style</code> and "
-"<code>svn:mime-type</code> files from this directory and <code>svn:auto-"
-"props</code> from the directory itself."
-
-#: src/main/reference/ch_props.xml:96(para)
-msgid "Например, файл с содержимым:"
-msgstr "For example, a file with contents:"
-
-#: src/main/reference/ch_props.xml:98(programlisting)
-#, no-wrap
-msgid ""
-"*.txt           text eol=native\n"
-"*.xml           eol=lf\n"
-"*.bin           binary"
-msgstr ""
-"*.txt           text eol=native\n"
-"*.xml           eol=lf\n"
-"*.bin           binary"
-
-#: src/main/reference/ch_props.xml:102(para)
-msgid "Добавит к директории свойство <code>svn:auto-props</code> с содержимым:"
-msgstr ""
-"Add property to the directory <code>svn:auto-props</code> with the contents:"
-
-#: src/main/reference/ch_props.xml:105(programlisting)
-#, no-wrap
-msgid ""
-"*.txt = svn:eol-style=native\n"
-"*.xml = svn:eol-style=LF\n"
-"*.bin = svn:mime-type=application/octet-stream"
-msgstr ""
-"*.txt = svn:eol-style=native\n"
-"*.xml = svn:eol-style=LF\n"
-"*.bin = svn:mime-type=application/octet-stream"
-
-#: src/main/reference/ch_props.xml:109(para)
-msgid "И файлам в данной директории:"
-msgstr "And files in this directory:"
-
-#: src/main/reference/ch_props.xml:113(para)
-msgid ""
-"с суффиксом <filename>.txt</filename> свойство <code>svn:eol-style = "
-"navtive</code>"
-msgstr ""
-"for suffix <filename>.txt</filename> add property <code>svn:eol-style = "
-"navtive</code>"
-
-#: src/main/reference/ch_props.xml:118(para)
-msgid ""
-"с суффиксом <filename>.xml</filename> свойство <code>svn:eol-style = LF</"
-"code>"
-msgstr ""
-"for suffix <filename>.xml</filename> add property <code>svn:eol-style = LF</"
-"code>"
-
-#: src/main/reference/ch_props.xml:123(para)
-msgid ""
-"с суффиксом <filename>.bin</filename> свойство <code>svn:mime-type = "
-"application/octet-stream</code>"
-msgstr ""
-"for suffix <filename>.bin</filename> add property <code>svn:mime-type = "
-"application/octet-stream</code>"
-
-#: src/main/reference/ch_props.xml:130(title)
-msgid "Файл .tgitconfig"
-msgstr "File .tgitconfig"
-
-#: src/main/reference/ch_props.xml:132(para)
-msgid "Данный файл меняет только свойства директории, в которой он расположен."
-msgstr ""
-"This file only changes the properties of the directory in which it is "
-"located."
-
-#: src/main/reference/ch_props.xml:135(para)
-msgid "Свойства проецируются один-к-одному, например, файл с содержимым:"
-msgstr ""
-"Properties are mapped one-to-one, for example, a file with the contents:"
-
-#: src/main/reference/ch_props.xml:138(programlisting)
-#, no-wrap
-msgid ""
-"[bugtraq]\n"
-"    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%\n"
-"    logregex = #(\\\\d+)\n"
-"    warnifnoissue = false"
-msgstr ""
-"[bugtraq]\n"
-"    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%\n"
-"    logregex = #(\\\\d+)\n"
-"    warnifnoissue = false"
-
-#: src/main/reference/ch_props.xml:143(para)
-msgid "Будет преобразован в свойства:"
-msgstr "It will be converted to properties:"
-
-#: src/main/reference/ch_props.xml:147(code)
-msgid "bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%"
-msgstr "bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%"
-
-#: src/main/reference/ch_props.xml:152(code)
-msgid "bugtraq:logregex = #(\\\\d+)"
-msgstr "bugtraq:logregex = #(\\\\d+)"
-
-#: src/main/reference/ch_props.xml:156(code)
-msgid "bugtraq:warnifnoissue = false"
-msgstr "bugtraq:warnifnoissue = false"
-
-#: src/main/reference/ch_props.xml:161(para)
-msgid ""
-"Если вы используете данные svn properties, то крайне рекомендуется "
-"использовать TortoiseSVN 1.9 или более поздний."
-msgstr ""
-"If you use bugtraq svn properties, it is highly recommended that you use "
-"TortoiseSVN 1.9 or later."
-
-#: src/main/reference/ch_props.xml:164(para)
-msgid ""
-"В противном случае TortoiseSVN будет пытаться установить данные параметры "
-"для всех вновь создаваемых каталогов."
-msgstr ""
-"Otherwise TortoiseSVN will attempt to set these parameters for all newly "
-"created directories instead of use inherited properties."
-
-#: src/main/reference/ch_install.xml:9(title)
-msgid "Установка"
-msgstr "Installation"
-
-#: src/main/reference/ch_install.xml:12(title)
-msgid "Быстрый старт"
-msgstr "Quick start"
-
-#: src/main/reference/ch_install.xml:14(para)
-msgid "Для того, чтобы посмотреть, как работает Git as Subversion нужно:"
-msgstr "To try Git as Subversion you need:"
-
-#: src/main/reference/ch_install.xml:19(para)
-msgid "Установить Java 8 или более позднюю;"
-msgstr "Install Java 8 or later;"
-
-#: src/main/reference/ch_install.xml:23(para)
-msgid ""
-"Скачать архив с сайта <link xlink:href=\"https://github.com/bozaro/git-as-"
-"svn/releases/latest\">https://github.com/bozaro/git-as-svn/releases/latest</"
-"link>;"
-msgstr ""
-"Download archive from site <link xlink:href=\"https://github.com/bozaro/git-"
-"as-svn/releases/latest\">https://github.com/bozaro/git-as-svn/releases/"
-"latest</link>;"
-
-#: src/main/reference/ch_install.xml:28(para)
-msgid ""
-"После распаковки архива перейти в распакованный каталог и запустить команду:"
-msgstr ""
-"After unpacking the archive change working path to the uncompressed "
-"directory and run the command:"
-
-#: src/main/reference/ch_install.xml:31(programlisting)
-#, no-wrap
-msgid "bin/git-as-svn --config doc/config-local.example --show-config"
-msgstr "bin/git-as-svn --config doc/config-local.example --show-config"
-
-#: src/main/reference/ch_install.xml:35(para)
-msgid ""
-"В результате будет запущен Git as Subversion сервер в следующей конфигурации:"
-msgstr "This will start Git as Subversion server with following configuration:"
-
-#: src/main/reference/ch_install.xml:40(para)
-msgid "Сервер доступен через svn-протокол по порту 3690."
-msgstr "The server is accessible via svn-protocol on port 3690."
-
-#: src/main/reference/ch_install.xml:42(para)
-msgid "Для его проверки можно выполнить команду:"
-msgstr "You can check server with command like:"
-
-#: src/main/reference/ch_install.xml:44(programlisting)
-#, no-wrap
-msgid "svn ls svn://localhost/example"
-msgstr "svn ls svn://localhost/example"
-
-#: src/main/reference/ch_install.xml:48(para)
-msgid "Для доступа к серверу необходимо использовать пользователя:"
-msgstr "To access the server, you can use the user:"
-
-#: src/main/reference/ch_install.xml:51(para)
-msgid "Имя пользователя: test"
-msgstr "Login: test"
-
-#: src/main/reference/ch_install.xml:53(para)
-msgid "Пароль: test"
-msgstr "Password: test"
-
-#: src/main/reference/ch_install.xml:57(para)
-msgid "Репозиторий и кэш будут созданы в каталоге <filename>build</filename>:"
-msgstr ""
-"Cache and repository will be created in <filename>build</filename> directory:"
-
-#: src/main/reference/ch_install.xml:62(para)
-msgid ""
-"<filename>example.git</filename> — каталог с репозиторием, доступным через "
-"svn-протокол;"
-msgstr ""
-"<filename>example.git</filename> — repository directory, accessible via svn-"
-"protocol;"
-
-#: src/main/reference/ch_install.xml:67(para)
-msgid ""
-"<filename>git-as-svn.mapdb*</filename> — файлы с кэшем дорого вычисляемых "
-"данных."
-msgstr ""
-"<filename>git-as-svn.mapdb*</filename> — cache files for expensive computed "
-"data."
-
-#: src/main/reference/ch_install.xml:76(title)
-msgid "Сборка из исходного кода"
-msgstr "Build from source code"
-
-#: src/main/reference/ch_install.xml:78(para)
-msgid "Данный проект изначально рассчитан на сборку в Ubuntu."
-msgstr "The project was originally designed for assembly in Ubuntu."
-
-#: src/main/reference/ch_install.xml:80(para)
-msgid "Для сборки из исходного кода необходимо локально установить:"
-msgstr "To build from the source code you need to install locally:"
-
-#: src/main/reference/ch_install.xml:84(para)
-msgid "Java 8 (пакет openjdk-8-jdk);"
-msgstr "Java 8 (openjdk-8-jdk package);"
-
-#: src/main/reference/ch_install.xml:88(para)
-msgid "xml2po (пакет gnome-doc-utils) — необходимо для сборки документации;"
-msgstr "xml2po (gnome-doc-utils package) — required for build reference files;"
-
-#: src/main/reference/ch_install.xml:93(para)
-msgid "protoc (пакет protobuf-compiler) — необходимо для сборки API."
-msgstr "protoc (protobuf-compiler package) — required for build API."
-
-#: src/main/reference/ch_install.xml:98(para)
-msgid "Полностью собрать дистрибутив можно командой:"
-msgstr "You can build distribution by command:"
-
-#: src/main/reference/ch_install.xml:100(programlisting)
-#, no-wrap
-msgid "./gradlew assembleDist"
-msgstr "./gradlew assembleDist"
-
-#: src/main/reference/ch_install.xml:102(para)
-msgid ""
-"Комплект установочных файлов будет располагаться в директории: "
-"<filename>build/distributions</filename>"
-msgstr ""
-"Distribution files build in folder: <filename>build/distributions</filename>"
-
-#: src/main/reference/ch_gitlab.xml:9(title)
-msgid "Интеграция с GitLab"
-msgstr "GitLab integration"
-
-#: src/main/reference/ch_gitlab.xml:12(title)
-msgid "Список исправлений для GitLab"
-msgstr "Recommended GitLab patches"
-
-#: src/main/reference/ch_gitlab.xml:14(para)
-msgid ""
-"Для интеграции с GitLab нужно установить следующие исправления на GitLab:"
-msgstr "For integration with GitLab install the following patches on GitLab:"
-
-#: src/main/reference/ch_gitlab.xml:20(link)
-msgid "#230 (gitlab-shell)"
-msgstr "#230 (gitlab-shell)"
-
-#: src/main/reference/ch_gitlab.xml:21(phrase)
-msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
-msgstr ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
-
-#: src/main/reference/ch_gitlab.xml:27(link)
-msgid "#237 (gitlab-shell)"
-msgstr "#237 (gitlab-shell)"
-
-#: src/main/reference/ch_gitlab.xml:28(phrase)
-msgid ""
-": Execute git-lfs-authenticate command with original arguments (merged to "
-"8.2.0);"
-msgstr ""
-": Execute git-lfs-authenticate command with original arguments (merged to "
-"8.2.0);"
-
-#: src/main/reference/ch_gitlab.xml:34(link)
-msgid "#9591 (gitlabhq)"
-msgstr "#9591 (gitlabhq)"
-
-#: src/main/reference/ch_gitlab.xml:35(phrase)
-msgid ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
-msgstr ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
-
-#: src/main/reference/ch_gitlab.xml:41(link)
-msgid "#9728 (gitlabhq)"
-msgstr "#9728 (gitlabhq)"
-
-#: src/main/reference/ch_gitlab.xml:42(phrase)
-msgid ""
-": Show \"Empty Repository Page\" for repository without branches (merged to "
-"8.2.0)."
-msgstr ""
-": Show \"Empty Repository Page\" for repository without branches (merged to "
-"8.2.0)."
-
-#: src/main/reference/ch_gitlab.xml:49(title)
-msgid "Точки стыка интеграции с GitLab"
-msgstr "GitLab intergration points"
-
-#: src/main/reference/ch_gitlab.xml:51(para)
-msgid "В случае с GitLab есть несколько точек стыка:"
-msgstr "There are some intgeration points with GitLab:"
-
-#: src/main/reference/ch_gitlab.xml:55(para)
-msgid "Список репозиториев"
-msgstr "The list of repositories"
-
-#: src/main/reference/ch_gitlab.xml:57(para)
-msgid ""
-"Git as Subversion автоматически получает список репозиториев в момент старта "
-"через GitLab API."
-msgstr ""
-"Git as a Subversion automatically retrieves the list of repositories on "
-"startup via the GitLab API."
-
-#: src/main/reference/ch_gitlab.xml:60(para)
-msgid ""
-"Далее этот список поддерживается в актуальном состоянии при помощи System "
-"Hook, который так же регистрируется автоматически."
-msgstr ""
-"Further, this list is updated by System Hook, which is registered "
-"automatically."
-
-#: src/main/reference/ch_gitlab.xml:66(para)
-msgid "Авторизация и аутентификация пользователей"
-msgstr "Authorization and authentication of users"
-
-#: src/main/reference/ch_gitlab.xml:68(para)
-msgid ""
-"Для аутентификации пользователей и определения наличия прав на репозиторий "
-"так же используется GitLab API."
-msgstr ""
-"For authenticating users and repository permission control is also used "
-"GitLab API."
-
-#: src/main/reference/ch_gitlab.xml:73(para)
-msgid "Git Hooks"
-msgstr "Git Hooks"
-
-#: src/main/reference/ch_gitlab.xml:75(para)
-msgid ""
-"При коммите через Git as Subversion выполняются хуки от GitLab. Эти хуки, в "
-"частности, позволяют видеть информацию о новых коммитах без задержки через "
-"WEB-интерфейс GitLab."
-msgstr ""
-"When you commit using Git as Subversion the GitLab hooks are executed. These "
-"hooks, in particular, allow to see information about new commits without "
-"delay via the GitLab WEB interface."
-
-#: src/main/reference/ch_gitlab.xml:79(para)
-msgid ""
-"Для того, чтобы этот функционал работал, Git as Subversion должен передать "
-"идентификатор GitLab-пользователя (GL_ID), полученный при его авторизации."
-msgstr ""
-"GitLab Hooks require GitLab user ID information (GL_ID environment variable) "
-"received at user authorization."
-
-#: src/main/reference/ch_gitlab.xml:84(para)
-msgid ""
-"Из-за этого в случае интеграции с GitLab авторизация пользователей должна "
-"так же проходить через GitLab."
-msgstr ""
-"Because of this, in the case of integration with GitLab user authentication "
-"must be via GitLab."
-
-#: src/main/reference/ch_gitlab.xml:90(para)
-msgid "Git LFS"
-msgstr "Git LFS"
-
-#: src/main/reference/ch_gitlab.xml:92(para)
-msgid ""
-"В случае использования Git LFS надо так же указать путь до GitLab LFS "
-"хранилища."
-msgstr "In the case of GitLFS need to specify the path to GitLab LFS storage."
-
-#: src/main/reference/ch_gitlab.xml:95(para)
-msgid ""
-"GitLab с версии 8.2 использует общее хранилище LFS-файлов для всех "
-"репозиториев. Файлы хранятся в отдельном каталоге в сыром виде."
-msgstr ""
-"GitLab from version 8.2 uses single LFS-files storage shared between all "
-"repositories. Files are stored in a separate directory as raw data."
-
-#: src/main/reference/ch_gitlab.xml:99(para)
-msgid ""
-"Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
-"от GitLab при этом не используется."
-msgstr ""
-"Integration with LFS repository GitLab occurs at the file level. GitLab API "
-"is not used."
-
-#: src/main/reference/ch_gitlab.xml:104(para)
-msgid "Git LFS авторизация для SSH-пользователей"
-msgstr "Git LFS authorization for SSH users"
-
-#: src/main/reference/ch_gitlab.xml:106(para)
-msgid ""
-"К сожалению, GitLab не предоставляет скрипт git-lfs-authenticate, который "
-"отвечает за SSO авторизацию SSH-пользователей на Git LFS сервере. Для "
-"настройки данного скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
-msgstr ""
-"Unfortunately, GitLab does't provide the git-lfs-authenticate script, which "
-"is responsible for SSO authorization SSH-user Git on the server LFS. To "
-"configure this script, see <xref linkend=\"git-lfs-authenticate\"/>."
-
-#: src/main/reference/ch_gitlab.xml:115(title)
-msgid "Пример конфигурационного файла"
-msgstr "Configuration file example"
-
-#: src/main/reference/ch_about.xml:9(title)
+#: en_US/build/main/index.l10n.xml:26(title)
 msgid "О проекте"
 msgstr "About project"
 
-#: src/main/reference/ch_about.xml:12(title)
+#: en_US/build/main/index.l10n.xml:29(title)
 msgid "Что это?"
 msgstr "What is it?"
 
-#: src/main/reference/ch_about.xml:14(para)
+#: en_US/build/main/index.l10n.xml:31(para)
 msgid ""
 "Git as Subversion — это реализация Subversion-сервера (по протоколу svn) для "
 "Git-репозиториев."
@@ -623,7 +63,7 @@ msgstr ""
 "Git as Subversion — Subversion-server implementation (svn protocol) for Git-"
 "repositories."
 
-#: src/main/reference/ch_about.xml:17(para)
+#: en_US/build/main/index.l10n.xml:34(para)
 msgid ""
 "Он позволяет работать с Git-репозиторием, используя консольный Subversion-"
 "клиент, TortoiseSVN, SvnKit и подобный инструментарий."
@@ -631,11 +71,11 @@ msgstr ""
 "This project allows to work with Git-repository using Subversion console "
 "client, TortoiseSVN, SvnKit and other similar tools."
 
-#: src/main/reference/ch_about.xml:22(title)
+#: en_US/build/main/index.l10n.xml:39(title)
 msgid "Какова цель проекта?"
 msgstr "What is project goal?"
 
-#: src/main/reference/ch_about.xml:24(para)
+#: en_US/build/main/index.l10n.xml:41(para)
 msgid ""
 "Проект создан для того, чтобы позволить работать с одним и тем же "
 "репозиторием как в Git-стиле, так и в Subversion-стиле."
@@ -643,11 +83,11 @@ msgstr ""
 "The project is designed to allow you to work with the same repository as "
 "Git, Subversion and style."
 
-#: src/main/reference/ch_about.xml:29(glossterm)
+#: en_US/build/main/index.l10n.xml:46(glossterm)
 msgid "Git-стиль"
 msgstr "Git style"
 
-#: src/main/reference/ch_about.xml:32(para)
+#: en_US/build/main/index.l10n.xml:49(para)
 msgid ""
 "Основная идея сводится к тому, что разработчик производит все изменения в "
 "локальной ветке. Эти изменения никак не влияют на работу остальных "
@@ -658,7 +98,7 @@ msgstr ""
 "do not affect the work of other developers, but nonetheless they can be "
 "tested on CI farm, review by another developer and etc."
 
-#: src/main/reference/ch_about.xml:38(para)
+#: en_US/build/main/index.l10n.xml:55(para)
 msgid ""
 "Это позволяет каждому разработчику вести работу независимо, так, как ему "
 "удобно, изменяя и сохраняя промежуточные версии документов, пользуясь всеми "
@@ -670,7 +110,7 @@ msgstr ""
 "of the version control system (including access to the change history) even "
 "without network connection to the server."
 
-#: src/main/reference/ch_about.xml:44(para)
+#: en_US/build/main/index.l10n.xml:61(para)
 msgid ""
 "К сожалению, этот подход не работает в случае, когда изменяемые документы не "
 "поддерживают слияние (например, это характерно для двоичных файлов)."
@@ -678,11 +118,11 @@ msgstr ""
 "Unfortunately, this approach does not work with not mergeable documents (for "
 "example, binary files)."
 
-#: src/main/reference/ch_about.xml:51(glossterm)
+#: en_US/build/main/index.l10n.xml:68(glossterm)
 msgid "Subversion-стиль"
 msgstr "Subversion style"
 
-#: src/main/reference/ch_about.xml:54(para)
+#: en_US/build/main/index.l10n.xml:71(para)
 msgid ""
 "Использование централизованной системы контроля версий более удобно в случае "
 "использования документов не поддерживающих слияние (например, это характерно "
@@ -694,7 +134,7 @@ msgstr ""
 "due to the presence of the locking mechanism and a simpler and shorter "
 "publication cycle changes."
 
-#: src/main/reference/ch_about.xml:63(para)
+#: en_US/build/main/index.l10n.xml:80(para)
 msgid ""
 "Необходимость совместить Git-стиль и Subversion-стиль работы с одним "
 "репозиторием возникает из-за того, что разные сотрудники в рамках одного "
@@ -706,15 +146,15 @@ msgstr ""
 "fundamentally different data. If you overdo, you Git programmers, and "
 "artists like Subversion."
 
-#: src/main/reference/ch_about.xml:70(title)
+#: en_US/build/main/index.l10n.xml:87(title)
 msgid "Как оно работает?"
 msgstr "How does it work?"
 
-#: src/main/reference/ch_about.xml:73(title)
+#: en_US/build/main/index.l10n.xml:90(title)
 msgid "Где хранятся Subversion-данные репозитория?"
 msgstr "Where is the Subversion data stored?"
 
-#: src/main/reference/ch_about.xml:75(para)
+#: en_US/build/main/index.l10n.xml:92(para)
 msgid ""
 "Для представления Subversion репозитория нужно хранить информацию о том, "
 "какой номер Subversion-ревизии соответствует какому Git-коммиту. Вычислять "
@@ -731,7 +171,7 @@ msgstr ""
 "it does not require a separate backup Subversion data. Because of this "
 "separate backup Subversion data is not necessary."
 
-#: src/main/reference/ch_about.xml:83(para)
+#: en_US/build/main/index.l10n.xml:100(para)
 msgid ""
 "Также часть данных, необходимых для Subversion репозитория, очень дорого "
 "получить на основании Git-репозитория."
@@ -739,23 +179,23 @@ msgstr ""
 "Also part of the data necessary for the Subversion repository, is very "
 "expensive to get based on Git repository."
 
-#: src/main/reference/ch_about.xml:86(para)
+#: en_US/build/main/index.l10n.xml:103(para)
 msgid "Например:"
 msgstr "For example:"
 
-#: src/main/reference/ch_about.xml:90(para)
+#: en_US/build/main/index.l10n.xml:107(para)
 msgid "номер ревизии с предыдущим изменением файла;"
 msgstr "the revision number with the previous change file;"
 
-#: src/main/reference/ch_about.xml:94(para)
+#: en_US/build/main/index.l10n.xml:111(para)
 msgid "данные о том, откуда был скопирован файл;"
 msgstr "information about where the file was copied;"
 
-#: src/main/reference/ch_about.xml:98(para)
+#: en_US/build/main/index.l10n.xml:115(para)
 msgid "MD5-хэш файла."
 msgstr "MD5 file hash."
 
-#: src/main/reference/ch_about.xml:102(para)
+#: en_US/build/main/index.l10n.xml:119(para)
 msgid ""
 "Чтобы не заниматься их вычислением каждый запуск, эти данные кэширутся в "
 "файлах. Потеря данного кэша не критична для работы и его резервное "
@@ -765,24 +205,24 @@ msgstr ""
 "The loss of the cache is not critical for the operation and backup does not "
 "make sense."
 
-#: src/main/reference/ch_about.xml:106(para)
+#: en_US/build/main/index.l10n.xml:123(para)
 msgid ""
 "Данные о блокировках файлов в данный момент так же хранятся в файла кэша."
 msgstr "File locking information currently stored in the cache file."
 
-#: src/main/reference/ch_about.xml:111(title)
+#: en_US/build/main/index.l10n.xml:128(title)
 msgid "Как работает коммит?"
 msgstr "How does commit works?"
 
-#: src/main/reference/ch_about.xml:113(para)
+#: en_US/build/main/index.l10n.xml:130(para)
 msgid "Одна из самых важных деталей системы — сохранение изменений."
 msgstr "One of the most important parts of the system — to save the changes."
 
-#: src/main/reference/ch_about.xml:116(para)
+#: en_US/build/main/index.l10n.xml:133(para)
 msgid "В общих чертах, алгоритм следующий:"
 msgstr "In general, the following algorithm:"
 
-#: src/main/reference/ch_about.xml:120(para)
+#: en_US/build/main/index.l10n.xml:137(para)
 msgid ""
 "В момент команды <command>svn commit</command> клиент отправляет на сервер "
 "свои изменения. Сервер запоминает их. В этот же момент происходит первая "
@@ -792,7 +232,7 @@ msgstr ""
 "server of your changes. The server remembers them. At this point comes the "
 "first check the relevance of customer data."
 
-#: src/main/reference/ch_about.xml:127(para)
+#: en_US/build/main/index.l10n.xml:144(para)
 msgid ""
 "Сервер берет голову ветки и начинает формировать новый коммит на базе "
 "полученных от клиента данных. В этот момент происходит ещё одна проверка на "
@@ -802,11 +242,11 @@ msgstr ""
 "basis of client received delta. At this moment there is yet another check of "
 "the relevance of customer data."
 
-#: src/main/reference/ch_about.xml:133(para)
+#: en_US/build/main/index.l10n.xml:150(para)
 msgid "Проверяется целостность svn properties для заливаемых данных."
 msgstr "Validating svn properties for changed data."
 
-#: src/main/reference/ch_about.xml:138(para)
+#: en_US/build/main/index.l10n.xml:155(para)
 msgid ""
 "Сервер пытается консольным Git-клиентом сделать push нового коммита в "
 "текущую ветку этого же репозитория. Далее по результату push-а:"
@@ -814,14 +254,14 @@ msgstr ""
 "The server tries to push the new commit in the current branch of the same "
 "repository via console Git client. Next, the result of a push:"
 
-#: src/main/reference/ch_about.xml:144(para)
+#: en_US/build/main/index.l10n.xml:161(para)
 msgid ""
 "если все хорошо — загружаем последние изменения из git-коммитов и радуемся;"
 msgstr ""
 "if commits pushed successfully — loading the latest changes from git commits "
 "and rejoice;"
 
-#: src/main/reference/ch_about.xml:149(para)
+#: en_US/build/main/index.l10n.xml:166(para)
 msgid ""
 "если не fast forward — загружаем последние изменения из git-коммитов и идём "
 "к шагу 2;"
@@ -829,15 +269,15 @@ msgstr ""
 "if push is not fast forward — load the latest changes from git commits and "
 "go to step 2;"
 
-#: src/main/reference/ch_about.xml:154(para)
+#: en_US/build/main/index.l10n.xml:171(para)
 msgid "если отбили хуки — сообщаем клиенту;"
 msgstr "if push declined by hooks — inform the client;"
 
-#: src/main/reference/ch_about.xml:158(para)
+#: en_US/build/main/index.l10n.xml:175(para)
 msgid "если другая ошибка — сообщаем клиенту."
 msgstr "on another error — inform the client;"
 
-#: src/main/reference/ch_about.xml:164(para)
+#: en_US/build/main/index.l10n.xml:181(para)
 msgid ""
 "Таким образом, за счёт использования в данной операции консольного Git-а мы "
 "избегает гонки с заливкой напрямую через Git, и получаем хуки в качестве "
@@ -847,11 +287,11 @@ msgstr ""
 "condition pouring directly change Git repository, and get the native hooks "
 "as a nice bonus."
 
-#: src/main/reference/ch_about.xml:170(title)
+#: en_US/build/main/index.l10n.xml:187(title)
 msgid "Отличие от других решений"
 msgstr "Unlike other solutions"
 
-#: src/main/reference/ch_about.xml:172(para)
+#: en_US/build/main/index.l10n.xml:189(para)
 msgid ""
 "Проблему совмещения Git и Subversion стиля работы с системой контроля версий "
 "можно решить разными способами."
@@ -859,15 +299,15 @@ msgstr ""
 "The problem of combining Git and Subversion work style with a version "
 "control system can be solved in different ways."
 
-#: src/main/reference/ch_about.xml:176(title)
+#: en_US/build/main/index.l10n.xml:193(title)
 msgid "Поддержка Subversion у GitHub"
 msgstr "GitHub Subversion support"
 
-#: src/main/reference/ch_about.xml:178(para)
+#: en_US/build/main/index.l10n.xml:195(para)
 msgid "Это, наверное, самый близкий аналог."
 msgstr "This is probably the closest analogue."
 
-#: src/main/reference/ch_about.xml:180(para)
+#: en_US/build/main/index.l10n.xml:197(para)
 msgid ""
 "Основная проблема данной реализации — неотделимость от GitHub. Так же, "
 "внезапно, данная реализация не поддерживает Git LFS."
@@ -875,11 +315,11 @@ msgstr ""
 "The main problem of this implementation is inseparable from GitHub. Also, "
 "all of a sudden, this implementation does not support Git LFS."
 
-#: src/main/reference/ch_about.xml:185(title)
+#: en_US/build/main/index.l10n.xml:202(title)
 msgid "SubGit"
 msgstr "SubGit"
 
-#: src/main/reference/ch_about.xml:187(para)
+#: en_US/build/main/index.l10n.xml:204(para)
 msgid ""
 "Сайт: <link xlink:href=\"http://www.subgit.com/\">http://www.subgit.com/</"
 "link>"
@@ -887,7 +327,7 @@ msgstr ""
 "Web site: <link xlink:href=\"http://www.subgit.com/\">http://www.subgit.com/"
 "</link>"
 
-#: src/main/reference/ch_about.xml:190(para)
+#: en_US/build/main/index.l10n.xml:206(para)
 msgid ""
 "Достаточно интересная реализация при которой поддерживаются Git и Subversion-"
 "репозитории в синхронном состоянии. За счет чего обеспечивается синхронность "
@@ -897,11 +337,11 @@ msgstr ""
 "with Git and Subversion repositories. Thereby providing synchronization of "
 "repositories is not clear."
 
-#: src/main/reference/ch_about.xml:196(title)
+#: en_US/build/main/index.l10n.xml:212(title)
 msgid "Subversion репозиторий и git svn"
 msgstr "Subversion repository and git svn"
 
-#: src/main/reference/ch_about.xml:198(para)
+#: en_US/build/main/index.l10n.xml:214(para)
 msgid ""
 "Данный способ позволяет использовать Git при работе с Subversion-"
 "репозиторием, но использование общего Git-репозитория между несколькими "
@@ -910,109 +350,640 @@ msgstr ""
 "This method allows you to use Git with Subversion repository, but using a "
 "shared Git repository between multiple developers very difficult."
 
-#: src/main/reference/ch_about.xml:206(title)
+#: en_US/build/main/index.l10n.xml:222(title)
 msgid "Функционал"
 msgstr "Features"
 
-#: src/main/reference/ch_about.xml:209(title)
+#: en_US/build/main/index.l10n.xml:225(title)
 msgid "Что уже есть?"
 msgstr "What is already there?"
 
-#: src/main/reference/ch_about.xml:213(para)
+#: en_US/build/main/index.l10n.xml:229(para)
 msgid "Работаю, как минимум, следующие клиенты:"
 msgstr "You can use at least the following clients:"
 
-#: src/main/reference/ch_about.xml:217(para)
+#: en_US/build/main/index.l10n.xml:233(para)
 msgid "Консольный Subversion-клиент;"
 msgstr "Subversion console client;"
 
-#: src/main/reference/ch_about.xml:221(para)
+#: en_US/build/main/index.l10n.xml:237(para)
 msgid "TortoiseSVN;"
 msgstr "TortoiseSVN;"
 
-#: src/main/reference/ch_about.xml:225(para)
+#: en_US/build/main/index.l10n.xml:241(para)
 msgid "SvnKit."
 msgstr "SvnKit."
 
-#: src/main/reference/ch_about.xml:231(para)
+#: en_US/build/main/index.l10n.xml:247(para)
 msgid "Работают, как минимум, следующие операции:"
 msgstr "Supported subversion operations:"
 
-#: src/main/reference/ch_about.xml:235(para)
+#: en_US/build/main/index.l10n.xml:251(para)
 msgid "svn checkout, update, switch, diff"
 msgstr "svn checkout, update, switch, diff"
 
-#: src/main/reference/ch_about.xml:239(para)
+#: en_US/build/main/index.l10n.xml:255(para)
 msgid "svn commit"
 msgstr "svn commit"
 
-#: src/main/reference/ch_about.xml:244(para)
+#: en_US/build/main/index.l10n.xml:260(para)
 msgid ""
 "Операции поддерживаются, но данные об источнике копирования не сохраняются."
 msgstr ""
 "Operations are supported, but the data about the source of a copy is not "
 "saved."
 
-#: src/main/reference/ch_about.xml:243(para)
+#: en_US/build/main/index.l10n.xml:259(para)
 msgid "svn copy, move<placeholder-1/>"
 msgstr "svn copy, move<placeholder-1/>"
 
-#: src/main/reference/ch_about.xml:250(para)
+#: en_US/build/main/index.l10n.xml:266(para)
 msgid "svn cat, ls"
 msgstr "svn cat, ls"
 
-#: src/main/reference/ch_about.xml:254(para)
+#: en_US/build/main/index.l10n.xml:270(para)
 msgid "svn lock, unlock"
 msgstr "svn lock, unlock"
 
-#: src/main/reference/ch_about.xml:258(para)
+#: en_US/build/main/index.l10n.xml:274(para)
 msgid "svn replay (svnsync)"
 msgstr "svn replay (svnsync)"
 
-#: src/main/reference/ch_about.xml:264(para)
+#: en_US/build/main/index.l10n.xml:280(para)
 msgid "Поддерживается Git LFS;"
 msgstr "Git LFS support;"
 
-#: src/main/reference/ch_about.xml:269(para)
+#: en_US/build/main/index.l10n.xml:285(para)
 msgid "Данные из git submodule видны в репозитории в режиме только для чтения."
 msgstr "Git submodule data available in read only mode."
 
-#: src/main/reference/ch_about.xml:268(para)
+#: en_US/build/main/index.l10n.xml:284(para)
 msgid "Поддерживаются git submodules;<placeholder-1/>"
 msgstr "Git submodules supported;<placeholder-1/>"
 
-#: src/main/reference/ch_about.xml:275(para)
+#: en_US/build/main/index.l10n.xml:291(para)
 msgid "Авторизация через LDAP;"
 msgstr "LDAP authorization;"
 
-#: src/main/reference/ch_about.xml:279(para)
+#: en_US/build/main/index.l10n.xml:295(para)
 msgid "Интеграция с GitLab."
 msgstr "GitLab integration."
 
-#: src/main/reference/ch_about.xml:285(title)
+#: en_US/build/main/index.l10n.xml:301(title)
 msgid "Чего еще нет?"
 msgstr "What is lacking?"
 
-#: src/main/reference/ch_about.xml:289(para)
+#: en_US/build/main/index.l10n.xml:305(para)
 msgid "Категорически не хватает документации;"
 msgstr "Strongly enough documentation;"
 
-#: src/main/reference/ch_about.xml:293(para)
+#: en_US/build/main/index.l10n.xml:309(para)
 msgid "Из Subversion доступна только одна ветка."
 msgstr "You can only access one branch from Subversion."
 
-#: src/main/reference/ch_about.xml:299(title)
+#: en_US/build/main/index.l10n.xml:315(title)
 msgid "Технические ограничения"
 msgstr "Technical limitations"
 
-#: src/main/reference/ch_about.xml:303(para)
+#: en_US/build/main/index.l10n.xml:319(para)
 msgid "Нельзя средствами Subversion менять svn properties."
 msgstr "It is impossible to change svn properties by Subversion client."
 
+#: en_US/build/main/index.l10n.xml:327(title)
+msgid "Установка"
+msgstr "Installation"
+
+#: en_US/build/main/index.l10n.xml:330(title)
+msgid "Быстрый старт"
+msgstr "Quick start"
+
+#: en_US/build/main/index.l10n.xml:332(para)
+msgid "Для того, чтобы посмотреть, как работает Git as Subversion нужно:"
+msgstr "To try Git as Subversion you need:"
+
+#: en_US/build/main/index.l10n.xml:337(para)
+msgid "Установить Java 8 или более позднюю;"
+msgstr "Install Java 8 or later;"
+
+#: en_US/build/main/index.l10n.xml:341(para)
+msgid ""
+"Скачать архив с сайта <link xlink:href=\"https://github.com/bozaro/git-as-"
+"svn/releases/latest\">https://github.com/bozaro/git-as-svn/releases/latest</"
+"link>;"
+msgstr ""
+"Download archive from site <link xlink:href=\"https://github.com/bozaro/git-"
+"as-svn/releases/latest\">https://github.com/bozaro/git-as-svn/releases/"
+"latest</link>;"
+
+#: en_US/build/main/index.l10n.xml:345(para)
+msgid ""
+"После распаковки архива перейти в распакованный каталог и запустить команду:"
+msgstr ""
+"After unpacking the archive change working path to the uncompressed "
+"directory and run the command:"
+
+#: en_US/build/main/index.l10n.xml:352(para)
+msgid ""
+"В результате будет запущен Git as Subversion сервер в следующей конфигурации:"
+msgstr "This will start Git as Subversion server with following configuration:"
+
+#: en_US/build/main/index.l10n.xml:357(para)
+msgid "Сервер доступен через svn-протокол по порту 3690."
+msgstr "The server is accessible via svn-protocol on port 3690."
+
+#: en_US/build/main/index.l10n.xml:359(para)
+msgid "Для его проверки можно выполнить команду:"
+msgstr "You can check server with command like:"
+
+#: en_US/build/main/index.l10n.xml:365(para)
+msgid "Для доступа к серверу необходимо использовать пользователя:"
+msgstr "To access the server, you can use the user:"
+
+#: en_US/build/main/index.l10n.xml:368(para)
+msgid "Имя пользователя: test"
+msgstr "Login: test"
+
+#: en_US/build/main/index.l10n.xml:370(para)
+msgid "Пароль: test"
+msgstr "Password: test"
+
+#: en_US/build/main/index.l10n.xml:374(para)
+msgid "Репозиторий и кэш будут созданы в каталоге <filename>build</filename>:"
+msgstr ""
+"Cache and repository will be created in <filename>build</filename> directory:"
+
+#: en_US/build/main/index.l10n.xml:379(para)
+msgid ""
+"<filename>example.git</filename> — каталог с репозиторием, доступным через "
+"svn-протокол;"
+msgstr ""
+"<filename>example.git</filename> — repository directory, accessible via svn-"
+"protocol;"
+
+#: en_US/build/main/index.l10n.xml:384(para)
+msgid ""
+"<filename>git-as-svn.mapdb*</filename> — файлы с кэшем дорого вычисляемых "
+"данных."
+msgstr ""
+"<filename>git-as-svn.mapdb*</filename> — cache files for expensive computed "
+"data."
+
+#: en_US/build/main/index.l10n.xml:393(title)
+msgid "Сборка из исходного кода"
+msgstr "Build from source code"
+
+#: en_US/build/main/index.l10n.xml:395(para)
+msgid "Данный проект изначально рассчитан на сборку в Ubuntu."
+msgstr "The project was originally designed for assembly in Ubuntu."
+
+#: en_US/build/main/index.l10n.xml:397(para)
+msgid "Для сборки из исходного кода необходимо локально установить:"
+msgstr "To build from the source code you need to install locally:"
+
+#: en_US/build/main/index.l10n.xml:401(para)
+msgid "Java 8 (пакет openjdk-8-jdk);"
+msgstr "Java 8 (openjdk-8-jdk package);"
+
+#: en_US/build/main/index.l10n.xml:405(para)
+msgid "xml2po (пакет gnome-doc-utils) — необходимо для сборки документации;"
+msgstr "xml2po (gnome-doc-utils package) — required for build reference files;"
+
+#: en_US/build/main/index.l10n.xml:410(para)
+msgid "protoc (пакет protobuf-compiler) — необходимо для сборки API."
+msgstr "protoc (protobuf-compiler package) — required for build API."
+
+#: en_US/build/main/index.l10n.xml:415(para)
+msgid "Полностью собрать дистрибутив можно командой:"
+msgstr "You can build distribution by command:"
+
+#: en_US/build/main/index.l10n.xml:419(para)
+msgid ""
+"Комплект установочных файлов будет располагаться в директории: "
+"<filename>build/distributions</filename>"
+msgstr ""
+"Distribution files build in folder: <filename>build/distributions</filename>"
+
+#: en_US/build/main/index.l10n.xml:425(title)
+msgid "Интеграция с GitLab"
+msgstr "GitLab integration"
+
+#: en_US/build/main/index.l10n.xml:428(title)
+msgid "Список исправлений для GitLab"
+msgstr "Recommended GitLab patches"
+
+#: en_US/build/main/index.l10n.xml:430(para)
+msgid ""
+"Для интеграции с GitLab нужно установить следующие исправления на GitLab:"
+msgstr "For integration with GitLab install the following patches on GitLab:"
+
+#: en_US/build/main/index.l10n.xml:453(title)
+msgid "Точки стыка интеграции с GitLab"
+msgstr "GitLab intergration points"
+
+#: en_US/build/main/index.l10n.xml:455(para)
+msgid "В случае с GitLab есть несколько точек стыка:"
+msgstr "There are some intgeration points with GitLab:"
+
+#: en_US/build/main/index.l10n.xml:459(para)
+msgid "Список репозиториев"
+msgstr "The list of repositories"
+
+#: en_US/build/main/index.l10n.xml:461(para)
+msgid ""
+"Git as Subversion автоматически получает список репозиториев в момент старта "
+"через GitLab API."
+msgstr ""
+"Git as a Subversion automatically retrieves the list of repositories on "
+"startup via the GitLab API."
+
+#: en_US/build/main/index.l10n.xml:464(para)
+msgid ""
+"Далее этот список поддерживается в актуальном состоянии при помощи System "
+"Hook, который так же регистрируется автоматически."
+msgstr ""
+"Further, this list is updated by System Hook, which is registered "
+"automatically."
+
+#: en_US/build/main/index.l10n.xml:470(para)
+msgid "Авторизация и аутентификация пользователей"
+msgstr "Authorization and authentication of users"
+
+#: en_US/build/main/index.l10n.xml:472(para)
+msgid ""
+"Для аутентификации пользователей и определения наличия прав на репозиторий "
+"так же используется GitLab API."
+msgstr ""
+"For authenticating users and repository permission control is also used "
+"GitLab API."
+
+#: en_US/build/main/index.l10n.xml:477(para)
+msgid "Git Hooks"
+msgstr "Git Hooks"
+
+#: en_US/build/main/index.l10n.xml:479(para)
+msgid ""
+"При коммите через Git as Subversion выполняются хуки от GitLab. Эти хуки, в "
+"частности, позволяют видеть информацию о новых коммитах без задержки через "
+"WEB-интерфейс GitLab."
+msgstr ""
+"When you commit using Git as Subversion the GitLab hooks are executed. These "
+"hooks, in particular, allow to see information about new commits without "
+"delay via the GitLab WEB interface."
+
+#: en_US/build/main/index.l10n.xml:483(para)
+msgid ""
+"Для того, чтобы этот функционал работал, Git as Subversion должен передать "
+"идентификатор GitLab-пользователя (GL_ID), полученный при его авторизации."
+msgstr ""
+"GitLab Hooks require GitLab user ID information (GL_ID environment variable) "
+"received at user authorization."
+
+#: en_US/build/main/index.l10n.xml:488(para)
+msgid ""
+"Из-за этого в случае интеграции с GitLab авторизация пользователей должна "
+"так же проходить через GitLab."
+msgstr ""
+"Because of this, in the case of integration with GitLab user authentication "
+"must be via GitLab."
+
+#: en_US/build/main/index.l10n.xml:494(para)
+msgid "Git LFS"
+msgstr "Git LFS"
+
+#: en_US/build/main/index.l10n.xml:496(para)
+msgid ""
+"В случае использования Git LFS надо так же указать путь до GitLab LFS "
+"хранилища."
+msgstr "In the case of GitLFS need to specify the path to GitLab LFS storage."
+
+#: en_US/build/main/index.l10n.xml:499(para)
+msgid ""
+"GitLab с версии 8.2 использует общее хранилище LFS-файлов для всех "
+"репозиториев. Файлы хранятся в отдельном каталоге в сыром виде."
+msgstr ""
+"GitLab from version 8.2 uses single LFS-files storage shared between all "
+"repositories. Files are stored in a separate directory as raw data."
+
+#: en_US/build/main/index.l10n.xml:503(para)
+msgid ""
+"Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
+"от GitLab при этом не используется."
+msgstr ""
+"Integration with LFS repository GitLab occurs at the file level. GitLab API "
+"is not used."
+
+#: en_US/build/main/index.l10n.xml:508(para)
+msgid "Git LFS авторизация для SSH-пользователей"
+msgstr "Git LFS authorization for SSH users"
+
+#: en_US/build/main/index.l10n.xml:510(para)
+msgid ""
+"К сожалению, GitLab не предоставляет скрипт git-lfs-authenticate, который "
+"отвечает за SSO авторизацию SSH-пользователей на Git LFS сервере. Для "
+"настройки данного скрипта см. <xref linkend=\"git-lfs-authenticate\"/>."
+msgstr ""
+"Unfortunately, GitLab does't provide the git-lfs-authenticate script, which "
+"is responsible for SSO authorization SSH-user Git on the server LFS. To "
+"configure this script, see <xref linkend=\"git-lfs-authenticate\"/>."
+
+#: en_US/build/main/index.l10n.xml:519(title)
+msgid "Пример конфигурационного файла"
+msgstr "Configuration file example"
+
+#: en_US/build/main/index.l10n.xml:526(title)
+msgid "SVN Properties"
+msgstr "SVN Properties"
+
+#: en_US/build/main/index.l10n.xml:528(para)
+msgid ""
+"Основная беда <code>svn properties</code> в том, что их надо поддерживать в "
+"синхронном состоянии между Git и Subversion."
+msgstr ""
+"The main <code>svn properties</code> trouble that they should be maintained "
+"in the synchronous state between Git and Subversion."
+
+#: en_US/build/main/index.l10n.xml:531(para)
+msgid ""
+"Из-за этого произвольные <code>svn properties</code> не поддерживаются. "
+"Чтобы значения <code>svn properties</code> соответствовали Git-"
+"представлению, они генерируются на лету на основании содержимого репозитория."
+msgstr ""
+"Because of this arbitrary <code>svn properties</code> is not supported. To "
+"value <code>svn properties</ code> correspond Git-view, they are generated "
+"on the fly based on the repository content."
+
+#: en_US/build/main/index.l10n.xml:536(para)
+msgid "При этом:"
+msgstr "Wherein:"
+
+#: en_US/build/main/index.l10n.xml:540(para)
+msgid ""
+"при коммите проверяется, что <code>svn properties</code> файла/директории "
+"точно соответствуют тому, что должно быть по данным репозитория;"
+msgstr ""
+"the commit verifies that <code>svn properties</code> file or directory "
+"exactly match what should be according to the data repository;"
+
+#: en_US/build/main/index.l10n.xml:546(para)
+msgid ""
+"средствами Subversion большую часть свойств изменить нельзя (исключения: "
+"<code>svn:executable</code>, <code>svn:special</code>);"
+msgstr ""
+"Subversion does not tool allows you to change most of the properties "
+"(exception: <code>svn:executable</code>, <code>svn:special</code>);"
+
+#: en_US/build/main/index.l10n.xml:552(para)
+msgid ""
+"если какой-либо файл влияет на <code>svn properties</code> других файлов, то "
+"после его изменения <code>svn properties</code> этих файлов так же "
+"поменяются."
+msgstr ""
+"if a file affects the <code>svn properties</code> other files after changing "
+"it <code>svn properties</code> of the files in the same change."
+
+#: en_US/build/main/index.l10n.xml:559(title)
+msgid "Файл .gitignores"
+msgstr "File .gitignores"
+
+#: en_US/build/main/index.l10n.xml:561(para)
+msgid ""
+"Данный файл влияет на свойство <code>svn:ignore</code> и <code>svn:global-"
+"ignores</code> для директории и её поддиректорий."
+msgstr ""
+"This file affects the property <code>svn:ignore</code> and <code>svn:global-"
+"ignores</code> for the directory and its subdirectories."
+
+#: en_US/build/main/index.l10n.xml:564(para)
+msgid "Например, файл в каталоге <filename>/foo</filename> с содержимым:"
+msgstr ""
+"For example, a file in the directory <filename>/foo</filename> with the "
+"contents:"
+
+#: en_US/build/main/index.l10n.xml:569(para)
+msgid "Проецируется на свойства:"
+msgstr "Mapped to properties:"
+
+#: en_US/build/main/index.l10n.xml:573(para)
+msgid "для каталога <code>/foo</code>:"
+msgstr "for directory <code>/foo</code>:"
+
+#: en_US/build/main/index.l10n.xml:579(para)
+msgid "для каталогов <code>/foo/*</code>:"
+msgstr "for directory <code>/foo/*</code>:"
+
+#: en_US/build/main/index.l10n.xml:585(para)
+msgid "для каталога <code>/foo/.idea</code>:"
+msgstr "for directory <code>/foo/.idea</code>:"
+
+#: en_US/build/main/index.l10n.xml:592(para)
+msgid ""
+"Для Subversion нет способа сделать исключения для директорий, в результате, "
+"к примеру, правила <code>/foo</code> (файл или директория <code>foo</code>) "
+"и <code>/foo/</code> (директория <code>foo</code>) в Subversion будут "
+"работать одинаково, хотя в Git у них поведение разное."
+msgstr ""
+"For Subversion has no way to make an exception for directories, as a result, "
+"for example, the rules of <code>/foo</code> (file or directory <code>foo</ "
+"code>) and <code>/foo/</code> (directory <code>foo</code>) in Subversion "
+"will work the same way, though to Git they have different behavior."
+
+#: en_US/build/main/index.l10n.xml:598(para)
+msgid ""
+"Правила вида \"все кроме\" не поддерживаются при проецировании на <code>svn:"
+"global-ignores</code>."
+msgstr ""
+"Terms like \"all but\" not supported on mapping to the <code>svn:global-"
+"ignores</code> property."
+
+#: en_US/build/main/index.l10n.xml:604(title)
+msgid "Файл .gitattributes"
+msgstr "File .gitattributes"
+
+#: en_US/build/main/index.l10n.xml:606(para)
+msgid ""
+"Данный файл влияет на свойства <code>svn:eol-style</code> и <code>svn:mime-"
+"type</code> файлов от данной директории и <code>svn:auto-props</code> у "
+"самой директории."
+msgstr ""
+"This file affects the properties of the <code>svn:eol-style</code> and "
+"<code>svn:mime-type</code> files from this directory and <code>svn:auto-"
+"props</code> from the directory itself."
+
+#: en_US/build/main/index.l10n.xml:610(para)
+msgid "Например, файл с содержимым:"
+msgstr "For example, a file with contents:"
+
+#: en_US/build/main/index.l10n.xml:614(para)
+msgid "Добавит к директории свойство <code>svn:auto-props</code> с содержимым:"
+msgstr ""
+"Add property to the directory <code>svn:auto-props</code> with the contents:"
+
+#: en_US/build/main/index.l10n.xml:619(para)
+msgid "И файлам в данной директории:"
+msgstr "And files in this directory:"
+
+#: en_US/build/main/index.l10n.xml:623(para)
+msgid ""
+"с суффиксом <filename>.txt</filename> свойство <code>svn:eol-style = "
+"navtive</code>"
+msgstr ""
+"for suffix <filename>.txt</filename> add property <code>svn:eol-style = "
+"navtive</code>"
+
+#: en_US/build/main/index.l10n.xml:628(para)
+msgid ""
+"с суффиксом <filename>.xml</filename> свойство <code>svn:eol-style = LF</"
+"code>"
+msgstr ""
+"for suffix <filename>.xml</filename> add property <code>svn:eol-style = LF</"
+"code>"
+
+#: en_US/build/main/index.l10n.xml:633(para)
+msgid ""
+"с суффиксом <filename>.bin</filename> свойство <code>svn:mime-type = "
+"application/octet-stream</code>"
+msgstr ""
+"for suffix <filename>.bin</filename> add property <code>svn:mime-type = "
+"application/octet-stream</code>"
+
+#: en_US/build/main/index.l10n.xml:640(title)
+msgid "Файл .tgitconfig"
+msgstr "File .tgitconfig"
+
+#: en_US/build/main/index.l10n.xml:642(para)
+msgid "Данный файл меняет только свойства директории, в которой он расположен."
+msgstr ""
+"This file only changes the properties of the directory in which it is "
+"located."
+
+#: en_US/build/main/index.l10n.xml:645(para)
+msgid "Свойства проецируются один-к-одному, например, файл с содержимым:"
+msgstr ""
+"Properties are mapped one-to-one, for example, a file with the contents:"
+
+#: en_US/build/main/index.l10n.xml:650(para)
+msgid "Будет преобразован в свойства:"
+msgstr "It will be converted to properties:"
+
+#: en_US/build/main/index.l10n.xml:667(para)
+msgid ""
+"Если вы используете данные svn properties, то крайне рекомендуется "
+"использовать TortoiseSVN 1.9 или более поздний."
+msgstr ""
+"If you use bugtraq svn properties, it is highly recommended that you use "
+"TortoiseSVN 1.9 or later."
+
+#: en_US/build/main/index.l10n.xml:670(para)
+msgid ""
+"В противном случае TortoiseSVN будет пытаться установить данные параметры "
+"для всех вновь создаваемых каталогов."
+msgstr ""
+"Otherwise TortoiseSVN will attempt to set these parameters for all newly "
+"created directories instead of use inherited properties."
+
 #. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
-#: src/main/reference/ch_about.xml:0(None)
+#: en_US/build/main/index.l10n.xml:0(None)
 msgid "translator-credits"
 msgstr ""
+
+#~ msgid ""
+#~ ".idea/libraries\n"
+#~ "*.class\n"
+#~ "*/build"
+#~ msgstr ""
+#~ ".idea/libraries\n"
+#~ "*.class\n"
+#~ "*/build"
+
+#~ msgid "svn:global-ignores: *.class"
+#~ msgstr "svn:global-ignores: *.class"
+
+#~ msgid "svn:ignore: build"
+#~ msgstr "svn:ignore: build"
+
+#~ msgid "svn:ignore: libraries build"
+#~ msgstr "svn:ignore: libraries build"
+
+#~ msgid ""
+#~ "*.txt           text eol=native\n"
+#~ "*.xml           eol=lf\n"
+#~ "*.bin           binary"
+#~ msgstr ""
+#~ "*.txt           text eol=native\n"
+#~ "*.xml           eol=lf\n"
+#~ "*.bin           binary"
+
+#~ msgid ""
+#~ "*.txt = svn:eol-style=native\n"
+#~ "*.xml = svn:eol-style=LF\n"
+#~ "*.bin = svn:mime-type=application/octet-stream"
+#~ msgstr ""
+#~ "*.txt = svn:eol-style=native\n"
+#~ "*.xml = svn:eol-style=LF\n"
+#~ "*.bin = svn:mime-type=application/octet-stream"
+
+#~ msgid ""
+#~ "[bugtraq]\n"
+#~ "    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%\n"
+#~ "    logregex = #(\\\\d+)\n"
+#~ "    warnifnoissue = false"
+#~ msgstr ""
+#~ "[bugtraq]\n"
+#~ "    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%\n"
+#~ "    logregex = #(\\\\d+)\n"
+#~ "    warnifnoissue = false"
+
+#~ msgid "bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%"
+#~ msgstr "bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%"
+
+#~ msgid "bugtraq:logregex = #(\\\\d+)"
+#~ msgstr "bugtraq:logregex = #(\\\\d+)"
+
+#~ msgid "bugtraq:warnifnoissue = false"
+#~ msgstr "bugtraq:warnifnoissue = false"
+
+#~ msgid "bin/git-as-svn --config doc/config-local.example --show-config"
+#~ msgstr "bin/git-as-svn --config doc/config-local.example --show-config"
+
+#~ msgid "svn ls svn://localhost/example"
+#~ msgstr "svn ls svn://localhost/example"
+
+#~ msgid "./gradlew assembleDist"
+#~ msgstr "./gradlew assembleDist"
+
+#~ msgid "#230 (gitlab-shell)"
+#~ msgstr "#230 (gitlab-shell)"
+
+#~ msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
+#~ msgstr ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
+
+#~ msgid "#237 (gitlab-shell)"
+#~ msgstr "#237 (gitlab-shell)"
+
+#~ msgid ""
+#~ ": Execute git-lfs-authenticate command with original arguments (merged to "
+#~ "8.2.0);"
+#~ msgstr ""
+#~ ": Execute git-lfs-authenticate command with original arguments (merged to "
+#~ "8.2.0);"
+
+#~ msgid "#9591 (gitlabhq)"
+#~ msgstr "#9591 (gitlabhq)"
+
+#~ msgid ""
+#~ ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
+#~ msgstr ""
+#~ ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
+
+#~ msgid "#9728 (gitlabhq)"
+#~ msgstr "#9728 (gitlabhq)"
+
+#~ msgid ""
+#~ ": Show \"Empty Repository Page\" for repository without branches (merged "
+#~ "to 8.2.0)."
+#~ msgstr ""
+#~ ": Show \"Empty Repository Page\" for repository without branches (merged "
+#~ "to 8.2.0)."
 
 #~ msgid "Manual"
 #~ msgstr "Manual"
