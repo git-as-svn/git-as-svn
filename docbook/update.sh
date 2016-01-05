@@ -5,6 +5,6 @@ cd `dirname $0`
 
 for po in src/main/po/*.po; do
     lang=`basename ${po/.po/}`
-    xml2po -u $po $lang/build/main/index.l10n.xml
+    xml2po -u $po $lang/build/docbook/index.l10n.xml
 done
 

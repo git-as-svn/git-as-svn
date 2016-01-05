@@ -4,27 +4,31 @@ subprojects {
   def docbookDir = "${project.buildDir}/docbook"
   def inputDir = "${project.parent.projectDir}/src/main/reference"
 
-  task docbookSingle {
+  task docbookStatic(type: Copy) {
+    from inputDir
+    exclude "**/*.xml"
+    into docbookDir
+  }
+
+  task docbookSingle(dependsOn: docbookStatic) {
     inputs.dir   "${project.parent.projectDir}/src/main/reference"
-    outputs.file "${project.buildDir}/main/index.xml"
+    outputs.file "${docbookDir}/index.single.xml"
     doLast {
-      file ("${project.buildDir}/main").mkdirs()
       ant.xslt (
           in: "${project.parent.projectDir}/src/main/reference/index.xml",
-          out: "${buildDir}/main/index.xml",
+          out: "${docbookDir}/index.single.xml",
           style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
       )
     }
   }
 
-  task docbookSinglePo {
+  task docbookSinglePo(dependsOn: docbookStatic) {
     inputs.dir   "${project.parent.projectDir}/src/main/reference"
-    outputs.file "${project.buildDir}/main/index.l10n.xml"
+    outputs.file "${docbookDir}/index.l10n.xml"
     doLast {
-      file ("${project.buildDir}/main").mkdirs()
       ant.xslt (
           in: "${project.parent.projectDir}/src/main/reference/index.xml",
-          out: "${project.buildDir}/main/index.l10n.xml",
+          out: "${docbookDir}/index.l10n.xml",
           style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
       ) {
         param(name: "lang", expression: project.name)
@@ -43,16 +47,9 @@ subprojects {
   }
 
   task translate(type: Exec, dependsOn: docbookSingle) {
-    def output = file("$docbookDir/index.xml")
-    def input = "${project.buildDir}/main/index.xml"
+    def output = file("${docbookDir}/index.xml")
+    def input = "${docbookDir}/index.single.xml"
     output.parentFile.mkdirs()
-
-    copy {
-      from (inputDir) {
-        exclude "**/*.xml"
-      }
-      into docbookDir
-    }
 
     inputs.file file(input)
     inputs.file file(getPo(project))
