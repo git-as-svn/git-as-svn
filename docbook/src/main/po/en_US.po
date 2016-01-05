@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-04 22:07+0300\n"
-"PO-Revision-Date: 2016-01-04 22:08+0300\n"
+"POT-Creation-Date: 2016-01-05 21:57+0300\n"
+"PO-Revision-Date: 2016-01-05 21:57+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -10,6 +10,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.4\n"
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: en_US/build/main/index.l10n.xml:531(None)
+msgid "@@image: 'images/gitlab_svn_url.png'; md5=THIS FILE DOESN'T EXIST"
+msgstr ""
 
 #: en_US/build/main/index.l10n.xml:3(title)
 msgid "Git as Subversion"
@@ -687,14 +693,32 @@ msgstr ""
 "configure this script, see <xref linkend=\"git-lfs-authenticate\"/>."
 
 #: en_US/build/main/index.l10n.xml:519(title)
+msgid "Добавление SVN-ссылки в интерфейс GitLab"
+msgstr "Adding a SVN-link to GitLab interface"
+
+#: en_US/build/main/index.l10n.xml:521(para)
+msgid ""
+"Для того, чтобы добавить SVN-ссылку в интерфейс GitLab нужно взять последний "
+"коммит из ветки <link xlink:href=\"https://github.com/bozaro/gitlabhq/"
+"commits/svn_url\">https://github.com/bozaro/gitlabhq/commits/svn_url</link>."
+msgstr ""
+"To add a SVN-link to GitLab interface need to take latest commit of branch "
+"<link xlink:href=\"https://github.com/bozaro/gitlabhq/commits/svn_url"
+"\">https://github.com/bozaro/gitlabhq/commits/svn_url</link>."
+
+#: en_US/build/main/index.l10n.xml:526(title)
+msgid "Пример SVN-ссылки в интерфейсе GitLab"
+msgstr "Example of SVN-link in GitLab interface"
+
+#: en_US/build/main/index.l10n.xml:538(title)
 msgid "Пример конфигурационного файла"
 msgstr "Configuration file example"
 
-#: en_US/build/main/index.l10n.xml:526(title)
+#: en_US/build/main/index.l10n.xml:545(title)
 msgid "SVN Properties"
 msgstr "SVN Properties"
 
-#: en_US/build/main/index.l10n.xml:528(para)
+#: en_US/build/main/index.l10n.xml:547(para)
 msgid ""
 "Основная беда <code>svn properties</code> в том, что их надо поддерживать в "
 "синхронном состоянии между Git и Subversion."
@@ -702,7 +726,7 @@ msgstr ""
 "The main <code>svn properties</code> trouble that they should be maintained "
 "in the synchronous state between Git and Subversion."
 
-#: en_US/build/main/index.l10n.xml:531(para)
+#: en_US/build/main/index.l10n.xml:550(para)
 msgid ""
 "Из-за этого произвольные <code>svn properties</code> не поддерживаются. "
 "Чтобы значения <code>svn properties</code> соответствовали Git-"
@@ -712,11 +736,11 @@ msgstr ""
 "value <code>svn properties</ code> correspond Git-view, they are generated "
 "on the fly based on the repository content."
 
-#: en_US/build/main/index.l10n.xml:536(para)
+#: en_US/build/main/index.l10n.xml:555(para)
 msgid "При этом:"
 msgstr "Wherein:"
 
-#: en_US/build/main/index.l10n.xml:540(para)
+#: en_US/build/main/index.l10n.xml:559(para)
 msgid ""
 "при коммите проверяется, что <code>svn properties</code> файла/директории "
 "точно соответствуют тому, что должно быть по данным репозитория;"
@@ -724,7 +748,7 @@ msgstr ""
 "the commit verifies that <code>svn properties</code> file or directory "
 "exactly match what should be according to the data repository;"
 
-#: en_US/build/main/index.l10n.xml:546(para)
+#: en_US/build/main/index.l10n.xml:565(para)
 msgid ""
 "средствами Subversion большую часть свойств изменить нельзя (исключения: "
 "<code>svn:executable</code>, <code>svn:special</code>);"
@@ -732,7 +756,7 @@ msgstr ""
 "Subversion does not tool allows you to change most of the properties "
 "(exception: <code>svn:executable</code>, <code>svn:special</code>);"
 
-#: en_US/build/main/index.l10n.xml:552(para)
+#: en_US/build/main/index.l10n.xml:571(para)
 msgid ""
 "если какой-либо файл влияет на <code>svn properties</code> других файлов, то "
 "после его изменения <code>svn properties</code> этих файлов так же "
@@ -741,11 +765,11 @@ msgstr ""
 "if a file affects the <code>svn properties</code> other files after changing "
 "it <code>svn properties</code> of the files in the same change."
 
-#: en_US/build/main/index.l10n.xml:559(title)
+#: en_US/build/main/index.l10n.xml:578(title)
 msgid "Файл .gitignores"
 msgstr "File .gitignores"
 
-#: en_US/build/main/index.l10n.xml:561(para)
+#: en_US/build/main/index.l10n.xml:580(para)
 msgid ""
 "Данный файл влияет на свойство <code>svn:ignore</code> и <code>svn:global-"
 "ignores</code> для директории и её поддиректорий."
@@ -753,29 +777,29 @@ msgstr ""
 "This file affects the property <code>svn:ignore</code> and <code>svn:global-"
 "ignores</code> for the directory and its subdirectories."
 
-#: en_US/build/main/index.l10n.xml:564(para)
+#: en_US/build/main/index.l10n.xml:583(para)
 msgid "Например, файл в каталоге <filename>/foo</filename> с содержимым:"
 msgstr ""
 "For example, a file in the directory <filename>/foo</filename> with the "
 "contents:"
 
-#: en_US/build/main/index.l10n.xml:569(para)
+#: en_US/build/main/index.l10n.xml:588(para)
 msgid "Проецируется на свойства:"
 msgstr "Mapped to properties:"
 
-#: en_US/build/main/index.l10n.xml:573(para)
+#: en_US/build/main/index.l10n.xml:592(para)
 msgid "для каталога <code>/foo</code>:"
 msgstr "for directory <code>/foo</code>:"
 
-#: en_US/build/main/index.l10n.xml:579(para)
+#: en_US/build/main/index.l10n.xml:598(para)
 msgid "для каталогов <code>/foo/*</code>:"
 msgstr "for directory <code>/foo/*</code>:"
 
-#: en_US/build/main/index.l10n.xml:585(para)
+#: en_US/build/main/index.l10n.xml:604(para)
 msgid "для каталога <code>/foo/.idea</code>:"
 msgstr "for directory <code>/foo/.idea</code>:"
 
-#: en_US/build/main/index.l10n.xml:592(para)
+#: en_US/build/main/index.l10n.xml:611(para)
 msgid ""
 "Для Subversion нет способа сделать исключения для директорий, в результате, "
 "к примеру, правила <code>/foo</code> (файл или директория <code>foo</code>) "
@@ -787,7 +811,7 @@ msgstr ""
 "code>) and <code>/foo/</code> (directory <code>foo</code>) in Subversion "
 "will work the same way, though to Git they have different behavior."
 
-#: en_US/build/main/index.l10n.xml:598(para)
+#: en_US/build/main/index.l10n.xml:617(para)
 msgid ""
 "Правила вида \"все кроме\" не поддерживаются при проецировании на <code>svn:"
 "global-ignores</code>."
@@ -795,11 +819,11 @@ msgstr ""
 "Terms like \"all but\" not supported on mapping to the <code>svn:global-"
 "ignores</code> property."
 
-#: en_US/build/main/index.l10n.xml:604(title)
+#: en_US/build/main/index.l10n.xml:623(title)
 msgid "Файл .gitattributes"
 msgstr "File .gitattributes"
 
-#: en_US/build/main/index.l10n.xml:606(para)
+#: en_US/build/main/index.l10n.xml:625(para)
 msgid ""
 "Данный файл влияет на свойства <code>svn:eol-style</code> и <code>svn:mime-"
 "type</code> файлов от данной директории и <code>svn:auto-props</code> у "
@@ -809,20 +833,20 @@ msgstr ""
 "<code>svn:mime-type</code> files from this directory and <code>svn:auto-"
 "props</code> from the directory itself."
 
-#: en_US/build/main/index.l10n.xml:610(para)
+#: en_US/build/main/index.l10n.xml:629(para)
 msgid "Например, файл с содержимым:"
 msgstr "For example, a file with contents:"
 
-#: en_US/build/main/index.l10n.xml:614(para)
+#: en_US/build/main/index.l10n.xml:633(para)
 msgid "Добавит к директории свойство <code>svn:auto-props</code> с содержимым:"
 msgstr ""
 "Add property to the directory <code>svn:auto-props</code> with the contents:"
 
-#: en_US/build/main/index.l10n.xml:619(para)
+#: en_US/build/main/index.l10n.xml:638(para)
 msgid "И файлам в данной директории:"
 msgstr "And files in this directory:"
 
-#: en_US/build/main/index.l10n.xml:623(para)
+#: en_US/build/main/index.l10n.xml:642(para)
 msgid ""
 "с суффиксом <filename>.txt</filename> свойство <code>svn:eol-style = "
 "navtive</code>"
@@ -830,7 +854,7 @@ msgstr ""
 "for suffix <filename>.txt</filename> add property <code>svn:eol-style = "
 "navtive</code>"
 
-#: en_US/build/main/index.l10n.xml:628(para)
+#: en_US/build/main/index.l10n.xml:647(para)
 msgid ""
 "с суффиксом <filename>.xml</filename> свойство <code>svn:eol-style = LF</"
 "code>"
@@ -838,7 +862,7 @@ msgstr ""
 "for suffix <filename>.xml</filename> add property <code>svn:eol-style = LF</"
 "code>"
 
-#: en_US/build/main/index.l10n.xml:633(para)
+#: en_US/build/main/index.l10n.xml:652(para)
 msgid ""
 "с суффиксом <filename>.bin</filename> свойство <code>svn:mime-type = "
 "application/octet-stream</code>"
@@ -846,26 +870,26 @@ msgstr ""
 "for suffix <filename>.bin</filename> add property <code>svn:mime-type = "
 "application/octet-stream</code>"
 
-#: en_US/build/main/index.l10n.xml:640(title)
+#: en_US/build/main/index.l10n.xml:659(title)
 msgid "Файл .tgitconfig"
 msgstr "File .tgitconfig"
 
-#: en_US/build/main/index.l10n.xml:642(para)
+#: en_US/build/main/index.l10n.xml:661(para)
 msgid "Данный файл меняет только свойства директории, в которой он расположен."
 msgstr ""
 "This file only changes the properties of the directory in which it is "
 "located."
 
-#: en_US/build/main/index.l10n.xml:645(para)
+#: en_US/build/main/index.l10n.xml:664(para)
 msgid "Свойства проецируются один-к-одному, например, файл с содержимым:"
 msgstr ""
 "Properties are mapped one-to-one, for example, a file with the contents:"
 
-#: en_US/build/main/index.l10n.xml:650(para)
+#: en_US/build/main/index.l10n.xml:669(para)
 msgid "Будет преобразован в свойства:"
 msgstr "It will be converted to properties:"
 
-#: en_US/build/main/index.l10n.xml:667(para)
+#: en_US/build/main/index.l10n.xml:686(para)
 msgid ""
 "Если вы используете данные svn properties, то крайне рекомендуется "
 "использовать TortoiseSVN 1.9 или более поздний."
@@ -873,7 +897,7 @@ msgstr ""
 "If you use bugtraq svn properties, it is highly recommended that you use "
 "TortoiseSVN 1.9 or later."
 
-#: en_US/build/main/index.l10n.xml:670(para)
+#: en_US/build/main/index.l10n.xml:689(para)
 msgid ""
 "В противном случае TortoiseSVN будет пытаться установить данные параметры "
 "для всех вновь создаваемых каталогов."

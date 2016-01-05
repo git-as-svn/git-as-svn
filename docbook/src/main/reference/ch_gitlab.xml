@@ -116,6 +116,27 @@
   </section>
 
   <section>
+    <title>Добавление SVN-ссылки в интерфейс GitLab</title>
+
+    <para>Для того, чтобы добавить SVN-ссылку в интерфейс GitLab нужно взять
+    последний коммит из ветки <link
+    xlink:href="https://github.com/bozaro/gitlabhq/commits/svn_url">https://github.com/bozaro/gitlabhq/commits/svn_url</link>.</para>
+
+    <screenshot>
+      <info>
+        <title>Пример SVN-ссылки в интерфейсе GitLab</title>
+      </info>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata contentwidth="160mm" fileref="images/gitlab_svn_url.png"
+                     scalefit="1"/>
+        </imageobject>
+      </mediaobject>
+    </screenshot>
+  </section>
+
+  <section>
     <title>Пример конфигурационного файла</title>
 
     <programlisting language="yaml" linenumbering="numbered"><xi:include
