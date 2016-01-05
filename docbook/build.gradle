@@ -46,6 +46,17 @@ subprojects {
     into ("${project.buildDir}/fonts")
   }
 
+  task updatePo(type: Exec, dependsOn: docbookSinglePo) {
+    def input = file("${docbookDir}/index.l10n.xml")
+
+    inputs.file input
+
+    workingDir input.parentFile
+    executable "xml2po"
+    args "-u", getPo(project)
+    args input.name
+  }
+
   task translate(type: Exec, dependsOn: docbookSingle) {
     def output = file("${docbookDir}/index.xml")
     def input = "${docbookDir}/index.single.xml"

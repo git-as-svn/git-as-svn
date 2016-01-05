@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-05 22:21+0300\n"
+"POT-Creation-Date: 2016-01-05 22:44+0300\n"
 "PO-Revision-Date: 2016-01-04 22:08+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -13,17 +13,17 @@ msgstr ""
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
-#: ru_RU/build/docbook/index.l10n.xml:460(None)
+#: index.l10n.xml:460(None)
 msgid ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
 msgstr ""
 
-#: ru_RU/build/docbook/index.l10n.xml:373(phrase)
+#: index.l10n.xml:373(phrase)
 msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"
 msgstr ""
 ": Добавлена команда git-lfs-authenticate в белый список (включено в 7.14.1);"
 
-#: ru_RU/build/docbook/index.l10n.xml:379(phrase)
+#: index.l10n.xml:379(phrase)
 msgid ""
 ": Execute git-lfs-authenticate command with original arguments (merged to "
 "8.2.0);"
@@ -31,13 +31,13 @@ msgstr ""
 ": Выполнение команды git-lfs-authenticate в оригинальными аргументами "
 "(включено в 8.2.0);"
 
-#: ru_RU/build/docbook/index.l10n.xml:385(phrase)
+#: index.l10n.xml:385(phrase)
 msgid ": Add API for lookup user information by SSH key ID (merged to 8.0.0);"
 msgstr ""
 ": Добавлено API для получения информации о пользователе по идентификатору "
 "SSH-ключа (включено в 8.0.0);"
 
-#: ru_RU/build/docbook/index.l10n.xml:391(phrase)
+#: index.l10n.xml:391(phrase)
 msgid ""
 ": Show \"Empty Repository Page\" for repository without branches (merged to "
 "8.2.0)."
@@ -46,6 +46,6 @@ msgstr ""
 "8.2.0)."
 
 #. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
-#: ru_RU/build/docbook/index.l10n.xml:0(None)
+#: index.l10n.xml:0(None)
 msgid "translator-credits"
 msgstr ""
