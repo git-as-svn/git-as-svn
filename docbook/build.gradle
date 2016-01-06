@@ -101,11 +101,6 @@ subprojects {
       from("${project.buildDir}/reference/epub")
       into("${rootProject.buildDir}/doc/epub")
     }
-    copy {
-      from("${project.buildDir}/reference/epub")
-      from("${project.buildDir}/reference/pdf")
-      into("${rootProject.buildDir}/distributions")
-    }
   }
 
   rootProject.createDocs {
