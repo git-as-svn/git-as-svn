@@ -19,8 +19,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.DocbookConstants;
 import svnserver.StringHelper;
-import svnserver.WikiConstants;
 import svnserver.auth.User;
 import svnserver.repository.*;
 import svnserver.repository.git.prop.PropertyMapping;
@@ -438,7 +438,7 @@ public class GitWriter implements VcsWriter {
           message.append("  ").append(configFile).append('\n');
         }
         message.append("\n" +
-            "For more detailed information you can see: ").append(WikiConstants.PROPERTIES).append("\n");
+            "For more detailed information you can see: ").append(DocbookConstants.PROPERTIES).append("\n");
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
       }
     }

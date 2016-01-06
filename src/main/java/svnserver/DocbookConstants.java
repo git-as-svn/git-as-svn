@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author a.navrotskiy
  */
-public final class WikiConstants {
+public final class DocbookConstants {
   @NotNull
-  public static final String WIKI = "https://github.com/bozaro/git-as-svn/wiki/";
+  public static final String DOCBOOK = "https://bozaro.github.io/git-as-svn/html/en_US/";
   @NotNull
-  public static final String PROPERTIES = WIKI + "Properties";
+  public static final String PROPERTIES = DOCBOOK + "ch_props.html";
 }
