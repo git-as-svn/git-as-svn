@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+<chapter version="5.0" xml:lang="ru_RU" xmlns="http://docbook.org/ns/docbook"
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:svg="http://www.w3.org/2000/svg"
@@ -28,7 +28,7 @@
         <para>После распаковки архива перейти в распакованный каталог и
         запустить команду:</para>
 
-        <programlisting>bin/git-as-svn --config doc/config-local.example --show-config</programlisting>
+        <programlisting xml:lang="C">bin/git-as-svn --config doc/config-local.example --show-config</programlisting>
       </listitem>
     </orderedlist>
 
@@ -41,7 +41,7 @@
 
         <para>Для его проверки можно выполнить команду:</para>
 
-        <programlisting>svn ls svn://localhost/example</programlisting>
+        <programlisting xml:lang="C">svn ls svn://localhost/example</programlisting>
       </listitem>
 
       <listitem>
@@ -97,7 +97,7 @@
 
     <para>Полностью собрать дистрибутив можно командой:</para>
 
-    <programlisting language="bash">./gradlew assembleDist</programlisting>
+    <programlisting language="bash" xml:lang="C">./gradlew assembleDist</programlisting>
 
     <para>Комплект установочных файлов будет располагаться в директории:
     <filename>build/distributions</filename></para>

@@ -6,14 +6,14 @@
       xmlns:m="http://www.w3.org/1998/Math/MathML"
       xmlns:html="http://www.w3.org/1999/xhtml"
       xmlns:db="http://docbook.org/ns/docbook">
-  <info>
+  <info xml:lang="ru_RU">
     <title>Git as Subversion</title>
 
     <subtitle>Руководство пользователя</subtitle>
 
     <author>
-      <personname><firstname>Artem</firstname>
-      <surname>Navrotskiy</surname></personname>
+      <personname><firstname>Артём</firstname>
+      <surname>Навроцкий</surname></personname>
     </author>
 
     <pubdate>2015</pubdate>
@@ -21,7 +21,7 @@
     <copyright>
       <year>2014-2015</year>
 
-      <holder>Artem Navrotskiy</holder>
+      <holder>Артём Навроцкий</holder>
     </copyright>
 
     <productname>git-as-svn</productname>

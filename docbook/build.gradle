@@ -4,11 +4,36 @@ subprojects {
   def docbookDir = "${project.buildDir}/docbook"
   def inputDir = "${project.parent.projectDir}/src/main/reference"
 
-  task translate(type: Copy) {
-    from (inputDir) {
-      exclude "**/*.xml"
-    }
+  task docbookStatic(type: Copy) {
+    from inputDir
+    exclude "**/*.xml"
     into docbookDir
+  }
+
+  task docbookSingle(dependsOn: docbookStatic) {
+    inputs.dir   "${project.parent.projectDir}/src/main/reference"
+    outputs.file "${docbookDir}/index.single.xml"
+    doLast {
+      ant.xslt (
+          in: "${project.parent.projectDir}/src/main/reference/index.xml",
+          out: "${docbookDir}/index.single.xml",
+          style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+      )
+    }
+  }
+
+  task docbookSinglePo(dependsOn: docbookStatic) {
+    inputs.dir   "${project.parent.projectDir}/src/main/reference"
+    outputs.file "${docbookDir}/index.l10n.xml"
+    doLast {
+      ant.xslt (
+          in: "${project.parent.projectDir}/src/main/reference/index.xml",
+          out: "${docbookDir}/index.l10n.xml",
+          style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+      ) {
+        param(name: "lang", expression: project.name)
+      }
+    }
   }
 
   task fopConfig(type: Copy) {
@@ -21,25 +46,32 @@ subprojects {
     into ("${project.buildDir}/fonts")
   }
 
-  fileTree(inputDir) {
-    include "**/*.xml"
-  }.visit {FileVisitDetails details ->
-    if (details.directory) return;
-    translate.dependsOn.add(tasks.create (name: "translate." + details.relativePath, type: Exec) {
-      def output = file("$docbookDir/${details.relativePath}")
-      output.parentFile.mkdirs()
+  task updatePo(type: Exec, dependsOn: docbookSinglePo) {
+    def input = file("${docbookDir}/index.l10n.xml")
 
-      inputs.file file(details.file)
-      inputs.file file(getPo(project))
-      outputs.file output
+    inputs.file input
 
-      executable "xml2po"
-      args "-p", getPo(project)
-      args details.file.path
-      doFirst {
-        standardOutput = new FileOutputStream(output)
-      }
-    })
+    workingDir input.parentFile
+    executable "xml2po"
+    args "-u", getPo(project)
+    args input.name
+  }
+
+  task translate(type: Exec, dependsOn: docbookSingle) {
+    def output = file("${docbookDir}/index.xml")
+    def input = "${docbookDir}/index.single.xml"
+    output.parentFile.mkdirs()
+
+    inputs.file file(input)
+    inputs.file file(getPo(project))
+    outputs.file output
+
+    executable "xml2po"
+    args "-p", getPo(project)
+    args input
+    doFirst {
+      standardOutput = new FileOutputStream(output)
+    }
   }
 
   reference {
@@ -68,11 +100,6 @@ subprojects {
     copy {
       from("${project.buildDir}/reference/epub")
       into("${rootProject.buildDir}/doc/epub")
-    }
-    copy {
-      from("${project.buildDir}/reference/epub")
-      from("${project.buildDir}/reference/pdf")
-      into("${rootProject.buildDir}/distributions")
     }
   }
 

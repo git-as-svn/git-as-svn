@@ -3,6 +3,20 @@
 [![Build Status](https://travis-ci.org/bozaro/git-as-svn.svg?branch=master)](https://travis-ci.org/bozaro/git-as-svn)
 [![Download](https://img.shields.io/github/release/bozaro/git-as-svn.svg)](https://github.com/bozaro/git-as-svn/releases/latest)
 
+## Documentation links
+You can read documentation by links:
+
+ * English:
+   [HTML multipage](https://bozaro.github.io/git-as-svn/html/en_US/),
+   [HTML single page](https://bozaro.github.io/git-as-svn/htmlsingle/en_US/),
+   [PDF](https://bozaro.github.io/git-as-svn/pdf/git-as-svn.en_US.pdf),
+   [EPUB](https://bozaro.github.io/git-as-svn/epub/git-as-svn.en_US.epub)
+ * Russian:
+   [HTML multipage](https://bozaro.github.io/git-as-svn/html/ru_RU/),
+   [HTML single page](https://bozaro.github.io/git-as-svn/htmlsingle/ru_RU/),
+   [PDF](https://bozaro.github.io/git-as-svn/pdf/git-as-svn.ru_RU.pdf),
+   [EPUB](https://bozaro.github.io/git-as-svn/epub/git-as-svn.ru_RU.epub)
+
 ## What is it?
 This project is an implementation of the Subversion server (svn protocol) for git repository.
 
