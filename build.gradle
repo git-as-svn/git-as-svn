@@ -119,6 +119,11 @@ test {
   useTestNG()
   maxHeapSize = "384m"
   ignoreFailures = "$testIgnoreFailures".toBoolean()
+
+  // listen to events in the test execution lifecycle
+  beforeTest { descriptor ->
+    logger.lifecycle("Running test: " + descriptor)
+  }
 }
 
 jar {
