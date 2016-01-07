@@ -8,7 +8,6 @@ env:
 addons:
   apt:
     packages:
-    - protobuf-compiler
     - gnome-doc-utils
 install:
 - ./gradlew assemble
