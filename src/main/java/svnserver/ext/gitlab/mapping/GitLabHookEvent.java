@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.mapping;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import java.io.Reader;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GitLabHookEvent {
   @JsonProperty("event_name")
   private String eventName;

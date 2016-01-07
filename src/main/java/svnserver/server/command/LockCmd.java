@@ -73,6 +73,11 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
         .listEnd();
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkWrite(context.getRepositoryPath(args.path));
+  }
+
   static void writeLock(@NotNull SvnServerWriter writer, @Nullable LockDesc lockDesc) throws IOException {
     if (lockDesc != null)
       writer

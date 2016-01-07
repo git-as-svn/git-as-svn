@@ -1,6 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
-project.version = "1.0.14"
+project.version = "1.0.17"
 
 buildscript {
   repositories {
@@ -9,6 +9,9 @@ buildscript {
     maven {
       url "https://bozaro.github.io/gradle-ospackage-plugin/repository"
     }
+    maven {
+      url "https://repo.spring.io/plugins-release"
+    }
   }
 
   dependencies {
@@ -16,6 +19,7 @@ buildscript {
     classpath "org.ajoberstar:gradle-git:0.9.0"
     classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.1"
     classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0-dev.17+postinst.ac6901a"
+    classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
   }
 }
 
@@ -23,9 +27,15 @@ task wrapper(type: Wrapper) {
   gradleVersion = "2.7"
 }
 
-repositories {
-  mavenLocal()
-  mavenCentral()
+allprojects {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+
+subprojects {
+  version = rootProject.version
 }
 
 apply plugin: "license"
@@ -61,15 +71,17 @@ dependencies {
   compile "com.googlecode.protobuf-java-format:protobuf-java-format:1.4"
   compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
 
-  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.6.0"
-  compile "ru.bozaro.gitlfs:gitlfs-client:0.6.0"
-  compile "ru.bozaro.gitlfs:gitlfs-server:0.6.0"
+  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.7.0"
+  compile "ru.bozaro.gitlfs:gitlfs-client:0.7.0"
+  compile "ru.bozaro.gitlfs:gitlfs-server:0.7.0"
 
   compile "org.slf4j:slf4j-api:1.7.12"
   runtime "org.apache.logging.log4j:log4j-core:2.4.1"
   runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1"
 
-  testCompile "org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19"
+  testCompile("org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M19") {
+    exclude group: "org.slf4j", module: "slf4j-log4j12"
+  }
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
   testCompile "org.testng:testng:6.8.8"
 }
@@ -97,7 +109,7 @@ idea {
 
 run {
   args "-c"
-  args "${projectDir}/config-local.example"
+  args "${projectDir}/cfg/config-local.example"
 }
 
 tasks.withType(JavaCompile) {
@@ -108,6 +120,11 @@ test {
   useTestNG()
   maxHeapSize = "384m"
   ignoreFailures = "$testIgnoreFailures".toBoolean()
+
+  // listen to events in the test execution lifecycle
+  beforeTest { descriptor ->
+    logger.lifecycle("Running test: " + descriptor)
+  }
 }
 
 jar {
@@ -121,12 +138,17 @@ jar {
 }
 
 protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:2.6.1"
+  }
   generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
 task createDocs(type: Copy) {
-  from(project.projectDir) {
+  from("$projectDir/cfg") {
     include "*.example"
+  }
+  from("$projectDir") {
     include "*.md"
     include "LICENSE"
   }

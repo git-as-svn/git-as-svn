@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xml:lang="ru_RU" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:m="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook">
+  <title>О проекте</title>
+
+  <section>
+    <title>Что это?</title>
+
+    <para>Git as Subversion — это реализация Subversion-сервера (по протоколу
+    svn) для Git-репозиториев.</para>
+
+    <para>Он позволяет работать с Git-репозиторием, используя консольный
+    Subversion-клиент, TortoiseSVN, SvnKit и подобный инструментарий.</para>
+  </section>
+
+  <section>
+    <title>Какова цель проекта?</title>
+
+    <para>Проект создан для того, чтобы позволить работать с одним и тем же
+    репозиторием как в Git-стиле, так и в Subversion-стиле.</para>
+
+    <glosslist>
+      <glossentry>
+        <glossterm>Git-стиль</glossterm>
+
+        <glossdef>
+          <para>Основная идея сводится к тому, что разработчик производит все
+          изменения в локальной ветке. Эти изменения никак не влияют на работу
+          остальных разработчиков, но тем не менее их можно протестировать на
+          сборочной ферме, передать другому разработчику на проверку и
+          т.д.</para>
+
+          <para>Это позволяет каждому разработчику вести работу независимо,
+          так, как ему удобно, изменяя и сохраняя промежуточные версии
+          документов, пользуясь всеми возможностями системы (в том числе
+          доступом к истории изменений) даже в отсутствие сетевого соединения
+          с сервером.</para>
+
+          <para>К сожалению, этот подход не работает в случае, когда
+          изменяемые документы не поддерживают слияние (например, это
+          характерно для двоичных файлов).</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Subversion-стиль</glossterm>
+
+        <glossdef>
+          <para>Использование централизованной системы контроля версий более
+          удобно в случае использования документов не поддерживающих слияние
+          (например, это характерно для двоичных файлов) за счет наличия
+          механизма блокировок и более простого и короткого цикла публикации
+          изменений.</para>
+        </glossdef>
+      </glossentry>
+    </glosslist>
+
+    <para>Необходимость совместить Git-стиль и Subversion-стиль работы с одним
+    репозиторием возникает из-за того, что разные сотрудники в рамках одного
+    проекта работают с принципиально разными данными. Если утрировать, то
+    программисты предпочитают Git, а художники любят Subversion.</para>
+  </section>
+
+  <section>
+    <title>Как оно работает?</title>
+
+    <section>
+      <title>Где хранятся Subversion-данные репозитория?</title>
+
+      <para>Для представления Subversion репозитория нужно хранить информацию
+      о том, какой номер Subversion-ревизии соответствует какому Git-коммиту.
+      Вычислять эту информацию каждый раз при запуске нельзя, так как тогда
+      первый же <command>git push --force</command> нарушит порядок ревизий.
+      Эти данные лежат в ветках <filename>refs/git-as-svn/*</filename>. В
+      частности из-за этого не требуется отдельного резервного копирования для
+      Subversion-данных.</para>
+
+      <para>Также часть данных, необходимых для Subversion репозитория, очень
+      дорого получить на основании Git-репозитория.</para>
+
+      <para>Например:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>номер ревизии с предыдущим изменением файла;</para>
+        </listitem>
+
+        <listitem>
+          <para>данные о том, откуда был скопирован файл;</para>
+        </listitem>
+
+        <listitem>
+          <para>MD5-хэш файла.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Чтобы не заниматься их вычислением каждый запуск, эти данные
+      кэширутся в файлах. Потеря данного кэша не критична для работы и его
+      резервное копирование не имеет смысла.</para>
+
+      <para>Данные о блокировках файлов в данный момент так же хранятся в
+      файла кэша.</para>
+    </section>
+
+    <section>
+      <title>Как работает коммит?</title>
+
+      <para>Одна из самых важных деталей системы — сохранение
+      изменений.</para>
+
+      <para>В общих чертах, алгоритм следующий:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>В момент команды <command>svn commit</command> клиент
+          отправляет на сервер свои изменения. Сервер запоминает их. В этот же
+          момент происходит первая проверка клиентских данных на
+          актуальность.</para>
+        </listitem>
+
+        <listitem>
+          <para>Сервер берет голову ветки и начинает формировать новый коммит
+          на базе полученных от клиента данных. В этот момент происходит ещё
+          одна проверка на актуальность клиентских данных.</para>
+        </listitem>
+
+        <listitem>
+          <para>Проверяется целостность svn properties для заливаемых
+          данных.</para>
+        </listitem>
+
+        <listitem>
+          <para>Сервер пытается консольным Git-клиентом сделать push нового
+          коммита в текущую ветку этого же репозитория. Далее по результату
+          push-а:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>если все хорошо — загружаем последние изменения из
+              git-коммитов и радуемся;</para>
+            </listitem>
+
+            <listitem>
+              <para>если не fast forward — загружаем последние изменения из
+              git-коммитов и идём к шагу 2;</para>
+            </listitem>
+
+            <listitem>
+              <para>если отбили хуки — сообщаем клиенту;</para>
+            </listitem>
+
+            <listitem>
+              <para>если другая ошибка — сообщаем клиенту.</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+      </orderedlist>
+
+      <para>Таким образом, за счёт использования в данной операции консольного
+      Git-а мы избегает гонки с заливкой напрямую через Git, и получаем хуки в
+      качестве приятного бонуса.</para>
+    </section>
+
+    <section>
+      <title>Отличие от других решений</title>
+
+      <para>Проблему совмещения Git и Subversion стиля работы с системой
+      контроля версий можно решить разными способами.</para>
+
+      <section>
+        <title>Поддержка Subversion у GitHub</title>
+
+        <para>Это, наверное, самый близкий аналог.</para>
+
+        <para>Основная проблема данной реализации — неотделимость от GitHub.
+        Так же, внезапно, данная реализация не поддерживает Git LFS.</para>
+      </section>
+
+      <section>
+        <title>SubGit</title>
+
+        <para>Сайт: <link
+        xlink:href="http://www.subgit.com/">http://www.subgit.com/</link></para>
+
+        <para>Достаточно интересная реализация при которой поддерживаются Git
+        и Subversion-репозитории в синхронном состоянии. За счет чего
+        обеспечивается синхронность репозиториев — не понятно.</para>
+      </section>
+
+      <section>
+        <title>Subversion репозиторий и git svn</title>
+
+        <para>Данный способ позволяет использовать Git при работе с
+        Subversion-репозиторием, но использование общего Git-репозитория между
+        несколькими разработчиками сильно затруднено.</para>
+      </section>
+    </section>
+  </section>
+
+  <section>
+    <title>Функционал</title>
+
+    <section>
+      <title>Что уже есть?</title>
+
+      <orderedlist>
+        <listitem>
+          <para>Работаю, как минимум, следующие клиенты:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>Консольный Subversion-клиент;</para>
+            </listitem>
+
+            <listitem>
+              <para>TortoiseSVN;</para>
+            </listitem>
+
+            <listitem>
+              <para>SvnKit.</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+
+        <listitem>
+          <para>Работают, как минимум, следующие операции:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>svn checkout, update, switch, diff</para>
+            </listitem>
+
+            <listitem>
+              <para>svn commit</para>
+            </listitem>
+
+            <listitem>
+              <para>svn copy, move<footnote>
+                  <para>Операции поддерживаются, но данные об источнике
+                  копирования не сохраняются.</para>
+                </footnote></para>
+            </listitem>
+
+            <listitem>
+              <para>svn cat, ls</para>
+            </listitem>
+
+            <listitem>
+              <para>svn lock, unlock</para>
+            </listitem>
+
+            <listitem>
+              <para>svn replay (svnsync)</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+
+        <listitem>
+          <para>Поддерживается Git LFS;</para>
+        </listitem>
+
+        <listitem>
+          <para>Поддерживаются git submodules;<footnote>
+              <para>Данные из git submodule видны в репозитории в режиме
+              только для чтения.</para>
+            </footnote></para>
+        </listitem>
+
+        <listitem>
+          <para>Авторизация через LDAP;</para>
+        </listitem>
+
+        <listitem>
+          <para>Интеграция с GitLab.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section>
+      <title>Чего еще нет?</title>
+
+      <orderedlist>
+        <listitem>
+          <para>Категорически не хватает документации;</para>
+        </listitem>
+
+        <listitem>
+          <para>Из Subversion доступна только одна ветка.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section>
+      <title>Технические ограничения</title>
+
+      <orderedlist>
+        <listitem>
+          <para>Нельзя средствами Subversion менять svn properties.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+  </section>
+</chapter>

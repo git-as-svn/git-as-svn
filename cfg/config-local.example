@@ -21,7 +21,7 @@
 
 # Set cache location
 cacheConfig: !persistentCache
-  path: build/git-as-svn.mapdb
+  path: ../build/git-as-svn.mapdb
 
 repositoryMapping: !listMapping
   repositories:
@@ -55,7 +55,7 @@ repositoryMapping: !listMapping
         # - EXAMPLE - create repository with example data
         createMode: EXAMPLE
         branch: master
-        path: build/example.git
+        path: ../build/example.git
         renameDetection: true
         extensions:
           - !api
@@ -81,7 +81,7 @@ shared:
   - !lfs
     # Secret token for git-lfs-authenticate script
     # token: secret
-    path: build/lfs
+    path: ../build/lfs
   - !api
     path: /api
   - !socket

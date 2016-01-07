@@ -39,7 +39,7 @@ public class AuthLdapTest {
   public void validUserPooled() throws Throwable {
     try (
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
-        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig())
+        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
       final ExecutorService pool = Executors.newFixedThreadPool(10);
       final AtomicBoolean done = new AtomicBoolean(false);
@@ -73,14 +73,33 @@ public class AuthLdapTest {
     checkUser("ldapadmin2", "ldapadmin");
   }
 
-  private void checkUser(@NotNull String login, @NotNull String password) throws Throwable {
+  @Test
+  public void anonymousUserAllowed() throws Throwable {
+    checkAnonymous(true);
+  }
+
+  @Test(expectedExceptions = SVNAuthenticationException.class)
+  public void anonymousUserDenies() throws Throwable {
+    checkAnonymous(false);
+  }
+
+  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
     try (
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
-        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig())
+        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
       final SVNRepository repo = server.openSvnRepository();
       repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(login, password.toCharArray()));
       repo.getLatestRevision();
+    }
+  }
+
+  private void checkAnonymous(boolean anonymousRead) throws Exception {
+    try (
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), anonymousRead)
+    ) {
+      server.openSvnRepository().getLatestRevision();
     }
   }
 

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xml:lang="ru_RU" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:m="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook">
+  <title>Установка</title>
+
+  <section>
+    <title>Быстрый старт</title>
+
+    <para>Для того, чтобы посмотреть, как работает Git as Subversion
+    нужно:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Установить Java 8 или более позднюю;</para>
+      </listitem>
+
+      <listitem>
+        <para>Скачать архив с сайта <link
+        xlink:href="https://github.com/bozaro/git-as-svn/releases/latest">https://github.com/bozaro/git-as-svn/releases/latest</link>;</para>
+      </listitem>
+
+      <listitem>
+        <para>После распаковки архива перейти в распакованный каталог и
+        запустить команду:</para>
+
+        <programlisting xml:lang="C">bin/git-as-svn --config doc/config-local.example --show-config</programlisting>
+      </listitem>
+    </orderedlist>
+
+    <para>В результате будет запущен Git as Subversion сервер в следующей
+    конфигурации:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Сервер доступен через svn-протокол по порту 3690.</para>
+
+        <para>Для его проверки можно выполнить команду:</para>
+
+        <programlisting xml:lang="C">svn ls svn://localhost/example</programlisting>
+      </listitem>
+
+      <listitem>
+        <para>Для доступа к серверу необходимо использовать
+        пользователя:</para>
+
+        <para>Имя пользователя: test</para>
+
+        <para>Пароль: test</para>
+      </listitem>
+
+      <listitem>
+        <para>Репозиторий и кэш будут созданы в каталоге
+        <filename>build</filename>:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><filename>example.git</filename> — каталог с репозиторием,
+            доступным через svn-протокол;</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>git-as-svn.mapdb*</filename> — файлы с кэшем
+            дорого вычисляемых данных.</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+    </orderedlist>
+  </section>
+
+  <section>
+    <title>Сборка из исходного кода</title>
+
+    <para>Данный проект изначально рассчитан на сборку в Ubuntu.</para>
+
+    <para>Для сборки из исходного кода необходимо локально установить:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Java 8 (пакет openjdk-8-jdk);</para>
+      </listitem>
+
+      <listitem>
+        <para>xml2po (пакет gnome-doc-utils) — необходимо для сборки
+        документации;</para>
+      </listitem>
+
+      <listitem>
+        <para>protoc (пакет protobuf-compiler) — необходимо для сборки
+        API.</para>
+      </listitem>
+    </orderedlist>
+
+    <para>Полностью собрать дистрибутив можно командой:</para>
+
+    <programlisting language="bash" xml:lang="C">./gradlew assembleDist</programlisting>
+
+    <para>Комплект установочных файлов будет располагаться в директории:
+    <filename>build/distributions</filename></para>
+  </section>
+</chapter>

@@ -1,0 +1,40 @@
+!config:
+realm: Example realm
+compressionEnabled: true
+
+# Use GitLab repositories
+repositoryMapping: !gitlabMapping
+  path: /var/opt/gitlab/git-data/repositories/
+  template:
+    branch: master
+    renameDetection: true
+
+# Use GitLab user database
+userDB: !gitlabUsers {}
+
+shared:
+  # Web server settings
+  # Used for:
+  #  * detecticting add/remove repositories via GitLab System Hook
+  #  * git-lfs-authenticate script (optionaly)
+  - !web
+    baseUrl: http://git-as-svn.local/
+    listen:
+    - !http
+      host: localhost
+      port: 8123
+      # Use X-Forwarded-* headers
+      forwarded: true
+  # GitLab LFS server
+  - !lfs
+    # Secret token for git-lfs-authenticate script
+    # token: secret
+    path: /mnt/storage/lfs-objects
+    saveMeta: false
+    compress: false
+    layout: GitLab
+  # GitLab server
+  - !gitlab
+    url: http://localhost:3000/
+    hookUrl: http://localhost:8123/
+    token: qytzQc6uYiQfsoqJxGuG

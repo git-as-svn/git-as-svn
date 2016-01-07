@@ -38,7 +38,7 @@ import java.util.Collections;
  * @author Artem V. Navrotskiy (bozaro at buzzsoft.ru)
  */
 public final class EmbeddedDirectoryServer implements AutoCloseable {
-  public static final String HOST = "127.0.0.2";
+  public static final String HOST = "127.0.0.3";
 
   @NotNull
   private final DirectoryService service;

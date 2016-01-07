@@ -33,7 +33,7 @@ public abstract class BaseCmd<T> {
   public abstract Class<? extends T> getArguments();
 
   public void process(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
-    context.push(new CheckPermissionStep(sessionContext -> processCommand(sessionContext, args)));
+    context.push(new CheckPermissionStep(sessionContext -> processCommand(sessionContext, args), sessionContext -> permissionCheck(sessionContext, args)));
   }
 
   /**
@@ -43,6 +43,16 @@ public abstract class BaseCmd<T> {
    * @param args    Command arguments.
    */
   protected abstract void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException;
+
+  /**
+   * Check permissions for this command.
+   *
+   * @param context Session context.
+   * @param args    Command arguments.
+   */
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
+    context.checkRead(context.getRepositoryPath(""));
+  }
 
   protected int getRevision(int[] rev, int defaultRevision) {
     return rev.length > 0 ? rev[0] : defaultRevision;

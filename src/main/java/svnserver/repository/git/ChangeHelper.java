@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
+import svnserver.repository.SvnForbiddenException;
 
 import java.io.IOException;
 import java.util.*;
@@ -94,7 +95,12 @@ public final class ChangeHelper {
 
     @NotNull
     private static Iterable<GitFile> getIterable(@Nullable GitFile tree) throws IOException, SVNException {
-      return tree != null ? tree.getEntries() : Collections.emptyList();
+      try {
+        return tree != null ? tree.getEntries() : Collections.emptyList();
+      } catch (SvnForbiddenException e) {
+        // todo: Need some additional logic for missing Git objects
+        return Collections.emptyList();
+      }
     }
 
     @Override
@@ -143,7 +149,7 @@ public final class ChangeHelper {
         if (oldTreeEntry == null || newTreeEntry == null) {
           throw new IllegalStateException("Tree entry can be null only for revision tree root.");
         }
-        compare = oldItem.getTreeEntry().compareTo(newItem.getTreeEntry());
+        compare = oldTreeEntry.compareTo(newTreeEntry);
       }
       final GitFile oldEntry;
       final GitFile newEntry;

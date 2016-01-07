@@ -1,0 +1,119 @@
+subprojects {
+  apply plugin: "docbook-reference"
+
+  def docbookDir = "${project.buildDir}/docbook"
+  def inputDir = "${project.parent.projectDir}/src/main/reference"
+
+  task docbookStatic(type: Copy) {
+    from inputDir
+    exclude "**/*.xml"
+    into docbookDir
+  }
+
+  task docbookSingle(dependsOn: docbookStatic) {
+    inputs.dir   "${project.parent.projectDir}/src/main/reference"
+    outputs.file "${docbookDir}/index.single.xml"
+    doLast {
+      ant.xslt (
+          in: "${project.parent.projectDir}/src/main/reference/index.xml",
+          out: "${docbookDir}/index.single.xml",
+          style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+      )
+    }
+  }
+
+  task docbookSinglePo(dependsOn: docbookStatic) {
+    inputs.dir   "${project.parent.projectDir}/src/main/reference"
+    outputs.file "${docbookDir}/index.l10n.xml"
+    doLast {
+      ant.xslt (
+          in: "${project.parent.projectDir}/src/main/reference/index.xml",
+          out: "${docbookDir}/index.l10n.xml",
+          style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+      ) {
+        param(name: "lang", expression: project.name)
+      }
+    }
+  }
+
+  task fopConfig(type: Copy) {
+    from ("${project.parent.projectDir}/src/main/fonts") {
+      include "fop-userconfig.xml"
+      expand (
+        fontBase: "${project.parent.projectDir}/src/main/fonts"
+      )
+    }
+    into ("${project.buildDir}/fonts")
+  }
+
+  task updatePo(type: Exec, dependsOn: docbookSinglePo) {
+    def input = file("${docbookDir}/index.l10n.xml")
+
+    inputs.file input
+
+    workingDir input.parentFile
+    executable "xml2po"
+    args "-u", getPo(project)
+    args input.name
+  }
+
+  task translate(type: Exec, dependsOn: docbookSingle) {
+    def output = file("${docbookDir}/index.xml")
+    def input = "${docbookDir}/index.single.xml"
+    output.parentFile.mkdirs()
+
+    inputs.file file(input)
+    inputs.file file(getPo(project))
+    outputs.file output
+
+    executable "xml2po"
+    args "-p", getPo(project)
+    args input
+    doFirst {
+      standardOutput = new FileOutputStream(output)
+    }
+  }
+
+  reference {
+    pdfFilename = "${project.rootProject.name}.${project.name}.pdf"
+    epubFilename = "${project.rootProject.name}.${project.name}.epub"
+    sourceDir = project.file(docbookDir)
+    fopUserConfig = file("${project.buildDir}/fonts/fop-userconfig.xml")
+
+    // Configure which files have ${} expanded
+    expandPlaceholders = "**/*.xml"
+  }
+
+  task assembleDocbook(dependsOn: reference) << {
+    copy {
+      from("${project.buildDir}/reference/html")
+      into("${rootProject.buildDir}/doc/html/${project.name}")
+    }
+    copy {
+      from("${project.buildDir}/reference/htmlsingle")
+      into("${rootProject.buildDir}/doc/htmlsingle/${project.name}")
+    }
+    copy {
+      from("${project.buildDir}/reference/pdf")
+      into("${rootProject.buildDir}/doc/pdf")
+    }
+    copy {
+      from("${project.buildDir}/reference/epub")
+      into("${rootProject.buildDir}/doc/epub")
+    }
+  }
+
+  rootProject.createDocs {
+    dependsOn assembleDocbook
+  }
+
+  referencePdf.dependsOn.add("fopConfig")
+
+  afterEvaluate {
+    tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("translate") }
+  }
+}
+
+def getPo(project) {
+  return "${project.parent.projectDir}/src/main/po/${project.name}.po"
+}

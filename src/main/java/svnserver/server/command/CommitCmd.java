@@ -230,6 +230,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     pipeline.editorCommand(context);
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
+    context.checkWrite(context.getRepositoryPath(""));
+  }
+
   private static class FileUpdater {
     @NotNull
     private final VcsDeltaConsumer deltaConsumer;
@@ -467,6 +472,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       log.debug("Modify file: {} (rev: {})", args.name, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
       final VcsDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
@@ -563,7 +569,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           }
         }
       });
-      context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision)));
+      context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision), null));
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
@@ -614,8 +620,14 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           parser.readToken(ListEndToken.class);
           //noinspection unchecked
           command.process(context, param);
+        } catch (SVNException e) {
+          if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_NOT_AUTHORIZED) {
+            log.warn("Found error in cmd " + cmd, e);
+          }
+          aborted = true;
+          throw e;
         } catch (Throwable e) {
-          log.warn("Found error in cmd {}: {}", cmd, e.getMessage());
+          log.warn("Found error in cmd " + cmd, e);
           aborted = true;
           throw e;
         }

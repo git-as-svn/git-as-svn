@@ -1,5 +1,21 @@
 # Changes
 
+## 1.0.17-alpha: Added documentation
+
+ * Add PDF, EPUB manual.
+ * Add support for anonymous authentication for public repositories.
+
+## 1.0.16-alpha: GitLab authentication
+
+ * Rewrite GitLab authentication #110.
+ * Fix some permission check issues #110.
+ * Generate token in LFS server instead pass original authentication data #105.
+ * Ignore unknown GitLab hook data.
+
+## 1.0.15-alhpa: GitLab 8.2 LFS storage layout support
+
+ * Add support for GitLab 8.2 LFS storage layout #109.
+
 ## 1.0.14-alpha: Debian packaging
 
  * Add debian packaging.

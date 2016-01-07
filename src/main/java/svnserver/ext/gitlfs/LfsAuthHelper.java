@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Helper for git-lfs-authenticate implementation.
@@ -59,22 +60,34 @@ public class LfsAuthHelper {
     }
   }
 
+  @NotNull
+  public static NumericDate getDefaultExpire() {
+    // Calculate expire time and token.
+    NumericDate expireAt = NumericDate.now();
+    expireAt.addSeconds(60);
+    return expireAt;
+  }
+
+  @NotNull
+  public static Map<String, String> createTokenHeader(@NotNull SharedContext context,
+                                                      @NotNull User user,
+                                                      @NotNull NumericDate expireAt) throws IOException {
+    WebServer webServer = WebServer.get(context);
+    final String accessToken = TokenHelper.createToken(webServer.createEncryption(), user, expireAt);
+    return ImmutableMap.<String, String>builder()
+        .put(Constants.HEADER_AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
+        .build();
+  }
+
   public static Link createToken(
       @NotNull SharedContext context,
       @NotNull URI baseLfsUrl,
       @NotNull User user
   ) throws IOException {
-    // Calculate expire time and token.
-    NumericDate expireAt = NumericDate.now();
-    expireAt.addSeconds(60);
-    WebServer webServer = WebServer.get(context);
-    final String accessToken = TokenHelper.createToken(webServer.createEncryption(), user, expireAt);
-
+    NumericDate expireAt = getDefaultExpire();
     return new Link(
         baseLfsUrl,
-        ImmutableMap.<String, String>builder()
-            .put(Constants.HEADER_AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
-            .build(),
+        createTokenHeader(context, user, expireAt),
         new Date(expireAt.getValueInMillis())
     );
   }
