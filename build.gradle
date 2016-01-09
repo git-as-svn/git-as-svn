@@ -12,6 +12,7 @@ buildscript {
     maven {
       url "https://repo.spring.io/plugins-release"
     }
+    jcenter()
   }
 
   dependencies {
@@ -20,6 +21,7 @@ buildscript {
     classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.1"
     classpath "com.netflix.nebula:gradle-ospackage-plugin:3.1.0-dev.17+postinst.ac6901a"
     classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
+    classpath "com.github.ben-manes:gradle-versions-plugin:0.11.3"
   }
 }
 
@@ -55,6 +57,7 @@ allprojects {
 
 configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
   apply plugin: "java"
+  apply plugin: "com.github.ben-manes.versions"
 
   dependencies {
     compile "org.jetbrains:annotations:13.0"
