@@ -5,14 +5,14 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.internal;
+package ru.bozaro.protobuf.internal;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Service;
 import org.atteo.classindex.ClassIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.ext.api.ProtobufFormat;
+import ru.bozaro.protobuf.ProtobufFormat;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;

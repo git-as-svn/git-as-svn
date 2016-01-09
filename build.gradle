@@ -38,27 +38,41 @@ subprojects {
   version = rootProject.version
 }
 
-apply plugin: "license"
 apply plugin: "idea"
-apply plugin: "java"
 apply plugin: "application"
-apply plugin: "project-report"
 apply plugin: "com.google.protobuf"
 apply plugin: "nebula.deb"
 
-license {
-  header rootProject.file('license_header.txt')
-  exclude "src/test/resources/svnserver"
+allprojects {
+  apply plugin: "license"
+  apply plugin: "project-report"
+
+  license {
+    header rootProject.file('license_header.txt')
+    exclude "src/test/resources/svnserver"
+  }
+}
+
+configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
+  apply plugin: "java"
+
+  dependencies {
+    compile "org.jetbrains:annotations:13.0"
+    compile "org.atteo.classindex:classindex:3.1"
+    compile "org.slf4j:slf4j-api:1.7.12"
+
+    testCompile "org.testng:testng:6.8.8"
+  }
 }
 
 dependencies {
-  compile "org.jetbrains:annotations:13.0"
+  compile project(":protobuf")
+
   compile "org.eclipse.jgit:org.eclipse.jgit:3.6.2.201501210735-r"
   compile "org.tmatesoft.svnkit:svnkit:1.8.11"
   compile "org.yaml:snakeyaml:1.14"
   compile "com.beust:jcommander:1.35"
   compile "org.ini4j:ini4j:0.5.2"
-  compile "org.atteo.classindex:classindex:3.1"
   compile "org.mapdb:mapdb:1.0.6"
   compile "com.unboundid:unboundid-ldapsdk:3.0.0"
   compile "org.eclipse.jetty:jetty-server:9.3.0.v20150612"
@@ -67,15 +81,12 @@ dependencies {
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:18.0"
-  compile "com.google.protobuf:protobuf-java:2.6.1"
-  compile "com.googlecode.protobuf-java-format:protobuf-java-format:1.4"
   compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.7.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.7.0"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.7.0"
 
-  compile "org.slf4j:slf4j-api:1.7.12"
   runtime "org.apache.logging.log4j:log4j-core:2.4.1"
   runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1"
 
@@ -83,7 +94,6 @@ dependencies {
     exclude group: "org.slf4j", module: "slf4j-log4j12"
   }
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M26"
-  testCompile "org.testng:testng:6.8.8"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8

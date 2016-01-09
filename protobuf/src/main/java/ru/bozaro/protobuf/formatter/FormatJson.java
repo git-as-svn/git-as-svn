@@ -5,18 +5,17 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.internal;
+package ru.bozaro.protobuf.formatter;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.text.ParseException;
+import com.googlecode.protobuf.format.JsonFormat;
 
 /**
- * Simple field parser.
+ * JSON serialization.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@FunctionalInterface
-public interface FieldParser<T> {
-  T parse(@NotNull String value) throws ParseException;
+public class FormatJson extends BaseFormat {
+  public FormatJson() {
+    super(new JsonFormat(), "application/json", ".json");
+  }
 }

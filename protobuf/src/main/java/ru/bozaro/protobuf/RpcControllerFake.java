@@ -5,7 +5,7 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api;
+package ru.bozaro.protobuf;
 
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;

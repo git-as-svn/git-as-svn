@@ -5,7 +5,7 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.internal;
+package ru.bozaro.protobuf.internal;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svnserver.ext.api.ProtobufFormat;
-import svnserver.ext.api.RpcControllerFake;
+import ru.bozaro.protobuf.ProtobufFormat;
+import ru.bozaro.protobuf.RpcControllerFake;
 
 import javax.servlet.ServletException;
 import java.io.ByteArrayOutputStream;

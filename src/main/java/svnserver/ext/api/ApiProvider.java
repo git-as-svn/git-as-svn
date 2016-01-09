@@ -9,6 +9,7 @@ package svnserver.ext.api;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.protobuf.ProtobufRpcServlet;
 import svnserver.api.core.Core;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;

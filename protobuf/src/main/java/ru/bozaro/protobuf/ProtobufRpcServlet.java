@@ -5,14 +5,14 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api;
+package ru.bozaro.protobuf;
 
 import com.google.protobuf.Message;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svnserver.ext.api.internal.MethodInfo;
-import svnserver.ext.api.internal.ServiceInfo;
+import ru.bozaro.protobuf.internal.MethodInfo;
+import ru.bozaro.protobuf.internal.ServiceInfo;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -33,10 +33,10 @@ public class ProtobufRpcServlet extends HttpServlet {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(ProtobufRpcServlet.class);
   @NotNull
-  private final ServiceRegistry registry;
+  private final ServiceHolder holder;
 
-  public ProtobufRpcServlet(@NotNull ServiceRegistry registry) {
-    this.registry = registry;
+  public ProtobufRpcServlet(@NotNull ServiceHolder holder) {
+    this.holder = holder;
   }
 
   @Override
@@ -46,7 +46,7 @@ public class ProtobufRpcServlet extends HttpServlet {
       final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
       final int separator = pathInfo.indexOf('/', begin);
       if (separator > 0) {
-        ServiceInfo serviceInfo = registry.getService(pathInfo.substring(begin, separator));
+        ServiceInfo serviceInfo = holder.getService(pathInfo.substring(begin, separator));
         if (serviceInfo != null) {
           service(req, res, pathInfo.substring(separator + 1), serviceInfo);
           return;
