@@ -69,6 +69,12 @@
   <section>
     <title>Как оно работает?</title>
 
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="images/git-as-svn.png"/>
+      </imageobject>
+    </mediaobject>
+
     <section>
       <title>Где хранятся Subversion-данные репозитория?</title>
 
@@ -175,6 +181,12 @@
       <section>
         <title>Поддержка Subversion у GitHub</title>
 
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/github.png"/>
+          </imageobject>
+        </mediaobject>
+
         <para>Это, наверное, самый близкий аналог.</para>
 
         <para>Основная проблема данной реализации — неотделимость от GitHub.
@@ -183,6 +195,12 @@
 
       <section>
         <title>SubGit</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/subgit.png"/>
+          </imageobject>
+        </mediaobject>
 
         <para>Сайт: <link
         xlink:href="http://www.subgit.com/">http://www.subgit.com/</link></para>
@@ -194,6 +212,12 @@
 
       <section>
         <title>Subversion репозиторий и git svn</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/git-svn.png"/>
+          </imageobject>
+        </mediaobject>
 
         <para>Данный способ позволяет использовать Git при работе с
         Subversion-репозиторием, но использование общего Git-репозитория между
