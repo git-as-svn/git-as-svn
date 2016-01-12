@@ -40,12 +40,11 @@ subprojects {
   version = rootProject.version
 }
 
-apply plugin: "idea"
 apply plugin: "application"
-apply plugin: "com.google.protobuf"
 apply plugin: "nebula.deb"
 
 allprojects {
+  apply plugin: "idea"
   apply plugin: "license"
   apply plugin: "project-report"
 
@@ -53,11 +52,25 @@ allprojects {
     header rootProject.file('license_header.txt')
     exclude "src/test/resources/svnserver"
   }
+
+  idea {
+    module {
+      jdkName = sourceCompatibility.name
+      downloadJavadoc = true
+      downloadSources = true
+
+      sourceDirs += file("src/generated/main/java")
+      testSourceDirs += file("src/generated/test/java")
+      generatedSourceDirs += file("src/generated/main/java")
+      generatedSourceDirs += file("src/generated/test/java")
+    }
+  }
 }
 
 configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
   apply plugin: "java"
   apply plugin: "com.github.ben-manes.versions"
+  apply plugin: "com.google.protobuf"
 
   dependencies {
     compile "org.jetbrains:annotations:13.0"
@@ -65,6 +78,13 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
     compile "org.slf4j:slf4j-api:1.7.12"
 
     testCompile "org.testng:testng:6.8.8"
+  }
+
+  protobuf {
+    protoc {
+      artifact = "com.google.protobuf:protoc:2.6.1"
+    }
+    generatedFilesBaseDir = "$projectDir/src/generated"
   }
 }
 
@@ -108,16 +128,6 @@ idea {
     jdkName = sourceCompatibility.name
     languageLevel = sourceCompatibility.name
   }
-  module {
-    jdkName = sourceCompatibility.name
-    downloadJavadoc = true
-    downloadSources = true
-
-    sourceDirs += file("src/generated/main/java")
-    testSourceDirs += file("src/generated/test/java")
-    generatedSourceDirs += file("src/generated/main/java")
-    generatedSourceDirs += file("src/generated/test/java")
-  }
 }
 
 run {
@@ -148,13 +158,6 @@ jar {
         "Class-Path": "${-> createLauncherClassPath()}"
     )
   }
-}
-
-protobuf {
-  protoc {
-    artifact = "com.google.protobuf:protoc:2.6.1"
-  }
-  generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
 task createDocs(type: Copy) {
