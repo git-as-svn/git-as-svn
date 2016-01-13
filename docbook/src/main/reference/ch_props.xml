@@ -39,6 +39,17 @@
     </listitem>
   </itemizedlist>
 
+  <important>
+    <para>Для удобства пользователей Git as Subversion активно использует
+    наследуемые свойства.</para>
+
+    <para>Для того, чтобы они работали необходимо использовать клиент
+    Subversion 1.8 или более поздний.</para>
+
+    <para>В противном случае будут проблемы с svn properties для новых файлов
+    и директорий.</para>
+  </important>
+
   <section>
     <title>Файл .gitignores</title>
 
