@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
 "POT-Creation-Date: 2016-01-13 07:20+0300\n"
-"PO-Revision-Date: 2016-01-13 07:23+0300\n"
+"PO-Revision-Date: 2016-01-13 21:52+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -353,6 +353,9 @@ msgid ""
 "Subversion-ревизиями и Git-коммитами. Это может быть проблемой при "
 "восстановлении репозиториев после внештатных ситуаций."
 msgstr ""
+"In the case of GitHub it is also not clear where the stored mapping between "
+"Subversion-revision and Git-commit. This can be a problem when restoring "
+"repositories after emergency situations."
 
 #: index.l10n.xml:218(title)
 msgid "SubGit"
@@ -394,6 +397,8 @@ msgid ""
 "Так же надо учесть, что разработчику приходится использовать специфический "
 "инструмент командной строки для работы с репозиторием."
 msgstr ""
+"At the same time, the developer has to use a specific command-line tool for "
+"working with the repository."
 
 #: index.l10n.xml:254(title)
 msgid "Функционал"
@@ -404,6 +409,8 @@ msgid ""
 "Данная реализация позволяет большинству Subversion-пользователей работать не "
 "задумываясь о том, что они на самом деле используют Git-репозиторий."
 msgstr ""
+"This implementation allows the majority of Subversion-users to work without "
+"thinking about what they actually use Git-repository."
 
 #: index.l10n.xml:261(title)
 msgid "Что уже есть?"
@@ -449,6 +456,7 @@ msgid ""
 "Информация об источнике копирования вычисляется на основании изменений Git-"
 "репозитория."
 msgstr ""
+"Information about the source copy is calculated on Git-repository commits."
 
 #: index.l10n.xml:295(para)
 msgid "svn copy, move<placeholder-1/>"
@@ -491,9 +499,8 @@ msgid "Чего еще нет?"
 msgstr "What is lacking?"
 
 #: index.l10n.xml:344(para)
-#, fuzzy
 msgid "Большие пробелы в документации;"
-msgstr "Strongly enough documentation;"
+msgstr "Large gaps in the documents;"
 
 #: index.l10n.xml:348(para)
 msgid "Из Subversion доступна только одна ветка."
@@ -826,19 +833,22 @@ msgid ""
 "Для удобства пользователей Git as Subversion активно использует наследуемые "
 "свойства."
 msgstr ""
+"For user convenience Git as Subversion is actively using the inherited "
+"properties."
 
 #: index.l10n.xml:624(para)
-#, fuzzy
 msgid ""
 "Для того, чтобы они работали необходимо использовать клиент Subversion 1.8 "
 "или более поздний."
-msgstr "To access the server, you can use the user:"
+msgstr "This feature require to use the client Subversion 1.8 or later."
 
 #: index.l10n.xml:627(para)
 msgid ""
 "В противном случае будут проблемы с svn properties для новых файлов и "
 "директорий."
 msgstr ""
+"Otherwise there will be problems with the svn properties for new files and "
+"directories."
 
 #: index.l10n.xml:632(title)
 msgid "Файл .gitignores"
