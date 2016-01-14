@@ -18,6 +18,7 @@ subprojects {
           in: "${project.parent.projectDir}/src/main/reference/index.xml",
           out: "${docbookDir}/index.single.xml",
           style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+          force: true,
       )
     }
   }
@@ -30,6 +31,7 @@ subprojects {
           in: "${project.parent.projectDir}/src/main/reference/index.xml",
           out: "${docbookDir}/index.l10n.xml",
           style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+          force: true,
       ) {
         param(name: "lang", expression: project.name)
       }
@@ -47,23 +49,23 @@ subprojects {
   }
 
   task updatePo(type: Exec, dependsOn: docbookSinglePo) {
-    def input = file("${docbookDir}/index.l10n.xml")
+    def input = "${docbookDir}/index.l10n.xml"
 
     inputs.file input
 
-    workingDir input.parentFile
+    workingDir file(input).parentFile
     executable "xml2po"
     args "-u", getPo(project)
-    args input.name
+    args file(input).name
   }
 
   task translate(type: Exec, dependsOn: docbookSingle) {
-    def output = file("${docbookDir}/index.xml")
+    def output = "${docbookDir}/index.xml"
     def input = "${docbookDir}/index.single.xml"
-    output.parentFile.mkdirs()
+    file(output).parentFile.mkdirs()
 
-    inputs.file file(input)
-    inputs.file file(getPo(project))
+    inputs.file input
+    inputs.file getPo(project)
     outputs.file output
 
     executable "xml2po"
