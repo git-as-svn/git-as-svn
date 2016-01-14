@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-13 07:20+0300\n"
+"POT-Creation-Date: 2016-01-14 07:19+0300\n"
 "PO-Revision-Date: 2016-01-13 07:22+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -15,8 +15,7 @@ msgstr ""
 #. It doesn't matter what you translate it to: it's not used at all.
 #: index.l10n.xml:71(None)
 msgid "@@image: 'images/git-as-svn.png'; md5=06c84e3ea2057b06edfd8365e093df10"
-msgstr ""
-"@@image: 'images/git-as-svn.png'; md5=06c84e3ea2057b06edfd8365e093df10"
+msgstr "@@image: 'images/git-as-svn.png'; md5=06c84e3ea2057b06edfd8365e093df10"
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.

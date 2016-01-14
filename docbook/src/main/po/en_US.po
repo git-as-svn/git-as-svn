@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-13 07:20+0300\n"
-"PO-Revision-Date: 2016-01-13 21:52+0300\n"
+"POT-Creation-Date: 2016-01-14 07:19+0300\n"
+"PO-Revision-Date: 2016-01-14 07:20+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -89,11 +89,11 @@ msgstr "What is it?"
 
 #: index.l10n.xml:31(para)
 msgid ""
-"Git as Subversion — это реализация Subversion-сервера (по протоколу svn) для "
-"Git-репозиториев."
+"<productname>Git as Subversion</productname> — это реализация Subversion-"
+"сервера (по протоколу svn) для Git-репозиториев."
 msgstr ""
-"Git as Subversion — Subversion-server implementation (svn protocol) for Git-"
-"repositories."
+"<productname>Git as Subversion</productname> — Subversion-server "
+"implementation (svn protocol) for Git-repositories."
 
 #: index.l10n.xml:34(para)
 msgid ""
@@ -229,7 +229,7 @@ msgstr "MD5 file hash."
 
 #: index.l10n.xml:125(para)
 msgid ""
-"Чтобы не заниматься их вычислением каждый запуск, эти данные кэширутся в "
+"Чтобы не заниматься их вычислением каждый запуск, эти данные кэшируются в "
 "файлах. Потеря данного кэша не критична для работы и его резервное "
 "копирование не имеет смысла."
 msgstr ""
@@ -239,7 +239,7 @@ msgstr ""
 
 #: index.l10n.xml:129(para)
 msgid ""
-"Данные о блокировках файлов в данный момент так же хранятся в файла кэша."
+"Данные о блокировках файлов в данный момент также хранятся в файла кэша."
 msgstr "File locking information currently stored in the cache file."
 
 #: index.l10n.xml:134(title)
@@ -311,8 +311,8 @@ msgstr "on another error — inform the client;"
 
 #: index.l10n.xml:187(para)
 msgid ""
-"Таким образом, за счёт использования в данной операции консольного Git-а мы "
-"избегает гонки с заливкой напрямую через Git, и получаем хуки в качестве "
+"Таким образом, за счёт использования в данной операции консольного Git-а, мы "
+"избегает гонки с заливкой напрямую через Git и получаем хуки в качестве "
 "приятного бонуса."
 msgstr ""
 "Thus, through the use console Git client for push, we avoid the race "
@@ -341,7 +341,7 @@ msgstr "This is probably the closest analogue."
 
 #: index.l10n.xml:209(para)
 msgid ""
-"Основная проблема данной реализации — неотделимость от GitHub. Так же, "
+"Основная проблема данной реализации — неотделимость от GitHub. Также, "
 "внезапно, данная реализация не поддерживает Git LFS."
 msgstr ""
 "The main problem of this implementation is inseparable from GitHub. Also, "
@@ -349,7 +349,7 @@ msgstr ""
 
 #: index.l10n.xml:212(para)
 msgid ""
-"В случае с GitHub так же не понятно, где хранится соответствие между "
+"В случае с GitHub также не понятно, где хранится соответствие между "
 "Subversion-ревизиями и Git-коммитами. Это может быть проблемой при "
 "восстановлении репозиториев после внештатных ситуаций."
 msgstr ""
@@ -373,7 +373,7 @@ msgstr ""
 msgid ""
 "Достаточно интересная реализация при которой поддерживаются Git и Subversion-"
 "репозитории в синхронном состоянии. За счет чего обеспечивается синхронность "
-"репозиториев — не понятно."
+"репозиториев — непонятно."
 msgstr ""
 "Quite an interesting implementation which supports master-master replication "
 "with Git and Subversion repositories. Thereby providing synchronization of "
@@ -394,7 +394,7 @@ msgstr ""
 
 #: index.l10n.xml:246(para)
 msgid ""
-"Так же надо учесть, что разработчику приходится использовать специфический "
+"Также надо учесть, что разработчику приходится использовать специфический "
 "инструмент командной строки для работы с репозиторием."
 msgstr ""
 "At the same time, the developer has to use a specific command-line tool for "
@@ -417,7 +417,7 @@ msgid "Что уже есть?"
 msgstr "What is already there?"
 
 #: index.l10n.xml:265(para)
-msgid "Работаю, как минимум, следующие клиенты:"
+msgid "Работают, как минимум, следующие клиенты:"
 msgstr "You can use at least the following clients:"
 
 #: index.l10n.xml:269(para)
