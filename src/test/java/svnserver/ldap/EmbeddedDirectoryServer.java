@@ -11,7 +11,7 @@ import org.apache.directory.api.ldap.model.constants.SchemaConstants;
 import org.apache.directory.api.ldap.model.constants.SupportedSaslMechanisms;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
-import org.apache.directory.api.ldap.schemamanager.impl.DefaultSchemaManager;
+import org.apache.directory.api.ldap.schema.manager.impl.DefaultSchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
@@ -90,7 +90,7 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
   private Partition createPartition(@NotNull Dn partitionDn, @NotNull SchemaManager schemaManager) throws Exception {
     // Create a new partition
     AvlPartition partition = new AvlPartition(schemaManager);
-    partition.setId(String.valueOf(partitionDn.getRdn().getNormValue().getValue()));
+    partition.setId(partitionDn.getRdn().getNormValue());
     partition.setSuffixDn(new Dn(partitionDn.getNormName()));
     return partition;
   }

@@ -17,8 +17,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +63,7 @@ public class LfsHttpStorage implements LfsStorage {
   @NotNull
   private final LoadingCache<User, Link> tokens;
   @NotNull
-  private final HttpClient httpClient = new DefaultHttpClient(new ThreadSafeClientConnManager());
+  private final HttpClient httpClient = HttpClients.createDefault();
 
   public LfsHttpStorage(@NotNull URL authUrl, @NotNull String authToken) {
     this.authUrl = authUrl;

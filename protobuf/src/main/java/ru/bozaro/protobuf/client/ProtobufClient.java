@@ -9,8 +9,7 @@ package ru.bozaro.protobuf.client;
 
 import com.google.protobuf.*;
 import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.ProtobufFormat;
@@ -33,7 +32,7 @@ public class ProtobufClient implements BlockingRpcChannel {
 
   public ProtobufClient(@NotNull URI baseUri, @Nullable HttpClient client, @Nullable ProtobufFormat format) {
     this.baseUri = baseUri;
-    this.client = client != null ? client : new DefaultHttpClient(new ThreadSafeClientConnManager());
+    this.client = client != null ? client : HttpClients.createDefault();
     this.format = format != null ? format : new FormatBinary();
   }
 
