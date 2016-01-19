@@ -7,14 +7,20 @@
  */
 package ru.bozaro.protobuf;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.BlockingService;
+import com.google.protobuf.RpcController;
+import com.google.protobuf.ServiceException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import ru.bozaro.protobuf.client.ProtobufClient;
 import ru.bozaro.protobuf.example.EchoMessage;
 import ru.bozaro.protobuf.example.Example;
+import ru.bozaro.protobuf.example.HelloRequest;
+import ru.bozaro.protobuf.example.HelloResponse;
 import ru.bozaro.protobuf.internal.ServiceInfo;
+
+import java.util.Map;
 
 /**
  * Simple test for ProtobufRpcServlet.
@@ -22,16 +28,33 @@ import ru.bozaro.protobuf.internal.ServiceInfo;
  * @author Artem V. Navrotskiy
  */
 public class ProtobufRpcServletTest {
-  @Test(enabled = false)
+  @Test
   public void methodPost() throws Exception {
-    try (final EmbeddedHttpServer server = new EmbeddedHttpServer()) {
-      server.addServlet("/api/*", new ProtobufRpcServlet(new ServiceHolder() {
-        @Nullable
-        @Override
-        public ServiceInfo getService(@NotNull String name) {
-          return null;
+    BlockingService service = Example.newReflectiveBlockingService(new Example.BlockingInterface() {
+      @Override
+      public HelloResponse hello(RpcController controller, HelloRequest request) throws ServiceException {
+        final StringBuilder greeting = new StringBuilder("Hello, ");
+        if (request.hasTitle()) {
+          greeting.append(request.getTitle()).append(" ");
         }
-      }));
+        greeting.append(request.getPerson());
+        return HelloResponse.newBuilder()
+            .setGreeting(greeting.toString())
+            .build();
+      }
+
+      @Override
+      public EchoMessage echo(RpcController controller, EchoMessage request) throws ServiceException {
+        return request;
+      }
+    });
+
+    final Map<String, ServiceInfo> services = ImmutableMap.<String, ServiceInfo>builder()
+        .put(service.getDescriptorForType().getName().toLowerCase(), new ServiceInfo(new BlockingServiceWrapper(service)))
+        .build();
+
+    try (final EmbeddedHttpServer server = new EmbeddedHttpServer()) {
+      server.addServlet("/api/*", new ProtobufRpcServlet(services::get));
 
       ProtobufClient channel = new ProtobufClient(server.getBase().resolve("/api"), null, null);
       Example.BlockingInterface stub = Example.newBlockingStub(channel);
