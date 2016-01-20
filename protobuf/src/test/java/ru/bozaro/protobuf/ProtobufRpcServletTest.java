@@ -7,20 +7,17 @@
  */
 package ru.bozaro.protobuf;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.BlockingService;
-import com.google.protobuf.RpcController;
-import com.google.protobuf.ServiceException;
+import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import ru.bozaro.protobuf.client.ProtobufClient;
 import ru.bozaro.protobuf.example.EchoMessage;
 import ru.bozaro.protobuf.example.Example;
-import ru.bozaro.protobuf.example.HelloRequest;
-import ru.bozaro.protobuf.example.HelloResponse;
-import ru.bozaro.protobuf.internal.ServiceInfo;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Simple test for ProtobufRpcServlet.
@@ -28,35 +25,22 @@ import java.util.Map;
  * @author Artem V. Navrotskiy
  */
 public class ProtobufRpcServletTest {
-  @Test
-  public void methodPost() throws Exception {
-    BlockingService service = Example.newReflectiveBlockingService(new Example.BlockingInterface() {
-      @Override
-      public HelloResponse hello(RpcController controller, HelloRequest request) throws ServiceException {
-        final StringBuilder greeting = new StringBuilder("Hello, ");
-        if (request.hasTitle()) {
-          greeting.append(request.getTitle()).append(" ");
-        }
-        greeting.append(request.getPerson());
-        return HelloResponse.newBuilder()
-            .setGreeting(greeting.toString())
-            .build();
-      }
+  @DataProvider
+  public static Object[][] formatProvider() {
+    List<Object[]> result = new ArrayList<>();
+    for (ProtobufFormat format : ProtobufFormat.getFormats()) {
+      result.add(new Object[]{format});
+    }
+    return result.toArray(new Object[result.size()][]);
+  }
 
-      @Override
-      public EchoMessage echo(RpcController controller, EchoMessage request) throws ServiceException {
-        return request;
-      }
-    });
-
-    final Map<String, ServiceInfo> services = ImmutableMap.<String, ServiceInfo>builder()
-        .put(service.getDescriptorForType().getName().toLowerCase(), new ServiceInfo(new BlockingServiceWrapper(service)))
-        .build();
-
+  @Test(dataProvider = "formatProvider")
+  public void echoPost(@NotNull ProtobufFormat format) throws Exception {
+    final BlockingService service = Example.newReflectiveBlockingService(new ExampleBlockingImpl());
     try (final EmbeddedHttpServer server = new EmbeddedHttpServer()) {
-      server.addServlet("/api/*", new ProtobufRpcServlet(services::get));
+      server.addServlet("/api/*", new ProtobufRpcServlet(new ServiceHolderImpl(service)));
 
-      ProtobufClient channel = new ProtobufClient(server.getBase().resolve("/api"), null, null);
+      final ProtobufClient channel = new ProtobufClient(server.getBase().resolve("/api"), null, format);
       Example.BlockingInterface stub = Example.newBlockingStub(channel);
       // Check echo method.
       final EchoMessage echoRequest = EchoMessage.newBuilder()

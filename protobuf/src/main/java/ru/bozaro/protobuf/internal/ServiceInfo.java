@@ -9,15 +9,12 @@ package ru.bozaro.protobuf.internal;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Service;
-import org.atteo.classindex.ClassIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.ProtobufFormat;
 
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.StreamSupport;
 
 /**
  * Service information.
@@ -25,8 +22,6 @@ import java.util.stream.StreamSupport;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class ServiceInfo {
-  @NotNull
-  private static final ProtobufFormat[] formats = collectFormats();
   @NotNull
   private final Service service;
   @NotNull
@@ -40,7 +35,7 @@ public class ServiceInfo {
 
     final Map<String, MethodInfo> methods = new HashMap<>();
     for (Descriptors.MethodDescriptor method : service.getDescriptorForType().getMethods()) {
-      for (ProtobufFormat format : formats) {
+      for (ProtobufFormat format : ProtobufFormat.getFormats()) {
         final MethodInfo methodInfo = new MethodInfo(service, method, format);
         methods.put(method.getName().toLowerCase() + format.getSuffix(), methodInfo);
       }
@@ -57,19 +52,4 @@ public class ServiceInfo {
   public MethodInfo getMethod(@NotNull String path) {
     return methods.get(path);
   }
-
-  private static ProtobufFormat[] collectFormats() {
-    return StreamSupport
-        .stream(ClassIndex.getSubclasses(ProtobufFormat.class).spliterator(), false)
-        .filter(type -> !Modifier.isAbstract(type.getModifiers()))
-        .map(type -> {
-          try {
-            return type.newInstance();
-          } catch (IllegalAccessException | InstantiationException e) {
-            throw new IllegalStateException(e);
-          }
-        })
-        .toArray(ProtobufFormat[]::new);
-  }
-
 }
