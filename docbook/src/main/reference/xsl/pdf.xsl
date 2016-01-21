@@ -13,12 +13,11 @@
 	<!-- Extensions -->
 	<xsl:param name="fop1.extensions" select="1"/>
 	<xsl:param name="paper.type" select="'A4'"/>
-	<xsl:param name="linenumbering.everyNth">1</xsl:param>
 
 	<!-- Format Variable Lists as Blocks (prevents horizontal overflow) -->
 	<xsl:param name="variablelist.as.blocks">1</xsl:param>
 	<xsl:param name="body.start.indent">0pt</xsl:param>
-	<xsl:param name="ulink.footnotes">true</xsl:param>
+	<xsl:param name="ulink.footnotes">1</xsl:param>
 
 	<!-- COLORED AND HYPHENATED LINKS -->
 	<xsl:template match="ulink">

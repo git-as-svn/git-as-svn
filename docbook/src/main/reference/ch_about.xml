@@ -11,10 +11,10 @@
   <section>
     <title>Что это?</title>
 
-    <para><link
-    xlink:href="https://github.com/bozaro/git-as-svn"><productname>Git as
-    Subversion</productname></link> — это реализация Subversion-сервера (по
-    протоколу svn) для Git-репозиториев.</para>
+    <para><productname>Git as Subversion</productname> (<link
+    xlink:href="https://github.com/bozaro/git-as-svn">https://github.com/bozaro/git-as-svn</link>)
+    — это реализация Subversion-сервера (по протоколу svn) для
+    Git-репозиториев.</para>
 
     <para>Он позволяет работать с Git-репозиторием, используя консольный
     Subversion-клиент, TortoiseSVN, SvnKit и подобный инструментарий.</para>
