@@ -100,6 +100,6 @@ public class ProtobufRpcServlet extends HttpServlet {
   @NotNull
   private static Charset getCharset(@NotNull HttpServletRequest request) {
     final String charset = request.getCharacterEncoding();
-    return charset == null ? StandardCharsets.ISO_8859_1 : Charset.forName(charset);
+    return charset == null ? StandardCharsets.UTF_8 : Charset.forName(charset);
   }
 }
