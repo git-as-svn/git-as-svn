@@ -44,7 +44,7 @@ public class ProtobufRpcSimpleHttp {
     this.holder = holder;
   }
 
-  public void service(@NotNull HttpMessageParser<HttpRequest> parser, @NotNull HttpMessageWriter<HttpResponse> writer) throws IOException, HttpException {
+  protected void service(@NotNull HttpMessageParser<HttpRequest> parser, @NotNull HttpMessageWriter<HttpResponse> writer) throws IOException, HttpException {
     final HttpRequest request = parser.parse();
     final HttpResponse response = service(request);
     writer.write(response);

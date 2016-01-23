@@ -44,7 +44,6 @@ apply plugin: "application"
 apply plugin: "nebula.deb"
 
 allprojects {
-  apply plugin: "idea"
   apply plugin: "license"
   apply plugin: "project-report"
 
@@ -52,6 +51,13 @@ allprojects {
     header rootProject.file('license_header.txt')
     exclude "**/*.json"
   }
+}
+
+configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
+  apply plugin: "idea"
+  apply plugin: "java"
+  apply plugin: "com.github.ben-manes.versions"
+  apply plugin: "com.google.protobuf"
 
   idea {
     module {
@@ -65,12 +71,6 @@ allprojects {
       generatedSourceDirs += file("src/generated/test/java")
     }
   }
-}
-
-configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
-  apply plugin: "java"
-  apply plugin: "com.github.ben-manes.versions"
-  apply plugin: "com.google.protobuf"
 
   dependencies {
     compile "org.jetbrains:annotations:15.0"
@@ -85,6 +85,17 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
       artifact = "com.google.protobuf:protoc:2.6.1"
     }
     generatedFilesBaseDir = "$projectDir/src/generated"
+  }
+
+  test {
+    useTestNG()
+    maxHeapSize = "384m"
+    ignoreFailures = "$testIgnoreFailures".toBoolean()
+
+    // listen to events in the test execution lifecycle
+    beforeTest { descriptor ->
+      logger.lifecycle("Running test: " + descriptor)
+    }
   }
 }
 
@@ -137,17 +148,6 @@ run {
 
 tasks.withType(JavaCompile) {
   options.encoding = "UTF-8"
-}
-
-test {
-  useTestNG()
-  maxHeapSize = "384m"
-  ignoreFailures = "$testIgnoreFailures".toBoolean()
-
-  // listen to events in the test execution lifecycle
-  beforeTest { descriptor ->
-    logger.lifecycle("Running test: " + descriptor)
-  }
 }
 
 jar {

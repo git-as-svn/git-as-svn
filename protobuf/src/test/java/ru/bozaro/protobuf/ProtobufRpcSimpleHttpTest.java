@@ -16,15 +16,19 @@ import ru.bozaro.protobuf.client.ProtobufClient;
 import ru.bozaro.protobuf.example.EchoMessage;
 import ru.bozaro.protobuf.example.Example;
 
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
- * Simple test for ProtobufRpcServlet.
+ * Simple test for ProtobufRpcSimpleHttp.
  *
  * @author Artem V. Navrotskiy
  */
-public class ProtobufRpcServletTest {
+public class ProtobufRpcSimpleHttpTest {
   @DataProvider(name = "formatProvider")
   public static Object[][] formatProvider() {
     List<Object[]> result = new ArrayList<>();
@@ -34,21 +38,23 @@ public class ProtobufRpcServletTest {
     return result.toArray(new Object[result.size()][]);
   }
 
-  @Test(dataProvider = "formatProvider")
+  @Test(dataProvider = "formatProvider", timeOut = 30000)
   public void echoPost(@NotNull ProtobufFormat format) throws Exception {
     final BlockingService service = Example.newReflectiveBlockingService(new ExampleBlockingImpl());
-    try (final EmbeddedHttpServer server = new EmbeddedHttpServer()) {
-      server.addServlet("/api/*", new ProtobufRpcServlet(new ServiceHolderImpl(service)));
-
-      final ProtobufClient channel = new ProtobufClient(server.getBase().resolve("/api"), null, format);
-      Example.BlockingInterface stub = Example.newBlockingStub(channel);
-      // Check echo method.
-      for (int pass = 0; pass < 2; ++pass) {
-        final EchoMessage echoRequest = EchoMessage.newBuilder()
-            .setText("Foo " + pass)
-            .build();
-        final EchoMessage echoResponse = stub.echo(null, echoRequest);
-        Assert.assertEquals(echoRequest, echoResponse);
+    try (final ServerSocket socket = new ServerSocket()) {
+      socket.bind(new InetSocketAddress("127.0.0.2", 0));
+      try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool())) {
+        final String url = "http:/" + socket.getLocalSocketAddress().toString();
+        final ProtobufClient channel = new ProtobufClient(new URI(url), null, format);
+        Example.BlockingInterface stub = Example.newBlockingStub(channel);
+        // Check echo method.
+        for (int pass = 0; pass < 2; ++pass) {
+          final EchoMessage echoRequest = EchoMessage.newBuilder()
+              .setText("Foo " + pass)
+              .build();
+          final EchoMessage echoResponse = stub.echo(null, echoRequest);
+          Assert.assertEquals(echoRequest, echoResponse);
+        }
       }
     }
   }
