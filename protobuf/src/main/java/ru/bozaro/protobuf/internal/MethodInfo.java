@@ -12,12 +12,9 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.bozaro.protobuf.ProtobufFormat;
 import ru.bozaro.protobuf.RpcControllerFake;
 
-import javax.servlet.ServletException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,8 +32,6 @@ import java.util.concurrent.CompletableFuture;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class MethodInfo {
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(MethodInfo.class);
   @NotNull
   private final ProtobufFormat format;
   @NotNull
@@ -103,7 +98,7 @@ public class MethodInfo {
   }
 
   @NotNull
-  public Message requestByParams(@NotNull Map<String, String[]> params) throws ServletException, ParseException {
+  public Message requestByParams(@NotNull Map<String, String[]> params) throws ParseException {
     final Message.Builder builder = service.getRequestPrototype(method).toBuilder();
     for (Map.Entry<String, String[]> entry : params.entrySet()) {
       final SetterInfo fieldParser = fields.get(entry.getKey());

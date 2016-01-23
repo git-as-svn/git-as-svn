@@ -14,14 +14,14 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.DefaultHttpResponseFactory;
-import org.apache.http.io.SessionInputBuffer;
+import org.apache.http.io.HttpMessageParser;
+import org.apache.http.io.HttpMessageWriter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.bozaro.protobuf.internal.MethodInfo;
 import ru.bozaro.protobuf.internal.ServiceInfo;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -44,12 +44,14 @@ public class ProtobufRpcSimpleHttp {
     this.holder = holder;
   }
 
-  public void service(@NotNull SessionInputBuffer inputBuffer) {
-
+  public void service(@NotNull HttpMessageParser<HttpRequest> parser, @NotNull HttpMessageWriter<HttpResponse> writer) throws IOException, HttpException {
+    final HttpRequest request = parser.parse();
+    final HttpResponse response = service(request);
+    writer.write(response);
   }
 
   @NotNull
-  protected HttpResponse service(@NotNull HttpRequest req) throws ServletException, IOException {
+  protected HttpResponse service(@NotNull HttpRequest req) throws IOException {
     final String pathInfo = getPathInfo(req);
     if (pathInfo != null) {
       final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
@@ -69,7 +71,7 @@ public class ProtobufRpcSimpleHttp {
     return null;
   }
 
-  private @NotNull HttpResponse service(@NotNull HttpRequest req, @NotNull final String methodPath, @NotNull ServiceInfo serviceInfo) throws ServletException, IOException {
+  private @NotNull HttpResponse service(@NotNull HttpRequest req, @NotNull String methodPath, @NotNull ServiceInfo serviceInfo) throws IOException {
     final MethodInfo method = serviceInfo.getMethod(methodPath);
     if (method == null) {
       return sendError(HttpStatus.SC_NOT_FOUND, "Method not found: " + methodPath);
@@ -80,7 +82,7 @@ public class ProtobufRpcSimpleHttp {
       try {
         result = method.requestByParams(getParameterMap(req));
       } catch (ParseException e) {
-        throw new ServletException(e);
+        return sendError(HttpStatus.SC_BAD_REQUEST, e.getMessage());
       }
       msgRequest = result;
     } else if (req instanceof HttpPost) {
