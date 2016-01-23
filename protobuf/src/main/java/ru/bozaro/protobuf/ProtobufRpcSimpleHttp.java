@@ -9,8 +9,6 @@ package ru.bozaro.protobuf;
 
 import com.google.protobuf.Message;
 import org.apache.http.*;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.DefaultHttpResponseFactory;
@@ -23,6 +21,8 @@ import ru.bozaro.protobuf.internal.MethodInfo;
 import ru.bozaro.protobuf.internal.ServiceInfo;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -52,15 +52,18 @@ public class ProtobufRpcSimpleHttp {
 
   @NotNull
   protected HttpResponse service(@NotNull HttpRequest req) throws IOException {
-    final String pathInfo = getPathInfo(req);
-    if (pathInfo != null) {
-      final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
-      final int separator = pathInfo.indexOf('/', begin);
-      if (separator > 0) {
-        ServiceInfo serviceInfo = holder.getService(pathInfo.substring(begin, separator));
-        if (serviceInfo != null) {
-          return service(req, pathInfo.substring(separator + 1), serviceInfo);
-        }
+    final String pathInfo;
+    try {
+      pathInfo = getPathInfo(req);
+    } catch (URISyntaxException e) {
+      return sendError(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+    }
+    final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
+    final int separator = pathInfo.indexOf('/', begin);
+    if (separator > 0) {
+      ServiceInfo serviceInfo = holder.getService(pathInfo.substring(begin, separator));
+      if (serviceInfo != null) {
+        return service(req, pathInfo.substring(separator + 1), serviceInfo);
       }
     }
     return sendError(HttpStatus.SC_NOT_FOUND, "Service not found: " + pathInfo);
@@ -76,8 +79,17 @@ public class ProtobufRpcSimpleHttp {
     if (method == null) {
       return sendError(HttpStatus.SC_NOT_FOUND, "Method not found: " + methodPath);
     }
+
     final Message msgRequest;
-    if (req instanceof HttpGet) {
+    final String httpHethod = req.getRequestLine().getMethod();
+    if (httpHethod.equals("POST") && (req instanceof HttpEntityEnclosingRequest)) {
+      final HttpEntity entity = ((HttpEntityEnclosingRequest) req).getEntity();
+      if (entity != null) {
+        msgRequest = method.requestByStream(entity.getContent(), getCharset(entity));
+      } else {
+        return sendError(HttpStatus.SC_NO_CONTENT, "Request payload not found");
+      }
+    } else if (httpHethod.equals("GET")) {
       Message result;
       try {
         result = method.requestByParams(getParameterMap(req));
@@ -85,12 +97,6 @@ public class ProtobufRpcSimpleHttp {
         return sendError(HttpStatus.SC_BAD_REQUEST, e.getMessage());
       }
       msgRequest = result;
-    } else if (req instanceof HttpPost) {
-      final HttpPost post = (HttpPost) req;
-      msgRequest = method.requestByStream(post.getEntity().getContent(), getCharset(post.getEntity()));
-      if (msgRequest == null) {
-        return sendError(HttpStatus.SC_BAD_REQUEST, "Method serialization reader is not supported.");
-      }
     } else {
       return sendError(HttpStatus.SC_METHOD_NOT_ALLOWED, null);
     }
@@ -110,8 +116,9 @@ public class ProtobufRpcSimpleHttp {
   }
 
   @NotNull
-  private String getPathInfo(@NotNull HttpRequest req) {
-    return null;
+  private String getPathInfo(@NotNull HttpRequest req) throws URISyntaxException {
+    final URI uri = new URI(req.getRequestLine().getUri());
+    return uri.getPath() != null ? uri.getPath() : "";
   }
 
   @NotNull

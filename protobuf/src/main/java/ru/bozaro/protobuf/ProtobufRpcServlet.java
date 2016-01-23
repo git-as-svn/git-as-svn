@@ -73,10 +73,6 @@ public class ProtobufRpcServlet extends HttpServlet {
       msgRequest = result;
     } else {
       msgRequest = method.requestByStream(req.getInputStream(), getCharset(req));
-      if (msgRequest == null) {
-        res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Method serialization reader is not supported.");
-        return;
-      }
     }
     try {
       final byte[] response = method.call(msgRequest, StandardCharsets.UTF_8).get();

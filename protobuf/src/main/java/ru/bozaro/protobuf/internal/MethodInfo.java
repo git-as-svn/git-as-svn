@@ -116,7 +116,7 @@ public class MethodInfo {
     return builder.build();
   }
 
-  @Nullable
+  @NotNull
   public Message requestByStream(@NotNull InputStream stream, @NotNull Charset charset) throws IOException {
     final Message.Builder builder = service.getRequestPrototype(method).toBuilder();
     return format.read(builder, stream, charset);
