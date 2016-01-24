@@ -5,17 +5,17 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.formatter;
+package ru.bozaro.protobuf.formatter;
 
-import com.googlecode.protobuf.format.JsonFormat;
+import com.googlecode.protobuf.format.XmlFormat;
 
 /**
- * JSON serialization.
+ * XML serialization.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class FormatJson extends BaseFormat {
-  public FormatJson() {
-    super(new JsonFormat(), "application/json", ".json");
+public class FormatXml extends BaseFormat {
+  public FormatXml() {
+    super(new XmlFormat(), "application/xml", ".xml");
   }
 }

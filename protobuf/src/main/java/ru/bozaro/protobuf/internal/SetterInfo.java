@@ -5,7 +5,7 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.internal;
+package ru.bozaro.protobuf.internal;
 
 import com.google.protobuf.Descriptors;
 import org.jetbrains.annotations.NotNull;

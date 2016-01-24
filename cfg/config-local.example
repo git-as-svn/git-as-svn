@@ -84,6 +84,8 @@ shared:
     path: ../build/lfs
   - !api
     path: /api
+  - !socket
+    path: git-as-svn.socket
 
 # Simple in-memory user database
 userDB: !localUsers

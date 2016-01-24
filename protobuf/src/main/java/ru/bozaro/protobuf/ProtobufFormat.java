@@ -5,9 +5,10 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api;
+package ru.bozaro.protobuf;
 
 import com.google.protobuf.Message;
+import org.atteo.classindex.ClassIndex;
 import org.atteo.classindex.IndexSubclasses;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
+import java.util.stream.StreamSupport;
 
 /**
  * Protobuf formatter.
@@ -24,6 +27,8 @@ import java.nio.charset.Charset;
  */
 @IndexSubclasses
 public abstract class ProtobufFormat {
+  @NotNull
+  private static final ProtobufFormat[] formats = collectFormats();
   @NotNull
   private final String mimeType;
   @NotNull
@@ -44,8 +49,32 @@ public abstract class ProtobufFormat {
     return suffix;
   }
 
+  @Override
+  public String toString() {
+    return mimeType;
+  }
+
   public abstract void write(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException;
 
   @Nullable
   public abstract Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException;
+
+  @NotNull
+  public static ProtobufFormat[] getFormats() {
+    return formats;
+  }
+
+  private static ProtobufFormat[] collectFormats() {
+    return StreamSupport
+        .stream(ClassIndex.getSubclasses(ProtobufFormat.class).spliterator(), false)
+        .filter(type -> !Modifier.isAbstract(type.getModifiers()))
+        .map(type -> {
+          try {
+            return type.newInstance();
+          } catch (IllegalAccessException | InstantiationException e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .toArray(ProtobufFormat[]::new);
+  }
 }

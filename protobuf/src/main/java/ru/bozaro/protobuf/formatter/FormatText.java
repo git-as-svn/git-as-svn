@@ -5,18 +5,16 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.formatter;
+package ru.bozaro.protobuf.formatter;
 
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.ext.api.ProtobufFormat;
+import ru.bozaro.protobuf.ProtobufFormat;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 
 /**
@@ -39,6 +37,7 @@ public class FormatText extends ProtobufFormat {
   @Nullable
   @Override
   public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
-    return null;
+    TextFormat.merge(new InputStreamReader(stream, charset), ExtensionRegistry.getEmptyRegistry(), builder);
+    return builder.build();
   }
 }

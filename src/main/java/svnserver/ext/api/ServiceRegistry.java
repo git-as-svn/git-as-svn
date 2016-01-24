@@ -11,11 +11,13 @@ import com.google.protobuf.BlockingService;
 import com.google.protobuf.Service;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.protobuf.BlockingServiceWrapper;
+import ru.bozaro.protobuf.ServiceHolder;
+import ru.bozaro.protobuf.internal.ServiceInfo;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
-import svnserver.ext.api.internal.ServiceInfo;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class ServiceRegistry implements Local, Shared {
+public final class ServiceRegistry implements ServiceHolder, Local, Shared {
   public final class Holder {
 
     @NotNull
@@ -46,6 +48,7 @@ public final class ServiceRegistry implements Local, Shared {
   private ServiceRegistry() {
   }
 
+  @Override
   @Nullable
   public ServiceInfo getService(@NotNull String name) {
     return services.get(name);

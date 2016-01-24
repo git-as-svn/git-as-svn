@@ -5,14 +5,14 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.formatter;
+package ru.bozaro.protobuf.formatter;
 
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.googlecode.protobuf.format.ProtobufFormatter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.ext.api.ProtobufFormat;
+import ru.bozaro.protobuf.ProtobufFormat;
 
 import java.io.IOException;
 import java.io.InputStream;

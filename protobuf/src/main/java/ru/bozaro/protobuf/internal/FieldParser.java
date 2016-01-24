@@ -5,17 +5,18 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.api.formatter;
+package ru.bozaro.protobuf.internal;
 
-import com.googlecode.protobuf.format.XmlFormat;
+import org.jetbrains.annotations.NotNull;
+
+import java.text.ParseException;
 
 /**
- * XML serialization.
+ * Simple field parser.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class FormatXml extends BaseFormat {
-  public FormatXml() {
-    super(new XmlFormat(), "application/xml", ".xml");
-  }
+@FunctionalInterface
+public interface FieldParser<T> {
+  T parse(@NotNull String value) throws ParseException;
 }
