@@ -74,15 +74,17 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
   }
 
   protected void acceptClient(@NotNull Socket client) throws IOException {
-    final HttpMessageParser<HttpRequest> parser = new DefaultHttpRequestParser(wrapInputStream(client.getInputStream()),
+    final SessionInputBuffer inputBuffer = wrapInputStream(client.getInputStream());
+    final HttpMessageParser<HttpRequest> parser = new DefaultHttpRequestParser(inputBuffer,
         new BasicLineParser(),
         new DefaultHttpRequestFactory(),
         MessageConstraints.DEFAULT
     );
-    final HttpMessageWriter<HttpResponse> writer = new DefaultHttpResponseWriter(wrapOutputStream(client.getOutputStream()));
+    final SessionOutputBuffer outputBuffer = wrapOutputStream(client.getOutputStream());
+    final HttpMessageWriter<HttpResponse> writer = new DefaultHttpResponseWriter(outputBuffer);
     while (!socket.isClosed()) {
       try {
-        service(parser, writer);
+        service(inputBuffer, outputBuffer, parser, writer);
       } catch (HttpException e) {
         log.error(e.getMessage(), e);
         break;

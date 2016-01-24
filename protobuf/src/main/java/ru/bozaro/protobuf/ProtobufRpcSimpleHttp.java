@@ -12,8 +12,13 @@ import org.apache.http.*;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.DefaultHttpResponseFactory;
+import org.apache.http.impl.entity.EntityDeserializer;
+import org.apache.http.impl.entity.EntitySerializer;
+import org.apache.http.impl.entity.LaxContentLengthStrategy;
 import org.apache.http.io.HttpMessageParser;
 import org.apache.http.io.HttpMessageWriter;
+import org.apache.http.io.SessionInputBuffer;
+import org.apache.http.io.SessionOutputBuffer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +49,30 @@ public class ProtobufRpcSimpleHttp {
     this.holder = holder;
   }
 
-  protected void service(@NotNull HttpMessageParser<HttpRequest> parser, @NotNull HttpMessageWriter<HttpResponse> writer) throws IOException, HttpException {
-    final HttpRequest request = parser.parse();
-    final HttpResponse response = service(request);
-    writer.write(response);
+  protected void service(@NotNull SessionInputBuffer inputBuffer, @NotNull SessionOutputBuffer outputBuffer, @NotNull HttpMessageParser<HttpRequest> parser, @NotNull HttpMessageWriter<HttpResponse> writer) throws IOException, HttpException {
+    try {
+      final HttpRequest request = parser.parse();
+      final HttpEntity entity;
+      if (request instanceof HttpEntityEnclosingRequest) {
+        final EntityDeserializer deserializer = new EntityDeserializer(new LaxContentLengthStrategy());
+        entity = deserializer.deserialize(inputBuffer, request);
+        ((HttpEntityEnclosingRequest) request).setEntity(entity);
+      } else {
+        entity = null;
+      }
+      final HttpResponse response = service(request);
+      response.setHeader(HttpHeaders.SERVER, "Protobuf RPC");
+      if (entity != null) {
+        entity.getContent().close();
+      }
+      writer.write(response);
+      if (response.getEntity() != null) {
+        final EntitySerializer serializer = new EntitySerializer(new LaxContentLengthStrategy());
+        serializer.serialize(outputBuffer, response, response.getEntity());
+      }
+    } finally {
+      outputBuffer.flush();
+    }
   }
 
   @NotNull
@@ -104,7 +129,11 @@ public class ProtobufRpcSimpleHttp {
       final byte[] msgResponse = method.call(msgRequest, StandardCharsets.UTF_8).get();
       if (msgResponse != null) {
         final HttpResponse response = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(req.getProtocolVersion(), HttpStatus.SC_OK, null);
-        response.setEntity(new ByteArrayEntity(msgResponse, ContentType.create(method.getFormat().getMimeType(), StandardCharsets.UTF_8)));
+        final ByteArrayEntity entity = new ByteArrayEntity(msgResponse, ContentType.create(method.getFormat().getMimeType(), StandardCharsets.UTF_8));
+        response.setEntity(entity);
+        response.setHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(entity.getContentLength()));
+        response.addHeader(entity.getContentEncoding());
+        response.addHeader(entity.getContentType());
         return response;
       } else {
         return sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, null);
