@@ -13,8 +13,8 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -49,6 +50,16 @@ public class ProtobufClient implements BlockingRpcChannel {
   }
 
   @NotNull
+  public URI getBaseUri() {
+    return baseUri;
+  }
+
+  @NotNull
+  public ProtobufFormat getFormat() {
+    return format;
+  }
+
+  @NotNull
   public static URI prepareUrl(@NotNull URI url) {
     final String path = url.getPath();
     return path == null || path.endsWith("/") ? url : url.resolve(path + "/");
@@ -57,7 +68,7 @@ public class ProtobufClient implements BlockingRpcChannel {
   @Override
   public Message callBlockingMethod(@NotNull Descriptors.MethodDescriptor method, @Nullable RpcController controller, @NotNull Message request, @NotNull Message responsePrototype) throws ServiceException {
     try {
-      final HttpEntityEnclosingRequestBase httpRequest = createRequest(method, request);
+      final HttpUriRequest httpRequest = createRequest(method, request);
       final HttpResponse response = client.execute(httpRequest);
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
         try (final InputStream stream = response.getEntity().getContent()) {
@@ -78,7 +89,7 @@ public class ProtobufClient implements BlockingRpcChannel {
   }
 
   @NotNull
-  public HttpEntityEnclosingRequestBase createRequest(@NotNull Descriptors.MethodDescriptor method, @NotNull Message request) throws IOException {
+  public HttpUriRequest createRequest(@NotNull Descriptors.MethodDescriptor method, @NotNull Message request) throws IOException, URISyntaxException {
     final HttpPost post = new HttpPost(baseUri.resolve(method.getService().getName().toLowerCase() + "/" + method.getName().toLowerCase() + format.getSuffix()));
     post.setHeader(HttpHeaders.CONTENT_TYPE, format.getMimeType());
     post.setHeader(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8.name());

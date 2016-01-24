@@ -54,22 +54,15 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
 
   protected void acceptThread() {
     while (!socket.isClosed()) {
-      try {
-        final Socket client = socket.accept();
-        pool.execute(() -> {
-          try {
-            try {
-              acceptClient(client);
-            } finally {
-              client.close();
-            }
-          } catch (IOException e) {
-            log.error(e.getMessage(), e);
+      pool.execute(() -> {
+        try {
+          try (Socket client = socket.accept()) {
+            acceptClient(client);
           }
-        });
-      } catch (IOException e) {
-        log.error(e.getMessage(), e);
-      }
+        } catch (IOException e) {
+          log.error(e.getMessage(), e);
+        }
+      });
     }
   }
 

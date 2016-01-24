@@ -9,8 +9,10 @@ package ru.bozaro.protobuf;
 
 import com.google.protobuf.Message;
 import org.apache.http.*;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.entity.EntityDeserializer;
 import org.apache.http.impl.entity.EntitySerializer;
@@ -19,6 +21,7 @@ import org.apache.http.io.HttpMessageParser;
 import org.apache.http.io.HttpMessageWriter;
 import org.apache.http.io.SessionInputBuffer;
 import org.apache.http.io.SessionOutputBuffer;
+import org.apache.http.message.BasicHttpResponse;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -49,6 +55,7 @@ public class ProtobufRpcSimpleHttp {
     this.holder = holder;
   }
 
+  @SuppressWarnings("deprecation")
   protected void service(@NotNull SessionInputBuffer inputBuffer, @NotNull SessionOutputBuffer outputBuffer, @NotNull HttpMessageParser<HttpRequest> parser, @NotNull HttpMessageWriter<HttpResponse> writer) throws IOException, HttpException {
     try {
       final HttpRequest request = parser.parse();
@@ -81,7 +88,7 @@ public class ProtobufRpcSimpleHttp {
     try {
       pathInfo = getPathInfo(req);
     } catch (URISyntaxException e) {
-      return sendError(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+      return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
     }
     final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
     final int separator = pathInfo.indexOf('/', begin);
@@ -91,18 +98,21 @@ public class ProtobufRpcSimpleHttp {
         return service(req, pathInfo.substring(separator + 1), serviceInfo);
       }
     }
-    return sendError(HttpStatus.SC_NOT_FOUND, "Service not found: " + pathInfo);
+    return sendError(req, HttpStatus.SC_NOT_FOUND, "Service not found: " + pathInfo);
   }
 
   @NotNull
-  public HttpResponse sendError(@NotNull int scNotFound, @NotNull String message) {
-    return null;
+  public HttpResponse sendError(@NotNull HttpRequest req, int code, @NotNull String reason) {
+    final BasicHttpResponse response = new BasicHttpResponse(req.getProtocolVersion(), code, reason);
+    final ContentType contentType = ContentType.create("text/plain", StandardCharsets.UTF_8);
+    response.setEntity(new StringEntity("ERROR " + code + ": " + response, contentType));
+    return response;
   }
 
   private @NotNull HttpResponse service(@NotNull HttpRequest req, @NotNull String methodPath, @NotNull ServiceInfo serviceInfo) throws IOException {
     final MethodInfo method = serviceInfo.getMethod(methodPath);
     if (method == null) {
-      return sendError(HttpStatus.SC_NOT_FOUND, "Method not found: " + methodPath);
+      return sendError(req, HttpStatus.SC_NOT_FOUND, "Method not found: " + methodPath);
     }
 
     final Message msgRequest;
@@ -112,18 +122,18 @@ public class ProtobufRpcSimpleHttp {
       if (entity != null) {
         msgRequest = method.requestByStream(entity.getContent(), getCharset(entity));
       } else {
-        return sendError(HttpStatus.SC_NO_CONTENT, "Request payload not found");
+        return sendError(req, HttpStatus.SC_NO_CONTENT, "Request payload not found");
       }
     } else if (httpHethod.equals("GET")) {
       Message result;
       try {
         result = method.requestByParams(getParameterMap(req));
-      } catch (ParseException e) {
-        return sendError(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+      } catch (URISyntaxException | ParseException e) {
+        return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
       }
       msgRequest = result;
     } else {
-      return sendError(HttpStatus.SC_METHOD_NOT_ALLOWED, null);
+      return sendError(req, HttpStatus.SC_METHOD_NOT_ALLOWED, "Unsupported method");
     }
     try {
       final byte[] msgResponse = method.call(msgRequest, StandardCharsets.UTF_8).get();
@@ -136,11 +146,11 @@ public class ProtobufRpcSimpleHttp {
         response.addHeader(entity.getContentType());
         return response;
       } else {
-        return sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, null);
+        return sendError(req, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Illegal method return value");
       }
     } catch (InterruptedException | ExecutionException e) {
       log.error("Method error " + method.getName(), e);
-      return sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+      return sendError(req, HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -151,8 +161,23 @@ public class ProtobufRpcSimpleHttp {
   }
 
   @NotNull
-  private Map<String, String[]> getParameterMap(@NotNull HttpRequest req) {
-    return null;
+  private Map<String, String[]> getParameterMap(@NotNull HttpRequest req) throws URISyntaxException {
+    final Map<String, List<String>> params = new HashMap<>();
+    final List<NameValuePair> pairList = URLEncodedUtils.parse(new URI(req.getRequestLine().getUri()), StandardCharsets.UTF_8.name());
+    for (NameValuePair param : pairList) {
+      params.compute(param.getName(), (item, value) -> {
+        if (value == null) {
+          value = new ArrayList<>();
+        }
+        value.add(param.getValue());
+        return value;
+      });
+    }
+    final Map<String, String[]> result = new HashMap<>();
+    for (Map.Entry<String, List<String>> pair : params.entrySet()) {
+      result.put(pair.getKey(), pair.getValue().toArray(new String[pair.getValue().size()]));
+    }
+    return result;
   }
 
   @NotNull

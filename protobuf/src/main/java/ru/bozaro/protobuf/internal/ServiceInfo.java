@@ -23,14 +23,11 @@ import java.util.Map;
  */
 public class ServiceInfo {
   @NotNull
-  private final Service service;
-  @NotNull
   private final Map<String, MethodInfo> methods;
   @NotNull
   private final String name;
 
   public ServiceInfo(@NotNull Service service) {
-    this.service = service;
     this.name = service.getDescriptorForType().getName().toLowerCase();
 
     final Map<String, MethodInfo> methods = new HashMap<>();

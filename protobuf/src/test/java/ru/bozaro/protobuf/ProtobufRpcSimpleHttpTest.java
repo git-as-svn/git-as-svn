@@ -7,12 +7,14 @@
  */
 package ru.bozaro.protobuf;
 
+import com.google.protobuf.BlockingRpcChannel;
 import com.google.protobuf.BlockingService;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import ru.bozaro.protobuf.client.ProtobufClient;
+import ru.bozaro.protobuf.client.ProtobufClientGet;
 import ru.bozaro.protobuf.example.EchoMessage;
 import ru.bozaro.protobuf.example.Example;
 
@@ -45,7 +47,28 @@ public class ProtobufRpcSimpleHttpTest {
       socket.bind(new InetSocketAddress("127.0.0.2", 0));
       try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool())) {
         final String url = "http:/" + socket.getLocalSocketAddress().toString();
-        final ProtobufClient channel = new ProtobufClient(new URI(url), null, format);
+        final BlockingRpcChannel channel = new ProtobufClient(new URI(url), null, format);
+        Example.BlockingInterface stub = Example.newBlockingStub(channel);
+        // Check echo method.
+        for (int pass = 0; pass < 2; ++pass) {
+          final EchoMessage echoRequest = EchoMessage.newBuilder()
+              .setText("Foo " + pass)
+              .build();
+          final EchoMessage echoResponse = stub.echo(null, echoRequest);
+          Assert.assertEquals(echoRequest, echoResponse);
+        }
+      }
+    }
+  }
+
+  @Test(dataProvider = "formatProvider", timeOut = 30000)
+  public void echoGet(@NotNull ProtobufFormat format) throws Exception {
+    final BlockingService service = Example.newReflectiveBlockingService(new ExampleBlockingImpl());
+    try (final ServerSocket socket = new ServerSocket()) {
+      socket.bind(new InetSocketAddress("127.0.0.2", 0));
+      try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool())) {
+        final String url = "http:/" + socket.getLocalSocketAddress().toString();
+        final BlockingRpcChannel channel = new ProtobufClientGet(new URI(url), null, format);
         Example.BlockingInterface stub = Example.newBlockingStub(channel);
         // Check echo method.
         for (int pass = 0; pass < 2; ++pass) {
