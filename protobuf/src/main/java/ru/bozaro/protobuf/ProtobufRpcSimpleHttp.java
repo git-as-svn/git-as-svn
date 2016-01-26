@@ -72,6 +72,11 @@ public class ProtobufRpcSimpleHttp {
       if (entity != null) {
         entity.getContent().close();
       }
+      if (response.getEntity() != null) {
+        response.addHeader(response.getEntity().getContentType());
+        response.addHeader(response.getEntity().getContentEncoding());
+        response.addHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(response.getEntity().getContentLength()));
+      }
       writer.write(response);
       if (response.getEntity() != null) {
         final EntitySerializer serializer = new EntitySerializer(new LaxContentLengthStrategy());
@@ -105,7 +110,7 @@ public class ProtobufRpcSimpleHttp {
   public HttpResponse sendError(@NotNull HttpRequest req, int code, @NotNull String reason) {
     final BasicHttpResponse response = new BasicHttpResponse(req.getProtocolVersion(), code, reason);
     final ContentType contentType = ContentType.create("text/plain", StandardCharsets.UTF_8);
-    response.setEntity(new StringEntity("ERROR " + code + ": " + response, contentType));
+    response.setEntity(new StringEntity("ERROR " + code + ": " + reason, contentType));
     return response;
   }
 
