@@ -16,22 +16,25 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 /**
- * Unix socket transport for API.
+ * TCP socket transport for API.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("socket")
-public class SocketConfig implements SharedConfig {
+@ConfigType("tcp")
+public class TCPConfig implements SharedConfig {
     @NotNull
-    private String path = "git-as-svn.socket";
+    private String host = "localhost";
+    @NotNull
+    private int port = 8124;
 
     @Override
     public void create(@NotNull SharedContext context) throws IOException {
-        final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
-        socket.bind(new AFUNIXSocketAddress(ConfigHelper.joinPath(context.getBasePath(), path)));
+        final ServerSocket socket = new ServerSocket();
+        socket.bind(new InetSocketAddress(host, port));
 
         context.add(SocketRpc.class, new SocketRpc(context, socket));
     }

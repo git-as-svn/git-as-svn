@@ -19,6 +19,7 @@ import svnserver.context.SharedContext;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
@@ -38,9 +39,7 @@ public class SocketRpc implements Shared {
   @NotNull
   private final SharedContext context;
   @NotNull
-  private final File socketFile;
-  @NotNull
-  private final AFUNIXServerSocket socket;
+  private final ServerSocket socket;
   @NotNull
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   @NotNull
@@ -50,18 +49,16 @@ public class SocketRpc implements Shared {
   @NotNull
   private final ExecutorService poolExecutor;
 
-  public SocketRpc(@NotNull SharedContext context, @NotNull File socketFile) throws IOException {
+  public SocketRpc(@NotNull SharedContext context, @NotNull ServerSocket serverSocket) throws IOException {
     this.context = context;
-    this.socketFile = socketFile;
-    this.socket = AFUNIXServerSocket.newInstance();
-    socket.bind(new AFUNIXSocketAddress(socketFile));
+    this.socket = serverSocket;
     this.poolExecutor = Executors.newCachedThreadPool();
-    thread = new Thread(SocketRpc.this::run, "unix-socket-listener");
-    thread.run();
+    thread = new Thread(SocketRpc.this::run, "socket-listener");
+    thread.start();
   }
 
   private void run() {
-    log.info("Server API on unix socket: {}", socketFile);
+    log.info("Server API on socket: {}", socket.toString());
     while (!stopped.get()) {
       final Socket client;
       try {
