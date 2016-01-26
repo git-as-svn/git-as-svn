@@ -44,7 +44,7 @@ public class ProtobufRpcServlet extends HttpServlet {
     final String pathInfo = req.getPathInfo();
     if (pathInfo != null) {
       final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
-      final int separator = pathInfo.indexOf('/', begin);
+      final int separator = pathInfo.lastIndexOf('/');
       if (separator > 0) {
         ServiceInfo serviceInfo = holder.getService(pathInfo.substring(begin, separator));
         if (serviceInfo != null) {

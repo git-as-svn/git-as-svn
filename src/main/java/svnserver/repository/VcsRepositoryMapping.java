@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import svnserver.context.Shared;
 
 import java.io.IOException;
 
@@ -19,7 +20,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface VcsRepositoryMapping {
+public interface VcsRepositoryMapping extends Shared {
   @Nullable
   RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException;
 

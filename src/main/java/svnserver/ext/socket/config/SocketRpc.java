@@ -8,12 +8,18 @@
 package svnserver.ext.socket.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import ru.bozaro.protobuf.ProtobufRpcSocket;
+import ru.bozaro.protobuf.internal.ServiceInfo;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 import svnserver.ext.api.ServiceRegistry;
+import svnserver.repository.RepositoryInfo;
+import svnserver.repository.VcsRepositoryMapping;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -34,11 +40,34 @@ public class SocketRpc implements Shared {
   private final ExecutorService poolExecutor;
   @NotNull
   private final ProtobufRpcSocket server;
+  @NotNull
+  private final SharedContext context;
 
   public SocketRpc(@NotNull SharedContext context, @NotNull ServerSocket serverSocket) throws IOException {
     this.poolExecutor = Executors.newCachedThreadPool();
+    this.context = context;
     log.info("Server API on socket: {}", serverSocket);
-    this.server = new ProtobufRpcSocket(ServiceRegistry.get(context), serverSocket, poolExecutor);
+    this.server = new ProtobufRpcSocket(SocketRpc.this::getService, serverSocket, poolExecutor);
+  }
+
+  @Nullable
+  public ServiceInfo getService(@NotNull String name) {
+    int separator = name.lastIndexOf('/');
+    ServiceRegistry registry;
+    if (separator < 0) {
+      registry = ServiceRegistry.get(context);
+    } else {
+      try {
+        VcsRepositoryMapping mapping = context.sure(VcsRepositoryMapping.class);
+        SVNURL url = SVNURL.create("svn", null, "localhost", 0, name.substring(0, separator), false);
+        RepositoryInfo repository = mapping.getRepository(url);
+        registry = repository != null ? ServiceRegistry.get(repository.getRepository().getContext()) : null;
+      } catch (SVNException e) {
+        log.warn("Can't find repository", e);
+        return null;
+      }
+    }
+    return registry != null ? registry.getService(name.substring(separator + 1)) : null;
   }
 
   @Override
