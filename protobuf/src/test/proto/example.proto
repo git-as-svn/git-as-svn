@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 option java_package = "ru.bozaro.protobuf.example";
 
 option java_outer_classname = "ExampleProto";
@@ -12,18 +14,18 @@ service Example {
 }
 
 message HelloRequest {
-	required string person = 1;
-	optional string title = 2 [default = "Mr"];
+	string person = 1;
+	string title = 2;
 }
 
 message HelloResponse {
-	required string greeting = 1;
+	string greeting = 1;
 }
 
 message EchoMessage {
 	message Embedded {
-		required string foo = 1;
+		string foo = 1;
 	}
-	optional Embedded embedded = 1;
-	required string text = 2;
+	Embedded embedded = 1;
+	string text = 2;
 }

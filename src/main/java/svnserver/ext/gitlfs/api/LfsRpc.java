@@ -45,11 +45,11 @@ public class LfsRpc implements Lfs.BlockingInterface {
   @NotNull
   @Override
   public AuthenticateResponse authenticate(RpcController controller, AuthenticateRequest request) throws ServiceException {
-    if ((request.getMode() != AuthenticateRequest.Mode.ANONYMOUS) && (!request.hasIdentificator())) {
+    if ((request.getMode() != AuthenticateRequest.Mode.ANONYMOUS) && (request.getIdentificator() == null)) {
       return AuthenticateResponse.newBuilder()
           .setError(svnserver.api.lfs.Error.newBuilder()
-                  .setKind(Error.Kind.BAD_REQUEST)
-                  .setDescription("Identificator field is required for authentication mode: " + request.getMode())
+              .setKind(Error.Kind.BAD_REQUEST)
+              .setDescription("Identificator field is required for authentication mode: " + request.getMode())
           )
           .build();
     }
@@ -72,23 +72,23 @@ public class LfsRpc implements Lfs.BlockingInterface {
       if (user == null) {
         return AuthenticateResponse.newBuilder()
             .setError(svnserver.api.lfs.Error.newBuilder()
-                    .setKind(Error.Kind.USER_NOT_FOUND)
-                    .setDescription("User not found")
+                .setKind(Error.Kind.USER_NOT_FOUND)
+                .setDescription("User not found")
             )
             .build();
       }
-      final URI url = request.hasUrl() ? URI.create(request.getUrl()) : getWebServer().getUrl(baseLfsUrl);
+      final URI url = request.getUrl() != null ? URI.create(request.getUrl()) : getWebServer().getUrl(baseLfsUrl);
       Link token = LfsAuthHelper.createToken(context.getShared(), url, user);
       return AuthenticateResponse.newBuilder()
           .setSuccess(AuthenticateResponse.Success.newBuilder()
-                  .setJson(JsonHelper.createMapper().writeValueAsString(token))
+              .setJson(JsonHelper.createMapper().writeValueAsString(token))
           )
           .build();
     } catch (SVNException | IOException e) {
       return AuthenticateResponse.newBuilder()
           .setError(svnserver.api.lfs.Error.newBuilder()
-                  .setKind(Error.Kind.UNKNOWN_ERROR)
-                  .setDescription("Can't get user information. See server log for more details")
+              .setKind(Error.Kind.UNKNOWN_ERROR)
+              .setDescription("Can't get user information. See server log for more details")
           )
           .build();
     }
