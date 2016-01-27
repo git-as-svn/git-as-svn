@@ -82,7 +82,7 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 
   protobuf {
     protoc {
-      artifact = "com.google.protobuf:protoc:2.6.1"
+      artifact = "com.google.protobuf:protoc:3.0.0-beta-2"
     }
     generatedFilesBaseDir = "$projectDir/src/generated"
   }
