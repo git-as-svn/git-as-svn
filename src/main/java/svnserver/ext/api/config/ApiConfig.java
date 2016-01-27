@@ -20,9 +20,11 @@ import java.io.IOException;
 /**
  * API configuration.
  *
+ * This class is unsafe, because all API have anonymous access.
+ *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("api")
+@ConfigType(value = "api", unsafe = true)
 public class ApiConfig implements SharedConfig, LocalConfig {
   @NotNull
   private String path = "/api";

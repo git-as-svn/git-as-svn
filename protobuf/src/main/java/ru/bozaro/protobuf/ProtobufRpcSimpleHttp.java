@@ -68,15 +68,15 @@ public class ProtobufRpcSimpleHttp {
         entity = null;
       }
       final HttpResponse response = service(request);
-      response.setHeader(HttpHeaders.SERVER, "Protobuf RPC");
       if (entity != null) {
         entity.getContent().close();
       }
       if (response.getEntity() != null) {
+        response.addHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(response.getEntity().getContentLength()));
         response.addHeader(response.getEntity().getContentType());
         response.addHeader(response.getEntity().getContentEncoding());
-        response.addHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(response.getEntity().getContentLength()));
       }
+      response.setHeader(HttpHeaders.SERVER, "Protobuf RPC");
       writer.write(response);
       if (response.getEntity() != null) {
         final EntitySerializer serializer = new EntitySerializer(new LaxContentLengthStrategy());
@@ -146,9 +146,6 @@ public class ProtobufRpcSimpleHttp {
         final HttpResponse response = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(req.getProtocolVersion(), HttpStatus.SC_OK, null);
         final ByteArrayEntity entity = new ByteArrayEntity(msgResponse, ContentType.create(method.getFormat().getMimeType(), StandardCharsets.UTF_8));
         response.setEntity(entity);
-        response.setHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(entity.getContentLength()));
-        response.addHeader(entity.getContentEncoding());
-        response.addHeader(entity.getContentType());
         return response;
       } else {
         return sendError(req, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Illegal method return value");

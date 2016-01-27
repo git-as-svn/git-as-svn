@@ -21,5 +21,9 @@ message HelloResponse {
 }
 
 message EchoMessage {
-	required string text = 1;
+	message Embedded {
+		required string foo = 1;
+	}
+	optional Embedded embedded = 1;
+	required string text = 2;
 }

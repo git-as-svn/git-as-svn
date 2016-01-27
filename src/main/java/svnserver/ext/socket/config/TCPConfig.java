@@ -8,9 +8,6 @@
 package svnserver.ext.socket.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.newsclub.net.unix.AFUNIXServerSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
-import svnserver.config.ConfigHelper;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
@@ -21,21 +18,22 @@ import java.net.ServerSocket;
 
 /**
  * TCP socket transport for API.
+ * <p>
+ * This is developers-only API endpoint implementation.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("tcp")
+@ConfigType(value = "tcp", unsafe = true)
 public class TCPConfig implements SharedConfig {
-    @NotNull
-    private String host = "localhost";
-    @NotNull
-    private int port = 8124;
+  @NotNull
+  private String host = "localhost";
+  private int port = 8124;
 
-    @Override
-    public void create(@NotNull SharedContext context) throws IOException {
-        final ServerSocket socket = new ServerSocket();
-        socket.bind(new InetSocketAddress(host, port));
+  @Override
+  public void create(@NotNull SharedContext context) throws IOException {
+    final ServerSocket socket = new ServerSocket();
+    socket.bind(new InetSocketAddress(host, port));
 
-        context.add(SocketRpc.class, new SocketRpc(context, socket));
-    }
+    context.add(SocketRpc.class, new SocketRpc(context, socket));
+  }
 }

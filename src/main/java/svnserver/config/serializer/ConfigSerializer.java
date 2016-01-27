@@ -36,12 +36,12 @@ public class ConfigSerializer {
   @NotNull
   private final Yaml yaml;
 
-  public ConfigSerializer() {
+  public ConfigSerializer(boolean unsafeConfig) {
     final DumperOptions options = new DumperOptions();
     options.setPrettyFlow(true);
     options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
-    yaml = new Yaml(new ConfigConstructor(), new ConfigRepresenter(), options);
+    yaml = new Yaml(new ConfigConstructor(unsafeConfig), new ConfigRepresenter(unsafeConfig), options);
     yaml.setBeanAccess(BeanAccess.FIELD);
   }
 
@@ -62,28 +62,31 @@ public class ConfigSerializer {
     }
   }
 
-  private static Map<String, Class<?>> configTypes() {
+  private static Map<String, Class<?>> configTypes(boolean unsafeConfig) {
     final Map<String, Class<?>> result = new TreeMap<>();
     for (Class<?> type : ClassIndex.getAnnotated(ConfigType.class)) {
-      final String name = type.getAnnotation(ConfigType.class).value();
-      if (result.put(TAG_PREFIX + name, type) != null) {
-        throw new IllegalStateException("Found duplicate type name: " + name);
+      ConfigType annotation = type.getAnnotation(ConfigType.class);
+      if (unsafeConfig || !annotation.unsafe()) {
+        final String name = annotation.value();
+        if (result.put(TAG_PREFIX + name, type) != null) {
+          throw new IllegalStateException("Found duplicate type name: " + name);
+        }
       }
     }
     return result;
   }
 
   public static class ConfigConstructor extends Constructor {
-    public ConfigConstructor() {
-      for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
+    public ConfigConstructor(boolean unsafeConfig) {
+      for (Map.Entry<String, Class<?>> entry : configTypes(unsafeConfig).entrySet()) {
         addTypeDescription(new TypeDescription(entry.getValue(), entry.getKey()));
       }
     }
   }
 
   public static class ConfigRepresenter extends Representer {
-    public ConfigRepresenter() {
-      for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
+    public ConfigRepresenter(boolean unsafeConfig) {
+      for (Map.Entry<String, Class<?>> entry : configTypes(unsafeConfig).entrySet()) {
         addClassTag(entry.getValue(), new Tag(entry.getKey()));
       }
     }

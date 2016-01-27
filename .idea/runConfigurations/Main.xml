@@ -8,7 +8,7 @@
     </extension>
     <option name="MAIN_CLASS_NAME" value="svnserver.server.Main" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="-c cfg/config-local.example" />
+    <option name="PROGRAM_PARAMETERS" value="-c cfg/config-local.example --unsafe" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />
