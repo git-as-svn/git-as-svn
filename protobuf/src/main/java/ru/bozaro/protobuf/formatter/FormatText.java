@@ -11,7 +11,6 @@ import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.ProtobufFormat;
 
 import java.io.*;
@@ -34,10 +33,10 @@ public class FormatText extends ProtobufFormat {
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
+  public Message.Builder read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
     TextFormat.merge(new InputStreamReader(stream, charset), ExtensionRegistry.getEmptyRegistry(), builder);
-    return builder.build();
+    return builder;
   }
 }

@@ -120,28 +120,25 @@ public class ProtobufRpcSimpleHttp {
       return sendError(req, HttpStatus.SC_NOT_FOUND, "Method not found: " + methodPath);
     }
 
-    final Message msgRequest;
+    final Message.Builder msgRequest = method.requestBuilder();
     final String httpHethod = req.getRequestLine().getMethod();
     if (httpHethod.equals("POST") && (req instanceof HttpEntityEnclosingRequest)) {
       final HttpEntity entity = ((HttpEntityEnclosingRequest) req).getEntity();
       if (entity != null) {
-        msgRequest = method.requestByStream(entity.getContent(), getCharset(entity));
+        method.requestByStream(msgRequest, entity.getContent(), getCharset(entity));
       } else {
         return sendError(req, HttpStatus.SC_NO_CONTENT, "Request payload not found");
       }
-    } else if (httpHethod.equals("GET")) {
-      Message result;
-      try {
-        result = method.requestByParams(getParameterMap(req));
-      } catch (URISyntaxException | ParseException e) {
-        return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
-      }
-      msgRequest = result;
-    } else {
+    } else if (!httpHethod.equals("GET")) {
       return sendError(req, HttpStatus.SC_METHOD_NOT_ALLOWED, "Unsupported method");
     }
     try {
-      final byte[] msgResponse = method.call(msgRequest, StandardCharsets.UTF_8).get();
+      method.requestByParams(msgRequest, getParameterMap(req));
+    } catch (URISyntaxException | ParseException e) {
+      return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
+    }
+    try {
+      final byte[] msgResponse = method.call(msgRequest.build(), StandardCharsets.UTF_8).get();
       if (msgResponse != null) {
         final HttpResponse response = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(req.getProtocolVersion(), HttpStatus.SC_OK, null);
         final ByteArrayEntity entity = new ByteArrayEntity(msgResponse, ContentType.create(method.getFormat().getMimeType(), StandardCharsets.UTF_8));

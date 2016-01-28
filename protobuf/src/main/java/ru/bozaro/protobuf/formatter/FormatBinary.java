@@ -9,7 +9,6 @@ package ru.bozaro.protobuf.formatter;
 
 import com.google.protobuf.Message;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.ProtobufFormat;
 
 import java.io.IOException;
@@ -32,9 +31,9 @@ public class FormatBinary extends ProtobufFormat {
     message.writeTo(stream);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
-    return builder.mergeFrom(stream).build();
+  public Message.Builder read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
+    return builder.mergeFrom(stream);
   }
 }

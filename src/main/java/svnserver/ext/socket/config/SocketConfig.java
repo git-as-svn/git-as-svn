@@ -15,8 +15,8 @@ import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
 
 /**
  * Unix socket transport for API.
@@ -25,14 +25,18 @@ import java.net.ServerSocket;
  */
 @ConfigType("socket")
 public class SocketConfig implements SharedConfig {
-    @NotNull
-    private String path = "git-as-svn.socket";
+  @NotNull
+  private String path = "git-as-svn.socket";
 
-    @Override
-    public void create(@NotNull SharedContext context) throws IOException {
-        final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
-        socket.bind(new AFUNIXSocketAddress(ConfigHelper.joinPath(context.getBasePath(), path)));
-
-        context.add(SocketRpc.class, new SocketRpc(context, socket));
+  @Override
+  public void create(@NotNull SharedContext context) throws IOException {
+    final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
+    final File socketFile = ConfigHelper.joinPath(context.getBasePath(), path);
+    if (socketFile.exists()) {
+      //noinspection ResultOfMethodCallIgnored
+      socketFile.delete();
     }
+    socket.bind(new AFUNIXSocketAddress(socketFile));
+    context.add(SocketRpc.class, new SocketRpc(context, socket));
+  }
 }

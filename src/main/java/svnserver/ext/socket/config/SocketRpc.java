@@ -61,13 +61,15 @@ public class SocketRpc implements Shared {
         VcsRepositoryMapping mapping = context.sure(VcsRepositoryMapping.class);
         SVNURL url = SVNURL.create("svn", null, "localhost", 0, name.substring(0, separator), false);
         RepositoryInfo repository = mapping.getRepository(url);
-        registry = repository != null ? ServiceRegistry.get(repository.getRepository().getContext()) : null;
+        if (repository == null || !repository.getBaseUrl().getPath().equals(url.getPath()))
+          return null;
+        registry = ServiceRegistry.get(repository.getRepository().getContext());
       } catch (SVNException e) {
         log.warn("Can't find repository", e);
         return null;
       }
     }
-    return registry != null ? registry.getService(name.substring(separator + 1)) : null;
+    return registry.getService(name.substring(separator + 1));
   }
 
   @Override

@@ -38,6 +38,9 @@ public class ApiProvider implements Shared, Local {
   public synchronized void init(@NotNull LocalContext context) throws IOException {
     if (servletInfo == null) {
       WebServer webServer = WebServer.get(context.getShared());
+      final ServiceRegistry registry = ServiceRegistry.get(context);
+      registry.addService(Core.newReflectiveBlockingService(new CoreRpc(registry)));
+
       final ProtobufRpcServlet servlet = new ProtobufRpcServlet(ServiceRegistry.get(context));
       servletInfo = webServer.addServlet("/" + path + "/*", servlet);
     }
@@ -48,7 +51,7 @@ public class ApiProvider implements Shared, Local {
     if (servletInfo == null) {
       WebServer webServer = WebServer.get(context);
       final ServiceRegistry registry = ServiceRegistry.get(context);
-      registry.addService(Core.newReflectiveBlockingService(new CoreRpc()));
+      registry.addService(Core.newReflectiveBlockingService(new CoreRpc(registry)));
 
       final ProtobufRpcServlet servlet = new ProtobufRpcServlet(registry);
       servletInfo = webServer.addServlet(path + "/*", servlet);

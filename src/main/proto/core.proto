@@ -19,4 +19,5 @@ message VersionResponse {
 	string version = 1;
 	string tag = 2;
 	string revision = 3;
+	repeated string service = 4;
 }
