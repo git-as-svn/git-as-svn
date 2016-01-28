@@ -1,0 +1,10 @@
+# defaults for git-as-svn server
+
+# location of java
+#JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+# arguments to pass to java
+JAVA_OPTS="-Xmx256m -Dlog4j.configurationFile=/etc/git-as-svn/log4j2.xml"
+
+# additional arguments to pass to git-as-svn
+GAS_ARGS=""

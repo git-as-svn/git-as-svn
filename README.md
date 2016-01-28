@@ -22,8 +22,6 @@ This project is an implementation of the Subversion server (svn protocol) for gi
 
 It allows you to work with a git repository using the console svn, TortoiseSVN, SvnKit and similar tools.
 
-Subversion frontend server for git repository (in Java).
-
 ## Why do we need it?
 This project was born out of division teams working on another project into two camps:
 

@@ -1,0 +1,5 @@
+git-as-svn (1.0.0) debian; urgency=low
+
+  * See CHANGELOG.md for more details.
+
+ -- Artem V. Navrotskiy <bozaro@yandex.ru>  Thu, 28 Jan 2016 21:34:19 +0300
