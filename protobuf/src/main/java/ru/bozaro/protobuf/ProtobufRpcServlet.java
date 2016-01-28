@@ -63,7 +63,9 @@ public class ProtobufRpcServlet extends HttpServlet {
       return;
     }
     final Message.Builder msgRequest = method.requestBuilder();
-    method.requestByStream(msgRequest, req.getInputStream(), getCharset(req));
+    if (req.getMethod().equalsIgnoreCase("POST")) {
+      method.requestByStream(msgRequest, req.getInputStream(), getCharset(req));
+    }
     try {
       method.requestByParams(msgRequest, req.getParameterMap());
     } catch (ParseException e) {
