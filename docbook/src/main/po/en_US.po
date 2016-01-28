@@ -1,21 +1,30 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-05 22:44+0300\n"
-"PO-Revision-Date: 2016-01-05 21:57+0300\n"
+"POT-Creation-Date: 2016-01-28 11:44+0300\n"
+"PO-Revision-Date: 2016-01-28 11:24+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
 #: index.l10n.xml:531(None)
 msgid ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
+msgstr ""
+"@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: index.l10n.xml:700(None)
+msgid ""
+"@@image: 'images/rpc_annotation_ru_RU.png'; "
+"md5=bdd13c5d799a2d5daf202be430e319e2"
 msgstr ""
 
 #: index.l10n.xml:3(title)
@@ -737,7 +746,7 @@ msgstr ""
 "value <code>svn properties</ code> correspond Git-view, they are generated "
 "on the fly based on the repository content."
 
-#: index.l10n.xml:555(para)
+#: index.l10n.xml:555(para) index.l10n.xml:737(para)
 msgid "При этом:"
 msgstr "Wherein:"
 
@@ -906,7 +915,112 @@ msgstr ""
 "Otherwise TortoiseSVN will attempt to set these parameters for all newly "
 "created directories instead of use inherited properties."
 
+#: index.l10n.xml:696(title)
+msgid "API"
+msgstr "API"
+
+#: index.l10n.xml:704(link)
+msgid "http://xkcd.ru/927/"
+msgstr "https://xkcd.com/927/"
+
+#: index.l10n.xml:709(title)
+#, fuzzy
+msgid "Описание интерфейса"
+msgstr "Example of SVN-link in GitLab interface"
+
+#: index.l10n.xml:711(para)
+msgid "При реализации интерфейса API предъявлялись следующие требования:"
+msgstr ""
+
+#: index.l10n.xml:716(para)
+msgid "Схема должна быть первична."
+msgstr ""
+
+#: index.l10n.xml:718(para)
+msgid ""
+"Это позволяет использовать схему как документацию и, в некоторых случаях, "
+"гененрировать код для работы с API."
+msgstr ""
+
+#: index.l10n.xml:723(para)
+msgid ""
+"Реализация клиента должна быть тривиальной на любом языке программирования."
+msgstr ""
+
+#: index.l10n.xml:728(para)
+msgid ""
+"В результате, для схемы был выбран Protocol Buffers (<link xlink:href="
+"\"https://developers.google.com/protocol-buffers/\">https://developers."
+"google.com/protocol-buffers/</link>)."
+msgstr ""
+
+#: index.l10n.xml:730(para)
+msgid ""
+"Так как Protocol Buffers не имеет штатного RPC, общение ведется по протороку "
+"HTTP."
+msgstr ""
+
+#: index.l10n.xml:733(para)
+msgid "Для вызова метода, отправляется запрос на URL вида:"
+msgstr ""
+
+#: index.l10n.xml:744(para)
+msgid "Имя репозитория, для которого вызывается метод API."
+msgstr ""
+
+#: index.l10n.xml:746(para)
+msgid "Не указывается для общих API."
+msgstr ""
+
+#: index.l10n.xml:754(para)
+msgid "Имя сервиса внутри .proto-схемы в нижнем регистре."
+msgstr ""
+
+#: index.l10n.xml:762(para)
+msgid "Имя метода внутри .proto-схемы в нижнем регистре."
+msgstr ""
+
+#: index.l10n.xml:770(para)
+msgid "Формат сериализации сообщений."
+msgstr ""
+
+#: index.l10n.xml:772(para)
+msgid "Поддерживаются следующие форматы:"
+msgstr ""
+
+#: index.l10n.xml:778(para)
+msgid "Бинарная сериализация Protocol Buffers."
+msgstr ""
+
+#: index.l10n.xml:784(para)
+msgid ""
+"Сериализация в JSON. Позволяет использовать API без привязки к Protocol "
+"Buffers."
+msgstr ""
+
+#: index.l10n.xml:791(para)
+msgid ""
+"Сериализация в XML. Позволяет использовать API без привязки к Protocol "
+"Buffers."
+msgstr ""
+
+#: index.l10n.xml:798(para)
+msgid ""
+"Текстовая сериализация. В основном полезна для вызова некоторых методов из "
+"браузера."
+msgstr ""
+
+#: index.l10n.xml:806(para)
+msgid "Аргумент RPC-вызова можент быть передан через POST-запрос."
+msgstr ""
+
+#: index.l10n.xml:808(para)
+msgid ""
+"Скалярные аттрибуты верхнего уровня можно так же передать через параметры "
+"URL."
+msgstr ""
+
 #. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
 #: index.l10n.xml:0(None)
 msgid "translator-credits"
-msgstr ""
+msgstr "translator-credits"
