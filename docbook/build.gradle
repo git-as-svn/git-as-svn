@@ -1,4 +1,13 @@
 subprojects {
+  configurations {
+    xslt
+  }
+
+  dependencies {
+//    xslt "xalan:xalan:2.7.2"
+    xslt "net.sf.saxon:saxon:8.7"
+  }
+
   apply plugin: "docbook-reference"
 
   def docbookDir = "${project.buildDir}/docbook"
@@ -18,7 +27,10 @@ subprojects {
           in: "${project.parent.projectDir}/src/main/reference/index.xml",
           out: "${docbookDir}/index.single.xml",
           style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
-      )
+          classpath: configurations.xslt.asPath,
+      ) {
+        param(name: "lang", expression: project.name)
+      }
     }
   }
 
@@ -30,8 +42,10 @@ subprojects {
           in: "${project.parent.projectDir}/src/main/reference/index.xml",
           out: "${docbookDir}/index.l10n.xml",
           style: "${project.parent.projectDir}/src/main/reference/xsl/copy.xsl",
+          classpath: configurations.xslt.asPath,
       ) {
         param(name: "lang", expression: project.name)
+        param(name: "skip", expression: project.name)
       }
     }
   }

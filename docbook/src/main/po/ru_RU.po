@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-28 11:40+0300\n"
+"POT-Creation-Date: 2016-01-28 13:30+0300\n"
 "PO-Revision-Date: 2016-01-28 11:18+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
@@ -22,9 +22,10 @@ msgstr ""
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
 #: index.l10n.xml:602(None)
+#, fuzzy
 msgid ""
 "@@image: 'images/rpc_annotation_ru_RU.png'; "
-"md5=ffac727fd7f9547d36657745fe7ea3a1"
+"md5=bdd13c5d799a2d5daf202be430e319e2"
 msgstr ""
 "@@image: 'images/rpc_annotation_ru_RU.png'; "
 "md5=ffac727fd7f9547d36657745fe7ea3a1"

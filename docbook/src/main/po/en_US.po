@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-28 11:44+0300\n"
+"POT-Creation-Date: 2016-01-28 13:30+0300\n"
 "PO-Revision-Date: 2016-01-28 11:24+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
@@ -23,8 +23,8 @@ msgstr ""
 #. It doesn't matter what you translate it to: it's not used at all.
 #: index.l10n.xml:700(None)
 msgid ""
-"@@image: 'images/rpc_annotation_ru_RU.png'; "
-"md5=bdd13c5d799a2d5daf202be430e319e2"
+"@@image: 'images/rpc_annotation_en_US.png'; "
+"md5=e3ca18a46618b08cb3f13a65850146c4"
 msgstr ""
 
 #: index.l10n.xml:3(title)
