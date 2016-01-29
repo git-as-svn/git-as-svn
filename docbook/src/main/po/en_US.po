@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-28 13:30+0300\n"
-"PO-Revision-Date: 2016-01-28 11:24+0300\n"
+"POT-Creation-Date: 2016-01-29 16:31+0300\n"
+"PO-Revision-Date: 2016-01-29 16:34+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -26,6 +26,8 @@ msgid ""
 "@@image: 'images/rpc_annotation_en_US.png'; "
 "md5=e3ca18a46618b08cb3f13a65850146c4"
 msgstr ""
+"@@image: 'images/rpc_annotation_en_US.png'; "
+"md5=e3ca18a46618b08cb3f13a65850146c4"
 
 #: index.l10n.xml:3(title)
 msgid "Git as Subversion"
@@ -924,28 +926,29 @@ msgid "http://xkcd.ru/927/"
 msgstr "https://xkcd.com/927/"
 
 #: index.l10n.xml:709(title)
-#, fuzzy
 msgid "Описание интерфейса"
-msgstr "Example of SVN-link in GitLab interface"
+msgstr "Interface description"
 
 #: index.l10n.xml:711(para)
 msgid "При реализации интерфейса API предъявлялись следующие требования:"
-msgstr ""
+msgstr "API is implemented according to the following requirements:"
 
 #: index.l10n.xml:716(para)
 msgid "Схема должна быть первична."
-msgstr ""
+msgstr "Schema-first API definition."
 
 #: index.l10n.xml:718(para)
 msgid ""
 "Это позволяет использовать схему как документацию и, в некоторых случаях, "
-"гененрировать код для работы с API."
+"генерировать код для работы с API."
 msgstr ""
+"This allows the use schema as the documentation, and in some cases, to "
+"generate the code for the work with the API."
 
 #: index.l10n.xml:723(para)
 msgid ""
 "Реализация клиента должна быть тривиальной на любом языке программирования."
-msgstr ""
+msgstr "Client implementation must be trivial on any programming language."
 
 #: index.l10n.xml:728(para)
 msgid ""
@@ -953,72 +956,79 @@ msgid ""
 "\"https://developers.google.com/protocol-buffers/\">https://developers."
 "google.com/protocol-buffers/</link>)."
 msgstr ""
+"As a result, for API scheme has been choosen Protocol Buffers (<link xlink:"
+"href=\"https://developers.google.com/protocol-buffers/\">https://developers."
+"google.com/protocol-buffers/</link>)."
 
 #: index.l10n.xml:730(para)
 msgid ""
-"Так как Protocol Buffers не имеет штатного RPC, общение ведется по протороку "
+"Так как Protocol Buffers не имеет штатного RPC, общение ведется по протоколу "
 "HTTP."
 msgstr ""
+"Since Protocol Buffers does not have a native RPC implemenation, used custom "
+"RPC implementation based on HTTP protocol."
 
 #: index.l10n.xml:733(para)
 msgid "Для вызова метода, отправляется запрос на URL вида:"
-msgstr ""
+msgstr "To call the method, a request is sent to a URL of the form:"
 
 #: index.l10n.xml:744(para)
 msgid "Имя репозитория, для которого вызывается метод API."
-msgstr ""
+msgstr "The name of the repository, for which the method is called API."
 
 #: index.l10n.xml:746(para)
 msgid "Не указывается для общих API."
-msgstr ""
+msgstr "Don't used for server-wide API."
 
 #: index.l10n.xml:754(para)
 msgid "Имя сервиса внутри .proto-схемы в нижнем регистре."
-msgstr ""
+msgstr "Lower case service name from .proto file."
 
 #: index.l10n.xml:762(para)
 msgid "Имя метода внутри .proto-схемы в нижнем регистре."
-msgstr ""
+msgstr "Lower case method name from .proto file."
 
 #: index.l10n.xml:770(para)
 msgid "Формат сериализации сообщений."
-msgstr ""
+msgstr "Message serialization format."
 
 #: index.l10n.xml:772(para)
 msgid "Поддерживаются следующие форматы:"
-msgstr ""
+msgstr "Supported formats:"
 
 #: index.l10n.xml:778(para)
 msgid "Бинарная сериализация Protocol Buffers."
-msgstr ""
+msgstr "Binary Protocol Buffers serialization."
 
 #: index.l10n.xml:784(para)
 msgid ""
 "Сериализация в JSON. Позволяет использовать API без привязки к Protocol "
 "Buffers."
 msgstr ""
+"JSON serialization. Allows to implement API without Protocol Buffers library."
 
 #: index.l10n.xml:791(para)
 msgid ""
 "Сериализация в XML. Позволяет использовать API без привязки к Protocol "
 "Buffers."
 msgstr ""
+"XML serialization. Allows to implement API without Protocol Buffers library."
 
 #: index.l10n.xml:798(para)
 msgid ""
 "Текстовая сериализация. В основном полезна для вызова некоторых методов из "
 "браузера."
 msgstr ""
+"Text serialization. It useful for invoke some methods from Internet browser."
 
 #: index.l10n.xml:806(para)
-msgid "Аргумент RPC-вызова можент быть передан через POST-запрос."
-msgstr ""
+msgid "Аргумент RPC-вызова может быть передан через тело POST-запроса."
+msgstr "The RPC-call argument may be transmitted via POST-request body."
 
-#: index.l10n.xml:808(para)
+#: index.l10n.xml:809(para)
 msgid ""
-"Скалярные аттрибуты верхнего уровня можно так же передать через параметры "
-"URL."
-msgstr ""
+"Скалярные атрибуты верхнего уровня можно так же передать через параметры URL."
+msgstr "Scalar top-level attributes also can be passed via URL parameters."
 
 #. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
 #: index.l10n.xml:0(None)

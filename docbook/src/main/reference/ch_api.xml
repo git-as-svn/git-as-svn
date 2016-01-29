@@ -30,7 +30,7 @@
         <para>Схема должна быть первична.</para>
 
         <para>Это позволяет использовать схему как документацию и, в некоторых
-        случаях, гененрировать код для работы с API.</para>
+        случаях, генерировать код для работы с API.</para>
       </listitem>
 
       <listitem>
@@ -43,7 +43,7 @@
     xlink:href="https://developers.google.com/protocol-buffers/">https://developers.google.com/protocol-buffers/</link>).</para>
 
     <para>Так как Protocol Buffers не имеет штатного RPC, общение ведется по
-    протороку HTTP.</para>
+    протоколу HTTP.</para>
 
     <para>Для вызова метода, отправляется запрос на URL вида:</para>
 
@@ -123,9 +123,10 @@
       </varlistentry>
     </variablelist>
 
-    <para>Аргумент RPC-вызова можент быть передан через POST-запрос.</para>
+    <para>Аргумент RPC-вызова может быть передан через тело
+    POST-запроса.</para>
 
-    <para>Скалярные аттрибуты верхнего уровня можно так же передать через
+    <para>Скалярные атрибуты верхнего уровня можно так же передать через
     параметры URL.</para>
   </section>
 </chapter>
