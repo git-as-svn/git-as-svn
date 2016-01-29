@@ -17,6 +17,8 @@ export DH_OPTIONS
 override_dh_fixperms:
 	dh_fixperms
 
+	cp ../../../cfg/config.example	$(GAS)/etc/git-as-svn/git-as-svn.conf.example
+
 	mkdir -p $(GAS)/usr/bin
 	ln -s ../share/git-as-svn/bin/git-as-svn $(GAS)/usr/bin
 
