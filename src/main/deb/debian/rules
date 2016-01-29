@@ -1,6 +1,8 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
+GAS=debian/tmp
+
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -10,3 +12,23 @@ export DH_OPTIONS
 
 %:
 	dh $@ 
+
+
+override_dh_fixperms:
+	dh_fixperms
+
+	mkdir -p $(GAS)/usr/bin
+	ln -s ../share/git-as-svn/bin/git-as-svn $(GAS)/usr/bin
+
+	mkdir -p $(GAS)/var/git/lfs
+	mkdir -p $(GAS)/var/git/repositories
+	mkdir -p $(GAS)/var/cache/git-as-svn
+	mkdir -p $(GAS)/var/log/git-as-svn
+	mkdir -p $(GAS)/var/run/git-as-svn
+
+	chown git:git -R $(GAS)/var/git/lfs
+	chown git:git -R $(GAS)/var/git/repositories
+	chown git:git -R $(GAS)/var/cache/git-as-svn
+	chown git:git -R $(GAS)/var/log/git-as-svn
+	chown git:git -R $(GAS)/var/run/git-as-svn
+	chmod 700 $(GAS)/var/run/git-as-svn

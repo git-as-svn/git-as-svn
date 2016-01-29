@@ -2,8 +2,3 @@ etc
 lib
 ../../../build/install/git-as-svn/bin	/usr/share/git-as-svn/
 ../../../build/install/git-as-svn/lib	/usr/share/git-as-svn/
-.keep	/var/git/lfs/
-.keep	/var/git/repositories/
-.keep	/var/cache/git-as-svn/
-.keep	/var/log/git-as-svn/
-.keep	/var/run/git-as-svn/
