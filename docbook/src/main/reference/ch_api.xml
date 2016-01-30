@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xml:lang="ru_RU" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:m="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook">
+  <title>API</title>
+
+  <mediaobject>
+    <imageobject>
+      <imagedata fileref="images/rpc_annotation_ru_RU.png"/>
+    </imageobject>
+
+    <caption>
+      <para><link
+      xlink:href="http://xkcd.ru/927/">http://xkcd.ru/927/</link></para>
+    </caption>
+  </mediaobject>
+
+  <section>
+    <title>Описание интерфейса</title>
+
+    <para>При реализации интерфейса API предъявлялись следующие
+    требования:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Схема должна быть первична.</para>
+
+        <para>Это позволяет использовать схему как документацию и, в некоторых
+        случаях, генерировать код для работы с API.</para>
+      </listitem>
+
+      <listitem>
+        <para>Реализация клиента должна быть тривиальной на любом языке
+        программирования.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>В результате, для схемы был выбран Protocol Buffers (<link
+    xlink:href="https://developers.google.com/protocol-buffers/">https://developers.google.com/protocol-buffers/</link>).</para>
+
+    <para>Так как Protocol Buffers не имеет штатного RPC, общение ведется по
+    протоколу HTTP.</para>
+
+    <para>Для вызова метода, отправляется запрос на URL вида:</para>
+
+    <para><code
+    xml:lang="C">http://somehost/&lt;repository&gt;/&lt;service&gt;/&lt;method&gt;.&lt;format&gt;</code></para>
+
+    <para>При этом:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term xml:lang="C">&lt;repository&gt;</term>
+
+        <listitem>
+          <para>Имя репозитория, для которого вызывается метод API.</para>
+
+          <para>Не указывается для общих API.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term xml:lang="C">&lt;service&gt;</term>
+
+        <listitem>
+          <para>Имя сервиса внутри .proto-схемы в нижнем регистре.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term xml:lang="C">&lt;method&gt;</term>
+
+        <listitem>
+          <para>Имя метода внутри .proto-схемы в нижнем регистре.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term xml:lang="C">&lt;format&gt;</term>
+
+        <listitem>
+          <para>Формат сериализации сообщений.</para>
+
+          <para>Поддерживаются следующие форматы:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para xml:lang="C"><token>bin</token>
+              (<type>application/x-protobuf</type>)</para>
+
+              <para>Бинарная сериализация Protocol Buffers.</para>
+            </listitem>
+
+            <listitem>
+              <para xml:lang="C"><token>json</token>
+              (<type>application/json</type>)</para>
+
+              <para>Сериализация в JSON. Позволяет использовать API без
+              привязки к Protocol Buffers.</para>
+            </listitem>
+
+            <listitem>
+              <para xml:lang="C"><token>xml</token>
+              (<type>application/xml</type>)</para>
+
+              <para>Сериализация в XML. Позволяет использовать API без
+              привязки к Protocol Buffers.</para>
+            </listitem>
+
+            <listitem>
+              <para xml:lang="C"><token>txt</token>
+              (<type>text/plain</type>)</para>
+
+              <para>Текстовая сериализация. В основном полезна для вызова
+              некоторых методов из браузера.</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Аргумент RPC-вызова может быть передан через тело
+    POST-запроса.</para>
+
+    <para>Скалярные атрибуты верхнего уровня можно так же передать через
+    параметры URL.</para>
+  </section>
+</chapter>

@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import argparse
+import json
+import os
+import os.path
+import re
+import socket
+import sys
+
+if sys.version_info > (3,):
+    import configparser
+else:
+    import ConfigParser as configparser
+
+def load_config():
+    config = configparser.SafeConfigParser({
+        "socket-file": "/var/run/git-as-svn/git-as-svn.socket",
+        "mode": "username",
+        "variable": "USER",
+    })
+    config.read([
+        "/etc/git-as-svn/git-lfs-authenticate.cfg",
+        os.path.expanduser("~/.git-lfs-authenticate.cfg"),
+    ])
+    return config
+
+
+def fail(code, message):
+    sys.stderr.write("ERROR: " + message + "\n")
+    os._exit(code)
+
+
+def parse_response(response):
+    separator = response.index(b"\r\n\r\n")
+    header = response[0:separator].split(b"\r\n")
+    body = response[separator + 4:]
+
+    m = re.compile(r"^(\S+)\s+(\S+)\s+(.+)$").match(header[0].decode("utf-8"))
+    protocol = m.group(1)
+    code = int(m.group(2))
+    reason = m.group(3)
+
+    headers = {}
+    for item in header[1:]:
+        separator = item.index(b':')
+        headers[item[0:separator].decode("utf-8").strip()] = item[separator + 1:].decode("utf-8").strip()
+
+    return {
+        "protocol": protocol,
+        "code": code,
+        "reason": reason,
+        "header": headers,
+        "body": body,
+    }
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("repository", help="SSH repository path")
+parser.add_argument("operation", help="Git LFS operation (upload or download)")
+parser.add_argument("oid", help="OID (can be send by Git LFS v0.5.x clients)", nargs="?")
+args = parser.parse_args()
+
+config = load_config()
+socketFile = config.get("DEFAULT", "socket-file")
+
+if not os.path.exists(socketFile):
+    fail(1, "API socket file not exists: %s" % socketFile)
+
+mode = config.get("DEFAULT", "mode")
+identificator = os.getenv(config.get("DEFAULT", "variable"))
+if identificator is None:
+    mode = "anonymous"
+    identificator = ""
+
+client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+client.connect(socketFile)
+client.send("""GET /{repository}/lfs/authenticate.json?mode={mode}&identificator={identificator} HTTP/1.0
+Host: localhost
+
+""".format(
+        repository=args.repository,
+        mode=mode,
+        identificator=identificator,
+).replace("\r", "").replace("\n", "\r\n").encode("utf-8"))
+client.shutdown(socket.SHUT_WR)
+
+response = b""
+while True:
+    block = client.recv(1024)
+    if len(block) == 0:
+        break
+    response += block
+client.close()
+
+response = parse_response(response)
+if response["code"] != 200:
+    fail(2, "API response error: {code} {reason}".format(**response))
+
+bodyParsed = json.loads(response["body"].decode("utf-8"))
+error = bodyParsed.get("error", None)
+if error is not None:
+    fail(3, "API response error: %s" % error)
+
+print (bodyParsed["success"]["json"])

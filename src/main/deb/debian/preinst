@@ -2,7 +2,7 @@
 
 # creating git group if he isn't already there
 if ! getent group git >/dev/null; then
- 	# Adding system group: git
+	# Adding system group: git
 	addgroup --system git >/dev/null
 fi
 

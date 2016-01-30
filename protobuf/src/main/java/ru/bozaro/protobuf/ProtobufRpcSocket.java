@@ -7,6 +7,7 @@
  */
 package ru.bozaro.protobuf;
 
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -27,6 +28,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -41,6 +44,9 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
   @NotNull
   private final ServerSocket socket;
   @NotNull
+  private final Map<Socket, Boolean> connections = new ConcurrentHashMap<>();
+
+  @NotNull
   private final ExecutorService pool;
 
   public ProtobufRpcSocket(@NotNull ServiceHolder holder, @NotNull ServerSocket socket, @NotNull ExecutorService pool) {
@@ -54,15 +60,21 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
 
   protected void acceptThread() {
     while (!socket.isClosed()) {
-      pool.execute(() -> {
-        try {
-          try (Socket client = socket.accept()) {
+      try {
+        final Socket clientSocket = socket.accept();
+        connections.put(clientSocket, Boolean.FALSE);
+        pool.execute(() -> {
+          try (final Socket client = clientSocket) {
             acceptClient(client);
+          } catch (IOException e) {
+            log.error(e.getMessage(), e);
+          } finally {
+            connections.remove(clientSocket);
           }
-        } catch (IOException e) {
-          log.error(e.getMessage(), e);
-        }
-      });
+        });
+      } catch (IOException e) {
+        log.error(e.getMessage(), e);
+      }
     }
   }
 
@@ -78,6 +90,8 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
     while (!socket.isClosed()) {
       try {
         service(inputBuffer, outputBuffer, parser, writer);
+      } catch (ConnectionClosedException ignored) {
+        break;
       } catch (HttpException e) {
         log.error(e.getMessage(), e);
         break;
@@ -102,6 +116,9 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
   @Override
   public void close() throws Exception {
     socket.close();
+    for (Socket clinet : connections.keySet()) {
+      clinet.close();
+    }
     thread.join();
   }
 

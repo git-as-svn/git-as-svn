@@ -68,10 +68,15 @@ public class ProtobufRpcSimpleHttp {
         entity = null;
       }
       final HttpResponse response = service(request);
-      response.setHeader(HttpHeaders.SERVER, "Protobuf RPC");
       if (entity != null) {
         entity.getContent().close();
       }
+      if (response.getEntity() != null) {
+        response.addHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(response.getEntity().getContentLength()));
+        response.addHeader(response.getEntity().getContentType());
+        response.addHeader(response.getEntity().getContentEncoding());
+      }
+      response.setHeader(HttpHeaders.SERVER, "Protobuf RPC");
       writer.write(response);
       if (response.getEntity() != null) {
         final EntitySerializer serializer = new EntitySerializer(new LaxContentLengthStrategy());
@@ -91,7 +96,7 @@ public class ProtobufRpcSimpleHttp {
       return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
     }
     final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
-    final int separator = pathInfo.indexOf('/', begin);
+    final int separator = pathInfo.lastIndexOf('/');
     if (separator > 0) {
       ServiceInfo serviceInfo = holder.getService(pathInfo.substring(begin, separator));
       if (serviceInfo != null) {
@@ -105,7 +110,7 @@ public class ProtobufRpcSimpleHttp {
   public HttpResponse sendError(@NotNull HttpRequest req, int code, @NotNull String reason) {
     final BasicHttpResponse response = new BasicHttpResponse(req.getProtocolVersion(), code, reason);
     final ContentType contentType = ContentType.create("text/plain", StandardCharsets.UTF_8);
-    response.setEntity(new StringEntity("ERROR " + code + ": " + response, contentType));
+    response.setEntity(new StringEntity("ERROR " + code + ": " + reason, contentType));
     return response;
   }
 
@@ -115,35 +120,29 @@ public class ProtobufRpcSimpleHttp {
       return sendError(req, HttpStatus.SC_NOT_FOUND, "Method not found: " + methodPath);
     }
 
-    final Message msgRequest;
+    final Message.Builder msgRequest = method.requestBuilder();
     final String httpHethod = req.getRequestLine().getMethod();
     if (httpHethod.equals("POST") && (req instanceof HttpEntityEnclosingRequest)) {
       final HttpEntity entity = ((HttpEntityEnclosingRequest) req).getEntity();
       if (entity != null) {
-        msgRequest = method.requestByStream(entity.getContent(), getCharset(entity));
+        method.requestByStream(msgRequest, entity.getContent(), getCharset(entity));
       } else {
         return sendError(req, HttpStatus.SC_NO_CONTENT, "Request payload not found");
       }
-    } else if (httpHethod.equals("GET")) {
-      Message result;
-      try {
-        result = method.requestByParams(getParameterMap(req));
-      } catch (URISyntaxException | ParseException e) {
-        return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
-      }
-      msgRequest = result;
-    } else {
+    } else if (!httpHethod.equals("GET")) {
       return sendError(req, HttpStatus.SC_METHOD_NOT_ALLOWED, "Unsupported method");
     }
     try {
-      final byte[] msgResponse = method.call(msgRequest, StandardCharsets.UTF_8).get();
+      method.requestByParams(msgRequest, getParameterMap(req));
+    } catch (URISyntaxException | ParseException e) {
+      return sendError(req, HttpStatus.SC_BAD_REQUEST, e.getMessage());
+    }
+    try {
+      final byte[] msgResponse = method.call(msgRequest.build(), StandardCharsets.UTF_8).get();
       if (msgResponse != null) {
         final HttpResponse response = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(req.getProtocolVersion(), HttpStatus.SC_OK, null);
         final ByteArrayEntity entity = new ByteArrayEntity(msgResponse, ContentType.create(method.getFormat().getMimeType(), StandardCharsets.UTF_8));
         response.setEntity(entity);
-        response.setHeader(HttpHeaders.CONTENT_LENGTH, Long.toString(entity.getContentLength()));
-        response.addHeader(entity.getContentEncoding());
-        response.addHeader(entity.getContentType());
         return response;
       } else {
         return sendError(req, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Illegal method return value");

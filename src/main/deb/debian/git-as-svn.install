@@ -1,0 +1,4 @@
+etc
+lib
+../../../build/install/git-as-svn/bin	/usr/share/git-as-svn/
+../../../build/install/git-as-svn/lib	/usr/share/git-as-svn/

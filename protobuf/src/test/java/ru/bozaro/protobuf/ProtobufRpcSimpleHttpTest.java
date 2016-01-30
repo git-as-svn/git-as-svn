@@ -53,6 +53,9 @@ public class ProtobufRpcSimpleHttpTest {
         for (int pass = 0; pass < 2; ++pass) {
           final EchoMessage echoRequest = EchoMessage.newBuilder()
               .setText("Foo " + pass)
+              .setEmbedded(EchoMessage.Embedded.newBuilder()
+                  .setFoo("some text")
+                  .build())
               .build();
           final EchoMessage echoResponse = stub.echo(null, echoRequest);
           Assert.assertEquals(echoRequest, echoResponse);

@@ -11,7 +11,6 @@ import com.google.protobuf.Message;
 import org.atteo.classindex.ClassIndex;
 import org.atteo.classindex.IndexSubclasses;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,8 +55,8 @@ public abstract class ProtobufFormat {
 
   public abstract void write(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException;
 
-  @Nullable
-  public abstract Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException;
+  @NotNull
+  public abstract Message.Builder read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException;
 
   @NotNull
   public static ProtobufFormat[] getFormats() {

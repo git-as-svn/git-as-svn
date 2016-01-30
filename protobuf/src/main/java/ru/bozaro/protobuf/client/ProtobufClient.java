@@ -79,7 +79,7 @@ public class ProtobufClient implements BlockingRpcChannel {
           } else {
             charset = StandardCharsets.UTF_8;
           }
-          return format.read(responsePrototype.toBuilder(), stream, charset);
+          return format.read(responsePrototype.toBuilder(), stream, charset).build();
         }
       }
       return null;

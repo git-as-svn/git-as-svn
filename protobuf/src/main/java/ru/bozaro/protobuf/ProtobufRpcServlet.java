@@ -44,7 +44,7 @@ public class ProtobufRpcServlet extends HttpServlet {
     final String pathInfo = req.getPathInfo();
     if (pathInfo != null) {
       final int begin = pathInfo.charAt(0) == '/' ? 1 : 0;
-      final int separator = pathInfo.indexOf('/', begin);
+      final int separator = pathInfo.lastIndexOf('/');
       if (separator > 0) {
         ServiceInfo serviceInfo = holder.getService(pathInfo.substring(begin, separator));
         if (serviceInfo != null) {
@@ -62,20 +62,17 @@ public class ProtobufRpcServlet extends HttpServlet {
       res.sendError(HttpServletResponse.SC_NOT_FOUND, "Method not found: " + methodPath);
       return;
     }
-    final Message msgRequest;
-    if ("GET".equals(req.getMethod())) {
-      Message result;
-      try {
-        result = method.requestByParams(req.getParameterMap());
-      } catch (ParseException e) {
-        throw new ServletException(e);
-      }
-      msgRequest = result;
-    } else {
-      msgRequest = method.requestByStream(req.getInputStream(), getCharset(req));
+    final Message.Builder msgRequest = method.requestBuilder();
+    if (req.getMethod().equalsIgnoreCase("POST")) {
+      method.requestByStream(msgRequest, req.getInputStream(), getCharset(req));
     }
     try {
-      final byte[] response = method.call(msgRequest, StandardCharsets.UTF_8).get();
+      method.requestByParams(msgRequest, req.getParameterMap());
+    } catch (ParseException e) {
+      throw new ServletException(e);
+    }
+    try {
+      final byte[] response = method.call(msgRequest.build(), StandardCharsets.UTF_8).get();
       try {
         if (response != null) {
           res.setContentType(method.getFormat().getMimeType());

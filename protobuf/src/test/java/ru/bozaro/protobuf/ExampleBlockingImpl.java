@@ -23,8 +23,9 @@ public class ExampleBlockingImpl implements Example.BlockingInterface {
   @Override
   public HelloResponse hello(RpcController controller, HelloRequest request) throws ServiceException {
     final StringBuilder greeting = new StringBuilder("Hello, ");
-    if (request.hasTitle()) {
-      greeting.append(request.getTitle()).append(" ");
+    final String title = request.getTitle();
+    if (title != null) {
+      greeting.append(title).append(" ");
     }
     greeting.append(request.getPerson());
     return HelloResponse.newBuilder()

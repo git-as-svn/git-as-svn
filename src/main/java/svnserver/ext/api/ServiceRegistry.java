@@ -19,6 +19,8 @@ import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -52,6 +54,11 @@ public final class ServiceRegistry implements ServiceHolder, Local, Shared {
   @Nullable
   public ServiceInfo getService(@NotNull String name) {
     return services.get(name);
+  }
+
+  @NotNull
+  public Set<String> getServices() {
+    return new TreeSet<>(services.keySet());
   }
 
   @NotNull

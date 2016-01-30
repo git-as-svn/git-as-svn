@@ -11,7 +11,6 @@ import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.googlecode.protobuf.format.ProtobufFormatter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.ProtobufFormat;
 
 import java.io.IOException;
@@ -38,10 +37,10 @@ public abstract class BaseFormat extends ProtobufFormat {
     formatter.print(message, stream, charset);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Message read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset defaultCharset) throws IOException {
+  public Message.Builder read(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset defaultCharset) throws IOException {
     formatter.merge(stream, defaultCharset, ExtensionRegistry.getEmptyRegistry(), builder);
-    return builder.build();
+    return builder;
   }
 }

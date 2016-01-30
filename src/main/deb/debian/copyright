@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: git-as-svn
+Source: https://github.com/bozaro/git-as-svn
+
+Files: *
+Copyright: 2014-2015 Artem V. Navrotskiy <bozaro@yandex.ru>
+License: GPL-2+

@@ -98,8 +98,11 @@ public class MethodInfo {
   }
 
   @NotNull
-  public Message requestByParams(@NotNull Map<String, String[]> params) throws ParseException {
-    final Message.Builder builder = service.getRequestPrototype(method).toBuilder();
+  public Message.Builder requestBuilder() {
+    return service.getRequestPrototype(method).toBuilder();
+  }
+
+  public void requestByParams(@NotNull Message.Builder builder, @NotNull Map<String, String[]> params) throws ParseException {
     for (Map.Entry<String, String[]> entry : params.entrySet()) {
       final SetterInfo fieldParser = fields.get(entry.getKey());
       if (fieldParser != null) {
@@ -113,13 +116,10 @@ public class MethodInfo {
         }
       }
     }
-    return builder.build();
   }
 
-  @NotNull
-  public Message requestByStream(@NotNull InputStream stream, @NotNull Charset charset) throws IOException {
-    final Message.Builder builder = service.getRequestPrototype(method).toBuilder();
-    return format.read(builder, stream, charset);
+  public void requestByStream(@NotNull Message.Builder builder, @NotNull InputStream stream, @NotNull Charset charset) throws IOException {
+    format.read(builder, stream, charset);
   }
 
   public void responseToStream(@NotNull Message message, @NotNull OutputStream stream, @NotNull Charset charset) throws IOException {

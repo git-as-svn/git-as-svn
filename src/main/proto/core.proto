@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 option java_package = "svnserver.api.core";
 
 option java_outer_classname = "CoreProto";
@@ -14,7 +16,8 @@ message VersionRequest {
 }
 
 message VersionResponse {
-	required string version = 1;
-	optional string tag = 2;
-	optional string revision = 3;
+	string version = 1;
+	string tag = 2;
+	string revision = 3;
+	repeated string service = 4;
 }

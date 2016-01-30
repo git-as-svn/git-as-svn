@@ -1,0 +1,33 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+GAS=debian/git-as-svn
+LFS=debian/git-as-svn-lfs
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+
+%:
+	dh $@ 
+
+
+override_dh_fixperms:
+	dh_fixperms
+
+	cp ../../../cfg/config.example	$(GAS)/etc/git-as-svn/git-as-svn.conf.example
+	ln -s ../share/git-as-svn/bin/git-as-svn $(GAS)/usr/bin
+
+	chown git:git -R $(GAS)/var/git/lfs
+	chown git:git -R $(GAS)/var/git/repositories
+	chown git:git -R $(GAS)/var/cache/git-as-svn
+	chown git:git -R $(GAS)/var/log/git-as-svn
+	chown git:git -R $(GAS)/var/run/git-as-svn
+	chmod 700 $(GAS)/var/run/git-as-svn
+
+override_dh_compress:
+	gzip -9nf $(GAS)/usr/share/doc/git-as-svn/LICENSE $(GAS)/usr/share/doc/git-as-svn/README.md $(GAS)/usr/share/doc/git-as-svn/changelog
+	gzip -9nf $(LFS)/usr/share/doc/git-as-svn-lfs/changelog

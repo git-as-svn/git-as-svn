@@ -8,35 +8,32 @@
 package svnserver.ext.socket.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.newsclub.net.unix.AFUNIXServerSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
-import svnserver.config.ConfigHelper;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 
 /**
- * Unix socket transport for API.
+ * TCP socket transport for API.
+ * <p>
+ * This is developers-only API endpoint implementation.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("socket")
-public class SocketConfig implements SharedConfig {
+@ConfigType(value = "tcp", unsafe = true)
+public class TCPConfig implements SharedConfig {
   @NotNull
-  private String path = "git-as-svn.socket";
+  private String host = "localhost";
+  private int port = 8124;
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
-    final File socketFile = ConfigHelper.joinPath(context.getBasePath(), path);
-    if (socketFile.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      socketFile.delete();
-    }
-    socket.bind(new AFUNIXSocketAddress(socketFile));
+    final ServerSocket socket = new ServerSocket();
+    socket.bind(new InetSocketAddress(host, port));
+
     context.add(SocketRpc.class, new SocketRpc(context, socket));
   }
 }

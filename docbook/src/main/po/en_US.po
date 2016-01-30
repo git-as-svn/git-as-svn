@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-21 23:54+0300\n"
-"PO-Revision-Date: 2016-01-21 23:55+0300\n"
+"POT-Creation-Date: 2016-01-30 22:25+0300\n"
+"PO-Revision-Date: 2016-01-30 22:25+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -42,6 +42,16 @@ msgid ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
 msgstr ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: index.l10n.xml:755(None)
+msgid ""
+"@@image: 'images/rpc_annotation_en_US.png'; "
+"md5=e3ca18a46618b08cb3f13a65850146c4"
+msgstr ""
+"@@image: 'images/rpc_annotation_en_US.png'; "
+"md5=e3ca18a46618b08cb3f13a65850146c4"
 
 #: index.l10n.xml:3(title)
 msgid "Git as Subversion"
@@ -801,7 +811,7 @@ msgstr ""
 "value <code>svn properties</ code> correspond Git-view, they are generated "
 "on the fly based on the repository content."
 
-#: index.l10n.xml:599(para)
+#: index.l10n.xml:599(para) index.l10n.xml:792(para)
 msgid "При этом:"
 msgstr "Wherein:"
 
@@ -992,7 +1002,174 @@ msgstr ""
 "Otherwise TortoiseSVN will attempt to set these parameters for all newly "
 "created directories instead of use inherited properties."
 
+#: index.l10n.xml:751(title)
+msgid "API"
+msgstr "API"
+
+#: index.l10n.xml:759(link)
+msgid "http://xkcd.ru/927/"
+msgstr "https://xkcd.com/927/"
+
+#: index.l10n.xml:764(title)
+msgid "Описание интерфейса"
+msgstr "Interface description"
+
+#: index.l10n.xml:766(para)
+msgid "При реализации интерфейса API предъявлялись следующие требования:"
+msgstr "API is implemented according to the following requirements:"
+
+#: index.l10n.xml:771(para)
+msgid "Схема должна быть первична."
+msgstr "Schema-first API definition."
+
+#: index.l10n.xml:773(para)
+msgid ""
+"Это позволяет использовать схему как документацию и, в некоторых случаях, "
+"генерировать код для работы с API."
+msgstr ""
+"This allows the use schema as the documentation, and in some cases, to "
+"generate the code for the work with the API."
+
+#: index.l10n.xml:778(para)
+msgid ""
+"Реализация клиента должна быть тривиальной на любом языке программирования."
+msgstr "Client implementation must be trivial on any programming language."
+
+#: index.l10n.xml:783(para)
+msgid ""
+"В результате, для схемы был выбран Protocol Buffers (<link xlink:href="
+"\"https://developers.google.com/protocol-buffers/\">https://developers."
+"google.com/protocol-buffers/</link>)."
+msgstr ""
+"As a result, for API scheme has been choosen Protocol Buffers (<link xlink:"
+"href=\"https://developers.google.com/protocol-buffers/\">https://developers."
+"google.com/protocol-buffers/</link>)."
+
+#: index.l10n.xml:785(para)
+msgid ""
+"Так как Protocol Buffers не имеет штатного RPC, общение ведется по протоколу "
+"HTTP."
+msgstr ""
+"Since Protocol Buffers does not have a native RPC implemenation, used custom "
+"RPC implementation based on HTTP protocol."
+
+#: index.l10n.xml:788(para)
+msgid "Для вызова метода, отправляется запрос на URL вида:"
+msgstr "To call the method, a request is sent to a URL of the form:"
+
+#: index.l10n.xml:799(para)
+msgid "Имя репозитория, для которого вызывается метод API."
+msgstr "The name of the repository, for which the method is called API."
+
+#: index.l10n.xml:801(para)
+msgid "Не указывается для общих API."
+msgstr "Don't used for server-wide API."
+
+#: index.l10n.xml:809(para)
+msgid "Имя сервиса внутри .proto-схемы в нижнем регистре."
+msgstr "Lower case service name from .proto file."
+
+#: index.l10n.xml:817(para)
+msgid "Имя метода внутри .proto-схемы в нижнем регистре."
+msgstr "Lower case method name from .proto file."
+
+#: index.l10n.xml:825(para)
+msgid "Формат сериализации сообщений."
+msgstr "Message serialization format."
+
+#: index.l10n.xml:827(para)
+msgid "Поддерживаются следующие форматы:"
+msgstr "Supported formats:"
+
+#: index.l10n.xml:833(para)
+msgid "Бинарная сериализация Protocol Buffers."
+msgstr "Binary Protocol Buffers serialization."
+
+#: index.l10n.xml:839(para)
+msgid ""
+"Сериализация в JSON. Позволяет использовать API без привязки к Protocol "
+"Buffers."
+msgstr ""
+"JSON serialization. Allows to implement API without Protocol Buffers library."
+
+#: index.l10n.xml:846(para)
+msgid ""
+"Сериализация в XML. Позволяет использовать API без привязки к Protocol "
+"Buffers."
+msgstr ""
+"XML serialization. Allows to implement API without Protocol Buffers library."
+
+#: index.l10n.xml:853(para)
+msgid ""
+"Текстовая сериализация. В основном полезна для вызова некоторых методов из "
+"браузера."
+msgstr ""
+"Text serialization. It useful for invoke some methods from Internet browser."
+
+#: index.l10n.xml:861(para)
+msgid "Аргумент RPC-вызова может быть передан через тело POST-запроса."
+msgstr "The RPC-call argument may be transmitted via POST-request body."
+
+#: index.l10n.xml:864(para)
+msgid ""
+"Скалярные атрибуты верхнего уровня можно так же передать через параметры URL."
+msgstr "Scalar top-level attributes also can be passed via URL parameters."
+
 #. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
 #: index.l10n.xml:0(None)
 msgid "translator-credits"
 msgstr "translator-credits"
+
+#~ msgid ""
+#~ "Git as Subversion — это реализация Subversion-сервера (по протоколу svn) "
+#~ "для Git-репозиториев."
+#~ msgstr ""
+#~ "Git as Subversion — Subversion-server implementation (svn protocol) for "
+#~ "Git-repositories."
+
+#~ msgid ""
+#~ "Чтобы не заниматься их вычислением каждый запуск, эти данные кэширутся в "
+#~ "файлах. Потеря данного кэша не критична для работы и его резервное "
+#~ "копирование не имеет смысла."
+#~ msgstr ""
+#~ "In order not to find out their every startup, the data is cached in "
+#~ "files. The loss of the cache is not critical for the operation and backup "
+#~ "does not make sense."
+
+#~ msgid ""
+#~ "Данные о блокировках файлов в данный момент так же хранятся в файла кэша."
+#~ msgstr "File locking information currently stored in the cache file."
+
+#~ msgid ""
+#~ "Таким образом, за счёт использования в данной операции консольного Git-а "
+#~ "мы избегает гонки с заливкой напрямую через Git, и получаем хуки в "
+#~ "качестве приятного бонуса."
+#~ msgstr ""
+#~ "Thus, through the use console Git client for push, we avoid the race "
+#~ "condition pouring directly change Git repository, and get the native "
+#~ "hooks as a nice bonus."
+
+#~ msgid ""
+#~ "Основная проблема данной реализации — неотделимость от GitHub. Так же, "
+#~ "внезапно, данная реализация не поддерживает Git LFS."
+#~ msgstr ""
+#~ "The main problem of this implementation is inseparable from GitHub. Also, "
+#~ "all of a sudden, this implementation does not support Git LFS."
+
+#~ msgid ""
+#~ "Достаточно интересная реализация при которой поддерживаются Git и "
+#~ "Subversion-репозитории в синхронном состоянии. За счет чего "
+#~ "обеспечивается синхронность репозиториев — не понятно."
+#~ msgstr ""
+#~ "Quite an interesting implementation which supports master-master "
+#~ "replication with Git and Subversion repositories. Thereby providing "
+#~ "synchronization of repositories is not clear."
+
+#~ msgid "Работаю, как минимум, следующие клиенты:"
+#~ msgstr "You can use at least the following clients:"
+
+#~ msgid "Категорически не хватает документации;"
+#~ msgstr "Strongly enough documentation;"
+
+#~ msgid "Нельзя средствами Subversion менять svn properties."
+#~ msgstr "It is impossible to change svn properties by Subversion client."

@@ -36,4 +36,6 @@
   <xi:include href="ch_gitlab.xml"/>
 
   <xi:include href="ch_props.xml"/>
+
+  <xi:include href="ch_api.xml"/>
 </book>

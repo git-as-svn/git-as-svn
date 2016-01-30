@@ -1,15 +1,15 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-14 07:19+0300\n"
-"PO-Revision-Date: 2016-01-13 07:22+0300\n"
+"POT-Creation-Date: 2016-01-30 22:25+0300\n"
+"PO-Revision-Date: 2016-01-30 22:25+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: Russian\n"
 "Language: ru_RU\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
@@ -42,6 +42,16 @@ msgid ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
 msgstr ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: index.l10n.xml:646(None)
+msgid ""
+"@@image: 'images/rpc_annotation_ru_RU.png'; "
+"md5=bdd13c5d799a2d5daf202be430e319e2"
+msgstr ""
+"@@image: 'images/rpc_annotation_ru_RU.png'; "
+"md5=bdd13c5d799a2d5daf202be430e319e2"
 
 #: index.l10n.xml:409(phrase)
 msgid ": Add git-lfs-authenticate to server white list (merged to 7.14.1);"

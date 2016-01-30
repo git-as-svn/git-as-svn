@@ -15,6 +15,7 @@ import svnserver.VersionInfo;
 import svnserver.api.core.Core;
 import svnserver.api.core.VersionRequest;
 import svnserver.api.core.VersionResponse;
+import svnserver.ext.api.ServiceRegistry;
 
 import java.util.function.Consumer;
 
@@ -24,6 +25,12 @@ import java.util.function.Consumer;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class CoreRpc implements Core.BlockingInterface {
+  @NotNull
+  private final ServiceRegistry registry;
+
+  public CoreRpc(@NotNull final ServiceRegistry registry) {
+    this.registry = registry;
+  }
 
   @Override
   public VersionResponse version(RpcController controller, VersionRequest request) throws ServiceException {
@@ -31,6 +38,7 @@ public class CoreRpc implements Core.BlockingInterface {
         .setVersion(VersionInfo.getVersion());
     setField(builder::setVersion, VersionInfo.getRevision());
     setField(builder::setTag, VersionInfo.getTag());
+    registry.getServices().forEach(builder::addService);
     return builder.build();
   }
 
