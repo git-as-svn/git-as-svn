@@ -79,6 +79,9 @@ shared:
     # Secret token for git-lfs-authenticate script
     # token: secret
     path: /var/git/lfs
+  - !socket
+    # Unix domain socket for API
+    path: /var/run/git-as-svn/git-as-svn.socket
 
 # Simple in-memory user database
 userDB: !localUsers
