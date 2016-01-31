@@ -139,6 +139,7 @@ idea {
 run {
   args "-c"
   args "${projectDir}/cfg/config-local.example"
+  args "--unsafe"
 }
 
 tasks.withType(JavaCompile) {
