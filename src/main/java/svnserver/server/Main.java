@@ -30,30 +30,35 @@ public class Main {
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
 
   public static void main(@NotNull String[] args) throws IOException, SVNException, InterruptedException {
-    log.info("Git as svn version: {}", VersionInfo.getVersionInfo());
-    final CmdArgs cmd = new CmdArgs();
-    final JCommander jc = new JCommander(cmd);
-    jc.parse(args);
-    if (cmd.help) {
-      jc.usage();
-      return;
-    }
-    // Load config
-    ConfigSerializer serializer = new ConfigSerializer(cmd.unsafeConfig);
-    Config config = serializer.load(cmd.configuration);
-    if (cmd.showConfig) {
-      log.info("Actual config:\n{}", serializer.dump(config));
-    }
-    final SvnServer server = new SvnServer(cmd.configuration.getAbsoluteFile().getParentFile(), config);
-    server.start();
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      try {
-        server.shutdown(config.getShutdownTimeout());
-      } catch (IOException | InterruptedException e) {
-        log.error("Can't shutdown correctly", e);
+    try {
+      log.info("Git as svn version: {}", VersionInfo.getVersionInfo());
+      final CmdArgs cmd = new CmdArgs();
+      final JCommander jc = new JCommander(cmd);
+      jc.parse(args);
+      if (cmd.help) {
+        jc.usage();
+        return;
       }
-    }));
-    server.join();
+      // Load config
+      ConfigSerializer serializer = new ConfigSerializer(cmd.unsafeConfig);
+      Config config = serializer.load(cmd.configuration);
+      if (cmd.showConfig) {
+        log.info("Actual config:\n{}", serializer.dump(config));
+      }
+      final SvnServer server = new SvnServer(cmd.configuration.getAbsoluteFile().getParentFile(), config);
+      server.start();
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+          server.shutdown(config.getShutdownTimeout());
+        } catch (IOException | InterruptedException e) {
+          log.error("Can't shutdown correctly", e);
+        }
+      }));
+      server.join();
+    } catch (Throwable e) {
+      log.error("Fatal error: " + e.getMessage(), e);
+      throw e;
+    }
   }
 
   public static class CmdArgs {
