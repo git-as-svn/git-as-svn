@@ -32,6 +32,8 @@ public class SocketConfig implements SharedConfig {
   public void create(@NotNull SharedContext context) throws IOException {
     final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
     final File socketFile = ConfigHelper.joinPath(context.getBasePath(), path);
+    //noinspection ResultOfMethodCallIgnored
+    socketFile.getParentFile().mkdirs();
     if (socketFile.exists()) {
       //noinspection ResultOfMethodCallIgnored
       socketFile.delete();

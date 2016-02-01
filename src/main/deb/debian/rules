@@ -25,8 +25,6 @@ override_dh_fixperms:
 	chown git:git -R $(GAS)/var/git/repositories
 	chown git:git -R $(GAS)/var/cache/git-as-svn
 	chown git:git -R $(GAS)/var/log/git-as-svn
-	chown git:git -R $(GAS)/var/run/git-as-svn
-	chmod 700 $(GAS)/var/run/git-as-svn
 
 override_dh_compress:
 	gzip -9nf $(GAS)/usr/share/doc/git-as-svn/LICENSE $(GAS)/usr/share/doc/git-as-svn/README.md $(GAS)/usr/share/doc/git-as-svn/changelog

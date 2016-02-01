@@ -3,4 +3,3 @@
 /var/git/repositories
 /var/cache/git-as-svn
 /var/log/git-as-svn
-/var/run/git-as-svn
