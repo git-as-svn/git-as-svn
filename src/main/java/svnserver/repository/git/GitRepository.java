@@ -171,7 +171,7 @@ public class GitRepository implements VcsRepository {
       final int lastRevision = revisions.size() - 1;
       final ObjectId lastCommitId;
       if (lastRevision >= 0) {
-        lastCommitId = revisions.get(lastRevision).getGitNewCommit();
+        lastCommitId = revisions.get(lastRevision).getCacheCommit();
         final Ref head = repository.getRef(svnBranch);
         if (head.getObjectId().equals(lastCommitId)) {
           return false;
