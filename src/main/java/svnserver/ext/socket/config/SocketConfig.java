@@ -10,6 +10,8 @@ package svnserver.ext.socket.config;
 import org.jetbrains.annotations.NotNull;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svnserver.config.ConfigHelper;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
@@ -26,10 +28,16 @@ import java.io.IOException;
 @ConfigType("socket")
 public class SocketConfig implements SharedConfig {
   @NotNull
+  private static final Logger log = LoggerFactory.getLogger(SocketConfig.class);
+  @NotNull
   private String path = "git-as-svn.socket";
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
+    if (!isSupported()) {
+      log.error("Domain sockets is not supported on this platfrom. Socket configuration is ignored.");
+      return;
+    }
     final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
     final File socketFile = ConfigHelper.joinPath(context.getBasePath(), path);
     if (socketFile.exists()) {
@@ -38,5 +46,13 @@ public class SocketConfig implements SharedConfig {
     }
     socket.bind(new AFUNIXSocketAddress(socketFile));
     context.add(SocketRpc.class, new SocketRpc(context, socket));
+  }
+
+  private static boolean isSupported() {
+    try {
+      return AFUNIXServerSocket.isSupported();
+    } catch (LinkageError ignored) {
+      return false;
+    }
   }
 }
