@@ -15,7 +15,7 @@ else:
 
 def load_config():
     config = configparser.SafeConfigParser({
-        "socket-file": "/var/run/git-as-svn/git-as-svn.socket",
+        "socket-file": "/var/run/git-as-svn.socket",
         "mode": "username",
         "variable": "USER",
     })
