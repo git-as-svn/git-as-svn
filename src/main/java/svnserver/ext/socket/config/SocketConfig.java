@@ -31,6 +31,8 @@ public class SocketConfig implements SharedConfig {
   private static final Logger log = LoggerFactory.getLogger(SocketConfig.class);
   @NotNull
   private String path = "git-as-svn.socket";
+  @NotNull
+  private String mode = "600";
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
@@ -44,7 +46,7 @@ public class SocketConfig implements SharedConfig {
       //noinspection ResultOfMethodCallIgnored
       socketFile.delete();
     }
-    socket.bind(new AFUNIXSocketAddress(socketFile));
+    socket.bind(new AFUNIXSocketAddress(socketFile, 0, Integer.parseInt(mode, 8)));
     context.add(SocketRpc.class, new SocketRpc(context, socket));
   }
 

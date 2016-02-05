@@ -86,6 +86,7 @@ shared:
     path: /api
   - !socket
     path: git-as-svn.socket
+    mode: 600
 
 # Simple in-memory user database
 userDB: !localUsers

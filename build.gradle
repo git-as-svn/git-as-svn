@@ -29,6 +29,9 @@ allprojects {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      url "https://bozaro.github.io/junixsocket"
+    }
   }
 }
 
@@ -110,7 +113,7 @@ dependencies {
   compile "com.esotericsoftware:kryo:3.0.3"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:19.0"
-  compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
+  compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4.1"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.9.0"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.9.0"
