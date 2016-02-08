@@ -14,6 +14,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class GitEolTest {
             "*.txt  eol=native\n" +
             "*.md   eol=lf\n" +
             "*.dat  -text\n" +
+            "3.md   -text\n" +
             "*.bin  binary\n" +
             "1.bin  -binary\n" +
             "2.bin  text\n"
@@ -45,10 +47,11 @@ public class GitEolTest {
         new Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF),
         new Params(attr, "foo.dat"),
         new Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-        new Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, "application/octet-stream"),
+        new Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE,  SVNFileUtil.BINARY_MIME_TYPE),
 
-        //new Params(attr, "1.bin"),
-        //new Params(attr, "2.bin"),
+        new Params(attr, "1.bin"),
+        new Params(attr, "2.bin"),
+        new Params(attr, "3.md"),
         //new Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
     };
     final Object[][] result = new Object[params.length][];
