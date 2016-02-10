@@ -41,6 +41,9 @@ public final class DepthTest {
 
     editor.changeDirProperty("svn:ignore", SVNPropertyValue.create("sample.txt"));
 
+    editor.addFile("/.gitattributes", null, -1);
+    sendDeltaAndClose(editor, "/.gitattributes", null, "* -text\n");
+
     editor.addFile("/.gitignore", null, -1);
     sendDeltaAndClose(editor, "/.gitignore", null, "/sample.txt\n");
 
@@ -134,6 +137,15 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.EMPTY, false);
         reporter.finishReport();
       }, " - open-root: r0\n" +
+          ".gitattributes - add-file\n" +
+          ".gitattributes - apply-text-delta: null\n" +
+          ".gitattributes - change-file-prop: svn:entry:committed-date\n" +
+          ".gitattributes - change-file-prop: svn:entry:committed-rev\n" +
+          ".gitattributes - change-file-prop: svn:entry:last-author\n" +
+          ".gitattributes - change-file-prop: svn:entry:uuid\n" +
+          ".gitattributes - close-file: d3d04ac1b5897688b0d97abfd135aefa\n" +
+          ".gitattributes - delta-chunk\n" +
+          ".gitattributes - delta-end\n" +
           ".gitignore - add-file\n" +
           ".gitignore - apply-text-delta: null\n" +
           ".gitignore - change-file-prop: svn:entry:committed-date\n" +
@@ -292,6 +304,15 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
+          ".gitattributes - add-file\n" +
+          ".gitattributes - apply-text-delta: null\n" +
+          ".gitattributes - change-file-prop: svn:entry:committed-date\n" +
+          ".gitattributes - change-file-prop: svn:entry:committed-rev\n" +
+          ".gitattributes - change-file-prop: svn:entry:last-author\n" +
+          ".gitattributes - change-file-prop: svn:entry:uuid\n" +
+          ".gitattributes - close-file: d3d04ac1b5897688b0d97abfd135aefa\n" +
+          ".gitattributes - delta-chunk\n" +
+          ".gitattributes - delta-end\n" +
           ".gitignore - add-file\n" +
           ".gitignore - apply-text-delta: null\n" +
           ".gitignore - change-file-prop: svn:entry:committed-date\n" +
@@ -531,6 +552,15 @@ public final class DepthTest {
         reporter.setPath("", null, revision, SVNDepth.INFINITY, true);
         reporter.finishReport();
       }, " - open-root: r0\n" +
+          ".gitattributes - add-file\n" +
+          ".gitattributes - apply-text-delta: null\n" +
+          ".gitattributes - change-file-prop: svn:entry:committed-date\n" +
+          ".gitattributes - change-file-prop: svn:entry:committed-rev\n" +
+          ".gitattributes - change-file-prop: svn:entry:last-author\n" +
+          ".gitattributes - change-file-prop: svn:entry:uuid\n" +
+          ".gitattributes - close-file: d3d04ac1b5897688b0d97abfd135aefa\n" +
+          ".gitattributes - delta-chunk\n" +
+          ".gitattributes - delta-end\n" +
           ".gitignore - add-file\n" +
           ".gitignore - apply-text-delta: null\n" +
           ".gitignore - change-file-prop: svn:entry:committed-date\n" +
