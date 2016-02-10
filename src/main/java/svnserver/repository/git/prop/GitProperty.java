@@ -36,16 +36,28 @@ public interface GitProperty {
    * @param mode Child node type.
    * @return Child property modifier or null, if this property is not affected for childs.
    */
-  @Nullable
-  GitProperty createForChild(@NotNull String name, @NotNull FileMode mode);
+  @Nullable GitProperty createForChild(@NotNull String name, @NotNull FileMode mode);
 
   /**
    * Get overrided filter name.
    *
    * @return Filter name.
    */
-  @Nullable
-  String getFilterName();
+  @Nullable String getFilterName();
+
+  @NotNull
+  static GitProperty[] joinProperties(@NotNull GitProperty[] before, @NotNull GitProperty[] after) {
+    if (before.length == 0) {
+      return after;
+    }
+    if (after.length == 0) {
+      return before;
+    }
+    final GitProperty[] joined = new GitProperty[before.length + after.length];
+    System.arraycopy(before, 0, joined, 0, before.length);
+    System.arraycopy(after, 0, joined, before.length, after.length);
+    return joined;
+  }
 
   @NotNull
   static GitProperty[] joinProperties(@NotNull GitProperty[] parentProps, @NotNull String entryName, @NotNull FileMode fileMode, @NotNull GitProperty[] entryProps) {

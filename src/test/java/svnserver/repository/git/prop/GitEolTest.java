@@ -30,15 +30,18 @@ import java.util.TreeMap;
 public class GitEolTest {
   @DataProvider(name = "parseAttributesData")
   public static Object[][] parseAttributesData() throws IOException {
-    final GitProperty[] attr = new GitAttributesFactory().create(
-        "# comment\n" +
-            "*.txt  eol=native\n" +
-            "*.md   eol=lf\n" +
-            "*.dat  -text\n" +
-            "3.md   -text\n" +
-            "*.bin  binary\n" +
-            "1.bin  -binary\n" +
-            "2.bin  text\n"
+    final GitProperty[] attr = GitProperty.joinProperties(
+        new GitAttributesFactory().rootDefaults(),
+        new GitAttributesFactory().create(
+            "# comment\n" +
+                "*.txt  eol=native\n" +
+                "*.md   eol=lf\n" +
+                "*.dat  -text\n" +
+                "3.md   -text\n" +
+                "*.bin  binary\n" +
+                "1.bin  -binary\n" +
+                "2.bin  text\n"
+        )
     );
     final Params[] params = new Params[]{
         new Params(attr, "/").prop(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n" +
@@ -47,12 +50,13 @@ public class GitEolTest {
         new Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF),
         new Params(attr, "foo.dat"),
         new Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-        new Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE,  SVNFileUtil.BINARY_MIME_TYPE),
+        new Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
 
         new Params(attr, "1.bin"),
         new Params(attr, "2.bin"),
         new Params(attr, "3.md"),
-        //new Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
+
+        new Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
     };
     final Object[][] result = new Object[params.length][];
     for (int i = 0; i < params.length; ++i) {

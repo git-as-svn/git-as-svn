@@ -11,10 +11,7 @@ import org.atteo.classindex.ClassIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -22,19 +19,29 @@ import java.util.TreeMap;
 public class PropertyMapping {
   @NotNull
   private static final Map<String, GitPropertyFactory> parserByFile = new TreeMap<>();
+  @NotNull
+  private static final GitProperty[] rootProperties;
 
   static {
     try {
+      GitProperty[] properties = GitProperty.emptyArray;
       for (Class<? extends GitPropertyFactory> factoryClass : ClassIndex.getSubclasses(GitPropertyFactory.class)) {
         final GitPropertyFactory factory = factoryClass.getConstructor().newInstance();
         final GitPropertyFactory oldParser = parserByFile.put(factory.getFileName(), factory);
         if (oldParser != null) {
           throw new RuntimeException("Found two classes mapped for same file: " + oldParser.getClass() + " and " + factoryClass);
         }
+        properties = GitProperty.joinProperties(properties, factory.rootDefaults());
       }
+      rootProperties = properties;
     } catch (ReflectiveOperationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public static GitProperty[] getRootProperties() {
+    return Arrays.copyOf(rootProperties, rootProperties.length);
   }
 
   @Nullable
