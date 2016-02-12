@@ -36,6 +36,10 @@ public class SvnFilePropertyTest {
     put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE);
   }};
   @NotNull
+  private final static Map<String, String> propsEolLf = new HashMap<String, String>() {{
+    put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF);
+  }};
+  @NotNull
   private final static Map<String, String> propsExecutable = new HashMap<String, String>() {{
     put(SVNProperty.EXECUTABLE, "*");
   }};
@@ -45,7 +49,7 @@ public class SvnFilePropertyTest {
   }};
   @NotNull
   private final static Map<String, String> propsAutoProps = new HashMap<String, String>() {{
-    put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n");
+    put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=LF\n");
   }};
   @NotNull
   private final static Map<String, String> propsBinary = new HashMap<String, String>() {{
@@ -204,11 +208,11 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/sample.txt", "", null);
-      checkFileProp(repo, "/sample.txt", null);
-      createFile(repo, "/.gitattributes", "*.txt\t\t\ttext eol=native\n", null);
-      // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
+      createFile(repo, "/sample.txt", "", propsEolNative);
       checkFileProp(repo, "/sample.txt", propsEolNative);
+      createFile(repo, "/.gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative);
+      // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
+      checkFileProp(repo, "/sample.txt", propsEolLf);
       // After commit .gitattributes directory with .gitattributes must change property svn:auto-props automagically.
       checkDirProp(repo, "/", propsAutoProps);
       // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
@@ -471,11 +475,11 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "sample.txt", "", null);
-      checkFileProp(repo, "/sample.txt", null);
+      createFile(repo, "sample.txt", "", propsEolNative);
+      checkFileProp(repo, "/sample.txt", propsEolNative);
 
-      createFile(repo, ".gitattributes", "*.txt\t\t\ttext eol=native\n", null);
-      createFile(repo, "with-props.txt", "", propsEolNative);
+      createFile(repo, ".gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative);
+      createFile(repo, "with-props.txt", "", propsEolLf);
       try {
         createFile(repo, "none-props.txt", "", null);
       } catch (SVNException e) {
