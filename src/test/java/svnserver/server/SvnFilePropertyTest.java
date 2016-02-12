@@ -7,6 +7,7 @@
  */
 package svnserver.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -18,7 +19,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -32,29 +32,34 @@ import static svnserver.SvnTestHelper.*;
  */
 public class SvnFilePropertyTest {
   @NotNull
-  private final static Map<String, String> propsEolNative = new HashMap<String, String>() {{
-    put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE);
-  }};
+  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
   @NotNull
-  private final static Map<String, String> propsEolLf = new HashMap<String, String>() {{
-    put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF);
-  }};
+  private final static Map<String, String> propsEolLf = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF)
+      .build();
   @NotNull
-  private final static Map<String, String> propsExecutable = new HashMap<String, String>() {{
-    put(SVNProperty.EXECUTABLE, "*");
-  }};
+  private final static Map<String, String> propsExecutable = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EXECUTABLE, "*")
+      .build();
   @NotNull
-  private final static Map<String, String> propsSymlink = new HashMap<String, String>() {{
-    put(SVNProperty.SPECIAL, "*");
-  }};
+  private final static Map<String, String> propsExecutableNative = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EXECUTABLE, "*")
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
   @NotNull
-  private final static Map<String, String> propsAutoProps = new HashMap<String, String>() {{
-    put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=LF\n");
-  }};
+  private final static Map<String, String> propsSymlink = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.SPECIAL, "*")
+      .build();
   @NotNull
-  private final static Map<String, String> propsBinary = new HashMap<String, String>() {{
-    put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
-  }};
+  private final static Map<String, String> propsAutoProps = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=LF\n")
+      .build();
+  @NotNull
+  private final static Map<String, String> propsBinary = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
+      .build();
 
   /**
    * Check commit .gitattributes.
@@ -67,10 +72,10 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/non-exec.txt", "", null);
-      createFile(repo, "/exec.txt", "", propsExecutable);
-      checkFileProp(repo, "/non-exec.txt", null);
-      checkFileProp(repo, "/exec.txt", propsExecutable);
+      createFile(repo, "/non-exec.txt", "", propsEolNative);
+      createFile(repo, "/exec.txt", "", propsExecutableNative);
+      checkFileProp(repo, "/non-exec.txt", propsEolNative);
+      checkFileProp(repo, "/exec.txt", propsExecutableNative);
       {
         final long latestRevision = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Create directory: /foo", null, false, null);
@@ -87,8 +92,8 @@ public class SvnFilePropertyTest {
         editor.closeDir();
         editor.closeEdit();
       }
-      checkFileProp(repo, "/non-exec.txt", propsExecutable);
-      checkFileProp(repo, "/exec.txt", null);
+      checkFileProp(repo, "/non-exec.txt", propsExecutableNative);
+      checkFileProp(repo, "/exec.txt", propsEolNative);
     }
   }
 
