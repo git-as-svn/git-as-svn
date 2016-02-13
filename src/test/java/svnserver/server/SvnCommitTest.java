@@ -7,21 +7,16 @@
  */
 package svnserver.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static svnserver.SvnTestHelper.*;
 
@@ -31,6 +26,11 @@ import static svnserver.SvnTestHelper.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class SvnCommitTest {
+  @NotNull
+  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
+
   /**
    * Check file copy.
    * <pre>
@@ -48,7 +48,7 @@ public class SvnCommitTest {
       final String dstFile = "/README.copy";
       final String expectedContent = "New content 2";
 
-      createFile(repo, srcFile, "Old content 1", null);
+      createFile(repo, srcFile, "Old content 1", propsEolNative);
       modifyFile(repo, srcFile, expectedContent, repo.getLatestRevision());
       final long srcRev = repo.getLatestRevision();
       modifyFile(repo, srcFile, "New content 3", repo.getLatestRevision());
@@ -83,23 +83,25 @@ public class SvnCommitTest {
         editor.addDir("/src", null, -1);
         editor.addDir("/src/main", null, -1);
         editor.addFile("/src/main/source.txt", null, -1);
+        editor.changeFileProperty("/src/main/source.txt", SVNProperty.EOL_STYLE,SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/src/main/source.txt", null, "Source content");
         editor.closeDir();
         editor.addDir("/src/test", null, -1);
         editor.addFile("/src/test/test.txt", null, -1);
+        editor.changeFileProperty("/src/test/test.txt", SVNProperty.EOL_STYLE,SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/src/test/test.txt", null, "Test content");
         editor.closeDir();
         editor.closeDir();
         editor.closeDir();
         editor.closeEdit();
       }
-      createFile(repo, "/src/main/copy-a.txt", "A content", null);
+      createFile(repo, "/src/main/copy-a.txt", "A content", propsEolNative);
 
       final String srcDir = "/src/main";
       final String dstDir = "/copy";
       final long srcRev = repo.getLatestRevision();
 
-      createFile(repo, "/src/main/copy-b.txt", "B content", null);
+      createFile(repo, "/src/main/copy-b.txt", "B content", propsEolNative);
       modifyFile(repo, "/src/main/source.txt", "Updated content", repo.getLatestRevision());
       {
         final ISVNEditor editor = repo.getCommitEditor("Copy dir commit", null, false, null);
@@ -138,7 +140,7 @@ public class SvnCommitTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/README.md", "Old content", null);
+      createFile(repo, "/README.md", "Old content", propsEolNative);
 
       final long lastRevision = repo.getLatestRevision();
 
@@ -162,8 +164,8 @@ public class SvnCommitTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/README.md", "Old content 1", null);
-      createFile(repo, "/build.gradle", "Old content 2", null);
+      createFile(repo, "/README.md", "Old content 1", propsEolNative);
+      createFile(repo, "/build.gradle", "Old content 2", propsEolNative);
 
       final long lastRevision = repo.getLatestRevision();
       modifyFile(repo, "/README.md", "New content 1", lastRevision);
@@ -180,8 +182,8 @@ public class SvnCommitTest {
   public void commitWithoutEmail() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo1 = server.openSvnRepository();
-      createFile(repo1, "/README.md", "Old content 1", null);
-      createFile(repo1, "/build.gradle", "Old content 2", null);
+      createFile(repo1, "/README.md", "Old content 1", propsEolNative);
+      createFile(repo1, "/build.gradle", "Old content 2", propsEolNative);
 
       final SVNRepository repo2 = server.openSvnRepository(SvnTestServer.USER_NAME_NO_MAIL, SvnTestServer.PASSWORD);
       final long lastRevision = repo2.getLatestRevision();
