@@ -7,6 +7,7 @@
  */
 package svnserver.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -15,6 +16,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -26,6 +29,7 @@ import svnserver.SvnTestServer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import static svnserver.SvnTestHelper.sendDeltaAndClose;
 
@@ -33,7 +37,6 @@ import static svnserver.SvnTestHelper.sendDeltaAndClose;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class WCDepthTest {
-
   @NotNull
   private SvnTestServer server;
   @NotNull
@@ -55,11 +58,13 @@ public final class WCDepthTest {
     editor.addDir("/a/b", null, -1);
 
     editor.addFile("/a/b/e", null, -1);
+    editor.changeFileProperty("/a/b/e", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
     sendDeltaAndClose(editor, "/a/b/e", null, "e body");
 
     editor.addDir("/a/b/c", null, -1);
 
     editor.addFile("/a/b/c/d", null, -1);
+    editor.changeFileProperty("/a/b/c/d", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
     sendDeltaAndClose(editor, "/a/b/c/d", null, "d body");
 
     editor.closeDir();
