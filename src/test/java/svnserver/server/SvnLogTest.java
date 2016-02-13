@@ -7,13 +7,12 @@
  */
 package svnserver.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
 import org.testng.internal.junit.ArrayAsserts;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
@@ -86,7 +85,10 @@ public class SvnLogTest {
           '}';
     }
   }
-
+  @NotNull
+  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
   /**
    * Check simple svn log behaviour.
    *
@@ -97,7 +99,7 @@ public class SvnLogTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       // r1 - add single file.
-      createFile(repo, "/foo.txt", "", null);
+      createFile(repo, "/foo.txt", "", propsEolNative);
       // r2 - add file in directory.
       {
         final long latestRevision = repo.getLatestRevision();
@@ -105,6 +107,7 @@ public class SvnLogTest {
         editor.openRoot(latestRevision);
         editor.addDir("/foo", null, -1);
         editor.addFile("/foo/bar.txt", null, -1);
+        editor.changeFileProperty("/foo/bar.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/foo/bar.txt", null, "File body");
         editor.closeDir();
         editor.closeDir();
@@ -113,7 +116,7 @@ public class SvnLogTest {
       // r3 - change file in directory.
       modifyFile(repo, "/foo/bar.txt", "New body", repo.getLatestRevision());
       // r4 - change file in directory.
-      createFile(repo, "/foo/foo.txt", "New body", null);
+      createFile(repo, "/foo/foo.txt", "New body", propsEolNative);
 
       // svn log from root
       final long last = repo.getLatestRevision();
@@ -153,14 +156,14 @@ public class SvnLogTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       // r1 - add single file.
-      createFile(repo, "/foo.txt", "", null);
+      createFile(repo, "/foo.txt", "", propsEolNative);
       // r2 - modify file.
       modifyFile(repo, "/foo.txt", "New content", repo.getLatestRevision());
       // r3 - remove file.
       deleteFile(repo, "/foo.txt");
       final long delete = repo.getLatestRevision();
       // r4 - recreate file.
-      createFile(repo, "/foo.txt", "", null);
+      createFile(repo, "/foo.txt", "", propsEolNative);
 
       // svn log from root
       final long last = repo.getLatestRevision();
@@ -191,6 +194,7 @@ public class SvnLogTest {
         // Empty file.
         final String file = "/foo/bar.txt";
         editor.addFile(file, null, -1);
+        editor.changeFileProperty(file, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, file, null, "");
         // Close dir
         editor.closeDir();
@@ -210,6 +214,7 @@ public class SvnLogTest {
         // Empty file.
         final String file = "/foo/bar.txt";
         editor.addFile(file, null, -1);
+        editor.changeFileProperty(file, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, file, null, "");
         // Close dir
         editor.closeDir();
@@ -239,7 +244,7 @@ public class SvnLogTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       // r1 - add single file.
-      createFile(repo, "/foo.txt", "Foo content", null);
+      createFile(repo, "/foo.txt", "Foo content", propsEolNative);
       // r2 - rename file
       {
         final long revision = repo.getLatestRevision();
@@ -247,6 +252,7 @@ public class SvnLogTest {
         editor.openRoot(-1);
         // Empty file.
         editor.addFile("/bar.txt", "/foo.txt", revision);
+        editor.changeFileProperty("/bar.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         editor.closeFile("/bar.txt", null);
         editor.deleteEntry("/foo.txt", revision);
         // Close dir
@@ -262,6 +268,7 @@ public class SvnLogTest {
         editor.openRoot(-1);
         // Empty file.
         editor.addFile("/baz.txt", "/bar.txt", revision);
+        editor.changeFileProperty("/baz.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         editor.closeFile("/baz.txt", null);
         editor.deleteEntry("/bar.txt", revision);
         // Close dir
@@ -329,6 +336,7 @@ public class SvnLogTest {
         editor.addDir("/foo", null, -1);
         // Some file.
         editor.addFile("/foo/test.txt", null, -1);
+        editor.changeFileProperty("/foo/test.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/foo/test.txt", null, "Foo content");
         // Close dir
         editor.closeDir();
