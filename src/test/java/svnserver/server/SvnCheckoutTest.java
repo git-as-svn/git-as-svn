@@ -168,10 +168,12 @@ public class SvnCheckoutTest {
       editor.addDir("/src", null, -1);
       editor.addDir("/src/main", null, -1);
       editor.addFile("/src/main/source.txt", null, -1);
+      editor.changeFileProperty("/src/main/source.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
       sendDeltaAndClose(editor, "/src/main/source.txt", null, "Source content");
       editor.closeDir();
       editor.addDir("/src/test", null, -1);
       editor.addFile("/src/test/test.txt", null, -1);
+      editor.changeFileProperty("/src/test/test.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
       sendDeltaAndClose(editor, "/src/test/test.txt", null, "Test content");
       editor.closeDir();
       editor.closeDir();
@@ -195,6 +197,8 @@ public class SvnCheckoutTest {
         Assert.assertFalse(file.exists());
         TestHelper.saveFile(file, "New content");
         client.getWCClient().doAdd(file, false, false, false, SVNDepth.INFINITY, false, true);
+        client.getWCClient().doSetProperty(file, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE), false, SVNDepth.INFINITY, null, null);
+
         commit = client.getCommitClient().doCommit(new File[]{file}, false, "Commit new file", null, null, false, false, SVNDepth.INFINITY);
       }
       // modify file
