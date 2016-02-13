@@ -103,12 +103,14 @@ public class GitFileTreeEntry extends GitEntryImpl implements GitFile {
     final Map<String, String> props = getUpstreamProperties();
     final FileMode fileMode = getFileMode();
     if (fileMode.equals(FileMode.SYMLINK)) {
+      props.remove(SVNProperty.EOL_STYLE);
       props.put(SVNProperty.SPECIAL, "*");
     } else {
       if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
         props.put(SVNProperty.EXECUTABLE, "*");
       }
       if (fileMode.getObjectType() == Constants.OBJ_BLOB && repo.isObjectBinary(filter, getObjectId())) {
+        props.remove(SVNProperty.EOL_STYLE);
         props.put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
       }
     }
