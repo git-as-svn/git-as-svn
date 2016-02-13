@@ -3,14 +3,16 @@ type: file
 pred: 4-2.0-5.r5/40
 count: 4
 text: 5 0 19 20 506d5d1e4313bd0aaa49c532bb649f08 6a5f7bcdfd5da354e55424540b8c0b34c290efbc 4-4/_3
+props: 1 435 34 34 25e6c2f7558b7484000d4d090dea5b92
 cpath: /foo/wow/file.move
 copyfrom: 5 /foo/bar/file.move
 
-id: 4-2.2-6.r6/212
+id: 4-2.2-6.r6/264
 type: file
-pred: 4-2.0.r3/266
+pred: 4-2.0.r3/318
 count: 2
 text: 3 42 18 15 68c13f81c207c9261b14b74ccf2084ac d869bfed562b6789ed0dc0af1308f45165e67490 2-2/_4
+props: 1 435 34 34 25e6c2f7558b7484000d4d090dea5b92
 cpath: /foo/wow/file.txt
 copyfrom: 3 /foo/bar/file.txt
 
@@ -22,14 +24,14 @@ file 4-2.1-6.r6/0
 K 8
 file.txt
 V 19
-file 4-2.2-6.r6/212
+file 4-2.2-6.r6/264
 END
 ENDREP
-id: 2-2.0-6.r6/516
+id: 2-2.0-6.r6/620
 type: dir
-pred: 2-2.0.r2/262
+pred: 2-2.0.r2/314
 count: 1
-text: 6 424 79 0 d289fca484779d6bc3e0b25c00cc3c6d
+text: 6 528 79 79 803aaf247b7f65046991a6fd879c6a9d
 cpath: /foo/wow
 copyfrom: 2 /foo/bar
 
@@ -37,18 +39,18 @@ PLAIN
 K 3
 bar
 V 16
-dir 2-2.0.r5/343
+dir 2-2.0.r5/395
 K 3
 wow
 V 18
-dir 2-2.0-6.r6/516
+dir 2-2.0-6.r6/620
 END
 ENDREP
-id: 0-2.0.r6/740
+id: 0-2.0.r6/845
 type: dir
-pred: 0-2.0.r5/526
+pred: 0-2.0.r5/579
 count: 4
-text: 6 661 66 0 617121cf083c04f290f28b434c5e9a77
+text: 6 766 66 66 070b0f3496bad44765836d689589fefa
 cpath: /foo
 copyroot: 0 /
 
@@ -60,14 +62,14 @@ file 0-1.0.r3/80
 K 3
 foo
 V 16
-dir 0-2.0.r6/740
+dir 0-2.0.r6/845
 END
 ENDREP
-id: 0.0.r6/955
+id: 0.0.r6/1061
 type: dir
-pred: 0.0.r5/741
+pred: 0.0.r5/795
 count: 6
-text: 6 872 70 0 8dab219076b7369ba58d000b5037a94b
+text: 6 978 70 70 9e07e48b4985dee0c1a6ee3c86d6a5aa
 cpath: /
 copyroot: 0 /
 
@@ -78,4 +80,4 @@ copyroot: 0 /
 4-2._2.t5-5 replace-file false false /foo/wow/file.txt
 3 /foo/bar/file.txt
 
-955 1080
+1061 1188
