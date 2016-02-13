@@ -25,15 +25,23 @@ public interface GitPropertyFactory {
    *
    * @return File name.
    */
-  @NotNull
-  String getFileName();
+  @NotNull String getFileName();
 
   /**
    * Create git property worker by file content.
    *
    * @param content File content.
-   * @return Git property worker.
+   * @return Git property workers.
+   */
+  @NotNull GitProperty[] create(@NotNull String content) throws IOException;
+
+  /**
+   * Create git property for root directory.
+   *
+   * @return Git property workers.
    */
   @NotNull
-  GitProperty[] create(@NotNull String content) throws IOException;
+  default GitProperty[] rootDefaults() {
+    return GitProperty.emptyArray;
+  }
 }

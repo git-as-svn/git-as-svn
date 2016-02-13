@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.repository.git.path.Wildcard;
+import svnserver.repository.git.path.matcher.path.AlwaysMatcher;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,6 +62,14 @@ public final class GitAttributesFactory implements GitPropertyFactory {
       }
     }
     return properties.toArray(new GitProperty[properties.size()]);
+  }
+
+  @NotNull
+  @Override
+  public GitProperty[] rootDefaults() {
+    return new GitProperty[]{
+        new GitFileProperty(AlwaysMatcher.INSTANCE, SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+    };
   }
 
   private static void processProperty(@NotNull List<GitProperty> properties, @NotNull Wildcard wildcard, @NotNull String property, @Nullable String value) {

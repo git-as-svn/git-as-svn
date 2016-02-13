@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
+import svnserver.repository.git.prop.PropertyMapping;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +33,7 @@ public class GitFileEmptyTree extends GitEntryImpl implements GitFile {
   private final int revision;
 
   public GitFileEmptyTree(@NotNull GitRepository repo, @NotNull String parentPath, int revision) {
-    super(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE);
+    super(PropertyMapping.getRootProperties(), parentPath, GitProperty.emptyArray, "", FileMode.TREE);
     this.repo = repo;
     this.revision = revision;
   }
