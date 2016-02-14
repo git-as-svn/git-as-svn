@@ -1,8 +1,9 @@
 id: 4-2.1-7.r7/0
 type: file
-pred: 4-2.2-6.r6/212
+pred: 4-2.2-6.r6/264
 count: 3
 text: 2 0 24 12 448a6777de4ba2cc54e984c480f2451a e2402141efeabc2bf8e70611974629a64f2f7592 6-6/_3
+props: 1 435 34 34 25e6c2f7558b7484000d4d090dea5b92
 cpath: /foo/omg/file.txt
 copyroot: 6 /foo/wow/file.txt
 
@@ -13,11 +14,11 @@ V 17
 file 4-2.1-7.r7/0
 END
 ENDREP
-id: 2-2.0-7.r7/264
+id: 2-2.0-7.r7/316
 type: dir
-pred: 2-2.0-6.r6/516
+pred: 2-2.0-6.r6/620
 count: 2
-text: 7 211 40 0 2aa163ddc596271e3f37405d8775a2ea
+text: 7 263 40 40 2aa163ddc596271e3f37405d8775a2ea
 cpath: /foo/omg
 copyfrom: 6 /foo/wow
 
@@ -25,18 +26,18 @@ PLAIN
 K 3
 bar
 V 16
-dir 2-2.0.r5/343
+dir 2-2.0.r5/395
 K 3
 omg
 V 18
-dir 2-2.0-7.r7/264
+dir 2-2.0-7.r7/316
 END
 ENDREP
-id: 0-2.0.r7/490
+id: 0-2.0.r7/543
 type: dir
-pred: 0-2.0.r6/740
+pred: 0-2.0.r6/845
 count: 5
-text: 7 411 66 0 b0d6b0d5f7be97cddcef996e0cd49556
+text: 7 464 66 66 4fe192a36f52d8873012b0d9ee95d111
 cpath: /foo
 copyroot: 0 /
 
@@ -48,14 +49,14 @@ file 0-1.0.r3/80
 K 3
 foo
 V 16
-dir 0-2.0.r7/490
+dir 0-2.0.r7/543
 END
 ENDREP
-id: 0.0.r7/705
+id: 0.0.r7/759
 type: dir
-pred: 0.0.r6/955
+pred: 0.0.r6/1061
 count: 7
-text: 7 622 70 0 c8dbbed58acb2b1ff75bdb3d68ecaa46
+text: 7 676 70 70 bd6c7173cb1ac79b07f8ec9b3fae0eba
 cpath: /
 copyroot: 0 /
 
@@ -65,7 +66,7 @@ copyroot: 0 /
 
 4-2._1.t6-6 modify-file true false /foo/omg/file.txt
 
-2-2.0-6.r6/516 delete-dir false false /foo/wow
+2-2.0-6.r6/620 delete-dir false false /foo/wow
 
 
-705 830
+759 886

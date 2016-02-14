@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.repository.git.path.PathMatcher;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Parse and processing .gitignore.
@@ -25,7 +26,7 @@ public final class GitFileProperty implements GitProperty {
   private final PathMatcher matcher;
   @NotNull
   private final String property;
-  @NotNull
+  @Nullable
   private final String value;
 
   /**
@@ -35,7 +36,7 @@ public final class GitFileProperty implements GitProperty {
    * @param property Property name.
    * @param value    Property value.
    */
-  public GitFileProperty(@NotNull PathMatcher matcher, @NotNull String property, @NotNull String value) {
+  public GitFileProperty(@NotNull PathMatcher matcher, @NotNull String property, @Nullable String value) {
     this.matcher = matcher;
     this.property = property;
     this.value = value;
@@ -63,7 +64,11 @@ public final class GitFileProperty implements GitProperty {
         return new GitProperty() {
           @Override
           public void apply(@NotNull Map<String, String> props) {
-            props.put(property, value);
+            if (value != null) {
+              props.put(property, value);
+            } else {
+              props.remove(property);
+            }
           }
 
           @Nullable
@@ -92,14 +97,16 @@ public final class GitFileProperty implements GitProperty {
 
     return matcher.equals(that.matcher)
         && property.equals(that.property)
-        && value.equals(that.value);
+        && Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
     int result = matcher.hashCode();
     result = 31 * result + property.hashCode();
-    result = 31 * result + value.hashCode();
+    if (value != null) {
+      result = 31 * result + value.hashCode();
+    }
     return result;
   }
 }

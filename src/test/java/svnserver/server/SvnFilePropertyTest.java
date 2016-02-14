@@ -7,6 +7,7 @@
  */
 package svnserver.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -18,7 +19,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -32,25 +32,30 @@ import static svnserver.SvnTestHelper.*;
  */
 public class SvnFilePropertyTest {
   @NotNull
-  private final static Map<String, String> propsEolNative = new HashMap<String, String>() {{
-    put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE);
-  }};
+  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
   @NotNull
-  private final static Map<String, String> propsExecutable = new HashMap<String, String>() {{
-    put(SVNProperty.EXECUTABLE, "*");
-  }};
+  private final static Map<String, String> propsEolLf = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF)
+      .build();
   @NotNull
-  private final static Map<String, String> propsSymlink = new HashMap<String, String>() {{
-    put(SVNProperty.SPECIAL, "*");
-  }};
+  private final static Map<String, String> propsExecutable = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EXECUTABLE, "*")
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
   @NotNull
-  private final static Map<String, String> propsAutoProps = new HashMap<String, String>() {{
-    put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n");
-  }};
+  private final static Map<String, String> propsSymlink = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.SPECIAL, "*")
+      .build();
   @NotNull
-  private final static Map<String, String> propsBinary = new HashMap<String, String>() {{
-    put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
-  }};
+  private final static Map<String, String> propsAutoProps = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=LF\n")
+      .build();
+  @NotNull
+  private final static Map<String, String> propsBinary = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
+      .build();
 
   /**
    * Check commit .gitattributes.
@@ -63,9 +68,9 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/non-exec.txt", "", null);
+      createFile(repo, "/non-exec.txt", "", propsEolNative);
       createFile(repo, "/exec.txt", "", propsExecutable);
-      checkFileProp(repo, "/non-exec.txt", null);
+      checkFileProp(repo, "/non-exec.txt", propsEolNative);
       checkFileProp(repo, "/exec.txt", propsExecutable);
       {
         final long latestRevision = repo.getLatestRevision();
@@ -84,7 +89,7 @@ public class SvnFilePropertyTest {
         editor.closeEdit();
       }
       checkFileProp(repo, "/non-exec.txt", propsExecutable);
-      checkFileProp(repo, "/exec.txt", null);
+      checkFileProp(repo, "/exec.txt", propsEolNative);
     }
   }
 
@@ -99,9 +104,9 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/data.txt", "Test file", null);
+      createFile(repo, "/data.txt", "Test file", propsEolNative);
       createFile(repo, "/data.dat", "Test data\0", propsBinary);
-      checkFileProp(repo, "/data.txt", null);
+      checkFileProp(repo, "/data.txt", propsEolNative);
       checkFileProp(repo, "/data.dat", propsBinary);
       {
         final long latestRevision = repo.getLatestRevision();
@@ -110,17 +115,19 @@ public class SvnFilePropertyTest {
 
         editor.openFile("/data.txt", latestRevision);
         editor.changeFileProperty("/data.txt", SVNProperty.MIME_TYPE, SVNPropertyValue.create(SVNFileUtil.BINARY_MIME_TYPE));
+        editor.changeFileProperty("/data.txt", SVNProperty.EOL_STYLE, null);
         sendDeltaAndClose(editor, "/data.txt", "Test file", "Test file\0");
 
         editor.openFile("/data.dat", latestRevision);
         editor.changeFileProperty("/data.dat", SVNProperty.MIME_TYPE, null);
+        editor.changeFileProperty("/data.dat", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/data.dat", "Test data\0", "Test data");
 
         editor.closeDir();
         editor.closeEdit();
       }
       checkFileProp(repo, "/data.txt", propsBinary);
-      checkFileProp(repo, "/data.dat", null);
+      checkFileProp(repo, "/data.dat", propsEolNative);
     }
   }
 
@@ -135,10 +142,10 @@ public class SvnFilePropertyTest {
       final SVNRepository repo = server.openSvnRepository();
 
       final String content = "link foo/bar.txt";
-      createFile(repo, "/non-link", content, null);
+      createFile(repo, "/non-link", content, propsEolNative);
       createFile(repo, "/link", content, propsSymlink);
 
-      checkFileProp(repo, "/non-link", null);
+      checkFileProp(repo, "/non-link", propsEolNative);
       checkFileProp(repo, "/link", propsSymlink);
 
       checkFileContent(repo, "/non-link", content);
@@ -151,10 +158,12 @@ public class SvnFilePropertyTest {
         editor.openRoot(-1);
 
         editor.openFile("/non-link", latestRevision);
+        editor.changeFileProperty("/non-link", SVNProperty.EOL_STYLE, null);
         editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"));
         sendDeltaAndClose(editor, "/non-link", content, content2);
 
         editor.openFile("/link", latestRevision);
+        editor.changeFileProperty("/link", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         editor.changeFileProperty("/link", SVNProperty.SPECIAL, null);
         sendDeltaAndClose(editor, "/link", content, content2);
 
@@ -163,7 +172,7 @@ public class SvnFilePropertyTest {
       }
 
       checkFileProp(repo, "/non-link", propsSymlink);
-      checkFileProp(repo, "/link", null);
+      checkFileProp(repo, "/link", propsEolNative);
 
       checkFileContent(repo, "/non-link", content2);
       checkFileContent(repo, "/link", content2);
@@ -174,10 +183,12 @@ public class SvnFilePropertyTest {
         editor.openRoot(-1);
 
         editor.openFile("/non-link", latestRevision);
+        editor.changeFileProperty("/non-link", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, null);
         editor.closeFile("/non-link", null);
 
         editor.openFile("/link", latestRevision);
+        editor.changeFileProperty("/link", SVNProperty.EOL_STYLE, null);
         editor.changeFileProperty("/link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"));
         editor.closeFile("/link", null);
 
@@ -185,11 +196,34 @@ public class SvnFilePropertyTest {
         editor.closeEdit();
       }
 
-      checkFileProp(repo, "/non-link", null);
+      checkFileProp(repo, "/non-link", propsEolNative);
       checkFileProp(repo, "/link", propsSymlink);
 
       checkFileContent(repo, "/non-link", content2);
       checkFileContent(repo, "/link", content2);
+    }
+  }
+
+  /**
+   * Check commit .gitattributes.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void symlinkBinary() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final String content = "link foo/bar.txt";
+      createFile(repo, "/.gitattributes", "*.bin binary", propsEolNative);
+      createFile(repo, "/non-link.bin", content, propsBinary);
+      createFile(repo, "/link.bin", content, propsSymlink);
+
+      checkFileProp(repo, "/non-link.bin", propsBinary);
+      checkFileProp(repo, "/link.bin", propsSymlink);
+
+      checkFileContent(repo, "/non-link.bin", content);
+      checkFileContent(repo, "/link.bin", content);
     }
   }
 
@@ -204,11 +238,11 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/sample.txt", "", null);
-      checkFileProp(repo, "/sample.txt", null);
-      createFile(repo, "/.gitattributes", "*.txt\t\t\ttext eol=native\n", null);
-      // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
+      createFile(repo, "/sample.txt", "", propsEolNative);
       checkFileProp(repo, "/sample.txt", propsEolNative);
+      createFile(repo, "/.gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative);
+      // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
+      checkFileProp(repo, "/sample.txt", propsEolLf);
       // After commit .gitattributes directory with .gitattributes must change property svn:auto-props automagically.
       checkDirProp(repo, "/", propsAutoProps);
       // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
@@ -239,21 +273,22 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String emptyFile = "/foo/.keep";
         editor.addFile(emptyFile, null, -1);
+        editor.changeFileProperty(emptyFile, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, emptyFile, null, "");
         // Close dir
         editor.closeDir();
         editor.closeDir();
         editor.closeEdit();
       }
-      createFile(repo, "/sample.txt", "", null);
-      createFile(repo, "/foo/sample.txt", "", null);
-      checkFileProp(repo, "/sample.txt", null);
-      checkFileProp(repo, "/foo/sample.txt", null);
-
-      createFile(repo, "/foo/.gitattributes", "*.txt\t\t\ttext eol=native\n", null);
-      // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
+      createFile(repo, "/sample.txt", "", propsEolNative);
+      createFile(repo, "/foo/sample.txt", "", propsEolNative);
+      checkFileProp(repo, "/sample.txt", propsEolNative);
       checkFileProp(repo, "/foo/sample.txt", propsEolNative);
-      checkFileProp(repo, "/sample.txt", null);
+
+      createFile(repo, "/foo/.gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative);
+      // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
+      checkFileProp(repo, "/foo/sample.txt", propsEolLf);
+      checkFileProp(repo, "/sample.txt", propsEolNative);
       // After commit .gitattributes directory with .gitattributes must change property svn:auto-props automagically.
       checkDirProp(repo, "/foo", propsAutoProps);
       // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
@@ -286,6 +321,7 @@ public class SvnFilePropertyTest {
       // Empty file.
       final String filePath = "/foo/.gitattributes";
       editor.addFile(filePath, null, -1);
+      editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
       sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n");
       // Close dir
       editor.closeDir();
@@ -339,6 +375,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.addFile(filePath, null, -1);
+        editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, filePath, null, "");
         // Close dir
         editor.closeDir();
@@ -379,6 +416,7 @@ public class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.addFile(filePath, null, -1);
+        editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, filePath, null, "");
         // Close dir
         editor.closeDir();
@@ -415,7 +453,7 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/.gitattributes", "", null);
+      createFile(repo, "/.gitattributes", "", propsEolNative);
       {
         long latestRevision = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Modify .gitattributes", null, false, null);
@@ -442,7 +480,7 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/.gitattributes", "", null);
+      createFile(repo, "/.gitattributes", "", propsEolNative);
       try {
         long latestRevision = repo.getLatestRevision();
         final ISVNEditor editor = repo.getCommitEditor("Modify .gitattributes", null, false, null);
@@ -471,11 +509,11 @@ public class SvnFilePropertyTest {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "sample.txt", "", null);
-      checkFileProp(repo, "/sample.txt", null);
+      createFile(repo, "sample.txt", "", propsEolNative);
+      checkFileProp(repo, "/sample.txt", propsEolNative);
 
-      createFile(repo, ".gitattributes", "*.txt\t\t\ttext eol=native\n", null);
-      createFile(repo, "with-props.txt", "", propsEolNative);
+      createFile(repo, ".gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative);
+      createFile(repo, "with-props.txt", "", propsEolLf);
       try {
         createFile(repo, "none-props.txt", "", null);
       } catch (SVNException e) {

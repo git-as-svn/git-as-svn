@@ -1,8 +1,9 @@
 id: 4-2.0-4.r4/0
 type: file
-pred: 4-2.0.r3/266
+pred: 4-2.0.r3/318
 count: 2
 text: 3 42 18 15 68c13f81c207c9261b14b74ccf2084ac d869bfed562b6789ed0dc0af1308f45165e67490 2-2/_4
+props: 1 435 34 34 25e6c2f7558b7484000d4d090dea5b92
 cpath: /foo/bar/file.copy
 copyfrom: 3 /foo/bar/file.txt
 
@@ -14,14 +15,14 @@ file 4-2.0-4.r4/0
 K 8
 file.txt
 V 17
-file 4-2.0.r3/266
+file 4-2.0.r3/318
 END
 ENDREP
-id: 2-2.0.r4/301
+id: 2-2.0.r4/353
 type: dir
-pred: 2-2.0.r3/512
+pred: 2-2.0.r3/616
 count: 2
-text: 4 211 77 0 bd47dabca555d9d25a5c2137ce6e7a70
+text: 4 263 77 77 52db2b6a8c0d7bf97a2101281ff75a2e
 cpath: /foo/bar
 copyroot: 0 /
 
@@ -29,14 +30,14 @@ PLAIN
 K 3
 bar
 V 16
-dir 2-2.0.r4/301
+dir 2-2.0.r4/353
 END
 ENDREP
-id: 0-2.0.r4/484
+id: 0-2.0.r4/537
 type: dir
-pred: 0-2.0.r3/695
+pred: 0-2.0.r3/800
 count: 2
-text: 4 437 34 0 94cf8b2d95e0a05e7f3cef9fa899921b
+text: 4 490 34 34 71eb64a7b0186e7d36ca080451e42238
 cpath: /foo
 copyroot: 0 /
 
@@ -48,18 +49,18 @@ file 0-1.0.r3/80
 K 3
 foo
 V 16
-dir 0-2.0.r4/484
+dir 0-2.0.r4/537
 END
 ENDREP
-id: 0.0.r4/699
+id: 0.0.r4/753
 type: dir
-pred: 0.0.r3/910
+pred: 0.0.r3/1016
 count: 4
-text: 4 616 70 0 88e6e0e2bae262008508018402362480
+text: 4 670 70 70 fad1cb642d8e6bae8d10f895e1f54058
 cpath: /
 copyroot: 0 /
 
 4-2._0.t3-3 add-file false false /foo/bar/file.copy
 3 /foo/bar/file.txt
 
-699 824
+753 880

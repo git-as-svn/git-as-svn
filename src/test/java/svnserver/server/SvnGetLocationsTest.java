@@ -13,6 +13,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
@@ -149,6 +151,7 @@ public class SvnGetLocationsTest {
       editor.addDir("/foo", null, -1);
       // Some file.
       editor.addFile("/foo/test.txt", null, -1);
+      editor.changeFileProperty("/foo/test.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
       sendDeltaAndClose(editor, "/foo/test.txt", null, "Foo content");
       // Close dir
       editor.closeDir();

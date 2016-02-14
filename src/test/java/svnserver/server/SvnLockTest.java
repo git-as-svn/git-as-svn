@@ -7,15 +7,13 @@
  */
 package svnserver.server;
 
+import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -39,6 +37,11 @@ import static svnserver.SvnTestHelper.*;
  */
 @Listeners(SvnTesterExternalListener.class)
 public class SvnLockTest {
+  @NotNull
+  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+      .build();
+
   /**
    * Check to take lock on absent file.
    *
@@ -48,7 +51,7 @@ public class SvnLockTest {
   public void lockNotExists(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       lock(repo, "example2.txt", repo.getLatestRevision(), false, SVNErrorCode.FS_OUT_OF_DATE);
     }
   }
@@ -63,7 +66,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       modifyFile(repo, "/example.txt", "content", latestRevision);
@@ -85,6 +88,7 @@ public class SvnLockTest {
       editor.openRoot(-1);
       editor.addDir("/example", null, -1);
       editor.addFile("/example/example.txt", null, -1);
+      editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
       sendDeltaAndClose(editor, "/example/example.txt", null, "Source content");
       editor.closeDir();
       editor.closeDir();
@@ -105,7 +109,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       SVNLock oldLock = lock(repo, "example.txt", latestRevision, false, null);
@@ -132,7 +136,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       SVNLock oldLock = lock(repo, "example.txt", latestRevision, false, null);
@@ -158,10 +162,10 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
-      createFile(repo, "/example2.txt", "", null);
+      createFile(repo, "/example2.txt", "", propsEolNative);
 
       Assert.assertNull(repo.getLock("example.txt"));
 
@@ -195,7 +199,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // Lock
@@ -221,7 +225,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // Lock
@@ -257,7 +261,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // Lock
@@ -287,7 +291,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // Lock
@@ -317,7 +321,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // Lock
@@ -351,6 +355,7 @@ public class SvnLockTest {
         editor.openRoot(-1);
         editor.addDir("/example", null, -1);
         editor.addFile("/example/example.txt", null, -1);
+        editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/example/example.txt", null, "Source content");
         editor.closeDir();
         editor.closeDir();
@@ -387,9 +392,11 @@ public class SvnLockTest {
         editor.openRoot(-1);
         editor.addDir("/example", null, -1);
         editor.addFile("/example/example.txt", null, -1);
+        editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/example/example.txt", null, "Source content");
         editor.closeDir();
         editor.addFile("/foo.txt", null, -1);
+        editor.changeFileProperty("/foo.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/foo.txt", null, "Source content");
         editor.closeDir();
         editor.closeEdit();
@@ -421,6 +428,7 @@ public class SvnLockTest {
         editor.openRoot(-1);
         editor.addDir("/example", null, -1);
         editor.addFile("/example/example.txt", null, -1);
+        editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/example/example.txt", null, "Source content");
         editor.closeDir();
         editor.closeDir();
@@ -450,7 +458,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // New lock
@@ -471,7 +479,7 @@ public class SvnLockTest {
     try (SvnTester server = factory.create()) {
       final SVNRepository repo = server.openSvnRepository();
 
-      createFile(repo, "/example.txt", "", null);
+      createFile(repo, "/example.txt", "", propsEolNative);
       final long latestRevision = repo.getLatestRevision();
 
       // New lock
