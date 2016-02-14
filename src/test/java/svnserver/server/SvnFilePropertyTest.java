@@ -210,6 +210,29 @@ public class SvnFilePropertyTest {
    * @throws Exception
    */
   @Test
+  public void symlinkBinary() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final String content = "link foo/bar.txt";
+      createFile(repo, "/.gitattributes", "*.bin binary", propsEolNative);
+      createFile(repo, "/non-link.bin", content, propsBinary);
+      createFile(repo, "/link.bin", content, propsSymlink);
+
+      checkFileProp(repo, "/non-link.bin", propsBinary);
+      checkFileProp(repo, "/link.bin", propsSymlink);
+
+      checkFileContent(repo, "/non-link.bin", content);
+      checkFileContent(repo, "/link.bin", content);
+    }
+  }
+
+  /**
+   * Check commit .gitattributes.
+   *
+   * @throws Exception
+   */
+  @Test
   public void commitUpdatePropertiesRoot() throws Exception {
     //Map<String, String> props = new HashMap<>()["key":""];
     try (SvnTestServer server = SvnTestServer.createEmpty()) {

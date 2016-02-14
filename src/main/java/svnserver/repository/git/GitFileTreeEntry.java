@@ -104,6 +104,7 @@ public class GitFileTreeEntry extends GitEntryImpl implements GitFile {
     final FileMode fileMode = getFileMode();
     if (fileMode.equals(FileMode.SYMLINK)) {
       props.remove(SVNProperty.EOL_STYLE);
+      props.remove(SVNProperty.MIME_TYPE);
       props.put(SVNProperty.SPECIAL, "*");
     } else {
       if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
