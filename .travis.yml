@@ -12,7 +12,8 @@ addons:
 install:
 - ./gradlew assemble
 script:
-- ./gradlew check
+#- ./gradlew check
+- echo SCRIPT
 before_deploy:
 - ./gradlew assembleDist
 after_success: |
@@ -22,13 +23,15 @@ after_success: |
   $HOME/.local/bin/ghp-import -n build/doc &&
   git push -qf https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
 deploy:
-  provider: releases
-  api-key:
-    secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
-  file_glob: true
-  file:
-    - build/distributions/git-as-svn*
-  skip_cleanup: true
-  on:
-    tags: true
-    all_branches: true
+  - provider: releases
+    api-key:
+      secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
+    file_glob: true
+    file:
+      - build/distributions/git-as-svn*
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: script
+    script:
+    - echo DEPLOY SCRIPT
