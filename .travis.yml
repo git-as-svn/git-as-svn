@@ -1,10 +1,7 @@
 language: java
-sudo: false
+sudo: true
 jdk:
 - oraclejdk8
-env:
-  global:
-    secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
 addons:
   apt:
     packages:
@@ -15,13 +12,8 @@ script:
 #- ./gradlew check
 - echo SCRIPT
 before_deploy:
+- adduser --disabled-login --ingroup git git
 - ./gradlew assembleDist
-after_success: |
-  [ $TRAVIS_BRANCH = master ] &&
-  [ $TRAVIS_PULL_REQUEST = false ] &&
-  pip install ghp-import --user $USER &&
-  $HOME/.local/bin/ghp-import -n build/doc &&
-  git push -qf https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
 deploy:
   - provider: releases
     api-key:
@@ -33,5 +25,18 @@ deploy:
     on:
       tags: true
   - provider: script
+    env:
+      secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
+    script:
+    - pip install ghp-import --user $USER &&
+    - $HOME/.local/bin/ghp-import -n build/doc &&
+    - git push -qf https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
+    skip_cleanup: true
+    on:
+      branch: master
+  - provider: script
     script:
     - echo DEPLOY SCRIPT
+    skip_cleanup: true
+    on:
+      branch: deb
