@@ -1,0 +1,8 @@
+[deploy]
+allow_unsigned_uploads	= 1
+login			= deploy
+method			= scp
+ssh_config_options	= batchmode=yes
+fqdn			= dist.bozaro.ru
+incoming		= /home/deploy/incoming
+run_dinstall		= 0
