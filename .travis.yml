@@ -1,5 +1,5 @@
 language: java
-sudo: true
+sudo: false
 jdk:
 - oraclejdk8
 addons:
@@ -12,7 +12,6 @@ script:
 #- ./gradlew check
 - echo SCRIPT
 before_deploy:
-- adduser --disabled-login --ingroup git git
 - ./gradlew assembleDist
 deploy:
   - provider: releases
