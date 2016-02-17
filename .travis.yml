@@ -9,7 +9,6 @@ addons:
   apt:
     packages:
     - gnome-doc-utils
-    - dput
 install:
 - ./gradlew assemble
 script:
