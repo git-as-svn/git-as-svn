@@ -12,8 +12,7 @@ addons:
 install:
 - ./gradlew assemble
 script:
-#- ./gradlew check
-- echo SCRIPT
+- ./gradlew check
 before_deploy:
 - ./gradlew assembleDist
 deploy:
@@ -30,9 +29,9 @@ deploy:
     script: deploy/deploy.manual.sh
     skip_cleanup: true
     on:
-      branch: deb
+      branch: master
   - provider: script
     script: deploy/deploy.debian.sh
     skip_cleanup: true
     on:
-      branch: deb
+      tags: true
