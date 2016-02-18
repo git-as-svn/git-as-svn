@@ -1,9 +1,8 @@
 #!/bin/sh -e
 chown git:git /var/git/lfs
 chown git:git /var/git/repositories
-
-chown git:git -R /var/cache/git-as-svn
-chown git:git -R /var/log/git-as-svn
+chown git:git /var/cache/git-as-svn
+chown git:git /var/log/git-as-svn
 
 /usr/sbin/update-rc.d git-as-svn defaults > /dev/null
 /usr/sbin/update-rc.d git-as-svn enable > /dev/null
