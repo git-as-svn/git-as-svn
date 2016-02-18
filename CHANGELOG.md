@@ -3,6 +3,7 @@
 ## 1.1.XXX: Unreleased
 
  * Use by default svn:eol-style = native for text files (fix #106).
+ * Upload .deb package to debian repository.
 
 ## 1.0.17-alpha: Added documentation
 

@@ -73,6 +73,21 @@
   </section>
 
   <section>
+    <title>Установка на Debian/Ubuntu</title>
+
+    <para>Вы можете установить Git as Subversion на Debian/Ubuntu репозиторий
+    при помощи команд:</para>
+
+    <programlisting language="bash"># Add package source
+echo "deb https://dist.bozaro.ru/ debian/" | sudo tee /etc/apt/sources.list.d/dist.bozaro.ru.list
+curl -s https://dist.bozaro.ru/signature.gpg | sudo apt-key add -
+# Install package
+sudo apt-get update
+sudo apt-get install git-as-svn
+sudo apt-get install git-as-svn-lfs</programlisting>
+  </section>
+
+  <section>
     <title>Сборка из исходного кода</title>
 
     <para>Данный проект изначально рассчитан на сборку в Ubuntu.</para>
