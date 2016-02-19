@@ -78,7 +78,8 @@
     <para>Вы можете установить Git as Subversion на Debian/Ubuntu репозиторий
     при помощи команд:</para>
 
-    <programlisting language="bash"># Add package source
+    <programlisting language="bash">#!/bin/bash
+# Add package source
 echo "deb https://dist.bozaro.ru/ debian/" | sudo tee /etc/apt/sources.list.d/dist.bozaro.ru.list
 curl -s https://dist.bozaro.ru/signature.gpg | sudo apt-key add -
 # Install package
@@ -192,6 +193,40 @@ sudo apt-get install git-as-svn-lfs</programlisting>
       предоставления реквизитов доступа к Git LFS серверу по HTTP протоколу
       для пользователей, использующих SSH для работы с Git-репозиторием (<link
       xlink:href="https://github.com/github/git-lfs/blob/master/docs/api/README.md">https://github.com/github/git-lfs/blob/master/docs/api/README.md</link>).</para>
+
+      <para>Данный скрипт общяется через Unix Domain Socket с Git as
+      Subversion.</para>
+
+      <para>В Git as Subverison отправляет имя (<varname>mode</varname> =
+      <constant>username</constant>) или идентификатор
+      (<varname>mode</varname> = <constant>external</constant>) пользователя,
+      полученное из определенной параметром <varname>variable</varname>
+      переменной окружения (по умолчанию: <constant>GL_ID</constant>).</para>
+
+      <para>Для проверки настройки скрипта можно выполнить локально на сервере
+      команду вида:</para>
+
+      <programlisting language="bash" xml:lang="C">#!/bin/bash
+# Set environment variable defined in configuration file
+export GL_ID=key-1
+# Check access to repository
+git-lfs-authenticate bozaro/git-as-svn.git download</programlisting>
+
+      <para>Или на клиенте команду вида:</para>
+
+      <programlisting language="bash" xml:lang="C">#!/bin/bash
+ssh git@github.com -C "git-lfs-authenticate bozaro/git-as-svn.git download"</programlisting>
+
+      <para>Результат выполенения команды должен выглядеть примерно следующим
+      образом:</para>
+
+      <programlisting language="json" xml:lang="C">{
+  "href": "https://api.github.com/lfs/bozaro/git-as-svn",
+  "header": {
+    "Authorization": "RemoteAuth SOME-SECRET-TOKEN"
+  },
+  "expires_at": "2016-02-19T18:56:59Z"
+}</programlisting>
     </section>
   </section>
 
