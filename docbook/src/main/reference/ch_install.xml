@@ -85,6 +85,114 @@ curl -s https://dist.bozaro.ru/signature.gpg | sudo apt-key add -
 sudo apt-get update
 sudo apt-get install git-as-svn
 sudo apt-get install git-as-svn-lfs</programlisting>
+
+    <section>
+      <title>Пакет git-as-svn</title>
+
+      <para>Данный пакет содержит Git as Subversion.</para>
+
+      <para>После его установки Git as Subversion запускается в режиме демона
+      и доступен по svn-протоколу на порту 3690. Демон запускается от имени
+      пользователя <varname>git</varname>.</para>
+
+      <para>Для доступа к серверу необходимо использовать пользователя:</para>
+
+      <para>Имя пользователя: test</para>
+
+      <para>Пароль: test</para>
+
+      <section>
+        <title>Используемые директории</title>
+
+        <para>Данный пакет пл-умолчанию настроен на использование следующих
+        директорий:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>/etc/git-as-svn</term>
+
+            <listitem>
+              <para>Это директория с конфигурационными файлами.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>/usr/share/doc/git-as-svn</term>
+
+            <listitem>
+              <para>Данная директория содержит в себе данную документацию на
+              уставновленную версию.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>/var/git/lfs</term>
+
+            <listitem>
+              <para>Данная директория по-умолчанию используется для хранения
+              Git LFS файлов.</para>
+
+              <para>Она должна быть доступна на запись для пользователя
+              <varname>git</varname>.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>/var/git/repositories</term>
+
+            <listitem>
+              <para>Эта директория по-умолчанию используется для хранения
+              Git-репозиториев.</para>
+
+              <para>Реползитории должны быть доступны на запись для
+              пользователя <varname>git</varname>.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>/var/log/git-as-svn</term>
+
+            <listitem>
+              <para>Эта директория используется для записи логов.</para>
+
+              <para>Она должна быть доступна на запись для пользователя
+              <varname>git</varname>.</para>
+
+              <para>Параметры ротации логов задаются через конфигурационный
+              файл <filename>/etc/git-as-svn/log4j2.xml</filename>.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>/var/cache/git-as-svn</term>
+
+            <listitem>
+              <para>Эта директория используется для хранения кэша Git as
+              Subversion.</para>
+
+              <para>Она должна быть доступна на запись для пользователя
+              <varname>git</varname>.</para>
+
+              <para>Потеря содержимого данной директории не является критичной
+              для работы и не влечет за собой потерю пользовательских
+              данных.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+    </section>
+
+    <section>
+      <title xml:id="git-lfs-authenticate">Пакет git-as-svn-lfs</title>
+
+      <para>Данный пакет содержит в себе скрипт
+      <filename>git-lfs-authenticate</filename>.</para>
+
+      <para>Скрипт <filename>git-lfs-authenticate</filename> используется для
+      предоставления реквизитов доступа к Git LFS серверу по HTTP протоколу
+      для пользователей, использующих SSH для работы с Git-репозиторием (<link
+      xlink:href="https://github.com/github/git-lfs/blob/master/docs/api/README.md">https://github.com/github/git-lfs/blob/master/docs/api/README.md</link>).</para>
+    </section>
   </section>
 
   <section>
