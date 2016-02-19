@@ -1,15 +1,15 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-01-30 22:25+0300\n"
-"PO-Revision-Date: 2016-01-30 22:25+0300\n"
+"POT-Creation-Date: 2016-02-19 22:06+0300\n"
+"PO-Revision-Date: 2016-02-19 22:25+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.4\n"
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
@@ -37,7 +37,7 @@ msgstr "@@image: 'images/git-svn.png'; md5=8db5b2aff7d1a4381ba66a1beb6154a3"
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
-#: index.l10n.xml:575(None)
+#: index.l10n.xml:714(None)
 msgid ""
 "@@image: 'images/gitlab_svn_url.png'; md5=200ffefdce5150c2bf9a63b8c5bf2b48"
 msgstr ""
@@ -45,7 +45,7 @@ msgstr ""
 
 #. When image changes, this message will be marked fuzzy or untranslated for you.
 #. It doesn't matter what you translate it to: it's not used at all.
-#: index.l10n.xml:755(None)
+#: index.l10n.xml:894(None)
 msgid ""
 "@@image: 'images/rpc_annotation_en_US.png'; "
 "md5=e3ca18a46618b08cb3f13a65850146c4"
@@ -576,15 +576,15 @@ msgstr "The server is accessible via svn-protocol on port 3690."
 msgid "Для его проверки можно выполнить команду:"
 msgstr "You can check server with command like:"
 
-#: index.l10n.xml:409(para)
+#: index.l10n.xml:409(para) index.l10n.xml:453(para)
 msgid "Для доступа к серверу необходимо использовать пользователя:"
 msgstr "To access the server, you can use the user:"
 
-#: index.l10n.xml:412(para)
+#: index.l10n.xml:412(para) index.l10n.xml:455(para)
 msgid "Имя пользователя: test"
 msgstr "Login: test"
 
-#: index.l10n.xml:414(para)
+#: index.l10n.xml:414(para) index.l10n.xml:457(para)
 msgid "Пароль: test"
 msgstr "Password: test"
 
@@ -610,66 +610,203 @@ msgstr ""
 "data."
 
 #: index.l10n.xml:437(title)
+msgid "Установка на Debian/Ubuntu"
+msgstr "Installation on Debian/Ubuntu"
+
+#: index.l10n.xml:439(para)
+msgid ""
+"Вы можете установить Git as Subversion на Debian/Ubuntu репозиторий при "
+"помощи команд:"
+msgstr ""
+"You can install Git as Subversion repository on Debian/Ubuntu using the "
+"commands:"
+
+#: index.l10n.xml:445(title)
+msgid "Пакет git-as-svn"
+msgstr "Package git-as-svn"
+
+#: index.l10n.xml:447(para)
+msgid "Данный пакет содержит Git as Subversion."
+msgstr "This package contains the Git as Subversion."
+
+#: index.l10n.xml:449(para)
+msgid ""
+"После его установки Git as Subversion запускается в режиме демона и доступен "
+"по svn-протоколу на порту 3690. Демон запускается от имени пользователя "
+"<varname>git</varname>."
+msgstr ""
+
+#: index.l10n.xml:460(title)
+msgid "Используемые директории"
+msgstr "Used directories"
+
+#: index.l10n.xml:462(para)
+msgid ""
+"Данный пакет пл-умолчанию настроен на использование следующих директорий:"
+msgstr ""
+
+#: index.l10n.xml:470(para)
+msgid "Это директория с конфигурационными файлами."
+msgstr "This is the directory with configuration files."
+
+#: index.l10n.xml:478(para)
+msgid ""
+"Данная директория содержит в себе данную документацию на уставновленную "
+"версию."
+msgstr "This directory contains this documentation to the installed version."
+
+#: index.l10n.xml:487(para)
+msgid ""
+"Данная директория по-умолчанию используется для хранения Git LFS файлов."
+msgstr ""
+
+#: index.l10n.xml:490(para) index.l10n.xml:513(para) index.l10n.xml:528(para)
+msgid ""
+"Она должна быть доступна на запись для пользователя <varname>git</varname>."
+msgstr ""
+
+#: index.l10n.xml:499(para)
+#, fuzzy
+msgid "Эта директория по-умолчанию используется для хранения Git-репозиториев."
+msgstr ""
+"Information about the source copy is calculated on Git-repository commits."
+
+#: index.l10n.xml:502(para)
+msgid ""
+"Реползитории должны быть доступны на запись для пользователя <varname>git</"
+"varname>."
+msgstr ""
+
+#: index.l10n.xml:511(para)
+msgid "Эта директория используется для записи логов."
+msgstr ""
+
+#: index.l10n.xml:516(para)
+msgid ""
+"Параметры ротации логов задаются через конфигурационный файл <filename>/etc/"
+"git-as-svn/log4j2.xml</filename>."
+msgstr ""
+
+#: index.l10n.xml:525(para)
+msgid "Эта директория используется для хранения кэша Git as Subversion."
+msgstr ""
+
+#: index.l10n.xml:531(para)
+msgid ""
+"Потеря содержимого данной директории не является критичной для работы и не "
+"влечет за собой потерю пользовательских данных."
+msgstr ""
+
+#: index.l10n.xml:541(title)
+msgid "Пакет git-as-svn-lfs"
+msgstr "Package git-as-svn-lfs"
+
+#: index.l10n.xml:543(para)
+msgid ""
+"Данный пакет содержит в себе скрипт <filename>git-lfs-authenticate</"
+"filename>."
+msgstr ""
+"This package contains the <filename>git-lfs-authenticate</filename> script."
+
+#: index.l10n.xml:546(para)
+msgid ""
+"Скрипт <filename>git-lfs-authenticate</filename> используется для "
+"предоставления реквизитов доступа к Git LFS серверу по HTTP протоколу для "
+"пользователей, использующих SSH для работы с Git-репозиторием (<link xlink:"
+"href=\"https://github.com/github/git-lfs/blob/master/docs/api/README.md"
+"\">https://github.com/github/git-lfs/blob/master/docs/api/README.md</link>)."
+msgstr ""
+
+#: index.l10n.xml:550(para)
+msgid "Данный скрипт общяется через Unix Domain Socket с Git as Subversion."
+msgstr ""
+
+#: index.l10n.xml:553(para)
+msgid ""
+"В Git as Subverison отправляет имя (<varname>mode</varname> = "
+"<constant>username</constant>) или идентификатор (<varname>mode</varname> = "
+"<constant>external</constant>) пользователя, полученное из определенной "
+"параметром <varname>variable</varname> переменной окружения (по умолчанию: "
+"<constant>GL_ID</constant>)."
+msgstr ""
+
+#: index.l10n.xml:559(para)
+#, fuzzy
+msgid ""
+"Для проверки настройки скрипта можно выполнить локально на сервере команду "
+"вида:"
+msgstr "You can check server with command like:"
+
+#: index.l10n.xml:564(para)
+msgid "Или на клиенте команду вида:"
+msgstr ""
+
+#: index.l10n.xml:568(para)
+msgid ""
+"Результат выполенения команды должен выглядеть примерно следующим образом:"
+msgstr ""
+
+#: index.l10n.xml:576(title)
 msgid "Сборка из исходного кода"
 msgstr "Build from source code"
 
-#: index.l10n.xml:439(para)
+#: index.l10n.xml:578(para)
 msgid "Данный проект изначально рассчитан на сборку в Ubuntu."
 msgstr "The project was originally designed for assembly in Ubuntu."
 
-#: index.l10n.xml:441(para)
+#: index.l10n.xml:580(para)
 msgid "Для сборки из исходного кода необходимо локально установить:"
 msgstr "To build from the source code you need to install locally:"
 
-#: index.l10n.xml:445(para)
+#: index.l10n.xml:584(para)
 msgid "Java 8 (пакет openjdk-8-jdk);"
 msgstr "Java 8 (openjdk-8-jdk package);"
 
-#: index.l10n.xml:449(para)
+#: index.l10n.xml:588(para)
 msgid "xml2po (пакет gnome-doc-utils) — необходимо для сборки документации;"
 msgstr "xml2po (gnome-doc-utils package) — required for build reference files;"
 
-#: index.l10n.xml:454(para)
+#: index.l10n.xml:593(para)
 msgid "protoc (пакет protobuf-compiler) — необходимо для сборки API."
 msgstr "protoc (protobuf-compiler package) — required for build API."
 
-#: index.l10n.xml:459(para)
+#: index.l10n.xml:598(para)
 msgid "Полностью собрать дистрибутив можно командой:"
 msgstr "You can build distribution by command:"
 
-#: index.l10n.xml:463(para)
+#: index.l10n.xml:602(para)
 msgid ""
 "Комплект установочных файлов будет располагаться в директории: "
 "<filename>build/distributions</filename>"
 msgstr ""
 "Distribution files build in folder: <filename>build/distributions</filename>"
 
-#: index.l10n.xml:469(title)
+#: index.l10n.xml:608(title)
 msgid "Интеграция с GitLab"
 msgstr "GitLab integration"
 
-#: index.l10n.xml:472(title)
+#: index.l10n.xml:611(title)
 msgid "Список исправлений для GitLab"
 msgstr "Recommended GitLab patches"
 
-#: index.l10n.xml:474(para)
+#: index.l10n.xml:613(para)
 msgid ""
 "Для интеграции с GitLab нужно установить следующие исправления на GitLab:"
 msgstr "For integration with GitLab install the following patches on GitLab:"
 
-#: index.l10n.xml:497(title)
+#: index.l10n.xml:636(title)
 msgid "Точки стыка интеграции с GitLab"
 msgstr "GitLab intergration points"
 
-#: index.l10n.xml:499(para)
+#: index.l10n.xml:638(para)
 msgid "В случае с GitLab есть несколько точек стыка:"
 msgstr "There are some intgeration points with GitLab:"
 
-#: index.l10n.xml:503(para)
+#: index.l10n.xml:642(para)
 msgid "Список репозиториев"
 msgstr "The list of repositories"
 
-#: index.l10n.xml:505(para)
+#: index.l10n.xml:644(para)
 msgid ""
 "Git as Subversion автоматически получает список репозиториев в момент старта "
 "через GitLab API."
@@ -677,7 +814,7 @@ msgstr ""
 "Git as a Subversion automatically retrieves the list of repositories on "
 "startup via the GitLab API."
 
-#: index.l10n.xml:508(para)
+#: index.l10n.xml:647(para)
 msgid ""
 "Далее этот список поддерживается в актуальном состоянии при помощи System "
 "Hook, который так же регистрируется автоматически."
@@ -685,11 +822,11 @@ msgstr ""
 "Further, this list is updated by System Hook, which is registered "
 "automatically."
 
-#: index.l10n.xml:514(para)
+#: index.l10n.xml:653(para)
 msgid "Авторизация и аутентификация пользователей"
 msgstr "Authorization and authentication of users"
 
-#: index.l10n.xml:516(para)
+#: index.l10n.xml:655(para)
 msgid ""
 "Для аутентификации пользователей и определения наличия прав на репозиторий "
 "так же используется GitLab API."
@@ -697,11 +834,11 @@ msgstr ""
 "For authenticating users and repository permission control is also used "
 "GitLab API."
 
-#: index.l10n.xml:521(para)
+#: index.l10n.xml:660(para)
 msgid "Git Hooks"
 msgstr "Git Hooks"
 
-#: index.l10n.xml:523(para)
+#: index.l10n.xml:662(para)
 msgid ""
 "При коммите через Git as Subversion выполняются хуки от GitLab. Эти хуки, в "
 "частности, позволяют видеть информацию о новых коммитах без задержки через "
@@ -711,7 +848,7 @@ msgstr ""
 "hooks, in particular, allow to see information about new commits without "
 "delay via the GitLab WEB interface."
 
-#: index.l10n.xml:527(para)
+#: index.l10n.xml:666(para)
 msgid ""
 "Для того, чтобы этот функционал работал, Git as Subversion должен передать "
 "идентификатор GitLab-пользователя (GL_ID), полученный при его авторизации."
@@ -719,7 +856,7 @@ msgstr ""
 "GitLab Hooks require GitLab user ID information (GL_ID environment variable) "
 "received at user authorization."
 
-#: index.l10n.xml:532(para)
+#: index.l10n.xml:671(para)
 msgid ""
 "Из-за этого в случае интеграции с GitLab авторизация пользователей должна "
 "так же проходить через GitLab."
@@ -727,17 +864,17 @@ msgstr ""
 "Because of this, in the case of integration with GitLab user authentication "
 "must be via GitLab."
 
-#: index.l10n.xml:538(para)
+#: index.l10n.xml:677(para)
 msgid "Git LFS"
 msgstr "Git LFS"
 
-#: index.l10n.xml:540(para)
+#: index.l10n.xml:679(para)
 msgid ""
 "В случае использования Git LFS надо так же указать путь до GitLab LFS "
 "хранилища."
 msgstr "In the case of GitLFS need to specify the path to GitLab LFS storage."
 
-#: index.l10n.xml:543(para)
+#: index.l10n.xml:682(para)
 msgid ""
 "GitLab с версии 8.2 использует общее хранилище LFS-файлов для всех "
 "репозиториев. Файлы хранятся в отдельном каталоге в сыром виде."
@@ -745,7 +882,7 @@ msgstr ""
 "GitLab from version 8.2 uses single LFS-files storage shared between all "
 "repositories. Files are stored in a separate directory as raw data."
 
-#: index.l10n.xml:547(para)
+#: index.l10n.xml:686(para)
 msgid ""
 "Интеграция с LFS хранилищем GitLab происходит на уровне файлов. Никакое API "
 "от GitLab при этом не используется."
@@ -753,11 +890,11 @@ msgstr ""
 "Integration with LFS repository GitLab occurs at the file level. GitLab API "
 "is not used."
 
-#: index.l10n.xml:552(para)
+#: index.l10n.xml:691(para)
 msgid "Git LFS авторизация для SSH-пользователей"
 msgstr "Git LFS authorization for SSH users"
 
-#: index.l10n.xml:554(para)
+#: index.l10n.xml:693(para)
 msgid ""
 "К сожалению, GitLab не предоставляет скрипт git-lfs-authenticate, который "
 "отвечает за SSO авторизацию SSH-пользователей на Git LFS сервере. Для "
@@ -767,11 +904,11 @@ msgstr ""
 "is responsible for SSO authorization SSH-user Git on the server LFS. To "
 "configure this script, see <xref linkend=\"git-lfs-authenticate\"/>."
 
-#: index.l10n.xml:563(title)
+#: index.l10n.xml:702(title)
 msgid "Добавление SVN-ссылки в интерфейс GitLab"
 msgstr "Adding a SVN-link to GitLab interface"
 
-#: index.l10n.xml:565(para)
+#: index.l10n.xml:704(para)
 msgid ""
 "Для того, чтобы добавить SVN-ссылку в интерфейс GitLab нужно взять последний "
 "коммит из ветки <link xlink:href=\"https://github.com/bozaro/gitlabhq/"
@@ -781,19 +918,19 @@ msgstr ""
 "<link xlink:href=\"https://github.com/bozaro/gitlabhq/commits/svn_url"
 "\">https://github.com/bozaro/gitlabhq/commits/svn_url</link>."
 
-#: index.l10n.xml:570(title)
+#: index.l10n.xml:709(title)
 msgid "Пример SVN-ссылки в интерфейсе GitLab"
 msgstr "Example of SVN-link in GitLab interface"
 
-#: index.l10n.xml:582(title)
+#: index.l10n.xml:721(title)
 msgid "Пример конфигурационного файла"
 msgstr "Configuration file example"
 
-#: index.l10n.xml:589(title)
+#: index.l10n.xml:728(title)
 msgid "SVN Properties"
 msgstr "SVN Properties"
 
-#: index.l10n.xml:591(para)
+#: index.l10n.xml:730(para)
 msgid ""
 "Основная беда <code>svn properties</code> в том, что их надо поддерживать в "
 "синхронном состоянии между Git и Subversion."
@@ -801,7 +938,7 @@ msgstr ""
 "The main <code>svn properties</code> trouble that they should be maintained "
 "in the synchronous state between Git and Subversion."
 
-#: index.l10n.xml:594(para)
+#: index.l10n.xml:733(para)
 msgid ""
 "Из-за этого произвольные <code>svn properties</code> не поддерживаются. "
 "Чтобы значения <code>svn properties</code> соответствовали Git-"
@@ -811,11 +948,11 @@ msgstr ""
 "value <code>svn properties</ code> correspond Git-view, they are generated "
 "on the fly based on the repository content."
 
-#: index.l10n.xml:599(para) index.l10n.xml:792(para)
+#: index.l10n.xml:738(para) index.l10n.xml:931(para)
 msgid "При этом:"
 msgstr "Wherein:"
 
-#: index.l10n.xml:603(para)
+#: index.l10n.xml:742(para)
 msgid ""
 "при коммите проверяется, что <code>svn properties</code> файла/директории "
 "точно соответствуют тому, что должно быть по данным репозитория;"
@@ -823,7 +960,7 @@ msgstr ""
 "the commit verifies that <code>svn properties</code> file or directory "
 "exactly match what should be according to the data repository;"
 
-#: index.l10n.xml:609(para)
+#: index.l10n.xml:748(para)
 msgid ""
 "средствами Subversion большую часть свойств изменить нельзя (исключения: "
 "<code>svn:executable</code>, <code>svn:special</code>);"
@@ -831,7 +968,7 @@ msgstr ""
 "Subversion does not tool allows you to change most of the properties "
 "(exception: <code>svn:executable</code>, <code>svn:special</code>);"
 
-#: index.l10n.xml:615(para)
+#: index.l10n.xml:754(para)
 msgid ""
 "если какой-либо файл влияет на <code>svn properties</code> других файлов, то "
 "после его изменения <code>svn properties</code> этих файлов так же "
@@ -840,7 +977,7 @@ msgstr ""
 "if a file affects the <code>svn properties</code> other files after changing "
 "it <code>svn properties</code> of the files in the same change."
 
-#: index.l10n.xml:622(para)
+#: index.l10n.xml:761(para)
 msgid ""
 "Для удобства пользователей Git as Subversion активно использует наследуемые "
 "свойства."
@@ -848,13 +985,13 @@ msgstr ""
 "For user convenience Git as Subversion is actively using the inherited "
 "properties."
 
-#: index.l10n.xml:625(para)
+#: index.l10n.xml:764(para)
 msgid ""
 "Для того, чтобы они работали необходимо использовать клиент Subversion 1.8 "
 "или более поздний."
 msgstr "This feature require to use the client Subversion 1.8 or later."
 
-#: index.l10n.xml:628(para)
+#: index.l10n.xml:767(para)
 msgid ""
 "В противном случае будут проблемы с svn properties для новых файлов и "
 "директорий."
@@ -862,11 +999,11 @@ msgstr ""
 "Otherwise there will be problems with the svn properties for new files and "
 "directories."
 
-#: index.l10n.xml:633(title)
+#: index.l10n.xml:772(title)
 msgid "Файл .gitignores"
 msgstr "File .gitignores"
 
-#: index.l10n.xml:635(para)
+#: index.l10n.xml:774(para)
 msgid ""
 "Данный файл влияет на свойство <code>svn:ignore</code> и <code>svn:global-"
 "ignores</code> для директории и её поддиректорий."
@@ -874,29 +1011,29 @@ msgstr ""
 "This file affects the property <code>svn:ignore</code> and <code>svn:global-"
 "ignores</code> for the directory and its subdirectories."
 
-#: index.l10n.xml:638(para)
+#: index.l10n.xml:777(para)
 msgid "Например, файл в каталоге <filename>/foo</filename> с содержимым:"
 msgstr ""
 "For example, a file in the directory <filename>/foo</filename> with the "
 "contents:"
 
-#: index.l10n.xml:643(para)
+#: index.l10n.xml:782(para)
 msgid "Проецируется на свойства:"
 msgstr "Mapped to properties:"
 
-#: index.l10n.xml:647(para)
+#: index.l10n.xml:786(para)
 msgid "для каталога <code>/foo</code>:"
 msgstr "for directory <code>/foo</code>:"
 
-#: index.l10n.xml:653(para)
+#: index.l10n.xml:792(para)
 msgid "для каталогов <code>/foo/*</code>:"
 msgstr "for directory <code>/foo/*</code>:"
 
-#: index.l10n.xml:659(para)
+#: index.l10n.xml:798(para)
 msgid "для каталога <code>/foo/.idea</code>:"
 msgstr "for directory <code>/foo/.idea</code>:"
 
-#: index.l10n.xml:666(para)
+#: index.l10n.xml:805(para)
 msgid ""
 "Для Subversion нет способа сделать исключения для директорий, в результате, "
 "к примеру, правила <code>/foo</code> (файл или директория <code>foo</code>) "
@@ -908,7 +1045,7 @@ msgstr ""
 "code>) and <code>/foo/</code> (directory <code>foo</code>) in Subversion "
 "will work the same way, though to Git they have different behavior."
 
-#: index.l10n.xml:672(para)
+#: index.l10n.xml:811(para)
 msgid ""
 "Правила вида \"все кроме\" не поддерживаются при проецировании на <code>svn:"
 "global-ignores</code>."
@@ -916,11 +1053,11 @@ msgstr ""
 "Terms like \"all but\" not supported on mapping to the <code>svn:global-"
 "ignores</code> property."
 
-#: index.l10n.xml:678(title)
+#: index.l10n.xml:817(title)
 msgid "Файл .gitattributes"
 msgstr "File .gitattributes"
 
-#: index.l10n.xml:680(para)
+#: index.l10n.xml:819(para)
 msgid ""
 "Данный файл влияет на свойства <code>svn:eol-style</code> и <code>svn:mime-"
 "type</code> файлов от данной директории и <code>svn:auto-props</code> у "
@@ -930,20 +1067,20 @@ msgstr ""
 "<code>svn:mime-type</code> files from this directory and <code>svn:auto-"
 "props</code> from the directory itself."
 
-#: index.l10n.xml:684(para)
+#: index.l10n.xml:823(para)
 msgid "Например, файл с содержимым:"
 msgstr "For example, a file with contents:"
 
-#: index.l10n.xml:688(para)
+#: index.l10n.xml:827(para)
 msgid "Добавит к директории свойство <code>svn:auto-props</code> с содержимым:"
 msgstr ""
 "Add property to the directory <code>svn:auto-props</code> with the contents:"
 
-#: index.l10n.xml:693(para)
+#: index.l10n.xml:832(para)
 msgid "И файлам в данной директории:"
 msgstr "And files in this directory:"
 
-#: index.l10n.xml:697(para)
+#: index.l10n.xml:836(para)
 msgid ""
 "с суффиксом <filename>.txt</filename> свойство <code>svn:eol-style = "
 "navtive</code>"
@@ -951,7 +1088,7 @@ msgstr ""
 "for suffix <filename>.txt</filename> add property <code>svn:eol-style = "
 "navtive</code>"
 
-#: index.l10n.xml:702(para)
+#: index.l10n.xml:841(para)
 msgid ""
 "с суффиксом <filename>.xml</filename> свойство <code>svn:eol-style = LF</"
 "code>"
@@ -959,7 +1096,7 @@ msgstr ""
 "for suffix <filename>.xml</filename> add property <code>svn:eol-style = LF</"
 "code>"
 
-#: index.l10n.xml:707(para)
+#: index.l10n.xml:846(para)
 msgid ""
 "с суффиксом <filename>.bin</filename> свойство <code>svn:mime-type = "
 "application/octet-stream</code>"
@@ -967,26 +1104,26 @@ msgstr ""
 "for suffix <filename>.bin</filename> add property <code>svn:mime-type = "
 "application/octet-stream</code>"
 
-#: index.l10n.xml:714(title)
+#: index.l10n.xml:853(title)
 msgid "Файл .tgitconfig"
 msgstr "File .tgitconfig"
 
-#: index.l10n.xml:716(para)
+#: index.l10n.xml:855(para)
 msgid "Данный файл меняет только свойства директории, в которой он расположен."
 msgstr ""
 "This file only changes the properties of the directory in which it is "
 "located."
 
-#: index.l10n.xml:719(para)
+#: index.l10n.xml:858(para)
 msgid "Свойства проецируются один-к-одному, например, файл с содержимым:"
 msgstr ""
 "Properties are mapped one-to-one, for example, a file with the contents:"
 
-#: index.l10n.xml:724(para)
+#: index.l10n.xml:863(para)
 msgid "Будет преобразован в свойства:"
 msgstr "It will be converted to properties:"
 
-#: index.l10n.xml:741(para)
+#: index.l10n.xml:880(para)
 msgid ""
 "Если вы используете данные svn properties, то крайне рекомендуется "
 "использовать TortoiseSVN 1.9 или более поздний."
@@ -994,7 +1131,7 @@ msgstr ""
 "If you use bugtraq svn properties, it is highly recommended that you use "
 "TortoiseSVN 1.9 or later."
 
-#: index.l10n.xml:744(para)
+#: index.l10n.xml:883(para)
 msgid ""
 "В противном случае TortoiseSVN будет пытаться установить данные параметры "
 "для всех вновь создаваемых каталогов."
@@ -1002,27 +1139,27 @@ msgstr ""
 "Otherwise TortoiseSVN will attempt to set these parameters for all newly "
 "created directories instead of use inherited properties."
 
-#: index.l10n.xml:751(title)
+#: index.l10n.xml:890(title)
 msgid "API"
 msgstr "API"
 
-#: index.l10n.xml:759(link)
+#: index.l10n.xml:898(link)
 msgid "http://xkcd.ru/927/"
 msgstr "https://xkcd.com/927/"
 
-#: index.l10n.xml:764(title)
+#: index.l10n.xml:903(title)
 msgid "Описание интерфейса"
 msgstr "Interface description"
 
-#: index.l10n.xml:766(para)
+#: index.l10n.xml:905(para)
 msgid "При реализации интерфейса API предъявлялись следующие требования:"
 msgstr "API is implemented according to the following requirements:"
 
-#: index.l10n.xml:771(para)
+#: index.l10n.xml:910(para)
 msgid "Схема должна быть первична."
 msgstr "Schema-first API definition."
 
-#: index.l10n.xml:773(para)
+#: index.l10n.xml:912(para)
 msgid ""
 "Это позволяет использовать схему как документацию и, в некоторых случаях, "
 "генерировать код для работы с API."
@@ -1030,12 +1167,12 @@ msgstr ""
 "This allows the use schema as the documentation, and in some cases, to "
 "generate the code for the work with the API."
 
-#: index.l10n.xml:778(para)
+#: index.l10n.xml:917(para)
 msgid ""
 "Реализация клиента должна быть тривиальной на любом языке программирования."
 msgstr "Client implementation must be trivial on any programming language."
 
-#: index.l10n.xml:783(para)
+#: index.l10n.xml:922(para)
 msgid ""
 "В результате, для схемы был выбран Protocol Buffers (<link xlink:href="
 "\"https://developers.google.com/protocol-buffers/\">https://developers."
@@ -1045,7 +1182,7 @@ msgstr ""
 "href=\"https://developers.google.com/protocol-buffers/\">https://developers."
 "google.com/protocol-buffers/</link>)."
 
-#: index.l10n.xml:785(para)
+#: index.l10n.xml:924(para)
 msgid ""
 "Так как Protocol Buffers не имеет штатного RPC, общение ведется по протоколу "
 "HTTP."
@@ -1053,64 +1190,64 @@ msgstr ""
 "Since Protocol Buffers does not have a native RPC implemenation, used custom "
 "RPC implementation based on HTTP protocol."
 
-#: index.l10n.xml:788(para)
+#: index.l10n.xml:927(para)
 msgid "Для вызова метода, отправляется запрос на URL вида:"
 msgstr "To call the method, a request is sent to a URL of the form:"
 
-#: index.l10n.xml:799(para)
+#: index.l10n.xml:938(para)
 msgid "Имя репозитория, для которого вызывается метод API."
 msgstr "The name of the repository, for which the method is called API."
 
-#: index.l10n.xml:801(para)
+#: index.l10n.xml:940(para)
 msgid "Не указывается для общих API."
 msgstr "Don't used for server-wide API."
 
-#: index.l10n.xml:809(para)
+#: index.l10n.xml:948(para)
 msgid "Имя сервиса внутри .proto-схемы в нижнем регистре."
 msgstr "Lower case service name from .proto file."
 
-#: index.l10n.xml:817(para)
+#: index.l10n.xml:956(para)
 msgid "Имя метода внутри .proto-схемы в нижнем регистре."
 msgstr "Lower case method name from .proto file."
 
-#: index.l10n.xml:825(para)
+#: index.l10n.xml:964(para)
 msgid "Формат сериализации сообщений."
 msgstr "Message serialization format."
 
-#: index.l10n.xml:827(para)
+#: index.l10n.xml:966(para)
 msgid "Поддерживаются следующие форматы:"
 msgstr "Supported formats:"
 
-#: index.l10n.xml:833(para)
+#: index.l10n.xml:972(para)
 msgid "Бинарная сериализация Protocol Buffers."
 msgstr "Binary Protocol Buffers serialization."
 
-#: index.l10n.xml:839(para)
+#: index.l10n.xml:978(para)
 msgid ""
 "Сериализация в JSON. Позволяет использовать API без привязки к Protocol "
 "Buffers."
 msgstr ""
 "JSON serialization. Allows to implement API without Protocol Buffers library."
 
-#: index.l10n.xml:846(para)
+#: index.l10n.xml:985(para)
 msgid ""
 "Сериализация в XML. Позволяет использовать API без привязки к Protocol "
 "Buffers."
 msgstr ""
 "XML serialization. Allows to implement API without Protocol Buffers library."
 
-#: index.l10n.xml:853(para)
+#: index.l10n.xml:992(para)
 msgid ""
 "Текстовая сериализация. В основном полезна для вызова некоторых методов из "
 "браузера."
 msgstr ""
 "Text serialization. It useful for invoke some methods from Internet browser."
 
-#: index.l10n.xml:861(para)
+#: index.l10n.xml:1000(para)
 msgid "Аргумент RPC-вызова может быть передан через тело POST-запроса."
 msgstr "The RPC-call argument may be transmitted via POST-request body."
 
-#: index.l10n.xml:864(para)
+#: index.l10n.xml:1003(para)
 msgid ""
 "Скалярные атрибуты верхнего уровня можно так же передать через параметры URL."
 msgstr "Scalar top-level attributes also can be passed via URL parameters."
@@ -1119,6 +1256,18 @@ msgstr "Scalar top-level attributes also can be passed via URL parameters."
 #: index.l10n.xml:0(None)
 msgid "translator-credits"
 msgstr "translator-credits"
+
+#, fuzzy
+#~ msgid "/etc/git-as-svn"
+#~ msgstr "git-as-svn"
+
+#, fuzzy
+#~ msgid "/var/log/git-as-svn"
+#~ msgstr "git-as-svn"
+
+#, fuzzy
+#~ msgid "/var/cache/git-as-svn"
+#~ msgstr "git-as-svn"
 
 #~ msgid ""
 #~ "Git as Subversion — это реализация Subversion-сервера (по протоколу svn) "

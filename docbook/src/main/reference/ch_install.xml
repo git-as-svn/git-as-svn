@@ -78,7 +78,7 @@
     <para>Вы можете установить Git as Subversion на Debian/Ubuntu репозиторий
     при помощи команд:</para>
 
-    <programlisting language="bash">#!/bin/bash
+    <programlisting language="bash" xml:lang="C">#!/bin/bash
 # Add package source
 echo "deb https://dist.bozaro.ru/ debian/" | sudo tee /etc/apt/sources.list.d/dist.bozaro.ru.list
 curl -s https://dist.bozaro.ru/signature.gpg | sudo apt-key add -
@@ -110,7 +110,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
 
         <variablelist>
           <varlistentry>
-            <term>/etc/git-as-svn</term>
+            <term xml:lang="C">/etc/git-as-svn</term>
 
             <listitem>
               <para>Это директория с конфигурационными файлами.</para>
@@ -118,7 +118,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>/usr/share/doc/git-as-svn</term>
+            <term xml:lang="C">/usr/share/doc/git-as-svn</term>
 
             <listitem>
               <para>Данная директория содержит в себе данную документацию на
@@ -127,7 +127,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>/var/git/lfs</term>
+            <term xml:lang="C">/var/git/lfs</term>
 
             <listitem>
               <para>Данная директория по-умолчанию используется для хранения
@@ -139,7 +139,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>/var/git/repositories</term>
+            <term xml:lang="C">/var/git/repositories</term>
 
             <listitem>
               <para>Эта директория по-умолчанию используется для хранения
@@ -151,7 +151,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>/var/log/git-as-svn</term>
+            <term xml:lang="C">/var/log/git-as-svn</term>
 
             <listitem>
               <para>Эта директория используется для записи логов.</para>
@@ -165,7 +165,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>/var/cache/git-as-svn</term>
+            <term xml:lang="C">/var/cache/git-as-svn</term>
 
             <listitem>
               <para>Эта директория используется для хранения кэша Git as
