@@ -182,8 +182,8 @@ sudo apt-get install git-as-svn-lfs</programlisting>
       </section>
     </section>
 
-    <section>
-      <title xml:id="git-lfs-authenticate">Пакет git-as-svn-lfs</title>
+    <section xml:id="git-lfs-authenticate">
+      <title>Пакет git-as-svn-lfs</title>
 
       <para>Данный пакет содержит в себе скрипт
       <filename>git-lfs-authenticate</filename>.</para>
