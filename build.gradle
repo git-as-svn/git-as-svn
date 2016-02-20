@@ -214,7 +214,6 @@ task distDeb(type: Exec, dependsOn: [installDist, debianControl]) {
 task assembleDeb(type: Copy, dependsOn: distDeb) {
   from("$buildDir/debPackage") {
     include "*.deb"
-    include "*.changes"
   }
   into "$buildDir/distributions"
 }
