@@ -105,7 +105,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
       <section>
         <title>Используемые директории</title>
 
-        <para>Данный пакет пл-умолчанию настроен на использование следующих
+        <para>Данный пакет по умолчанию настроен на использование следующих
         директорий:</para>
 
         <variablelist>
@@ -122,7 +122,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
 
             <listitem>
               <para>Данная директория содержит в себе данную документацию на
-              уставновленную версию.</para>
+              установленную версию.</para>
             </listitem>
           </varlistentry>
 
@@ -145,7 +145,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
               <para>Эта директория по-умолчанию используется для хранения
               Git-репозиториев.</para>
 
-              <para>Реползитории должны быть доступны на запись для
+              <para>Репозитории должны быть доступны на запись для
               пользователя <varname>git</varname>.</para>
             </listitem>
           </varlistentry>
@@ -175,7 +175,7 @@ sudo apt-get install git-as-svn-lfs</programlisting>
               <varname>git</varname>.</para>
 
               <para>Потеря содержимого данной директории не является критичной
-              для работы и не влечет за собой потерю пользовательских
+              для работы и не влечёт за собой потерю пользовательских
               данных.</para>
             </listitem>
           </varlistentry>
@@ -194,13 +194,13 @@ sudo apt-get install git-as-svn-lfs</programlisting>
       для пользователей, использующих SSH для работы с Git-репозиторием (<link
       xlink:href="https://github.com/github/git-lfs/blob/master/docs/api/README.md">https://github.com/github/git-lfs/blob/master/docs/api/README.md</link>).</para>
 
-      <para>Данный скрипт общяется через Unix Domain Socket с Git as
+      <para>Данный скрипт общается через Unix Domain Socket с Git as
       Subversion.</para>
 
       <para>В Git as Subverison отправляет имя (<varname>mode</varname> =
       <constant>username</constant>) или идентификатор
       (<varname>mode</varname> = <constant>external</constant>) пользователя,
-      полученное из определенной параметром <varname>variable</varname>
+      полученное из определённой параметром <varname>variable</varname>
       переменной окружения (по умолчанию: <constant>GL_ID</constant>).</para>
 
       <para>Для проверки настройки скрипта можно выполнить локально на сервере
@@ -217,7 +217,7 @@ git-lfs-authenticate bozaro/git-as-svn.git download</programlisting>
       <programlisting language="bash" xml:lang="C">#!/bin/bash
 ssh git@github.com -C "git-lfs-authenticate bozaro/git-as-svn.git download"</programlisting>
 
-      <para>Результат выполенения команды должен выглядеть примерно следующим
+      <para>Результат выполнения команды должен выглядеть примерно следующим
       образом:</para>
 
       <programlisting language="json" xml:lang="C">{

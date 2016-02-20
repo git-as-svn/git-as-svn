@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-as-svn\n"
-"POT-Creation-Date: 2016-02-19 22:06+0300\n"
-"PO-Revision-Date: 2016-02-19 22:25+0300\n"
+"POT-Creation-Date: 2016-02-20 07:03+0300\n"
+"PO-Revision-Date: 2016-02-20 07:19+0300\n"
 "Last-Translator: Artem V. Navorskiy\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -635,6 +635,9 @@ msgid ""
 "по svn-протоколу на порту 3690. Демон запускается от имени пользователя "
 "<varname>git</varname>."
 msgstr ""
+"After you install Git as Subversion is run in daemon mode and is available "
+"on the svn-protocol on port 3690. The daemon runs as <varname>git</varname> "
+"user."
 
 #: index.l10n.xml:460(title)
 msgid "Используемые директории"
@@ -642,60 +645,63 @@ msgstr "Used directories"
 
 #: index.l10n.xml:462(para)
 msgid ""
-"Данный пакет пл-умолчанию настроен на использование следующих директорий:"
+"Данный пакет по умолчанию настроен на использование следующих директорий:"
 msgstr ""
+"This package by default is configured to use the following directories:"
 
 #: index.l10n.xml:470(para)
 msgid "Это директория с конфигурационными файлами."
-msgstr "This is the directory with configuration files."
+msgstr "This directory contains configuration files."
 
 #: index.l10n.xml:478(para)
 msgid ""
-"Данная директория содержит в себе данную документацию на уставновленную "
+"Данная директория содержит в себе данную документацию на установленную "
 "версию."
 msgstr "This directory contains this documentation to the installed version."
 
 #: index.l10n.xml:487(para)
 msgid ""
 "Данная директория по-умолчанию используется для хранения Git LFS файлов."
-msgstr ""
+msgstr "This directory contains configuration files."
 
 #: index.l10n.xml:490(para) index.l10n.xml:513(para) index.l10n.xml:528(para)
 msgid ""
 "Она должна быть доступна на запись для пользователя <varname>git</varname>."
-msgstr ""
+msgstr "It must be writable for the user <varname>git</varname>."
 
 #: index.l10n.xml:499(para)
-#, fuzzy
 msgid "Эта директория по-умолчанию используется для хранения Git-репозиториев."
-msgstr ""
-"Information about the source copy is calculated on Git-repository commits."
+msgstr "This directory is used by default to store the Git-repositories."
 
 #: index.l10n.xml:502(para)
 msgid ""
-"Реползитории должны быть доступны на запись для пользователя <varname>git</"
+"Репозитории должны быть доступны на запись для пользователя <varname>git</"
 "varname>."
-msgstr ""
+msgstr "Repositories must be writable for the user <varname>git</varname>."
 
 #: index.l10n.xml:511(para)
 msgid "Эта директория используется для записи логов."
-msgstr ""
+msgstr "This directory is used to record log files."
 
 #: index.l10n.xml:516(para)
 msgid ""
 "Параметры ротации логов задаются через конфигурационный файл <filename>/etc/"
 "git-as-svn/log4j2.xml</filename>."
 msgstr ""
+"Log rotation configuration can be changed by <filename>/etc/git-as-svn/"
+"log4j2.xml</filename> file."
 
 #: index.l10n.xml:525(para)
 msgid "Эта директория используется для хранения кэша Git as Subversion."
-msgstr ""
+msgstr "This directory is used to store the Git as Subversion cache."
 
 #: index.l10n.xml:531(para)
 msgid ""
 "Потеря содержимого данной директории не является критичной для работы и не "
-"влечет за собой потерю пользовательских данных."
+"влечёт за собой потерю пользовательских данных."
 msgstr ""
+"The loss of the contents of this directory is not critical for operation and "
+"does not entail the loss of user data."
 
 #: index.l10n.xml:541(title)
 msgid "Пакет git-as-svn-lfs"
@@ -716,35 +722,47 @@ msgid ""
 "href=\"https://github.com/github/git-lfs/blob/master/docs/api/README.md"
 "\">https://github.com/github/git-lfs/blob/master/docs/api/README.md</link>)."
 msgstr ""
+"Script <filename>git-lfs-authenticate</filename> is used for provide "
+"authentication data for HTTP access to Git LFS server for Git-users working "
+"with Git repository by SSH (<link xlink:href=\"https://github.com/github/git-"
+"lfs/blob/master/docs/api/README.md\">https://github.com/github/git-lfs/blob/"
+"master/docs/api/README.md</link>)."
 
 #: index.l10n.xml:550(para)
-msgid "Данный скрипт общяется через Unix Domain Socket с Git as Subversion."
+msgid "Данный скрипт общается через Unix Domain Socket с Git as Subversion."
 msgstr ""
+"This script communicates through a Unix Domain Socket with Git as Subversion."
 
 #: index.l10n.xml:553(para)
 msgid ""
 "В Git as Subverison отправляет имя (<varname>mode</varname> = "
 "<constant>username</constant>) или идентификатор (<varname>mode</varname> = "
-"<constant>external</constant>) пользователя, полученное из определенной "
+"<constant>external</constant>) пользователя, полученное из определённой "
 "параметром <varname>variable</varname> переменной окружения (по умолчанию: "
 "<constant>GL_ID</constant>)."
 msgstr ""
+"It send to Git as Subverison user name (<varname>mode</varname> = "
+"<constant>username</constant>) or user identifier (<varname>mode</varname> = "
+"<constant>external</constant>) taken from environment variable. Environment "
+"variable name is defined in configuration file via <varname>variable</"
+"varname> parameter (default value: <constant>GL_ID</constant>)."
 
 #: index.l10n.xml:559(para)
-#, fuzzy
 msgid ""
 "Для проверки настройки скрипта можно выполнить локально на сервере команду "
 "вида:"
-msgstr "You can check server with command like:"
+msgstr ""
+"To check the settings of the script can be run locally on the server the "
+"following command:"
 
 #: index.l10n.xml:564(para)
 msgid "Или на клиенте команду вида:"
-msgstr ""
+msgstr "Or on the client the following command:"
 
 #: index.l10n.xml:568(para)
 msgid ""
-"Результат выполенения команды должен выглядеть примерно следующим образом:"
-msgstr ""
+"Результат выполнения команды должен выглядеть примерно следующим образом:"
+msgstr "The output should look something like this:"
 
 #: index.l10n.xml:576(title)
 msgid "Сборка из исходного кода"
