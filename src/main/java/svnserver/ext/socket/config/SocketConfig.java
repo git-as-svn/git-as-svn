@@ -31,13 +31,11 @@ public class SocketConfig implements SharedConfig {
   private static final Logger log = LoggerFactory.getLogger(SocketConfig.class);
   @NotNull
   private String path = "git-as-svn.socket";
-  @NotNull
-  private String mode = "600";
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     if (!isSupported()) {
-      log.error("Domain sockets is not supported on this platfrom. Socket configuration is ignored.");
+      log.error("Domain sockets is not supported on this platform. Socket configuration is ignored.");
       return;
     }
     final AFUNIXServerSocket socket = AFUNIXServerSocket.newInstance();
@@ -48,7 +46,7 @@ public class SocketConfig implements SharedConfig {
       //noinspection ResultOfMethodCallIgnored
       socketFile.delete();
     }
-    socket.bind(new AFUNIXSocketAddress(socketFile, 0, Integer.parseInt(mode, 8)));
+    socket.bind(new AFUNIXSocketAddress(socketFile));
     context.add(SocketRpc.class, new SocketRpc(context, socket));
   }
 
