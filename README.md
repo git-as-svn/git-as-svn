@@ -145,6 +145,18 @@ Also you need to set ```baseUrl``` parameter in ```!web``` section of git-as-svn
 
 # How to use
 
+### Install on Ubuntu/Debian
+
+You can install Git as Subversion by commands:
+```bash
+# Add package source
+echo "deb https://dist.bozaro.ru/ debian/" | sudo tee /etc/apt/sources.list.d/dist.bozaro.ru.list
+curl -s https://dist.bozaro.ru/signature.gpg | sudo apt-key add -
+# Install package
+sudo apt-get update
+sudo apt-get install git-as-svn
+```
+
 ## Run from binaries
 
 For quick run you need:
