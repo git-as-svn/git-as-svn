@@ -102,6 +102,10 @@ sudo apt-get install git-as-svn-lfs</programlisting>
 
       <para>Пароль: test</para>
 
+      <para>Для проверки можно выполнить команду вида:</para>
+
+      <programlisting language="bash" xml:lang="C">svn ls --username test --password test svn://localhost/example/</programlisting>
+
       <section>
         <title>Используемые директории</title>
 
@@ -210,12 +214,12 @@ sudo apt-get install git-as-svn-lfs</programlisting>
 # Set environment variable defined in configuration file
 export GL_ID=key-1
 # Check access to repository
-git-lfs-authenticate bozaro/git-as-svn.git download</programlisting>
+sudo su git -c "git-lfs-authenticate example download"</programlisting>
 
       <para>Или на клиенте команду вида:</para>
 
       <programlisting language="bash" xml:lang="C">#!/bin/bash
-ssh git@github.com -C "git-lfs-authenticate bozaro/git-as-svn.git download"</programlisting>
+ssh git@remote -C "git-lfs-authenticate example download"</programlisting>
 
       <para>Результат выполнения команды должен выглядеть примерно следующим
       образом:</para>
@@ -223,7 +227,7 @@ ssh git@github.com -C "git-lfs-authenticate bozaro/git-as-svn.git download"</pro
       <programlisting language="json" xml:lang="C">{
   "href": "https://api.github.com/lfs/bozaro/git-as-svn",
   "header": {
-    "Authorization": "RemoteAuth SOME-SECRET-TOKEN"
+    "Authorization": "Bearer SOME-SECRET-TOKEN"
   },
   "expires_at": "2016-02-19T18:56:59Z"
 }</programlisting>
