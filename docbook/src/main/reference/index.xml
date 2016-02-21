@@ -31,6 +31,8 @@
 
   <xi:include href="ch_about.xml"/>
 
+  <xi:include href="ch_prereq.xml"/>
+
   <xi:include href="ch_install.xml"/>
 
   <xi:include href="ch_gitlab.xml"/>

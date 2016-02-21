@@ -92,24 +92,6 @@ Also you need some GitLab patches:
 
 ### LFS for Git HTTP users
 
-#### Password caching (client side)
-
-You need to enable caching passwords. Otherwise, git-lfs will ask for the password for each lfs-stored file.
-
-Turn on the credential helper so that Git will save your password in memory for some time. By default, Git will cache your password for 15 minutes.
-```
-$ git config --global credential.helper cache
-# Set git to use the credential memory cache
-```
-
-To change the default password cache timeout, enter the following:
-```
-$ git config --global credential.helper 'cache --timeout=3600'
-# Set the cache to timeout after 1 hour (setting is in seconds)
-```
-
-More info: https://help.github.com/articles/caching-your-github-password-in-git/
-
 #### Reverse proxy
 
 You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/nginx/conf/gitlab-http.conf``` file:
@@ -145,7 +127,7 @@ Also you need to set ```baseUrl``` parameter in ```!web``` section of git-as-svn
 
 # How to use
 
-### Install on Ubuntu/Debian
+## Install on Ubuntu/Debian
 
 You can install Git as Subversion by commands:
 ```bash
