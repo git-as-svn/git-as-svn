@@ -22,7 +22,7 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = "2.10"
+  gradleVersion = "2.11"
 }
 
 allprojects {
@@ -132,7 +132,7 @@ applicationDefaultJvmArgs = ["-Xmx512m"]
 idea {
   project {
     jdkName = sourceCompatibility.name
-    languageLevel = sourceCompatibility.name
+    languageLevel = sourceCompatibility
   }
 }
 
