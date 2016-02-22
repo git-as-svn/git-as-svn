@@ -16,10 +16,10 @@
       <surname>Навроцкий</surname></personname>
     </author>
 
-    <pubdate>2015</pubdate>
+    <pubdate xml:lang="C">2016</pubdate>
 
     <copyright>
-      <year>2014-2015</year>
+      <year xml:lang="C">2014-2016</year>
 
       <holder>Артём Навроцкий</holder>
     </copyright>
