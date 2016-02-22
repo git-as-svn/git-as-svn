@@ -72,7 +72,7 @@ chmod 700 ~/.ssh/controlmasters</programlisting>
       <programlisting language="bash" xml:lang="C">git config --global credential.helper 'cache --timeout=3600'</programlisting>
 
       <para>Более подробная информация доступна по адресу: <link
-      xlink:href="???">https://help.github.com/articles/caching-your-github-password-in-git/</link></para>
+      xlink:href="https://help.github.com/articles/caching-your-github-password-in-git/">https://help.github.com/articles/caching-your-github-password-in-git/</link></para>
     </section>
   </section>
 
