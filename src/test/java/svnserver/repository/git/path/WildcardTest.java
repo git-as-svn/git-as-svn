@@ -42,11 +42,11 @@ public class WildcardTest {
   public static Object[][] normalizePatternData() {
     return new Object[][]{
         // Simple mask
-        new Object[]{"/", new String[]{"**/"}},
-        new Object[]{"*/", new String[]{"*/", "**/"}},
-        new Object[]{"*", new String[]{"*"}},
+        new Object[]{"/", new String[0]},
+        new Object[]{"*/", new String[]{"*/"}},
+        new Object[]{"*", new String[]{}},
         new Object[]{"**", new String[]{}},
-        new Object[]{"**/", new String[]{"**/"}},
+        new Object[]{"**/", new String[]{}},
         new Object[]{"foo", new String[]{"**/", "foo"}},
         new Object[]{"foo/", new String[]{"**/", "foo/"}},
         new Object[]{"/foo", new String[]{"foo"}},
@@ -69,11 +69,11 @@ public class WildcardTest {
 
         // Collapse trailing masks
         new Object[]{"foo/**", new String[]{"foo/"}},
-        new Object[]{"foo/**/*", new String[]{"foo/", "*"}},
-        new Object[]{"foo/**/*/*", new String[]{"foo/", "*/", "*"}},
-        new Object[]{"foo/**/", new String[]{"foo/", "**/"}},
-        new Object[]{"foo/**/*/", new String[]{"foo/", "*/", "**/"}},
-        new Object[]{"foo/**/*/*/", new String[]{"foo/", "*/", "*/", "**/"}},
+        new Object[]{"foo/**/*", new String[]{"foo/"}},
+        new Object[]{"foo/**/*/*", new String[]{"foo/", "*/"}},
+        new Object[]{"foo/**/", new String[]{"foo/"}},
+        new Object[]{"foo/**/*/", new String[]{"foo/", "*/"}},
+        new Object[]{"foo/**/*/*/", new String[]{"foo/", "*/", "*/"}},
     };
   }
 
@@ -111,15 +111,15 @@ public class WildcardTest {
   public static Object[][] pathMatcherData() {
     return new Object[][]{
         // Simple pattern
-        new Object[]{"/", "foo/bar", null},
+        new Object[]{"/", "foo/bar", true},
         new Object[]{"*", "foo/bar", true},
-        new Object[]{"*/", "foo/bar", null},
+        new Object[]{"*/", "foo/bar", true},
         new Object[]{"/", "foo/bar/", true},
         new Object[]{"*", "foo/bar/", true},
         new Object[]{"*/", "foo/bar/", true},
         new Object[]{"**/", "foo/bar/", true},
         new Object[]{"foo/**/", "foo/bar/", true},
-        new Object[]{"foo/**/", "foo/bar/xxx", null},
+        new Object[]{"foo/**/", "foo/bar/xxx", true},
         new Object[]{"foo/**/", "foo/bar/xxx/", true},
         new Object[]{"f*o", "foo/bar", true},
         new Object[]{"/f*o", "foo/bar", true},

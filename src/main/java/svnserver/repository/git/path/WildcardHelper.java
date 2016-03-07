@@ -16,8 +16,6 @@ import svnserver.repository.git.path.matcher.name.SimpleMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Objects;
 
 /**
  * Git wildcard mask.
@@ -28,8 +26,6 @@ import java.util.Objects;
  */
 public class WildcardHelper {
   public static final char PATH_SEPARATOR = '/';
-
-  private static final boolean DEBUG_WILDCARD = true;
 
   @NotNull
   public static NameMatcher nameMatcher(@NotNull String mask) throws InvalidPatternException {
@@ -90,6 +86,7 @@ public class WildcardHelper {
    * @param pattern Path pattern.
    * @return Path pattern items.
    */
+  @NotNull
   public static List<String> splitPattern(@NotNull String pattern) {
     final List<String> result = new ArrayList<>(count(pattern, PATH_SEPARATOR) + 1);
     int start = 0;
@@ -113,77 +110,57 @@ public class WildcardHelper {
    * @param tokens Original modifiable list.
    * @return Return tokens,
    */
+  @NotNull
   public static List<String> normalizePattern(@NotNull List<String> tokens) {
-    // Add "any path" prefix for simple mask
+    // By default without slashes using mask for files in all subdirectories
     if (tokens.size() == 1) {
-      switch (tokens.get(0)) {
-        case "/":
-          tokens.set(0, "**/");
-          break;
-        default:
-          tokens.add(0, "**/");
-          break;
+      if (tokens.get(0).equals("/")) {
+        tokens.set(0, "**/");
+      } else {
+        tokens.add(0, "**/");
       }
     }
+    // Normalized pattern always starts with "/"
     if (tokens.size() == 0 || !tokens.get(0).equals("/")) {
       tokens.add(0, "/");
     }
-    ListIterator<String> iter = tokens.listIterator();
-    String prev = null;
-    while (iter.hasNext()) {
-      if (DEBUG_WILDCARD) {
-        final String checkPrev;
-        if (iter.hasPrevious()) {
-          checkPrev = iter.previous();
-          iter.next();
-        } else {
-          checkPrev = null;
-        }
-        assert (Objects.equals(prev, checkPrev));
-      }
-
-      final String token = iter.next();
-      if ("**/".equals(prev)) {
-        if (token.equals("*/")) {
-          iter.previous();
-          iter.previous();
-          iter.set(token);
-          iter.next();
-          iter.next();
-          iter.set(prev);
-          continue;
-        }
-        if (token.equals("*") || token.equals("**")) {
-          iter.previous();
-          iter.previous();
-          iter.remove();
-          assert (iter.hasPrevious());
-          prev = iter.previous();
-          iter.next();
-          continue;
-        }
-      }
-      if (token.equals("**")) {
-        iter.remove();
+    // Replace:
+    //  * "**/*/" to "*/**/"
+    //  * "**/**/" to "**/"
+    //  * "**.foo" to "**/*.foo"
+    int index = 1;
+    while (index < tokens.size()) {
+      final String thisToken = tokens.get(index);
+      final String prevToken = tokens.get(index - 1);
+      if (thisToken.equals("/")) {
+        tokens.remove(index);
         continue;
       }
-      if (token.equals("**/")) {
-        if ("**/".equals(prev)) {
-          iter.remove();
-        }
-        prev = token;
+      if (thisToken.equals("**/") && prevToken.equals("**/")) {
+        tokens.remove(index);
         continue;
       }
-      // Convert "**.test" to "**/" + "*.test"
-      if (token.startsWith("**")) {
-        iter.remove();
-        iter.add("**/");
-        iter.add(token.substring(1));
-        iter.previous();
-        iter.previous();
+      if ((!thisToken.equals("**/")) && thisToken.startsWith("**")) {
+        tokens.add(index, "**/");
+        tokens.set(index + 1, thisToken.substring(1));
         continue;
       }
-      prev = token;
+      if (thisToken.equals("*/") && prevToken.equals("**/")) {
+        tokens.set(index - 1, "*/");
+        tokens.set(index, "**/");
+        index--;
+        continue;
+      }
+      index++;
+    }
+    // Remove tailing "**/" and "*"
+    while (!tokens.isEmpty()) {
+      final String token = tokens.get(tokens.size() - 1);
+      if (token.equals("**/") || token.equals("*")) {
+        tokens.remove(tokens.size() - 1);
+      } else {
+        break;
+      }
     }
     return tokens;
   }
