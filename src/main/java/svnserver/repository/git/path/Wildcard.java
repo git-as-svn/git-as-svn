@@ -25,12 +25,11 @@ import java.util.List;
  */
 public class Wildcard {
   @NotNull
-  private final NameMatcher[] nameMatchers;
-  @NotNull
   private final PathMatcher matcher;
+  private final boolean svnCompatible;
 
   public Wildcard(@NotNull String pattern) throws InvalidPatternException {
-    nameMatchers = createNameMatchers(pattern);
+    final NameMatcher[] nameMatchers = createNameMatchers(pattern);
     if (nameMatchers.length > 0) {
       if (hasRecursive(nameMatchers)) {
         if (nameMatchers.length == 2 && nameMatchers[0].isRecursive() && !nameMatchers[1].isRecursive()) {
@@ -41,13 +40,15 @@ public class Wildcard {
       } else {
         matcher = new SimplePathMatcher(nameMatchers);
       }
+      svnCompatible = nameMatchers[nameMatchers.length - 1].getSvnMask() != null;
     } else {
       matcher = AlwaysMatcher.INSTANCE;
+      svnCompatible = false;
     }
   }
 
   public boolean isSvnCompatible() {
-    return nameMatchers[nameMatchers.length - 1].getSvnMask() != null;
+    return svnCompatible;
   }
 
   @NotNull
