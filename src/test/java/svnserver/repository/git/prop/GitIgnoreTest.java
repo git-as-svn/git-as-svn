@@ -38,7 +38,7 @@ public class GitIgnoreTest {
             "qqq/**/bar\n" +
             "data/**/*.sample\n"
     );
-    checkProps(attr, ".idea\n", "*.class\n#*\ndeploy\nspace end \ntemp\n");
+    checkProps(attr, ".idea\ndeploy\n", "*.class\n#*\nspace end \ntemp\n");
     // Rule: */.idea/vcs.xml
     checkProps(attr, "build\n", null, ".idea\ndeploy");
     checkProps(attr, "vcs.xml\n", null, "server", ".idea");

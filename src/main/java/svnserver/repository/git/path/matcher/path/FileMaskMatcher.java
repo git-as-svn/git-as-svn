@@ -31,6 +31,9 @@ public final class FileMaskMatcher implements PathMatcher {
     if (matcher.isMatch(name, isDir)) {
       return AlwaysMatcher.INSTANCE;
     }
+    if (!isDir) {
+      return null;
+    }
     return this;
   }
 

@@ -113,12 +113,8 @@ public class WildcardHelper {
   @NotNull
   public static List<String> normalizePattern(@NotNull List<String> tokens) {
     // By default without slashes using mask for files in all subdirectories
-    if (tokens.size() == 1) {
-      if (tokens.get(0).equals("/")) {
-        tokens.set(0, "**/");
-      } else {
-        tokens.add(0, "**/");
-      }
+    if (tokens.size() == 1 && !tokens.get(0).contains("/")) {
+      tokens.add(0, "**/");
     }
     // Normalized pattern always starts with "/"
     if (tokens.size() == 0 || !tokens.get(0).equals("/")) {
