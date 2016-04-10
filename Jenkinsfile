@@ -3,11 +3,9 @@ apt install gnome-doc-utils gettext dpkg-dev debhelper
 */
 node {
   stage 'Checkout'
-  checkout ([
-    $class: 'GitSCM',
-    userRemoteConfigs: [[url: 'https://github.com/bozaro/git-as-svn.git']],
-    extensions: [[$class: 'CleanCheckout']]
-  ])
+  checkout scm
+  sh 'git reset --hard'
+  sh 'git clean -ffdx'
 
   stage 'Build'
   sh './gradlew assembleDist'
