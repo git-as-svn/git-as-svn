@@ -1,5 +1,10 @@
 # Changes
 
+## 1.1.1
+
+ * Fix "E210002: Network connection closed unexpectedly" on client
+   update failure #114.
+
 ## 1.1.0
 
  * Use by default svn:eol-style = native for text files (fix #106).
