@@ -294,23 +294,58 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd();
       final SvnServerParser parser = context.getParser();
       parser.readToken(ListBeginToken.class);
-      if (!"success".equals(parser.readText())) {
-        parser.readToken(ListBeginToken.class);
-        parser.readToken(ListBeginToken.class);
-        final int errorCode = parser.readNumber();
-        final String errorMessage = parser.readText();
-        parser.skipItems();
-        parser.readToken(ListEndToken.class);
-        parser.readToken(ListEndToken.class);
-        log.error("Received client error: {} {}", errorCode, errorMessage);
-        throw new EOFException(errorMessage);
-      } else {
-        parser.skipItems();
-        writer
-            .listBegin()
-            .word("success")
-            .listBegin().listEnd()
-            .listEnd();
+
+      final String clientStatus = parser.readText();
+      switch (clientStatus) {
+        case "failure": {
+          parser.readToken(ListBeginToken.class);
+          parser.readToken(ListBeginToken.class);
+          final int errorCode = parser.readNumber();
+          final String errorMessage = parser.readText();
+          final String errorFile = parser.readText();
+          final int errorLine = parser.readNumber();
+          parser.readToken(ListEndToken.class);
+          parser.readToken(ListEndToken.class);
+          parser.readToken(ListEndToken.class);
+          if (errorFile.isEmpty()) {
+            log.error("Received client error: {} {}", errorCode, errorMessage);
+          } else {
+            log.error("Received client error [%s:%d]: {} {}", errorFile, errorLine, errorCode, errorMessage);
+          }
+          writer
+              .listBegin()
+              .word("abort-edit")
+              .listBegin().listEnd()
+              .listEnd();
+          writer
+              .listBegin()
+              .word("failure")
+              .listBegin()
+              .listBegin()
+              .number(errorCode)
+              .string(errorMessage)
+              .string(errorFile)
+              .number(errorLine)
+              .listEnd()
+              .listEnd()
+              .listEnd();
+          writer
+              .listBegin();
+          break;
+        }
+        case "success": {
+          parser.skipItems();
+          writer
+              .listBegin()
+              .word("success")
+              .listBegin().listEnd()
+              .listEnd();
+          break;
+        }
+        default: {
+          log.error("Unexpected client status: {}", clientStatus);
+          throw new EOFException("Unexpected client status");
+        }
       }
     }
 
