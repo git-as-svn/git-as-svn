@@ -1,4 +1,7 @@
 # Changes
+## 1.1.2
+
+ * Add reference to original commit as parent for prevent commit removing by `git gc` #118.
 
 ## 1.1.1
 

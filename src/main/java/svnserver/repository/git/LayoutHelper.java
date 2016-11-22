@@ -119,6 +119,8 @@ public class LayoutHelper {
     commitBuilder.setCommitter(commit.getCommitterIdent());
     commitBuilder.setMessage("#" + revisionId + ": " + commit.getFullMessage());
     commitBuilder.addParentId(parent);
+    // Add reference to original commit as parent for prevent commit removing by `git gc` (see #118).
+    commitBuilder.addParentId(commit);
     commitBuilder.setTreeId(rootTree);
     return inserter.insert(commitBuilder);
   }
