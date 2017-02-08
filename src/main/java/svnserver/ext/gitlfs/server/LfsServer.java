@@ -47,10 +47,12 @@ public class LfsServer implements Shared {
   private final String pathFormat;
   @Nullable
   private final String privateToken;
+  private int tokenExpireSec;
 
-  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken) {
+  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken, int tokenExpireSec) {
     this.pathFormat = pathFormat;
     this.privateToken = privateToken;
+    this.tokenExpireSec = tokenExpireSec;
   }
 
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
@@ -58,16 +60,16 @@ public class LfsServer implements Shared {
     final String name = localContext.getName();
 
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
-    final ContentManager manager = new LfsContentManager(localContext, storage);
+    final ContentManager manager = new LfsContentManager(localContext, storage, tokenExpireSec);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
-            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken))
+            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken, tokenExpireSec))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(manager, pathSpec + SERVLET_CONTENT))
             .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(manager))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
-    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext)));
+    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext, tokenExpireSec)));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {

@@ -18,6 +18,7 @@ import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.TokenHelper;
 
@@ -38,7 +39,8 @@ public class LfsAuthHelper {
       @NotNull URI baseLfsUrl,
       @Nullable String username,
       @Nullable String external,
-      boolean anonymous
+      boolean anonymous,
+      int tokenExpireSec
   ) throws ServerError {
     try {
       final UserDB userDB = context.sure(UserDB.class);
@@ -54,17 +56,17 @@ public class LfsAuthHelper {
         //throw new NotFoundException();
         throw new ServerError(HttpServletResponse.SC_NOT_FOUND, "User not found");
       }
-      return createToken(context, baseLfsUrl, user);
+      return createToken(context, baseLfsUrl, user, tokenExpireSec);
     } catch (SVNException | IOException e) {
       throw new ServerError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Can't get user information. See server log for more details", e);
     }
   }
 
   @NotNull
-  public static NumericDate getDefaultExpire() {
+  public static NumericDate getExpire(int tokenExpireSec) {
     // Calculate expire time and token.
     NumericDate expireAt = NumericDate.now();
-    expireAt.addSeconds(60);
+    expireAt.addSeconds(tokenExpireSec <= 0 ? LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec);
     return expireAt;
   }
 
@@ -82,9 +84,10 @@ public class LfsAuthHelper {
   public static Link createToken(
       @NotNull SharedContext context,
       @NotNull URI baseLfsUrl,
-      @NotNull User user
+      @NotNull User user,
+      int tokenExpireSec
   ) throws IOException {
-    NumericDate expireAt = getDefaultExpire();
+    NumericDate expireAt = getExpire(tokenExpireSec);
     return new Link(
         baseLfsUrl,
         createTokenHeader(context, user, expireAt),

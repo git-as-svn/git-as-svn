@@ -25,6 +25,7 @@ import svnserver.auth.UserDB;
 import svnserver.auth.UserWithPassword;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.LfsReader;
@@ -70,7 +71,7 @@ public class LfsHttpStorageTest {
     // Create shared context
     SharedContext sharedContext = new SharedContext(new File("/tmp"), DBMaker.newMemoryDB().make());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
-    sharedContext.add(LfsServer.class, new LfsServer("{0}.git", "t0ken"));
+    sharedContext.add(LfsServer.class, new LfsServer("{0}.git", "t0ken", LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC));
     sharedContext.add(UserDB.class, users);
     sharedContext.ready();
     // Create local context

@@ -36,10 +36,12 @@ public class LfsRpc implements Lfs.BlockingInterface {
   private final URI baseLfsUrl;
   @NotNull
   private final LocalContext context;
+  private final int tokenExpireSec;
 
-  public LfsRpc(@NotNull URI baseLfsUrl, @NotNull LocalContext context) {
+  public LfsRpc(@NotNull URI baseLfsUrl, @NotNull LocalContext context, int tokenExpireSec) {
     this.baseLfsUrl = baseLfsUrl;
     this.context = context;
+    this.tokenExpireSec = tokenExpireSec;
   }
 
   @NotNull
@@ -78,7 +80,7 @@ public class LfsRpc implements Lfs.BlockingInterface {
             .build();
       }
       final URI url = request.getUrl() != null ? URI.create(request.getUrl()) : getWebServer().getUrl(baseLfsUrl);
-      Link token = LfsAuthHelper.createToken(context.getShared(), url, user);
+      Link token = LfsAuthHelper.createToken(context.getShared(), url, user, tokenExpireSec);
       return AuthenticateResponse.newBuilder()
           .setSuccess(AuthenticateResponse.Success.newBuilder()
               .setJson(JsonHelper.createMapper().writeValueAsString(token))

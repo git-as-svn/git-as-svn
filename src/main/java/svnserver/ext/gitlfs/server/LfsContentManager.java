@@ -40,6 +40,8 @@ import java.util.Objects;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsContentManager implements ContentManager {
+  private final int tokenExpireSec;
+
   @FunctionalInterface
   public interface Checker {
     void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
@@ -50,15 +52,20 @@ public class LfsContentManager implements ContentManager {
   @NotNull
   private final LfsStorage storage;
 
-  public LfsContentManager(@NotNull LocalContext context, @NotNull LfsStorage storage) {
+  public LfsContentManager(@NotNull LocalContext context, @NotNull LfsStorage storage, int tokenExpireSec) {
     this.context = context;
     this.storage = storage;
+    this.tokenExpireSec = tokenExpireSec;
   }
 
   private User getAuthInfo(@NotNull HttpServletRequest request) {
     final WebServer server = context.getShared().sure(WebServer.class);
     final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION));
     return user == null ? User.getAnonymous() : user;
+  }
+
+  public int getTokenExpireSec() {
+    return tokenExpireSec;
   }
 
   @NotNull
@@ -72,7 +79,7 @@ public class LfsContentManager implements ContentManager {
           .put(Constants.HEADER_AUTHORIZATION, auth)
           .build();
     } else {
-      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getDefaultExpire());
+      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getExpire(tokenExpireSec));
     }
   }
 
