@@ -25,27 +25,30 @@ public class RepositoryListMappingTest {
   @Test
   public void testEmpty() {
     final TreeMap<String, String> map = new Builder()
-        .add("")
+        .add("/")
         .build();
-    checkMapped(map, "", "");
-    checkMapped(map, "", "/foo");
-    checkMapped(map, "", "/bar");
+    checkMapped(map, "/", "");
+    checkMapped(map, "/", "/foo");
+    checkMapped(map, "/", "/bar");
   }
 
   @Test
   public void testRepositoryByPrefix() {
     final TreeMap<String, String> map = new Builder()
-        .add("/foo")
-        .add("/bar")
+        .add("/foo/")
+        .add("/bar/")
+        .add("/foo.test/")
         .build();
     checkMapped(map, null, "");
     checkMapped(map, null, "/bazz");
     checkMapped(map, null, "/foo2");
     checkMapped(map, null, "/bar2");
-    checkMapped(map, "/foo", "/foo");
-    checkMapped(map, "/foo", "/foo/bar");
-    checkMapped(map, "/bar", "/bar");
-    checkMapped(map, "/bar", "/bar/foo");
+    checkMapped(map, "/foo/", "/foo");
+    checkMapped(map, "/foo/", "/foo/bar");
+    checkMapped(map, "/bar/", "/bar");
+    checkMapped(map, "/bar/", "/bar/foo");
+    checkMapped(map, "/foo.test/", "/foo.test");
+    checkMapped(map, "/foo.test/", "/foo.test/foo");
   }
 
   private void checkMapped(@NotNull NavigableMap<String, String> map, @Nullable String expected, @NotNull String prefix) {

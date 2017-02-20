@@ -67,6 +67,18 @@ public final class StringHelper {
   }
 
   @NotNull
+  public static String normalizeDir(@NotNull String path) {
+    if (path.isEmpty()) return "/";
+    String result = path;
+    if (result.charAt(0) != '/') {
+      result = "/" + result;
+    } else if (result.length() == 1) {
+      return "/";
+    }
+    return result.endsWith("/") ? result : (result + "/");
+  }
+
+  @NotNull
   public static String parentDir(@NotNull String fullPath) {
     int index = fullPath.lastIndexOf('/');
     return index >= 0 ? fullPath.substring(0, index) : "";
@@ -85,8 +97,16 @@ public final class StringHelper {
    * @return Returns true, if parentPath is base path of childPath.
    */
   public static boolean isParentPath(@NotNull String parentPath, @NotNull String childPath) {
-    return childPath.equals(parentPath)
-        || childPath.startsWith(parentPath) && (childPath.charAt(parentPath.length()) == '/');
+    if (childPath.startsWith(parentPath)) {
+      int parentLength = parentPath.length();
+      if (childPath.length() == parentLength)
+        return true;
+      if (childPath.charAt(parentLength) == '/')
+        return true;
+      if ((parentLength > 0) && (childPath.charAt(parentLength - 1) == '/'))
+        return true;
+    }
+    return false;
   }
 
   @Contract("null -> null; !null -> !null")

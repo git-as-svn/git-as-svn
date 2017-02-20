@@ -2,6 +2,7 @@
 ## 1.1.2
 
  * Add reference to original commit as parent for prevent commit removing by `git gc` #118.
+ * Fix repository mapping error #122.
 
 ## 1.1.1
 

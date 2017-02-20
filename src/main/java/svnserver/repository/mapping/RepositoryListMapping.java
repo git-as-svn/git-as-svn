@@ -61,8 +61,9 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
 
   @Nullable
   public static <T> Map.Entry<String, T> getMapped(@NotNull NavigableMap<String, T> mapping, @NotNull String prefix) {
-    final Map.Entry<String, T> entry = mapping.floorEntry(StringHelper.normalize(prefix));
-    if (entry != null && StringHelper.isParentPath(entry.getKey(), prefix)) {
+    final String path = StringHelper.normalizeDir(prefix);
+    final Map.Entry<String, T> entry = mapping.floorEntry(path);
+    if (entry != null && StringHelper.isParentPath(entry.getKey(), path)) {
       return entry;
     }
     return null;
@@ -79,7 +80,7 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
     private final Map<String, VcsRepository> mapping = new TreeMap<>();
 
     public Builder add(@NotNull String prefix, @NotNull VcsRepository repository) {
-      mapping.put(StringHelper.normalize(prefix), repository);
+      mapping.put(StringHelper.normalizeDir(prefix), repository);
       return this;
     }
 

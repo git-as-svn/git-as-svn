@@ -74,7 +74,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
   @Nullable
   public GitLabProject addRepository(@NotNull GitlabProject project) throws IOException, SVNException {
     final String projectName = project.getPathWithNamespace();
-    final String projectKey = StringHelper.normalize(projectName);
+    final String projectKey = StringHelper.normalizeDir(projectName);
     final GitLabProject oldProject = mapping.get(projectKey);
     if (oldProject == null || oldProject.getProjectId() != project.getId()) {
       final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
@@ -91,7 +91,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
   }
 
   public void removeRepository(int projectId, @NotNull String projectName) {
-    final String projectKey = StringHelper.normalize(projectName);
+    final String projectKey = StringHelper.normalizeDir(projectName);
     final GitLabProject project = mapping.get(projectKey);
     if (project != null && project.getProjectId() == projectId) {
       if (mapping.remove(projectKey, project)) {
