@@ -4,6 +4,7 @@
  * Add reference to original commit as parent for prevent commit removing by `git gc` #118.
  * Fix repository mapping error #122.
  * Fix non ThreadSafe Kryo usage #121.
+ * Add support for combine multiple authenticators.
 
 ## 1.1.1
 

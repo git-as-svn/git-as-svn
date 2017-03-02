@@ -15,6 +15,8 @@ import svnserver.context.SharedContext;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public interface UserDBConfig {
+  UserDBConfig[] emptyArray = {};
+
   @NotNull
   UserDB create(@NotNull SharedContext context);
 }
