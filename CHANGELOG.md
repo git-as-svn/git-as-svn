@@ -5,6 +5,7 @@
  * Fix repository mapping error #122.
  * Fix non ThreadSafe Kryo usage #121.
  * Add support for combine multiple authenticators.
+ * Fix tree conflict on Windows after renaming file with same name in another case #123.
 
 ## 1.1.1
 
