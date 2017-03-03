@@ -26,8 +26,8 @@ public class CopyFromSVNEditor extends SVNEditorWrapper {
   @NotNull
   private final String basePath;
 
-  public CopyFromSVNEditor(@Nullable ISVNEditor editor, @NotNull String basePath) {
-    super(editor);
+  public CopyFromSVNEditor(@Nullable ISVNEditor editor, @NotNull String basePath, boolean checkDelete) {
+    super(editor, checkDelete);
     this.basePath = basePath;
   }
 
