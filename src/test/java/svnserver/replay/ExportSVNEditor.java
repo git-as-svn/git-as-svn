@@ -27,8 +27,8 @@ public class ExportSVNEditor extends SVNEditorWrapper {
   @NotNull
   private final Map<String, Map<String, String>> properties = new HashMap<>();
 
-  public ExportSVNEditor() {
-    super(null);
+  public ExportSVNEditor(boolean checkDelete) {
+    super(null, checkDelete);
   }
 
   @Override

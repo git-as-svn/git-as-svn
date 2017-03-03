@@ -9,6 +9,7 @@ package svnserver.replay;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testng.Assert;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -25,9 +26,13 @@ import java.io.OutputStream;
 public abstract class SVNEditorWrapper implements ISVNEditor {
   @Nullable
   private final ISVNEditor editor;
+  // Allow removing directory entries only before creation/updating (issue #123).
+  private boolean allowDelete = false;
+  private final boolean checkDelete;
 
-  public SVNEditorWrapper(@Nullable ISVNEditor editor) {
+  public SVNEditorWrapper(@Nullable ISVNEditor editor, boolean checkDelete) {
     this.editor = editor;
+    this.checkDelete = checkDelete;
   }
 
   @Override
@@ -40,12 +45,16 @@ public abstract class SVNEditorWrapper implements ISVNEditor {
   public void openRoot(long revision) throws SVNException {
     if (editor != null)
       editor.openRoot(revision);
+    allowDelete = true;
   }
 
   @Override
   public void deleteEntry(String path, long revision) throws SVNException {
     if (editor != null)
       editor.deleteEntry(path, revision);
+    if (checkDelete) {
+      Assert.assertTrue(allowDelete, "Removing from " + path + "#" + revision + " is not allowed");
+    }
   }
 
   @Override
@@ -63,12 +72,14 @@ public abstract class SVNEditorWrapper implements ISVNEditor {
   public void addDir(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) throws SVNException {
     if (editor != null)
       editor.addDir(path, copyFromPath, copyFromRevision);
+    allowDelete = true;
   }
 
   @Override
   public void openDir(String path, long revision) throws SVNException {
     if (editor != null)
       editor.openDir(path, revision);
+    allowDelete = true;
   }
 
   @Override
@@ -79,17 +90,20 @@ public abstract class SVNEditorWrapper implements ISVNEditor {
   @Override
   public void closeDir() throws SVNException {
     if (editor != null) editor.closeDir();
+    allowDelete = false;
   }
 
   @Override
   public void addFile(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) throws SVNException {
     if (editor != null) editor.addFile(path, copyFromPath, copyFromRevision);
+    allowDelete = false;
   }
 
   @Override
   public void openFile(String path, long revision) throws SVNException {
     if (editor != null)
       editor.openFile(path, revision);
+    allowDelete = false;
   }
 
   @Override

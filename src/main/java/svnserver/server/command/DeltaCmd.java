@@ -415,19 +415,39 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final Depth.Action dirAction = wcDepth.determineAction(requestedDepth, true);
       final Depth.Action fileAction = wcDepth.determineAction(requestedDepth, false);
 
+      final Map<String, VcsFile> newEntries = new TreeMap<>();
+      for (VcsFile entry : newFile.getEntries()) {
+        newEntries.put(entry.getFileName(), entry);
+      }
+
+      final Set<String> forced = new HashSet<>(forcedPaths.getOrDefault(wcPath, Collections.emptySet()));
       final Map<String, VcsFile> oldEntries;
       if (oldFile != null) {
-        oldEntries = new HashMap<>();
-        for (VcsFile entry : oldFile.getEntries()) {
-          oldEntries.put(entry.getFileName(), entry);
+        oldEntries = new TreeMap<>();
+        for (VcsFile oldEntry : oldFile.getEntries()) {
+          final String entryPath = joinPath(wcPath, oldEntry.getFileName());
+          if (newEntries.containsKey(oldEntry.getFileName())) {
+            oldEntries.put(oldEntry.getFileName(), oldEntry);
+            continue;
+          }
+          removeEntry(context, entryPath, oldEntry.getLastChange().getId(), tokenId);
+          forced.remove(entryPath);
         }
       } else {
         oldEntries = Collections.emptyMap();
       }
-      final Set<String> forced = new HashSet<>(forcedPaths.getOrDefault(wcPath, Collections.emptySet()));
+
+      for (String entryPath : forced) {
+        String entryName = StringHelper.getChildPath(wcPath, entryPath);
+        if ((entryName != null) && newEntries.containsKey(entryName)) {
+          continue;
+        }
+        removeEntry(context, entryPath, newFile.getLastChange().getId(), tokenId);
+      }
+
       for (VcsFile newEntry : newFile.getEntries()) {
         final String entryPath = joinPath(wcPath, newEntry.getFileName());
-        final VcsFile oldEntry = getPrevFile(context, entryPath, oldEntries.remove(newEntry.getFileName()));
+        final VcsFile oldEntry = getPrevFile(context, entryPath, oldEntries.get(newEntry.getFileName()));
 
         final Depth.Action action = newEntry.isDirectory() ? dirAction : fileAction;
 
@@ -440,14 +460,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
         final Depth entryDepth = getWcDepth(entryPath, wcDepth);
         updateEntry(context, entryPath, action == Depth.Action.Upgrade ? null : oldEntry, newEntry, tokenId, false, entryDepth, requestedDepth.deepen());
-      }
-      for (VcsFile entry : oldEntries.values()) {
-        final String entryPath = joinPath(wcPath, entry.getFileName());
-        removeEntry(context, entryPath, entry.getLastChange().getId(), tokenId);
-        forced.remove(entryPath);
-      }
-      for (String removed : forced) {
-        removeEntry(context, removed, newFile.getLastChange().getId(), tokenId);
       }
     }
 

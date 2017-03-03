@@ -9,17 +9,16 @@ package svnserver.replay;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testng.Assert;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import svnserver.StringHelper;
 
 import java.io.OutputStream;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * ISVNEditor for comparing differ subversion servers behaviour.
@@ -29,6 +28,8 @@ import java.util.TreeSet;
 public class ReportSVNEditor implements ISVNEditor {
   @NotNull
   private final Deque<String> paths = new ArrayDeque<>();
+  @NotNull
+  private final Set<String> caseChecker = new HashSet<>();
   @NotNull
   private final Set<String> report = new TreeSet<>();
   private long targetRevision = 0;
@@ -62,7 +63,7 @@ public class ReportSVNEditor implements ISVNEditor {
 
   @Override
   public void deleteEntry(String path, long revision) throws SVNException {
-    add(path, "delete-entry: " + rev(revision));
+    del(path, "delete-entry: " + rev(revision));
   }
 
   @Override
@@ -157,6 +158,12 @@ public class ReportSVNEditor implements ISVNEditor {
   }
 
   private void add(@NotNull String path, @NotNull String line) {
+    caseChecker.add(StringHelper.parentDir(path));
+    report.add(path + " - " + line);
+  }
+
+  private void del(@NotNull String path, @NotNull String line) {
+    Assert.assertFalse(caseChecker.contains(StringHelper.parentDir(path)), "Remove after modification: " + path);
     report.add(path + " - " + line);
   }
 }

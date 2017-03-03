@@ -109,6 +109,33 @@ public final class StringHelper {
     return false;
   }
 
+  /**
+   * Get childPath from parentPath or null.
+   *
+   * @param parentPath    Parent path.
+   * @param fullChildPath Full child path.
+   * @return Returns child path related parent path or null.
+   */
+  @Nullable
+  public static String getChildPath(@NotNull String parentPath, @NotNull String fullChildPath) {
+    if (parentPath.isEmpty()) {
+      if ((fullChildPath.length() > 1) && (fullChildPath.charAt(1) == '/')) {
+        return fullChildPath.substring(1);
+      }
+      return fullChildPath;
+    }
+    if (fullChildPath.startsWith(parentPath)) {
+      int parentLength = parentPath.length();
+      if (fullChildPath.length() == parentLength)
+        return "";
+      if (fullChildPath.charAt(parentLength) == '/')
+        return fullChildPath.substring(parentLength + 1);
+      if ((parentLength > 0) && (fullChildPath.charAt(parentLength - 1) == '/'))
+        return fullChildPath.substring(parentLength);
+    }
+    return null;
+  }
+
   @Contract("null -> null; !null -> !null")
   public static String getFirstLine(@Nullable String message) {
     if (message == null)

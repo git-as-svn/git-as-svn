@@ -19,8 +19,8 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
  * @author a.navrotskiy
  */
 public class FilterSVNEditor extends SVNEditorWrapper {
-  public FilterSVNEditor(@NotNull ISVNEditor editor) {
-    super(editor);
+  public FilterSVNEditor(@NotNull ISVNEditor editor, boolean checkDelete) {
+    super(editor, checkDelete);
   }
 
   @Override
