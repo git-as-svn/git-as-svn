@@ -7,14 +7,18 @@
  */
 package svnserver.ext.gitlab.auth;
 
+import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.models.GitlabUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.*;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +30,8 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitLabUserDB implements UserDB, UserLookupVisitor {
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(GitLabUserDB.class);
   @NotNull
   private static final String PREFIX_USER = "user-";
   @NotNull
@@ -51,7 +57,14 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
   public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
     try {
       return createUser(context.connect(userName, password));
+    } catch (GitlabAPIException e) {
+      if (e.getResponseCode() == 401) {
+        return null;
+      }
+      log.warn("User password check error: " + userName, e);
+      return null;
     } catch (IOException e) {
+      log.warn("User password check error: " + userName, e);
       return null;
     }
   }
@@ -61,7 +74,10 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
   public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
     try {
       return createUser(context.connect().getUserViaSudo(userName));
+    } catch (FileNotFoundException e) {
+      return null;
     } catch (IOException e) {
+      log.warn("User lookup by name error: " + userName, e);
       return null;
     }
   }
@@ -73,7 +89,10 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
     if (userId != null) {
       try {
         return createUser(context.connect().getUser(userId));
+      } catch (FileNotFoundException e) {
+        return null;
       } catch (IOException e) {
+        log.warn("User lookup by userId error: " + external, e);
         return null;
       }
     }
@@ -81,7 +100,10 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
     if (keyId != null) {
       try {
         return createUser(context.connect().getSSHKey(keyId).getUser());
+      } catch (FileNotFoundException e) {
+        return null;
       } catch (IOException e) {
+        log.warn("User lookup by SSH key error: " + external, e);
         return null;
       }
     }
