@@ -124,7 +124,7 @@ public final class GitRevision implements VcsRevision {
     if (gitNewCommit == null)
       return null;
 
-    final PersonIdent ident = gitNewCommit.getCommitterIdent();
+    final PersonIdent ident = gitNewCommit.getAuthorIdent();
     return String.format("%s <%s>", ident.getName(), ident.getEmailAddress());
   }
 

@@ -6,6 +6,7 @@
  * Fix non ThreadSafe Kryo usage #121.
  * Add support for combine multiple authenticators.
  * Fix tree conflict on Windows after renaming file with same name in another case #123.
+ * Use commit author instead of commiter identity in svn log.
 
 ## 1.1.1
 
