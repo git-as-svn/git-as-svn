@@ -57,6 +57,16 @@ public class SvnServer extends Thread {
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
   @NotNull
+  private static final Set<SVNErrorCode> WARNING_CODES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new SVNErrorCode[]{
+      SVNErrorCode.CANCELLED,
+      SVNErrorCode.ENTRY_NOT_FOUND,
+      SVNErrorCode.FS_NOT_FOUND,
+      SVNErrorCode.RA_NOT_AUTHORIZED,
+      SVNErrorCode.REPOS_HOOK_FAILURE,
+      SVNErrorCode.WC_NOT_UP_TO_DATE,
+  })));
+
+  @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
   private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
@@ -208,7 +218,7 @@ public class SvnServer extends Thread {
           parser.skipItems();
         }
       } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED) {
+        if (WARNING_CODES.contains(e.getErrorMessage().getErrorCode())) {
           log.warn("Command execution error: {}", e.getMessage());
         } else {
           log.error("Command execution error", e);
