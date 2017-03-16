@@ -88,14 +88,15 @@ shared:
     path: git-as-svn.socket
 
 # Simple in-memory user database
-userDB: !localUsers
-  users:
-    - username: test
-      # Clear-text password is required to perform CRAM-MD5 authentication
-      password: test
-      # Email and real name are used to create Git commits
-      email: test@noreply.fake
-      realName: Test User
+userDB: !cacheUsers
+  userDB: !localUsers
+    users:
+      - username: test
+        # Clear-text password is required to perform CRAM-MD5 authentication
+        password: test
+        # Email and real name are used to create Git commits
+        email: test@noreply.fake
+        realName: Test User
 
 # Authenticates a user by binding to the directory with the DN of the entry for that user and the password
 # presented by the user. If this simple bind succeeds the user is considered to be authenticated.

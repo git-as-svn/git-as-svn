@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class PlainAuthenticator implements Authenticator {
+public final class PlainAuthenticator implements Authenticator, PasswordChecker {
 
   @NotNull
   private final PasswordChecker passwordChecker;
@@ -45,7 +45,13 @@ public final class PlainAuthenticator implements Authenticator {
 
     final String username = credentials[1];
     final String password = credentials[2];
-    return passwordChecker.check(username, password);
+    return check(username, password);
+  }
+
+  @Nullable
+  @Override
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+    return passwordChecker.check(userName, password);
   }
 
   /**

@@ -5,6 +5,7 @@
  * Fix repository mapping error #122.
  * Fix non ThreadSafe Kryo usage #121.
  * Add support for combine multiple authenticators.
+ * Add support for authenticator cache.
  * Fix tree conflict on Windows after renaming file with same name in another case #123.
  * Use commit author instead of commiter identity in svn log.
 

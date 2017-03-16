@@ -18,7 +18,10 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
- * @author Marat Radchenko <marat@slonopotamus.org>
+ * Complex authentication.
+ * Can combine multiple authenticators.
+ *
+ * @author Artem V. Navrotskiy
  */
 @SuppressWarnings("FieldCanBeLocal")
 @ConfigType("combineUsers")
