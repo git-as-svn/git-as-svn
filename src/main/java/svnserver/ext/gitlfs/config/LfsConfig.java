@@ -33,12 +33,15 @@ import java.io.IOException;
 public class LfsConfig implements SharedConfig, LfsStorageFactory {
   // Default client token expiration time.
   public static final int DEFAULT_TOKEN_EXPIRE_SEC = 900;
+  // Allow batch API request only if token is not expired in token ensure time.
+  public static final int DEFAULT_TOKEN_ENSURE_SEC = 300;
 
   @NotNull
   private String path = "lfs";
   @NotNull
   private String pathFormat = "{0}.git";
   private int tokenExpireSec = DEFAULT_TOKEN_EXPIRE_SEC;
+  private int tokenEnsureSec = DEFAULT_TOKEN_ENSURE_SEC;
   private boolean compress = true;
   private boolean saveMeta = true;
   @Nullable
@@ -88,6 +91,14 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
     this.tokenExpireSec = tokenExpireSec;
   }
 
+  public int getTokenEnsureSec() {
+    return tokenEnsureSec;
+  }
+
+  public void setTokenEnsureSec(int tokenEnsureSec) {
+    this.tokenEnsureSec = tokenEnsureSec;
+  }
+
   @NotNull
   public LfsLayout getLayout() {
     return layout;
@@ -105,7 +116,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(LfsStorageFactory.class, this);
-    context.add(LfsServer.class, new LfsServer(pathFormat, token, getTokenExpireSec()));
+    context.add(LfsServer.class, new LfsServer(pathFormat, token, getTokenExpireSec(), getTokenEnsureSec()));
   }
 
   @NotNull

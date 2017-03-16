@@ -215,7 +215,7 @@ public class WebServer implements Shared {
    * </ul>
    */
   @Nullable
-  public User getAuthInfo(@Nullable final String authorization) {
+  public User getAuthInfo(@Nullable final String authorization, int tokenEnsureTime) {
     final UserDB userDB = context.sure(UserDB.class);
     // Check HTTP authorization.
     if (authorization == null) {
@@ -236,7 +236,7 @@ public class WebServer implements Shared {
       return null;
     }
     if (authorization.startsWith(AUTH_TOKEN)) {
-      return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()).trim());
+      return TokenHelper.parseToken(createEncryption(), authorization.substring(AUTH_TOKEN.length()).trim(), tokenEnsureTime);
     }
     return null;
   }

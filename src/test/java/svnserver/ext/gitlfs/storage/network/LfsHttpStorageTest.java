@@ -12,13 +12,12 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mapdb.DBMaker;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.TestHelper;
+import svnserver.VcsAccessNoAnonymous;
 import svnserver.auth.LocalUserDB;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
@@ -71,31 +70,23 @@ public class LfsHttpStorageTest {
     // Create shared context
     SharedContext sharedContext = new SharedContext(new File("/tmp"), DBMaker.newMemoryDB().make());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
-    sharedContext.add(LfsServer.class, new LfsServer("{0}.git", "t0ken", LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC));
+    sharedContext.add(LfsServer.class, new LfsServer("{0}.git", "t0ken", 0, 0));
     sharedContext.add(UserDB.class, users);
     sharedContext.ready();
     // Create local context
     LocalContext localContext = new LocalContext(sharedContext, "example");
-    localContext.add(VcsAccess.class, new VcsAccess() {
-      @Override
-      public void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException {
-      }
-
-      @Override
-      public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException {
-      }
-    });
+    localContext.add(VcsAccess.class, new VcsAccessNoAnonymous());
     localContext.add(LfsStorage.class, new LfsMemoryStorage());
     // Register storage
     sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
 
     try {
-      URL url = new URL("http", http.getHost(), http.getLocalPort(), "/");
+      final URL url = new URL("http", http.getHost(), http.getLocalPort(), "/");
       final URL authUrl = new URL(url, "example.git/" + LfsServer.SERVLET_AUTH);
       LfsHttpStorage storage = new LfsHttpStorage(authUrl, "t0ken");
 
       // Check file is not exists
-      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
+      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", user));
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter(user)) {
@@ -104,7 +95,7 @@ public class LfsHttpStorageTest {
       }
 
       // Read old file.
-      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", user);
       Assert.assertNotNull(reader);
       Assert.assertNull(reader.getMd5());
       Assert.assertEquals(reader.getSize(), 15);

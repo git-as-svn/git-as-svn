@@ -149,12 +149,11 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   @Nullable
-  @Override
-  public LfsReader getReader(@NotNull String oid) throws IOException {
+  public LfsReader getReader(@NotNull String oid, @NotNull User user) throws IOException {
     try {
       if (!oid.startsWith(OID_PREFIX)) return null;
       final String hash = oid.substring(OID_PREFIX.length());
-      final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), httpClient);
+      final Client lfsClient = new Client(new UserAuthProvider(user), httpClient);
       final ObjectRes meta = lfsClient.getMeta(hash);
       if (meta == null || meta.getMeta() == null) {
         return null;
@@ -164,6 +163,12 @@ public class LfsHttpStorage implements LfsStorage {
       log.error("HTTP request error:" + e.getMessage() + "\n" + e.getRequestInfo());
       throw e;
     }
+  }
+
+  @Nullable
+  @Override
+  public LfsReader getReader(@NotNull String oid) throws IOException {
+    return getReader(oid, User.getAnonymous());
   }
 
   @NotNull

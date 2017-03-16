@@ -8,6 +8,7 @@
  * Add support for authenticator cache.
  * Fix tree conflict on Windows after renaming file with same name in another case #123.
  * Use commit author instead of commiter identity in svn log.
+ * Don't allow almost expired tokens for LFS pointer requests.
 
 ## 1.1.1
 

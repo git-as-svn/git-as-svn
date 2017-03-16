@@ -20,6 +20,7 @@ import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 import svnserver.ext.api.ServiceRegistry;
 import svnserver.ext.gitlfs.api.LfsRpc;
+import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
@@ -48,11 +49,13 @@ public class LfsServer implements Shared {
   @Nullable
   private final String privateToken;
   private int tokenExpireSec;
+  private int tokenEnsureSec;
 
-  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken, int tokenExpireSec) {
+  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken, int tokenExpireSec, int tokenEnsureSec) {
     this.pathFormat = pathFormat;
     this.privateToken = privateToken;
-    this.tokenExpireSec = tokenExpireSec;
+    this.tokenExpireSec = tokenExpireSec > 0 ? tokenExpireSec : LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC;
+    this.tokenEnsureSec = (tokenEnsureSec > 0) && (tokenEnsureSec < this.tokenExpireSec / 2) ? tokenEnsureSec : this.tokenExpireSec / 2;
   }
 
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
@@ -60,12 +63,13 @@ public class LfsServer implements Shared {
     final String name = localContext.getName();
 
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
-    final ContentManager manager = new LfsContentManager(localContext, storage, tokenExpireSec);
+    final ContentManager pointerManager = new LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureSec);
+    final ContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken, tokenExpireSec))
-            .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(manager, pathSpec + SERVLET_CONTENT))
-            .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(manager))
+            .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT))
+            .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(contentManager))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));

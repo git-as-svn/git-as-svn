@@ -59,12 +59,16 @@ public class TokenHelper {
   }
 
   @Nullable
-  public static User parseToken(@NotNull JsonWebEncryption jwe, @NotNull String token) {
+  public static User parseToken(@NotNull JsonWebEncryption jwe, @NotNull String token, int tokenEnsureTime) {
     try {
       jwe.setCompactSerialization(token);
       final JwtClaims claims = JwtClaims.parse(jwe.getPayload());
       final NumericDate now = NumericDate.now();
-      if (claims.getExpirationTime() == null || claims.getExpirationTime().isBefore(now)) {
+      final NumericDate expire = NumericDate.fromMilliseconds(now.getValueInMillis());
+      if (tokenEnsureTime > 0) {
+        expire.addSeconds(tokenEnsureTime);
+      }
+      if (claims.getExpirationTime() == null || claims.getExpirationTime().isBefore(expire)) {
         return null;
       }
       if (claims.getNotBefore() == null || claims.getNotBefore().isAfter(now)) {

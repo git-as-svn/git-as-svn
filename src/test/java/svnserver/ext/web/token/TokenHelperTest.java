@@ -25,8 +25,7 @@ public class TokenHelperTest {
   public void simpleWithoutExternal() {
     final User expected = User.create("foo", "bar", "foo@example.com", null);
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
-    final User actual = TokenHelper.parseToken(createToken("secret"), token);
-    Assert.assertNotNull(actual);
+    final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertEquals(actual, expected);
   }
 
@@ -34,8 +33,7 @@ public class TokenHelperTest {
   public void simpleWithExternal() {
     final User expected = User.create("foo", "bar", "foo@example.com", "user-1");
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
-    final User actual = TokenHelper.parseToken(createToken("secret"), token);
-    Assert.assertNotNull(actual);
+    final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertEquals(actual, expected);
   }
 
@@ -43,8 +41,7 @@ public class TokenHelperTest {
   public void anonymous() {
     final User expected = User.getAnonymous();
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
-    final User actual = TokenHelper.parseToken(createToken("secret"), token);
-    Assert.assertNotNull(actual);
+    final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertEquals(actual, expected);
   }
 
@@ -52,7 +49,7 @@ public class TokenHelperTest {
   public void invalidToken() {
     final User expected = User.create("foo", "bar", "foo@example.com", null);
     final String token = TokenHelper.createToken(createToken("big secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
-    final User actual = TokenHelper.parseToken(createToken("small secret"), token);
+    final User actual = TokenHelper.parseToken(createToken("small secret"), token, 0);
     Assert.assertNull(actual);
   }
 
@@ -60,7 +57,7 @@ public class TokenHelperTest {
   public void expiredToken() {
     final User expected = User.create("foo", "bar", "foo@example.com", null);
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() - 2000));
-    final User actual = TokenHelper.parseToken(createToken("secret"), token);
+    final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertNull(actual);
   }
 
