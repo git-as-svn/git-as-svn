@@ -41,7 +41,7 @@ import java.util.Objects;
  */
 public class LfsContentManager implements ContentManager {
   private final int tokenExpireSec;
-  private final int tokenEnsureSec;
+  private final float tokenEnsureTime;
 
   @FunctionalInterface
   public interface Checker {
@@ -53,16 +53,16 @@ public class LfsContentManager implements ContentManager {
   @NotNull
   private final LfsStorage storage;
 
-  public LfsContentManager(@NotNull LocalContext context, @NotNull LfsStorage storage, int tokenExpireSec, int tokenEnsureSec) {
+  public LfsContentManager(@NotNull LocalContext context, @NotNull LfsStorage storage, int tokenExpireSec, float tokenEnsureTime) {
     this.context = context;
     this.storage = storage;
     this.tokenExpireSec = tokenExpireSec;
-    this.tokenEnsureSec = tokenEnsureSec;
+    this.tokenEnsureTime = tokenEnsureTime;
   }
 
   private User getAuthInfo(@NotNull HttpServletRequest request) {
     final WebServer server = context.getShared().sure(WebServer.class);
-    final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION), tokenEnsureSec);
+    final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION), Math.round(tokenExpireSec * tokenEnsureTime));
     return user == null ? User.getAnonymous() : user;
   }
 

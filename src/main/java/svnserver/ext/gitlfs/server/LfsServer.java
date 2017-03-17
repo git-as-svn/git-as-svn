@@ -49,13 +49,13 @@ public class LfsServer implements Shared {
   @Nullable
   private final String privateToken;
   private int tokenExpireSec;
-  private int tokenEnsureSec;
+  private float tokenEnsureTime;
 
-  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken, int tokenExpireSec, int tokenEnsureSec) {
+  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken, int tokenExpireSec, float tokenEnsureTime) {
     this.pathFormat = pathFormat;
     this.privateToken = privateToken;
     this.tokenExpireSec = tokenExpireSec > 0 ? tokenExpireSec : LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC;
-    this.tokenEnsureSec = (tokenEnsureSec > 0) && (tokenEnsureSec < this.tokenExpireSec / 2) ? tokenEnsureSec : this.tokenExpireSec / 2;
+    this.tokenEnsureTime =   Math.max(0.0f, Math.min(tokenEnsureTime, 1.0f));
   }
 
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
@@ -63,8 +63,8 @@ public class LfsServer implements Shared {
     final String name = localContext.getName();
 
     final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
-    final ContentManager pointerManager = new LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureSec);
-    final ContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0);
+    final ContentManager pointerManager = new LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureTime);
+    final ContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0.0f);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken, tokenExpireSec))
