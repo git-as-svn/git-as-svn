@@ -176,7 +176,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
       try (InputStream stream = temporaryStream.toInputStream()) {
         objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
       }
-      log.info("Created blob {} for file: {}", objectId.getObject().getName(), path);
+      log.info("Created blob {} for file: {}", objectId.getObject().getName(), entry.getFullPath());
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
