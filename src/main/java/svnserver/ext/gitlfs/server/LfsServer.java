@@ -55,7 +55,7 @@ public class LfsServer implements Shared {
     this.pathFormat = pathFormat;
     this.privateToken = privateToken;
     this.tokenExpireSec = tokenExpireSec > 0 ? tokenExpireSec : LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC;
-    this.tokenEnsureTime =   Math.max(0.0f, Math.min(tokenEnsureTime, 1.0f));
+    this.tokenEnsureTime = Math.max(0.0f, Math.min(tokenEnsureTime, 1.0f));
   }
 
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
@@ -67,13 +67,13 @@ public class LfsServer implements Shared {
     final ContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0.0f);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
-            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken, tokenExpireSec))
+            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken, tokenExpireSec, tokenEnsureTime))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT))
             .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(contentManager))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
-    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext, tokenExpireSec)));
+    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext, tokenExpireSec, tokenEnsureTime)));
   }
 
   public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {

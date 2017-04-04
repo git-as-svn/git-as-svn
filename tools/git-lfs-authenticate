@@ -22,6 +22,7 @@ def load_config():
     config.read([
         "/etc/git-as-svn/git-lfs-authenticate.cfg",
         os.path.expanduser("~/.git-lfs-authenticate.cfg"),
+        os.path.join(os.path.dirname(sys.argv[0]), "git-lfs-authenticate.cfg"),
     ])
     return config
 

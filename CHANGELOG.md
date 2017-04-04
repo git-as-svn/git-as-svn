@@ -1,4 +1,8 @@
 # Changes
+## 1.1.3
+
+ * Fix ISO 8601 date formatting.
+
 ## 1.1.2
 
  * Add reference to original commit as parent for prevent commit removing by `git gc` #118.

@@ -36,12 +36,14 @@ public class LfsAuthServlet extends HttpServlet {
   @Nullable
   private final String privateToken;
   private final int tokenExpireSec;
+  private final float tokenExpireTime;
 
-  public LfsAuthServlet(@NotNull LocalContext context, @NotNull String baseLfsUrl, @Nullable String privateToken, int tokenExpireSec) {
+  public LfsAuthServlet(@NotNull LocalContext context, @NotNull String baseLfsUrl, @Nullable String privateToken, int tokenExpireSec, float tokenExpireTime) {
     this.context = context;
     this.baseLfsUrl = baseLfsUrl;
     this.privateToken = privateToken;
     this.tokenExpireSec = tokenExpireSec;
+    this.tokenExpireTime = tokenExpireTime;
   }
 
   @Override
@@ -89,7 +91,7 @@ public class LfsAuthServlet extends HttpServlet {
     if (!privateToken.equals(token)) {
       throw new ServerError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
     }
-    return LfsAuthHelper.createToken(context.getShared(), uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl), username, external, anonymous, tokenExpireSec);
+    return LfsAuthHelper.createToken(context.getShared(), uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl), username, external, anonymous, tokenExpireSec, tokenExpireTime);
   }
 
   @NotNull

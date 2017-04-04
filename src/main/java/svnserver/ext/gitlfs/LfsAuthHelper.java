@@ -40,7 +40,8 @@ public class LfsAuthHelper {
       @Nullable String username,
       @Nullable String external,
       boolean anonymous,
-      int tokenExpireSec
+      int tokenExpireSec,
+      float tokenEnsureTime
   ) throws ServerError {
     try {
       final UserDB userDB = context.sure(UserDB.class);
@@ -56,7 +57,7 @@ public class LfsAuthHelper {
         //throw new NotFoundException();
         throw new ServerError(HttpServletResponse.SC_NOT_FOUND, "User not found");
       }
-      return createToken(context, baseLfsUrl, user, tokenExpireSec);
+      return createToken(context, baseLfsUrl, user, tokenExpireSec, tokenEnsureTime);
     } catch (SVNException | IOException e) {
       throw new ServerError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Can't get user information. See server log for more details", e);
     }
@@ -85,13 +86,18 @@ public class LfsAuthHelper {
       @NotNull SharedContext context,
       @NotNull URI baseLfsUrl,
       @NotNull User user,
-      int tokenExpireSec
+      int tokenExpireSec,
+      float tokenEnsureTime
   ) throws IOException {
-    NumericDate expireAt = getExpire(tokenExpireSec);
+    int expireSec = tokenExpireSec <= 0 ? LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec;
+    int ensureSec = (int) Math.ceil(expireSec * tokenEnsureTime);
+    NumericDate now = NumericDate.now();
+    NumericDate expireAt = NumericDate.fromSeconds(now.getValue() + expireSec);
+    NumericDate ensureAt = NumericDate.fromSeconds(now.getValue() + ensureSec);
     return new Link(
         baseLfsUrl,
         createTokenHeader(context, user, expireAt),
-        new Date(expireAt.getValueInMillis())
+        new Date(ensureAt.getValueInMillis())
     );
   }
 }
