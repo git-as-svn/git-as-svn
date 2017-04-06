@@ -2,6 +2,7 @@
 ## 1.1.3
 
  * Fix ISO 8601 date formatting.
+ * Increase default token expire time to one hour (3600 sec).
 
 ## 1.1.2
 

@@ -32,7 +32,7 @@ import java.io.IOException;
 @ConfigType("lfs")
 public class LfsConfig implements SharedConfig, LfsStorageFactory {
   // Default client token expiration time.
-  public static final int DEFAULT_TOKEN_EXPIRE_SEC = 900;
+  public static final int DEFAULT_TOKEN_EXPIRE_SEC = 3600;
   // Allow batch API request only if token is not expired in token ensure time (part of tokenExpireTime).
   public static final float DEFAULT_TOKEN_ENSURE_TIME = 0.5f;
 
