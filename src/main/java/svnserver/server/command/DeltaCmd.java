@@ -123,6 +123,30 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     pipeline.reportCommand(context);
   }
 
+  private static class FailureInfo {
+    private final int errorCode;
+    private final String errorMessage;
+    private final String errorFile;
+    private final int errorLine;
+
+    FailureInfo(@NotNull SvnServerParser parser) throws IOException {
+      errorCode = parser.readNumber();
+      errorMessage = parser.readText();
+      errorFile = parser.readText();
+      errorLine = parser.readNumber();
+      parser.readToken(ListEndToken.class);
+    }
+
+    public void write(@NotNull SvnServerWriter writer) throws IOException {
+      writer.listBegin()
+          .number(errorCode)
+          .string(errorMessage)
+          .string(errorFile)
+          .number(errorLine)
+          .listEnd();
+    }
+  }
+
   public static class ReportPipeline {
     private int lastTokenId;
     @NotNull
@@ -299,19 +323,17 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       switch (clientStatus) {
         case "failure": {
           parser.readToken(ListBeginToken.class);
-          parser.readToken(ListBeginToken.class);
-          final int errorCode = parser.readNumber();
-          final String errorMessage = parser.readText();
-          final String errorFile = parser.readText();
-          final int errorLine = parser.readNumber();
-          parser.readToken(ListEndToken.class);
-          parser.readToken(ListEndToken.class);
-          parser.readToken(ListEndToken.class);
-          if (errorFile.isEmpty()) {
-            log.error("Received client error: {} {}", errorCode, errorMessage);
-          } else {
-            log.error("Received client error [%s:%d]: {} {}", errorFile, errorLine, errorCode, errorMessage);
+          final List<FailureInfo> failures = new ArrayList<>();
+          while (parser.readItem(ListBeginToken.class) != null) {
+            final FailureInfo failure = new FailureInfo(parser);
+            if (failure.errorFile.isEmpty()) {
+              log.error("Received client error: {} {}", failure.errorCode, failure.errorMessage);
+            } else {
+              log.error("Received client error [%s:%d]: {} {}", failure.errorFile, failure.errorLine, failure.errorCode, failure.errorMessage);
+            }
+            failures.add(failure);
           }
+          parser.readToken(ListEndToken.class);
           writer
               .listBegin()
               .word("abort-edit")
@@ -320,17 +342,15 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           writer
               .listBegin()
               .word("failure")
-              .listBegin()
-              .listBegin()
-              .number(errorCode)
-              .string(errorMessage)
-              .string(errorFile)
-              .number(errorLine)
-              .listEnd()
+              .listBegin();
+          for (FailureInfo failure : failures) {
+            failure.write(writer);
+          }
+          writer
               .listEnd()
               .listEnd();
           writer
-              .listBegin();
+               .listBegin();
           break;
         }
         case "success": {
