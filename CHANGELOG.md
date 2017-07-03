@@ -3,6 +3,7 @@
 
  * Fix ISO 8601 date formatting.
  * Increase default token expire time to one hour (3600 sec).
+ * Add string-suffix parameter for git-lfs-authenticate script.
 
 ## 1.1.2
 

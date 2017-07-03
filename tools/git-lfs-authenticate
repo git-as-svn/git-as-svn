@@ -18,6 +18,7 @@ def load_config():
         "socket-file": "/var/run/git-as-svn.socket",
         "mode": "username",
         "variable": "USER",
+        "strip-suffix": ".git",
     })
     config.read([
         "/etc/git-as-svn/git-lfs-authenticate.cfg",
@@ -73,6 +74,10 @@ identificator = os.getenv(config.get("DEFAULT", "variable"))
 if identificator is None:
     mode = "anonymous"
     identificator = ""
+
+stripSuffix = config.get("DEFAULT", "strip-suffix")
+if args.repository.endswith(stripSuffix):
+    args.repository = args.repository[:-len(stripSuffix)]
 
 client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 client.connect(socketFile)
