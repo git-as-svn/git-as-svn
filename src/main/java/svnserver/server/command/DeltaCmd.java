@@ -134,7 +134,16 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       errorMessage = parser.readText();
       errorFile = parser.readText();
       errorLine = parser.readNumber();
+    }
+
+    @Nullable
+    public static FailureInfo read(@NotNull SvnServerParser parser) throws IOException {
+      if (parser.readItem(ListBeginToken.class) == null) {
+        return null;
+      }
+      final FailureInfo result = new FailureInfo(parser);
       parser.readToken(ListEndToken.class);
+      return result;
     }
 
     public void write(@NotNull SvnServerWriter writer) throws IOException {
@@ -324,8 +333,11 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         case "failure": {
           parser.readToken(ListBeginToken.class);
           final List<FailureInfo> failures = new ArrayList<>();
-          while (parser.readItem(ListBeginToken.class) != null) {
-            final FailureInfo failure = new FailureInfo(parser);
+          while (true) {
+            final FailureInfo failure = FailureInfo.read(parser);
+            if (failure == null) {
+              break;
+            }
             if (failure.errorFile.isEmpty()) {
               log.error("Received client error: {} {}", failure.errorCode, failure.errorMessage);
             } else {
@@ -350,7 +362,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
               .listEnd()
               .listEnd();
           writer
-               .listBegin();
+              .listBegin();
           break;
         }
         case "success": {
