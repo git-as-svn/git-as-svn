@@ -16,7 +16,6 @@ import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
-import svnserver.server.SvnServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,8 +74,6 @@ public class LfsLocalStorage implements LfsStorage {
   static File getPath(@NotNull LfsLayout layout, @NotNull File root, @NotNull String oid, @NotNull String suffix) {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
-    File file = new File(root, layout.getPath(oid.substring(offset)) + suffix);
-    log.warn(file.getAbsolutePath());
-    return file;
+    return new File(root, layout.getPath(oid.substring(offset)) + suffix);
   }
 }
