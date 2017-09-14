@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Simple repository mapping by predefined list.
@@ -53,10 +54,13 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
 
   @Override
   public void initRevisions() throws IOException, SVNException {
-    for (Map.Entry<String, VcsRepository> entry : mapping.entrySet()) {
-      log.info("Repository initialize: {}", entry.getKey());
-      entry.getValue().updateRevisions();
-    }
+    new ConcurrentHashMap<>(mapping).forEachEntry(0, entry -> {
+      try {
+        entry.getValue().updateRevisions();
+      } catch (IOException | SVNException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   @Nullable
