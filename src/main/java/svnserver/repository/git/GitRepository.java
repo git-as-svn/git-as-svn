@@ -204,19 +204,19 @@ public class GitRepository implements VcsRepository {
       final long beginTime = System.currentTimeMillis();
       int processed = 0;
       long reportTime = beginTime;
-      log.info("Loading cached revision changes: {} revision", newRevs.size());
+      log.info("[{}]: loading cached revision changes: {} revisions", context.getName(), newRevs.size());
       for (int i = newRevs.size() - 1; i >= 0; i--) {
         loadRevisionInfo(newRevs.get(i));
         processed++;
         long currentTime = System.currentTimeMillis();
         if (currentTime - reportTime > REPORT_DELAY) {
-          log.info("  processed cached revision: {} ({} rev/sec)", newRevs.size() - i, 1000.0f * processed / (currentTime - reportTime));
+          log.info("[{}]: processed cached revision: {}/{} ({} rev/sec)", context.getName(), newRevs.size() - i, newRevs.size(), 1000.0f * processed / (currentTime - reportTime));
           reportTime = currentTime;
           processed = 0;
         }
       }
       final long endTime = System.currentTimeMillis();
-      log.info("Cached revision loaded: {} ms", endTime - beginTime);
+      log.info("[{}]: {} cached revision loaded: {} ms", context.getName(), newRevs.size(), endTime - beginTime);
       return true;
     } finally {
       lock.writeLock().unlock();
@@ -282,7 +282,7 @@ public class GitRepository implements VcsRepository {
         final long beginTime = System.currentTimeMillis();
         int processed = 0;
         long reportTime = beginTime;
-        log.info("Loading revision changes: {} revision", newRevs.size());
+        log.info("[{}]: Loading revision changes: {} revision", context.getName(), newRevs.size());
         int revisionId = revisions.size();
         ObjectId cacheId = revisions.get(revisions.size() - 1).getCacheCommit();
         for (int i = newRevs.size() - 1; i >= 0; i--) {
@@ -485,7 +485,7 @@ public class GitRepository implements VcsRepository {
   private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
     GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
-      property = factory.create(loadContent(objectId));
+      property = factory.create(loadContent(repository.newObjectReader(), objectId.getObject()));
       if (property.length == 0) {
         property = GitProperty.emptyArray;
       }
@@ -619,8 +619,8 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public static String loadContent(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
-    final byte[] bytes = objectId.getRepo().newObjectReader().open(objectId.getObject()).getBytes();
+  public static String loadContent(@NotNull ObjectReader reader, @NotNull ObjectId objectId) throws IOException {
+    final byte[] bytes = reader.open(objectId).getCachedBytes();
     return new String(bytes, StandardCharsets.UTF_8);
   }
 

@@ -260,7 +260,7 @@ public class LayoutHelper {
     RevWalk revWalk = new RevWalk(objectReader);
     TreeWalk treeWalk = TreeWalk.forPath(objectReader, ENTRY_UUID, revWalk.parseCommit(commit).getTree());
     if (treeWalk != null) {
-      return new String(objectReader.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8);
+      return GitRepository.loadContent(objectReader, treeWalk.getObjectId(0));
     }
     throw new FileNotFoundException(ENTRY_UUID);
   }
