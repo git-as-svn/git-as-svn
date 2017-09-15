@@ -60,6 +60,10 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
       downloadJavadoc = true
       downloadSources = true
 
+      // Workaround for https://youtrack.jetbrains.com/issue/IDEA-175172
+      outputDir file('build/classes/main')
+      testOutputDir file('build/classes/test')
+
       sourceDirs += file("src/generated/main/java")
       testSourceDirs += file("src/generated/test/java")
       generatedSourceDirs += file("src/generated/main/java")
