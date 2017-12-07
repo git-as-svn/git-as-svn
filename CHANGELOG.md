@@ -5,6 +5,7 @@
  * Fix unexpected error message on locked file update #127.
  * Increase default token expire time to one hour (3600 sec).
  * Add string-suffix parameter for git-lfs-authenticate script.
+ * Index repositories using multiple threads on startup #132
 
 ## 1.1.2
 
