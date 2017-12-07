@@ -8,6 +8,8 @@ env:
 addons:
   apt:
     packages:
+    - build-essential
+    - fakeroot
     - gnome-doc-utils
 install:
 - ./gradlew assemble
