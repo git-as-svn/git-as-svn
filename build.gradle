@@ -226,7 +226,8 @@ distZip {
 }
 
 distTar {
-  archiveName "${project.name}_${project.version}.tar"
+  archiveName "${project.name}_${project.version}.tbz2"
+  compression = Compression.BZIP2
 }
 
 def createLauncherClassPath() {
