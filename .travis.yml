@@ -10,6 +10,7 @@ addons:
     packages:
     - build-essential
     - fakeroot
+    - debhelper
     - gnome-doc-utils
 install:
 - ./gradlew assemble
