@@ -13,7 +13,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.context.Shared;
 
-import java.io.IOException;
+import java.util.Collection;
 
 /**
  * Resolving repository by URL.
@@ -24,10 +24,6 @@ public interface VcsRepositoryMapping extends Shared {
   @Nullable
   RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException;
 
-  /**
-   * Update revision information in all mapped repositories.
-   *
-   * @throws IOException
-   */
-  void initRevisions() throws IOException, SVNException;
+  @NotNull
+  Collection<VcsRepository> getRepositories();
 }

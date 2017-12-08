@@ -1,6 +1,7 @@
 !config:
 realm: Example realm
 compressionEnabled: true
+parallelIndexing: true
 
 # Use GitLab repositories
 repositoryMapping: !gitlabMapping

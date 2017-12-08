@@ -48,6 +48,7 @@ public final class Config {
   private boolean reuseAddress = false;
   private boolean compressionEnabled = true;
   private long shutdownTimeout = TimeUnit.SECONDS.toMillis(5);
+  private boolean parallelIndexing = true;
 
   @SuppressWarnings("UnusedDeclaration")
   public Config() {
@@ -110,6 +111,10 @@ public final class Config {
   @NotNull
   public List<SharedConfig> getShared() {
     return shared;
+  }
+
+  public boolean canUseParallelIndexing() {
+    return parallelIndexing;
   }
 
   public boolean isCompressionEnabled() {
