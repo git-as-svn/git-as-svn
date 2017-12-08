@@ -128,7 +128,7 @@ public class SvnServer extends Thread {
       try {
         repository.updateRevisions();
       } catch (IOException | SVNException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(String.format("Failed to initialize repository: %s", repository.getContext().getName()), e);
       }
     };
 
