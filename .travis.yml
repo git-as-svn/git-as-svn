@@ -26,9 +26,11 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-  - provider: script
-    script: deploy/deploy.manual.sh
+  - provider: pages
+    github_token:
+      secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
     skip_cleanup: true
+    local_dir: build/doc
     on:
       branch: master
   - provider: script
