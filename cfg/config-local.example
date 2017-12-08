@@ -19,6 +19,10 @@
 #
 # compressionEnabled: true
 
+# Use parallel repository indexing on startup
+#
+# parallelIndexing: true
+
 # Set cache location
 cacheConfig: !persistentCache
   path: ../build/git-as-svn.mapdb

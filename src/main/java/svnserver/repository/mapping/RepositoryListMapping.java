@@ -19,6 +19,7 @@ import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -53,14 +54,9 @@ public class RepositoryListMapping implements VcsRepositoryMapping {
   }
 
   @Override
-  public void initRevisions() throws IOException, SVNException {
-    new ConcurrentHashMap<>(mapping).forEachEntry(0, entry -> {
-      try {
-        entry.getValue().updateRevisions();
-      } catch (IOException | SVNException e) {
-        throw new RuntimeException(e);
-      }
-    });
+  @NotNull
+  public Collection<VcsRepository> getRepositories() {
+    return mapping.values();
   }
 
   @Nullable

@@ -24,9 +24,9 @@ import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
 
 /**
  * Simple repository mapping by predefined list.
@@ -65,10 +65,9 @@ public class GitLabMapping implements VcsRepositoryMapping {
   }
 
   @Override
-  public void initRevisions() throws IOException, SVNException {
-    for (Map.Entry<String, GitLabProject> entry : mapping.entrySet()) {
-      entry.getValue().initRevisions();
-    }
+  @NotNull
+  public Collection<VcsRepository> getRepositories() {
+    return mapping.values().stream().map(GitLabProject::getRepository).collect(Collectors.toList());
   }
 
   @Nullable

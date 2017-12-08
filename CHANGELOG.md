@@ -1,4 +1,10 @@
 # Changes
+
+## 1.1.4
+
+ * Upgrade Kryo to 4.0.1 #121
+ * Add option to disable parallel repository indexing on startup #121
+
 ## 1.1.3
 
  * Fix ISO 8601 date formatting.

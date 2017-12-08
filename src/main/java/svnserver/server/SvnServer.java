@@ -46,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
@@ -122,7 +123,20 @@ public class SvnServer extends Thread {
 
     repositoryMapping = config.getRepositoryMapping().create(context);
     context.add(VcsRepositoryMapping.class, repositoryMapping);
-    repositoryMapping.initRevisions();
+
+    final Consumer<VcsRepository> init = repository -> {
+      try {
+        repository.updateRevisions();
+      } catch (IOException | SVNException e) {
+        throw new RuntimeException(e);
+      }
+    };
+
+    if (config.canUseParallelIndexing()) {
+      repositoryMapping.getRepositories().parallelStream().forEach(init);
+    } else {
+      repositoryMapping.getRepositories().forEach(init);
+    }
 
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
