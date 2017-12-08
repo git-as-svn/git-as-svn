@@ -316,9 +316,12 @@ public class GitRepository implements VcsRepository {
     }
   }
 
+  @NotNull
   private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
     final HTreeMap<String, byte[]> cache = context.getShared().getCacheDB().getHashMap("cache-revision");
-    CacheRevision result = CacheRevision.deserialize(cache.get(newCommit.name()));
+    final String cacheKey = String.format("%s|%s", newCommit.name(), renameDetection ? "1" : "0");
+
+    CacheRevision result = CacheRevision.deserialize(cache.get(cacheKey));
     if (result == null) {
       final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
       final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
@@ -332,7 +335,7 @@ public class GitRepository implements VcsRepository {
           collectRename(oldTree, newTree),
           fileChange
       );
-      cache.put(newCommit.name(), CacheRevision.serialize(result));
+      cache.put(cacheKey, CacheRevision.serialize(result));
     }
     return result;
   }
@@ -485,7 +488,7 @@ public class GitRepository implements VcsRepository {
   private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
     GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
-      property = factory.create(loadContent(repository.newObjectReader(), objectId.getObject()));
+      property = factory.create(loadContent(objectId.getRepo().newObjectReader(), objectId.getObject()));
       if (property.length == 0) {
         property = GitProperty.emptyArray;
       }

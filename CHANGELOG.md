@@ -1,5 +1,10 @@
 # Changes
 
+## 1.1.5
+
+ * Fix submodules support (was broken in 1.1.3)
+ * Invalidate caches properly if renameDetection setting was changed
+
 ## 1.1.4
 
  * Upgrade Kryo to 4.0.1 #121
