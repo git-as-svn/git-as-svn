@@ -316,9 +316,12 @@ public class GitRepository implements VcsRepository {
     }
   }
 
+  @NotNull
   private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
     final HTreeMap<String, byte[]> cache = context.getShared().getCacheDB().getHashMap("cache-revision");
-    CacheRevision result = CacheRevision.deserialize(cache.get(newCommit.name()));
+    final String cacheKey = String.format("%s|%s", newCommit.name(), renameDetection ? "1" : "0");
+
+    CacheRevision result = CacheRevision.deserialize(cache.get(cacheKey));
     if (result == null) {
       final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
       final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
@@ -332,7 +335,7 @@ public class GitRepository implements VcsRepository {
           collectRename(oldTree, newTree),
           fileChange
       );
-      cache.put(newCommit.name(), CacheRevision.serialize(result));
+      cache.put(cacheKey, CacheRevision.serialize(result));
     }
     return result;
   }
