@@ -111,7 +111,7 @@ dependencies {
   compile "org.eclipse.jetty:jetty-server:9.3.7.v20160115"
   compile "org.eclipse.jetty:jetty-servlet:9.3.7.v20160115"
   compile "org.gitlab:java-gitlab-api:1.2.3"
-  compile "com.esotericsoftware:kryo:3.0.3"
+  compile "com.esotericsoftware:kryo:4.0.1"
   compile "org.bitbucket.b_c:jose4j:0.4.4"
   compile "com.google.guava:guava:19.0"
   compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"

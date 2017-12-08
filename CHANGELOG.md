@@ -1,4 +1,9 @@
 # Changes
+
+## 1.1.4
+
+ * Upgrade Kryo to 4.0.1
+
 ## 1.1.3
 
  * Fix ISO 8601 date formatting.
