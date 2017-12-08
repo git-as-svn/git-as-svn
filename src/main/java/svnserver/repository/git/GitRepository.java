@@ -488,7 +488,7 @@ public class GitRepository implements VcsRepository {
   private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
     GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
-      property = factory.create(loadContent(repository.newObjectReader(), objectId.getObject()));
+      property = factory.create(loadContent(objectId.getRepo().newObjectReader(), objectId.getObject()));
       if (property.length == 0) {
         property = GitProperty.emptyArray;
       }
