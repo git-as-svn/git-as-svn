@@ -17,6 +17,7 @@ import svnserver.parser.SvnServerWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -39,7 +40,8 @@ public final class PlainAuthenticator implements Authenticator, PasswordChecker 
   @Nullable
   @Override
   public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException, SVNException {
-    final String[] credentials = new String(fromBase64(token), StandardCharsets.US_ASCII).split("\u0000");
+    final String decodedToken = new String(Base64.getDecoder().decode(token), StandardCharsets.US_ASCII);
+    final String[] credentials = decodedToken.split("\u0000");
     if (credentials.length < 3)
       return null;
 
@@ -52,33 +54,5 @@ public final class PlainAuthenticator implements Authenticator, PasswordChecker 
   @Override
   public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
     return passwordChecker.check(userName, password);
-  }
-
-  /**
-   * Taken from {@link org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator#fromBase64(String)}.
-   */
-  private static byte[] fromBase64(@Nullable String src) {
-    if (src == null) {
-      return new byte[0];
-    }
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    for (int i = 0; i < src.length(); i++) {
-      char ch = src.charAt(i);
-      if (!Character.isWhitespace(ch) && ch != '\n' && ch != '\r') {
-        bos.write((byte) ch & 0xFF);
-      }
-    }
-    byte[] cbytes = new byte[src.length()];
-    src = new String(bos.toByteArray(), StandardCharsets.US_ASCII);
-    int clength = SVNBase64.base64ToByteArray(new StringBuffer(src), cbytes);
-    byte[] result = new byte[clength];
-    // strip trailing -1s.
-    for (int i = clength - 1; i >= 0; i--) {
-      if (i == -1) {
-        clength--;
-      }
-    }
-    System.arraycopy(cbytes, 0, result, 0, clength);
-    return result;
   }
 }
