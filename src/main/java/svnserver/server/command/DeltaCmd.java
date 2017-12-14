@@ -563,7 +563,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
                         .listEnd();
                     return null;
                   } catch (IOException e) {
-                    throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
+                    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR), e);
                   }
                 }
 

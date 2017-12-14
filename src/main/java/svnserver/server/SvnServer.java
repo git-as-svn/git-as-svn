@@ -58,14 +58,16 @@ public class SvnServer extends Thread {
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
   @NotNull
-  private static final Set<SVNErrorCode> WARNING_CODES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new SVNErrorCode[]{
+  private static final Set<SVNErrorCode> WARNING_CODES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
       SVNErrorCode.CANCELLED,
       SVNErrorCode.ENTRY_NOT_FOUND,
       SVNErrorCode.FS_NOT_FOUND,
       SVNErrorCode.RA_NOT_AUTHORIZED,
       SVNErrorCode.REPOS_HOOK_FAILURE,
       SVNErrorCode.WC_NOT_UP_TO_DATE,
-  })));
+      SVNErrorCode.IO_WRITE_ERROR,
+      SVNErrorCode.IO_PIPE_READ_ERROR
+  )));
 
   @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
