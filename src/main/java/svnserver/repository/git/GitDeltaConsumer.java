@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * @author a.navrotskiy
  */
-public class GitDeltaConsumer implements VcsDeltaConsumer {
+final class GitDeltaConsumer implements VcsDeltaConsumer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
   @NotNull
@@ -68,7 +68,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   private String md5;
 
-  public GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @Nullable User user) throws IOException, SVNException {
+  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @Nullable User user) throws IOException, SVNException {
     this.writer = writer;
     this.entry = entry;
     this.user = user;
@@ -94,8 +94,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     return props;
   }
 
-  @Nullable
-  public GitObject<ObjectId> getOriginalId() {
+  @Nullable GitObject<ObjectId> getOriginalId() {
     return originalId;
   }
 
@@ -112,7 +111,7 @@ public class GitDeltaConsumer implements VcsDeltaConsumer {
     return objectId;
   }
 
-  public boolean migrateFilter(@NotNull GitFilter filter) throws IOException, SVNException {
+  boolean migrateFilter(@NotNull GitFilter filter) throws IOException, SVNException {
     if (newFilter == null || objectId == null) {
       throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
     }

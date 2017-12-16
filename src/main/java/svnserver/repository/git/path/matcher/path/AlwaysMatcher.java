@@ -16,7 +16,7 @@ import svnserver.repository.git.path.PathMatcher;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class AlwaysMatcher implements PathMatcher {
+public final class AlwaysMatcher implements PathMatcher {
   @NotNull
   public final static AlwaysMatcher INSTANCE = new AlwaysMatcher();
 

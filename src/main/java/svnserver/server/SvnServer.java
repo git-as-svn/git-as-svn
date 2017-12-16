@@ -191,7 +191,7 @@ public class SvnServer extends Thread {
     }
   }
 
-  public void serveClient(@NotNull Socket socket) throws IOException, SVNException {
+  private void serveClient(@NotNull Socket socket) throws IOException, SVNException {
     socket.setTcpNoDelay(true);
     final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
@@ -384,7 +384,7 @@ public class SvnServer extends Thread {
     poolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
   }
 
-  public boolean isCompressionEnabled() {
+  boolean isCompressionEnabled() {
     return config.isCompressionEnabled();
   }
 }

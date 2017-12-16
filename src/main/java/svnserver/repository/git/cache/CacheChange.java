@@ -25,6 +25,7 @@ public class CacheChange {
   @Nullable
   private final ObjectId newFile;
 
+  @SuppressWarnings("unused")
   protected CacheChange() {
     oldFile = null;
     newFile = null;
@@ -34,7 +35,7 @@ public class CacheChange {
     this(getFileId(logPair.getOldEntry()), getFileId(logPair.getNewEntry()));
   }
 
-  public CacheChange(@Nullable ObjectId oldFile, @Nullable ObjectId newFile) {
+  private CacheChange(@Nullable ObjectId oldFile, @Nullable ObjectId newFile) {
     this.oldFile = oldFile != null ? oldFile.copy() : null;
     this.newFile = newFile != null ? newFile.copy() : null;
   }

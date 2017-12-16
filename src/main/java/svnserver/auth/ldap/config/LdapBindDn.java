@@ -29,7 +29,7 @@ public class LdapBindDn implements LdapBind {
     this("", "");
   }
 
-  public LdapBindDn(@NotNull String bindDn, @NotNull String password) {
+  private LdapBindDn(@NotNull String bindDn, @NotNull String password) {
     this.bindDn = bindDn;
     this.password = password;
   }

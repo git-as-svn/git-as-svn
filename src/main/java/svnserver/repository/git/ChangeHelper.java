@@ -21,12 +21,12 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class ChangeHelper {
+final class ChangeHelper {
   private ChangeHelper() {
   }
 
   @NotNull
-  public static Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
+  static Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
     final Map<String, GitLogPair> changes = new HashMap<>();
     final GitLogPair logEntry = new GitLogPair(oldTree, newTree);
     if (oldTree == null || logEntry.isModified()) {
@@ -103,6 +103,7 @@ public final class ChangeHelper {
       }
     }
 
+    @NotNull
     @Override
     public Iterator<GitLogPair> iterator() {
       return new LogPairIterator(oldTree, newTree);

@@ -16,7 +16,7 @@ import svnserver.repository.git.path.NameMatcher;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class RecursiveMatcher implements NameMatcher {
+public final class RecursiveMatcher implements NameMatcher {
   public static final RecursiveMatcher INSTANCE = new RecursiveMatcher();
 
   private RecursiveMatcher() {

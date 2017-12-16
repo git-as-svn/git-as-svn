@@ -51,16 +51,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private boolean renameDetection = true;
 
   @NotNull
-  public GitPusherConfig getPusher() {
-    return pusher;
-  }
-
-  public boolean isRenameDetection() {
-    return renameDetection;
-  }
-
-  @NotNull
-  public Repository createRepository(@NotNull File fullPath) throws IOException {
+  private Repository createRepository(@NotNull File fullPath) throws IOException {
     if (!fullPath.exists()) {
       log.info("Repository fullPath: {} - not exists, create mode: {}", fullPath, createMode);
       return createMode.createRepository(fullPath, branch);
@@ -78,7 +69,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
     context.add(GitLocation.class, new GitLocation(fullPath));
-    GitRepository repository = new GitRepository(context, createRepository(fullPath), getPusher().create(context), branch, isRenameDetection(), new PersistentLockFactory(context));
+    GitRepository repository = new GitRepository(context, createRepository(fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
     for (LocalConfig extension : extensions) {
       extension.create(context);
     }

@@ -28,7 +28,7 @@ public final class GitLogPair {
   @Nullable
   private final GitFile newEntry;
 
-  public GitLogPair(@Nullable GitFile oldEntry, @Nullable GitFile newEntry) {
+  GitLogPair(@Nullable GitFile oldEntry, @Nullable GitFile newEntry) {
     this.oldEntry = oldEntry;
     this.newEntry = newEntry;
   }
@@ -43,7 +43,7 @@ public final class GitLogPair {
     return newEntry;
   }
 
-  public boolean isContentModified() throws IOException, SVNException {
+  boolean isContentModified() throws IOException, SVNException {
     if (newEntry == null || newEntry.isDirectory())
       return false;
 
@@ -63,7 +63,7 @@ public final class GitLogPair {
     return filter == null ? null : filter.getName();
   }
 
-  public boolean isPropertyModified() throws IOException, SVNException {
+  boolean isPropertyModified() throws IOException, SVNException {
     if ((newEntry == null) || (oldEntry == null)) return false;
     final Map<String, String> newProps = newEntry.getProperties();
     final Map<String, String> oldProps = oldEntry.getProperties();

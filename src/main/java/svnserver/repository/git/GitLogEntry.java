@@ -23,13 +23,13 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLogEntry implements VcsLogEntry {
+final class GitLogEntry implements VcsLogEntry {
   @NotNull
   private final GitLogPair pair;
   @Nullable
   private final VcsCopyFrom copyFrom;
 
-  public GitLogEntry(@NotNull GitLogPair pair, @NotNull Map<String, VcsCopyFrom> renames) {
+  GitLogEntry(@NotNull GitLogPair pair, @NotNull Map<String, VcsCopyFrom> renames) {
     this.pair = pair;
     this.copyFrom = pair.getNewEntry() != null ? renames.get(pair.getNewEntry().getFullPath()) : null;
   }

@@ -132,8 +132,7 @@ public final class SessionContext {
     stepStack.push(step);
   }
 
-  @Nullable
-  public Step poll() {
+  @Nullable Step poll() {
     return stepStack.poll();
   }
 

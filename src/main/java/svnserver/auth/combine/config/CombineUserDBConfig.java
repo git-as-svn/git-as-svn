@@ -33,15 +33,6 @@ public final class CombineUserDBConfig implements UserDBConfig {
   private UserDBConfig[] items = UserDBConfig.emptyArray;
 
   @NotNull
-  public UserDBConfig[] getItems() {
-    return items;
-  }
-
-  public void setItems(@NotNull UserDBConfig[] items) {
-    this.items = items;
-  }
-
-  @NotNull
   @Override
   public UserDB create(@NotNull SharedContext context) {
     return new CombineUserDB(Arrays.stream(items)

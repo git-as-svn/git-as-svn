@@ -22,13 +22,13 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitTreeUpdate {
+final class GitTreeUpdate {
   @NotNull
   private final String name;
   @NotNull
   private final Map<String, GitTreeEntry> entries;
 
-  public GitTreeUpdate(@NotNull String name, @NotNull Iterable<GitTreeEntry> entries) {
+  GitTreeUpdate(@NotNull String name, @NotNull Iterable<GitTreeEntry> entries) {
     this.name = name;
     this.entries = new HashMap<>();
     for (GitTreeEntry entry : entries) {
@@ -41,13 +41,11 @@ public class GitTreeUpdate {
     return name;
   }
 
-  @NotNull
-  public Map<String, GitTreeEntry> getEntries() {
+  @NotNull Map<String, GitTreeEntry> getEntries() {
     return entries;
   }
 
-  @NotNull
-  public ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException, SVNException {
+  @NotNull ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException, SVNException {
     final TreeFormatter treeBuilder = new TreeFormatter();
     final List<GitTreeEntry> sortedEntries = new ArrayList<>(entries.values());
     Collections.sort(sortedEntries);

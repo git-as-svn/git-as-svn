@@ -36,7 +36,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitWriter implements VcsWriter {
+public final class GitWriter implements VcsWriter {
   private static final int MAX_PROPERTY_ERRROS = 50;
 
   @NotNull

@@ -51,7 +51,7 @@ public class ConfigSerializer {
   }
 
   @NotNull
-  public Config load(@NotNull InputStream stream) {
+  private Config load(@NotNull InputStream stream) {
     return yaml.loadAs(stream, Config.class);
   }
 
@@ -76,16 +76,16 @@ public class ConfigSerializer {
     return result;
   }
 
-  public static class ConfigConstructor extends Constructor {
-    public ConfigConstructor(boolean unsafeConfig) {
+  private static class ConfigConstructor extends Constructor {
+    private ConfigConstructor(boolean unsafeConfig) {
       for (Map.Entry<String, Class<?>> entry : configTypes(unsafeConfig).entrySet()) {
         addTypeDescription(new TypeDescription(entry.getValue(), entry.getKey()));
       }
     }
   }
 
-  public static class ConfigRepresenter extends Representer {
-    public ConfigRepresenter(boolean unsafeConfig) {
+  private static class ConfigRepresenter extends Representer {
+    private ConfigRepresenter(boolean unsafeConfig) {
       for (Map.Entry<String, Class<?>> entry : configTypes(unsafeConfig).entrySet()) {
         addClassTag(entry.getValue(), new Tag(entry.getKey()));
       }

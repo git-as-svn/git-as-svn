@@ -21,13 +21,13 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>> {
+public final class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>> {
   @NotNull
   private SortedMap<String, LockDesc> locks;
   @NotNull
   private final String pathKey;
 
-  public TreeMapLockDepthVisitor(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
+  TreeMapLockDepthVisitor(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
     this.pathKey = pathKey;
     this.locks = locks;
   }
@@ -36,7 +36,7 @@ public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>>
   @Override
   public Iterator<LockDesc> visitEmpty() throws SVNException {
     final LockDesc desc = locks.get(pathKey);
-    return desc == null ? Collections.emptyIterator() : Arrays.asList(desc).iterator();
+    return desc == null ? Collections.emptyIterator() : Collections.singletonList(desc).iterator();
   }
 
   @NotNull
@@ -81,7 +81,7 @@ public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>>
     @Nullable
     private LockDesc nextItem;
 
-    public LockDescIterator(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
+    private LockDescIterator(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
       this.iterator = locks.tailMap(pathKey).entrySet().iterator();
       this.pathKey = pathKey;
       this.nextItem = findNext();
@@ -101,7 +101,7 @@ public class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>>
       return result;
     }
 
-    protected LockDesc findNext() {
+    private LockDesc findNext() {
       while (iterator.hasNext()) {
         Map.Entry<String, LockDesc> item = iterator.next();
         if (StringHelper.isParentPath(pathKey, item.getKey())) {

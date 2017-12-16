@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFileTreeEntry extends GitEntryImpl implements GitFile {
+final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   @NotNull
   private final GitRepository repo;
   @NotNull

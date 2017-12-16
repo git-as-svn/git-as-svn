@@ -23,7 +23,7 @@ import java.util.List;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class Wildcard {
+public final class Wildcard {
   @NotNull
   private final PathMatcher matcher;
   private final boolean svnCompatible;

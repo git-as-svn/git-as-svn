@@ -29,7 +29,7 @@ import java.util.UUID;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class TreeMapLockManager implements LockManagerWrite {
+public final class TreeMapLockManager implements LockManagerWrite {
   private final static char SEPARATOR = ':';
 
   @NotNull
@@ -37,7 +37,7 @@ public class TreeMapLockManager implements LockManagerWrite {
   @NotNull
   private final SortedMap<String, LockDesc> locks;
 
-  public TreeMapLockManager(@NotNull VcsRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
+  TreeMapLockManager(@NotNull VcsRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
     this.locks = locks;
     this.repo = repo;
   }

@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class LfsFilter implements GitFilter {
   @NotNull
-  public static final String NAME = "lfs";
+  private static final String NAME = "lfs";
   @NotNull
   private final LfsStorage storage;
   @NotNull
@@ -177,7 +177,7 @@ public class LfsFilter implements GitFilter {
     private final OutputStream stream;
     private long size;
 
-    public TemporaryOutputStream(LfsWriter writer, OutputStream stream) {
+    private TemporaryOutputStream(LfsWriter writer, OutputStream stream) {
       this.writer = writer;
       this.stream = stream;
       size = 0;

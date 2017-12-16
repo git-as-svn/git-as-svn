@@ -21,7 +21,7 @@ import java.util.Objects;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitFileProperty implements GitProperty {
+final class GitFileProperty implements GitProperty {
   @NotNull
   private final PathMatcher matcher;
   @NotNull
@@ -36,7 +36,7 @@ public final class GitFileProperty implements GitProperty {
    * @param property Property name.
    * @param value    Property value.
    */
-  public GitFileProperty(@NotNull PathMatcher matcher, @NotNull String property, @Nullable String value) {
+  GitFileProperty(@NotNull PathMatcher matcher, @NotNull String property, @Nullable String value) {
     this.matcher = matcher;
     this.property = property;
     this.value = value;

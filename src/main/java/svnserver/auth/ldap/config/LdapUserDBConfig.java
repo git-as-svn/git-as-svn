@@ -136,10 +136,6 @@ public final class LdapUserDBConfig implements UserDBConfig {
     return ldapCertPem;
   }
 
-  public void setLdapCertPem(@Nullable String ldapCertPem) {
-    this.ldapCertPem = ldapCertPem;
-  }
-
   public int getMaxConnections() {
     return maxConnections;
   }
@@ -151,10 +147,6 @@ public final class LdapUserDBConfig implements UserDBConfig {
   @NotNull
   public String getFakeMailSuffix() {
     return fakeMailSuffix;
-  }
-
-  public void setFakeMailSuffix(@NotNull String fakeMailSuffix) {
-    this.fakeMailSuffix = fakeMailSuffix;
   }
 
   @NotNull

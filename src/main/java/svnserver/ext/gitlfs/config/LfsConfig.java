@@ -34,7 +34,7 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   // Default client token expiration time.
   public static final int DEFAULT_TOKEN_EXPIRE_SEC = 3600;
   // Allow batch API request only if token is not expired in token ensure time (part of tokenExpireTime).
-  public static final float DEFAULT_TOKEN_ENSURE_TIME = 0.5f;
+  private static final float DEFAULT_TOKEN_ENSURE_TIME = 0.5f;
 
   @NotNull
   private String path = "lfs";
@@ -45,59 +45,9 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   private boolean compress = true;
   private boolean saveMeta = true;
   @Nullable
-  private String token;
+  private String token = null;
   @NotNull
   private LfsLayout layout = LfsLayout.OneLevel;
-
-  @NotNull
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(@NotNull String path) {
-    this.path = path;
-  }
-
-  @NotNull
-  public String getPathFormat() {
-    return pathFormat;
-  }
-
-  public void setPathFormat(@NotNull String pathFormat) {
-    this.pathFormat = pathFormat;
-  }
-
-  public boolean isCompress() {
-    return compress;
-  }
-
-  public void setCompress(boolean compress) {
-    this.compress = compress;
-  }
-
-  public boolean isSaveMeta() {
-    return saveMeta;
-  }
-
-  public void setSaveMeta(boolean saveMeta) {
-    this.saveMeta = saveMeta;
-  }
-
-  public int getTokenExpireSec() {
-    return tokenExpireSec;
-  }
-
-  public void setTokenExpireSec(int tokenExpireSec) {
-    this.tokenExpireSec = tokenExpireSec;
-  }
-
-  public float getTokenEnsureTime() {
-    return tokenEnsureTime;
-  }
-
-  public void setTokenEnsureTime(float tokenEnsureTime) {
-    this.tokenEnsureTime = tokenEnsureTime;
-  }
 
   @NotNull
   public LfsLayout getLayout() {
@@ -116,13 +66,13 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(LfsStorageFactory.class, this);
-    context.add(LfsServer.class, new LfsServer(pathFormat, token, getTokenExpireSec(), getTokenEnsureTime()));
+    context.add(LfsServer.class, new LfsServer(pathFormat, token, tokenExpireSec, tokenEnsureTime));
   }
 
   @NotNull
   public LfsStorage createStorage(@NotNull LocalContext context) {
-    File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), getPath());
-    File metaRoot = isSaveMeta() ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
-    return new LfsLocalStorage(getLayout(), dataRoot, metaRoot, isCompress());
+    File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
+    File metaRoot = saveMeta ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
+    return new LfsLocalStorage(getLayout(), dataRoot, metaRoot, compress);
   }
 }

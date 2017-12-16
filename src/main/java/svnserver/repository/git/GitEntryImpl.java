@@ -22,7 +22,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitEntryImpl implements GitEntry {
+class GitEntryImpl implements GitEntry {
   @NotNull
   private final GitProperty[] props;
   @NotNull
@@ -34,7 +34,7 @@ public class GitEntryImpl implements GitEntry {
   @Nullable
   private String fullPathCache;
 
-  public GitEntryImpl(@NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitProperty[] props, @NotNull String name, @NotNull FileMode fileMode) {
+  GitEntryImpl(@NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitProperty[] props, @NotNull String name, @NotNull FileMode fileMode) {
     this.parentPath = parentPath;
     this.name = name;
     this.props = GitProperty.joinProperties(parentProps, name, fileMode, props);

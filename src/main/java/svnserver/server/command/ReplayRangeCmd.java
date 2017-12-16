@@ -36,7 +36,7 @@ import java.util.Map;
  *
  * @author a.navrotskiy
  */
-public class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
+public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
   public static class Params {
     private final int startRev;
     private final int endRev;

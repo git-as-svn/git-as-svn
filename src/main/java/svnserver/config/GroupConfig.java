@@ -18,7 +18,7 @@ public final class GroupConfig {
   public static final GroupConfig[] emptyArray = {};
 
   @NotNull
-  private String name;
+  private String name = "";
 
   @NotNull
   private String[] users = {};

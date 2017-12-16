@@ -126,7 +126,7 @@ public final class ACL implements VcsAccess {
   }
 
   private boolean doCheck(@NotNull User user, @NotNull String path) {
-    for (AclEntry entry : path2acl.getOrDefault(path, Collections.<AclEntry>emptySet()))
+    for (AclEntry entry : path2acl.getOrDefault(path, Collections.emptySet()))
       if (entry.allows(user.getUserName()))
         return true;
 

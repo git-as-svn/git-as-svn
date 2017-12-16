@@ -25,7 +25,7 @@ public class GitLabContext implements Shared {
   @NotNull
   private final GitLabConfig config;
 
-  public GitLabContext(@NotNull GitLabConfig config) {
+  GitLabContext(@NotNull GitLabConfig config) {
     this.config = config;
   }
 

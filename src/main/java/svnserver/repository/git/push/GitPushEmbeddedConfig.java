@@ -29,36 +29,9 @@ public class GitPushEmbeddedConfig implements GitPusherConfig {
   @Nullable
   private String update = "update";
 
-  @Nullable
-  public String getPreReceive() {
-    return preReceive;
-  }
-
-  public void setPreReceive(@Nullable String preCommit) {
-    this.preReceive = preCommit;
-  }
-
-  @Nullable
-  public String getPostReceive() {
-    return postReceive;
-  }
-
-  public void setPostReceive(@Nullable String postReceive) {
-    this.postReceive = postReceive;
-  }
-
-  @Nullable
-  public String getUpdate() {
-    return update;
-  }
-
-  public void setUpdate(@Nullable String update) {
-    this.update = update;
-  }
-
   @NotNull
   @Override
   public GitPusher create(@NotNull LocalContext context) {
-    return new GitPushEmbedded(context, getPreReceive(), getPostReceive(), getUpdate());
+    return new GitPushEmbedded(context, preReceive, postReceive, update);
   }
 }

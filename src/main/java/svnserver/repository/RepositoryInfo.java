@@ -15,7 +15,7 @@ import org.tmatesoft.svn.core.SVNURL;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class RepositoryInfo {
+public final class RepositoryInfo {
   @NotNull
   private final SVNURL baseUrl;
   @NotNull

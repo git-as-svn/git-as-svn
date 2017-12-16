@@ -26,7 +26,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
+public final class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
 
   public static class Params {
     private final int revision;

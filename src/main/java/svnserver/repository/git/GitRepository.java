@@ -69,7 +69,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final LockManagerFactory lockManagerFactory;
   @NotNull
-  public static final byte[] emptyBytes = new byte[0];
+  static final byte[] emptyBytes = new byte[0];
   @NotNull
   private final Repository repository;
   @NotNull
@@ -164,7 +164,7 @@ public class GitRepository implements VcsRepository {
    * @throws IOException
    * @throws SVNException
    */
-  public boolean loadRevisions() throws IOException, SVNException {
+  private void loadRevisions() throws IOException, SVNException {
     // Fast check.
     lock.readLock().lock();
     try {
@@ -174,7 +174,7 @@ public class GitRepository implements VcsRepository {
         lastCommitId = revisions.get(lastRevision).getCacheCommit();
         final Ref head = repository.getRef(svnBranch);
         if (head.getObjectId().equals(lastCommitId)) {
-          return false;
+          return;
         }
       }
     } finally {
@@ -199,7 +199,7 @@ public class GitRepository implements VcsRepository {
         objectId = commit.getParent(0);
       }
       if (newRevs.isEmpty()) {
-        return false;
+        return;
       }
       final long beginTime = System.currentTimeMillis();
       int processed = 0;
@@ -217,7 +217,6 @@ public class GitRepository implements VcsRepository {
       }
       final long endTime = System.currentTimeMillis();
       log.info("[{}]: {} cached revision loaded: {} ms", context.getName(), newRevs.size(), endTime - beginTime);
-      return true;
     } finally {
       lock.writeLock().unlock();
     }

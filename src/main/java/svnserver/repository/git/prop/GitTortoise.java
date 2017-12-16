@@ -49,7 +49,7 @@ final class GitTortoise implements GitProperty {
    *
    * @param content Original file content.
    */
-  public GitTortoise(@NotNull String content) throws IOException {
+  GitTortoise(@NotNull String content) throws IOException {
     this.tortoiseProps = parseConfig(content);
   }
 

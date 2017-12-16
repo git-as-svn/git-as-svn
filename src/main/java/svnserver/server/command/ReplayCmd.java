@@ -30,7 +30,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
+public final class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
   public static class Params {
     private final int revision;
 
@@ -57,7 +57,7 @@ public class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
         .listEnd();
   }
 
-  public static void replayRevision(@NotNull SessionContext context, int revision, boolean sendDeltas) throws IOException, SVNException {
+  static void replayRevision(@NotNull SessionContext context, int revision, boolean sendDeltas) throws IOException, SVNException {
     final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(new DeltaParams(new int[]{revision}, "", "", sendDeltas, Depth.Infinity, SendCopyFrom.OnlyRelative, false, false));
     pipeline.setPathReport("", revision - 1, false, SVNDepth.INFINITY);
     pipeline.sendDelta(context, "", revision);
