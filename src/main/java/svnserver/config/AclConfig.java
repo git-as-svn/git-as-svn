@@ -35,10 +35,6 @@ public final class AclConfig implements AccessConfig {
     return groups;
   }
 
-  public void setGroups(@NotNull GroupConfig[] groups) {
-    this.groups = groups;
-  }
-
   @NotNull
   public AclAccessConfig[] getAccess() {
     return access;

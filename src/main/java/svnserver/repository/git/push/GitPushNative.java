@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitPushNative implements GitPusher {
+final class GitPushNative implements GitPusher {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitPushNativeConfig.class);
   @NotNull
@@ -41,7 +41,7 @@ public class GitPushNative implements GitPusher {
   @NotNull
   private final SharedContext context;
 
-  public GitPushNative(@NotNull LocalContext context) {
+  GitPushNative(@NotNull LocalContext context) {
     this.context = context.getShared();
   }
 

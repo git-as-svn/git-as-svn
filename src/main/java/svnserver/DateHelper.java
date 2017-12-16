@@ -25,9 +25,4 @@ public class DateHelper {
         .withZone(ZoneOffset.UTC)
         .format(time);
   }
-
-  @NotNull
-  public static String toISO8601(long time) {
-    return toISO8601(Instant.ofEpochMilli(time));
-  }
 }

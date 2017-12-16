@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitFilterProperty implements GitProperty {
+final class GitFilterProperty implements GitProperty {
   @NotNull
   private final PathMatcher matcher;
   @NotNull
@@ -32,7 +32,7 @@ public final class GitFilterProperty implements GitProperty {
    * @param matcher    File matcher.
    * @param filterName Filter name.
    */
-  public GitFilterProperty(@NotNull PathMatcher matcher, @NotNull String filterName) {
+  GitFilterProperty(@NotNull PathMatcher matcher, @NotNull String filterName) {
     this.matcher = matcher;
     this.filterName = filterName;
   }

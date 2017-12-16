@@ -20,7 +20,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitObject<T extends ObjectId> {
+public final class GitObject<T extends ObjectId> {
   @NotNull
   private final Repository repo;
   @NotNull

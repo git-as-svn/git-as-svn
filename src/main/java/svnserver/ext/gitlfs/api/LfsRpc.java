@@ -99,7 +99,7 @@ public class LfsRpc implements Lfs.BlockingInterface {
   }
 
   @NotNull
-  public WebServer getWebServer() {
+  private WebServer getWebServer() {
     return context.getShared().sure(WebServer.class);
   }
 }

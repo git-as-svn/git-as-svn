@@ -26,7 +26,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
+public final class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
   public static class Params {
     @NotNull
     private final SVNURL url;

@@ -22,7 +22,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnServerWriter {
+public final class SvnServerWriter {
   @NotNull
   private final OutputStream stream;
   private int depth = 0;

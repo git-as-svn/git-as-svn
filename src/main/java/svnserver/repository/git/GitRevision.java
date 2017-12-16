@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitRevision implements VcsRevision {
+final class GitRevision implements VcsRevision {
   @NotNull
   private final GitRepository repo;
   @NotNull
@@ -45,13 +45,13 @@ public final class GitRevision implements VcsRevision {
   private final long date;
   private final int revision;
 
-  public GitRevision(@NotNull GitRepository repo,
-                     @NotNull ObjectId cacheCommit,
-                     int revision,
-                     @NotNull Map<String, VcsCopyFrom> renames,
-                     @Nullable RevCommit gitOldCommit,
-                     @Nullable RevCommit gitNewCommit,
-                     int commitTimeSec) {
+  GitRevision(@NotNull GitRepository repo,
+              @NotNull ObjectId cacheCommit,
+              int revision,
+              @NotNull Map<String, VcsCopyFrom> renames,
+              @Nullable RevCommit gitOldCommit,
+              @Nullable RevCommit gitNewCommit,
+              int commitTimeSec) {
     this.repo = repo;
     this.cacheCommit = cacheCommit;
     this.revision = revision;
@@ -61,8 +61,7 @@ public final class GitRevision implements VcsRevision {
     this.date = TimeUnit.SECONDS.toMillis(commitTimeSec);
   }
 
-  @NotNull
-  public ObjectId getCacheCommit() {
+  @NotNull ObjectId getCacheCommit() {
     return cacheCommit;
   }
 
@@ -71,8 +70,7 @@ public final class GitRevision implements VcsRevision {
     return revision;
   }
 
-  @Nullable
-  public RevCommit getGitNewCommit() {
+  @Nullable RevCommit getGitNewCommit() {
     return gitNewCommit;
   }
 

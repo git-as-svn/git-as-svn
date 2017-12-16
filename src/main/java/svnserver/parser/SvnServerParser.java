@@ -24,7 +24,7 @@ import java.util.Arrays;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnServerParser {
+public final class SvnServerParser {
   private static final int DEFAULT_BUFFER_SIZE = 32 * 1024;
   // Buffer size limit for out-of-memory prevention.
   private static final int MAX_BUFFER_SIZE = 10 * 1024 * 1024;

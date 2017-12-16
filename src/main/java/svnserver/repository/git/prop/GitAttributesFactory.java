@@ -27,7 +27,6 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@SuppressWarnings("UnusedDeclaration")
 public final class GitAttributesFactory implements GitPropertyFactory {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitAttributesFactory.class);

@@ -130,7 +130,7 @@ public final class StringHelper {
         return "";
       if (fullChildPath.charAt(parentLength) == '/')
         return fullChildPath.substring(parentLength + 1);
-      if ((parentLength > 0) && (fullChildPath.charAt(parentLength - 1) == '/'))
+      if (fullChildPath.charAt(parentLength - 1) == '/')
         return fullChildPath.substring(parentLength);
     }
     return null;

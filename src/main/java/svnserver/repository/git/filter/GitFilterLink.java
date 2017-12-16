@@ -76,7 +76,7 @@ public class GitFilterLink implements GitFilter {
     private final InputStream inner;
     private int offset = 0;
 
-    public InputWrapper(@NotNull InputStream inner) {
+    private InputWrapper(@NotNull InputStream inner) {
       this.inner = inner;
     }
 
@@ -116,7 +116,7 @@ public class GitFilterLink implements GitFilter {
     private final OutputStream inner;
     private int offset = 0;
 
-    public OutputWrapper(@NotNull OutputStream inner) {
+    private OutputWrapper(@NotNull OutputStream inner) {
       this.inner = inner;
     }
 

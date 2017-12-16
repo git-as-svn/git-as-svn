@@ -32,13 +32,13 @@ public class GitLabProject implements AutoCloseable {
 
   private volatile boolean ready = false;
 
-  public GitLabProject(@NotNull LocalContext context, @NotNull VcsRepository repository, int projectId) {
+  GitLabProject(@NotNull LocalContext context, @NotNull VcsRepository repository, int projectId) {
     this.context = context;
     this.repository = repository;
     this.projectId = projectId;
   }
 
-  public void initRevisions() throws IOException, SVNException {
+  void initRevisions() throws IOException, SVNException {
     if (!ready) {
       log.info("Repository initialize: {}", context.getName());
       repository.updateRevisions();
@@ -51,7 +51,7 @@ public class GitLabProject implements AutoCloseable {
     return context;
   }
 
-  public int getProjectId() {
+  int getProjectId() {
     return projectId;
   }
 
@@ -60,7 +60,7 @@ public class GitLabProject implements AutoCloseable {
     return repository;
   }
 
-  public boolean isReady() {
+  boolean isReady() {
     return ready;
   }
 

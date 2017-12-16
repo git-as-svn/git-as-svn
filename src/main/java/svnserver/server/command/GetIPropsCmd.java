@@ -32,7 +32,7 @@ import java.util.List;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
+public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
   public static class Params {
     private final String path;
     private final int[] rev;

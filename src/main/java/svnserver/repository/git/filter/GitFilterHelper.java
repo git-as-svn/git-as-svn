@@ -118,7 +118,7 @@ public class GitFilterHelper {
     @Nullable
     private final String md5;
 
-    public Metadata(long size, @Nullable String md5) {
+    private Metadata(long size, @Nullable String md5) {
       this.size = size;
       this.md5 = md5;
     }

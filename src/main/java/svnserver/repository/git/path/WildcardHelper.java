@@ -24,11 +24,11 @@ import java.util.List;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class WildcardHelper {
-  public static final char PATH_SEPARATOR = '/';
+final class WildcardHelper {
+  private static final char PATH_SEPARATOR = '/';
 
   @NotNull
-  public static NameMatcher nameMatcher(@NotNull String mask) throws InvalidPatternException {
+  static NameMatcher nameMatcher(@NotNull String mask) throws InvalidPatternException {
     if (mask.equals("**/")) {
       return RecursiveMatcher.INSTANCE;
     }
@@ -51,7 +51,7 @@ public class WildcardHelper {
   }
 
   @NotNull
-  public static String tryRemoveBackslashes(@NotNull String pattern) {
+  static String tryRemoveBackslashes(@NotNull String pattern) {
     final StringBuilder result = new StringBuilder(pattern.length());
     int start = 0;
     while (true) {
@@ -87,7 +87,7 @@ public class WildcardHelper {
    * @return Path pattern items.
    */
   @NotNull
-  public static List<String> splitPattern(@NotNull String pattern) {
+  static List<String> splitPattern(@NotNull String pattern) {
     final List<String> result = new ArrayList<>(count(pattern, PATH_SEPARATOR) + 1);
     int start = 0;
     while (true) {
@@ -111,7 +111,7 @@ public class WildcardHelper {
    * @return Return tokens,
    */
   @NotNull
-  public static List<String> normalizePattern(@NotNull List<String> tokens) {
+  static List<String> normalizePattern(@NotNull List<String> tokens) {
     // By default without slashes using mask for files in all subdirectories
     if (tokens.size() == 1 && !tokens.get(0).contains("/")) {
       tokens.add(0, "**/");

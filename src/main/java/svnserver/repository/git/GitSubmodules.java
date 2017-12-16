@@ -31,13 +31,13 @@ import java.util.concurrent.CopyOnWriteArraySet;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitSubmodules implements Shared {
+public final class GitSubmodules implements Shared {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitSubmodules.class);
   @NotNull
   private final Set<Repository> repositories = new CopyOnWriteArraySet<>();
 
-  public GitSubmodules() {
+  GitSubmodules() {
   }
 
   public GitSubmodules(@NotNull File basePath, @NotNull Collection<String> paths) throws IOException {
@@ -51,8 +51,7 @@ public class GitSubmodules implements Shared {
     }
   }
 
-  @Nullable
-  public GitObject<RevCommit> findCommit(@NotNull ObjectId objectId) throws IOException {
+  @Nullable GitObject<RevCommit> findCommit(@NotNull ObjectId objectId) throws IOException {
     for (Repository repo : repositories) {
       if (repo.hasObject(objectId)) {
         return new GitObject<>(repo, new RevWalk(repo).parseCommit(objectId));
@@ -61,11 +60,11 @@ public class GitSubmodules implements Shared {
     return null;
   }
 
-  public void register(@NotNull Repository repository) {
+  void register(@NotNull Repository repository) {
     repositories.add(repository);
   }
 
-  public void unregister(@NotNull Repository repository) {
+  void unregister(@NotNull Repository repository) {
     repositories.remove(repository);
   }
 }

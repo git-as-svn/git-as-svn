@@ -9,8 +9,6 @@ package svnserver.repository.mapping;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
@@ -18,25 +16,21 @@ import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Simple repository mapping by predefined list.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class RepositoryListMapping implements VcsRepositoryMapping {
+public final class RepositoryListMapping implements VcsRepositoryMapping {
   @NotNull
   private final NavigableMap<String, VcsRepository> mapping;
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(RepositoryListMapping.class);
 
-  public RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
+  RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
     this.mapping = new TreeMap<>(mapping);
   }
 

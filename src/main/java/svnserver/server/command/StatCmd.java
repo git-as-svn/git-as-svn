@@ -33,7 +33,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class StatCmd extends BaseCmd<StatCmd.Params> {
+public final class StatCmd extends BaseCmd<StatCmd.Params> {
   public static class Params {
     @NotNull
     private final String path;

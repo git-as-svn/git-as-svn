@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SimplePathMatcher implements PathMatcher {
+public final class SimplePathMatcher implements PathMatcher {
   @NotNull
   private final NameMatcher[] nameMatchers;
   private final int index;

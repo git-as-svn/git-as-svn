@@ -16,7 +16,7 @@ import svnserver.repository.git.path.NameMatcher;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SimpleMatcher implements NameMatcher {
+public final class SimpleMatcher implements NameMatcher {
   @NotNull
   private final String prefix;
   @NotNull

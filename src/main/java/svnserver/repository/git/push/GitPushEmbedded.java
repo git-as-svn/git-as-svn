@@ -79,7 +79,7 @@ public class GitPushEmbedded implements GitPusher {
     }
   }
 
-  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull String hook, @NotNull User userInfo) throws IOException, SVNException {
+  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
     runHook(repository, hook, userInfo, processBuilder -> {
       final Process process = processBuilder.start();
       try (Writer stdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {

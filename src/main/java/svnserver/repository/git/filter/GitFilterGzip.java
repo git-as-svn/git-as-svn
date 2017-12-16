@@ -23,7 +23,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Gzip filter. Usefull for testing.
+ * Gzip filter. Useful for testing.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */

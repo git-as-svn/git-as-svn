@@ -26,7 +26,7 @@ public enum ReferenceLink {
     @NotNull
     private final String description;
 
-    public Lang(@NotNull String name, @NotNull String description) {
+    private Lang(@NotNull String name, @NotNull String description) {
       this.name = name;
       this.description = description;
     }
@@ -36,8 +36,7 @@ public enum ReferenceLink {
       return name;
     }
 
-    @NotNull
-    public String getItemPrefix() {
+    private @NotNull String getItemPrefix() {
       return description;
     }
 

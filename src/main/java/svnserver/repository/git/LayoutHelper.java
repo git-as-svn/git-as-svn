@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author a.navrotskiy
  */
-public class LayoutHelper {
+public final class LayoutHelper {
   @NotNull
   private static final RefMappingGroup layoutMapping = new RefMappingGroup(
       new RefMappingDirect(Constants.R_HEADS + Constants.MASTER, "trunk/"),

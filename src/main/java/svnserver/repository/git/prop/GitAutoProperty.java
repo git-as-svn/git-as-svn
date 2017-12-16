@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitAutoProperty implements GitProperty {
+final class GitAutoProperty implements GitProperty {
   @NotNull
   private final static String MASK_SEPARATOR = " = ";
   @NotNull
@@ -38,7 +38,7 @@ public final class GitAutoProperty implements GitProperty {
    * @param property Property name.
    * @param value    Property value.
    */
-  public GitAutoProperty(@NotNull PathMatcher matcher, @NotNull String property, @NotNull String value) {
+  GitAutoProperty(@NotNull PathMatcher matcher, @NotNull String property, @NotNull String value) {
     this.matcher = matcher;
     this.property = property;
     this.value = value;

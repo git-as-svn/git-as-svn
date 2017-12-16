@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitTreeEntry implements Comparable<GitTreeEntry> {
+final class GitTreeEntry implements Comparable<GitTreeEntry> {
   @NotNull
   private final FileMode fileMode;
   @NotNull
@@ -26,33 +26,33 @@ public final class GitTreeEntry implements Comparable<GitTreeEntry> {
   @NotNull
   private final String fileName;
 
-  public GitTreeEntry(@NotNull FileMode fileMode, @NotNull GitObject<ObjectId> objectId, @NotNull String fileName) {
+  GitTreeEntry(@NotNull FileMode fileMode, @NotNull GitObject<ObjectId> objectId, @NotNull String fileName) {
     this.fileMode = fileMode;
     this.objectId = objectId;
     this.fileName = fileName;
   }
 
-  public GitTreeEntry(@NotNull Repository repo, @NotNull FileMode fileMode, @NotNull ObjectId objectId, @NotNull String fileName) {
+  GitTreeEntry(@NotNull Repository repo, @NotNull FileMode fileMode, @NotNull ObjectId objectId, @NotNull String fileName) {
     this(fileMode, new GitObject<>(repo, objectId), fileName);
   }
 
   @NotNull
-  public String getId() {
+  String getId() {
     return objectId.getObject().getName();
   }
 
   @NotNull
-  public FileMode getFileMode() {
+  FileMode getFileMode() {
     return fileMode;
   }
 
   @NotNull
-  public String getFileName() {
+  String getFileName() {
     return fileName;
   }
 
   @NotNull
-  public GitObject<ObjectId> getObjectId() {
+  GitObject<ObjectId> getObjectId() {
     return objectId;
   }
 

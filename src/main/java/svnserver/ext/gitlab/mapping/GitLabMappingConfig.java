@@ -57,11 +57,11 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
     return path;
   }
 
-  public int getCacheTimeSec() {
+  int getCacheTimeSec() {
     return cacheTimeSec;
   }
 
-  public int getCacheMaximumSize() {
+  int getCacheMaximumSize() {
     return cacheMaximumSize;
   }
 
@@ -102,7 +102,7 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
     @NotNull
     private final GitLabMapping mapping;
 
-    public GitLabHookServlet(@NotNull GitLabMapping mapping) {
+    GitLabHookServlet(@NotNull GitLabMapping mapping) {
       this.mapping = mapping;
     }
 

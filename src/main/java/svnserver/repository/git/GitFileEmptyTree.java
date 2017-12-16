@@ -26,13 +26,13 @@ import java.util.Collections;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFileEmptyTree extends GitEntryImpl implements GitFile {
+final  class GitFileEmptyTree extends GitEntryImpl implements GitFile {
   @NotNull
   private final GitRepository repo;
 
   private final int revision;
 
-  public GitFileEmptyTree(@NotNull GitRepository repo, @NotNull String parentPath, int revision) {
+  GitFileEmptyTree(@NotNull GitRepository repo, @NotNull String parentPath, int revision) {
     super(PropertyMapping.getRootProperties(), parentPath, GitProperty.emptyArray, "", FileMode.TREE);
     this.repo = repo;
     this.revision = revision;

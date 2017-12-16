@@ -41,7 +41,7 @@ public class CacheRevision {
   @NotNull
   private final Map<String, CacheChange> fileChange = new TreeMap<>();
 
-  protected CacheRevision() {
+  private CacheRevision() {
     this.gitCommitId = null;
   }
 

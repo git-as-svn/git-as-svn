@@ -31,7 +31,7 @@ import java.io.IOException;
  *
  * @author a.navrotskiy
  */
-public class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
+public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
   public static class Params {
     @NotNull
     private final String path;

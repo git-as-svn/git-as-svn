@@ -17,7 +17,7 @@ import java.io.File;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLocation implements Local {
+public final class GitLocation implements Local {
   @NotNull
   private final File fullPath;
 

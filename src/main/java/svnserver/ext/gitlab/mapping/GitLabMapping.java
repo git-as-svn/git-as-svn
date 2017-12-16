@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabMapping implements VcsRepositoryMapping {
+class GitLabMapping implements VcsRepositoryMapping {
   @NotNull
   private final NavigableMap<String, GitLabProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -41,7 +41,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
   @NotNull
   private final GitLabMappingConfig config;
 
-  public GitLabMapping(@NotNull SharedContext context, @NotNull GitLabMappingConfig config) {
+  GitLabMapping(@NotNull SharedContext context, @NotNull GitLabMappingConfig config) {
     this.context = context;
     this.config = config;
   }
@@ -70,8 +70,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
     return mapping.values().stream().map(GitLabProject::getRepository).collect(Collectors.toList());
   }
 
-  @Nullable
-  public GitLabProject addRepository(@NotNull GitlabProject project) throws IOException, SVNException {
+  @Nullable GitLabProject addRepository(@NotNull GitlabProject project) throws IOException, SVNException {
     final String projectName = project.getPathWithNamespace();
     final String projectKey = StringHelper.normalizeDir(projectName);
     final GitLabProject oldProject = mapping.get(projectKey);
@@ -89,7 +88,7 @@ public class GitLabMapping implements VcsRepositoryMapping {
     return null;
   }
 
-  public void removeRepository(int projectId, @NotNull String projectName) {
+  void removeRepository(int projectId, @NotNull String projectName) {
     final String projectKey = StringHelper.normalizeDir(projectName);
     final GitLabProject project = mapping.get(projectKey);
     if (project != null && project.getProjectId() == projectId) {

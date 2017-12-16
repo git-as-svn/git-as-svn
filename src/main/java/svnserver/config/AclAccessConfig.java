@@ -23,7 +23,7 @@ public final class AclAccessConfig {
   public AclAccessConfig() {
   }
 
-  public AclAccessConfig(@NotNull String path, @NotNull String[] allowed) {
+  AclAccessConfig(@NotNull String path, @NotNull String[] allowed) {
     this.path = path;
     this.allowed = allowed;
   }
@@ -40,9 +40,5 @@ public final class AclAccessConfig {
   @NotNull
   public String[] getAllowed() {
     return allowed;
-  }
-
-  public void setAllowed(@NotNull String[] allowed) {
-    this.allowed = allowed;
   }
 }

@@ -22,7 +22,7 @@ import java.util.Objects;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class ComplexMatcher implements NameMatcher {
-  @Nullable
+  @NotNull
   private final String pattern;
   @NotNull
   private final IMatcher matcher;
@@ -65,7 +65,7 @@ public final class ComplexMatcher implements NameMatcher {
 
   @Override
   public int hashCode() {
-    int result = pattern != null ? pattern.hashCode() : 0;
+    int result = pattern.hashCode();
     result = 31 * result + (dirOnly ? 1 : 0);
     return result;
   }
