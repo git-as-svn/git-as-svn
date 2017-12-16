@@ -18,7 +18,6 @@ import svnserver.context.SharedContext;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@SuppressWarnings("FieldCanBeLocal")
 @ConfigType("gitlabUsers")
 public final class GitLabUserDBConfig implements UserDBConfig {
   @NotNull

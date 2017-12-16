@@ -28,7 +28,15 @@ public final class AclConfig implements AccessConfig {
   @NotNull
   private AclAccessConfig[] access = new AclAccessConfig[]{new AclAccessConfig("/", new String[]{ACL.EveryoneMarker})};
 
-  private boolean anonymousRead = false;
+  private boolean anonymousRead;
+
+  public AclConfig() {
+    this(false);
+  }
+
+  public AclConfig(boolean anonymousRead) {
+    this.anonymousRead = anonymousRead;
+  }
 
   @NotNull
   public GroupConfig[] getGroups() {
@@ -38,10 +46,6 @@ public final class AclConfig implements AccessConfig {
   @NotNull
   public AclAccessConfig[] getAccess() {
     return access;
-  }
-
-  public void setAccess(@NotNull AclAccessConfig[] access) {
-    this.access = access;
   }
 
   public boolean isAnonymousRead() {

@@ -56,13 +56,13 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnTestServer.class);
   @NotNull
-  public static final String USER_NAME = "tester";
+  private static final String USER_NAME = "tester";
   @NotNull
   public static final String USER_NAME_NO_MAIL = "nomail";
   @NotNull
-  public static final String REAL_NAME = "Test User";
+  private static final String REAL_NAME = "Test User";
   @NotNull
-  public static final String EMAIL = "foo@bar.org";
+  private static final String EMAIL = "foo@bar.org";
   @NotNull
   public static final String PASSWORD = "passw0rd";
   @NotNull
@@ -85,7 +85,7 @@ public final class SvnTestServer implements SvnTester {
 
   private final boolean safeBranch;
 
-  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig, boolean anonymousRead) throws Exception {
+  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
@@ -116,7 +116,10 @@ public final class SvnTestServer implements SvnTester {
           new LocalUserDBConfig.UserEntry(USER_NAME_NO_MAIL, REAL_NAME, null, PASSWORD),
       }));
     }
+
+    Collections.addAll(config.getShared(), shared);
     config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
+
     server = new SvnServer(tempDirectory, config);
     server.start();
     log.info("Temporary server started (url: {}, path: {}, branch: {} as {})", getUrl(), repository.getDirectory(), srcBranch, testBranch);
@@ -153,9 +156,9 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead) throws Exception {
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, userDBConfig, anonymousRead);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, userDBConfig, anonymousRead, shared);
   }
 
   @NotNull
@@ -207,7 +210,7 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public SvnOperationFactory createOperationFactory(@NotNull String userName, @NotNull String password) {
+  private SvnOperationFactory createOperationFactory(@NotNull String userName, @NotNull String password) {
     final SVNWCContext wcContext = new SVNWCContext(new DefaultSVNOptions(getTempDirectory(), true), null);
     wcContext.setSqliteTemporaryDbInMemory(true);
     wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
@@ -239,7 +242,7 @@ public final class SvnTestServer implements SvnTester {
     return server.getContext();
   }
 
-  private static class TestRepositoryConfig implements RepositoryMappingConfig {
+  private static final class TestRepositoryConfig implements RepositoryMappingConfig {
     @NotNull
     private final Repository repository;
     @NotNull
@@ -248,7 +251,7 @@ public final class SvnTestServer implements SvnTester {
     private final String prefix;
     private final boolean anonymousRead;
 
-    public TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch, @NotNull String prefix, boolean anonymousRead) {
+    private TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch, @NotNull String prefix, boolean anonymousRead) {
       this.repository = repository;
       this.branch = branch;
       this.prefix = prefix;
@@ -259,8 +262,7 @@ public final class SvnTestServer implements SvnTester {
     @Override
     public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
       final LocalContext local = new LocalContext(context, "test");
-      final AclConfig aclConfig = new AclConfig();
-      aclConfig.setAnonymousRead(anonymousRead);
+      final AclConfig aclConfig = new AclConfig(anonymousRead);
       local.add(VcsAccess.class, aclConfig.create(local));
       return new RepositoryListMapping(Collections.singletonMap(prefix, new GitRepository(
           local,

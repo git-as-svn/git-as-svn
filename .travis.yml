@@ -1,6 +1,9 @@
 language: java
 
-sudo: false
+sudo: required
+
+services:
+  - docker
 
 env:
   global:
