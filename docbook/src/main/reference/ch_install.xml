@@ -259,7 +259,7 @@ ssh git@remote -C "git-lfs-authenticate example download"</programlisting>
 
     <para>Полностью собрать дистрибутив можно командой:</para>
 
-    <programlisting language="bash" xml:lang="C">./gradlew assembleDist</programlisting>
+    <programlisting language="bash" xml:lang="C">./gradlew assemble</programlisting>
 
     <para>Комплект установочных файлов будет располагаться в директории:
     <filename>build/distributions</filename></para>
