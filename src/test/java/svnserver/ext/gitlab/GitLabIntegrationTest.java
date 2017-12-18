@@ -27,8 +27,6 @@ import java.time.temporal.ChronoUnit;
  */
 public final class GitLabIntegrationTest {
 
-  @NotNull
-  private static final String gitlabVersion = "9.5.10-ce.0";
   private static final int gitlabPort = 80;
 
   @NotNull
@@ -37,12 +35,20 @@ public final class GitLabIntegrationTest {
   private static final String rootPassword = "12345678";
 
   @NotNull
-  private static final GenericContainer<?> gitlab = new GenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
-      .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
-      .withExposedPorts(gitlabPort)
-      .waitingFor(Wait.forHttp("")
-          .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES))
-      );
+  private static final GenericContainer<?> gitlab;
+
+  static {
+    String gitlabVersion = System.getenv("GITLAB_VERSION");
+    if (gitlabVersion == null)
+      gitlabVersion = "9.3.3-ce.0";
+
+    gitlab = new GenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
+        .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
+        .withExposedPorts(gitlabPort)
+        .waitingFor(Wait.forHttp("")
+            .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES))
+        );
+  }
 
   @BeforeTest
   void before() {

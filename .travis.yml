@@ -8,6 +8,12 @@ services:
 env:
   global:
     secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
+  matrix:
+    # - GITLAB_VERSION=10.2.5-ce.0 # Commented out until we figure out why it doesn't pass tests
+    - GITLAB_VERSION=10.1.5-ce.0
+    - GITLAB_VERSION=10.0.7-ce.0
+    - GITLAB_VERSION=9.5.10-ce.0
+    - GITLAB_VERSION=9.3.3-ce.0  # We use this in production. Do not forget to update GitLabIntegrationTest.java when changing this
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -30,31 +36,32 @@ addons:
     - debhelper
     - gnome-doc-utils
 
-before_deploy:
-- ./gradlew assembleDist
-
-deploy:
-  - provider: releases
-    api-key:
-      secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
-    file_glob: true
-    file:
-      - build/distributions/git-as-svn*
-    skip_cleanup: true
-    on:
-      tags: true
-      repo: bozaro/git-as-svn
-  - provider: pages
-    github_token:
-      secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
-    skip_cleanup: true
-    local_dir: build/doc
-    on:
-      branch: master
-      repo: bozaro/git-as-svn
-  - provider: script
-    script: deploy/deploy.debian.sh
-    skip_cleanup: true
-    on:
-      tags: true
-      repo: bozaro/git-as-svn
+jobs:
+  include:
+    - stage: deploy
+      script: ./gradlew assembleDist
+      deploy:
+        - provider: releases
+          api-key:
+            secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
+          file_glob: true
+          file:
+            - build/distributions/git-as-svn*
+          skip_cleanup: true
+          on:
+            tags: true
+            repo: bozaro/git-as-svn
+        - provider: pages
+          github_token:
+            secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
+          skip_cleanup: true
+          local_dir: build/doc
+          on:
+            branch: master
+            repo: bozaro/git-as-svn
+        - provider: script
+          script: deploy/deploy.debian.sh
+          skip_cleanup: true
+          on:
+            tags: true
+            repo: bozaro/git-as-svn
