@@ -23,9 +23,6 @@ addons:
     - debhelper
     - gnome-doc-utils
 
-before_deploy:
-- ./gradlew assembleDist
-
 deploy:
   - provider: releases
     api-key:

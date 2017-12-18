@@ -8,7 +8,7 @@ node {
   sh 'git clean -ffdx'
 
   stage 'Build'
-  sh './gradlew assembleDist'
+  sh './gradlew assemble'
   archive 'build/distributions/*'
 
   stage 'Test'
