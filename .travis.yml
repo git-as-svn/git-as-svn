@@ -1,8 +1,20 @@
 language: java
+
 sudo: false
+
 env:
   global:
     secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
 addons:
   apt:
     packages:
@@ -10,12 +22,10 @@ addons:
     - fakeroot
     - debhelper
     - gnome-doc-utils
-install:
-- ./gradlew assemble
-script:
-- ./gradlew check
+
 before_deploy:
 - ./gradlew assembleDist
+
 deploy:
   - provider: releases
     api-key:
