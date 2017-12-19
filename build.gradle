@@ -15,7 +15,7 @@ buildscript {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
     classpath "org.ajoberstar:gradle-git:1.7.2"
-    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.3"
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.3"
     classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
     classpath "com.github.ben-manes:gradle-versions-plugin:0.17.0"
   }
