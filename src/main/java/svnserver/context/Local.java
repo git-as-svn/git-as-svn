@@ -7,7 +7,7 @@
  */
 package svnserver.context;
 
-import org.apache.http.annotation.ThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Interface for objects in LocalContext.

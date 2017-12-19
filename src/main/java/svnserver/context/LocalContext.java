@@ -7,8 +7,9 @@
  */
 package svnserver.context;
 
-import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Simple context object.
