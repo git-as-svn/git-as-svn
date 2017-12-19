@@ -43,6 +43,7 @@ import svnserver.tester.SvnTester;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -256,19 +257,19 @@ public final class SvnTestServer implements SvnTester {
 
     @NotNull
     @Override
-    public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
+    public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
       final LocalContext local = new LocalContext(context, "test");
       final AclConfig aclConfig = new AclConfig();
       aclConfig.setAnonymousRead(anonymousRead);
       local.add(VcsAccess.class, aclConfig.create(local));
-      return RepositoryListMapping.create(prefix, new GitRepository(
+      return new RepositoryListMapping(Collections.singletonMap(prefix, new GitRepository(
           local,
           repository,
           new GitPushEmbedded(local, "", "", ""),
           branch,
           true,
           new PersistentLockFactory(local)
-      ));
+      )));
     }
   }
 }

@@ -53,7 +53,7 @@ import java.util.function.Consumer;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnServer extends Thread {
+public final class SvnServer extends Thread {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
@@ -123,22 +123,9 @@ public class SvnServer extends Thread {
     commands.put("get-lock", new GetLockCmd());
     commands.put("get-locks", new GetLocksCmd());
 
-    repositoryMapping = config.getRepositoryMapping().create(context);
+    repositoryMapping = config.getRepositoryMapping().create(context, config.canUseParallelIndexing());
+
     context.add(VcsRepositoryMapping.class, repositoryMapping);
-
-    final Consumer<VcsRepository> init = repository -> {
-      try {
-        repository.updateRevisions();
-      } catch (IOException | SVNException e) {
-        throw new RuntimeException(String.format("[%s]: failed to initialize", repository.getContext().getName()), e);
-      }
-    };
-
-    if (config.canUseParallelIndexing()) {
-      repositoryMapping.getRepositories().parallelStream().forEach(init);
-    } else {
-      repositoryMapping.getRepositories().forEach(init);
-    }
 
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());

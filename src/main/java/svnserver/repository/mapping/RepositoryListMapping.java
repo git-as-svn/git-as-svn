@@ -16,7 +16,6 @@ import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -30,7 +29,7 @@ public final class RepositoryListMapping implements VcsRepositoryMapping {
   @NotNull
   private final NavigableMap<String, VcsRepository> mapping;
 
-  RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
+  public RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
     this.mapping = new TreeMap<>(mapping);
   }
 
@@ -47,12 +46,6 @@ public final class RepositoryListMapping implements VcsRepositoryMapping {
     return null;
   }
 
-  @Override
-  @NotNull
-  public Collection<VcsRepository> getRepositories() {
-    return mapping.values();
-  }
-
   @Nullable
   public static <T> Map.Entry<String, T> getMapped(@NotNull NavigableMap<String, T> mapping, @NotNull String prefix) {
     final String path = StringHelper.normalizeDir(prefix);
@@ -61,25 +54,5 @@ public final class RepositoryListMapping implements VcsRepositoryMapping {
       return entry;
     }
     return null;
-  }
-
-  public static RepositoryListMapping create(@NotNull String prefix, @NotNull VcsRepository repository) {
-    return new Builder()
-        .add(prefix, repository)
-        .build();
-  }
-
-  public static class Builder {
-    @NotNull
-    private final Map<String, VcsRepository> mapping = new TreeMap<>();
-
-    public Builder add(@NotNull String prefix, @NotNull VcsRepository repository) {
-      mapping.put(StringHelper.normalizeDir(prefix), repository);
-      return this;
-    }
-
-    public RepositoryListMapping build() {
-      return new RepositoryListMapping(mapping);
-    }
   }
 }

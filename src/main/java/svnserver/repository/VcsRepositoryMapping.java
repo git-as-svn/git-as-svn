@@ -13,8 +13,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.context.Shared;
 
-import java.util.Collection;
-
 /**
  * Resolving repository by URL.
  *
@@ -23,7 +21,4 @@ import java.util.Collection;
 public interface VcsRepositoryMapping extends Shared {
   @Nullable
   RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException;
-
-  @NotNull
-  Collection<VcsRepository> getRepositories();
 }
