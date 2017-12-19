@@ -9,7 +9,7 @@ env:
   global:
     secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
   matrix:
-    # - GITLAB_VERSION=10.2.5-ce.0 # Commented out until we figure out why it doesn't pass tests
+    - GITLAB_VERSION=10.2.5-ce.0
     - GITLAB_VERSION=10.1.5-ce.0
     - GITLAB_VERSION=10.0.7-ce.0
     - GITLAB_VERSION=9.5.10-ce.0

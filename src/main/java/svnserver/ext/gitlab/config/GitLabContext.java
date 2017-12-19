@@ -7,7 +7,15 @@
  */
 package svnserver.ext.gitlab.config;
 
+import com.google.api.client.auth.oauth.OAuthGetAccessToken;
+import com.google.api.client.auth.oauth2.PasswordTokenRequest;
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.TokenType;
 import org.gitlab.api.models.GitlabSession;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
@@ -21,7 +29,11 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabContext implements Shared {
+public final class GitLabContext implements Shared {
+  @NotNull
+  private static final HttpTransport transport = new NetHttpTransport();
+  @NotNull
+  private static final JsonFactory jsonFactory = new GsonFactory();
   @NotNull
   private final GitLabConfig config;
 
@@ -30,18 +42,26 @@ public class GitLabContext implements Shared {
   }
 
   @NotNull
-  public GitlabAPI connect() {
-    return GitlabAPI.connect(config.getUrl(), config.getToken());
+  public static GitLabContext sure(@NotNull SharedContext context) throws IOException, SVNException {
+    return context.sure(GitLabContext.class);
   }
 
   @NotNull
   public GitlabSession connect(@NotNull String username, @NotNull String password) throws IOException {
-    return GitlabAPI.connect(config.getUrl(), username, password);
+    String token = obtainToken(config.getUrl(), username, password);
+    final GitlabAPI api = GitlabAPI.connect(config.getUrl(), token, TokenType.ACCESS_TOKEN);
+    return api.getCurrentSession();
   }
 
   @NotNull
-  public static GitLabContext sure(@NotNull SharedContext context) throws IOException, SVNException {
-    return context.sure(GitLabContext.class);
+  public static String obtainToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password) throws IOException {
+    final TokenResponse oauthResponse = new PasswordTokenRequest(transport, jsonFactory, new OAuthGetAccessToken(gitlabUrl + "/oauth/token"), username, password).execute();
+    return oauthResponse.getAccessToken();
+  }
+
+  @NotNull
+  public GitlabAPI connect() {
+    return GitlabAPI.connect(config.getUrl(), config.getToken());
   }
 
   @NotNull
