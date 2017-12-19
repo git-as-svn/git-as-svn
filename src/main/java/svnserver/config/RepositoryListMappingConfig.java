@@ -13,12 +13,15 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.VcsAccess;
+import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 /**
  * Repository list mapping.
@@ -26,7 +29,7 @@ import java.util.TreeMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("listMapping")
-public class RepositoryListMappingConfig implements RepositoryMappingConfig {
+public final class RepositoryListMappingConfig implements RepositoryMappingConfig {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull
   private Map<String, Entry> repositories = new TreeMap<>();
@@ -40,13 +43,29 @@ public class RepositoryListMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
-    final RepositoryListMapping.Builder builder = new RepositoryListMapping.Builder();
+  public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+    final Map<String, VcsRepository> repos = new HashMap<>();
+
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
       local.add(VcsAccess.class, entry.getValue().access.create(local));
-      builder.add(entry.getKey(), entry.getValue().repository.create(local));
+      repos.put(entry.getKey(), entry.getValue().repository.create(local));
     }
-    return builder.build();
+
+    final Consumer<VcsRepository> init = repository -> {
+      try {
+        repository.updateRevisions();
+      } catch (IOException | SVNException e) {
+        throw new RuntimeException(String.format("[%s]: failed to initialize", repository.getContext().getName()), e);
+      }
+    };
+
+    if (canUseParallelIndexing) {
+      repos.values().parallelStream().forEach(init);
+    } else {
+      repos.values().forEach(init);
+    }
+
+    return new RepositoryListMapping(repos);
   }
 }

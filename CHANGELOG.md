@@ -1,5 +1,12 @@
 # Changes
 
+## 1.1.6
+
+ * Update various third-party libraries
+ * Upgrade to Gradle 4.4
+ * Fix GitLab repositories not becoming ready on git-as-svn startup #151
+ * Improve logging on git-as-svn startup
+
 ## 1.1.5
 
  * Fix submodules support (was broken in 1.1.3)

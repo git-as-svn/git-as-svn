@@ -126,7 +126,7 @@ public class GitRepository implements VcsRepository {
     final String repositoryId = loadRepositoryId(repository, svnBranch);
     this.uuid = UUID.nameUUIDFromBytes((repositoryId + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
 
-    log.info("Repository registered (branch: {})", gitBranch);
+    log.info("[{}]: registered branch: {}", context.getName(), gitBranch);
   }
 
   @NotNull

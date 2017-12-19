@@ -24,16 +24,17 @@ import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.stream.Collectors;
 
 /**
  * Simple repository mapping by predefined list.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitLabMapping implements VcsRepositoryMapping {
+final class GitLabMapping implements VcsRepositoryMapping {
   @NotNull
   private final NavigableMap<String, GitLabProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -64,10 +65,9 @@ class GitLabMapping implements VcsRepositoryMapping {
     return null;
   }
 
-  @Override
   @NotNull
-  public Collection<VcsRepository> getRepositories() {
-    return mapping.values().stream().map(GitLabProject::getRepository).collect(Collectors.toList());
+  Collection<GitLabProject> getRepositories() {
+    return mapping.values();
   }
 
   @Nullable GitLabProject addRepository(@NotNull GitlabProject project) throws IOException, SVNException {

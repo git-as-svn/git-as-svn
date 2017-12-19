@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.URL;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Repository list mapping.
@@ -39,7 +40,7 @@ import java.util.List;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("gitlabMapping")
-public class GitLabMappingConfig implements RepositoryMappingConfig {
+public final class GitLabMappingConfig implements RepositoryMappingConfig {
   @NotNull
   private GitRepositoryConfig template = new GitRepositoryConfig();
   @NotNull
@@ -67,7 +68,7 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException {
+  public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
     final GitLabContext gitlab = context.sure(GitLabContext.class);
     final GitlabAPI api = gitlab.connect();
     // Get repositories.
@@ -83,6 +84,21 @@ public class GitLabMappingConfig implements RepositoryMappingConfig {
     if (!isHookInstalled(api, hookUrl.toString())) {
       api.addSystemHook(hookUrl.toString());
     }
+
+    final Consumer<GitLabProject> init = repository -> {
+      try {
+        repository.initRevisions();
+      } catch (IOException | SVNException e) {
+        throw new RuntimeException(String.format("[%s]: failed to initialize", repository.getContext().getName()), e);
+      }
+    };
+
+    if (canUseParallelIndexing) {
+      mapping.getRepositories().parallelStream().forEach(init);
+    } else {
+      mapping.getRepositories().forEach(init);
+    }
+
     return mapping;
   }
 

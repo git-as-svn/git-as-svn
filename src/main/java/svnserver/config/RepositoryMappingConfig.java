@@ -21,5 +21,5 @@ import java.io.IOException;
  */
 public interface RepositoryMappingConfig {
   @NotNull
-  VcsRepositoryMapping create(@NotNull SharedContext context) throws IOException, SVNException;
+  VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException;
 }

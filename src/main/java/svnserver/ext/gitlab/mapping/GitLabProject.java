@@ -40,7 +40,7 @@ public class GitLabProject implements AutoCloseable {
 
   void initRevisions() throws IOException, SVNException {
     if (!ready) {
-      log.info("Repository initialize: {}", context.getName());
+      log.info("[{}]: initing...", context.getName());
       repository.updateRevisions();
       ready = true;
     }
