@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.7
+
+ * Use OAuth2 to obtain user token. Fixes compatibility with GitLab >= 10.2 #154
+
 ## 1.1.6
 
  * Update various third-party libraries

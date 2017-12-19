@@ -7,8 +7,6 @@
  */
 package svnserver.ext.gitlab;
 
-import org.gitlab.api.GitlabAPI;
-import org.gitlab.api.models.GitlabSession;
 import org.jetbrains.annotations.NotNull;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.Wait;
@@ -18,6 +16,7 @@ import org.testng.annotations.Test;
 import svnserver.SvnTestServer;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
 import svnserver.ext.gitlab.config.GitLabConfig;
+import svnserver.ext.gitlab.config.GitLabContext;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -40,7 +39,7 @@ public final class GitLabIntegrationTest {
   static {
     String gitlabVersion = System.getenv("GITLAB_VERSION");
     if (gitlabVersion == null)
-      gitlabVersion = "9.3.3-ce.0";
+      gitlabVersion = "10.2.5-ce.0";
 
     gitlab = new GenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
         .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
@@ -63,8 +62,8 @@ public final class GitLabIntegrationTest {
   @Test
   public void gitlabAuthentication() throws Exception {
     final String gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
-    final GitlabSession gitlabSession = GitlabAPI.connect(gitlabUrl, root, rootPassword);
-    final GitLabConfig gitlabConfig = new GitLabConfig(gitlabUrl, gitlabSession.getPrivateToken());
+    final String token = GitLabContext.obtainToken(gitlabUrl, root, rootPassword);
+    final GitLabConfig gitlabConfig = new GitLabConfig(gitlabUrl, token);
 
     try (SvnTestServer server = SvnTestServer.createEmpty(new GitLabUserDBConfig(), false, gitlabConfig)) {
       server.openSvnRepository(root, rootPassword).getLatestRevision();
