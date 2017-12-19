@@ -219,7 +219,7 @@ task assembleDeb(type: Copy, dependsOn: distDeb) {
   into "$buildDir/distributions"
 }
 
-tasks.assemble.dependsOn(assembleDeb)
+assembleDist.dependsOn(assembleDeb)
 
 distZip {
   archiveName "${project.name}_${project.version}.zip"
