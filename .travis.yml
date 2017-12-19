@@ -40,6 +40,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
+      repo: bozaro/git-as-svn
   - provider: pages
     github_token:
       secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
@@ -47,8 +48,10 @@ deploy:
     local_dir: build/doc
     on:
       branch: master
+      repo: bozaro/git-as-svn
   - provider: script
     script: deploy/deploy.debian.sh
     skip_cleanup: true
     on:
       tags: true
+      repo: bozaro/git-as-svn
