@@ -38,7 +38,7 @@ public final class ComplexMatcher implements NameMatcher {
 
   @Override
   public boolean isMatch(@NotNull String name, boolean isDir) {
-    return matcher.matches(name, isDir);
+    return matcher.matches(name, isDir, true);
   }
 
   @Override

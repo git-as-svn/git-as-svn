@@ -7,10 +7,10 @@
  */
 package svnserver.context;
 
-import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 
 /**

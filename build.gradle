@@ -14,10 +14,10 @@ buildscript {
 
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
-    classpath "org.ajoberstar:gradle-git:1.3.2"
-    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.3"
+    classpath "org.ajoberstar:gradle-git:1.7.2"
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.3"
     classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
-    classpath "com.github.ben-manes:gradle-versions-plugin:0.12.0"
+    classpath "com.github.ben-manes:gradle-versions-plugin:0.17.0"
   }
 }
 
@@ -74,14 +74,14 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
   dependencies {
     compile "org.jetbrains:annotations:15.0"
     compile "org.atteo.classindex:classindex:3.4"
-    compile "org.slf4j:slf4j-api:1.7.13"
+    compile "org.slf4j:slf4j-api:1.7.25"
 
-    testCompile "org.testng:testng:6.9.10"
+    testCompile "org.testng:testng:6.13.1"
   }
 
   protobuf {
     protoc {
-      artifact = "com.google.protobuf:protoc:3.0.0-beta-2"
+      artifact = "com.google.protobuf:protoc:3.5.0"
     }
     generatedFilesBaseDir = "$projectDir/src/generated"
   }
@@ -101,32 +101,32 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 dependencies {
   compile project(":protobuf")
 
-  compile "org.eclipse.jgit:org.eclipse.jgit:4.1.1.201511131810-r"
-  compile "org.tmatesoft.svnkit:svnkit:1.8.11"
-  compile "org.yaml:snakeyaml:1.16"
-  compile "com.beust:jcommander:1.48"
+  compile "org.eclipse.jgit:org.eclipse.jgit:4.9.2.201712150930-r"
+  compile "org.tmatesoft.svnkit:svnkit:1.9.0"
+  compile "org.yaml:snakeyaml:1.19"
+  compile "com.beust:jcommander:1.72"
   compile "org.ini4j:ini4j:0.5.4"
   compile "org.mapdb:mapdb:1.0.8"
-  compile "com.unboundid:unboundid-ldapsdk:3.1.0"
-  compile "org.eclipse.jetty:jetty-server:9.3.7.v20160115"
-  compile "org.eclipse.jetty:jetty-servlet:9.3.7.v20160115"
+  compile "com.unboundid:unboundid-ldapsdk:3.2.1"
+  compile "org.eclipse.jetty:jetty-server:9.4.8.v20171121"
+  compile "org.eclipse.jetty:jetty-servlet:9.4.8.v20171121"
   compile "org.gitlab:java-gitlab-api:1.2.3"
   compile "com.esotericsoftware:kryo:4.0.1"
-  compile "org.bitbucket.b_c:jose4j:0.4.4"
-  compile "com.google.guava:guava:19.0"
+  compile "org.bitbucket.b_c:jose4j:0.6.2"
+  compile "com.google.guava:guava:23.5-jre"
   compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.11.1"
 
-  runtime "org.apache.logging.log4j:log4j-core:2.5"
-  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.5"
+  runtime "org.apache.logging.log4j:log4j-core:2.10.0"
+  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.10.0"
 
-  testCompile("org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M21") {
+  testCompile("org.apache.directory.server:apacheds-protocol-ldap:2.0.0-M24") {
     exclude group: "org.slf4j", module: "slf4j-log4j12"
   }
-  testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0-M33"
+  testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
