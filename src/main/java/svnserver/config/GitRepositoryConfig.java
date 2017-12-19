@@ -51,12 +51,12 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private boolean renameDetection = true;
 
   @NotNull
-  private Repository createRepository(@NotNull File fullPath) throws IOException {
+  private Repository createRepository(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
     if (!fullPath.exists()) {
-      log.info("Repository fullPath: {} - not exists, create mode: {}", fullPath, createMode);
+      log.info("[{}]: storage {} not found, create mode: {}", context.getName(), fullPath, createMode);
       return createMode.createRepository(fullPath, branch);
     }
-    log.info("Repository fullPath: {}", fullPath);
+    log.info("[{}]: using existing storage {}", context.getName(), fullPath);
     return new FileRepository(fullPath);
   }
 
@@ -69,7 +69,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
     context.add(GitLocation.class, new GitLocation(fullPath));
-    GitRepository repository = new GitRepository(context, createRepository(fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
+    GitRepository repository = new GitRepository(context, createRepository(context, fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
     for (LocalConfig extension : extensions) {
       extension.create(context);
     }
