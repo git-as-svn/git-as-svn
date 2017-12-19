@@ -91,6 +91,10 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
     maxHeapSize = "384m"
     ignoreFailures = "$testIgnoreFailures".toBoolean()
 
+    testLogging {
+      exceptionFormat = 'full'
+    }
+
     // listen to events in the test execution lifecycle
     beforeTest { descriptor ->
       logger.lifecycle("Running test: " + descriptor)
