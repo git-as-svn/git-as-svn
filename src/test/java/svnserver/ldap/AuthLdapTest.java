@@ -88,8 +88,7 @@ public class AuthLdapTest {
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
-      final SVNRepository repo = server.openSvnRepository();
-      repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(login, password.toCharArray()));
+      final SVNRepository repo = server.openSvnRepository(login, password);
       repo.getLatestRevision();
     }
   }

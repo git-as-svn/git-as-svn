@@ -24,7 +24,6 @@ import svnserver.auth.UserDB;
 import svnserver.auth.UserWithPassword;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.config.LfsLayout;
 import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.LfsReader;

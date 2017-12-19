@@ -22,19 +22,24 @@ import java.io.IOException;
 @ConfigType("gitlab")
 public class GitLabConfig implements SharedConfig {
   @NotNull
-  private String url = "http://localhost/";
+  private String url;
+  @NotNull
+  private String token;
   @NotNull
   private String hookUrl = "http://localhost:8123/hooks/gitlab";
-  @NotNull
-  private String token = "";
+
+  public GitLabConfig() {
+    this("http://localhost/", "");
+  }
+
+  public GitLabConfig(@NotNull String url, @NotNull String token) {
+    this.url = url;
+    this.token = token;
+  }
 
   @NotNull
   public String getUrl() {
     return url;
-  }
-
-  public void setUrl(@NotNull String url) {
-    this.url = url;
   }
 
   @NotNull
@@ -42,17 +47,8 @@ public class GitLabConfig implements SharedConfig {
     return token;
   }
 
-  public void setToken(@NotNull String token) {
-    this.token = token;
-  }
-
-  @NotNull
-  public String getHookUrl() {
+  @NotNull String getHookUrl() {
     return hookUrl;
-  }
-
-  public void setHookUrl(@NotNull String hookUrl) {
-    this.hookUrl = hookUrl;
   }
 
   @Override

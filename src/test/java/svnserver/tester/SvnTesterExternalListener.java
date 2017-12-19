@@ -84,10 +84,6 @@ public class SvnTesterExternalListener implements ITestListener {
   @Override
   public void onStart(ITestContext context) {
     try {
-      if (System.getenv("TRAVIS") != null) {
-        log.warn("Native svn daemon disabled on travis");
-        return;
-      }
       final String svnserve = findExecutable("svnserve");
       final String svnadmin = findExecutable("svnadmin");
       if (svnserve != null && svnadmin != null) {
@@ -96,8 +92,6 @@ public class SvnTesterExternalListener implements ITestListener {
       } else {
         log.warn("Native svn daemon disabled");
       }
-
-      //SvnTesterExternal.create();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }

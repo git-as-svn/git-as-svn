@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabUserDB implements UserDB, UserLookupVisitor {
+public final class GitLabUserDB implements UserDB, UserLookupVisitor {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitLabUserDB.class);
   @NotNull
@@ -42,7 +42,7 @@ public class GitLabUserDB implements UserDB, UserLookupVisitor {
   @NotNull
   private final GitLabContext context;
 
-  public GitLabUserDB(@NotNull SharedContext context) {
+  GitLabUserDB(@NotNull SharedContext context) {
     this.context = context.sure(GitLabContext.class);
   }
 
