@@ -10,8 +10,8 @@ package svnserver.ext.gitlab;
 import org.jetbrains.annotations.NotNull;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.Wait;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import svnserver.SvnTestServer;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
@@ -33,13 +33,13 @@ public final class GitLabIntegrationTest {
   @NotNull
   private static final String rootPassword = "12345678";
 
-  @NotNull
-  private static final GenericContainer<?> gitlab;
+  private GenericContainer<?> gitlab;
 
-  static {
+  @BeforeClass
+  void before() {
     String gitlabVersion = System.getenv("GITLAB_VERSION");
     if (gitlabVersion == null)
-      gitlabVersion = "10.2.5-ce.0";
+      gitlabVersion = "9.3.3-ce.0";
 
     gitlab = new GenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
         .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
@@ -47,26 +47,27 @@ public final class GitLabIntegrationTest {
         .waitingFor(Wait.forHttp("")
             .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES))
         );
-  }
-
-  @BeforeTest
-  void before() {
     gitlab.start();
   }
 
-  @AfterTest
+  @AfterClass
   void after() {
     gitlab.stop();
   }
 
   @Test
-  public void gitlabAuthentication() throws Exception {
-    final String gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
+  void gitlabAuthentication() throws Exception {
+    final String gitlabUrl = getGitlabUrl();
     final String token = GitLabContext.obtainToken(gitlabUrl, root, rootPassword);
     final GitLabConfig gitlabConfig = new GitLabConfig(gitlabUrl, token);
 
     try (SvnTestServer server = SvnTestServer.createEmpty(new GitLabUserDBConfig(), false, gitlabConfig)) {
       server.openSvnRepository(root, rootPassword).getLatestRevision();
     }
+  }
+
+  @NotNull
+  private String getGitlabUrl() {
+    return "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
   }
 }
