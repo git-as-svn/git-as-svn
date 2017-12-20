@@ -21,7 +21,6 @@ import svnserver.ext.api.ServiceRegistry;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepositoryMapping;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SocketRpc implements Shared {
+final class SocketRpc implements Shared {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SocketRpc.class);
   private static final long TIMEOUT = 10000;
@@ -43,7 +42,7 @@ public class SocketRpc implements Shared {
   @NotNull
   private final SharedContext context;
 
-  public SocketRpc(@NotNull SharedContext context, @NotNull ServerSocket serverSocket) throws IOException {
+  SocketRpc(@NotNull SharedContext context, @NotNull ServerSocket serverSocket) {
     this.poolExecutor = Executors.newCachedThreadPool();
     this.context = context;
     log.info("Server API on socket: {}", serverSocket);
@@ -51,14 +50,17 @@ public class SocketRpc implements Shared {
   }
 
   @Nullable
-  public ServiceInfo getService(@NotNull String name) {
+  private ServiceInfo getService(@NotNull String name) {
     int separator = name.lastIndexOf('/');
     ServiceRegistry registry;
     if (separator < 0) {
       registry = ServiceRegistry.get(context);
     } else {
       try {
-        VcsRepositoryMapping mapping = context.sure(VcsRepositoryMapping.class);
+        VcsRepositoryMapping mapping = context.get(VcsRepositoryMapping.class);
+        if (mapping == null)
+          return null;
+
         SVNURL url = SVNURL.create("svn", null, "localhost", 0, name.substring(0, separator), false);
         RepositoryInfo repository = mapping.getRepository(url);
         if (repository == null || !repository.getBaseUrl().getPath().equals(url.getPath()))
