@@ -7,6 +7,7 @@
  */
 package svnserver;
 
+import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -17,6 +18,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -171,5 +173,20 @@ public final class SvnTestHelper {
       repo.getFile(filePath, repo.getLatestRevision(), null, stream);
       Assert.assertEquals(stream.toByteArray(), content);
     }
+  }
+
+  @Nullable
+  public static String findExecutable(@NotNull String name) {
+    final String path = System.getenv("PATH");
+    if (path != null) {
+      final String suffix = SystemUtils.IS_OS_WINDOWS ? ".exe" : "";
+      for (String dir : path.split(File.pathSeparator)) {
+        final File file = new File(dir, name + suffix);
+        if (file.exists()) {
+          return file.getAbsolutePath();
+        }
+      }
+    }
+    return null;
   }
 }

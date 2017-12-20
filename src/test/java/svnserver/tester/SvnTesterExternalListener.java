@@ -7,7 +7,6 @@
  */
 package svnserver.tester;
 
-import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -21,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import svnserver.SvnTestHelper;
 import svnserver.TestHelper;
 
 import java.io.File;
@@ -84,8 +84,8 @@ public class SvnTesterExternalListener implements ITestListener {
   @Override
   public void onStart(ITestContext context) {
     try {
-      final String svnserve = findExecutable("svnserve");
-      final String svnadmin = findExecutable("svnadmin");
+      final String svnserve = SvnTestHelper.findExecutable("svnserve");
+      final String svnadmin = SvnTestHelper.findExecutable("svnadmin");
       if (svnserve != null && svnadmin != null) {
         log.warn("Native svn daemon executables: {}, {}", svnserve, svnadmin);
         daemon = new NativeDaemon(svnserve, svnadmin);
@@ -95,21 +95,6 @@ public class SvnTesterExternalListener implements ITestListener {
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-  }
-
-  @Nullable
-  private static String findExecutable(@NotNull String name) {
-    final String path = System.getenv("PATH");
-    if (path != null) {
-      final String suffix = SystemUtils.IS_OS_WINDOWS ? ".exe" : "";
-      for (String dir : path.split(File.pathSeparator)) {
-        final File file = new File(dir, name + suffix);
-        if (file.exists()) {
-          return file.getAbsolutePath();
-        }
-      }
-    }
-    return null;
   }
 
   @Override

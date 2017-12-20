@@ -12,8 +12,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
@@ -30,6 +30,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Artem V. Navrotskiy (bozaro at buzzsoft.ru)
  */
 public class AuthLdapTest {
+  
+  /**
+   * Test for #156.
+   */
+  @Test
+  void nativeClient() throws Exception {
+    final String svn = SvnTestHelper.findExecutable("svn");
+    if (svn == null)
+      return;
+
+    try (
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
+    ) {
+      final String[] command = {svn, "--non-interactive", "ls", "--username=ldapadmin", "--password=ldapadmin", server.getUrl().toString()};
+      final int exitCode = new ProcessBuilder(command)
+          .redirectError(ProcessBuilder.Redirect.INHERIT)
+          .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+          .start()
+          .waitFor();
+      Assert.assertEquals(exitCode, 0);
+    }
+  }
+
   @Test
   public void validUser() throws Throwable {
     checkUser("ldapadmin", "ldapadmin");
