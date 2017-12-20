@@ -152,7 +152,7 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
     final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, null, true);
+    return new SvnTestServer(TestHelper.emptyRepository(), branch, "foo", false, null, true);
   }
 
   @NotNull
@@ -163,7 +163,7 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "/master", true, null, true);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "master", true, null, true);
   }
 
   @Override
