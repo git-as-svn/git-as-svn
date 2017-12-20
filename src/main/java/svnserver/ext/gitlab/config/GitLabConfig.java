@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.config;
 
+import org.gitlab.api.TokenType;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
@@ -20,21 +21,24 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("gitlab")
-public class GitLabConfig implements SharedConfig {
+public final class GitLabConfig implements SharedConfig {
   @NotNull
   private String url;
   @NotNull
   private String token;
   @NotNull
+  private TokenType tokenType;
+  @NotNull
   private String hookUrl = "http://localhost:8123/hooks/gitlab";
 
   public GitLabConfig() {
-    this("http://localhost/", "");
+    this("http://localhost/", "", TokenType.PRIVATE_TOKEN);
   }
 
-  public GitLabConfig(@NotNull String url, @NotNull String token) {
+  public GitLabConfig(@NotNull String url, @NotNull String token, @NotNull TokenType tokenType) {
     this.url = url;
     this.token = token;
+    this.tokenType = tokenType;
   }
 
   @NotNull
@@ -54,5 +58,9 @@ public class GitLabConfig implements SharedConfig {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(GitLabContext.class, new GitLabContext(this));
+  }
+
+  @NotNull TokenType getTokenType() {
+    return tokenType;
   }
 }

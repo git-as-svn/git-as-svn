@@ -38,9 +38,6 @@ public final class Config {
   private CacheConfig cacheConfig = new PersistentCacheConfig();
 
   @NotNull
-  private AccessConfig acl = new AclConfig();
-
-  @NotNull
   private List<SharedConfig> shared = new ArrayList<>();
 
   private int port = 3690;

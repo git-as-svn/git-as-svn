@@ -27,6 +27,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
@@ -44,17 +45,30 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
   @NotNull
   private GitRepositoryConfig template = new GitRepositoryConfig();
   @NotNull
-  private String path = "/var/git/repositories/";
+  private String path;
   private int cacheTimeSec = 15;
   private int cacheMaximumSize = 1000;
 
+  public GitLabMappingConfig() {
+    this("/var/git/repositories/");
+  }
+
+  private GitLabMappingConfig(@NotNull String path) {
+    this.path = path;
+  }
+
   @NotNull
-  public GitRepositoryConfig getTemplate() {
+  public static GitLabMappingConfig create(@NotNull File path) {
+    return new GitLabMappingConfig(path.getAbsolutePath());
+  }
+
+  @NotNull
+  GitRepositoryConfig getTemplate() {
     return template;
   }
 
   @NotNull
-  public String getPath() {
+  String getPath() {
     return path;
   }
 

@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Test subversion server.
@@ -54,17 +55,17 @@ import java.util.UUID;
  */
 public final class SvnTestServer implements SvnTester {
   @NotNull
+  public static final String USER_NAME_NO_MAIL = "nomail";
+  @NotNull
+  public static final String PASSWORD = "passw0rd";
+  @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnTestServer.class);
   @NotNull
   private static final String USER_NAME = "tester";
   @NotNull
-  public static final String USER_NAME_NO_MAIL = "nomail";
-  @NotNull
   private static final String REAL_NAME = "Test User";
   @NotNull
   private static final String EMAIL = "foo@bar.org";
-  @NotNull
-  public static final String PASSWORD = "passw0rd";
   @NotNull
   private static final String TEST_BRANCH_PREFIX = "test_";
 
@@ -85,7 +86,14 @@ public final class SvnTestServer implements SvnTester {
 
   private final boolean safeBranch;
 
-  private SvnTestServer(@NotNull Repository repository, @Nullable String branch, @NotNull String prefix, boolean safeBranch, @Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
+  private SvnTestServer(@NotNull Repository repository,
+                        @Nullable String branch,
+                        @NotNull String prefix,
+                        boolean safeBranch,
+                        @Nullable UserDBConfig userDBConfig,
+                        @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator,
+                        boolean anonymousRead,
+                        @NotNull SharedConfig... shared) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
@@ -107,7 +115,13 @@ public final class SvnTestServer implements SvnTester {
     final Config config = new Config(BIND_HOST, 0);
     config.setCompressionEnabled(false);
     config.setCacheConfig(new MemoryCacheConfig());
-    config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix, anonymousRead));
+
+    if (mappingConfigCreator != null) {
+      config.setRepositoryMapping(mappingConfigCreator.apply(tempDirectory));
+    } else {
+      config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix, anonymousRead));
+    }
+
     if (userDBConfig != null) {
       config.setUserDB(userDBConfig);
     } else {
@@ -149,23 +163,6 @@ public final class SvnTestServer implements SvnTester {
     }
   }
 
-  @NotNull
-  public static SvnTestServer createEmpty() throws Exception {
-    final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, "foo", false, null, true);
-  }
-
-  @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
-    final String branch = "master";
-    return new SvnTestServer(TestHelper.emptyRepository(), branch, "", false, userDBConfig, anonymousRead, shared);
-  }
-
-  @NotNull
-  public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "master", true, null, true);
-  }
-
   @Override
   @NotNull
   public SVNURL getUrl() throws SVNException {
@@ -173,17 +170,40 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public Repository getRepository() {
-    return repository;
+  public SVNRepository openSvnRepository() throws SVNException {
+    return openSvnRepository(USER_NAME, PASSWORD);
   }
 
   @NotNull
-  public File getTempDirectory() {
-    return tempDirectory;
+  public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
+    final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
+    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
+    return repo;
   }
 
-  public void shutdown(int millis) throws IOException, InterruptedException {
-    server.shutdown(millis);
+  @NotNull
+  public static SvnTestServer createEmpty() throws Exception {
+    return createEmpty(null, false);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
+    return createEmpty(userDBConfig, null, anonymousRead, shared);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
+    return new SvnTestServer(TestHelper.emptyRepository(), "master", "", false, userDBConfig, mappingConfigCreator, anonymousRead, shared);
+  }
+
+  @NotNull
+  public static SvnTestServer createMasterRepository() throws Exception {
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "master", true, null, null, true);
+  }
+
+  @NotNull
+  public Repository getRepository() {
+    return repository;
   }
 
   @Override
@@ -204,6 +224,10 @@ public final class SvnTestServer implements SvnTester {
     TestHelper.deleteDirectory(tempDirectory);
   }
 
+  public void shutdown(int millis) throws IOException, InterruptedException {
+    server.shutdown(millis);
+  }
+
   @NotNull
   public SvnOperationFactory createOperationFactory() {
     return createOperationFactory(USER_NAME, PASSWORD);
@@ -222,15 +246,8 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public SVNRepository openSvnRepository() throws SVNException {
-    return openSvnRepository(USER_NAME, PASSWORD);
-  }
-
-  @NotNull
-  public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
-    final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
-    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
-    return repo;
+  public File getTempDirectory() {
+    return tempDirectory;
   }
 
   public void startShutdown() throws IOException {

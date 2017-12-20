@@ -48,20 +48,20 @@ public final class GitLabContext implements Shared {
 
   @NotNull
   public GitlabSession connect(@NotNull String username, @NotNull String password) throws IOException {
-    String token = obtainToken(config.getUrl(), username, password);
+    String token = obtainAccessToken(config.getUrl(), username, password);
     final GitlabAPI api = GitlabAPI.connect(config.getUrl(), token, TokenType.ACCESS_TOKEN);
     return api.getCurrentSession();
   }
 
   @NotNull
-  public static String obtainToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password) throws IOException {
+  public static String obtainAccessToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password) throws IOException {
     final TokenResponse oauthResponse = new PasswordTokenRequest(transport, jsonFactory, new OAuthGetAccessToken(gitlabUrl + "/oauth/token"), username, password).execute();
     return oauthResponse.getAccessToken();
   }
 
   @NotNull
   public GitlabAPI connect() {
-    return GitlabAPI.connect(config.getUrl(), config.getToken());
+    return GitlabAPI.connect(config.getUrl(), config.getToken(), config.getTokenType());
   }
 
   @NotNull

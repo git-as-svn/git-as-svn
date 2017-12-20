@@ -7,7 +7,10 @@
  */
 package svnserver.ext.gitlab;
 
+import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.TokenType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.Wait;
 import org.testng.annotations.AfterClass;
@@ -15,12 +18,16 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import svnserver.SvnTestServer;
+import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
 import svnserver.ext.gitlab.config.GitLabConfig;
 import svnserver.ext.gitlab.config.GitLabContext;
+import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.function.Function;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -36,8 +43,7 @@ public final class GitLabIntegrationTest {
 
   private GenericContainer<?> gitlab;
   private String gitlabUrl;
-  private String rootToken;
-  private SvnTestServer server;
+  private String rootAccessToken;
 
   @BeforeClass
   void before() throws Exception {
@@ -54,18 +60,15 @@ public final class GitLabIntegrationTest {
     gitlab.start();
 
     gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
-    rootToken = GitLabContext.obtainToken(gitlabUrl, root, rootPassword);
-
-    final GitLabConfig gitlabConfig = new GitLabConfig(gitlabUrl, rootToken);
-    server = SvnTestServer.createEmpty(new GitLabUserDBConfig(), false, gitlabConfig);
+    rootAccessToken = GitLabContext.obtainAccessToken(gitlabUrl, root, rootPassword);
   }
 
   @AfterClass
   void after() throws Exception {
-    if (server != null)
-      server.close();
-    if (gitlab != null)
+    if (gitlab != null) {
       gitlab.stop();
+      gitlab = null;
+    }
   }
 
   @Test
@@ -74,7 +77,16 @@ public final class GitLabIntegrationTest {
   }
 
   private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
-    server.openSvnRepository(login, password).getLatestRevision();
+    try (SvnTestServer server = createServer(rootAccessToken, null)) {
+      server.openSvnRepository(login, password).getLatestRevision();
+    }
+  }
+
+  @NotNull
+  private SvnTestServer createServer(@NotNull String accessToken, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
+    // TODO: use private token when GitLab adds API to manage them. https://gitlab.com/gitlab-org/gitlab-ce/issues/27954
+    final GitLabConfig gitLabConfig = new GitLabConfig(gitlabUrl, accessToken, TokenType.ACCESS_TOKEN);
+    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, gitLabConfig);
   }
 
   @Test(expectedExceptions = SVNAuthenticationException.class)
@@ -85,5 +97,12 @@ public final class GitLabIntegrationTest {
   @Test(expectedExceptions = SVNAuthenticationException.class)
   void invalidUser() throws Throwable {
     checkUser("wronguser", rootPassword);
+  }
+
+  @Test
+  void gitlabMappingAsRoot() throws Exception {
+    try (SvnTestServer server = createServer(rootAccessToken, GitLabMappingConfig::create)) {
+      // TODO: check repo list
+    }
   }
 }
