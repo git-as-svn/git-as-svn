@@ -105,4 +105,18 @@ public final class GitLabIntegrationTest {
       // TODO: check repo list
     }
   }
+
+  /**
+   * Test for #119.
+   */
+  @Test
+  void gitlabMappingAsUser() throws Exception {
+    final GitlabAPI api = GitlabAPI.connect(gitlabUrl, rootAccessToken, TokenType.ACCESS_TOKEN);
+    api.createUser("git-as-svn@localhost", "git-as-svn", "git-as-svn", "git-as-svn", null, null, null, null, null, null, null, null, false, null, true);
+    final String userAccessToken = GitLabContext.obtainAccessToken(gitlabUrl, "git-as-svn", "git-as-svn");
+
+    try (SvnTestServer server = createServer(userAccessToken, GitLabMappingConfig::create)) {
+      // TODO: check repo list
+    }
+  }
 }

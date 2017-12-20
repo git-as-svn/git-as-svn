@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.9
+
+ * Not GitLab integration can work without admin rights #119
+
 ## 1.1.8
 
  * Fix git-as-svn unable to find prefix-mapped repositories (broken in 1.1.2)

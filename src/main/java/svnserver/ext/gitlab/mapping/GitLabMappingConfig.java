@@ -88,7 +88,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
     // Get repositories.
 
     final GitLabMapping mapping = new GitLabMapping(context, this);
-    for (GitlabProject project : api.getAllProjects()) {
+    for (GitlabProject project : api.getProjects()) {
       mapping.addRepository(project);
     }
     // Web hook for repository list update.
