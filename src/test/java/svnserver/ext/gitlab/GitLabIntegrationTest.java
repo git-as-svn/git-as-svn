@@ -13,6 +13,7 @@ import org.testcontainers.containers.wait.Wait;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import svnserver.SvnTestServer;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
 import svnserver.ext.gitlab.config.GitLabConfig;
@@ -34,9 +35,12 @@ public final class GitLabIntegrationTest {
   private static final String rootPassword = "12345678";
 
   private GenericContainer<?> gitlab;
+  private String gitlabUrl;
+  private String rootToken;
+  private SvnTestServer server;
 
   @BeforeClass
-  void before() {
+  void before() throws Exception {
     String gitlabVersion = System.getenv("GITLAB_VERSION");
     if (gitlabVersion == null)
       gitlabVersion = "9.3.3-ce.0";
@@ -48,26 +52,38 @@ public final class GitLabIntegrationTest {
             .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES))
         );
     gitlab.start();
+
+    gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
+    rootToken = GitLabContext.obtainToken(gitlabUrl, root, rootPassword);
+
+    final GitLabConfig gitlabConfig = new GitLabConfig(gitlabUrl, rootToken);
+    server = SvnTestServer.createEmpty(new GitLabUserDBConfig(), false, gitlabConfig);
   }
 
   @AfterClass
-  void after() {
-    gitlab.stop();
+  void after() throws Exception {
+    if (server != null)
+      server.close();
+    if (gitlab != null)
+      gitlab.stop();
   }
 
   @Test
-  void gitlabAuthentication() throws Exception {
-    final String gitlabUrl = getGitlabUrl();
-    final String token = GitLabContext.obtainToken(gitlabUrl, root, rootPassword);
-    final GitLabConfig gitlabConfig = new GitLabConfig(gitlabUrl, token);
-
-    try (SvnTestServer server = SvnTestServer.createEmpty(new GitLabUserDBConfig(), false, gitlabConfig)) {
-      server.openSvnRepository(root, rootPassword).getLatestRevision();
-    }
+  void validUser() throws Exception {
+    checkUser(root, rootPassword);
   }
 
-  @NotNull
-  private String getGitlabUrl() {
-    return "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
+  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
+    server.openSvnRepository(login, password).getLatestRevision();
+  }
+
+  @Test(expectedExceptions = SVNAuthenticationException.class)
+  void invalidPassword() throws Throwable {
+    checkUser(root, "wrongpassword");
+  }
+
+  @Test(expectedExceptions = SVNAuthenticationException.class)
+  void invalidUser() throws Throwable {
+    checkUser("wronguser", rootPassword);
   }
 }

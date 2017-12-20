@@ -89,7 +89,7 @@ public class AuthLdapTest {
 
   @Test(expectedExceptions = SVNAuthenticationException.class)
   public void invalidPassword() throws Throwable {
-    checkUser("ldapadmin", "ldapadmin2");
+    checkUser("ldapadmin", "wrongpassword");
   }
 
   @Test(expectedExceptions = SVNAuthenticationException.class)
@@ -112,8 +112,7 @@ public class AuthLdapTest {
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
-      final SVNRepository repo = server.openSvnRepository(login, password);
-      repo.getLatestRevision();
+      server.openSvnRepository(login, password).getLatestRevision();
     }
   }
 
