@@ -3,6 +3,7 @@
 ## 1.1.8
 
  * Fix git-as-svn unable to find prefix-mapped repositories (broken in 1.1.2)
+ * Fix PLAIN authentication with native SVN client (broken in 1.1.4)
 
 ## 1.1.7
 

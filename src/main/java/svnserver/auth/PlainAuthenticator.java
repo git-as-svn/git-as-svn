@@ -38,7 +38,7 @@ public final class PlainAuthenticator implements Authenticator, PasswordChecker 
   @Nullable
   @Override
   public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException, SVNException {
-    final String decodedToken = new String(Base64.getDecoder().decode(token), StandardCharsets.US_ASCII);
+    final String decodedToken = new String(Base64.getDecoder().decode(token.trim()), StandardCharsets.US_ASCII);
     final String[] credentials = decodedToken.split("\u0000");
     if (credentials.length < 3)
       return null;
