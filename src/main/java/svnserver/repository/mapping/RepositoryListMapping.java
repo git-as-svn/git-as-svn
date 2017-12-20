@@ -30,7 +30,11 @@ public final class RepositoryListMapping implements VcsRepositoryMapping {
   private final NavigableMap<String, VcsRepository> mapping;
 
   public RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
-    this.mapping = new TreeMap<>(mapping);
+    this.mapping = new TreeMap<>();
+
+    mapping.forEach((path, repository) -> {
+      RepositoryListMapping.this.mapping.put(StringHelper.normalizeDir(path), repository);
+    });
   }
 
   @Nullable

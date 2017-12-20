@@ -178,9 +178,13 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     private class HeaderEntry implements AutoCloseable {
 
+      @NotNull
       private final SessionContext context;
+      @Nullable
       private final VcsFile file;
+      @NotNull
       private final HeaderWriter beginWriter;
+      @NotNull
       private final HeaderWriter endWriter;
       private boolean writed = false;
 

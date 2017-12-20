@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.8
+
+ * Fix git-as-svn unable to find prefix-mapped repositories (broken in 1.1.2)
+
 ## 1.1.7
 
  * Use OAuth2 to obtain user token. Fixes compatibility with GitLab >= 10.2 #154
