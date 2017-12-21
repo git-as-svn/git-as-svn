@@ -13,18 +13,17 @@ import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.TokenType;
 import org.gitlab.api.models.GitlabSession;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
 /**
  * GitLab context.
@@ -35,8 +34,6 @@ public final class GitLabContext implements Shared {
   @NotNull
   private static final HttpTransport transport = new NetHttpTransport();
   @NotNull
-  private static final JsonFactory jsonFactory = new JacksonFactory();
-  @NotNull
   private final GitLabConfig config;
 
   GitLabContext(@NotNull GitLabConfig config) {
@@ -44,30 +41,42 @@ public final class GitLabContext implements Shared {
   }
 
   @NotNull
-  public static GitLabContext sure(@NotNull SharedContext context) throws IOException, SVNException {
+  public static GitLabContext sure(@NotNull SharedContext context) {
     return context.sure(GitLabContext.class);
   }
 
   @NotNull
   public GitlabSession connect(@NotNull String username, @NotNull String password) throws IOException {
-    String token = obtainAccessToken(config.getUrl(), username, password);
-    final GitlabAPI api = GitlabAPI.connect(config.getUrl(), token, TokenType.ACCESS_TOKEN);
+    final GitLabToken token = obtainAccessToken(config.getUrl(), username, password, false);
+    final GitlabAPI api = connect(config.getUrl(), token);
     return api.getCurrentSession();
   }
 
   @NotNull
-  public static String obtainAccessToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password) throws IOException {
+  public static GitLabToken obtainAccessToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password, boolean sudoScope) throws IOException {
     try {
-      final TokenResponse oauthResponse = new PasswordTokenRequest(transport, jsonFactory, new OAuthGetAccessToken(gitlabUrl + "/oauth/token"), username, password).execute();
-      return oauthResponse.getAccessToken();
+      final OAuthGetAccessToken tokenServerUrl = new OAuthGetAccessToken(gitlabUrl + "/oauth/token" + (sudoScope ? "?scope=api%20sudo" : ""));
+      final TokenResponse oauthResponse = new PasswordTokenRequest(transport, JacksonFactory.getDefaultInstance(), tokenServerUrl, username, password).execute();
+      return new GitLabToken(TokenType.ACCESS_TOKEN, oauthResponse.getAccessToken());
     } catch (TokenResponseException e) {
-      throw new GitlabAPIException(e.getMessage(), e.getStatusCode(), e);
+      if (sudoScope && e.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        // Fallback for pre-10.2 gitlab versions
+        final GitlabSession session = GitlabAPI.connect(gitlabUrl, username, password);
+        return new GitLabToken(TokenType.PRIVATE_TOKEN, session.getPrivateToken());
+      } else {
+        throw new GitlabAPIException(e.getMessage(), e.getStatusCode(), e);
+      }
     }
   }
 
   @NotNull
+  public static GitlabAPI connect(@NotNull String gitlabUrl, @NotNull GitLabToken token) {
+    return GitlabAPI.connect(gitlabUrl, token.getValue(), token.getType());
+  }
+
+  @NotNull
   public GitlabAPI connect() {
-    return GitlabAPI.connect(config.getUrl(), config.getToken(), config.getTokenType());
+    return connect(config.getUrl(), config.getToken());
   }
 
   @NotNull

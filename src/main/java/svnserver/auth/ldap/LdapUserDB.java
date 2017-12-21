@@ -25,7 +25,6 @@ import svnserver.auth.ldap.config.LdapUserDBConfig;
 import svnserver.config.ConfigHelper;
 import svnserver.context.SharedContext;
 
-import javax.naming.NamingException;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -52,7 +51,7 @@ import java.util.Collections;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LdapUserDB implements UserDB {
+public final class LdapUserDB implements UserDB {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(LdapUserDB.class);
 
@@ -96,7 +95,7 @@ public class LdapUserDB implements UserDB {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     this.pool.close();
   }
 
@@ -107,26 +106,25 @@ public class LdapUserDB implements UserDB {
     return authenticators;
   }
 
-  @Nullable
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
     return findUser(userName, userDN -> doTask(connection -> connection.bind(userDN, password).getResultCode() == ResultCode.SUCCESS));
   }
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+  public User lookupByUserName(@NotNull String userName) throws SVNException {
     return findUser(userName, userDN -> true);
   }
 
   @Nullable
   @Override
-  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+  public User lookupByExternal(@NotNull String external) {
     return null;
   }
 
   @Nullable
-  private String getAttribute(@NotNull SearchResultEntry entry, @NotNull String name) throws NamingException {
+  private String getAttribute(@NotNull SearchResultEntry entry, @NotNull String name) {
     Attribute attribute = entry.getAttribute(name);
     return attribute == null ? null : attribute.getValue();
   }
@@ -169,8 +167,6 @@ public class LdapUserDB implements UserDB {
       if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
         return null;
       }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
-    } catch (NamingException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
     }
   }

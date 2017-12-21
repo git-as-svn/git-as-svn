@@ -8,16 +8,12 @@
 package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-
-import java.io.IOException;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 @FunctionalInterface
 public interface PasswordChecker {
-  @Nullable
-  User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException;
+  User check(@NotNull String userName, @NotNull String password) throws SVNException;
 }

@@ -15,8 +15,10 @@ import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Complex authentication.
@@ -24,7 +26,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy
  */
-public class CombineUserDB implements UserDB {
+public final class CombineUserDB implements UserDB {
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
@@ -34,25 +36,24 @@ public class CombineUserDB implements UserDB {
     this.userDBs = new ArrayList<>(userDBs);
   }
 
-  @Nullable
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
     return firstAvailable(userDB -> userDB.check(userName, password));
   }
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+  public User lookupByUserName(@NotNull String userName) throws SVNException {
     return firstAvailable(userDB -> userDB.lookupByUserName(userName));
   }
 
   @Nullable
   @Override
-  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+  public User lookupByExternal(@NotNull String external) throws SVNException {
     return firstAvailable(userDB -> userDB.lookupByExternal(external));
   }
 
-  private User firstAvailable(@NotNull FirstAvailableCallback callback) throws IOException, SVNException {
+  private User firstAvailable(@NotNull FirstAvailableCallback callback) throws SVNException {
     for (UserDB userDB : userDBs) {
       User user = callback.exec(userDB);
       if (user != null) {
@@ -65,7 +66,7 @@ public class CombineUserDB implements UserDB {
   @FunctionalInterface
   private interface FirstAvailableCallback {
     @Nullable
-    User exec(UserDB userDB) throws SVNException, IOException;
+    User exec(UserDB userDB) throws SVNException;
   }
 
   @NotNull

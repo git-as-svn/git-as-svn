@@ -48,9 +48,8 @@ public final class PlainAuthenticator implements Authenticator, PasswordChecker 
     return check(username, password);
   }
 
-  @Nullable
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
     return passwordChecker.check(userName, password);
   }
 }

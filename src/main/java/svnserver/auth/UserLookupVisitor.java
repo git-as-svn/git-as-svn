@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 
-import java.io.IOException;
-
 /**
  * User lookup visitor.
  *
@@ -20,8 +18,8 @@ import java.io.IOException;
  */
 public interface UserLookupVisitor {
   @Nullable
-  User lookupByUserName(@NotNull String userName) throws SVNException, IOException;
+  User lookupByUserName(@NotNull String userName) throws SVNException;
 
   @Nullable
-  User lookupByExternal(@NotNull String external) throws SVNException, IOException;
+  User lookupByExternal(@NotNull String external) throws SVNException;
 }

@@ -12,9 +12,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnTesterSvnKit implements SvnTester {
+public final class SvnTesterSvnKit implements SvnTester {
   @NotNull
   public static final String USER_NAME = "tester";
   @NotNull
@@ -54,9 +54,7 @@ public class SvnTesterSvnKit implements SvnTester {
   @NotNull
   @Override
   public SVNRepository openSvnRepository() throws SVNException {
-    SVNRepository repo = SVNRepositoryFactory.create(url);
-    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(USER_NAME, PASSWORD.toCharArray()));
-    return repo;
+    return SvnTestServer.openSvnRepository(url, USER_NAME, PASSWORD);
   }
 
   @Override

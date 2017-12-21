@@ -176,7 +176,12 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
-    final SVNRepository repo = SVNRepositoryFactory.create(getUrl());
+    return openSvnRepository(getUrl(), userName, password);
+  }
+
+  @NotNull
+  public static SVNRepository openSvnRepository(@NotNull SVNURL url, @NotNull String userName, @NotNull String password) throws SVNException {
+    final SVNRepository repo = SVNRepositoryFactory.create(url);
     repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
     return repo;
   }

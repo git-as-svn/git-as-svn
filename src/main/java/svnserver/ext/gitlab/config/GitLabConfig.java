@@ -32,10 +32,14 @@ public final class GitLabConfig implements SharedConfig {
   private String hookUrl = "http://localhost:8123/hooks/gitlab";
 
   public GitLabConfig() {
-    this("http://localhost/", "", TokenType.PRIVATE_TOKEN);
+    this("http://localhost/", TokenType.PRIVATE_TOKEN, "");
   }
 
-  public GitLabConfig(@NotNull String url, @NotNull String token, @NotNull TokenType tokenType) {
+  public GitLabConfig(@NotNull String url, @NotNull GitLabToken token) {
+    this(url, token.getType(), token.getValue());
+  }
+
+  private GitLabConfig(@NotNull String url, @NotNull TokenType tokenType, @NotNull String token) {
     this.url = url;
     this.token = token;
     this.tokenType = tokenType;
@@ -47,8 +51,8 @@ public final class GitLabConfig implements SharedConfig {
   }
 
   @NotNull
-  public String getToken() {
-    return token;
+  public GitLabToken getToken() {
+    return new GitLabToken(tokenType, token);
   }
 
   @NotNull String getHookUrl() {
@@ -58,9 +62,5 @@ public final class GitLabConfig implements SharedConfig {
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
     context.add(GitLabContext.class, new GitLabContext(this));
-  }
-
-  @NotNull TokenType getTokenType() {
-    return tokenType;
   }
 }

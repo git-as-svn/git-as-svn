@@ -9,13 +9,11 @@ package svnserver.auth.cache;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -25,19 +23,18 @@ import java.util.Objects;
  *
  * @author Artem V. Navrotskiy
  */
-public class TestUserDB implements UserDB {
+final class TestUserDB implements UserDB {
   @NotNull
   private final User[] users;
   @NotNull
   private final StringBuilder report = new StringBuilder();
 
-  public TestUserDB(@NotNull User... users) {
+  TestUserDB(@NotNull User... users) {
     this.users = users;
   }
 
-  @Nullable
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+  public User check(@NotNull String userName, @NotNull String password) {
     log("check: " + userName + ", " + password);
     if (password.equals(password(userName))) {
       for (User user : users) {
@@ -49,6 +46,11 @@ public class TestUserDB implements UserDB {
     return null;
   }
 
+  private void log(@NotNull String message) {
+    if (report.length() > 0) report.append('\n');
+    report.append(message);
+  }
+
   @NotNull
   public String password(@NotNull String userName) {
     return "~~~" + userName + "~~~";
@@ -56,7 +58,7 @@ public class TestUserDB implements UserDB {
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+  public User lookupByUserName(@NotNull String userName) {
     log("lookupByUserName: " + userName);
     for (User user : users) {
       if (Objects.equals(user.getUserName(), userName)) {
@@ -68,7 +70,7 @@ public class TestUserDB implements UserDB {
 
   @Nullable
   @Override
-  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+  public User lookupByExternal(@NotNull String external) {
     log("lookupByExternal: " + external);
     for (User user : users) {
       if (Objects.equals(user.getExternalId(), external)) {
@@ -81,11 +83,6 @@ public class TestUserDB implements UserDB {
   @NotNull
   public String report() {
     return report.toString();
-  }
-
-  private void log(@NotNull String message) {
-    if (report.length() > 0) report.append('\n');
-    report.append(message);
   }
 
   @NotNull

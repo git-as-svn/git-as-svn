@@ -8,18 +8,19 @@
 package svnserver.ext.gitlab.auth;
 
 import org.gitlab.api.GitlabAPIException;
+import org.gitlab.api.models.GitlabSession;
 import org.gitlab.api.models.GitlabUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.*;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -52,13 +53,21 @@ public final class GitLabUserDB implements UserDB, UserLookupVisitor {
     return authenticators;
   }
 
-  @Nullable
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
+    final String externalId = userInfo.getExternalId();
+    if (externalId != null) {
+      env.put("GL_ID", PREFIX_USER + externalId);
+    }
+  }
+
+  @Override
+  public User check(@NotNull String userName, @NotNull String password) {
     try {
-      return createUser(context.connect(userName, password));
+      final GitlabSession session = context.connect(userName, password);
+      return createUser(session);
     } catch (GitlabAPIException e) {
-      if (e.getResponseCode() == 401) {
+      if (e.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
         return null;
       }
       log.warn("User password check error: " + userName, e);
@@ -69,9 +78,14 @@ public final class GitLabUserDB implements UserDB, UserLookupVisitor {
     }
   }
 
+  @NotNull
+  private User createUser(@NotNull GitlabUser user) {
+    return User.create(user.getUsername(), user.getName(), user.getEmail(), user.getId().toString());
+  }
+
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+  public User lookupByUserName(@NotNull String userName) {
     try {
       return createUser(context.connect().getUserViaSudo(userName));
     } catch (FileNotFoundException e) {
@@ -84,7 +98,7 @@ public final class GitLabUserDB implements UserDB, UserLookupVisitor {
 
   @Nullable
   @Override
-  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+  public User lookupByExternal(@NotNull String external) {
     final Integer userId = removePrefix(external, PREFIX_USER);
     if (userId != null) {
       try {
@@ -110,14 +124,6 @@ public final class GitLabUserDB implements UserDB, UserLookupVisitor {
     return null;
   }
 
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
-    final String externalId = userInfo.getExternalId();
-    if (externalId != null) {
-      env.put("GL_ID", PREFIX_USER + externalId);
-    }
-  }
-
   @Nullable
   private Integer removePrefix(@NotNull String glId, @NotNull String prefix) {
     if (glId.startsWith(prefix)) {
@@ -130,9 +136,5 @@ public final class GitLabUserDB implements UserDB, UserLookupVisitor {
       return result;
     }
     return null;
-  }
-
-  private User createUser(@NotNull GitlabUser user) {
-    return User.create(user.getUsername(), user.getName(), user.getEmail(), user.getId().toString());
   }
 }
