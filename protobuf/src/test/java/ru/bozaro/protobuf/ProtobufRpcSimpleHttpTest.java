@@ -45,7 +45,7 @@ public class ProtobufRpcSimpleHttpTest {
     final BlockingService service = Example.newReflectiveBlockingService(new ExampleBlockingImpl());
     try (final ServerSocket socket = new ServerSocket()) {
       socket.bind(new InetSocketAddress("127.0.0.2", 0));
-      try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool())) {
+      try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool()).start()) {
         final String url = "http:/" + socket.getLocalSocketAddress().toString();
         final BlockingRpcChannel channel = new ProtobufClient(new URI(url), null, format);
         Example.BlockingInterface stub = Example.newBlockingStub(channel);
@@ -69,7 +69,7 @@ public class ProtobufRpcSimpleHttpTest {
     final BlockingService service = Example.newReflectiveBlockingService(new ExampleBlockingImpl());
     try (final ServerSocket socket = new ServerSocket()) {
       socket.bind(new InetSocketAddress("127.0.0.2", 0));
-      try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool())) {
+      try (ProtobufRpcSocket rpc = new ProtobufRpcSocket(new ServiceHolderImpl(service), socket, Executors.newCachedThreadPool()).start()) {
         final String url = "http:/" + socket.getLocalSocketAddress().toString();
         final BlockingRpcChannel channel = new ProtobufClientGet(new URI(url), null, format);
         Example.BlockingInterface stub = Example.newBlockingStub(channel);

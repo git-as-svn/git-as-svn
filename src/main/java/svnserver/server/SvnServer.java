@@ -131,7 +131,6 @@ public final class SvnServer extends Thread implements ThreadFactory {
     serverSocket.setReuseAddress(config.getReuseAddress());
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
     poolExecutor = Executors.newCachedThreadPool(this);
-    log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
 
     context.ready();
   }
@@ -152,7 +151,7 @@ public final class SvnServer extends Thread implements ThreadFactory {
 
   @Override
   public void run() {
-    log.info("Server is ready on port: {}", serverSocket.getLocalPort());
+    log.info("Ready for connections on {}", serverSocket.getLocalSocketAddress());
     while (!stopped.get()) {
       final Socket client;
       try {

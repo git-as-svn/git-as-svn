@@ -21,6 +21,7 @@ import svnserver.ext.api.ServiceRegistry;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsRepositoryMapping;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,8 +46,13 @@ final class SocketRpc implements Shared {
   SocketRpc(@NotNull SharedContext context, @NotNull ServerSocket serverSocket) {
     this.poolExecutor = Executors.newCachedThreadPool();
     this.context = context;
-    log.info("Server API on socket: {}", serverSocket);
     this.server = new ProtobufRpcSocket(SocketRpc.this::getService, serverSocket, poolExecutor);
+  }
+
+  @Override
+  public void ready(@NotNull SharedContext context) throws IOException {
+    this.server.start();
+    log.info("Started {}", this.server);
   }
 
   @Nullable
@@ -57,10 +63,7 @@ final class SocketRpc implements Shared {
       registry = ServiceRegistry.get(context);
     } else {
       try {
-        VcsRepositoryMapping mapping = context.get(VcsRepositoryMapping.class);
-        if (mapping == null)
-          return null;
-
+        VcsRepositoryMapping mapping = context.sure(VcsRepositoryMapping.class);
         SVNURL url = SVNURL.create("svn", null, "localhost", 0, name.substring(0, separator), false);
         RepositoryInfo repository = mapping.getRepository(url);
         if (repository == null || !repository.getBaseUrl().getPath().equals(url.getPath()))
