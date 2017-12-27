@@ -56,7 +56,7 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     final int endRev = getRevision(args.endRev, 0);
-    final int pegRev = getRevision(args.pegRev, () -> context.getRepository().getLatestRevision().getId());
+    final int pegRev = getRevisionOrLatest(args.pegRev, context);
     final int startRev = getRevision(args.startRev, pegRev);
     if ((endRev > startRev) || (startRev > pegRev)) {
       writer.word("done");

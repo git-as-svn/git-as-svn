@@ -59,7 +59,7 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     String fullPath = context.getRepositoryPath(args.path);
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
+    final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     VcsFile fileInfo = info.getFile(fullPath);
     final SVNNodeKind kind;
     if (fileInfo != null) {

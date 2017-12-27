@@ -54,7 +54,7 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    final int rev = getRevision(args.rev, () -> context.getRepository().getLatestRevision().getId());
+    final int rev = getRevisionOrLatest(args.rev, context);
     final String path = context.getRepositoryPath(args.path);
     final LockTarget lockTarget = new LockTarget(path, rev);
     final String comment = args.comment.length == 0 ? null : args.comment[0];

@@ -34,10 +34,12 @@ import java.util.List;
  */
 public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
   public static class Params {
+    @NotNull
     private final String path;
+    @NotNull
     private final int[] rev;
 
-    public Params(String path, int[] rev) {
+    public Params(@NotNull String path, @NotNull int[] rev) {
       this.path = path;
       this.rev = rev;
     }
@@ -55,7 +57,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
     String fullPath = context.getRepositoryPath(args.path);
 
     final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
+    final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final List<VcsFile> files = new ArrayList<>();
     int index = -1;
     while (true) {
