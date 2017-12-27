@@ -24,6 +24,6 @@ public class MemoryCacheConfig implements CacheConfig {
   @NotNull
   @Override
   public DB createCache(@NotNull File basePath) {
-    return DBMaker.newMemoryDB().make();
+    return DBMaker.memoryDB().make();
   }
 }

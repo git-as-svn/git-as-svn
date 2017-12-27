@@ -9,15 +9,15 @@ package svnserver.repository.locks;
 
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
+import org.mapdb.DataInput2;
+import org.mapdb.DataOutput2;
 import org.mapdb.Serializer;
+import org.mapdb.serializer.GroupSerializerObjectArray;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
 import svnserver.repository.VcsRepository;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.SortedMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class PersistentLockFactory implements LockManagerFactory {
   @NotNull
-  private static final Serializer<LockDesc> serializer = new CustomSerializer();
+  private static final GroupSerializerObjectArray<LockDesc> serializer = new CustomSerializer();
 
   @NotNull
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -41,7 +41,7 @@ public final class PersistentLockFactory implements LockManagerFactory {
 
   public PersistentLockFactory(@NotNull LocalContext context) {
     this.db = context.getShared().getCacheDB();
-    this.map = db.createTreeMap("locks:" + context.getName()).valueSerializer(serializer).makeOrGet();
+    this.map = db.treeMap("locks:" + context.getName(), Serializer.STRING, serializer).createOrOpen();
   }
 
   @NotNull
@@ -68,11 +68,11 @@ public final class PersistentLockFactory implements LockManagerFactory {
     }
   }
 
-  public static class CustomSerializer implements Serializer<LockDesc>, Serializable {
+  public static class CustomSerializer extends GroupSerializerObjectArray<LockDesc> {
     private static final byte VERSION = 1;
 
     @Override
-    public void serialize(@NotNull DataOutput out, @NotNull LockDesc value) throws IOException {
+    public void serialize(@NotNull DataOutput2 out, @NotNull LockDesc value) throws IOException {
       out.writeByte(VERSION);
       out.writeUTF(value.getPath());
       out.writeUTF(value.getHash());
@@ -87,19 +87,18 @@ public final class PersistentLockFactory implements LockManagerFactory {
       out.writeLong(value.getCreated());
     }
 
-    @NotNull
     @Override
-    public LockDesc deserialize(@NotNull DataInput in, int available) throws IOException {
-      byte version = in.readByte();
+    public LockDesc deserialize(@NotNull DataInput2 input, int available) throws IOException {
+      byte version = input.readByte();
       if (version != VERSION) {
         throw new IOException("Unexpected data format");
       }
-      final String path = in.readUTF();
-      final String hash = in.readUTF();
-      final String token = in.readUTF();
-      final String owner = in.readUTF();
-      final String comment = in.readBoolean() ? in.readUTF() : null;
-      final long created = in.readLong();
+      final String path = input.readUTF();
+      final String hash = input.readUTF();
+      final String token = input.readUTF();
+      final String owner = input.readUTF();
+      final String comment = input.readBoolean() ? input.readUTF() : null;
+      final long created = input.readLong();
       return new LockDesc(path, hash, token, owner, comment, created);
     }
 

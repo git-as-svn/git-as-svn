@@ -67,7 +67,7 @@ public class LfsHttpStorageTest {
     final User user = User.create("test", "Test User", "test@example.com", null);
     users.add(new UserWithPassword(user, "test"));
     // Create shared context
-    SharedContext sharedContext = new SharedContext(new File("/tmp"), DBMaker.newMemoryDB().make());
+    SharedContext sharedContext = new SharedContext(new File("/tmp"), DBMaker.memoryDB().make());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
     sharedContext.add(LfsServer.class, new LfsServer("{0}.git", "t0ken", 0, 0));
     sharedContext.add(UserDB.class, users);

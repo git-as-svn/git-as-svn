@@ -20,6 +20,7 @@ import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.HTreeMap;
+import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -96,7 +97,9 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final LocalContext context;
   @NotNull
-  private final Map<String, Boolean> binaryCache;
+  private final HTreeMap<String, Boolean> binaryCache;
+  @NotNull
+  private final HTreeMap<String, byte[]> revisionCache;
   @NotNull
   private final Map<String, GitFilter> gitFilters;
   @NotNull
@@ -110,12 +113,13 @@ public class GitRepository implements VcsRepository {
                        @NotNull GitPusher pusher,
                        @NotNull String branch,
                        boolean renameDetection,
-                       @NotNull LockManagerFactory lockManagerFactory) throws IOException, SVNException {
+                       @NotNull LockManagerFactory lockManagerFactory) throws IOException {
     this.context = context;
     final SharedContext shared = context.getShared();
     shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
     this.repository = repository;
-    this.binaryCache = shared.getCacheDB().getHashMap("cache.binary");
+    this.binaryCache = shared.getCacheDB().hashMap("cache.binary", Serializer.STRING, Serializer.BOOLEAN).createOrOpen();
+    this.revisionCache = context.getShared().getCacheDB().hashMap(String.format("cache-revision.%s.%s", context.getName(), renameDetection ? "1" : "0"), Serializer.STRING, Serializer.BYTE_ARRAY).createOrOpen();
     this.pusher = pusher;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
@@ -136,7 +140,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     context.getShared().sure(GitSubmodules.class).unregister(repository);
   }
 
@@ -245,7 +249,7 @@ public class GitRepository implements VcsRepository {
    * @throws IOException
    * @throws SVNException
    */
-  public boolean cacheRevisions() throws IOException, SVNException {
+  public boolean cacheRevisions() throws IOException {
     // Fast check.
     lock.readLock().lock();
     try {
@@ -317,10 +321,9 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
-    final HTreeMap<String, byte[]> cache = context.getShared().getCacheDB().getHashMap("cache-revision");
-    final String cacheKey = String.format("%s|%s", newCommit.name(), renameDetection ? "1" : "0");
+    final String cacheKey = newCommit.name();
 
-    CacheRevision result = CacheRevision.deserialize(cache.get(cacheKey));
+    CacheRevision result = CacheRevision.deserialize(revisionCache.get(cacheKey));
     if (result == null) {
       final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
       final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
@@ -334,7 +337,7 @@ public class GitRepository implements VcsRepository {
           collectRename(oldTree, newTree),
           fileChange
       );
-      cache.put(cacheKey, CacheRevision.serialize(result));
+      revisionCache.put(cacheKey, CacheRevision.serialize(result));
     }
     return result;
   }
@@ -454,7 +457,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) throws IOException, SVNException {
+  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) {
     if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
       return gitFilters.get(GitFilterRaw.NAME);
     }
@@ -484,7 +487,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException, SVNException {
+  private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException {
     GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
       property = factory.create(loadContent(objectId.getRepo().newObjectReader(), objectId.getObject()));
@@ -498,7 +501,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public GitRevision getLatestRevision() throws IOException {
+  public GitRevision getLatestRevision() {
     lock.readLock().lock();
     try {
       return revisions.get(revisions.size() - 1);
@@ -509,7 +512,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsRevision getRevisionByDate(long dateTime) throws IOException {
+  public VcsRevision getRevisionByDate(long dateTime) {
     lock.readLock().lock();
     try {
       final Map.Entry<Long, GitRevision> entry = revisionByDate.floorEntry(dateTime);
@@ -548,7 +551,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public GitRevision getRevisionInfo(int revision) throws IOException, SVNException {
+  public GitRevision getRevisionInfo(int revision) throws SVNException {
     final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
     if (revisionInfo == null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
@@ -557,7 +560,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  public GitRevision sureRevisionInfo(int revision) throws IOException {
+  public GitRevision sureRevisionInfo(int revision) {
     final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
     if (revisionInfo == null) {
       throw new IllegalStateException("No such revision " + revision);
@@ -566,7 +569,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @Nullable
-  private GitRevision getRevisionInfoUnsafe(int revision) throws IOException {
+  private GitRevision getRevisionInfoUnsafe(int revision) {
     lock.readLock().lock();
     try {
       if (revision >= revisions.size())
@@ -593,7 +596,7 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsWriter createWriter(@NotNull User user) throws SVNException, IOException {
+  public VcsWriter createWriter(@NotNull User user) throws SVNException {
     if (user.getEmail() == null || user.getEmail().isEmpty()) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Users with undefined email can't create commits"));
     }
