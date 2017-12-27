@@ -95,6 +95,12 @@ public class LdapUserDB implements UserDB {
     }
   }
 
+  @Override
+  public void close() throws Exception {
+    this.pool.close();
+  }
+
+
   @NotNull
   @Override
   public Collection<Authenticator> authenticators() {
@@ -126,11 +132,8 @@ public class LdapUserDB implements UserDB {
   }
 
   private <T> T doTask(@NotNull LdapTask<T> task) throws LDAPException {
-    final LDAPConnection connection = pool.getConnection();
-    try {
+    try (LDAPConnection connection = pool.getConnection()) {
       return task.exec(connection);
-    } finally {
-      connection.close();
     }
   }
 
@@ -225,7 +228,7 @@ public class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  public static byte[] parseDERFromPEM(@NotNull byte[] pem, @NotNull String beginDelimiter, @NotNull String endDelimiter) throws GeneralSecurityException {
+  private static byte[] parseDERFromPEM(@NotNull byte[] pem, @NotNull String beginDelimiter, @NotNull String endDelimiter) throws GeneralSecurityException {
     final String data = new String(pem, StandardCharsets.ISO_8859_1);
     String[] tokens = data.split(beginDelimiter);
     if (tokens.length != 2) {
@@ -239,7 +242,7 @@ public class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  public static KeyStore getKeyStoreFromDER(@NotNull byte[] certBytes) throws GeneralSecurityException {
+  private static KeyStore getKeyStoreFromDER(@NotNull byte[] certBytes) throws GeneralSecurityException {
     try {
       final CertificateFactory factory = CertificateFactory.getInstance("X.509");
       final KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -252,7 +255,7 @@ public class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  public static TrustManager createTrustManager(@NotNull byte[] pem) throws GeneralSecurityException {
+  private static TrustManager createTrustManager(@NotNull byte[] pem) throws GeneralSecurityException {
     final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     final KeyStore keystore = getKeyStoreFromDER(parseDERFromPEM(pem, "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----"));
     factory.init(keystore);

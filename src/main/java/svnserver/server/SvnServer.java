@@ -40,20 +40,19 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 /**
  * Сервер для предоставления доступа к git-у через протокол subversion.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnServer extends Thread {
+public final class SvnServer extends Thread implements ThreadFactory {
+  @NotNull
+  private static AtomicInteger threadNumber = new AtomicInteger(1);
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
@@ -89,6 +88,7 @@ public final class SvnServer extends Thread {
   private final SharedContext context;
 
   public SvnServer(@NotNull File basePath, @NotNull Config config) throws IOException, SVNException {
+    super("SvnServer");
     setDaemon(true);
     this.config = config;
 
@@ -130,10 +130,15 @@ public final class SvnServer extends Thread {
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
-    poolExecutor = Executors.newCachedThreadPool();
+    poolExecutor = Executors.newCachedThreadPool(this);
     log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
 
     context.ready();
+  }
+
+  @Override
+  public Thread newThread(@NotNull Runnable r) {
+    return new Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()));
   }
 
   public int getPort() {
@@ -330,7 +335,7 @@ public final class SvnServer extends Thread {
         .string(repositoryInfo.getRepository().getUuid())
         .string(repositoryInfo.getBaseUrl().toString())
         .listBegin()
-            //.word("mergeinfo")
+        //.word("mergeinfo")
         .listEnd()
         .listEnd()
         .listEnd();
@@ -354,7 +359,7 @@ public final class SvnServer extends Thread {
     }
   }
 
-  public void shutdown(long millis) throws InterruptedException, IOException {
+  public void shutdown(long millis) throws Exception {
     startShutdown();
     if (!poolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
       forceShutdown();

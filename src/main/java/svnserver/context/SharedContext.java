@@ -24,7 +24,7 @@ import java.util.List;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-public class SharedContext extends Context<Shared> implements AutoCloseable {
+public final class SharedContext extends Context<Shared> implements AutoCloseable {
   @NotNull
   private final File basePath;
   @NotNull
@@ -53,7 +53,12 @@ public class SharedContext extends Context<Shared> implements AutoCloseable {
   }
 
   @Override
-  public void close() {
+  public void close() throws Exception {
+    final List<Shared> values = new ArrayList<>(values());
+
+    for (int i = values.size() - 1; i >= 0; --i)
+      values.get(i).close();
+
     cacheDB.close();
   }
 

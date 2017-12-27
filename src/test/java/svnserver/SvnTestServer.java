@@ -224,7 +224,7 @@ public final class SvnTestServer implements SvnTester {
     TestHelper.deleteDirectory(tempDirectory);
   }
 
-  public void shutdown(int millis) throws IOException, InterruptedException {
+  public void shutdown(int millis) throws Exception {
     server.shutdown(millis);
   }
 

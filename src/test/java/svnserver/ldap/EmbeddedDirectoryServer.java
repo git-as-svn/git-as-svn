@@ -64,6 +64,7 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
     service.setSchemaPartition(schemaPartition);
 
     service.setSystemPartition(createPartition(new Dn("ou=system"), schemaManager));
+    service.setShutdownHookEnabled(false);
 
     // Create a new partition
     baseDn = new Dn(dn);
