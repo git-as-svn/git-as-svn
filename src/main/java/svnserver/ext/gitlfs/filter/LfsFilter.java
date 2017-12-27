@@ -13,7 +13,6 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
@@ -47,11 +46,11 @@ public class LfsFilter implements GitFilter {
   @NotNull
   private final LfsStorage storage;
   @NotNull
-  private final DB cacheDb;
+  private final Map<String, String> cacheMd5;
 
   public LfsFilter(@NotNull LocalContext context) throws IOException, SVNException {
     this.storage = LfsConfig.getStorage(context);
-    this.cacheDb = context.getShared().getCacheDB();
+    this.cacheMd5 = GitFilterHelper.getCacheMd5(this, context.getShared().getCacheDB());
     final LfsServer lfsServer = context.getShared().get(LfsServer.class);
     if (lfsServer != null) {
       context.add(LfsServerEntry.class, new LfsServerEntry(lfsServer, context, storage));
@@ -89,11 +88,11 @@ public class LfsFilter implements GitFilter {
         }
       }
     }
-    return GitFilterHelper.getMd5(this, cacheDb, objectId, false);
+    return GitFilterHelper.getMd5(this, cacheMd5, null, objectId);
   }
 
   @Override
-  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     final ObjectLoader loader = objectId.openObject();
     final ObjectStream stream = loader.openStream();
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
@@ -109,7 +108,7 @@ public class LfsFilter implements GitFilter {
 
   @NotNull
   @Override
-  public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     final ObjectLoader loader = objectId.openObject();
     final ObjectStream stream = loader.openStream();
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
@@ -125,7 +124,7 @@ public class LfsFilter implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException {
+  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException {
     return new TemporaryOutputStream(storage.getWriter(user), stream);
   }
 
@@ -137,7 +136,7 @@ public class LfsFilter implements GitFilter {
     private final int length;
     private int offset = 0;
 
-    private TemporaryInputStream(@NotNull byte[] header, int length, @NotNull InputStream stream) throws FileNotFoundException {
+    private TemporaryInputStream(@NotNull byte[] header, int length, @NotNull InputStream stream) {
       this.header = header;
       this.length = length;
       this.stream = stream;

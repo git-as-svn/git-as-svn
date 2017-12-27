@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mapdb.DB;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
@@ -23,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StreamCorruptedException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * Get object for symbolic link.
@@ -35,10 +35,10 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   public static final String NAME = "link";
   @NotNull
-  private final DB cacheDb;
+  private final Map<String, String> cacheMd5;
 
   public GitFilterLink(@NotNull LocalContext context) {
-    this.cacheDb = context.getShared().getCacheDB();
+    this.cacheMd5 = GitFilterHelper.getCacheMd5(this, context.getShared().getCacheDB());
   }
 
   @NotNull
@@ -50,11 +50,11 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   @Override
   public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
-    return GitFilterHelper.getMd5(this, cacheDb, objectId, false);
+    return GitFilterHelper.getMd5(this, cacheMd5, null, objectId);
   }
 
   @Override
-  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     final ObjectReader reader = objectId.getRepo().newObjectReader();
     return reader.getObjectSize(objectId.getObject(), Constants.OBJ_BLOB) + LINK_PREFIX.length;
   }

@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.9
+
+ * Update MapDB to 3.0.5 #161
+
 ## 1.1.8
 
  * Fix git-as-svn unable to find prefix-mapped repositories (broken in 1.1.2)

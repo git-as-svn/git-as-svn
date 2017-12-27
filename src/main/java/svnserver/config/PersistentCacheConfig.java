@@ -9,6 +9,7 @@ package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
+import org.mapdb.DBException;
 import org.mapdb.DBMaker;
 import svnserver.config.serializer.ConfigType;
 
@@ -31,12 +32,14 @@ public class PersistentCacheConfig implements CacheConfig {
     final File cacheBase = ConfigHelper.joinPath(basePath, path);
     //noinspection ResultOfMethodCallIgnored
     cacheBase.getParentFile().mkdirs();
-    return DBMaker.newFileDB(cacheBase)
-        .closeOnJvmShutdown()
-        .asyncWriteEnable()
-        .mmapFileEnable()
-        .cacheSoftRefEnable()
-        .make();
+
+    try {
+      return DBMaker.fileDB(cacheBase)
+          .closeOnJvmShutdown()
+          .fileMmapEnableIfSupported()
+          .make();
+    } catch (DBException e) {
+      throw new DBException(String.format("Failed to open %s: %s", cacheBase, e.getMessage()), e);
+    }
   }
 }
-

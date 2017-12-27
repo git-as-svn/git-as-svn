@@ -53,7 +53,7 @@ public class SharedContext extends Context<Shared> implements AutoCloseable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     cacheDB.close();
   }
 

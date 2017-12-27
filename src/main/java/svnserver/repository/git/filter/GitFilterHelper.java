@@ -12,6 +12,8 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
+import org.mapdb.HTreeMap;
+import org.mapdb.Serializer;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.HashHelper;
 import svnserver.StringHelper;
@@ -30,40 +32,38 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFilterHelper {
+public final class GitFilterHelper {
   private static final int BUFFER_SIZE = 32 * 1024;
 
   private GitFilterHelper() {
   }
 
-  public static long getSize(@NotNull GitFilter filter, @NotNull DB cacheDb, @NotNull GitObject<? extends ObjectId> objectId, boolean needMd5) throws IOException, SVNException {
-    final Map<String, Long> cacheSize = getCacheSize(filter, cacheDb);
+  public static long getSize(@NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @NotNull Map<String, Long> cacheSize, @NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     final Long size = cacheSize.get(objectId.getObject().name());
     if (size != null) {
       return size;
     }
-    return createMetadata(objectId, filter, needMd5 ? getCacheMd5(filter, cacheDb) : null, cacheSize).size;
+    return createMetadata(objectId, filter, cacheMd5, cacheSize).size;
   }
 
   @NotNull
-  public static String getMd5(@NotNull GitFilter filter, @NotNull DB cacheDb, @NotNull GitObject<? extends ObjectId> objectId, boolean needSize) throws IOException, SVNException {
-    final Map<String, String> cacheMd5 = getCacheMd5(filter, cacheDb);
+  public static String getMd5(@NotNull GitFilter filter, @NotNull Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize, @NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     final String md5 = cacheMd5.get(objectId.getObject().name());
     if (md5 != null) {
       return md5;
     }
     //noinspection ConstantConditions
-    return createMetadata(objectId, filter, cacheMd5, needSize ? getCacheSize(filter, cacheDb) : null).md5;
+    return createMetadata(objectId, filter, cacheMd5, cacheSize).md5;
   }
 
   @NotNull
-  private static Map<String, String> getCacheMd5(@NotNull GitFilter filter, @NotNull DB cacheDb) {
-    return cacheDb.getHashMap("cache.filter." + filter.getName() + ".md5");
+  public static HTreeMap<String, String> getCacheMd5(@NotNull GitFilter filter, @NotNull DB cacheDb) {
+    return cacheDb.hashMap("cache.filter." + filter.getName() + ".md5", Serializer.STRING, Serializer.STRING).createOrOpen();
   }
 
   @NotNull
-  private static Map<String, Long> getCacheSize(@NotNull GitFilter filter, @NotNull DB cacheDb) {
-    return cacheDb.getHashMap("cache.filter." + filter.getName() + ".size");
+  public static HTreeMap<String, Long> getCacheSize(@NotNull GitFilter filter, @NotNull DB cacheDb) {
+    return cacheDb.hashMap("cache.filter." + filter.getName() + ".size", Serializer.STRING, Serializer.LONG).createOrOpen();
   }
 
   @NotNull
