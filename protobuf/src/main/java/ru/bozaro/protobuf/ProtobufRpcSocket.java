@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutorService;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoCloseable {
+public final class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoCloseable {
   private static final @NotNull Logger log = LoggerFactory.getLogger(ProtobufRpcSocket.class);
   @NotNull
   private final Thread thread;
@@ -53,12 +53,24 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
     super(holder);
     this.socket = socket;
     this.pool = pool;
-    this.thread = new Thread(ProtobufRpcSocket.this::acceptThread);
-    thread.setDaemon(true);
-    thread.start();
+    this.thread = new Thread(ProtobufRpcSocket.this::acceptThread, "ProtobufRpcSocket");
+    this.thread.setDaemon(true);
   }
 
-  protected void acceptThread() {
+  @Override
+  public String toString() {
+    return "ProtobufRpcSocket{" +
+        "socket=" + socket +
+        '}';
+  }
+
+  @NotNull
+  public ProtobufRpcSocket start() {
+    thread.start();
+    return this;
+  }
+
+  private void acceptThread() {
     while (!socket.isClosed()) {
       try {
         final Socket clientSocket = socket.accept();
@@ -78,7 +90,7 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
     }
   }
 
-  protected void acceptClient(@NotNull Socket client) throws IOException {
+  private void acceptClient(@NotNull Socket client) throws IOException {
     final SessionInputBuffer inputBuffer = wrapInputStream(client.getInputStream());
     final HttpMessageParser<HttpRequest> parser = new DefaultHttpRequestParser(inputBuffer,
         new BasicLineParser(),
@@ -107,7 +119,7 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
   }
 
   @NotNull
-  protected SessionInputBuffer wrapInputStream(@NotNull InputStream inputStream) {
+  private SessionInputBuffer wrapInputStream(@NotNull InputStream inputStream) {
     return new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 1024) {{
       bind(inputStream);
     }};
@@ -116,10 +128,9 @@ public class ProtobufRpcSocket extends ProtobufRpcSimpleHttp implements AutoClos
   @Override
   public void close() throws Exception {
     socket.close();
-    for (Socket clinet : connections.keySet()) {
-      clinet.close();
+    for (Socket client : connections.keySet()) {
+      client.close();
     }
     thread.join();
   }
-
 }

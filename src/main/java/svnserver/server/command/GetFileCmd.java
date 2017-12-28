@@ -79,7 +79,7 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not cat all targets because some targets are directories"));
 
     final VcsRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
+    final VcsRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final VcsFile fileInfo = revision.getFile(fullPath);
     if (fileInfo == null)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));

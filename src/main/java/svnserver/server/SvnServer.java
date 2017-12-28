@@ -131,7 +131,6 @@ public final class SvnServer extends Thread implements ThreadFactory {
     serverSocket.setReuseAddress(config.getReuseAddress());
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
     poolExecutor = Executors.newCachedThreadPool(this);
-    log.info("Server bind: {}", serverSocket.getLocalSocketAddress());
 
     context.ready();
   }
@@ -152,7 +151,7 @@ public final class SvnServer extends Thread implements ThreadFactory {
 
   @Override
   public void run() {
-    log.info("Server is ready on port: {}", serverSocket.getLocalPort());
+    log.info("Ready for connections on {}", serverSocket.getLocalSocketAddress());
     while (!stopped.get()) {
       final Socket client;
       try {
@@ -213,13 +212,10 @@ public final class SvnServer extends Thread implements ThreadFactory {
           throw new IOException("Unexpected token: " + token);
         }
         final String cmd = parser.readText();
-        BaseCmd command = commands.get(cmd);
+        final BaseCmd<?> command = commands.get(cmd);
         if (command != null) {
           log.debug("Receive command: {}", cmd);
-          Object param = MessageParser.parse(command.getArguments(), parser);
-          parser.readToken(ListEndToken.class);
-          //noinspection unchecked
-          command.process(context, param);
+          processCommand(context, command, parser);
         } else {
           log.warn("Unsupported command: {}", cmd);
           BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
@@ -236,6 +232,12 @@ public final class SvnServer extends Thread implements ThreadFactory {
     }
   }
 
+  private static <T> void processCommand(@NotNull SessionContext context, @NotNull BaseCmd<T> cmd, @NotNull SvnServerParser parser) throws IOException, SVNException {
+    final T param = MessageParser.parse(cmd.getArguments(), parser);
+    parser.readToken(ListEndToken.class);
+    cmd.process(context, param);
+  }
+
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
     // Анонсируем поддерживаемые функции.
     writer
@@ -249,13 +251,14 @@ public final class SvnServer extends Thread implements ThreadFactory {
         .listBegin();
     // Begin capabilities block.
     writer
-        .word("edit-pipeline")         // This is required.
-        .word("absent-entries")        // We support absent-dir and absent-dir editor commands
-        //.word("commit-revprops") // We don't currently have _any_ revprop support
-        //.word("mergeinfo")       // Nope, not yet
+        .word("edit-pipeline")      // This is required.
+        .word("absent-entries")     // We support absent-dir and absent-dir editor commands
+        //.word("commit-revprops")  // We don't currently have _any_ revprop support
+        //.word("mergeinfo")        // Nope, not yet
         .word("depth")
-        .word("inherited-props")       // Need for .gitattributes and .gitignore
-        .word("log-revprops");         // svn log --with-all-revprops
+        .word("inherited-props")    // Need for .gitattributes and .gitignore
+        .word("log-revprops");      // svn log --with-all-revprops
+
     if (config.isCompressionEnabled()) {
       writer.word("svndiff1");         // We support svndiff1 (compression)
     }

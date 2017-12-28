@@ -89,10 +89,10 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    SvnServerWriter writer = context.getWriter();
+    final SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
     final VcsRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevision(args.rev, () -> repository.getLatestRevision().getId()));
+    final VcsRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final VcsFile fileInfo = revision.getFile(fullPath);
 
     if (fileInfo == null)
