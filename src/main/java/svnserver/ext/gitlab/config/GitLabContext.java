@@ -10,11 +10,13 @@ package svnserver.ext.gitlab.config;
 import com.google.api.client.auth.oauth.OAuthGetAccessToken;
 import com.google.api.client.auth.oauth2.PasswordTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.TokenType;
 import org.gitlab.api.models.GitlabSession;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +35,7 @@ public final class GitLabContext implements Shared {
   @NotNull
   private static final HttpTransport transport = new NetHttpTransport();
   @NotNull
-  private static final JsonFactory jsonFactory = new GsonFactory();
+  private static final JsonFactory jsonFactory = new JacksonFactory();
   @NotNull
   private final GitLabConfig config;
 
@@ -55,8 +57,12 @@ public final class GitLabContext implements Shared {
 
   @NotNull
   public static String obtainAccessToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password) throws IOException {
-    final TokenResponse oauthResponse = new PasswordTokenRequest(transport, jsonFactory, new OAuthGetAccessToken(gitlabUrl + "/oauth/token"), username, password).execute();
-    return oauthResponse.getAccessToken();
+    try {
+      final TokenResponse oauthResponse = new PasswordTokenRequest(transport, jsonFactory, new OAuthGetAccessToken(gitlabUrl + "/oauth/token"), username, password).execute();
+      return oauthResponse.getAccessToken();
+    } catch (TokenResponseException e) {
+      throw new GitlabAPIException(e.getMessage(), e.getStatusCode(), e);
+    }
   }
 
   @NotNull

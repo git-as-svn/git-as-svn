@@ -124,7 +124,7 @@ dependencies {
   compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.11.1"
   compile "com.google.oauth-client:google-oauth-client:1.23.0"
-  compile "com.google.http-client:google-http-client-gson:1.23.0"
+  compile "com.google.http-client:google-http-client-jackson2:1.23.0"
 
   runtime "org.apache.logging.log4j:log4j-core:2.10.0"
   runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.10.0"
