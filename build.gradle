@@ -133,7 +133,7 @@ dependencies {
     exclude group: "org.slf4j", module: "slf4j-log4j12"
   }
   testCompile "org.apache.directory.api:api-ldap-codec-standalone:1.0.0"
-  testCompile("org.testcontainers:testcontainers:1.5.0")
+  testCompile("org.testcontainers:testcontainers:1.5.1")
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8

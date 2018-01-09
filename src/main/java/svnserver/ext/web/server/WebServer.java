@@ -229,7 +229,7 @@ public class WebServer implements Shared {
         final String password = raw.substring(separator + 1);
         try {
           return userDB.check(username, password);
-        } catch (IOException | SVNException e) {
+        } catch (SVNException e) {
           log.error("Authorization error: " + e.getMessage(), e);
         }
       }

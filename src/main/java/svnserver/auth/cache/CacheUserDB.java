@@ -18,7 +18,6 @@ import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Collection;
@@ -30,7 +29,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Artem V. Navrotskiy
  */
-public class CacheUserDB implements UserDB {
+public final class CacheUserDB implements UserDB {
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
@@ -45,25 +44,24 @@ public class CacheUserDB implements UserDB {
     this.cache = cache;
   }
 
-  @Nullable
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException, IOException {
+  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
     return cached("c." + hash(userName, password), db -> db.check(userName, password));
   }
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException, IOException {
+  public User lookupByUserName(@NotNull String userName) throws SVNException {
     return cached("l." + userName, db -> db.lookupByUserName(userName));
   }
 
   @Nullable
   @Override
-  public User lookupByExternal(@NotNull String external) throws SVNException, IOException {
+  public User lookupByExternal(@NotNull String external) throws SVNException {
     return cached("e." + external, db -> db.lookupByExternal(external));
   }
 
-  private User cached(@NotNull String key, @NotNull CachedCallback callback) throws IOException, SVNException {
+  private User cached(@NotNull String key, @NotNull CachedCallback callback) throws SVNException {
     try {
       final User cachedUser = cache.get(key, () -> {
         final User authUser = callback.exec(userDB);
@@ -71,9 +69,6 @@ public class CacheUserDB implements UserDB {
       });
       return cachedUser != invalidUser ? cachedUser : null;
     } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException) {
-        throw (IOException) e.getCause();
-      }
       if (e.getCause() instanceof SVNException) {
         throw (SVNException) e.getCause();
       }
@@ -104,7 +99,7 @@ public class CacheUserDB implements UserDB {
   @FunctionalInterface
   private interface CachedCallback {
     @Nullable
-    User exec(UserDB userDB) throws SVNException, IOException;
+    User exec(@NotNull UserDB userDB) throws SVNException;
   }
 
   @NotNull

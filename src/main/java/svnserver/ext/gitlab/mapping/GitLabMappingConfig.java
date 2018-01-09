@@ -8,6 +8,7 @@
 package svnserver.ext.gitlab.mapping;
 
 import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.models.GitlabProject;
 import org.gitlab.api.models.GitlabSystemHook;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.ext.web.server.WebServer;
 import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.git.GitCreateMode;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -31,6 +33,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.function.Consumer;
@@ -43,23 +46,25 @@ import java.util.function.Consumer;
 @ConfigType("gitlabMapping")
 public final class GitLabMappingConfig implements RepositoryMappingConfig {
   @NotNull
-  private GitRepositoryConfig template = new GitRepositoryConfig();
+  private static final Logger log = LoggerFactory.getLogger(GitLabHookServlet.class);
+  @NotNull
+  private GitRepositoryConfig template;
   @NotNull
   private String path;
   private int cacheTimeSec = 15;
   private int cacheMaximumSize = 1000;
 
   public GitLabMappingConfig() {
-    this("/var/git/repositories/");
+    this("/var/git/repositories/", GitCreateMode.ERROR);
   }
 
-  private GitLabMappingConfig(@NotNull String path) {
+  public GitLabMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
+    this(path.getAbsolutePath(), createMode);
+  }
+
+  private GitLabMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode) {
     this.path = path;
-  }
-
-  @NotNull
-  public static GitLabMappingConfig create(@NotNull File path) {
-    return new GitLabMappingConfig(path.getAbsolutePath());
+    template = new GitRepositoryConfig(createMode);
   }
 
   @NotNull
@@ -88,15 +93,24 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
     // Get repositories.
 
     final GitLabMapping mapping = new GitLabMapping(context, this);
-    for (GitlabProject project : api.getAllProjects()) {
+    for (GitlabProject project : api.getProjects()) {
       mapping.addRepository(project);
     }
     // Web hook for repository list update.
     final WebServer webServer = WebServer.get(context);
     final URL hookUrl = new URL(gitlab.getHookUrl());
     webServer.addServlet(hookUrl.getPath(), new GitLabHookServlet(mapping));
-    if (!isHookInstalled(api, hookUrl.toString())) {
-      api.addSystemHook(hookUrl.toString());
+
+    try {
+      if (!isHookInstalled(api, hookUrl.toString())) {
+        api.addSystemHook(hookUrl.toString());
+      }
+    } catch (GitlabAPIException e) {
+      if (e.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        log.warn("Unable to install gitlab hook {}: {}", hookUrl, e.getMessage());
+      } else {
+        throw e;
+      }
     }
 
     final Consumer<GitLabProject> init = repository -> {
@@ -127,8 +141,6 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
   }
 
   private static class GitLabHookServlet extends HttpServlet {
-    @NotNull
-    private static final Logger log = LoggerFactory.getLogger(GitLabHookServlet.class);
     @NotNull
     private final GitLabMapping mapping;
 

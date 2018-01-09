@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("FieldCanBeLocal")
 @ConfigType("cacheUsers")
-public class CacheUserDBConfig implements UserDBConfig {
+public final class CacheUserDBConfig implements UserDBConfig {
   /**
    * User database.
    */

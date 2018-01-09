@@ -44,11 +44,19 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   private GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
   @NotNull
-  private GitCreateMode createMode = GitCreateMode.ERROR;
+  private GitCreateMode createMode;
   @NotNull
   private List<LocalConfig> extensions = new ArrayList<>();
 
   private boolean renameDetection = true;
+
+  public GitRepositoryConfig() {
+    this(GitCreateMode.ERROR);
+  }
+
+  public GitRepositoryConfig(@NotNull GitCreateMode createMode) {
+    this.createMode = createMode;
+  }
 
   @NotNull
   private Repository createRepository(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {

@@ -27,7 +27,7 @@ import java.util.UUID;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnTesterExternal implements SvnTester {
+public final class SvnTesterExternal implements SvnTester {
   @NotNull
   private final SVNURL url;
   @Nullable

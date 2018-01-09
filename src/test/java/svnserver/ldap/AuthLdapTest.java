@@ -9,16 +9,15 @@ package svnserver.ldap;
 
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -30,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Artem V. Navrotskiy (bozaro at buzzsoft.ru)
  */
 public class AuthLdapTest {
-  
+
   /**
    * Test for #156.
    */
@@ -38,7 +37,7 @@ public class AuthLdapTest {
   void nativeClient() throws Exception {
     final String svn = SvnTestHelper.findExecutable("svn");
     if (svn == null)
-      return;
+      throw new SkipException("Native svn executable not found");
 
     try (
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
@@ -57,6 +56,15 @@ public class AuthLdapTest {
   @Test
   public void validUser() throws Throwable {
     checkUser("ldapadmin", "ldapadmin");
+  }
+
+  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
+    try (
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
+    ) {
+      server.openSvnRepository(login, password).getLatestRevision();
+    }
   }
 
   @Test
@@ -102,20 +110,6 @@ public class AuthLdapTest {
     checkAnonymous(true);
   }
 
-  @Test(expectedExceptions = SVNAuthenticationException.class)
-  public void anonymousUserDenies() throws Throwable {
-    checkAnonymous(false);
-  }
-
-  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
-    try (
-        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
-        SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
-    ) {
-      server.openSvnRepository(login, password).getLatestRevision();
-    }
-  }
-
   private void checkAnonymous(boolean anonymousRead) throws Exception {
     try (
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
@@ -125,7 +119,12 @@ public class AuthLdapTest {
     }
   }
 
-  private static class SuccessAuth implements Callable<Void> {
+  @Test(expectedExceptions = SVNAuthenticationException.class)
+  public void anonymousUserDenies() throws Throwable {
+    checkAnonymous(false);
+  }
+
+  private static final class SuccessAuth implements Callable<Void> {
     @NotNull
     private final AtomicBoolean done;
     @NotNull
@@ -135,7 +134,7 @@ public class AuthLdapTest {
     @NotNull
     private final String password;
 
-    public SuccessAuth(@NotNull UserDB userDB, @NotNull AtomicBoolean done, @NotNull String username, @NotNull String password) {
+    private SuccessAuth(@NotNull UserDB userDB, @NotNull AtomicBoolean done, @NotNull String username, @NotNull String password) {
       this.done = done;
       this.userDB = userDB;
       this.username = username;
@@ -149,7 +148,7 @@ public class AuthLdapTest {
         final User user = userDB.check(username, password);
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getUserName(), username);
-      } catch (IOException | SVNException e) {
+      } catch (SVNException e) {
         done.set(false);
       }
       return null;
@@ -166,7 +165,7 @@ public class AuthLdapTest {
     @NotNull
     private final String password;
 
-    public InvalidAuth(@NotNull UserDB userDB, @NotNull AtomicBoolean done, @NotNull String username, @NotNull String password) {
+    private InvalidAuth(@NotNull UserDB userDB, @NotNull AtomicBoolean done, @NotNull String username, @NotNull String password) {
       this.done = done;
       this.userDB = userDB;
       this.username = username;
@@ -174,12 +173,12 @@ public class AuthLdapTest {
     }
 
     @Override
-    public Void call() throws Exception {
+    public Void call() {
       if (done.get()) return null;
       try {
         final User user = userDB.check(username, password);
         Assert.assertNull(user);
-      } catch (IOException | SVNException e) {
+      } catch (SVNException e) {
         done.set(false);
       }
       return null;
