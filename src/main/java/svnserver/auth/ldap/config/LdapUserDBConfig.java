@@ -32,8 +32,8 @@ public final class LdapUserDBConfig implements UserDBConfig {
   /**
    * Bind configuration.
    */
-  @Nullable
-  private LdapBind bind;
+  @NotNull
+  private LdapBind bind = LdapBindAnonymous.instance;
 
   /**
    * Common part of search filter.
@@ -113,12 +113,12 @@ public final class LdapUserDBConfig implements UserDBConfig {
     this.searchFilter = searchFilter;
   }
 
-  @Nullable
+  @NotNull
   public LdapBind getBind() {
     return bind;
   }
 
-  public void setBind(@Nullable LdapBind bind) {
+  public void setBind(@NotNull LdapBind bind) {
     this.bind = bind;
   }
 

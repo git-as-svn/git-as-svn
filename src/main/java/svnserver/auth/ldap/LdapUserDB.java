@@ -76,8 +76,7 @@ public final class LdapUserDB implements UserDB {
       URI ldapUri = URI.create(config.getConnectionUrl());
       this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
       final ServerSet serverSet = createServerSet(context, config);
-      final LdapBind bind = config.getBind();
-      final BindRequest bindRequest = bind == null ? new ANONYMOUSBindRequest() : bind.createBindRequest();
+      final BindRequest bindRequest = config.getBind().createBindRequest();
       this.pool = new LDAPConnectionPool(serverSet, bindRequest, 1, config.getMaxConnections());
       this.fakeMailSuffix = createFakeMailSuffix(config);
       this.config = config;

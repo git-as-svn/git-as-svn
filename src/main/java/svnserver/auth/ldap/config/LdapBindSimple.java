@@ -20,7 +20,7 @@ import svnserver.config.serializer.ConfigType;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("ldapBindSimple")
-public final class LdapBindSimple extends LdapBind {
+public final class LdapBindSimple implements LdapBind {
   @NotNull
   private BindType bindType;
   @NotNull

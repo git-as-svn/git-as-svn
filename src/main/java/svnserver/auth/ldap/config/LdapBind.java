@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public abstract class LdapBind {
+public interface LdapBind {
 
   @NotNull
-  public abstract BindRequest createBindRequest();
+  BindRequest createBindRequest();
 }
