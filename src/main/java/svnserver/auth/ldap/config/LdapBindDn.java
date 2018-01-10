@@ -7,9 +7,8 @@
  */
 package svnserver.auth.ldap.config;
 
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.BindRequest;
+import com.unboundid.ldap.sdk.SimpleBindRequest;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.serializer.ConfigType;
 
@@ -19,7 +18,7 @@ import svnserver.config.serializer.ConfigType;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("ldapBindDn")
-public final class LdapBindDn implements LdapBind {
+public final class LdapBindDn extends LdapBind {
   @NotNull
   private String bindDn;
   @NotNull
@@ -34,9 +33,9 @@ public final class LdapBindDn implements LdapBind {
     this.password = password;
   }
 
-  @NotNull
   @Override
-  public BindResult bind(@NotNull LDAPConnection connection) throws LDAPException {
-    return connection.bind(bindDn, password);
+  @NotNull
+  public BindRequest createBindRequest() {
+    return new SimpleBindRequest(bindDn, password);
   }
 }

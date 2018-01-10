@@ -7,9 +7,7 @@
  */
 package svnserver.auth.ldap.config;
 
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.BindRequest;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface LdapBind {
+public abstract class LdapBind {
+
   @NotNull
-  BindResult bind(@NotNull LDAPConnection connection) throws LDAPException;
+  public abstract BindRequest createBindRequest();
 }

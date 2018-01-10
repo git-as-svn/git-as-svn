@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Artem V. Navrotskiy (bozaro at buzzsoft.ru)
  */
-public class AuthLdapTest {
+public final class AuthLdapTest {
 
   /**
    * Test for #156.

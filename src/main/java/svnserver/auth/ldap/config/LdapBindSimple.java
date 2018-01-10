@@ -7,10 +7,10 @@
  */
 package svnserver.auth.ldap.config;
 
-import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.BindRequest;
+import com.unboundid.ldap.sdk.CRAMMD5BindRequest;
 import com.unboundid.ldap.sdk.DIGESTMD5BindRequest;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.PLAINBindRequest;
 import org.jetbrains.annotations.NotNull;
 import svnserver.config.serializer.ConfigType;
 
@@ -20,24 +20,53 @@ import svnserver.config.serializer.ConfigType;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("ldapBindSimple")
-public final class LdapBindSimple implements LdapBind {
+public final class LdapBindSimple extends LdapBind {
+  @NotNull
+  private BindType bindType;
   @NotNull
   private String username;
   @NotNull
   private String password;
 
   public LdapBindSimple() {
-    this("", "");
+    this(BindType.DigestMD5, "", "");
   }
 
-  public LdapBindSimple(@NotNull String username, @NotNull String password) {
+  public LdapBindSimple(@NotNull BindType bindType, @NotNull String username, @NotNull String password) {
+    this.bindType = bindType;
     this.username = username;
     this.password = password;
   }
 
-  @NotNull
   @Override
-  public BindResult bind(@NotNull LDAPConnection connection) throws LDAPException {
-    return connection.bind(new DIGESTMD5BindRequest(username, password));
+  @NotNull
+  public BindRequest createBindRequest() {
+    return bindType.createBindRequest(username, password);
+  }
+
+  public enum BindType {
+    Plain {
+      @Override
+      public @NotNull BindRequest createBindRequest(@NotNull String username, @NotNull String password) {
+        return new PLAINBindRequest(username, password);
+      }
+    },
+
+    DigestMD5 {
+      @Override
+      public @NotNull BindRequest createBindRequest(@NotNull String username, @NotNull String password) {
+        return new DIGESTMD5BindRequest(username, password);
+      }
+    },
+
+    CramMD5 {
+      @Override
+      public @NotNull BindRequest createBindRequest(@NotNull String username, @NotNull String password) {
+        return new CRAMMD5BindRequest(username, password);
+      }
+    };
+
+    @NotNull
+    public abstract BindRequest createBindRequest(@NotNull String username, @NotNull String password);
   }
 }
