@@ -13,20 +13,19 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class PlainAuthenticator implements Authenticator, PasswordChecker {
+public final class PlainAuthenticator implements Authenticator {
 
   @NotNull
-  private final PasswordChecker passwordChecker;
+  private final UserDB userDB;
 
-  public PlainAuthenticator(@NotNull PasswordChecker passwordChecker) {
-    this.passwordChecker = passwordChecker;
+  public PlainAuthenticator(@NotNull UserDB userDB) {
+    this.userDB = userDB;
   }
 
   @NotNull
@@ -37,7 +36,7 @@ public final class PlainAuthenticator implements Authenticator, PasswordChecker 
 
   @Nullable
   @Override
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException, SVNException {
+  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws SVNException {
     final String decodedToken = new String(Base64.getDecoder().decode(token.trim()), StandardCharsets.US_ASCII);
     final String[] credentials = decodedToken.split("\u0000");
     if (credentials.length < 3)
@@ -45,11 +44,6 @@ public final class PlainAuthenticator implements Authenticator, PasswordChecker 
 
     final String username = credentials[1];
     final String password = credentials[2];
-    return check(username, password);
-  }
-
-  @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
-    return passwordChecker.check(userName, password);
+    return userDB.check(username, password);
   }
 }

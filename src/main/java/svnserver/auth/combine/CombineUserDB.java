@@ -15,10 +15,8 @@ import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Complex authentication.
@@ -30,10 +28,16 @@ public final class CombineUserDB implements UserDB {
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
-  private List<UserDB> userDBs;
+  private final UserDB[] userDBs;
 
-  public CombineUserDB(@NotNull List<UserDB> userDBs) {
-    this.userDBs = new ArrayList<>(userDBs);
+  public CombineUserDB(@NotNull UserDB[] userDBs) {
+    this.userDBs = userDBs;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Authenticator> authenticators() {
+    return authenticators;
   }
 
   @Override
@@ -66,12 +70,6 @@ public final class CombineUserDB implements UserDB {
   @FunctionalInterface
   private interface FirstAvailableCallback {
     @Nullable
-    User exec(UserDB userDB) throws SVNException;
-  }
-
-  @NotNull
-  @Override
-  public Collection<Authenticator> authenticators() {
-    return authenticators;
+    User exec(@NotNull UserDB userDB) throws SVNException;
   }
 }

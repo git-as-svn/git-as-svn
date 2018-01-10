@@ -11,8 +11,6 @@ import com.google.common.cache.CacheBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.auth.Authenticator;
-import svnserver.auth.PasswordChecker;
 import svnserver.auth.User;
 
 import java.io.IOException;
@@ -42,16 +40,9 @@ public class CacheUserDBTest {
       Assert.assertEquals(cache.lookupByExternal("f01"), user);
       Assert.assertNull(cache.lookupByExternal("foo"));
 
-      for (Authenticator auth : cache.authenticators()) {
-        if (auth instanceof PasswordChecker) {
-          final PasswordChecker checker = (PasswordChecker) auth;
-          Assert.assertNull(checker.check("foo", "bar1"));
-          Assert.assertNull(checker.check("foo", "bar2"));
-          Assert.assertEquals(checker.check("foo", db.password("foo")), user);
-        } else {
-          Assert.fail("Unsupported: " + auth);
-        }
-      }
+      Assert.assertNull(cache.check("foo", "bar1"));
+      Assert.assertNull(cache.check("foo", "bar2"));
+      Assert.assertEquals(cache.check("foo", db.password("foo")), user);
     }
 
     Assert.assertEquals(db.report(), "check: foo, bar\n" +

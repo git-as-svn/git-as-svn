@@ -8,6 +8,8 @@
 package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.Shared;
 
 import java.util.Collection;
@@ -18,10 +20,18 @@ import java.util.Map;
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public interface UserDB extends PasswordChecker, UserLookupVisitor, Shared {
+public interface UserDB extends Shared {
 
   @NotNull
   Collection<Authenticator> authenticators();
+
+  User check(@NotNull String userName, @NotNull String password) throws SVNException;
+
+  @Nullable
+  User lookupByUserName(@NotNull String userName) throws SVNException;
+
+  @Nullable
+  User lookupByExternal(@NotNull String external) throws SVNException;
 
   default void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
   }

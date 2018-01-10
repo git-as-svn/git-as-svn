@@ -15,7 +15,6 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * Complex authentication.
@@ -37,7 +36,7 @@ public final class CombineUserDBConfig implements UserDBConfig {
   public UserDB create(@NotNull SharedContext context) {
     return new CombineUserDB(Arrays.stream(items)
         .map(item -> item.create(context))
-        .collect(Collectors.toList())
+        .toArray(UserDB[]::new)
     );
   }
 }

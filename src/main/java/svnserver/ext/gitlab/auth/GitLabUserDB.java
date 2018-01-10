@@ -14,7 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svnserver.auth.*;
+import svnserver.auth.Authenticator;
+import svnserver.auth.PlainAuthenticator;
+import svnserver.auth.User;
+import svnserver.auth.UserDB;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 
@@ -30,7 +33,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitLabUserDB implements UserDB, UserLookupVisitor {
+public final class GitLabUserDB implements UserDB {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitLabUserDB.class);
   @NotNull

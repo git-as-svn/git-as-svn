@@ -31,9 +31,9 @@ import java.util.concurrent.ExecutionException;
  */
 public final class CacheUserDB implements UserDB {
   @NotNull
-  private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
-  @NotNull
   private final static User invalidUser = User.create("invalid", "invalid", null, null);
+  @NotNull
+  private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
   private final UserDB userDB;
   @NotNull
@@ -42,6 +42,12 @@ public final class CacheUserDB implements UserDB {
   public CacheUserDB(@NotNull UserDB userDB, @NotNull Cache<String, User> cache) {
     this.userDB = userDB;
     this.cache = cache;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Authenticator> authenticators() {
+    return authenticators;
   }
 
   @Override
@@ -61,6 +67,7 @@ public final class CacheUserDB implements UserDB {
     return cached("e." + external, db -> db.lookupByExternal(external));
   }
 
+  @Nullable
   private User cached(@NotNull String key, @NotNull CachedCallback callback) throws SVNException {
     try {
       final User cachedUser = cache.get(key, () -> {
@@ -100,11 +107,5 @@ public final class CacheUserDB implements UserDB {
   private interface CachedCallback {
     @Nullable
     User exec(@NotNull UserDB userDB) throws SVNException;
-  }
-
-  @NotNull
-  @Override
-  public Collection<Authenticator> authenticators() {
-    return authenticators;
   }
 }
