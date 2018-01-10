@@ -71,22 +71,14 @@ public final class LdapUserDB implements UserDB {
     boolean check(@NotNull String userDN) throws LDAPException;
   }
 
-  @FunctionalInterface
-  private interface LdapTask<T> {
-    @Nullable
-    T exec(@NotNull LDAPConnection connection) throws LDAPException;
-  }
-
   public LdapUserDB(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
     try {
       URI ldapUri = URI.create(config.getConnectionUrl());
       this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
-      final LDAPConnection ldap = createConnection(context, config);
+      final ServerSet serverSet = createServerSet(context, config);
       final LdapBind bind = config.getBind();
-      if (bind != null) {
-        bind.bind(ldap);
-      }
-      this.pool = new LDAPConnectionPool(ldap, 1, config.getMaxConnections());
+      final BindRequest bindRequest = bind == null ? new ANONYMOUSBindRequest() : bind.createBindRequest();
+      this.pool = new LDAPConnectionPool(serverSet, bindRequest, 1, config.getMaxConnections());
       this.fakeMailSuffix = createFakeMailSuffix(config);
       this.config = config;
     } catch (LDAPException e) {
@@ -108,7 +100,7 @@ public final class LdapUserDB implements UserDB {
 
   @Override
   public User check(@NotNull String userName, @NotNull String password) throws SVNException {
-    return findUser(userName, userDN -> doTask(connection -> connection.bind(userDN, password).getResultCode() == ResultCode.SUCCESS));
+    return findUser(userName, userDN -> pool.bindAndRevertAuthentication(userDN, password).getResultCode() == ResultCode.SUCCESS);
   }
 
   @Nullable
@@ -129,12 +121,6 @@ public final class LdapUserDB implements UserDB {
     return attribute == null ? null : attribute.getValue();
   }
 
-  private <T> T doTask(@NotNull LdapTask<T> task) throws LDAPException {
-    try (LDAPConnection connection = pool.getConnection()) {
-      return task.exec(connection);
-    }
-  }
-
   private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
     try {
       final Filter filter;
@@ -146,7 +132,7 @@ public final class LdapUserDB implements UserDB {
       } else {
         filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
       }
-      final SearchResult search = doTask((connection) -> connection.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute()));
+      final SearchResult search = pool.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute());
       if (search.getEntryCount() == 1) {
         final SearchResultEntry entry = search.getSearchEntries().get(0);
         final String login = getAttribute(entry, config.getLoginAttribute());
@@ -181,10 +167,10 @@ public final class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  private static LDAPConnection createConnection(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) throws LDAPException {
-    URI ldapUri = URI.create(config.getConnectionUrl());
-    SocketFactory factory;
-    int defaultPort;
+  private static ServerSet createServerSet(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) throws LDAPException {
+    final URI ldapUri = URI.create(config.getConnectionUrl());
+    final SocketFactory factory;
+    final int defaultPort;
     switch (ldapUri.getScheme().toLowerCase()) {
       case "ldap":
         factory = null;
@@ -197,21 +183,21 @@ public final class LdapUserDB implements UserDB {
       default:
         throw new IllegalStateException("Unknown ldap scheme: " + ldapUri.getScheme());
     }
-    int ldapPort = ldapUri.getPort() > 0 ? ldapUri.getPort() : defaultPort;
-    String ldapHost = ldapUri.getHost();
-    return new LDAPConnection(factory, ldapHost, ldapPort);
+    final String ldapHost = ldapUri.getHost();
+    final int ldapPort = ldapUri.getPort() > 0 ? ldapUri.getPort() : defaultPort;
+    return new SingleServerSet(ldapHost, ldapPort, factory);
   }
 
   @NotNull
   private static SocketFactory createSslFactory(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
     try {
-      final TrustManager trustManager;
       final String certPem = config.getLdapCertPem();
       if (certPem != null) {
         final File certFile = ConfigHelper.joinPath(context.getBasePath(), certPem);
         log.info("Loading CA certificate from: {}", certFile.getAbsolutePath());
-        trustManager = createTrustManager(Files.readAllBytes(certFile.toPath()));
-        return new SSLUtil(null, trustManager).createSSLSocketFactory();
+        final byte[] cert = Files.readAllBytes(certFile.toPath());
+        final TrustManager trustManager = createTrustManager(cert);
+        return new SSLUtil(trustManager).createSSLSocketFactory();
       } else {
         log.info("CA certificate not defined. Using JVM default SSL context");
         return SSLContext.getDefault().getSocketFactory();
