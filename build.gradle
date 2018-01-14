@@ -111,7 +111,7 @@ dependencies {
   compile "com.beust:jcommander:1.72"
   compile "org.ini4j:ini4j:0.5.4"
   compile "org.mapdb:mapdb:3.0.5"
-  compile "com.unboundid:unboundid-ldapsdk:3.2.1"
+  compile "com.unboundid:unboundid-ldapsdk:4.0.3"
   compile "org.eclipse.jetty:jetty-server:9.4.8.v20171121"
   compile "org.eclipse.jetty:jetty-servlet:9.4.8.v20171121"
   compile "org.gitlab:java-gitlab-api:1.2.3"
