@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 
-import java.io.IOException;
-
 /**
  * Anonymous authentication.
  *
@@ -39,7 +37,7 @@ public final class AnonymousAuthenticator implements Authenticator {
 
   @Nullable
   @Override
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException {
+  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) {
     return User.getAnonymous();
   }
 }
