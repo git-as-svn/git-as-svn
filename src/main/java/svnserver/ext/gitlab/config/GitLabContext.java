@@ -47,8 +47,8 @@ public final class GitLabContext implements Shared {
 
   @NotNull
   public GitlabSession connect(@NotNull String username, @NotNull String password) throws IOException {
-    final GitLabToken token = obtainAccessToken(config.getUrl(), username, password, false);
-    final GitlabAPI api = connect(config.getUrl(), token);
+    final GitLabToken token = obtainAccessToken(getGitLabUrl(), username, password, false);
+    final GitlabAPI api = connect(getGitLabUrl(), token);
     return api.getCurrentSession();
   }
 
@@ -76,7 +76,12 @@ public final class GitLabContext implements Shared {
 
   @NotNull
   public GitlabAPI connect() {
-    return connect(config.getUrl(), config.getToken());
+    return connect(getGitLabUrl(), config.getToken());
+  }
+
+  @NotNull
+  public String getGitLabUrl() {
+    return config.getUrl();
   }
 
   @NotNull
