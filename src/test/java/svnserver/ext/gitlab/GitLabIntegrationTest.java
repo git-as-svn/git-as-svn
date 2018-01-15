@@ -22,6 +22,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
@@ -56,6 +58,7 @@ public final class GitLabIntegrationTest {
   private String gitlabUrl;
   private GitLabToken rootToken;
   private GitlabProject gitlabProject;
+  private GitlabProject gitlabPublicProject;
 
   @BeforeClass
   void before() throws Exception {
@@ -85,12 +88,18 @@ public final class GitLabIntegrationTest {
 
     Assert.assertNotNull(rootAPI.addGroupMember(group.getId(), gitlabUser.getId(), GitlabAccessLevel.Developer));
 
-    gitlabProject = rootAPI.createProject("test", group.getId(), null, null, null, null, null, null, null, null, null);
+    gitlabProject = createGitlabProject(rootAPI, group, "test", false);
+    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", true);
   }
 
   @NotNull
   private GitLabToken createToken(@NotNull String username, @NotNull String password, boolean sudoScope) throws IOException {
     return GitLabContext.obtainAccessToken(gitlabUrl, username, password, sudoScope);
+  }
+
+  @NotNull
+  private GitlabProject createGitlabProject(@NotNull GitlabAPI rootAPI, @NotNull GitlabGroup group, @NotNull String name, boolean publik) throws IOException {
+    return rootAPI.createProject(name, group.getId(), null, null, null, null, null, null, publik, null, null);
   }
 
   @AfterClass
@@ -131,7 +140,19 @@ public final class GitLabIntegrationTest {
   @Test
   void gitlabMappingAsRoot() throws Exception {
     try (SvnTestServer server = createServer(rootToken, dir -> new GitLabMappingConfig(dir, GitCreateMode.EMPTY))) {
-      SvnTestServer.openSvnRepository(server.getUrl().appendPath(gitlabProject.getPathWithNamespace(), false), user, userPassword).getLatestRevision();
+      openSvnRepository(server, gitlabProject, user, userPassword).getLatestRevision();
+    }
+  }
+
+  @NotNull
+  private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull GitlabProject gitlabProject, @NotNull String username, @NotNull String password) throws SVNException {
+    return SvnTestServer.openSvnRepository(server.getUrl().appendPath(gitlabProject.getPathWithNamespace(), false), username, password);
+  }
+
+  @Test
+  void gitlabMappingForAnonymous() throws Throwable {
+    try (SvnTestServer server = createServer(rootToken, dir -> new GitLabMappingConfig(dir, GitCreateMode.EMPTY))) {
+      openSvnRepository(server, gitlabPublicProject, "nobody", "nopassword").getLatestRevision();
     }
   }
 
@@ -144,7 +165,7 @@ public final class GitLabIntegrationTest {
     final GitLabToken userToken = createToken(user, userPassword, false);
 
     try (SvnTestServer server = createServer(userToken, dir -> new GitLabMappingConfig(dir, GitCreateMode.EMPTY))) {
-      SvnTestServer.openSvnRepository(server.getUrl().appendPath(gitlabProject.getPathWithNamespace(), false), root, rootPassword).getLatestRevision();
+      openSvnRepository(server, gitlabProject, root, rootPassword).getLatestRevision();
     }
   }
 }

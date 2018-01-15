@@ -32,11 +32,13 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabAccess implements VcsAccess {
+final class GitLabAccess implements VcsAccess {
   @NotNull
   private final LoadingCache<String, GitlabProject> cache;
 
-  public GitLabAccess(@NotNull LocalContext local, @NotNull GitLabMappingConfig config, int projectId) {
+  GitLabAccess(@NotNull LocalContext local, @NotNull GitLabMappingConfig config, int projectId) {
+    final GitLabContext context = GitLabContext.sure(local.getShared());
+
     this.cache = CacheBuilder.newBuilder()
         .maximumSize(config.getCacheMaximumSize())
         .expireAfterWrite(config.getCacheTimeSec(), TimeUnit.SECONDS)
@@ -44,11 +46,11 @@ public class GitLabAccess implements VcsAccess {
             new CacheLoader<String, GitlabProject>() {
               @Override
               public GitlabProject load(@NotNull String userId) throws Exception {
-                final GitlabAPI api = GitLabContext.sure(local.getShared()).connect();
-                String tailUrl = GitlabProject.URL + "/" + projectId;
-                if (!userId.isEmpty()) {
-                  tailUrl += "?sudo=" + userId;
-                }
+                if (userId.isEmpty())
+                  return GitlabAPI.connect(context.getGitLabUrl(), null).getProject(projectId);
+
+                final GitlabAPI api = context.connect();
+                final String tailUrl = GitlabProject.URL + "/" + projectId + "?sudo=" + userId;
                 return api.retrieve().to(tailUrl, GitlabProject.class);
               }
             }
@@ -58,13 +60,7 @@ public class GitLabAccess implements VcsAccess {
   @Override
   public void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException {
     try {
-      if (user.isAnonymous()) {
-        if (!getProjectAsAdmin().isPublic()) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "This project has not public access"));
-        }
-      } else {
-        getProjectViaSudo(user);
-      }
+      getProjectViaSudo(user);
     } catch (FileNotFoundException ignored) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this project"));
     }
@@ -114,20 +110,11 @@ public class GitLabAccess implements VcsAccess {
   }
 
   @NotNull
-  private GitlabProject getProjectAsAdmin() throws IOException {
-    try {
-      return cache.get("");
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException) {
-        throw (IOException) e.getCause();
-      }
-      throw new IllegalStateException(e);
-    }
-  }
-
-  @NotNull
   private GitlabProject getProjectViaSudo(@NotNull User user) throws IOException {
     try {
+      if (user.isAnonymous())
+        return cache.get("");
+
       final String key = user.getExternalId() != null ? user.getExternalId() : user.getUserName();
       if (key.isEmpty()) {
         throw new IllegalStateException("Found user without identificator: " + user);
