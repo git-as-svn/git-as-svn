@@ -176,7 +176,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       void write(@NotNull SvnServerWriter writer) throws IOException, SVNException;
     }
 
-    private class HeaderEntry implements AutoCloseable {
+    private static class HeaderEntry implements AutoCloseable {
 
       @NotNull
       private final SessionContext context;
@@ -186,13 +186,15 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       private final HeaderWriter beginWriter;
       @NotNull
       private final HeaderWriter endWriter;
+      private final Deque<HeaderEntry> pathStack;
       private boolean writed = false;
 
-      public HeaderEntry(@NotNull SessionContext context, @Nullable VcsFile file, @NotNull HeaderWriter beginWriter, @NotNull HeaderWriter endWriter) throws IOException {
+      public HeaderEntry(@NotNull SessionContext context, @Nullable VcsFile file, @NotNull HeaderWriter beginWriter, @NotNull HeaderWriter endWriter, @NotNull Deque<HeaderEntry> pathStack) throws IOException {
         this.context = context;
         this.file = file;
         this.beginWriter = beginWriter;
         this.endWriter = endWriter;
+        this.pathStack = pathStack;
         pathStack.addLast(this);
       }
 
@@ -702,14 +704,14 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         final HeaderEntry entry = new HeaderEntry(context, entryFile, writer -> {
           sendNewEntry(writer, "add-" + type, wcPath, parentTokenId, tokenId, copyFrom);
           sendRevProps(writer, newFile, type, tokenId);
-        }, endWriter);
+        }, endWriter, pathStack);
         getWriter(context);
         return entry;
       } else {
         return new HeaderEntry(context, oldFile, writer -> {
           sendOpenEntry(writer, "open-" + type, wcPath, parentTokenId, tokenId, oldFile.getLastChange().getId());
           sendRevProps(writer, newFile, type, tokenId);
-        }, endWriter);
+        }, endWriter, pathStack);
       }
     }
 
