@@ -5,6 +5,7 @@
  * x10 speedup of LDAP authentication
  * Drop dependency on GSon in favor of Jackson2
  * Update unboundid-ldapsdk to 4.0.3
+ * Fix post-receive hook failing on GitLab 10 #160
 
 ## 1.1.9
 

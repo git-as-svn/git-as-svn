@@ -14,6 +14,7 @@ import svnserver.auth.User;
 import svnserver.context.Local;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Repository access checker.
@@ -38,4 +39,7 @@ public interface VcsAccess extends Local {
    * @throws SVNException
    */
   void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException;
+
+  default void updateEnvironment(@NotNull Map<String, String> environment) {
+  }
 }

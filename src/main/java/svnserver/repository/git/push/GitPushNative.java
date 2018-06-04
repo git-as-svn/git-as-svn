@@ -19,6 +19,7 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.repository.VcsAccess;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,10 +40,10 @@ final class GitPushNative implements GitPusher {
   private static final String SYSTEM_MESSAGE_PREFIX = "!";
 
   @NotNull
-  private final SharedContext context;
+  private final LocalContext context;
 
   GitPushNative(@NotNull LocalContext context) {
-    this.context = context.getShared();
+    this.context = context;
   }
 
   @Override
@@ -52,9 +53,12 @@ final class GitPushNative implements GitPusher {
       final ProcessBuilder processBuilder = new ProcessBuilder("git", "push", "--porcelain", "--quiet", ".", commitId.name() + ":" + branch)
           .directory(repository.getDirectory())
           .redirectErrorStream(true);
+
       processBuilder.environment().put("LANG", "en_US.utf8");
       userInfo.updateEnvironment(processBuilder.environment());
-      context.sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
+      context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
+      context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
+
       final Process process = processBuilder.start();
       final StringBuilder resultBuilder = new StringBuilder();
       final StringBuilder hookBuilder = new StringBuilder();

@@ -24,6 +24,8 @@ import svnserver.repository.VcsAccess;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -35,8 +37,12 @@ import java.util.concurrent.TimeUnit;
 final class GitLabAccess implements VcsAccess {
   @NotNull
   private final LoadingCache<String, GitlabProject> cache;
+  @NotNull
+  private final Map<String, String> environment;
 
   GitLabAccess(@NotNull LocalContext local, @NotNull GitLabMappingConfig config, int projectId) {
+    this.environment = Collections.singletonMap("GL_REPOSITORY", String.format("project-%s", projectId));
+
     final GitLabContext context = GitLabContext.sure(local.getShared());
 
     this.cache = CacheBuilder.newBuilder()
@@ -55,6 +61,11 @@ final class GitLabAccess implements VcsAccess {
               }
             }
         );
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> environment) {
+    environment.putAll(this.environment);
   }
 
   @Override
