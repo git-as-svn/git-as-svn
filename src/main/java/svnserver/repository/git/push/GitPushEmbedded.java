@@ -22,7 +22,7 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
-import svnserver.context.SharedContext;
+import svnserver.repository.VcsAccess;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -33,11 +33,12 @@ import java.util.Arrays;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitPushEmbedded implements GitPusher {
+public final class GitPushEmbedded implements GitPusher {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitPushEmbedded.class);
+
   @NotNull
-  private final SharedContext context;
+  private final LocalContext context;
   @Nullable
   private final String preReceive;
   @Nullable
@@ -45,14 +46,8 @@ public class GitPushEmbedded implements GitPusher {
   @Nullable
   private final String update;
 
-  @FunctionalInterface
-  public interface HookRunner {
-    @NotNull
-    Process exec(@NotNull ProcessBuilder processBuilder) throws IOException;
-  }
-
   public GitPushEmbedded(@NotNull LocalContext context, @Nullable String preReceive, @Nullable String postReceive, @Nullable String update) {
-    this.context = context.getShared();
+    this.context = context;
     this.preReceive = preReceive;
     this.postReceive = postReceive;
     this.update = update;
@@ -63,7 +58,7 @@ public class GitPushEmbedded implements GitPusher {
     final RefUpdate refUpdate = repository.updateRef(branch);
     refUpdate.getOldObjectId();
     refUpdate.setNewObjectId(ReceiveId);
-    runReceiveHook(repository, refUpdate, preReceive, userInfo);
+    runReceiveHook(repository, refUpdate, SVNErrorCode.REPOS_HOOK_FAILURE, preReceive, userInfo);
     runUpdateHook(repository, refUpdate, update, userInfo);
     final RefUpdate.Result result = refUpdate.update();
     switch (result) {
@@ -71,7 +66,7 @@ public class GitPushEmbedded implements GitPusher {
         return false;
       case NEW:
       case FAST_FORWARD:
-        runReceiveHook(repository, refUpdate, postReceive, userInfo);
+        runReceiveHook(repository, refUpdate, SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, postReceive, userInfo);
         return true;
       default:
         log.error("Unexpected push error: {}", result);
@@ -79,8 +74,8 @@ public class GitPushEmbedded implements GitPusher {
     }
   }
 
-  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
-    runHook(repository, hook, userInfo, processBuilder -> {
+  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull SVNErrorCode svnErrorCode, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
+    runHook(repository, svnErrorCode, hook, userInfo, processBuilder -> {
       final Process process = processBuilder.start();
       try (Writer stdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {
         stdin.write(getObjectId(refUpdate.getOldObjectId()));
@@ -95,7 +90,7 @@ public class GitPushEmbedded implements GitPusher {
   }
 
   private void runUpdateHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
-    runHook(repository, hook, userInfo, processBuilder -> {
+    runHook(repository, SVNErrorCode.REPOS_HOOK_FAILURE, hook, userInfo, processBuilder -> {
       processBuilder.command().addAll(Arrays.asList(
           refUpdate.getName(),
           getObjectId(refUpdate.getOldObjectId()),
@@ -105,7 +100,7 @@ public class GitPushEmbedded implements GitPusher {
     });
   }
 
-  private void runHook(@NotNull Repository repository, @Nullable String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws IOException, SVNException {
+  private void runHook(@NotNull Repository repository, @NotNull SVNErrorCode hookErrorCode, @Nullable String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws IOException, SVNException {
     if (hook == null || hook.isEmpty()) {
       return;
     }
@@ -115,14 +110,17 @@ public class GitPushEmbedded implements GitPusher {
         final ProcessBuilder processBuilder = new ProcessBuilder(script.getAbsolutePath())
             .directory(repository.getDirectory())
             .redirectErrorStream(true);
+
         processBuilder.environment().put("LANG", "en_US.utf8");
         userInfo.updateEnvironment(processBuilder.environment());
-        context.sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
+        context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
+        context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
+
         final Process process = runner.exec(processBuilder);
         final String hookMessage = CharStreams.toString(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Commit blocked by hook with output:\n" + hookMessage));
+          throw new SVNException(SVNErrorMessage.create(hookErrorCode, String.format("Hook %s failed with output:\n%s", script.getAbsolutePath(), hookMessage)));
         }
       } catch (InterruptedException e) {
         log.error("Hook interrupted: " + script.getAbsolutePath(), e);
@@ -134,5 +132,11 @@ public class GitPushEmbedded implements GitPusher {
   @NotNull
   private static String getObjectId(@Nullable ObjectId objectId) {
     return objectId == null ? ObjectId.zeroId().getName() : objectId.getName();
+  }
+
+  @FunctionalInterface
+  public interface HookRunner {
+    @NotNull
+    Process exec(@NotNull ProcessBuilder processBuilder) throws IOException;
   }
 }
