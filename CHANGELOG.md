@@ -1,6 +1,6 @@
 # Changes
 
-## 1.2
+## 1.2.0
 
  * x10 speedup of LDAP authentication
  * Drop dependency on GSon in favor of Jackson2
