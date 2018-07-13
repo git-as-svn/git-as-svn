@@ -345,9 +345,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
               break;
             }
             if (failure.errorFile.isEmpty()) {
-              log.error("Received client error: {} {}", failure.errorCode, failure.errorMessage);
+              log.warn("Received client error: {} {}", failure.errorCode, failure.errorMessage);
             } else {
-              log.error("Received client error [%s:%d]: {} {}", failure.errorFile, failure.errorLine, failure.errorCode, failure.errorMessage);
+              log.warn("Received client error [%s:%d]: {} {}", failure.errorFile, failure.errorLine, failure.errorCode, failure.errorMessage);
             }
             failures.add(failure);
           }
