@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. #176
+
 ## 1.2.0
 
  * x10 speedup of LDAP authentication

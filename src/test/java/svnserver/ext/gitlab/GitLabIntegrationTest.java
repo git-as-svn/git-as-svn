@@ -8,10 +8,7 @@
 package svnserver.ext.gitlab;
 
 import org.gitlab.api.GitlabAPI;
-import org.gitlab.api.models.GitlabAccessLevel;
-import org.gitlab.api.models.GitlabGroup;
-import org.gitlab.api.models.GitlabProject;
-import org.gitlab.api.models.GitlabUser;
+import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testcontainers.containers.GenericContainer;
@@ -83,13 +80,13 @@ public final class GitLabIntegrationTest {
     final GitlabUser gitlabUser = rootAPI.createUser("git-as-svn@localhost", userPassword, user, user, null, null, null, null, null, null, null, null, false, null, true);
     Assert.assertNotNull(gitlabUser);
 
-    final GitlabGroup group = rootAPI.createGroup("testGroup");
+    final GitlabGroup group = rootAPI.createGroup(new CreateGroupRequest("testGroup").setVisibility(GitlabVisibility.PUBLIC), null);
     Assert.assertNotNull(group);
 
     Assert.assertNotNull(rootAPI.addGroupMember(group.getId(), gitlabUser.getId(), GitlabAccessLevel.Developer));
 
-    gitlabProject = createGitlabProject(rootAPI, group, "test", false);
-    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", true);
+    gitlabProject = createGitlabProject(rootAPI, group, "test", GitlabVisibility.INTERNAL);
+    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC);
   }
 
   @NotNull
@@ -98,8 +95,8 @@ public final class GitLabIntegrationTest {
   }
 
   @NotNull
-  private GitlabProject createGitlabProject(@NotNull GitlabAPI rootAPI, @NotNull GitlabGroup group, @NotNull String name, boolean publik) throws IOException {
-    return rootAPI.createProject(name, group.getId(), null, null, null, null, null, null, publik, null, null);
+  private GitlabProject createGitlabProject(@NotNull GitlabAPI rootAPI, @NotNull GitlabGroup group, @NotNull String name, @NotNull GitlabVisibility visibility) throws IOException {
+    return rootAPI.createProjectForGroup(name, group, null, visibility.toString());
   }
 
   @AfterClass
