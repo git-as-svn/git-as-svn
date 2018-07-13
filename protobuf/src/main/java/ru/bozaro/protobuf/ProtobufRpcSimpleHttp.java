@@ -162,7 +162,7 @@ public class ProtobufRpcSimpleHttp {
   @NotNull
   private Map<String, String[]> getParameterMap(@NotNull HttpRequest req) throws URISyntaxException {
     final Map<String, List<String>> params = new HashMap<>();
-    final List<NameValuePair> pairList = URLEncodedUtils.parse(new URI(req.getRequestLine().getUri()), StandardCharsets.UTF_8.name());
+    final List<NameValuePair> pairList = URLEncodedUtils.parse(new URI(req.getRequestLine().getUri()), StandardCharsets.UTF_8);
     for (NameValuePair param : pairList) {
       params.compute(param.getName(), (item, value) -> {
         if (value == null) {

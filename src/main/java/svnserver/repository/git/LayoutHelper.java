@@ -53,9 +53,9 @@ public final class LayoutHelper {
 
   @NotNull
   public static Ref initRepository(@NotNull Repository repository, String branch) throws IOException {
-    Ref ref = repository.getRef(PREFIX_REF + branch);
+    Ref ref = repository.exactRef(PREFIX_REF + branch);
     if (ref == null) {
-      Ref old = repository.getRef(OLD_CACHE_REF);
+      Ref old = repository.exactRef(OLD_CACHE_REF);
       if (old != null) {
         final RefUpdate refUpdate = repository.updateRef(PREFIX_REF + branch);
         refUpdate.setNewObjectId(old.getObjectId());
@@ -67,12 +67,12 @@ public final class LayoutHelper {
       final RefUpdate refUpdate = repository.updateRef(PREFIX_REF + branch);
       refUpdate.setNewObjectId(revision);
       refUpdate.update();
-      ref = repository.getRef(PREFIX_REF + branch);
+      ref = repository.exactRef(PREFIX_REF + branch);
       if (ref == null) {
         throw new IOException("Can't initialize repository.");
       }
     }
-    Ref old = repository.getRef(OLD_CACHE_REF);
+    Ref old = repository.exactRef(OLD_CACHE_REF);
     if (old != null) {
       final RefUpdate refUpdate = repository.updateRef(OLD_CACHE_REF);
       refUpdate.setForceUpdate(true);

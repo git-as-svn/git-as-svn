@@ -125,9 +125,10 @@ public class GitRepository implements VcsRepository {
     this.lockManagerFactory = lockManagerFactory;
     this.gitFilters = GitFilterHelper.createFilters(context);
 
-    this.svnBranch = LayoutHelper.initRepository(repository, branch).getName();
+    final Ref svnBranchRef = LayoutHelper.initRepository(repository, branch);
+    this.svnBranch = svnBranchRef.getName();
     this.gitBranch = Constants.R_HEADS + branch;
-    final String repositoryId = loadRepositoryId(repository, svnBranch);
+    final String repositoryId = loadRepositoryId(repository, svnBranchRef);
     this.uuid = UUID.nameUUIDFromBytes((repositoryId + "\0" + gitBranch).getBytes(StandardCharsets.UTF_8)).toString();
 
     log.info("[{}]: registered branch: {}", context.getName(), gitBranch);
@@ -145,12 +146,7 @@ public class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  private static String loadRepositoryId(@NotNull Repository repository, @NotNull String refName) throws IOException {
-    final Ref ref = repository.getRef(refName);
-    if (ref == null) {
-      throw new IllegalStateException();
-    }
-
+  private static String loadRepositoryId(@NotNull Repository repository, @NotNull Ref ref) throws IOException {
     ObjectId oid = ref.getObjectId();
     final RevWalk revWalk = new RevWalk(repository);
     while (true) {
@@ -176,7 +172,7 @@ public class GitRepository implements VcsRepository {
       final ObjectId lastCommitId;
       if (lastRevision >= 0) {
         lastCommitId = revisions.get(lastRevision).getCacheCommit();
-        final Ref head = repository.getRef(svnBranch);
+        final Ref head = repository.exactRef(svnBranch);
         if (head.getObjectId().equals(lastCommitId)) {
           return;
         }
@@ -189,7 +185,7 @@ public class GitRepository implements VcsRepository {
     try {
       final int lastRevision = revisions.size() - 1;
       final ObjectId lastCommitId = lastRevision < 0 ? null : revisions.get(lastRevision).getCacheCommit();
-      final Ref head = repository.getRef(svnBranch);
+      final Ref head = repository.exactRef(svnBranch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
       ObjectId objectId = head.getObjectId();
@@ -256,7 +252,7 @@ public class GitRepository implements VcsRepository {
       final int lastRevision = revisions.size() - 1;
       if (lastRevision >= 0) {
         final ObjectId lastCommitId = revisions.get(lastRevision).getGitNewCommit();
-        final Ref master = repository.getRef(gitBranch);
+        final Ref master = repository.exactRef(gitBranch);
         if ((master == null) || (master.getObjectId().equals(lastCommitId))) {
           return false;
         }
@@ -268,7 +264,7 @@ public class GitRepository implements VcsRepository {
     final ObjectInserter inserter = repository.newObjectInserter();
     lock.writeLock().lock();
     try {
-      final Ref master = repository.getRef(gitBranch);
+      final Ref master = repository.exactRef(gitBranch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository);
       ObjectId objectId = master.getObjectId();
