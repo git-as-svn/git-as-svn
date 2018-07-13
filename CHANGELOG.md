@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.3.0
 
  * Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. #176
 
