@@ -105,7 +105,7 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 dependencies {
   compile project(":protobuf")
 
-  compile "org.eclipse.jgit:org.eclipse.jgit:4.9.2.201712150930-r"
+  compile "org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r"
   compile "org.tmatesoft.svnkit:svnkit:1.9.0"
   compile "org.yaml:snakeyaml:1.19"
   compile "com.beust:jcommander:1.72"

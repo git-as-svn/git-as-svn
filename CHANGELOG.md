@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Update JGit to 5.0.1.201806211838-r
+
 ## 1.3.0
 
  * Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. #176
