@@ -66,13 +66,13 @@ public final class SvnServerParser {
    * @param <T>       Тип элемента.
    * @return Прочитанный элемент.
    */
+  @SuppressWarnings("unchecked")
   @NotNull
   public <T extends SvnServerToken> T readToken(@NotNull Class<T> tokenType) throws IOException {
     final SvnServerToken token = readToken();
     if (!tokenType.isInstance(token)) {
       throw new IOException("Unexpected token: " + token + " (expected: " + tokenType.getName() + ')');
     }
-    //noinspection unchecked
     return (T) token;
   }
 
@@ -83,6 +83,7 @@ public final class SvnServerParser {
    * @param <T>       Тип элемента.
    * @return Прочитанный элемент.
    */
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T extends SvnServerToken> T readItem(@NotNull Class<T> tokenType) throws IOException {
     final SvnServerToken token = readToken();
@@ -92,7 +93,6 @@ public final class SvnServerParser {
     if (!tokenType.isInstance(token)) {
       throw new IOException("Unexpected token: " + token + " (expected: " + tokenType.getName() + ')');
     }
-    //noinspection unchecked
     return (T) token;
   }
 

@@ -771,6 +771,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return prefix.isEmpty() ? name : (prefix + "/" + name);
     }
 
+    @SuppressWarnings("unchecked")
     private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
       final SvnServerWriter writer = context.getWriter();
@@ -781,7 +782,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       if (command != null) {
         Object param = MessageParser.parse(command.getArguments(), parser);
         parser.readToken(ListEndToken.class);
-        //noinspection unchecked
         command.process(context, param);
       } else {
         log.error("Unsupported command: {}", cmd);
