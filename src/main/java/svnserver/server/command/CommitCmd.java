@@ -602,6 +602,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listEnd();
     }
 
+    @SuppressWarnings("unchecked")
     private void editorCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
       final SvnServerWriter writer = context.getWriter();
@@ -618,7 +619,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         try {
           Object param = MessageParser.parse(command.getArguments(), parser);
           parser.readToken(ListEndToken.class);
-          //noinspection unchecked
           command.process(context, param);
         } catch (SVNException e) {
           if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_NOT_AUTHORIZED) {

@@ -47,11 +47,11 @@ public final class MessageParser {
     parsers.put(boolean.class, MessageParser::parseBool);
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> T parse(@NotNull Class<T> type, @Nullable SvnServerParser tokenParser) throws IOException {
     Parser typeParser = parsers.get(type);
     if (typeParser != null) {
-      //noinspection unchecked
       return (T) typeParser.parse(tokenParser);
     }
     return parseObject(type, tokenParser);
@@ -95,7 +95,6 @@ public final class MessageParser {
       tokenParser.readToken();
     }
     try {
-      //noinspection unchecked
       return (T) ctor.newInstance(params);
     } catch (ReflectiveOperationException e) {
       throw new IllegalStateException(e);

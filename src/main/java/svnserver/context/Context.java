@@ -39,15 +39,15 @@ public abstract class Context<S extends AutoCloseable> implements AutoCloseable 
     return object;
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T extends S> T get(@NotNull Class<T> type) {
-    //noinspection unchecked
     return (T) map.get(type);
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T extends S> T remove(@NotNull Class<T> type) {
-    //noinspection unchecked
     return (T) map.remove(type);
   }
 
@@ -60,6 +60,7 @@ public abstract class Context<S extends AutoCloseable> implements AutoCloseable 
     return result;
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   public <T extends S> T getOrCreate(@NotNull Class<T> type, @NotNull Supplier<T> supplier) {
     final T result = get(type);
@@ -67,7 +68,6 @@ public abstract class Context<S extends AutoCloseable> implements AutoCloseable 
       final T newObj = supplier.get();
       final S oldObj = map.putIfAbsent(type, newObj);
       if (oldObj != null) {
-        //noinspection unchecked
         return (T) oldObj;
       }
       return newObj;
