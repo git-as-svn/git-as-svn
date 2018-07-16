@@ -106,7 +106,7 @@ dependencies {
   compile project(":protobuf")
 
   compile "org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r"
-  compile "org.tmatesoft.svnkit:svnkit:1.9.0"
+  compile "org.tmatesoft.svnkit:svnkit:1.9.3"
   compile "org.yaml:snakeyaml:1.19"
   compile "com.beust:jcommander:1.72"
   compile "org.ini4j:ini4j:0.5.4"

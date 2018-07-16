@@ -3,6 +3,7 @@
 ## Unreleased
 
  * Update JGit to 5.0.1.201806211838-r
+ * Update SVNKit to 1.9.3
 
 ## 1.3.0
 
