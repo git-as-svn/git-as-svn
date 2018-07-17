@@ -19,7 +19,7 @@ import svnserver.repository.git.GitObject;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class CacheChange {
+public final class CacheChange {
   @Nullable
   private final ObjectId oldFile;
   @Nullable
@@ -35,7 +35,7 @@ public class CacheChange {
     this(getFileId(logPair.getOldEntry()), getFileId(logPair.getNewEntry()));
   }
 
-  private CacheChange(@Nullable ObjectId oldFile, @Nullable ObjectId newFile) {
+  public CacheChange(@Nullable ObjectId oldFile, @Nullable ObjectId newFile) {
     this.oldFile = oldFile != null ? oldFile.copy() : null;
     this.newFile = newFile != null ? newFile.copy() : null;
   }

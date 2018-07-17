@@ -7,18 +7,11 @@
  */
 package svnserver.repository.git.cache;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoException;
-import com.esotericsoftware.kryo.Serializer;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -29,10 +22,6 @@ import java.util.TreeMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class CacheRevision {
-  @NotNull
-  public static final CacheRevision empty = new CacheRevision();
-  @NotNull
-  private static final ThreadLocal<Kryo> kryo = createKryo();
 
   @Nullable
   private final ObjectId gitCommitId;
@@ -41,8 +30,10 @@ public class CacheRevision {
   @NotNull
   private final Map<String, CacheChange> fileChange = new TreeMap<>();
 
-  private CacheRevision() {
-    this.gitCommitId = null;
+  public CacheRevision(@Nullable ObjectId commitId, Map<String, String> renames, Map<String, CacheChange> fileChange) {
+    this.gitCommitId = commitId == null ? null : commitId.copy();
+    this.renames.putAll(renames);
+    this.fileChange.putAll(fileChange);
   }
 
   public CacheRevision(
@@ -50,13 +41,7 @@ public class CacheRevision {
       @NotNull Map<String, String> renames,
       @NotNull Map<String, CacheChange> fileChange
   ) {
-    if (svnCommit != null) {
-      this.gitCommitId = svnCommit.copy();
-    } else {
-      this.gitCommitId = null;
-    }
-    this.renames.putAll(renames);
-    this.fileChange.putAll(fileChange);
+    this(svnCommit == null ? null : svnCommit.copy(), renames, fileChange);
   }
 
   @Nullable
@@ -72,54 +57,5 @@ public class CacheRevision {
   @NotNull
   public Map<String, CacheChange> getFileChange() {
     return Collections.unmodifiableMap(fileChange);
-  }
-
-  private static ThreadLocal<Kryo> createKryo() {
-    return ThreadLocal.withInitial(() -> {
-      final Kryo kryo = new Kryo();
-      kryo.register(ObjectId.class, new ObjectIdSerializer());
-      return kryo;
-    });
-  }
-
-  @Nullable
-  public static CacheRevision deserialize(@Nullable byte[] bytes) {
-    if (bytes != null) {
-      try (final Input input = new Input(bytes)) {
-        return kryo.get().readObjectOrNull(input, CacheRevision.class);
-      } catch (KryoException ignored) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  public static byte[] serialize(@NotNull CacheRevision cache) throws IOException {
-    try (final ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-      try (Output output = new Output(stream)) {
-        kryo.get().writeObject(output, cache);
-      }
-      try (final Input input = new Input(stream.toByteArray())) {
-        kryo.get().readObjectOrNull(input, CacheRevision.class);
-      } catch (KryoException e) {
-        throw new IOException("Can't read serialized object", e);
-      }
-      return stream.toByteArray();
-    }
-  }
-
-  private static class ObjectIdSerializer extends Serializer<ObjectId> {
-
-    @Override
-    public void write(@NotNull Kryo kryo, @NotNull Output output, @Nullable ObjectId object) {
-      output.writeString(object != null ? object.name() : null);
-    }
-
-    @Override
-    public ObjectId read(Kryo kryo, Input input, Class<ObjectId> type) {
-      final String id = input.readString();
-      return id != null ? ObjectId.fromString(id) : null;
-    }
   }
 }
