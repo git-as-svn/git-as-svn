@@ -16,11 +16,13 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.util.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mapdb.DataInput2;
+import org.mapdb.DataOutput2;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
+import org.mapdb.serializer.GroupSerializerObjectArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -61,7 +63,7 @@ import java.util.function.BiFunction;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitRepository implements VcsRepository {
+public final class GitRepository implements VcsRepository {
   private static final int REPORT_DELAY = 2500;
   private static final int MARK_NO_FILE = -1;
 
@@ -80,9 +82,11 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final TreeMap<Long, GitRevision> revisionByDate = new TreeMap<>();
   @NotNull
-  private final TreeMap<ObjectId, GitRevision> revisionByHash = new TreeMap<>();
+  private final Map<ObjectId, GitRevision> revisionByHash = new HashMap<>();
   @NotNull
-  private final Map<String, IntList> lastUpdates = new ConcurrentHashMap<>();
+  private final ReadWriteLock lastUpdatesLock = new ReentrantReadWriteLock();
+  @NotNull
+  private final Map<String, int[]> lastUpdates = new HashMap<>();
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   // Lock for prevent concurrent pushes.
@@ -99,7 +103,7 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final HTreeMap<String, Boolean> binaryCache;
   @NotNull
-  private final HTreeMap<String, byte[]> revisionCache;
+  private final HTreeMap<ObjectId, CacheRevision> revisionCache;
   @NotNull
   private final Map<String, GitFilter> gitFilters;
   @NotNull
@@ -107,6 +111,87 @@ public class GitRepository implements VcsRepository {
   @NotNull
   private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
+
+  @NotNull
+  private static final GroupSerializerObjectArray<ObjectId> objectIdSerializer = new GroupSerializerObjectArray<ObjectId>() {
+    @Override
+    public void serialize(@NotNull DataOutput2 out, @NotNull ObjectId value) throws IOException {
+      value.copyRawTo(out);
+    }
+
+    @Override
+    public int fixedSize() {
+      return Constants.OBJECT_ID_LENGTH;
+    }
+
+    @Override
+    public boolean isTrusted() {
+      return true;
+    }
+
+    @Override
+    public ObjectId deserialize(@NotNull DataInput2 input, int available) throws IOException {
+      final byte[] raw = new byte[fixedSize()];
+      input.readFully(raw);
+      return ObjectId.fromRaw(raw);
+    }
+  };
+
+  @NotNull
+  private static final GroupSerializerObjectArray<CacheRevision> cacheRevisionSerializer = new GroupSerializerObjectArray<CacheRevision>() {
+    @Override
+    public void serialize(@NotNull DataOutput2 out, @NotNull CacheRevision value) throws IOException {
+      final ObjectId objectId = value.getGitCommitId();
+      out.writeBoolean(objectId != null);
+      if (objectId != null)
+        objectIdSerializer.serialize(out, objectId);
+
+      out.writeInt(value.getRenames().size());
+      for (Map.Entry<String, String> en : value.getRenames().entrySet()) {
+        Serializer.STRING.serialize(out, en.getKey());
+        Serializer.STRING.serialize(out, en.getValue());
+      }
+
+      out.writeInt(value.getFileChange().size());
+      for (Map.Entry<String, CacheChange> en : value.getFileChange().entrySet()) {
+        Serializer.STRING.serialize(out, en.getKey());
+
+        final ObjectId oldFile = en.getValue().getOldFile();
+        out.writeBoolean(oldFile != null);
+        if (oldFile != null)
+          objectIdSerializer.serialize(out, oldFile);
+
+        final ObjectId newFile = en.getValue().getNewFile();
+        out.writeBoolean(newFile != null);
+        if (newFile != null)
+          objectIdSerializer.serialize(out, newFile);
+      }
+    }
+
+    @Override
+    public CacheRevision deserialize(@NotNull DataInput2 input, int available) throws IOException {
+      final ObjectId objectId = input.readBoolean() ? objectIdSerializer.deserialize(input, available) : null;
+
+      final Map<String, String> renames = new TreeMap<>();
+      final int renamesCount = input.readInt();
+      for (int i = 0; i < renamesCount; ++i) {
+        renames.put(Serializer.STRING.deserialize(input, available), Serializer.STRING.deserialize(input, available));
+      }
+
+      final Map<String, CacheChange> fileChange = new TreeMap<>();
+      final int fileChangeCount = input.readInt();
+      for (int i = 0; i < fileChangeCount; ++i) {
+        final String name = Serializer.STRING.deserialize(input, available);
+        final ObjectId oldFile = input.readBoolean() ? objectIdSerializer.deserialize(input, available) : null;
+        final ObjectId newFile = input.readBoolean() ? objectIdSerializer.deserialize(input, available) : null;
+        fileChange.put(name, new CacheChange(oldFile, newFile));
+      }
+
+      return new CacheRevision(objectId, renames, fileChange);
+    }
+  };
+
+  private static final int revisionCacheVersion = 2;
 
   public GitRepository(@NotNull LocalContext context,
                        @NotNull Repository repository,
@@ -119,7 +204,7 @@ public class GitRepository implements VcsRepository {
     shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
     this.repository = repository;
     this.binaryCache = shared.getCacheDB().hashMap("cache.binary", Serializer.STRING, Serializer.BOOLEAN).createOrOpen();
-    this.revisionCache = context.getShared().getCacheDB().hashMap(String.format("cache-revision.%s.%s", context.getName(), renameDetection ? "1" : "0"), Serializer.STRING, Serializer.BYTE_ARRAY).createOrOpen();
+    this.revisionCache = context.getShared().getCacheDB().hashMap(String.format("cache-revision.%s.%s.v%s", context.getName(), renameDetection ? 1 : 0, revisionCacheVersion), objectIdSerializer, cacheRevisionSerializer).createOrOpen();
     this.pusher = pusher;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;
@@ -317,9 +402,9 @@ public class GitRepository implements VcsRepository {
 
   @NotNull
   private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
-    final String cacheKey = newCommit.name();
+    final ObjectId cacheKey = newCommit.copy();
 
-    CacheRevision result = CacheRevision.deserialize(revisionCache.get(cacheKey));
+    CacheRevision result = revisionCache.get(cacheKey);
     if (result == null) {
       final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
       final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
@@ -333,7 +418,7 @@ public class GitRepository implements VcsRepository {
           collectRename(oldTree, newTree),
           fileChange
       );
-      revisionCache.put(cacheKey, CacheRevision.serialize(result));
+      revisionCache.put(cacheKey, result);
     }
     return result;
   }
@@ -376,16 +461,27 @@ public class GitRepository implements VcsRepository {
     }
     final RevCommit oldCommit = revisions.isEmpty() ? null : revisions.get(revisions.size() - 1).getGitNewCommit();
     final RevCommit svnCommit = cacheRevision.getGitCommitId() != null ? new RevWalk(reader).parseCommit(cacheRevision.getGitCommitId()) : null;
-    for (Map.Entry<String, CacheChange> entry : cacheRevision.getFileChange().entrySet()) {
-      lastUpdates.compute(entry.getKey(), (key, list) -> {
-        final IntList result = list == null ? new IntList() : list;
-        result.add(revisionId);
-        if (entry.getValue().getNewFile() == null) {
-          result.add(MARK_NO_FILE);
-        }
-        return result;
-      });
+
+    try {
+      lastUpdatesLock.writeLock().lock();
+      for (Map.Entry<String, CacheChange> entry : cacheRevision.getFileChange().entrySet()) {
+        lastUpdates.compute(entry.getKey(), (key, list) -> {
+          final boolean markNoFile = entry.getValue().getNewFile() == null;
+          final int prevLen = (list == null ? 0 : list.length);
+          final int newLen = prevLen + 1 + (markNoFile ? 1 : 0);
+          final int[] result = list == null ? new int[newLen] : Arrays.copyOf(list, newLen);
+
+          result[prevLen] = revisionId;
+          if (markNoFile) {
+            result[prevLen + 1] = MARK_NO_FILE;
+          }
+          return result;
+        });
+      }
+    } finally {
+      lastUpdatesLock.writeLock().unlock();
     }
+
     final GitRevision revision = new GitRevision(this, commit.getId(), revisionId, copyFroms, oldCommit, svnCommit, commit.getCommitTime());
     if (revision.getId() > 0) {
       if (revisionByDate.isEmpty() || revisionByDate.lastKey() <= revision.getDate()) {
@@ -442,11 +538,7 @@ public class GitRepository implements VcsRepository {
         }
       } catch (SvnForbiddenException ignored) {
       }
-      if (!propList.isEmpty()) {
-        props = propList.toArray(new GitProperty[propList.size()]);
-      } else {
-        props = GitProperty.emptyArray;
-      }
+      props = propList.toArray(GitProperty.emptyArray);
       directoryPropertyCache.put(treeEntry.getObjectId().getObject(), props);
     }
     return props;
@@ -602,20 +694,28 @@ public class GitRepository implements VcsRepository {
   @Override
   public int getLastChange(@NotNull String nodePath, int beforeRevision) {
     if (nodePath.isEmpty()) return beforeRevision;
-    final IntList revs = this.lastUpdates.get(nodePath);
-    if (revs != null) {
-      int prev = 0;
-      for (int i = revs.size() - 1; i >= 0; --i) {
-        final int rev = revs.get(i);
-        if ((rev >= 0) && (rev <= beforeRevision)) {
-          if (prev == MARK_NO_FILE) {
-            return MARK_NO_FILE;
+
+    try {
+      lastUpdatesLock.readLock().lock();
+
+      final int[] revs = this.lastUpdates.get(nodePath);
+      if (revs != null) {
+        int prev = 0;
+        for (int i = revs.length - 1; i >= 0; --i) {
+          final int rev = revs[i];
+          if ((rev >= 0) && (rev <= beforeRevision)) {
+            if (prev == MARK_NO_FILE) {
+              return MARK_NO_FILE;
+            }
+            return rev;
           }
-          return rev;
+          prev = rev;
         }
-        prev = rev;
       }
+    } finally {
+      lastUpdatesLock.readLock().unlock();
     }
+
     return MARK_NO_FILE;
   }
 
