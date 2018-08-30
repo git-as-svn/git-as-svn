@@ -9,6 +9,9 @@ buildscript {
     maven {
       url "https://repo.spring.io/plugins-release"
     }
+    maven {
+      url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
     jcenter()
   }
 
@@ -36,6 +39,9 @@ allprojects {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
   }
 }
 
@@ -123,6 +129,7 @@ dependencies {
   compile "org.eclipse.jetty:jetty-servlet:9.4.8.v20171121"
   compile "org.gitlab:java-gitlab-api:4.0.0"
   compile "org.bitbucket.b_c:jose4j:0.6.2"
+  compile "com.github.zeripath:java-gitea-api:1.6.0-SNAPSHOT"
   compile "com.google.guava:guava:23.5-jre"
   compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
 
