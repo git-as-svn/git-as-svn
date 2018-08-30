@@ -2,6 +2,7 @@ import org.ajoberstar.grgit.Grgit
 
 project.version = "1.4.0"
 
+
 buildscript {
   repositories {
     mavenLocal()
@@ -11,6 +12,13 @@ buildscript {
     }
     jcenter()
   }
+
+configurations.all {
+    resolutionStrategy {
+        force 'xml-apis:xml-apis:1.4.01'
+    }
+}
+
 
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
