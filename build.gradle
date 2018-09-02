@@ -2,7 +2,6 @@ import org.ajoberstar.grgit.Grgit
 
 project.version = "1.5.0"
 
-
 buildscript {
   repositories {
     mavenLocal()
@@ -30,7 +29,7 @@ configurations.all {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = "2.11"
+  gradleVersion = "4.10"
 }
 
 allprojects {

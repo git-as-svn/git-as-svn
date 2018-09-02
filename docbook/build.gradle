@@ -123,10 +123,13 @@ subprojects {
     dependsOn assembleDocbook
   }
 
-  referencePdf.dependsOn.add("fopConfig")
 
   afterEvaluate {
-    tasks.findAll { it.name.startsWith("reference") }.each{ it.dependsOn.add("translate") }
+    tasks.findAll { it.name.startsWith("reference") }.each{
+      it.dependsOn.add("translate")
+      it.dependsOn.add("fopConfig")
+      it.dependsOn.add("docbookSinglePo")
+    }
   }
 }
 
