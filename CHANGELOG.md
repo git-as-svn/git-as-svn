@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.5.0
 
  * Add tag-based repository filtering for GitLab integration
 
