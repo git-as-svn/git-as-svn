@@ -6,6 +6,9 @@ parallelIndexing: true
 # Use GitLab repositories
 repositoryMapping: !gitlabMapping
   path: /var/opt/gitlab/git-data/repositories/
+  # Uncomment following to only handle repositories with specified tags (add them to repositories via Settings -> General -> Tags in GitLab)
+  # repositoryTags:
+  #   - git-as-svn
   template:
     branch: master
     renameDetection: true

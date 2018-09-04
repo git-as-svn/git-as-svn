@@ -8,6 +8,7 @@
 package svnserver.ext.gitlab;
 
 import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
@@ -34,6 +36,8 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -85,8 +89,8 @@ public final class GitLabIntegrationTest {
 
     Assert.assertNotNull(rootAPI.addGroupMember(group.getId(), gitlabUser.getId(), GitlabAccessLevel.Developer));
 
-    gitlabProject = createGitlabProject(rootAPI, group, "test", GitlabVisibility.INTERNAL);
-    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC);
+    gitlabProject = createGitlabProject(rootAPI, group, "test", GitlabVisibility.INTERNAL, Collections.singleton("git-as-svn"));
+    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC, Collections.emptySet());
   }
 
   @NotNull
@@ -95,8 +99,16 @@ public final class GitLabIntegrationTest {
   }
 
   @NotNull
-  private GitlabProject createGitlabProject(@NotNull GitlabAPI rootAPI, @NotNull GitlabGroup group, @NotNull String name, @NotNull GitlabVisibility visibility) throws IOException {
-    return rootAPI.createProjectForGroup(name, group, null, visibility.toString());
+  private GitlabProject createGitlabProject(@NotNull GitlabAPI rootAPI, @NotNull GitlabGroup group, @NotNull String name, @NotNull GitlabVisibility visibility, @NotNull Set<String> tags) throws IOException {
+    // java-gitlab-api doesn't handle tag_list, so we have to do this manually
+    final Query query = new Query()
+        .append("name", name)
+        .appendIf("namespace_id", group.getId())
+        .appendIf("visibility", visibility.toString())
+        .appendIf("tag_list", String.join(",", tags));
+
+    final String tailUrl = GitlabProject.URL + query.toString();
+    return rootAPI.dispatch().to(tailUrl, GitlabProject.class);
   }
 
   @AfterClass
@@ -144,6 +156,27 @@ public final class GitLabIntegrationTest {
   @NotNull
   private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull GitlabProject gitlabProject, @NotNull String username, @NotNull String password) throws SVNException {
     return SvnTestServer.openSvnRepository(server.getUrl().appendPath(gitlabProject.getPathWithNamespace(), false), username, password);
+  }
+
+  @Test
+  void gitlabTagMappingPositive() throws Exception {
+    testTagMapping(gitlabProject);
+  }
+
+  private void testTagMapping(@NotNull GitlabProject project) throws Exception {
+    try (SvnTestServer server = createServer(rootToken, dir -> new GitLabMappingConfig(dir, GitCreateMode.EMPTY, Collections.singleton("git-as-svn")))) {
+      openSvnRepository(server, project, user, userPassword).getLatestRevision();
+    }
+  }
+
+  @Test
+  void gitlabTagMappingNegative() throws Exception {
+    try {
+      testTagMapping(gitlabPublicProject);
+    } catch (SVNException e) {
+      if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_SVN_REPOS_NOT_FOUND)
+        throw e;
+    }
   }
 
   @Test
