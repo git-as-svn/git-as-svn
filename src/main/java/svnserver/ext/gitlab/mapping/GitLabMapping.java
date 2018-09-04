@@ -70,7 +70,13 @@ final class GitLabMapping implements VcsRepositoryMapping {
     return mapping.values();
   }
 
-  @Nullable GitLabProject addRepository(@NotNull GitlabProject project) throws IOException, SVNException {
+  @Nullable
+  GitLabProject updateRepository(@NotNull GitlabProject project) throws IOException, SVNException {
+    if (!tagsMatch(project)) {
+      removeRepository(project.getId(), project.getPathWithNamespace());
+      return null;
+    }
+
     final String projectName = project.getPathWithNamespace();
     final String projectKey = StringHelper.normalizeDir(projectName);
     final GitLabProject oldProject = mapping.get(projectKey);
@@ -86,6 +92,19 @@ final class GitLabMapping implements VcsRepositoryMapping {
       }
     }
     return null;
+  }
+
+  private boolean tagsMatch(@NotNull GitlabProject project) {
+    if (config.getRepositoryTags().isEmpty()) {
+      return true;
+    }
+
+    for (String tag : project.getTagList()) {
+      if (config.getRepositoryTags().contains(tag)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void removeRepository(int projectId, @NotNull String projectName) {

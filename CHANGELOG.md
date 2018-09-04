@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Add tag-based repository filtering for GitLab integration
+
 ## 1.4.0
 
  * Update JGit to 5.0.1.201806211838-r

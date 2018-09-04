@@ -35,7 +35,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -53,18 +55,30 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
   private String path;
   private int cacheTimeSec = 15;
   private int cacheMaximumSize = 1000;
+  @NotNull
+  private Set<String> repositoryTags;
 
   public GitLabMappingConfig() {
-    this("/var/git/repositories/", GitCreateMode.ERROR);
+    this("/var/git/repositories/", GitCreateMode.ERROR, Collections.emptySet());
+  }
+
+  private GitLabMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode, @NotNull Set<String> repositoryTags) {
+    this.path = path;
+    this.template = new GitRepositoryConfig(createMode);
+    this.repositoryTags = repositoryTags;
   }
 
   public GitLabMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
-    this(path.getAbsolutePath(), createMode);
+    this(path.getAbsolutePath(), createMode, Collections.emptySet());
   }
 
-  private GitLabMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode) {
-    this.path = path;
-    template = new GitRepositoryConfig(createMode);
+  public GitLabMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode, @NotNull Set<String> repositoryTags) {
+    this(path.getAbsolutePath(), createMode, repositoryTags);
+  }
+
+  @NotNull
+  Set<String> getRepositoryTags() {
+    return repositoryTags;
   }
 
   @NotNull
@@ -94,7 +108,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
 
     final GitLabMapping mapping = new GitLabMapping(context, this);
     for (GitlabProject project : api.getProjects()) {
-      mapping.addRepository(project);
+      mapping.updateRepository(project);
     }
     // Web hook for repository list update.
     final WebServer webServer = WebServer.get(context);
@@ -158,12 +172,13 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
       try {
         switch (event.getEventName()) {
           case "project_create":
+          case "project_update":
             if (event.getProjectId() == null || event.getPathWithNamespace() == null) {
               resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Can't parse event data");
               return;
             }
             final GitlabAPI api = mapping.getContext().sure(GitLabContext.class).connect();
-            final GitLabProject project = mapping.addRepository(api.getProject(event.getProjectId()));
+            final GitLabProject project = mapping.updateRepository(api.getProject(event.getProjectId()));
             if (project != null) {
               project.initRevisions();
             }
