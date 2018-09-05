@@ -14,7 +14,7 @@
 	</xsl:template>
 	
 	<!-- Copy all nodes as is -->
-	<xsl:template match="node()">
+	<xsl:template match="node()" priority="-1">
 		<xsl:copy>
 			<xsl:apply-templates select="@*|node()" />
 		</xsl:copy>
