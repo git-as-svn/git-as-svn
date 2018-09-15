@@ -7,13 +7,13 @@
  */
 package svnserver.server.command;
 
+import org.eclipse.jgit.util.Holder;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.LockDesc;
 import svnserver.server.SessionContext;
 
-import javax.xml.ws.Holder;
 import java.io.IOException;
 
 /**
@@ -52,7 +52,7 @@ public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
         .word("success")
         .listBegin()
         .listBegin();
-    LockCmd.writeLock(writer, holder.value);
+    LockCmd.writeLock(writer, holder.get());
     writer
         .listEnd()
         .listEnd()

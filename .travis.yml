@@ -1,18 +1,10 @@
 language: java
-
 sudo: required
-
-services:
-  - docker
+services: docker
 
 env:
   global:
     secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
-  matrix:
-    - GITLAB_VERSION=11.0.3-ce.0 # Gitlab >= 11.0 no longer has API v3 (issue #176)
-    - GITLAB_VERSION=10.2.5-ce.0 # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
-    - GITLAB_VERSION=9.5.10-ce.0 # Last 9.x build, actually nothing special about it
-    - GITLAB_VERSION=9.3.3-ce.0  # We use this in production. Do not forget to update GitLabIntegrationTest.java when changing this
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -37,7 +29,33 @@ addons:
 
 jobs:
   include:
+    # Different JDKs
+    - stage: test
+      env: GITLAB_VERSION=11.0.3-ce.0 # Gitlab >= 11.0 no longer has API v3 (issue #176)
+      jdk: oraclejdk8
+    - stage: test
+      env: GITLAB_VERSION=11.0.3-ce.0
+      jdk: oraclejdk9
+    - stage: test
+      env: GITLAB_VERSION=11.0.3-ce.0
+      jdk: oraclejdk10
+    - stage: test
+      env: GITLAB_VERSION=11.0.3-ce.0
+      jdk: oraclejdk11
+
+    # Different Gitlabs
+    - stage: test
+      env: GITLAB_VERSION=10.2.5-ce.0 # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
+      jdk: oraclejdk8
+    - stage: test
+      env: GITLAB_VERSION=9.5.10-ce.0 # Last 9.x build, actually nothing special about it
+      jdk: oraclejdk8
+    - stage: test
+      env: GITLAB_VERSION=9.3.3-ce.0  # We use this in production. Do not forget to update GitLabIntegrationTest.java when changing this
+      jdk: oraclejdk8
+
     - stage: deploy
+      jdk: oraclejdk8 # Deploy releases using oldest supported jdk
       script: ./gradlew assembleDist
       deploy:
         - provider: releases

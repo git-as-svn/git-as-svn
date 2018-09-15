@@ -106,6 +106,7 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 
     testLogging {
       exceptionFormat = 'full'
+      showStandardStreams = true
     }
 
     // listen to events in the test execution lifecycle

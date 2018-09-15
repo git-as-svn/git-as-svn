@@ -9,20 +9,39 @@ package svnserver;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 
 /**
  * Helpers for datet.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class DateHelper {
+public final class DateHelper {
+  @NotNull
+  private static final DatatypeFactory datatypeFactory;
+
+  static {
+    try {
+      datatypeFactory = DatatypeFactory.newInstance();
+    } catch (DatatypeConfigurationException e) {
+      throw new Error(e);
+    }
+  }
+
   @NotNull
   public static String toISO8601(@NotNull Instant time) {
     return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
         .withZone(ZoneOffset.UTC)
         .format(time);
+  }
+
+  @NotNull
+  public static Calendar parseDateTime(@NotNull String value) throws IllegalArgumentException {
+    return datatypeFactory.newXMLGregorianCalendar(value).toGregorianCalendar();
   }
 }
