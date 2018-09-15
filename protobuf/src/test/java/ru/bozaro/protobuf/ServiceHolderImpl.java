@@ -7,11 +7,13 @@
  */
 package ru.bozaro.protobuf;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.BlockingService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.internal.ServiceInfo;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Simple service holder.
@@ -20,16 +22,14 @@ import ru.bozaro.protobuf.internal.ServiceInfo;
  */
 public class ServiceHolderImpl implements ServiceHolder {
   @NotNull
-  private final ImmutableMap<String, ServiceInfo> services;
+  private final Map<String, ServiceInfo> services = new HashMap<>();
 
   public ServiceHolderImpl(@NotNull BlockingService... services) {
-    final ImmutableMap.Builder<String, ServiceInfo> builder = ImmutableMap.<String, ServiceInfo>builder();
     for (BlockingService service : services) {
       String name = service.getDescriptorForType().getName().toLowerCase();
       ServiceInfo info = new ServiceInfo(new BlockingServiceWrapper(service));
-      builder.put(name, info);
+      this.services.put(name, info);
     }
-    this.services = builder.build();
   }
 
   @Override

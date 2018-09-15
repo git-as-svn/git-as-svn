@@ -25,9 +25,9 @@ configurations.all {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
     classpath "org.ajoberstar:gradle-git:1.7.2"
-    classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.3"
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.6"
     classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
-    classpath "com.github.ben-manes:gradle-versions-plugin:0.17.0"
+    classpath "com.github.ben-manes:gradle-versions-plugin:0.20.0"
   }
 }
 
@@ -85,16 +85,16 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
   }
 
   dependencies {
-    compile "org.jetbrains:annotations:15.0"
+    compile "org.jetbrains:annotations:16.0.2"
     compile "org.atteo.classindex:classindex:3.4"
     compile "org.slf4j:slf4j-api:1.7.25"
 
-    testCompile "org.testng:testng:6.13.1"
+    testCompile "org.testng:testng:6.14.3"
   }
 
   protobuf {
     protoc {
-      artifact = "com.google.protobuf:protoc:3.5.0"
+      artifact = "com.google.protobuf:protoc:3.6.1"
     }
     generatedFilesBaseDir = "$projectDir/src/generated"
   }
@@ -119,31 +119,31 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 dependencies {
   compile project(":protobuf")
 
-  compile "org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r"
+  compile "org.eclipse.jgit:org.eclipse.jgit:5.0.3.201809091024-r"
   compile "org.tmatesoft.svnkit:svnkit:1.9.3"
-  compile "org.yaml:snakeyaml:1.19"
+  compile "org.yaml:snakeyaml:1.23"
   compile "com.beust:jcommander:1.72"
   compile "org.ini4j:ini4j:0.5.4"
-  compile "org.mapdb:mapdb:3.0.5"
-  compile "com.unboundid:unboundid-ldapsdk:4.0.3"
-  compile "org.eclipse.jetty:jetty-server:9.4.8.v20171121"
-  compile "org.eclipse.jetty:jetty-servlet:9.4.8.v20171121"
+  compile "org.mapdb:mapdb:3.0.7"
+  compile "com.unboundid:unboundid-ldapsdk:4.0.8"
+  compile "org.eclipse.jetty:jetty-server:9.4.12.v20180830"
+  compile "org.eclipse.jetty:jetty-servlet:9.4.12.v20180830"
   compile "org.gitlab:java-gitlab-api:4.0.0"
-  compile "org.bitbucket.b_c:jose4j:0.6.2"
+  compile "org.bitbucket.b_c:jose4j:0.6.4"
   compile "com.github.zeripath:java-gitea-api:1.6.0-SNAPSHOT"
-  compile "com.google.guava:guava:23.5-jre"
-  compile "com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4"
+  compile("com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4") {
+    exclude group: "log4j", module: "log4j"
+  }
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.11.1"
-  compile "com.google.oauth-client:google-oauth-client:1.23.0"
-  compile "com.google.http-client:google-http-client-jackson2:1.23.0"
+  compile "com.google.oauth-client:google-oauth-client:1.25.0"
+  compile "com.google.http-client:google-http-client-jackson2:1.25.0"
 
-  runtime "org.apache.logging.log4j:log4j-core:2.10.0"
-  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.10.0"
+  runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.11.1"
 
-  testCompile("org.testcontainers:testcontainers:1.5.1")
+  testCompile("org.testcontainers:testcontainers:1.8.3")
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8

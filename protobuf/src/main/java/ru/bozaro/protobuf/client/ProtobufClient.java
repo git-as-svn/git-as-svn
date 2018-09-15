@@ -16,6 +16,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,10 +73,10 @@ public class ProtobufClient implements BlockingRpcChannel {
       final HttpResponse response = client.execute(httpRequest);
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
         try (final InputStream stream = response.getEntity().getContent()) {
-          final Header encoding = response.getFirstHeader(HttpHeaders.CONTENT_ENCODING);
+          final ContentType contentType = ContentType.get(response.getEntity());
           final Charset charset;
-          if (encoding != null && Charset.isSupported(encoding.getValue())) {
-            charset = Charset.forName(encoding.getValue());
+          if (contentType != null && contentType.getCharset() != null) {
+            charset = contentType.getCharset();
           } else {
             charset = StandardCharsets.UTF_8;
           }
@@ -92,7 +93,7 @@ public class ProtobufClient implements BlockingRpcChannel {
   public HttpUriRequest createRequest(@NotNull Descriptors.MethodDescriptor method, @NotNull Message request) throws IOException, URISyntaxException {
     final HttpPost post = new HttpPost(baseUri.resolve(method.getService().getName().toLowerCase() + "/" + method.getName().toLowerCase() + format.getSuffix()));
     post.setHeader(HttpHeaders.CONTENT_TYPE, format.getMimeType());
-    post.setHeader(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8.name());
+    post.setHeader(HttpHeaders.ACCEPT_CHARSET, StandardCharsets.UTF_8.name());
     final ByteArrayOutputStream stream = new ByteArrayOutputStream();
     format.write(request, stream, StandardCharsets.UTF_8);
     post.setEntity(new ByteArrayEntity(stream.toByteArray()));

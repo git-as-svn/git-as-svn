@@ -1,12 +1,11 @@
 dependencies {
-  compile "com.google.protobuf:protobuf-java:3.5.0"
+  compile "com.google.protobuf:protobuf-java:3.6.1"
   compile "com.googlecode.protobuf-java-format:protobuf-java-format:1.4"
-  compile "javax.servlet:javax.servlet-api:4.0.0"
-  compile "org.apache.httpcomponents:httpclient:4.5.4"
-  compile "com.google.guava:guava:23.5-jre"
+  compile "javax.servlet:javax.servlet-api:4.0.1"
+  compile "org.apache.httpcomponents:httpclient:4.5.6"
 
-  testCompile "org.eclipse.jetty:jetty-server:9.4.8.v20171121"
-  testCompile "org.eclipse.jetty:jetty-servlet:9.4.8.v20171121"
+  testCompile "org.eclipse.jetty:jetty-server:9.4.12.v20180830"
+  testCompile "org.eclipse.jetty:jetty-servlet:9.4.12.v20180830"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
