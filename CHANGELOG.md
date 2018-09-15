@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+ * Now git-as-svn is compatible with Java 9/10/11
+ * Added Gitea (https://gitea.io) integration
+
 ## 1.5.0
 
  * Add tag-based repository filtering for GitLab integration
