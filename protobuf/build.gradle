@@ -8,3 +8,6 @@ dependencies {
   testCompile "org.eclipse.jetty:jetty-server:9.4.8.v20171121"
   testCompile "org.eclipse.jetty:jetty-servlet:9.4.8.v20171121"
 }
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8

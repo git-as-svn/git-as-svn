@@ -1,0 +1,27 @@
+!config:
+realm: Gitea Realm
+compressionEnabled: true
+parallelIndexing: true
+
+# Use Gitea repositories
+repositoryMapping: !giteaMapping
+  path: /data/git/repositories
+  template:
+    branch: master
+    renameDetection: true
+
+# Use Gitea user database
+userDB: !giteaUsers {}
+
+shared:
+  # Gitea LFS server - uses the GitLab layout
+  - !lfs
+    path: /data/git/lfs
+    saveMeta: false
+    compress: false
+    layout: GitLab
+  # Gitea server
+  - !gitea
+    url: http://localhost:3000/api/v1
+    #token: de0c16fdc2c2ec5bcb4917922900015d3bceb82b
+    token: 90c68b84fb04e364c2ea3fc42a6a2193144bc07d
