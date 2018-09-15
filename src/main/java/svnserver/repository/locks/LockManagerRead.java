@@ -8,6 +8,7 @@
 package svnserver.repository.locks;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
 
@@ -20,5 +21,6 @@ public interface LockManagerRead {
   @NotNull
   Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException;
 
+  @Nullable
   LockDesc getLock(@NotNull String path);
 }

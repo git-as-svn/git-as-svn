@@ -8,10 +8,10 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import svnserver.DateHelper;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.util.Calendar;
 
@@ -26,15 +26,6 @@ import java.util.Calendar;
  * @author a.navrotskiy
  */
 public final class GetDatedRevCmd extends BaseCmd<GetDatedRevCmd.Params> {
-  public final static class Params {
-    @NotNull
-    private String date;
-
-    public Params(@NotNull String date) {
-      this.date = date;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -44,7 +35,7 @@ public final class GetDatedRevCmd extends BaseCmd<GetDatedRevCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
     final SvnServerWriter writer = context.getWriter();
-    final Calendar dateTime = DatatypeConverter.parseDateTime(args.date);
+    final Calendar dateTime = DateHelper.parseDateTime(args.date);
     writer
         .listBegin()
         .word("success")
@@ -52,5 +43,14 @@ public final class GetDatedRevCmd extends BaseCmd<GetDatedRevCmd.Params> {
         .number(context.getRepository().getRevisionByDate(dateTime.getTime().getTime()).getId())
         .listEnd()
         .listEnd();
+  }
+
+  public final static class Params {
+    @NotNull
+    private String date;
+
+    public Params(@NotNull String date) {
+      this.date = date;
+    }
   }
 }
