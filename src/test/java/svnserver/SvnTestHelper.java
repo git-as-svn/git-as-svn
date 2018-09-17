@@ -7,7 +7,7 @@
  */
 package svnserver;
 
-import org.apache.commons.lang.SystemUtils;
+import org.ini4j.Reg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -179,7 +179,7 @@ public final class SvnTestHelper {
   public static String findExecutable(@NotNull String name) {
     final String path = System.getenv("PATH");
     if (path != null) {
-      final String suffix = SystemUtils.IS_OS_WINDOWS ? ".exe" : "";
+      final String suffix = Reg.isWindows() ? ".exe" : "";
       for (String dir : path.split(File.pathSeparator)) {
         final File file = new File(dir, name + suffix);
         if (file.exists()) {
