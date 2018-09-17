@@ -55,8 +55,8 @@ public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMap
               GiteaProject project = mapping.addRepository(repository);
               if (project != null) {
                 project.initRevisions();
-                it.remove();
               }
+              it.remove();
             } catch (ApiException e) {
               // Not ready yet - try again later...
             } catch (IOException | SVNException e) {
