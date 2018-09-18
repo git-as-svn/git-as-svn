@@ -6,8 +6,6 @@ env:
   global:
     - secure: WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc=
     - BINTRAY_USER=bozaro
-    # BINTRAY_API_KEY=...
-    - secure: edL8Fb4WreerduO8bQj4RUwSFp9+UmXnolWm6PdsoMWMm8WNRwlU6gXBf39eZJjMMXkoftwkowcHiwar5YJHyZeIjlhLfvq2SmfmN/jVUCLppd+WrvSpUbm6A+7VShT9doIIcATvmHCC6Rk5kgchwWvPQQunYNy/Q9eRsz4STBk=
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -97,7 +95,8 @@ jobs:
         - provider: bintray
           file: bintray-descriptor.json
           user: $BINTRAY_USER
-          key: $BINTRAY_API_KEY
+          key:
+            secure: "yBfslep4aYXDT3dyfzhR3ePNDJkbXLHnkLxwjZoKsqqC0UWQ+J5Il8Pk67S4m8oyelK7U0BUe9O7slM4iTdvMdTzN278o7YNtxtInkx4MRvIokBVPq2Hh8mdVr/zJ/DDdf23blvwq/YePSqr6FD3x1bzoxQJQkXvqKTh4K3sKZc="
           skip_cleanup: true
           on:
             tags: true
