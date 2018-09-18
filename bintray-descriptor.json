@@ -1,0 +1,35 @@
+{
+	"package": {
+		"name": "git-as-svn",
+		"repo": "git-as-svn",
+		"licenses": ["GPL-2.0"],
+		"desc": "Subversion frontend for Git repositories",
+		"github_repo": "__REPO_SLUG__",
+		"website_url": "https://github.com/__REPO_SLUG__",
+		"issue_tracker_url": "https://github.com/__REPO_SLUG__/issues",
+		"vcs_url": "https://github.com/__REPO_SLUG__.git",
+		"github_use_tag_release_notes": true,
+		"github_release_notes_file": "CHANGELOG.md",
+		"subject": "__SUBJECT__"
+	},
+
+	"version": {
+		"name": "__VERSION__",
+		"desc": "git-as-svn __VERSION__ by __SUBJECT__",
+		"gpgSign": true
+	},
+
+	"files": [
+		{
+			"includePattern": "build/distributions/(.[^/]*(\\.deb)$)",
+			"uploadPattern": "$1",
+			"matrixParams": {
+				"deb_distribution": "debian",
+				"deb_component": "main",
+				"deb_architecture": "all"
+			}
+		}
+	],
+
+	"publish": true
+}

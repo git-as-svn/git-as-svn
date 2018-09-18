@@ -137,8 +137,7 @@ There is also integration with Gitea >=v1.6. (Requires Sudo API) Remember to run
 You can install Git as Subversion by commands:
 ```bash
 # Add package source
-echo "deb https://dist.bozaro.ru/ debian/" | sudo tee /etc/apt/sources.list.d/dist.bozaro.ru.list
-curl -s https://dist.bozaro.ru/signature.gpg | sudo apt-key add -
+echo "deb https://dl.bintray.com/bozaro/git-as-svn debian main" | sudo tee /etc/apt/sources.list.d/git-as-svn.list
 # Install package
 sudo apt-get update
 sudo apt-get install git-as-svn

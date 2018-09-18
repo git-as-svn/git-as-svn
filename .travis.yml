@@ -4,7 +4,8 @@ services: docker
 
 env:
   global:
-    secure: "WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc="
+    - secure: WBJI+q1QXLSPhJwHEwgY1dec7dpm7Wdw1vinQa1G6uaoq08yt/+SXRw4ID0QkGzZhcvrNI4/nYzb2b6JS9o5KzE+Yu/8Wp7Gw5LWSRwwj5k1yKt7f2wkvxHkNwUEmwQ2VFIf9WFmtcQsaMomre3hIYuS67i7900ICKm1vNJh4lc=
+    - BINTRAY_USER=bozaro
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -60,6 +61,12 @@ jobs:
     - stage: deploy
       jdk: oraclejdk8 # Deploy releases using oldest supported jdk
       script: ./gradlew assembleDist
+      before_deploy:
+        # Set the packages name and details in the descriptor file
+        - sed -i "s/__SUBJECT__/$BINTRAY_USER/g" bintray-descriptor.json
+        - sed -i "s/__BINTRAY_REPO__/git-as-svn/g" bintray-descriptor.json
+        - sed -i "s/__REPO_SLUG__/${TRAVIS_REPO_SLUG//\//\\/}/g" bintray-descriptor.json
+        - sed -i "s/__VERSION__/$TRAVIS_TAG/g" bintray-descriptor.json
       deploy:
         - provider: releases
           api-key:
@@ -81,6 +88,15 @@ jobs:
             repo: bozaro/git-as-svn
         - provider: script
           script: deploy/deploy.debian.sh
+          skip_cleanup: true
+          on:
+            tags: true
+            repo: bozaro/git-as-svn
+        - provider: bintray
+          file: bintray-descriptor.json
+          user: $BINTRAY_USER
+          key:
+            secure: edL8Fb4WreerduO8bQj4RUwSFp9+UmXnolWm6PdsoMWMm8WNRwlU6gXBf39eZJjMMXkoftwkowcHiwar5YJHyZeIjlhLfvq2SmfmN/jVUCLppd+WrvSpUbm6A+7VShT9doIIcATvmHCC6Rk5kgchwWvPQQunYNy/Q9eRsz4STBk=
           skip_cleanup: true
           on:
             tags: true
