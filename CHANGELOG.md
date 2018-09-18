@@ -1,5 +1,11 @@
 # Changes
 
+## 1.6.1
+
+ * Update dependencies
+ * Fix Gitea integration
+ * Deploy Debian packages to Bintray
+
 ## 1.6.0
 
  * Now git-as-svn is compatible with Java 9/10/11
