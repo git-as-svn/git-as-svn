@@ -18,7 +18,7 @@ before_cache:
   - rm -f  $HOME/.gradle/caches/*/fileHashes/fileHashes.bin
   - rm -f  $HOME/.gradle/caches/*/fileHashes/fileHashes.lock
   - rm -f  $HOME/.gradle/caches/*/javaCompile/javaCompile.lock
-  - rm -f  $HOME/.gradle/caches/journal-*
+  - rm -fr  $HOME/.gradle/caches/journal-*
 
 cache:
   directories:
