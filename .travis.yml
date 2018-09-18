@@ -96,7 +96,7 @@ jobs:
           file: bintray-descriptor.json
           user: $BINTRAY_USER
           key:
-            secure: "edL8Fb4WreerduO8bQj4RUwSFp9+UmXnolWm6PdsoMWMm8WNRwlU6gXBf39eZJjMMXkoftwkowcHiwar5YJHyZeIjlhLfvq2SmfmN/jVUCLppd+WrvSpUbm6A+7VShT9doIIcATvmHCC6Rk5kgchwWvPQQunYNy/Q9eRsz4STBk=
+            secure: "edL8Fb4WreerduO8bQj4RUwSFp9+UmXnolWm6PdsoMWMm8WNRwlU6gXBf39eZJjMMXkoftwkowcHiwar5YJHyZeIjlhLfvq2SmfmN/jVUCLppd+WrvSpUbm6A+7VShT9doIIcATvmHCC6Rk5kgchwWvPQQunYNy/Q9eRsz4STBk="
           skip_cleanup: true
           on:
             tags: true
