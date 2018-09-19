@@ -78,7 +78,8 @@ final class GiteaMapping implements VcsRepositoryMapping {
     final GiteaProject oldProject = mapping.get(projectKey);
     if (oldProject == null || oldProject.getProjectId() != repository.getId()) {
       final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
-      final File repoPath = ConfigHelper.joinPath(basePath, repository.getFullName() + ".git");
+      // the repository name is lowercased as per gitea cmd/serv.go:141
+      final File repoPath = ConfigHelper.joinPath(basePath, repository.getFullName().toLowerCase() + ".git");
       final LocalContext local = new LocalContext(context, repository.getFullName());
       local.add(VcsAccess.class, new GiteaAccess(local, config, repository));
       final VcsRepository vcsRepository = config.getTemplate().create(local, repoPath);
