@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /**
  * Client implementation for wrapping this RPC implementation.
@@ -91,7 +92,9 @@ public class ProtobufClient implements BlockingRpcChannel {
 
   @NotNull
   public HttpUriRequest createRequest(@NotNull Descriptors.MethodDescriptor method, @NotNull Message request) throws IOException, URISyntaxException {
-    final HttpPost post = new HttpPost(baseUri.resolve(method.getService().getName().toLowerCase() + "/" + method.getName().toLowerCase() + format.getSuffix()));
+    final String serviceName = method.getService().getName().toLowerCase(Locale.ENGLISH);
+    final String methodName = method.getName().toLowerCase(Locale.ENGLISH);
+    final HttpPost post = new HttpPost(baseUri.resolve(serviceName + "/" + methodName + format.getSuffix()));
     post.setHeader(HttpHeaders.CONTENT_TYPE, format.getMimeType());
     post.setHeader(HttpHeaders.ACCEPT_CHARSET, StandardCharsets.UTF_8.name());
     final ByteArrayOutputStream stream = new ByteArrayOutputStream();

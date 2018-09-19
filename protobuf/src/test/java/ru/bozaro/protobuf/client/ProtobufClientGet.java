@@ -20,6 +20,7 @@ import ru.bozaro.protobuf.ProtobufFormat;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 
 /**
  * Client implementation for wrapping this RPC implementation (test GET method).
@@ -33,7 +34,9 @@ public class ProtobufClientGet extends ProtobufClient {
 
   @NotNull
   public HttpUriRequest createRequest(@NotNull Descriptors.MethodDescriptor method, @NotNull Message request) throws IOException, URISyntaxException {
-    final URIBuilder builder = new URIBuilder(getBaseUri().resolve(method.getService().getName().toLowerCase() + "/" + method.getName().toLowerCase() + getFormat().getSuffix()));
+    final String serviceName = method.getService().getName().toLowerCase(Locale.ENGLISH);
+    final String methodName = method.getName().toLowerCase(Locale.ENGLISH);
+    final URIBuilder builder = new URIBuilder(getBaseUri().resolve(serviceName + "/" + methodName + getFormat().getSuffix()));
     for (Descriptors.FieldDescriptor field : method.getInputType().getFields()) {
       if (request.hasField(field)) {
         builder.addParameter(field.getName(), request.getField(field).toString());

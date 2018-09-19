@@ -44,6 +44,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 
 /**
  * LDAP authentication.
@@ -84,7 +85,7 @@ public final class LdapUserDB implements UserDB {
     final URI ldapUri = URI.create(config.getConnectionUrl());
     final SocketFactory factory;
     final int defaultPort;
-    switch (ldapUri.getScheme().toLowerCase()) {
+    switch (ldapUri.getScheme().toLowerCase(Locale.ENGLISH)) {
       case "ldap":
         factory = null;
         defaultPort = 389;

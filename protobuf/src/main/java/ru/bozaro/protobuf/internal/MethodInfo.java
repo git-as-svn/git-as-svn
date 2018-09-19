@@ -23,6 +23,7 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -153,14 +154,14 @@ public class MethodInfo {
         final String expected;
         final StringBuilder builder = new StringBuilder();
         for (Descriptors.EnumValueDescriptor value : field.getEnumType().getValues()) {
-          values.put(value.getName().toLowerCase(), value);
+          values.put(value.getName().toLowerCase(Locale.ENGLISH), value);
           values.put(Integer.toString(value.getNumber()), value);
           if (builder.length() > 0) builder.append(", ");
           builder.append(value.getName());
         }
         expected = builder.toString();
         return value -> {
-          final Descriptors.EnumValueDescriptor descriptor = values.get(value.toLowerCase());
+          final Descriptors.EnumValueDescriptor descriptor = values.get(value.toLowerCase(Locale.ENGLISH));
           if (descriptor == null) {
             throw new ParseException("Can't parse enum value: [" + value + "] for field [" + field.getFullName() + "] expected one of [" + expected + ']', 0);
           }
@@ -174,7 +175,7 @@ public class MethodInfo {
 
   @NotNull
   private static Boolean parseBoolean(@NotNull String value) throws ParseException {
-    switch (value.toLowerCase()) {
+    switch (value.toLowerCase(Locale.ENGLISH)) {
       case "true":
       case "yes":
       case "on":

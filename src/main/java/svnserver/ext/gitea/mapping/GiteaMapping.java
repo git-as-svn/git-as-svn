@@ -10,6 +10,7 @@ package svnserver.ext.gitea.mapping;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -79,7 +80,7 @@ final class GiteaMapping implements VcsRepositoryMapping {
     if (oldProject == null || oldProject.getProjectId() != repository.getId()) {
       final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
       // the repository name is lowercased as per gitea cmd/serv.go:141
-      final File repoPath = ConfigHelper.joinPath(basePath, repository.getFullName().toLowerCase() + ".git");
+      final File repoPath = ConfigHelper.joinPath(basePath, repository.getFullName().toLowerCase(Locale.ENGLISH) + ".git");
       final LocalContext local = new LocalContext(context, repository.getFullName());
       local.add(VcsAccess.class, new GiteaAccess(local, config, repository));
       final VcsRepository vcsRepository = config.getTemplate().create(local, repoPath);
@@ -89,16 +90,6 @@ final class GiteaMapping implements VcsRepositoryMapping {
       }
     }
     return null;
-  }
-
-  void removeRepository(long projectId, @NotNull String projectName) {
-    final String projectKey = StringHelper.normalizeDir(projectName);
-    final GiteaProject project = mapping.get(projectKey);
-    if (project != null && project.getProjectId() == projectId) {
-      if (mapping.remove(projectKey, project)) {
-        project.close();
-      }
-    }
   }
 
   void removeRepository(@NotNull String projectName) {

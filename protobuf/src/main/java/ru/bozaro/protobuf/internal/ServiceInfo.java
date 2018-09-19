@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.ProtobufFormat;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -28,13 +29,13 @@ public class ServiceInfo {
   private final String name;
 
   public ServiceInfo(@NotNull Service service) {
-    this.name = service.getDescriptorForType().getName().toLowerCase();
+    this.name = service.getDescriptorForType().getName().toLowerCase(Locale.ENGLISH);
 
     final Map<String, MethodInfo> methods = new HashMap<>();
     for (Descriptors.MethodDescriptor method : service.getDescriptorForType().getMethods()) {
       for (ProtobufFormat format : ProtobufFormat.getFormats()) {
         final MethodInfo methodInfo = new MethodInfo(service, method, format);
-        methods.put(method.getName().toLowerCase() + format.getSuffix(), methodInfo);
+        methods.put(method.getName().toLowerCase(Locale.ENGLISH) + format.getSuffix(), methodInfo);
       }
     }
     this.methods = methods;

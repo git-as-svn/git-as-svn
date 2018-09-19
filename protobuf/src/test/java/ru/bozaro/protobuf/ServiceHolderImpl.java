@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import ru.bozaro.protobuf.internal.ServiceInfo;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -26,7 +27,7 @@ public class ServiceHolderImpl implements ServiceHolder {
 
   public ServiceHolderImpl(@NotNull BlockingService... services) {
     for (BlockingService service : services) {
-      String name = service.getDescriptorForType().getName().toLowerCase();
+      final String name = service.getDescriptorForType().getName().toLowerCase(Locale.ENGLISH);
       ServiceInfo info = new ServiceInfo(new BlockingServiceWrapper(service));
       this.services.put(name, info);
     }
