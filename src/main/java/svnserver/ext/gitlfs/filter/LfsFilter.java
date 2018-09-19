@@ -18,18 +18,17 @@ import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
-import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.server.LfsServerEntry;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.git.GitObject;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.filter.GitFilterHelper;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,19 +39,19 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsFilter implements GitFilter {
+public final class LfsFilter implements GitFilter {
   @NotNull
   private static final String NAME = "lfs";
-  @NotNull
+  @Nullable
   private final LfsStorage storage;
   @NotNull
   private final Map<String, String> cacheMd5;
 
   public LfsFilter(@NotNull LocalContext context) throws IOException, SVNException {
-    this.storage = LfsConfig.getStorage(context);
+    this.storage = LfsStorageFactory.tryCreateStorage(context);
     this.cacheMd5 = GitFilterHelper.getCacheMd5(this, context.getShared().getCacheDB());
     final LfsServer lfsServer = context.getShared().get(LfsServer.class);
-    if (lfsServer != null) {
+    if (storage != null && lfsServer != null) {
       context.add(LfsServerEntry.class, new LfsServerEntry(lfsServer, context, storage));
     }
   }
@@ -61,15 +60,6 @@ public class LfsFilter implements GitFilter {
   @Override
   public String getName() {
     return NAME;
-  }
-
-  @NotNull
-  private LfsReader getReader(@NotNull Map<String, String> pointer) throws IOException {
-    final LfsReader reader = storage.getReader(pointer.get(Constants.OID));
-    if (reader == null) {
-      throw new SvnForbiddenException();
-    }
-    return reader;
   }
 
   @NotNull
@@ -89,6 +79,23 @@ public class LfsFilter implements GitFilter {
       }
     }
     return GitFilterHelper.getMd5(this, cacheMd5, null, objectId);
+  }
+
+  @NotNull
+  private LfsReader getReader(@NotNull Map<String, String> pointer) throws IOException {
+    final LfsReader reader = getStorage().getReader(pointer.get(Constants.OID));
+    if (reader == null) {
+      throw new SvnForbiddenException();
+    }
+    return reader;
+  }
+
+  @NotNull
+  private LfsStorage getStorage() {
+    if (storage == null)
+      throw new IllegalStateException("LFS is not configured");
+
+    return storage;
   }
 
   @Override
@@ -125,7 +132,7 @@ public class LfsFilter implements GitFilter {
   @NotNull
   @Override
   public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException {
-    return new TemporaryOutputStream(storage.getWriter(user), stream);
+    return new TemporaryOutputStream(getStorage().getWriter(user), stream);
   }
 
   private static class TemporaryInputStream extends InputStream {

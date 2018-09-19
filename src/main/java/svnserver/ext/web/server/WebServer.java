@@ -11,9 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.http.HttpHeaders;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.RequestLog;
-import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
@@ -56,17 +53,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class WebServer implements Shared {
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(WebServer.class);
-
+public final class WebServer implements Shared {
   @NotNull
   public static final String DEFAULT_REALM = "Git as Subversion server";
   @NotNull
-  public static final String AUTH_BASIC = "Basic ";
+  private static final String AUTH_BASIC = "Basic ";
   @NotNull
   public static final String AUTH_TOKEN = "Bearer ";
-
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(WebServer.class);
   @NotNull
   private final SharedContext context;
   @Nullable
@@ -90,18 +85,11 @@ public class WebServer implements Shared {
       contextHandler.setContextPath("/");
       handler = contextHandler.getServletHandler();
 
-      //final ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
-      //securityHandler.addConstraintMapping(new );
-      //contextHandler.setSecurityHandler(securityHandler);
-
       final RequestLogHandler logHandler = new RequestLogHandler();
-      logHandler.setRequestLog(new RequestLog() {
-        @Override
-        public void log(Request request, Response response) {
-          final User user = (User) request.getAttribute(User.class.getName());
-          final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
-          log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
-        }
+      logHandler.setRequestLog((request, response) -> {
+        final User user = (User) request.getAttribute(User.class.getName());
+        final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
+        log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
       });
 
       final HandlerCollection handlers = new HandlerCollection();
@@ -114,13 +102,22 @@ public class WebServer implements Shared {
   }
 
   @NotNull
-  public String getRealm() {
-    return config.getRealm();
+  public static WebServer get(@NotNull SharedContext context) {
+    return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
   @NotNull
-  public JsonWebEncryption createEncryption() {
-    return tokenFactory.create();
+  public static ObjectMapper createJsonMapper() {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    return mapper;
+  }
+
+  @NotNull
+  public String getRealm() {
+    return config.getRealm();
   }
 
   @Override
@@ -134,6 +131,14 @@ public class WebServer implements Shared {
     }
   }
 
+  @Override
+  public void close() throws Exception {
+    if (server != null) {
+      server.stop();
+      server.join();
+    }
+  }
+
   @NotNull
   public Holder addServlet(@NotNull String pathSpec, @NotNull Servlet servlet) {
     log.info("Registered servlet for path: {}", pathSpec);
@@ -141,6 +146,20 @@ public class WebServer implements Shared {
     servlets.add(servletInfo);
     updateServlets();
     return servletInfo;
+  }
+
+  private void updateServlets() {
+    if (handler != null) {
+      final Holder[] snapshot = servlets.toArray(new Holder[0]);
+      final ServletHolder[] holders = new ServletHolder[snapshot.length];
+      final ServletMapping[] mappings = new ServletMapping[snapshot.length];
+      for (int i = 0; i < snapshot.length; ++i) {
+        holders[i] = snapshot[i].holder;
+        mappings[i] = snapshot[i].mapping;
+      }
+      handler.setServlets(holders);
+      handler.setServletMappings(mappings);
+    }
   }
 
   @NotNull
@@ -174,33 +193,6 @@ public class WebServer implements Shared {
     if (modified) {
       updateServlets();
     }
-  }
-
-  private void updateServlets() {
-    if (handler != null) {
-      final Holder[] snapshot = servlets.toArray(new Holder[servlets.size()]);
-      final ServletHolder[] holders = new ServletHolder[snapshot.length];
-      final ServletMapping[] mappings = new ServletMapping[snapshot.length];
-      for (int i = 0; i < snapshot.length; ++i) {
-        holders[i] = snapshot[i].holder;
-        mappings[i] = snapshot[i].mapping;
-      }
-      handler.setServlets(holders);
-      handler.setServletMappings(mappings);
-    }
-  }
-
-  @Override
-  public void close() throws Exception {
-    if (server != null) {
-      server.stop();
-      server.join();
-    }
-  }
-
-  @NotNull
-  public static WebServer get(@NotNull SharedContext context) throws IOException {
-    return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
   }
 
   /**
@@ -242,6 +234,11 @@ public class WebServer implements Shared {
   }
 
   @NotNull
+  public JsonWebEncryption createEncryption() {
+    return tokenFactory.create();
+  }
+
+  @NotNull
   public URI getUrl(@NotNull HttpServletRequest req) {
     if (config.getBaseUrl() != null) {
       return URI.create(config.getBaseUrl()).resolve(req.getRequestURI());
@@ -261,19 +258,30 @@ public class WebServer implements Shared {
     return baseUri;
   }
 
-  @NotNull
-  public static ObjectMapper createJsonMapper() {
-    final ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    return mapper;
-  }
-
   public void sendError(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull ServerError error) throws IOException {
     resp.setContentType("text/html");
     resp.setStatus(error.getStatusCode());
     resp.getWriter().write(new ErrorWriter(req).content(error));
+  }
+
+  private static class ErrorWriter extends ErrorHandler {
+
+    private final HttpServletRequest req;
+
+    private ErrorWriter(HttpServletRequest req) {
+      this.req = req;
+    }
+
+    @NotNull
+    public String content(@NotNull ServerError error) {
+      try {
+        final StringWriter writer = new StringWriter();
+        writeErrorPage(req, writer, error.getStatusCode(), error.getMessage(), false);
+        return writer.toString();
+      } catch (IOException e) {
+        return e.getMessage();
+      }
+    }
   }
 
   public final class Holder {
@@ -290,30 +298,6 @@ public class WebServer implements Shared {
       mapping = new ServletMapping();
       mapping.setServletName(holder.getName());
       mapping.setPathSpec(pathSpec);
-    }
-
-    public void removeServlet() {
-      WebServer.this.removeServlet(this);
-    }
-  }
-
-  private static class ErrorWriter extends ErrorHandler {
-
-    private final HttpServletRequest req;
-
-    public ErrorWriter(HttpServletRequest req) {
-      this.req = req;
-    }
-
-    @NotNull
-    public String content(@NotNull ServerError error) {
-      try {
-        final StringWriter writer = new StringWriter();
-        writeErrorPage(req, writer, error.getStatusCode(), error.getMessage(), false);
-        return writer.toString();
-      } catch (IOException e) {
-        return e.getMessage();
-      }
     }
   }
 }

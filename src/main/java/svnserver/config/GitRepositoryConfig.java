@@ -45,8 +45,6 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   private GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
   @NotNull
   private GitCreateMode createMode;
-  @NotNull
-  private List<LocalConfig> extensions = new ArrayList<>();
 
   private boolean renameDetection = true;
 
@@ -77,10 +75,7 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   @NotNull
   public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
     context.add(GitLocation.class, new GitLocation(fullPath));
-    GitRepository repository = new GitRepository(context, createRepository(context, fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
-    for (LocalConfig extension : extensions) {
-      extension.create(context);
-    }
-    return repository;
+
+    return new GitRepository(context, createRepository(context, fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
   }
 }

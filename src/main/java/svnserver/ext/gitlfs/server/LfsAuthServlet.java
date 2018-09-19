@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs.server;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.common.JsonHelper;
@@ -16,7 +17,6 @@ import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.LfsAuthHelper;
 import svnserver.ext.web.server.WebServer;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,43 +28,42 @@ import java.net.URI;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsAuthServlet extends HttpServlet {
+final class LfsAuthServlet extends HttpServlet {
   @NotNull
   private final LocalContext context;
   @NotNull
   private final String baseLfsUrl;
-  @Nullable
-  private final String privateToken;
+  @NotNull
+  private final String secretToken;
   private final int tokenExpireSec;
   private final float tokenExpireTime;
 
-  public LfsAuthServlet(@NotNull LocalContext context, @NotNull String baseLfsUrl, @Nullable String privateToken, int tokenExpireSec, float tokenExpireTime) {
+  LfsAuthServlet(@NotNull LocalContext context, @NotNull String baseLfsUrl, @NotNull String secretToken, int tokenExpireSec, float tokenExpireTime) {
     this.context = context;
     this.baseLfsUrl = baseLfsUrl;
-    this.privateToken = privateToken;
+    this.secretToken = secretToken;
     this.tokenExpireSec = tokenExpireSec;
     this.tokenExpireTime = tokenExpireTime;
   }
 
   @Override
-  protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+  protected void doGet(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
     createToken(req, resp);
   }
 
   @Override
-  protected void doPost(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws ServletException, IOException {
+  protected void doPost(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
     createToken(req, resp);
   }
 
-  protected void createToken(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
+  private void createToken(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp) throws IOException {
     try {
       final Link token = createToken(
           req,
           getUriParam(req, "url"),
-          getStringParam(req, "token"),
-          getStringParam(req, "username"),
-          getStringParam(req, "external"),
-          getBoolParam(req, "anonymous", false)
+          getStringParam(req, "secretToken"),
+          getStringParam(req, "userId"),
+          getStringParam(req, "mode")
       );
       resp.setContentType("application/json");
       JsonHelper.createMapper().writeValue(resp.getOutputStream(), token);
@@ -73,35 +72,28 @@ public class LfsAuthServlet extends HttpServlet {
     }
   }
 
-  public Link createToken(
+  private Link createToken(
       @NotNull HttpServletRequest req,
       @Nullable URI uri,
-      @Nullable String token,
-      @Nullable String username,
-      @Nullable String external,
-      boolean anonymous
-  ) throws ServerError, IOException {
-    if (privateToken == null) {
-      throw new ServerError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Secret token is not defined in server configuration");
-    }
-    // Check privateToken authorization.
-    if (token == null) {
-      throw new ServerError(HttpServletResponse.SC_FORBIDDEN, "Parameter \"token\" is not defined");
-    }
-    if (!privateToken.equals(token)) {
-      throw new ServerError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
-    }
-    return LfsAuthHelper.createToken(context.getShared(), uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl), username, external, anonymous, tokenExpireSec, tokenExpireTime);
-  }
+      @Nullable String secretToken,
+      @Nullable String userId,
+      @Nullable String mode
+      ) throws ServerError {
+    // Check secretToken
+    if (StringUtils.isEmptyOrNull(secretToken))
+      throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter \"secretToken\" not specified");
 
-  @NotNull
-  public WebServer getWebServer() {
-    return context.getShared().sure(WebServer.class);
-  }
+    if (!this.secretToken.equals(secretToken))
+      throw new ServerError(HttpServletResponse.SC_FORBIDDEN, "Invalid secretToken");
 
-  @Nullable
-  public static String getStringParam(@NotNull HttpServletRequest req, @NotNull String name) {
-    return req.getParameter(name);
+    final LfsAuthHelper.AuthMode authMode = LfsAuthHelper.AuthMode.find(mode);
+    if (authMode == null)
+      throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode");
+
+    if (userId == null)
+      throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter \"mode\" not specified");
+
+    return LfsAuthHelper.createToken(context.getShared(), uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl), userId, authMode, tokenExpireSec, tokenExpireTime);
   }
 
   @Nullable
@@ -111,9 +103,19 @@ public class LfsAuthServlet extends HttpServlet {
     return URI.create(value);
   }
 
-  public static boolean getBoolParam(@NotNull HttpServletRequest req, @NotNull String name, boolean defaultValue) {
+  @Nullable
+  private static String getStringParam(@NotNull HttpServletRequest req, @NotNull String name) {
+    return req.getParameter(name);
+  }
+
+  private static boolean getBoolParam(@NotNull HttpServletRequest req, @NotNull String name, boolean defaultValue) {
     final String value = getStringParam(req, name);
     if (value == null) return defaultValue;
     return !(value.equals("0") || value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no"));
+  }
+
+  @NotNull
+  private WebServer getWebServer() {
+    return context.getShared().sure(WebServer.class);
   }
 }

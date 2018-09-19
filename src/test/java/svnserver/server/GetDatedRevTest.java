@@ -25,7 +25,7 @@ public final class GetDatedRevTest {
 
   @Test
   public void simple() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createMasterRepository()) {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
       Assert.assertEquals(server.openSvnRepository().getDatedRevision(new Date(0)), 0);
     }
   }
