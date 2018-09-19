@@ -12,9 +12,11 @@ import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Ignore;
@@ -63,6 +65,12 @@ public final class GitLabIntegrationTest {
 
   @BeforeClass
   void before() throws Exception {
+    try {
+      Assert.assertNotNull(DockerClientFactory.instance().client());
+    } catch (IllegalStateException e) {
+      throw new SkipException("Docker is not available", e);
+    }
+
     String gitlabVersion = System.getenv("GITLAB_VERSION");
     if (gitlabVersion == null)
       gitlabVersion = "9.3.3-ce.0";
