@@ -65,16 +65,23 @@ final class GiteaAccess implements VcsAccess {
           @Override
           public Repository load(@NotNull String userName) throws Exception {
             if (userName.isEmpty()) {
-              final ApiClient apiClient = context.connect();
-              final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
-              final Repository repository = repositoryApi.repoGetByID((int) projectId);
-              if (!repository.isPrivate()) {
-                // Munge the permissions
-                repository.getPermissions().setAdmin(false);
-                repository.getPermissions().setPush(false);
-                return repository;
+              try {
+                final ApiClient apiClient = context.connect();
+                final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
+                final Repository repository = repositoryApi.repoGetByID((int) projectId);
+                if (!repository.isPrivate()) {
+                  // Munge the permissions
+                  repository.getPermissions().setAdmin(false);
+                  repository.getPermissions().setPush(false);
+                  return repository;
+                }
+              } catch (ApiException e) {
+                if (e.getCode() == 404) {
+                  throw new FileNotFoundException();
+                } else {
+                  throw e;
+                }
               }
-              throw new FileNotFoundException();
             }
             // Sudo as the user
             try {
