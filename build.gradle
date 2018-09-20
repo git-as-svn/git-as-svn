@@ -25,7 +25,6 @@ configurations.all {
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
     classpath "org.ajoberstar:gradle-git:1.7.2"
-    classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.6"
     classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
     classpath "com.github.ben-manes:gradle-versions-plugin:0.20.0"
   }
@@ -65,7 +64,6 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
   apply plugin: "idea"
   apply plugin: "java"
   apply plugin: "com.github.ben-manes.versions"
-  apply plugin: "com.google.protobuf"
 
   idea {
     module {
@@ -76,11 +74,6 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
       // Workaround for https://youtrack.jetbrains.com/issue/IDEA-175172
       outputDir file('build/classes/main')
       testOutputDir file('build/classes/test')
-
-      sourceDirs += file("src/generated/main/java")
-      testSourceDirs += file("src/generated/test/java")
-      generatedSourceDirs += file("src/generated/main/java")
-      generatedSourceDirs += file("src/generated/test/java")
     }
   }
 
@@ -90,13 +83,6 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
     compile "org.slf4j:slf4j-api:1.7.25"
 
     testCompile "org.testng:testng:6.14.3"
-  }
-
-  protobuf {
-    protoc {
-      artifact = "com.google.protobuf:protoc:3.6.1"
-    }
-    generatedFilesBaseDir = "$projectDir/src/generated"
   }
 
   test {
@@ -117,8 +103,6 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 }
 
 dependencies {
-  compile project(":protobuf")
-
   compile "org.eclipse.jgit:org.eclipse.jgit:5.0.3.201809091024-r"
   compile "org.tmatesoft.svnkit:svnkit:1.9.3"
   compile "org.yaml:snakeyaml:1.23"
@@ -131,9 +115,6 @@ dependencies {
   compile "org.gitlab:java-gitlab-api:4.0.0"
   compile "org.bitbucket.b_c:jose4j:0.6.4"
   compile "com.github.zeripath:java-gitea-api:1.6.0-SNAPSHOT"
-  compile("com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4") {
-    exclude group: "log4j", module: "log4j"
-  }
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
@@ -161,7 +142,6 @@ idea {
 run {
   args "-c"
   args "${projectDir}/cfg/config-local.example"
-  args "--unsafe"
 }
 
 tasks.withType(JavaCompile) {

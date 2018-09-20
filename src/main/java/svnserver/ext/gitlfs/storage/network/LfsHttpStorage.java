@@ -88,14 +88,15 @@ public class LfsHttpStorage implements LfsStorage {
   private Link getTokenUncached(@NotNull User user) throws IOException {
     final HttpPost post = new HttpPost(authUrl.toString());
     final List<NameValuePair> params = new ArrayList<>();
-    addParameter(params, "token", authToken);
-    if (!user.isAnonymous()) {
-      addParameter(params, "username", user.getUserName());
-      addParameter(params, "realname", user.getRealName());
-      addParameter(params, "external", user.getExternalId());
-      addParameter(params, "email", user.getEmail());
+    addParameter(params, "secretToken", authToken);
+    if (user.getExternalId() != null) {
+      addParameter(params, "userId", user.getExternalId());
+      addParameter(params, "mode", "external");
+    } else if (user.isAnonymous()) {
+      addParameter(params, "mode", "anonymous");
     } else {
-      addParameter(params, "anonymous", "true");
+      addParameter(params, "userId", user.getUserName());
+      addParameter(params, "mode", "username");
     }
     post.setEntity(new UrlEncodedFormEntity(params));
     try {

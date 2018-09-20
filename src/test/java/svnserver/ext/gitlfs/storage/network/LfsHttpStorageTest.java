@@ -21,7 +21,6 @@ import svnserver.VcsAccessNoAnonymous;
 import svnserver.auth.LocalUserDB;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
-import svnserver.auth.UserWithPassword;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.config.LfsLayout;
@@ -64,12 +63,12 @@ public class LfsHttpStorageTest {
     final Server jetty = http.getServer();
     // Create users
     final LocalUserDB users = new LocalUserDB();
-    final User user = User.create("test", "Test User", "test@example.com", null);
-    users.add(new UserWithPassword(user, "test"));
+    final User user = users.add("test", "test", "Test User", "test@example.com");
+    Assert.assertNotNull(user);
     // Create shared context
     SharedContext sharedContext = new SharedContext(new File("/tmp"), DBMaker.memoryDB().make());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
-    sharedContext.add(LfsServer.class, new LfsServer("{0}.git", "t0ken", 0, 0));
+    sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
     sharedContext.add(UserDB.class, users);
     sharedContext.ready();
     // Create local context

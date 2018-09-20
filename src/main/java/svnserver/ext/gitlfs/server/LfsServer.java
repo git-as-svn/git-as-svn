@@ -9,24 +9,17 @@ package svnserver.ext.gitlfs.server;
 
 import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ContentServlet;
 import ru.bozaro.gitlfs.server.PointerServlet;
-import svnserver.api.lfs.Lfs;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
-import svnserver.ext.api.ServiceRegistry;
-import svnserver.ext.gitlfs.api.LfsRpc;
 import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
 import javax.servlet.Servlet;
-import java.io.IOException;
-import java.net.URI;
 import java.text.MessageFormat;
 import java.util.Collection;
 
@@ -35,48 +28,44 @@ import java.util.Collection;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsServer implements Shared {
+public final class LfsServer implements Shared {
   @NotNull
-  public static final String SERVLET_BASE = "info/lfs";
+  private static final String SERVLET_BASE = "info/lfs";
   @NotNull
-  public static final String SERVLET_AUTH = "auth/lfs";
+  public static final String SERVLET_AUTH = "lfs_authenticate";
   @NotNull
-  public static final String SERVLET_CONTENT = SERVLET_BASE + "/storage";
+  private static final String SERVLET_CONTENT = SERVLET_BASE + "/storage";
   @NotNull
-  public static final String SERVLET_POINTER = SERVLET_BASE + "/objects";
+  private static final String SERVLET_POINTER = SERVLET_BASE + "/objects";
   @NotNull
-  private final String pathFormat;
-  @Nullable
-  private final String privateToken;
+  private final String secretToken;
   private int tokenExpireSec;
   private float tokenEnsureTime;
 
-  public LfsServer(@NotNull String pathFormat, @Nullable String privateToken, int tokenExpireSec, float tokenEnsureTime) {
-    this.pathFormat = pathFormat;
-    this.privateToken = privateToken;
+  public LfsServer(@NotNull String secretToken, int tokenExpireSec, float tokenEnsureTime) {
+    this.secretToken = secretToken;
     this.tokenExpireSec = tokenExpireSec > 0 ? tokenExpireSec : LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC;
     this.tokenEnsureTime = Math.max(0.0f, Math.min(tokenEnsureTime, 1.0f));
   }
 
-  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) throws IOException, SVNException {
+  public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) {
     final WebServer webServer = WebServer.get(localContext.getShared());
     final String name = localContext.getName();
 
-    final String pathSpec = ("/" + MessageFormat.format(pathFormat, name) + "/").replaceAll("/+", "/");
+    final String pathSpec =  String.format("/%s.git/", name).replaceAll("/+", "/");
     final ContentManager pointerManager = new LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureTime);
     final ContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0.0f);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
-            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, privateToken, tokenExpireSec, tokenEnsureTime))
+            .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, secretToken, tokenExpireSec, tokenEnsureTime))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT))
             .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(contentManager))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
-    ServiceRegistry.get(localContext).addService(Lfs.newReflectiveBlockingService(new LfsRpc(URI.create(pathSpec + SERVLET_BASE), localContext, tokenExpireSec, tokenEnsureTime)));
   }
 
-  public void unregister(@NotNull LocalContext localContext) throws IOException, SVNException {
+  void unregister(@NotNull LocalContext localContext) {
     LfsServerHolder holder = localContext.remove(LfsServerHolder.class);
     if (holder != null) {
       holder.close();
@@ -89,7 +78,7 @@ public class LfsServer implements Shared {
     @NotNull
     private final Collection<WebServer.Holder> servlets;
 
-    public LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.Holder> servlets) {
+    LfsServerHolder(@NotNull WebServer webServer, @NotNull Collection<WebServer.Holder> servlets) {
       this.webServer = webServer;
       this.servlets = servlets;
     }

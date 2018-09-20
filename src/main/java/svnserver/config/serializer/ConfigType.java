@@ -28,9 +28,4 @@ public @interface ConfigType {
    * Type name in config file.
    */
   String value();
-
-  /**
-   * Mark for dangerous test-only options.
-   */
-  boolean unsafe() default false;
 }

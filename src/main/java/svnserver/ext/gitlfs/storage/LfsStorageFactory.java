@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
 
@@ -17,6 +18,13 @@ import svnserver.context.Shared;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface LfsStorageFactory extends Shared {
+
+  @Nullable
+  static LfsStorage tryCreateStorage(@NotNull LocalContext context) {
+    final LfsStorageFactory storageFactory = context.getShared().get(LfsStorageFactory.class);
+    return storageFactory == null ? null : storageFactory.createStorage(context);
+  }
+
   @NotNull
   LfsStorage createStorage(@NotNull LocalContext context);
 }

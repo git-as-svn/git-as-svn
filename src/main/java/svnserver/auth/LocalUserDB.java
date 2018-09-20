@@ -30,8 +30,15 @@ public final class LocalUserDB implements UserDB {
   public LocalUserDB() {
   }
 
-  public void add(@NotNull UserWithPassword userWithPassword) {
+  @Nullable
+  public User add(@NotNull String userName, @NotNull String password, @NotNull String realName, String email) {
+    if (users.containsKey(userName)) {
+      return null;
+    }
+
+    final UserWithPassword userWithPassword = new UserWithPassword(User.create(userName, realName, email, userName), password);
     users.put(userWithPassword.getUser().getUserName(), userWithPassword);
+    return userWithPassword.getUser();
   }
 
   @NotNull
@@ -62,6 +69,6 @@ public final class LocalUserDB implements UserDB {
   @Nullable
   @Override
   public User lookupByExternal(@NotNull String external) {
-    return null;
+    return lookupByUserName(external);
   }
 }

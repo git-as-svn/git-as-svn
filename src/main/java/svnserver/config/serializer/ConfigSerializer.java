@@ -30,18 +30,18 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class ConfigSerializer {
+public final class ConfigSerializer {
   @NotNull
   private static final String TAG_PREFIX = "!";
   @NotNull
   private final Yaml yaml;
 
-  public ConfigSerializer(boolean unsafeConfig) {
+  public ConfigSerializer() {
     final DumperOptions options = new DumperOptions();
     options.setPrettyFlow(true);
     options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
-    yaml = new Yaml(new ConfigConstructor(unsafeConfig), new ConfigRepresenter(unsafeConfig), options);
+    yaml = new Yaml(new ConfigConstructor(), new ConfigRepresenter(), options);
     yaml.setBeanAccess(BeanAccess.FIELD);
   }
 
@@ -62,31 +62,30 @@ public class ConfigSerializer {
     }
   }
 
-  private static Map<String, Class<?>> configTypes(boolean unsafeConfig) {
+  @NotNull
+  private static Map<String, Class<?>> configTypes() {
     final Map<String, Class<?>> result = new TreeMap<>();
     for (Class<?> type : ClassIndex.getAnnotated(ConfigType.class)) {
       ConfigType annotation = type.getAnnotation(ConfigType.class);
-      if (unsafeConfig || !annotation.unsafe()) {
-        final String name = annotation.value();
-        if (result.put(TAG_PREFIX + name, type) != null) {
-          throw new IllegalStateException("Found duplicate type name: " + name);
-        }
+      final String name = annotation.value();
+      if (result.put(TAG_PREFIX + name, type) != null) {
+        throw new IllegalStateException("Found duplicate type name: " + name);
       }
     }
     return result;
   }
 
   private static class ConfigConstructor extends Constructor {
-    private ConfigConstructor(boolean unsafeConfig) {
-      for (Map.Entry<String, Class<?>> entry : configTypes(unsafeConfig).entrySet()) {
+    private ConfigConstructor() {
+      for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
         addTypeDescription(new TypeDescription(entry.getValue(), entry.getKey()));
       }
     }
   }
 
   private static class ConfigRepresenter extends Representer {
-    private ConfigRepresenter(boolean unsafeConfig) {
-      for (Map.Entry<String, Class<?>> entry : configTypes(unsafeConfig).entrySet()) {
+    private ConfigRepresenter() {
+      for (Map.Entry<String, Class<?>> entry : configTypes().entrySet()) {
         addClassTag(entry.getValue(), new Tag(entry.getKey()));
       }
     }

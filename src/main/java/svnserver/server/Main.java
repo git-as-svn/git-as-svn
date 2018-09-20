@@ -40,7 +40,7 @@ public class Main {
         return;
       }
       // Load config
-      ConfigSerializer serializer = new ConfigSerializer(cmd.unsafeConfig);
+      ConfigSerializer serializer = new ConfigSerializer();
       Config config = serializer.load(cmd.configuration);
       if (cmd.showConfig) {
         log.info("Actual config:\n{}", serializer.dump(config));
@@ -69,11 +69,7 @@ public class Main {
     @Parameter(names = {"-s", "--show-config"}, description = "Show actual configuration on start")
     private boolean showConfig = false;
 
-    @Parameter(names = {"--unsafe"}, description = "Allow unsafe developer-only configuration options")
-    private boolean unsafeConfig = false;
-
     @Parameter(names = {"-h", "--help"}, description = "Show help", help = true)
     private boolean help = false;
   }
-
 }

@@ -61,9 +61,6 @@ repositoryMapping: !listMapping
         branch: master
         path: ../build/example.git
         renameDetection: true
-        extensions:
-          - !api
-            path: /api
 
 shared:
   # Submodule list.
@@ -84,12 +81,8 @@ shared:
   # Git LFS server
   - !lfs
     # Secret token for git-lfs-authenticate script
-    # token: secret
+    secretToken: ChangeMe
     path: ../build/lfs
-  - !api
-    path: /api
-  - !socket
-    path: git-as-svn.socket
 
 # Simple in-memory user database
 userDB: !cacheUsers

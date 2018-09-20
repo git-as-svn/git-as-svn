@@ -8,8 +8,6 @@
 package svnserver.ext.gitlfs.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.ConfigHelper;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
@@ -22,7 +20,6 @@ import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 import svnserver.repository.git.GitLocation;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Git LFS configuration file.
@@ -30,7 +27,7 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("lfs")
-public class LfsConfig implements SharedConfig, LfsStorageFactory {
+public final class LfsConfig implements SharedConfig, LfsStorageFactory {
   // Default client token expiration time.
   public static final int DEFAULT_TOKEN_EXPIRE_SEC = 3600;
   // Allow batch API request only if token is not expired in token ensure time (part of tokenExpireTime).
@@ -38,35 +35,19 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
 
   @NotNull
   private String path = "lfs";
-  @NotNull
-  private String pathFormat = "{0}.git";
   private int tokenExpireSec = DEFAULT_TOKEN_EXPIRE_SEC;
   private float tokenEnsureTime = DEFAULT_TOKEN_ENSURE_TIME;
   private boolean compress = true;
   private boolean saveMeta = true;
-  @Nullable
-  private String token = null;
+  @NotNull
+  private String secretToken = "";
   @NotNull
   private LfsLayout layout = LfsLayout.OneLevel;
 
-  @NotNull
-  public LfsLayout getLayout() {
-    return layout;
-  }
-
-  public void setLayout(@NotNull LfsLayout layout) {
-    this.layout = layout;
-  }
-
-  @NotNull
-  public static LfsStorage getStorage(@NotNull LocalContext context) throws IOException, SVNException {
-    return context.getShared().getOrCreate(LfsStorageFactory.class, LfsConfig::new).createStorage(context);
-  }
-
   @Override
-  public void create(@NotNull SharedContext context) throws IOException {
+  public void create(@NotNull SharedContext context) {
     context.add(LfsStorageFactory.class, this);
-    context.add(LfsServer.class, new LfsServer(pathFormat, token, tokenExpireSec, tokenEnsureTime));
+    context.add(LfsServer.class, new LfsServer(secretToken, tokenExpireSec, tokenEnsureTime));
   }
 
   @NotNull
@@ -74,5 +55,10 @@ public class LfsConfig implements SharedConfig, LfsStorageFactory {
     File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
     File metaRoot = saveMeta ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
     return new LfsLocalStorage(getLayout(), dataRoot, metaRoot, compress);
+  }
+
+  @NotNull
+  public LfsLayout getLayout() {
+    return layout;
   }
 }

@@ -23,9 +23,9 @@ import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.TokenHelper;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -33,32 +33,46 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsAuthHelper {
+public final class LfsAuthHelper {
+  public enum AuthMode {
+    Anonymous,
+    Username,
+    External;
+
+    @Nullable
+    public static AuthMode find(@Nullable String value) {
+      for (AuthMode authMode : values())
+        if (authMode.name().toLowerCase(Locale.ENGLISH).equals(value))
+          return authMode;
+      return null;
+    }
+  }
+
+  @NotNull
   public static Link createToken(
       @NotNull SharedContext context,
       @NotNull URI baseLfsUrl,
-      @Nullable String username,
-      @Nullable String external,
-      boolean anonymous,
+      @NotNull String userId,
+      @NotNull AuthMode authMode,
       int tokenExpireSec,
       float tokenEnsureTime
   ) throws ServerError {
     try {
       final UserDB userDB = context.sure(UserDB.class);
       final User user;
-      if (anonymous) {
+      if (authMode == AuthMode.Anonymous) {
         user = User.getAnonymous();
-      } else if (external == null && username == null) {
-        throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter \"username\" or \"external\" is not defined");
+      } else if (authMode == AuthMode.Username) {
+        user = userDB.lookupByUserName(userId);
       } else {
-        user = username != null ? userDB.lookupByUserName(username) : userDB.lookupByExternal(external);
+        user = userDB.lookupByExternal(userId);
       }
       if (user == null) {
         //throw new NotFoundException();
         throw new ServerError(HttpServletResponse.SC_NOT_FOUND, "User not found");
       }
       return createToken(context, baseLfsUrl, user, tokenExpireSec, tokenEnsureTime);
-    } catch (SVNException | IOException e) {
+    } catch (SVNException e) {
       throw new ServerError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Can't get user information. See server log for more details", e);
     }
   }
@@ -74,7 +88,7 @@ public class LfsAuthHelper {
   @NotNull
   public static Map<String, String> createTokenHeader(@NotNull SharedContext context,
                                                       @NotNull User user,
-                                                      @NotNull NumericDate expireAt) throws IOException {
+                                                      @NotNull NumericDate expireAt) {
     WebServer webServer = WebServer.get(context);
     final String accessToken = TokenHelper.createToken(webServer.createEncryption(), user, expireAt);
     return ImmutableMap.<String, String>builder()
@@ -82,13 +96,14 @@ public class LfsAuthHelper {
         .build();
   }
 
-  public static Link createToken(
+  @NotNull
+  private static Link createToken(
       @NotNull SharedContext context,
       @NotNull URI baseLfsUrl,
       @NotNull User user,
       int tokenExpireSec,
       float tokenEnsureTime
-  ) throws IOException {
+  ) {
     int expireSec = tokenExpireSec <= 0 ? LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec;
     int ensureSec = (int) Math.ceil(expireSec * tokenEnsureTime);
     NumericDate now = NumericDate.now();
