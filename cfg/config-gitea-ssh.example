@@ -11,7 +11,10 @@ repositoryMapping: !giteaMapping
     renameDetection: true
 
 # Use Gitea user database
-userDB: !giteaUsers {}
+userDB:
+  !sshKeyUsers
+    userDB: !giteaUsers {}
+    sshKeysToken: CHANGE_THIS_TO_SOMETHING_SECRET
 
 shared:
   # Gitea LFS server - uses the GitLab layout
@@ -25,4 +28,14 @@ shared:
     url: http://localhost:3000/api/v1
     #token: de0c16fdc2c2ec5bcb4917922900015d3bceb82b
     token: 90c68b84fb04e364c2ea3fc42a6a2193144bc07d
-
+  - !giteaSSHKeys
+  # if you want to run on Gitea v1.7.0 you don't need
+  # giteaSSHKeys and can simply use sshKeys
+  # - !sshKeys
+    shadowSSHDirectory: /data/git/ssh-shadow
+    realSSHDirectory: /data/git/.ssh
+    originalAppPath: /app/gitea/gitea
+    svnservePath: /app/gitea/git-as-svn-svnserve
+  # If your gitea instance is using AuthorizedKeysCommand
+  # look at tools/git-as-svn-authorized-keys-command
+  # You don't need sshKeys in that case

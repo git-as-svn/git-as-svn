@@ -1,0 +1,51 @@
+#!/bin/bash
+
+############################################################
+# git-as-svn-svnserve
+#
+# Shadow the default gitlab/gitea shell and allow svnserve
+############################################################
+
+############################################################
+# For Gitlab Docker:
+############################################################
+# SHADOW_SHELL_PATH="/opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell"
+# TUNNEL_PATH="/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel"
+# KEY="$1"
+# REAL_SHELL_PATH="$SHADOW_SHELL_PATH"
+
+############################################################
+# For Gitea Docker:
+############################################################
+SHADOW_SHELL_PATH="/app/gitea/gitea"
+TUNNEL_PATH="/app/git-as-svn/git-as-svn-svnserve-tunnel"
+KEY="$2"
+SUBCOMMAND="$1"
+REAL_SHELL_PATH="$SHADOW_SHELL_PATH"
+
+if [ "$SUBCOMMAND" != "serv" ]; then
+    exec -a "$REAL_SHELL_PATH" "$SHADOW_SHELL_PATH" "$@"
+fi
+
+############################################################
+# Other options:
+############################################################
+# For either, you can move the shadowed binary to something like 
+# /app/gitea/gitea.shadow and rename this script to /app/gitea/gitea.
+# 
+# If you follow his approach you do not need to rewrite the
+# authorized_keys file, but may still need to process it.
+#
+# You would need to set the REAL_SHELL_PATH to point to this file
+# and restore the shadowing on updates to the application
+############################################################
+SECRET="CHANGE_THIS_TO_SOMETHING_SECRET"
+
+SSH_ORIGINAL_COMMANDS=($SSH_ORIGINAL_COMMAND)
+
+if [ -n "$SSH_ORIGINAL_COMMAND" ] && [ "${SSH_ORIGINAL_COMMANDS[0]}" = "svnserve" ] ; then
+    ## TUNNEL TO OUR SVNSERVER WITH MAGIC AUTHENTICATION ##
+    exec "$TUNNEL_PATH" "$SECRET" "$KEY"
+else
+    exec -a "$REAL_SHELL_PATH" "$SHADOW_SHELL_PATH" "$@"
+fi
