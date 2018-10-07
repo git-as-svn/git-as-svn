@@ -10,7 +10,9 @@ package svnserver;
 import org.ini4j.Reg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testcontainers.DockerClientFactory;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -188,5 +190,13 @@ public final class SvnTestHelper {
       }
     }
     return null;
+  }
+
+  public static void skipTestIfDockerUnavailable() {
+    try {
+      Assert.assertNotNull(DockerClientFactory.instance().client());
+    } catch (IllegalStateException e) {
+      throw new SkipException("Docker is not available", e);
+    }
   }
 }
