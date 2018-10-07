@@ -54,8 +54,6 @@ jobs:
 
     # Different JDKs
     - stage: test
-      jdk: oraclejdk8
-    - stage: test
       jdk: oraclejdk9
     - stage: test
       jdk: oraclejdk10
