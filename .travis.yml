@@ -33,16 +33,6 @@ addons:
 
 jobs:
   include:
-    # Different JDKs
-    - stage: test
-      jdk: oraclejdk8
-    - stage: test
-      jdk: oraclejdk9
-    - stage: test
-      jdk: oraclejdk10
-    - stage: test
-      jdk: oraclejdk11
-
     # Gitlab
     - stage: test
       env: GITLAB_VERSION=11.0.3-ce.0 # Gitlab >= 11.0 no longer has API v3 (issue #176)
@@ -61,6 +51,16 @@ jobs:
     - stage: test
       env: GITEA_VERSION=latest # TODO: Change this to 1.6.x once it is released
       jdk: oraclejdk8
+
+    # Different JDKs
+    - stage: test
+      jdk: oraclejdk8
+    - stage: test
+      jdk: oraclejdk9
+    - stage: test
+      jdk: oraclejdk10
+    - stage: test
+      jdk: oraclejdk11
 
     - stage: deploy
       jdk: oraclejdk8 # Deploy releases using oldest supported jdk
