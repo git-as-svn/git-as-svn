@@ -6,7 +6,9 @@
  * git-lfs-authenticate.cfg format has changed. Now, git-lfs-authenticate talks to git-as-svn via http and uses shared token.
  * !api no longer exists in git-as-svn.conf
  * !socket no longer exists in git-as-svn.conf
- * LFS storage is no longer silently created, instead LfsFilter will error out when encounters LFS pointer without configured LFS stogare
+ * LFS storage is no longer silently created, instead LfsFilter will error out when encounters LFS pointer without configured LFS storage
+ * JGit updated to 5.1.2
+ * GitLab API updated to 4.1.0
 
 ## 1.6.2
 
