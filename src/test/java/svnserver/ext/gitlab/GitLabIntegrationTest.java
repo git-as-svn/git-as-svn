@@ -12,11 +12,9 @@ import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Ignore;
@@ -25,6 +23,7 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
@@ -65,11 +64,7 @@ public final class GitLabIntegrationTest {
 
   @BeforeClass
   void before() throws Exception {
-    try {
-      Assert.assertNotNull(DockerClientFactory.instance().client());
-    } catch (IllegalStateException e) {
-      throw new SkipException("Docker is not available", e);
-    }
+    SvnTestHelper.skipTestIfDockerUnavailable();
 
     String gitlabVersion = System.getenv("GITLAB_VERSION");
     if (gitlabVersion == null)
@@ -89,7 +84,7 @@ public final class GitLabIntegrationTest {
 
     final GitlabAPI rootAPI = GitLabContext.connect(gitlabUrl, rootToken);
 
-    final GitlabUser gitlabUser = rootAPI.createUser("git-as-svn@localhost", userPassword, user, user, null, null, null, null, null, null, null, null, false, null, true);
+    final GitlabUser gitlabUser = rootAPI.createUser(new CreateUserRequest(user, user, "git-as-svn@localhost").setPassword(userPassword));
     Assert.assertNotNull(gitlabUser);
 
     final GitlabGroup group = rootAPI.createGroup(new CreateGroupRequest("testGroup").setVisibility(GitlabVisibility.PUBLIC), null);
@@ -144,14 +139,14 @@ public final class GitLabIntegrationTest {
     return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, gitLabConfig);
   }
 
-  @Test(expectedExceptions = SVNAuthenticationException.class)
-  void invalidPassword() throws Throwable {
-    checkUser(root, "wrongpassword");
+  @Test
+  void invalidPassword() {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser(root, "wrongpassword"));
   }
 
-  @Test(expectedExceptions = SVNAuthenticationException.class)
-  void invalidUser() throws Throwable {
-    checkUser("wronguser", rootPassword);
+  @Test
+  void invalidUser() {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("wronguser", rootPassword));
   }
 
   @Test

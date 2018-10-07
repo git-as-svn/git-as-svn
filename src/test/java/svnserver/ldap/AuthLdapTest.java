@@ -95,14 +95,14 @@ public final class AuthLdapTest {
     }
   }
 
-  @Test(expectedExceptions = SVNAuthenticationException.class)
-  public void invalidPassword() throws Throwable {
-    checkUser("ldapadmin", "wrongpassword");
+  @Test
+  public void invalidPassword() {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin", "wrongpassword"));
   }
 
-  @Test(expectedExceptions = SVNAuthenticationException.class)
-  public void invalidUser() throws Throwable {
-    checkUser("ldapadmin2", "ldapadmin");
+  @Test
+  public void invalidUser() {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin2", "ldapadmin"));
   }
 
   @Test
@@ -119,9 +119,9 @@ public final class AuthLdapTest {
     }
   }
 
-  @Test(expectedExceptions = SVNAuthenticationException.class)
-  public void anonymousUserDenies() throws Throwable {
-    checkAnonymous(false);
+  @Test
+  public void anonymousUserDenies() {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkAnonymous(false));
   }
 
   private static final class SuccessAuth implements Callable<Void> {
@@ -142,7 +142,7 @@ public final class AuthLdapTest {
     }
 
     @Override
-    public Void call() throws Exception {
+    public Void call() {
       if (done.get()) return null;
       try {
         final User user = userDB.check(username, password);

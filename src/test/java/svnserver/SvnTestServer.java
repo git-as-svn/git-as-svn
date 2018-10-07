@@ -11,6 +11,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,12 +141,10 @@ public final class SvnTestServer implements SvnTester {
     log.info("Temporary directory: {}", tempDirectory);
   }
 
-  private void cleanupBranches(Repository repository) {
+  private void cleanupBranches(@NotNull Repository repository) throws IOException {
     final List<String> branches = new ArrayList<>();
-    for (String ref : repository.getAllRefs().keySet()) {
-      if (ref.startsWith(Constants.R_HEADS + TEST_BRANCH_PREFIX)) {
-        branches.add(ref.substring(Constants.R_HEADS.length()));
-      }
+    for (Ref ref : repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS + TEST_BRANCH_PREFIX)) {
+      branches.add(ref.getName().substring(Constants.R_HEADS.length()));
     }
     if (!branches.isEmpty()) {
       for (String branch : branches) {

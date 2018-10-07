@@ -91,7 +91,7 @@ public final class LayoutHelper {
   public static Map<String, RevCommit> getBranches(@NotNull Repository repository) throws IOException {
     final RevWalk revWalk = new RevWalk(repository);
     final Map<String, RevCommit> result = new TreeMap<>();
-    for (Ref ref : repository.getAllRefs().values()) {
+    for (Ref ref : repository.getRefDatabase().getRefs()) {
       try {
         final String svnPath = layoutMapping.gitToSvn(ref.getName());
         if (svnPath != null) {
