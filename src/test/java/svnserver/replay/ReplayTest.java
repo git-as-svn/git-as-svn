@@ -91,7 +91,7 @@ public class ReplayTest {
       final Repository srcGit = src.getRepository();
       final Repository dstGit = dst.getRepository();
 
-      long lastRevision = srcRepo.getLatestRevision();
+      final long lastRevision = Math.min(200, srcRepo.getLatestRevision());
       log.info("Start replay");
       for (long revision = 1; revision <= lastRevision; revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
