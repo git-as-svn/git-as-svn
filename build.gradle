@@ -15,13 +15,6 @@ buildscript {
     jcenter()
   }
 
-configurations.all {
-    resolutionStrategy {
-        force 'xml-apis:xml-apis:1.4.01'
-    }
-}
-
-
   dependencies {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
     classpath "org.ajoberstar:gradle-git:1.7.2"
