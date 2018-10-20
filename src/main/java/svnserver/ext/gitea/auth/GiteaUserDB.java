@@ -105,10 +105,11 @@ public final class GiteaUserDB implements UserDB {
     final String userId = external;
     if (userId != null) {
       try {
+        Long uid = Long.parseLong(userId);
         final UserApi userApi = new UserApi(context.connect());
-        UserSearchList users = userApi.userSearch(null, null);
+        UserSearchList users = userApi.userSearch(null, uid, null);
         for (io.gitea.model.User u : users.getData()) {
-          if (userId.equals("" + u.getId())) {
+          if (uid.equals(u.getId())) {
             return createUser(u);
           }
         }
