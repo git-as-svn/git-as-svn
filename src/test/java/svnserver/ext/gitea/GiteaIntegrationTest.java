@@ -102,9 +102,13 @@ public final class GiteaIntegrationTest {
     giteaUrl = "http://" + gitea.getContainerIpAddress() + ":" + gitea.getMappedPort(giteaPort) + "/";
     giteaApiUrl = giteaUrl + "api/v1";
 
-    // now we add the administrator user
+    ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
+    boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
+    String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     {
-      ExecResult result = gitea.execInContainer("gitea", "admin", "create-user", "--name", administrator, "--password", administratorPassword, "--email", "administrator@example.com", "--admin", "-c", "/data/gitea/conf/app.ini");
+      ExecResult result = gitea.execInContainer("gitea", "admin", "create-user", "--name", administrator,
+        "--password", administratorPassword, "--email", "administrator@example.com", "--admin",
+        mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
       System.out.println(result.getStdout());
       System.err.println(result.getStderr());
     }
