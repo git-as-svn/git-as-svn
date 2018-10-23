@@ -106,7 +106,7 @@ dependencies {
   compile "org.eclipse.jetty:jetty-servlet:9.4.12.v20180830"
   compile "org.gitlab:java-gitlab-api:4.1.0"
   compile "org.bitbucket.b_c:jose4j:0.6.4"
-  compile "com.github.zeripath:java-gitea-api:1.6.0-SNAPSHOT"
+  compile "com.github.zeripath:java-gitea-api:1.7.0-SNAPSHOT"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
