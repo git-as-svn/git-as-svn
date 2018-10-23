@@ -1,6 +1,6 @@
 # Changes
 
-# Unreleased
+# 1.7.0
 
  * Dramatically improve memory usage by offloading file -> changed revisions cache to MapDB
  * --unsafe option no longer exists, all "unsafe" functionality was removed
