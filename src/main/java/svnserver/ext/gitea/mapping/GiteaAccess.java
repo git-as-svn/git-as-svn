@@ -68,7 +68,7 @@ final class GiteaAccess implements VcsAccess {
               try {
                 final ApiClient apiClient = context.connect();
                 final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
-                final Repository repository = repositoryApi.repoGetByID(projectId);
+                final Repository repository = repositoryApi.repoGetByID((int) projectId);
                 if (!repository.isPrivate()) {
                   // Munge the permissions
                   repository.getPermissions().setAdmin(false);
@@ -88,7 +88,7 @@ final class GiteaAccess implements VcsAccess {
               final ApiClient apiClient = context.connect(userName);
               final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
 
-              final Repository repository = repositoryApi.repoGetByID(projectId);
+              final Repository repository = repositoryApi.repoGetByID((int) projectId);
               return repository;
             } catch (ApiException e) {
               if (e.getCode() == 404) {

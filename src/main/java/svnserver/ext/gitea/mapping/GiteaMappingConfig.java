@@ -91,7 +91,7 @@ public final class GiteaMappingConfig implements RepositoryMappingConfig {
     final GiteaMapping mapping = new GiteaMapping(context, this);
     
     try {
-      final UserSearchList usersList = userApi.userSearch(null, null, null);
+      final UserSearchList usersList = userApi.userSearch(null, null);
     
       for (User u : usersList.getData()) {
         List<Repository> repositories = userApi.userListRepos(u.getLogin());
