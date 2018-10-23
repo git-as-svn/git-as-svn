@@ -86,7 +86,7 @@ public final class GitRepository implements VcsRepository {
   @NotNull
   private final ReadWriteLock lastUpdatesLock = new ReentrantReadWriteLock();
   @NotNull
-  private final Map<String, int[]> lastUpdates = new HashMap<>();
+  private final HTreeMap<String, int[]> lastUpdates;
   @NotNull
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   // Lock for prevent concurrent pushes.
@@ -192,6 +192,7 @@ public final class GitRepository implements VcsRepository {
   };
 
   private static final int revisionCacheVersion = 2;
+  private static final int lastUpdatesCacheVersion = 1;
 
   public GitRepository(@NotNull LocalContext context,
                        @NotNull Repository repository,
@@ -205,6 +206,15 @@ public final class GitRepository implements VcsRepository {
     this.repository = repository;
     this.binaryCache = shared.getCacheDB().hashMap("cache.binary", Serializer.STRING, Serializer.BOOLEAN).createOrOpen();
     this.revisionCache = context.getShared().getCacheDB().hashMap(String.format("cache-revision.%s.%s.v%s", context.getName(), renameDetection ? 1 : 0, revisionCacheVersion), objectIdSerializer, cacheRevisionSerializer).createOrOpen();
+
+    this.lastUpdates = context.getShared().getCacheDB()
+        .hashMap(String.format("last-updates.%s.v%s", context.getName(), lastUpdatesCacheVersion), Serializer.STRING, Serializer.INT_ARRAY)
+        .createOrOpen();
+    // lastUpdates cache doesn't work the same other our caches work
+    // We fully populate lastUpdates when loading revisions and expect it to be empty when loading revision #1.
+    // The main reason why we need it at all is to offload tons of data to disk.
+    this.lastUpdates.clear();
+
     this.pusher = pusher;
     this.renameDetection = renameDetection;
     this.lockManagerFactory = lockManagerFactory;

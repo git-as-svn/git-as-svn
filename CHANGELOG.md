@@ -2,6 +2,7 @@
 
 # Unreleased
 
+ * Dramatically improve memory usage by offloading file -> changed revisions cache to MapDB
  * --unsafe option no longer exists, all "unsafe" functionality was removed
  * git-lfs-authenticate.cfg format has changed. Now, git-lfs-authenticate talks to git-as-svn via http and uses shared token.
  * !api no longer exists in git-as-svn.conf
