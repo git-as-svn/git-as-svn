@@ -49,7 +49,7 @@ jobs:
 
     # Gitea
     - stage: test
-      env: GITEA_VERSION=latest # TODO: Change this to 1.6.x once it is released
+      env: GITEA_VERSION=1.6
       jdk: oraclejdk8
 
     # Different JDKs
