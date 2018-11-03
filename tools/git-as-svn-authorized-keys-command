@@ -1,0 +1,21 @@
+#!/bin/bash
+
+############################################################
+# git-as-svn-authorized-keys_command
+#
+# Shadow the default ssh AuthorizedKeysComand and adjust its
+# output to replace the original command with our svnserve
+############################################################
+
+############################################################
+# For Gitlab Docker:
+############################################################
+ORIGINAL_AUTHORIZED_COMMAND="/opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell-authorized-keys-check"
+ORIGINAL_APP_PATH="/opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell"
+SVN_SERVE_PATH="/opt/git-as-svn/bin/git-as-svn-svnserve"
+
+############################################################
+# Gitea does not have AuthorizedKeysCommand at present
+############################################################
+
+exec -a "$ORIGINAL_AUTHORIZED_COMMAND"  "$ORIGINAL_AUTHORIZED_COMMAND" "$@" | sed -e 's|command="'"$ORIGINAL_APP_PATH"'|command="'"$SVN_SERVE_PATH"'|'
