@@ -230,6 +230,7 @@ public final class SvnServer extends Thread implements ThreadFactory {
         BaseCmd.sendError(writer, e.getErrorMessage());
       }
     }
+    SessionContext.LOCAL.remove();
   }
 
   private static <T> void processCommand(@NotNull SessionContext context, @NotNull BaseCmd<T> cmd, @NotNull SvnServerParser parser) throws IOException, SVNException {

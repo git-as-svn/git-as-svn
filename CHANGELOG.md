@@ -1,5 +1,10 @@
 # Changes
 
+## 1.8.0
+
+ * [GitLab] Support hashed store path
+ * Support remote git-lfs http server
+
 ## 1.7.0
 
  * Dramatically improve memory usage by offloading file -> changed revisions cache to MapDB

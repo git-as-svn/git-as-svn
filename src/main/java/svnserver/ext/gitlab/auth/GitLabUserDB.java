@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.auth;
 
+import org.apache.commons.codec.binary.Base64;
 import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.models.GitlabSession;
 import org.gitlab.api.models.GitlabUser;
@@ -24,6 +25,7 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -68,7 +70,8 @@ public final class GitLabUserDB implements UserDB {
   public User check(@NotNull String userName, @NotNull String password) {
     try {
       final GitlabSession session = context.connect(userName, password);
-      return createUser(session);
+      final String userInfo = userName + ':' + password;
+      return createUser(new String(Base64.encodeBase64(userInfo.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8), session);
     } catch (GitlabAPIException e) {
       if (e.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
         return null;
@@ -79,6 +82,11 @@ public final class GitLabUserDB implements UserDB {
       log.warn("User password check error: " + userName, e);
       return null;
     }
+  }
+
+  @NotNull
+  private User createUser(String token, @NotNull GitlabUser user) {
+    return User.create(token, user.getUsername(), user.getName(), user.getEmail(), user.getId().toString());
   }
 
   @NotNull

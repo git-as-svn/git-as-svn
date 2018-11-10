@@ -7,10 +7,12 @@
  */
 package svnserver.ext.gitlfs.storage.network;
 
+import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -27,48 +29,51 @@ import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.client.auth.AuthProvider;
 import ru.bozaro.gitlfs.client.exceptions.RequestException;
 import ru.bozaro.gitlfs.client.io.StreamProvider;
-import ru.bozaro.gitlfs.common.data.Link;
-import ru.bozaro.gitlfs.common.data.Links;
-import ru.bozaro.gitlfs.common.data.ObjectRes;
-import ru.bozaro.gitlfs.common.data.Operation;
+import ru.bozaro.gitlfs.common.data.*;
 import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
+import svnserver.ext.gitlfs.config.LfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.web.server.WebServer;
+import svnserver.server.SessionContext;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.Error;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.common.base.Strings.nullToEmpty;
+
 /**
- * Http remote storage for LFS files.
+ * HTTP remote storage for LFS files.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsHttpStorage implements LfsStorage {
   private static final int MAX_CACHE = 1000;
+  private static final String LFS_PATH = ".git/info/lfs";
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(LfsHttpStorage.class);
-  @NotNull
-  private final URL authUrl;
-  @NotNull
-  private final String authToken;
+  private URL authUrl;
   @NotNull
   private final ObjectMapper mapper;
   @NotNull
-  private final LoadingCache<User, Link> tokens;
-  @NotNull
   private final HttpClient httpClient = HttpClients.createDefault();
+  private String authToken;
+  private LfsConfig config;
+  private LoadingCache<User, Link> tokens;
 
   public LfsHttpStorage(@NotNull URL authUrl, @NotNull String authToken) {
+    this(null);
     this.authUrl = authUrl;
     this.authToken = authToken;
-    this.mapper = WebServer.createJsonMapper();
     this.tokens = CacheBuilder.newBuilder()
         .maximumSize(MAX_CACHE)
         .build(new CacheLoader<User, Link>() {
@@ -78,10 +83,9 @@ public class LfsHttpStorage implements LfsStorage {
         });
   }
 
-  private void addParameter(@NotNull List<NameValuePair> params, @NotNull String key, @Nullable String value) {
-    if (value != null) {
-      params.add(new BasicNameValuePair(key, value));
-    }
+  public LfsHttpStorage(LfsConfig config) {
+    this.config = config;
+    this.mapper = WebServer.createJsonMapper();
   }
 
   @NotNull
@@ -110,6 +114,12 @@ public class LfsHttpStorage implements LfsStorage {
     }
   }
 
+  private void addParameter(@NotNull List<NameValuePair> params, @NotNull String key, @Nullable String value) {
+    if (value != null) {
+      params.add(new BasicNameValuePair(key, value));
+    }
+  }
+
   @NotNull
   private Link getToken(@NotNull User user) throws IOException {
     try {
@@ -129,47 +139,58 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   public void invalidate(@NotNull User user) {
-    tokens.invalidate(user);
+    if (tokens != null)
+      tokens.invalidate(user);
   }
 
   @Nullable
   public ObjectRes getMeta(@NotNull String hash) throws IOException {
-    final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), httpClient);
+    final Client lfsClient = lfsClient(User.getAnonymous());
     return lfsClient.getMeta(hash);
   }
 
+  protected AuthProvider getAuthProvider(User user) {
+    return new UserAuthProvider(user);
+  }
+
   public boolean putObject(@NotNull User user, StreamProvider streamProvider, String sha, long size) throws IOException {
-    final Client lfsClient = new Client(new UserAuthProvider(user), httpClient);
+    final Client lfsClient = lfsClient(user);
     return lfsClient.putObject(streamProvider, sha, size);
   }
 
   @NotNull
   public InputStream getObject(@NotNull Links links) throws IOException {
-    final Client lfsClient = new Client(new UserAuthProvider(User.getAnonymous()), httpClient);
+    final Client lfsClient = lfsClient();
     return lfsClient.getObject(null, links, TemporaryOutputStream::new).toInputStream();
   }
 
+  private Client lfsClient() {
+    return lfsClient(null);
+  }
+
+  private Client lfsClient(User user) {
+    return new Client(
+        getAuthProvider(user == null ? SessionContext.get().getUser() : user),
+        httpClient
+    );
+  }
+
   @Nullable
-  public LfsReader getReader(@NotNull String oid, @NotNull User user) throws IOException {
+  public LfsReader getReader(@NotNull String oid) throws IOException {
     try {
       if (!oid.startsWith(OID_PREFIX)) return null;
       final String hash = oid.substring(OID_PREFIX.length());
-      final Client lfsClient = new Client(new UserAuthProvider(user), httpClient);
-      final ObjectRes meta = lfsClient.getMeta(hash);
-      if (meta == null || meta.getMeta() == null) {
+      final Client lfsClient = lfsClient();
+      BatchRes res = lfsClient.postBatch(new BatchReq(Operation.Download, Lists.newArrayList(new Meta(hash, -1))));
+      if (res.getObjects().isEmpty())
         return null;
-      }
+      BatchItem item = res.getObjects().get(0);
+      final ObjectRes meta = new ObjectRes(item.getOid(), item.getSize(), item.getLinks());
       return new LfsHttpReader(this, meta.getMeta(), meta);
     } catch (RequestException e) {
       log.error("HTTP request error:" + e.getMessage() + "\n" + e.getRequestInfo());
       throw e;
     }
-  }
-
-  @Nullable
-  @Override
-  public LfsReader getReader(@NotNull String oid) throws IOException {
-    return getReader(oid, User.getAnonymous());
   }
 
   @NotNull
@@ -186,15 +207,37 @@ public class LfsHttpStorage implements LfsStorage {
       this.user = user;
     }
 
+    private URI uri() {
+      URI href = URI.create(SessionContext.get().getRepositoryInfo().getBaseUrl().toDecodedString());
+      try {
+        return new URI(
+            config.getScheme(),
+            href.getAuthority(),
+            href.getPath() + LFS_PATH,
+            null, null
+        );
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     @NotNull
     @Override
     public Link getAuth(@NotNull Operation mode) throws IOException {
-      return getToken(user);
+      if (tokens != null) {
+        return getToken(user);
+      }
+      return new Link(
+          uri(),
+          ImmutableMap.of(config.getTokenHeader(), nullToEmpty(config.getTokenPrefix()) + user.getToken()),
+          null
+      );
     }
 
     @Override
     public void invalidateAuth(@NotNull Operation mode, @NotNull Link auth) {
-      tokens.invalidate(user);
+      if (tokens != null)
+        tokens.invalidate(user);
     }
   }
 }

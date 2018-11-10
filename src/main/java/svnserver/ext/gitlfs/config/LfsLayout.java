@@ -35,6 +35,12 @@ public enum LfsLayout {
     public String getPath(@NotNull String oid) {
       return oid.substring(0, 2) + "/" + oid.substring(2, 4) + "/" + oid.substring(4);
     }
+  },
+  HTTP {
+    @Override
+    public @NotNull String getPath(@NotNull String oid) {
+      return oid;
+    }
   };
 
   @NotNull

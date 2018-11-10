@@ -33,6 +33,8 @@ import java.util.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SessionContext {
+  static final ThreadLocal<SessionContext> LOCAL = new ThreadLocal<>();
+
   @NotNull
   private final SvnServerParser parser;
   @NotNull
@@ -52,6 +54,10 @@ public final class SessionContext {
   @NotNull
   private String parent;
 
+  public static SessionContext get() {
+    return LOCAL.get();
+  }
+
   public SessionContext(@NotNull SvnServerParser parser,
                         @NotNull SvnServerWriter writer,
                         @NotNull SvnServer server,
@@ -65,6 +71,7 @@ public final class SessionContext {
     this.acl = getRepository().getContext().sure(VcsAccess.class);
     setParent(clientInfo.getUrl());
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
+    LOCAL.set(this);
   }
 
   public boolean isCompressionEnabled() {
@@ -116,6 +123,11 @@ public final class SessionContext {
   @NotNull
   public VcsRepository getRepository() {
     return repositoryInfo.getRepository();
+  }
+
+  @NotNull
+  public RepositoryInfo getRepositoryInfo() {
+    return repositoryInfo;
   }
 
   @NotNull
