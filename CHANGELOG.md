@@ -1,19 +1,9 @@
 # Changes
 
-## 1.7.3
+## 1.8.0
 
- * Reduce number of threads by using same thread pool for svn:// and http://. #215
- * Fix compatibility with latest Gitea. #218
-
-## 1.7.2
-
- * Reduce lock contention during commit
- * Log how long commit hooks take
- * Do not log exception stacktraces on client-side issues during commit
-
-## 1.7.1
-
- * Revert offloading file -> changed revisions cache to MapDB (PR#207) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
+ * [GitLab] Support hashed store path
+ * Support remote git-lfs http server
 
 ## 1.7.0
 

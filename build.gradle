@@ -1,6 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
-project.version = "1.7.3"
+project.version = "1.8.0"
 
 buildscript {
   repositories {
@@ -161,21 +161,11 @@ task createDocs(type: Copy) {
   into file("$buildDir/doc")
 }
 
-task copyTools(type: Copy) {
-  from("$projectDir/tools") {
-    include "*"
-  }
-  into file("$buildDir/tools")
-}
-
 distributions {
   main {
     contents {
       from(createDocs) {
         into "doc"
-      }
-      from(copyTools) {
-        into "tools"
       }
     }
   }

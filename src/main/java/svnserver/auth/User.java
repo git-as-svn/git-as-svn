@@ -20,7 +20,7 @@ import java.util.Objects;
  */
 public final class User {
   @NotNull
-  private static final User anonymousUser = new User("anonymous", "anonymous", null, null, true);
+  private static final User anonymousUser = new User(null, "anonymous", "anonymous", null, null, true);
 
   private final boolean isAnonymous;
   @NotNull
@@ -31,12 +31,20 @@ public final class User {
   private final String email;
   @Nullable
   private final String externalId;
+  @Nullable
+  private final String token;
+
 
   public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
-    return new User(userName, realName, email, externalId, false);
+    return new User(null, userName, realName, email, externalId, false);
   }
 
-  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous) {
+  public static User create(@Nullable String token, @NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
+    return new User(token, userName, realName, email, externalId, false);
+  }
+
+  protected User(@Nullable String token, @NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous) {
+    this.token = token;
     this.userName = userName;
     this.realName = realName;
     this.email = email;
@@ -95,6 +103,7 @@ public final class User {
 
     return Objects.equals(externalId, user.externalId)
         && Objects.equals(email, user.email)
+        && Objects.equals(token, user.token)
         && userName.equals(user.userName)
         && realName.equals(user.realName)
         && (isAnonymous == user.isAnonymous);
@@ -105,7 +114,12 @@ public final class User {
     int result = userName.hashCode();
     result = 31 * result + realName.hashCode();
     result = 31 * result + (email != null ? email.hashCode() : 0);
+    result = 31 * result + (token != null ? token.hashCode() : 0);
     return result;
+  }
+
+  public String getToken() {
+    return token;
   }
 
   public static User getAnonymous() {
