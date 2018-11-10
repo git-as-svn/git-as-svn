@@ -1,0 +1,98 @@
+#!/bin/bash
+
+############################################################
+# git-as-svn-svnserve-tunnel
+#
+# Use a bit of bash hackery to implement svnserve -t by
+# pushing stdin to the svn port (3690) but hijack the 
+# authentication phase to pass in the ssh key id
+############################################################
+
+SECRET="$1"
+KEY="$2"
+FAKE_AUTH="( success ( ( EXTERNAL ) 16:Git-as-svn Realm ) )"
+
+function failed {
+    echo "$0: Unable to connect to svn service! Is it running?" 1>&2
+    exit
+}
+trap failed err
+
+OUR_PID=$$
+function finish {
+    pkill -P $OUR_PID
+    exec 3>&- 3<&-
+}
+trap finish EXIT
+
+exec 3<>/dev/tcp/localhost/3690
+
+trap finish err
+
+function read_bracket {
+    BEEN_IN=false
+    NBRACK=0
+
+    while ! $BEEN_IN || [ $NBRACK != 0 ]; do
+        IFS= read -n1 -r -d '' FROM
+        case $FROM in
+            '(')
+            NBRACK=$(($NBRACK + 1))
+            BEEN_IN=true
+            ;;
+            ')')
+            NBRACK=$(($NBRACK - 1))
+            ;;
+            '')
+            break
+        esac
+        echo -ne "$FROM"
+    done
+    IFS= read -n1 -r -d '' FROM
+    echo -ne "$FROM"
+    if [ "X$FROM" = "X" ]; then
+        exec 0<&-
+        exit
+    fi
+}
+
+# Send server capabilities to client
+read_bracket <&3 >&1
+
+# Send client capabilities to server
+read_bracket <&0 >&3
+
+# Get the server authentication
+AUTH_LIST_FROM_SERV=$(read_bracket <&3)
+
+# Send the server our information
+AUTHBODY=$(echo -ne "\0$SECRET\0$KEY" | base64)
+AUTHBODY_LENGTH=${#AUTHBODY}
+echo "( KEY-AUTHENTICATOR ( $AUTHBODY_LENGTH:$AUTHBODY ) )" >&3
+if ! { command >&3; } 2>/dev/null; then
+    exit
+fi
+
+# send the fake auth list to the client
+echo "$FAKE_AUTH" >&1
+if ! { command >&1; } 2>/dev/null; then
+    exit
+fi
+
+# throwaway the client's response
+read_bracket <&0 > /dev/null
+
+# THEN PRETEND THAT THE REST OF IT WENT THAT WAY
+(
+    cat <&3 >&1 &
+    CAT_PID=$!
+    function on_exit {
+        kill $CAT_PID
+    }
+    trap on_exit EXIT
+    wait
+    kill $OUR_PID
+) &
+
+cat <&0 >&3
+pkill -P $OUR_PID

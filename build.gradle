@@ -161,11 +161,21 @@ task createDocs(type: Copy) {
   into file("$buildDir/doc")
 }
 
+task copyTools(type: Copy) {
+  from("$projectDir/tools") {
+    include "*"
+  }
+  into file("$buildDir/tools")
+}
+
 distributions {
   main {
     contents {
       from(createDocs) {
         into "doc"
+      }
+      from(copyTools) {
+        into "tools"
       }
     }
   }

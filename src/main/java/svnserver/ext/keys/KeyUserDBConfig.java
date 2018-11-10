@@ -5,27 +5,33 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.gitea.auth;
+package svnserver.ext.keys;
 
 import org.jetbrains.annotations.NotNull;
+
 import svnserver.auth.UserDB;
 import svnserver.config.UserDBConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
-/**
- * GitLab authentication configuration.
- *
- * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
- * @author Andrew Thornton <zeripath@users.noreply.github.com>
- */
-@ConfigType("giteaUsers")
-public final class GiteaUserDBConfig implements UserDBConfig {
+@ConfigType("sshKeyUsers")
+public class KeyUserDBConfig implements UserDBConfig {
 
-  @NotNull
-  @Override
-  public UserDB create(@NotNull SharedContext context) {
-    return new GiteaUserDB(context);
-  }
+    @NotNull
+    private UserDBConfig userDB;
+
+    @NotNull
+    private String sshKeysToken;
+
+	@Override
+	public @NotNull UserDB create(@NotNull SharedContext context) {
+        UserDB internal = userDB.create(context);
+		return new KeyUserDB(internal, sshKeysToken);
+    }
+
+    @NotNull
+    public String getSshKeysToken() {
+        return sshKeysToken;
+    }
 
 }
