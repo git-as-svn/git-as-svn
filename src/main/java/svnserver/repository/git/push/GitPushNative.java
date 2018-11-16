@@ -18,7 +18,6 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
-import svnserver.context.SharedContext;
 import svnserver.repository.VcsAccess;
 
 import java.io.BufferedReader;
@@ -62,28 +61,32 @@ final class GitPushNative implements GitPusher {
       final Process process = processBuilder.start();
       final StringBuilder resultBuilder = new StringBuilder();
       final StringBuilder hookBuilder = new StringBuilder();
-      try (final BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-        while (true) {
-          final String line = stdout.readLine();
-          if (line == null) {
-            break;
-          }
-          if (line.startsWith(HOOK_MESSAGE_PREFIX)) {
-            if (hookBuilder.length() > 0) hookBuilder.append('\n');
-            hookBuilder.append(line.substring(HOOK_MESSAGE_PREFIX.length() + 1));
-          }
-          if (line.startsWith(SYSTEM_MESSAGE_PREFIX)) {
-            // System message like:
-            // !	2d1ed4dcc45bef07f6dfffabe7d3ff53aa147705:refs/heads/local	[remote rejected] (pre-receive hook declined)
-            // !	75cad4dcb5f6982a1f2df073157f3aa2083ae272:refs/heads/local	[rejected] (non-fast-forward)
-            if (resultBuilder.length() > 0) resultBuilder.append('\n');
-            resultBuilder.append(line.substring(SYSTEM_MESSAGE_PREFIX.length() + 1));
+      try {
+        try (final BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+          while (true) {
+            final String line = stdout.readLine();
+            if (line == null) {
+              break;
+            }
+            if (line.startsWith(HOOK_MESSAGE_PREFIX)) {
+              if (hookBuilder.length() > 0) hookBuilder.append('\n');
+              hookBuilder.append(line.substring(HOOK_MESSAGE_PREFIX.length() + 1));
+            }
+            if (line.startsWith(SYSTEM_MESSAGE_PREFIX)) {
+              // System message like:
+              // !	2d1ed4dcc45bef07f6dfffabe7d3ff53aa147705:refs/heads/local	[remote rejected] (pre-receive hook declined)
+              // !	75cad4dcb5f6982a1f2df073157f3aa2083ae272:refs/heads/local	[rejected] (non-fast-forward)
+              if (resultBuilder.length() > 0) resultBuilder.append('\n');
+              resultBuilder.append(line.substring(SYSTEM_MESSAGE_PREFIX.length() + 1));
+            }
           }
         }
-      }
-      int exitCode = process.waitFor();
-      if (exitCode == 0) {
-        return true;
+        final int exitCode = process.waitFor();
+        if (exitCode == 0) {
+          return true;
+        }
+      } finally {
+        process.destroyForcibly();
       }
       final String resultMessage = resultBuilder.toString();
       if (resultMessage.contains("non-fast-forward")) {

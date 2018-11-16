@@ -106,25 +106,27 @@ public final class GitPushEmbedded implements GitPusher {
     }
     final File script = ConfigHelper.joinPath(ConfigHelper.joinPath(repository.getDirectory(), "hooks"), hook);
     if (script.isFile()) {
+      final ProcessBuilder processBuilder = new ProcessBuilder(script.getAbsolutePath())
+          .directory(repository.getDirectory())
+          .redirectErrorStream(true);
+
+      processBuilder.environment().put("LANG", "en_US.utf8");
+      userInfo.updateEnvironment(processBuilder.environment());
+      context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
+      context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
+
+      final Process process = runner.exec(processBuilder);
       try {
-        final ProcessBuilder processBuilder = new ProcessBuilder(script.getAbsolutePath())
-            .directory(repository.getDirectory())
-            .redirectErrorStream(true);
-
-        processBuilder.environment().put("LANG", "en_US.utf8");
-        userInfo.updateEnvironment(processBuilder.environment());
-        context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
-        context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
-
-        final Process process = runner.exec(processBuilder);
         final String hookMessage = CharStreams.toString(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-        int exitCode = process.waitFor();
+        final int exitCode = process.waitFor();
         if (exitCode != 0) {
           throw new SVNException(SVNErrorMessage.create(hookErrorCode, String.format("Hook %s failed with output:\n%s", script.getAbsolutePath(), hookMessage)));
         }
       } catch (InterruptedException e) {
         log.error("Hook interrupted: " + script.getAbsolutePath(), e);
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
+      } finally {
+        process.destroyForcibly();
       }
     }
   }
