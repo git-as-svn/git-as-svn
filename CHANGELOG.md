@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.7.1
 
  * Revert offloading file -> changed revisions cache to MapDB (PR#207) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
 
