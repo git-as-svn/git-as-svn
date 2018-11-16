@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Revert offloading file -> changed revisions cache to MapDB (PR#207) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
+
 ## 1.7.0
 
  * Dramatically improve memory usage by offloading file -> changed revisions cache to MapDB
