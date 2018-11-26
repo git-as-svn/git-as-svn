@@ -1,5 +1,11 @@
 # Changes
 
+## 1.7.2
+
+ * Reduce lock contention during commit
+ * Log how long commit hooks take
+ * Do not log exception stacktraces on client-side issues during commit
+
 ## 1.7.1
 
  * Revert offloading file -> changed revisions cache to MapDB (PR#207) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
