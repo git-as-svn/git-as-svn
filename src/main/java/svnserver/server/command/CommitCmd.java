@@ -622,7 +622,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           command.process(context, param);
         } catch (SVNException e) {
           aborted = true;
-          throw new SVNException(SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "Exception during " + cmd), e);
+          throw e;
         } catch (Throwable e) {
           log.warn("Exception during in cmd " + cmd, e);
           aborted = true;
