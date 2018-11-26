@@ -105,6 +105,8 @@ public final class GitPushEmbedded implements GitPusher {
       return;
     }
     final File script = ConfigHelper.joinPath(ConfigHelper.joinPath(repository.getDirectory(), "hooks"), hook);
+
+    final long startTime = System.currentTimeMillis();
     if (script.isFile()) {
       final ProcessBuilder processBuilder = new ProcessBuilder(script.getAbsolutePath())
           .directory(repository.getDirectory())
@@ -126,6 +128,9 @@ public final class GitPushEmbedded implements GitPusher {
         log.error("Hook interrupted: " + script.getAbsolutePath(), e);
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
       } finally {
+        final long endTime = System.currentTimeMillis();
+        log.info("{} hook for repository {} took {}ms", hook, repository.toString(), (endTime - startTime));
+
         process.destroyForcibly();
       }
     }
