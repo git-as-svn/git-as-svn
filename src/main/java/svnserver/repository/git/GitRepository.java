@@ -434,17 +434,23 @@ public final class GitRepository implements VcsRepository {
 
   @Override
   public void updateRevisions() throws IOException, SVNException {
+    boolean gotNewRevisions = false;
+
     while (true) {
       loadRevisions();
       if (!cacheRevisions()) {
         break;
       }
+      gotNewRevisions = true;
     }
-    wrapLockWrite((lockManager) -> {
-      lockManager.validateLocks();
-      return Boolean.TRUE;
-    });
-    context.getShared().getCacheDB().commit();
+
+    if (gotNewRevisions) {
+      wrapLockWrite((lockManager) -> {
+        lockManager.validateLocks();
+        return Boolean.TRUE;
+      });
+      context.getShared().getCacheDB().commit();
+    }
   }
 
   private boolean isTreeEmpty(RevTree tree) throws IOException {
