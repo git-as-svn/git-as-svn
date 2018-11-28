@@ -52,7 +52,7 @@ jobs:
       env: GITEA_VERSION=latest
       jdk: oraclejdk8
     - stage: test
-      env: GITEA_VERSION=1.6
+      env: GITEA_VERSION=1.6.0
       jdk: oraclejdk8
 
     # Different JDKs
