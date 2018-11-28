@@ -9,6 +9,7 @@ package svnserver.ext.web.config;
 
 import org.apache.commons.codec.binary.Hex;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.config.SharedConfig;
@@ -28,7 +29,7 @@ import java.util.List;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("web")
-public class WebServerConfig implements SharedConfig {
+public final class WebServerConfig implements SharedConfig {
   @NotNull
   private final static String defaultSecret = generateDefaultSecret();
 
@@ -41,6 +42,13 @@ public class WebServerConfig implements SharedConfig {
   @Nullable
   private String baseUrl = null;
 
+  private static String generateDefaultSecret() {
+    final SecureRandom random = new SecureRandom();
+    final byte bytes[] = new byte[EncryptionFactoryAes.KEY_SIZE];
+    random.nextBytes(bytes);
+    return new String(Hex.encodeHex(bytes));
+  }
+
   @NotNull
   public String getRealm() {
     return realm;
@@ -51,29 +59,17 @@ public class WebServerConfig implements SharedConfig {
     return baseUrl;
   }
 
-  @NotNull
-  public List<ListenConfig> getListen() {
-    return listen;
-  }
-
   @Override
   public void create(@NotNull SharedContext context) throws IOException {
-    context.add(WebServer.class, new WebServer(context, createJettyServer(), this, new EncryptionFactoryAes(secret)));
+    context.add(WebServer.class, new WebServer(context, createJettyServer(context), this, new EncryptionFactoryAes(secret)));
   }
 
   @NotNull
-  public Server createJettyServer() {
-    final Server server = new Server();
+  private Server createJettyServer(@NotNull SharedContext context) {
+    final Server server = new Server(new ExecutorThreadPool(context.getThreadPoolExecutor()));
     for (ListenConfig listenConfig : listen) {
       server.addConnector(listenConfig.createConnector(server));
     }
     return server;
-  }
-
-  private static String generateDefaultSecret() {
-    final SecureRandom random = new SecureRandom();
-    final byte bytes[] = new byte[EncryptionFactoryAes.KEY_SIZE];
-    random.nextBytes(bytes);
-    return new String(Hex.encodeHex(bytes));
   }
 }
