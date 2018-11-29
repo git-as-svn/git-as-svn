@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 /**
  * Simple test for LfsLocalStorage.
@@ -66,7 +67,7 @@ public class LfsHttpStorageTest {
     final User user = users.add("test", "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    SharedContext sharedContext = new SharedContext(new File("/tmp"), DBMaker.memoryDB().make());
+    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), DBMaker.memoryDB().make(), r -> new Thread(r), Collections.emptyList());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
     sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
     sharedContext.add(UserDB.class, users);
@@ -106,6 +107,17 @@ public class LfsHttpStorageTest {
     }
   }
 
+  @NotNull
+  private ServerConnector createJettyServer() {
+    final Server server = new Server();
+    ServerConnector http = new ServerConnector(server, new HttpConnectionFactory());
+    http.setPort(0);
+    http.setHost("127.0.1.1");
+    http.setIdleTimeout(30000);
+    server.addConnector(http);
+    return http;
+  }
+
   @Test(dataProvider = "compressProvider")
   public void simple(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
@@ -138,16 +150,5 @@ public class LfsHttpStorageTest {
     } finally {
       TestHelper.deleteDirectory(tempDir);
     }
-  }
-
-  @NotNull
-  private ServerConnector createJettyServer() {
-    final Server server = new Server();
-    ServerConnector http = new ServerConnector(server, new HttpConnectionFactory());
-    http.setPort(0);
-    http.setHost("127.0.1.1");
-    http.setIdleTimeout(30000);
-    server.addConnector(http);
-    return http;
   }
 }

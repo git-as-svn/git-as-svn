@@ -17,6 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simple context object.
@@ -29,14 +33,19 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
   private final File basePath;
   @NotNull
   private final DB cacheDB;
+  @NotNull
+  private final ThreadPoolExecutor threadPoolExecutor;
 
-  public SharedContext(@NotNull File basePath, @NotNull DB cacheDb) {
+  private SharedContext(@NotNull File basePath, @NotNull DB cacheDb, @NotNull ThreadPoolExecutor threadPoolExecutor) {
     this.basePath = basePath;
     this.cacheDB = cacheDb;
+    this.threadPoolExecutor = threadPoolExecutor;
   }
 
-  public static SharedContext create(@NotNull File basePath, @NotNull DB cacheDb, @NotNull List<SharedConfig> shared) throws IOException, SVNException {
-    final SharedContext context = new SharedContext(basePath, cacheDb);
+  @NotNull
+  public static SharedContext create(@NotNull File basePath, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws IOException, SVNException {
+    final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), threadFactory);
+    final SharedContext context = new SharedContext(basePath, cacheDb, threadPoolExecutor);
     for (SharedConfig config : shared) {
       config.create(context);
     }
@@ -44,6 +53,11 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
       item.init(context);
     }
     return context;
+  }
+
+  @NotNull
+  public ThreadPoolExecutor getThreadPoolExecutor() {
+    return threadPoolExecutor;
   }
 
   public void ready() throws IOException {
