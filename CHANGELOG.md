@@ -1,5 +1,10 @@
 # Changes
 
+## 1.7.3
+
+ * Reduce number of threads by using same thread pool for svn:// and http://. #215
+ * Fix compatibility with latest Gitea. #218
+
 ## 1.7.2
 
  * Reduce lock contention during commit
