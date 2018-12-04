@@ -29,14 +29,11 @@ shared:
       port: 8123
       # Use X-Forwarded-* headers
       forwarded: true
-  # GitLab LFS server
+  # GitLab LFS Client
   - !lfs
-    # Secret token for git-lfs-authenticate script
-    # secretToken:
-    path: /mnt/storage/lfs-objects
-    saveMeta: false
-    compress: false
-    layout: GitLab
+    # tokenHeader: Authorization
+    # tokenPrefix: "Basic "
+    layout: HTTP
   # GitLab server
   - !gitlab
     url: http://localhost:3000/
