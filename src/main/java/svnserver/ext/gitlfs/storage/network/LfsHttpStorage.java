@@ -169,8 +169,15 @@ public class LfsHttpStorage implements LfsStorage {
   }
 
   private Client lfsClient(User user) {
+    if (user == null) {
+      if (SessionContext.get() != null) {
+        user = SessionContext.get().getUser();
+      } else {
+        user = User.getAnonymous();
+      }
+    }
     return new Client(
-        getAuthProvider(user == null ? SessionContext.get().getUser() : user),
+        getAuthProvider(user),
         httpClient
     );
   }
@@ -184,6 +191,7 @@ public class LfsHttpStorage implements LfsStorage {
       if (res.getObjects().isEmpty())
         return null;
       BatchItem item = res.getObjects().get(0);
+      if (item.getError() != null) return null;
       final ObjectRes meta = new ObjectRes(item.getOid(), item.getSize(), item.getLinks());
       return new LfsHttpReader(this, meta.getMeta(), meta);
     } catch (RequestException e) {
