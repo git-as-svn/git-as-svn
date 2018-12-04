@@ -621,13 +621,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           parser.readToken(ListEndToken.class);
           command.process(context, param);
         } catch (SVNException e) {
-          if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_NOT_AUTHORIZED) {
-            log.warn("Found error in cmd " + cmd, e);
-          }
           aborted = true;
           throw e;
         } catch (Throwable e) {
-          log.warn("Found error in cmd " + cmd, e);
+          log.warn("Exception during in cmd " + cmd, e);
           aborted = true;
           throw e;
         }

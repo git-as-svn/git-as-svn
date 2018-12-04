@@ -75,6 +75,7 @@ final class GiteaAccess implements VcsAccess {
                   repository.getPermissions().setPush(false);
                   return repository;
                 }
+                throw new FileNotFoundException();
               } catch (ApiException e) {
                 if (e.getCode() == 404) {
                   throw new FileNotFoundException();

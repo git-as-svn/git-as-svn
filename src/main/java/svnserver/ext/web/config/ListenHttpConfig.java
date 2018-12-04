@@ -17,47 +17,22 @@ import svnserver.config.serializer.ConfigType;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("http")
-public class ListenHttpConfig implements ListenConfig {
+public final class ListenHttpConfig implements ListenConfig {
   @NotNull
   private String host = "localhost";
   private int port = 80;
-  private boolean forwarded;
-
-  @NotNull
-  public String getHost() {
-    return host;
-  }
-
-  public void setHost(@NotNull String host) {
-    this.host = host;
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
-  }
-
-  public boolean isForwarded() {
-    return forwarded;
-  }
-
-  public void setForwarded(boolean forwarded) {
-    this.forwarded = forwarded;
-  }
+  private boolean forwarded = false;
 
   @NotNull
   @Override
   public Connector createConnector(@NotNull Server server) {
-    HttpConfiguration config = new HttpConfiguration();
+    final HttpConfiguration config = new HttpConfiguration();
     if (forwarded) {
       config.addCustomizer(new ForwardedRequestCustomizer());
     }
-    ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(config));
-    http.setPort(getPort());
-    http.setHost(getHost());
+    final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(config));
+    http.setPort(port);
+    http.setHost(host);
     http.setIdleTimeout(30000);
     return http;
   }

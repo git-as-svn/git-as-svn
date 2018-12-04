@@ -1,7 +1,13 @@
 # defaults for git-as-svn server
 
 # location of java
-#JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+# JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+# Prevent glibc from wasting too much memory
+# See https://github.com/prestodb/presto/issues/8993
+# https://issues.jboss.org/browse/JBEAP-11565
+# https://github.com/cloudfoundry/java-buildpack/issues/320
+MALLOC_ARENA_MAX=1
 
 # arguments to pass to java
 JAVA_OPTS="-Xmx256m -Dlog4j.configurationFile=/etc/git-as-svn/log4j2.xml"

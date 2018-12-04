@@ -40,7 +40,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,7 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnServer extends Thread implements ThreadFactory {
+public final class SvnServer extends Thread {
   @NotNull
   private static AtomicInteger threadNumber = new AtomicInteger(1);
   @NotNull
@@ -79,8 +81,6 @@ public final class SvnServer extends Thread implements ThreadFactory {
   @NotNull
   private final ServerSocket serverSocket;
   @NotNull
-  private final ExecutorService poolExecutor;
-  @NotNull
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   @NotNull
   private final AtomicLong lastSessionId = new AtomicLong();
@@ -92,7 +92,13 @@ public final class SvnServer extends Thread implements ThreadFactory {
     setDaemon(true);
     this.config = config;
 
-    context = SharedContext.create(basePath, config.getCacheConfig().createCache(basePath), config.getShared());
+    final ThreadFactory threadFactory = r -> {
+      final Thread thread = new Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()));
+      thread.setDaemon(true);
+      return thread;
+    };
+
+    context = SharedContext.create(basePath, config.getCacheConfig().createCache(basePath), threadFactory, config.getShared());
     context.add(UserDB.class, config.getUserDB().create(context));
 
     commands.put("commit", new CommitCmd());
@@ -130,14 +136,8 @@ public final class SvnServer extends Thread implements ThreadFactory {
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
-    poolExecutor = Executors.newCachedThreadPool(this);
 
     context.ready();
-  }
-
-  @Override
-  public Thread newThread(@NotNull Runnable r) {
-    return new Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()));
   }
 
   public int getPort() {
@@ -165,7 +165,7 @@ public final class SvnServer extends Thread implements ThreadFactory {
         continue;
       }
       long sessionId = lastSessionId.incrementAndGet();
-      poolExecutor.execute(() -> {
+      context.getThreadPoolExecutor().execute(() -> {
         log.info("New connection from: {}", client.getRemoteSocketAddress());
         try (Socket clientSocket = client) {
           connections.put(sessionId, client);
@@ -355,17 +355,9 @@ public final class SvnServer extends Thread implements ThreadFactory {
         .listEnd();
   }
 
-  public void startShutdown() throws IOException {
-    if (stopped.compareAndSet(false, true)) {
-      log.info("Shutdown server");
-      serverSocket.close();
-      poolExecutor.shutdown();
-    }
-  }
-
   public void shutdown(long millis) throws Exception {
     startShutdown();
-    if (!poolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
+    if (!context.getThreadPoolExecutor().awaitTermination(millis, TimeUnit.MILLISECONDS)) {
       forceShutdown();
     }
     join(millis);
@@ -373,11 +365,19 @@ public final class SvnServer extends Thread implements ThreadFactory {
     log.info("Server shutdowned");
   }
 
+  public void startShutdown() throws IOException {
+    if (stopped.compareAndSet(false, true)) {
+      log.info("Shutdown server");
+      serverSocket.close();
+      context.getThreadPoolExecutor().shutdown();
+    }
+  }
+
   private void forceShutdown() throws IOException, InterruptedException {
     for (Socket socket : connections.values()) {
       socket.close();
     }
-    poolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
+    context.getThreadPoolExecutor().awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
   }
 
   boolean isCompressionEnabled() {
