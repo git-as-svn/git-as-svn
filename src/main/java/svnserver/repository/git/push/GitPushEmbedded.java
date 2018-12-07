@@ -118,6 +118,10 @@ public final class GitPushEmbedded implements GitPusher {
       context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
 
       final Process process = runner.exec(processBuilder);
+
+      // Prevent hanging if hook tries to read from stdin
+      process.getOutputStream().close();
+
       try {
         final String hookMessage;
         try (Reader stdout = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
