@@ -1,5 +1,9 @@
 # Changes
 
+## 1.7.5
+
+ * Ensure hook stdout is closed when using embedded pusher
+
 ## 1.7.4
 
  * Revert #215, causes tens of thousands of CLOSE_WAIT connections in Jetty
