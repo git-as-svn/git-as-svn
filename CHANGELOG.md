@@ -1,5 +1,10 @@
 # Changes
 
+## 1.7.4
+
+ * Revert #215, causes tens of thousands of CLOSE_WAIT connections in Jetty
+ * Update Jetty to 9.4.14
+
 ## 1.7.3
 
  * Reduce number of threads by using same thread pool for svn:// and http://. #215

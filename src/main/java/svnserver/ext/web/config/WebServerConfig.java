@@ -66,7 +66,7 @@ public final class WebServerConfig implements SharedConfig {
 
   @NotNull
   private Server createJettyServer(@NotNull SharedContext context) {
-    final Server server = new Server(new ExecutorThreadPool(context.getThreadPoolExecutor()));
+    final Server server = new Server();
     for (ListenConfig listenConfig : listen) {
       server.addConnector(listenConfig.createConnector(server));
     }
