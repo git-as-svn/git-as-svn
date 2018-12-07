@@ -119,7 +119,11 @@ public final class GitPushEmbedded implements GitPusher {
 
       final Process process = runner.exec(processBuilder);
       try {
-        final String hookMessage = CharStreams.toString(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+        final String hookMessage;
+        try (Reader stdout = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+          hookMessage = CharStreams.toString(stdout);
+        }
+
         final int exitCode = process.waitFor();
         if (exitCode != 0) {
           throw new SVNException(SVNErrorMessage.create(hookErrorCode, String.format("Hook %s failed with output:\n%s", script.getAbsolutePath(), hookMessage)));
