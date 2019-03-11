@@ -36,10 +36,16 @@ baseUrl = config.get("DEFAULT", "baseUrl")
 
 mode = config.get("DEFAULT", "mode")
 
-userId = os.getenv(config.get("DEFAULT", "variable"))
+userId = None
+
+if mode == "username":
+	userId = os.getlogin()
+elif mode == "external":
+	variable = config.get("DEFAULT", "variable")
+	userId = os.getenv(variable)
+
 if userId is None:
-    mode = "anonymous"
-    userId = ""
+	userId = ""
 
 secretToken = config.get("DEFAULT", "secretToken")
 
