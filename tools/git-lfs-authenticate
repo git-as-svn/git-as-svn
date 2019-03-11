@@ -56,6 +56,6 @@ params = {
 }
 params_encoded = urllib.parse.urlencode(params).encode()
 
-url = "%s/%s/lfs_authenticate" % (baseUrl, args.repository)
+url = urllib.parse.urljoin(baseUrl, args.repository, "lfs_authenticate")
 response = urllib.request.urlopen(url, data=params_encoded)
 sys.stdout.buffer.write(response.read())
