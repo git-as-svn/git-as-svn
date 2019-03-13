@@ -168,16 +168,17 @@ public final class GiteaIntegrationTest {
 
   @NotNull
   private User createUser(@NotNull String username, @NotNull String email, @NotNull String password) throws Exception {
+    // Need to create user using command line because users now default to requiring to change password
+    ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
+    boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
+    String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
+    gitea.execInContainer("gitea", "admin", "create-user", "--name", username,
+      "--password", password, "--email", email,
+      mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
     ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
-    AdminApi adminApi = new AdminApi(apiClient);
+    UserApi userApi = new UserApi(sudo(apiClient, username));
 
-    // Create the user information
-    final CreateUserOption userOption = new CreateUserOption();
-    userOption.setUsername(username);
-    userOption.setFullName(username);
-    userOption.setEmail(email);
-    userOption.setPassword(password);
-    return adminApi.adminCreateUser(userOption);
+    return userApi.userGetCurrent();
   }
 
   private void repoAddCollaborator(@NotNull String owner, @NotNull String repo, @NotNull String collaborator) throws Exception {
