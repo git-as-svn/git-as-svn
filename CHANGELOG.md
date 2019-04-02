@@ -1,5 +1,10 @@
 # Changes
 
+## 1.7.6
+
+ * git-lfs-authenticate no longer silently falls back to anonymous mode if it failed to obtain user token
+ * git-lfs-authenticate now properly handles absolute repository paths
+
 ## 1.7.5
 
  * Ensure hook stdout is closed when using embedded pusher
