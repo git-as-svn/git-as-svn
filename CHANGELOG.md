@@ -1,5 +1,9 @@
 # Changes
 
+## 1.7.6.1
+
+ * Fix broken URL construction in git-lfs-authenticate
+
 ## 1.7.6
 
  * git-lfs-authenticate no longer silently falls back to anonymous mode if it failed to obtain user token
