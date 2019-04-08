@@ -80,6 +80,11 @@ public final class GitLabContext implements Shared {
   }
 
   @NotNull
+  public GitLabToken getToken() {
+    return  config.getToken();
+  }
+
+  @NotNull
   public String getGitLabUrl() {
     return config.getUrl();
   }

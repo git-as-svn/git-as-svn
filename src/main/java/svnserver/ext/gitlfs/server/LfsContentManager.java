@@ -42,47 +42,16 @@ import java.util.Objects;
 public class LfsContentManager implements ContentManager {
   private final int tokenExpireSec;
   private final float tokenEnsureTime;
-
-  @FunctionalInterface
-  public interface Checker {
-    void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
-  }
-
   @NotNull
   private final LocalContext context;
   @NotNull
   private final LfsStorage storage;
 
-  public LfsContentManager(@NotNull LocalContext context, @NotNull LfsStorage storage, int tokenExpireSec, float tokenEnsureTime) {
+  LfsContentManager(@NotNull LocalContext context, @NotNull LfsStorage storage, int tokenExpireSec, float tokenEnsureTime) {
     this.context = context;
     this.storage = storage;
     this.tokenExpireSec = tokenExpireSec;
     this.tokenEnsureTime = tokenEnsureTime;
-  }
-
-  private User getAuthInfo(@NotNull HttpServletRequest request) {
-    final WebServer server = context.getShared().sure(WebServer.class);
-    final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION), Math.round(tokenExpireSec * tokenEnsureTime));
-    return user == null ? User.getAnonymous() : user;
-  }
-
-  public int getTokenExpireSec() {
-    return tokenExpireSec;
-  }
-
-  @NotNull
-  Map<String, String> createHeader(@NotNull HttpServletRequest request, @NotNull User user) throws IOException {
-    final String auth = request.getHeader(Constants.HEADER_AUTHORIZATION);
-    if (auth == null) {
-      return Collections.emptyMap();
-    }
-    if (auth.startsWith(WebServer.AUTH_TOKEN)) {
-      return ImmutableMap.<String, String>builder()
-          .put(Constants.HEADER_AUTHORIZATION, auth)
-          .build();
-    } else {
-      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getExpire(tokenExpireSec));
-    }
   }
 
   @NotNull
@@ -143,7 +112,18 @@ public class LfsContentManager implements ContentManager {
     };
   }
 
-  public User checkAccess(@NotNull HttpServletRequest request, @NotNull Checker checker) throws IOException, UnauthorizedError, ForbiddenError {
+  @Nullable
+  @Override
+  public Meta getMetadata(@NotNull String hash) throws IOException {
+    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+    if (reader == null) {
+      return null;
+    }
+    return new Meta(reader.getOid(true), reader.getSize());
+  }
+
+  @NotNull
+  private User checkAccess(@NotNull HttpServletRequest request, @NotNull Checker checker) throws IOException, UnauthorizedError, ForbiddenError {
     final User user = getAuthInfo(request);
     try {
       checker.check(user, null);
@@ -158,13 +138,30 @@ public class LfsContentManager implements ContentManager {
     return user;
   }
 
-  @Nullable
-  @Override
-  public Meta getMetadata(@NotNull String hash) throws IOException {
-    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
-    if (reader == null) {
-      return null;
+  @NotNull
+  private Map<String, String> createHeader(@NotNull HttpServletRequest request, @NotNull User user) {
+    final String auth = request.getHeader(Constants.HEADER_AUTHORIZATION);
+    if (auth == null) {
+      return Collections.emptyMap();
     }
-    return new Meta(reader.getOid(true), reader.getSize());
+    if (auth.startsWith(WebServer.AUTH_TOKEN)) {
+      return ImmutableMap.<String, String>builder()
+          .put(Constants.HEADER_AUTHORIZATION, auth)
+          .build();
+    } else {
+      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getExpire(tokenExpireSec));
+    }
+  }
+
+  @NotNull
+  private User getAuthInfo(@NotNull HttpServletRequest request) {
+    final WebServer server = context.getShared().sure(WebServer.class);
+    final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION), Math.round(tokenExpireSec * tokenEnsureTime));
+    return user == null ? User.getAnonymous() : user;
+  }
+
+  @FunctionalInterface
+  public interface Checker {
+    void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
   }
 }

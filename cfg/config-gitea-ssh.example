@@ -18,7 +18,7 @@ userDB:
 
 shared:
   # Gitea LFS server - uses the GitLab layout
-  - !lfs
+  - !localLfs
     path: /data/git/lfs
     saveMeta: false
     compress: false

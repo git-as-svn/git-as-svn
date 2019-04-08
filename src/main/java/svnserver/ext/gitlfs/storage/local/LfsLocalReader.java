@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
-import svnserver.ext.gitlfs.config.LfsLayout;
+import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
@@ -38,7 +38,7 @@ public class LfsLocalReader implements LfsReader {
   private final Map<String, String> meta;
 
   @Nullable
-  public static LfsLocalReader create(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
+  public static LfsLocalReader create(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
     final Map<String, String> meta;
     File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
     File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");

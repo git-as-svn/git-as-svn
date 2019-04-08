@@ -8,6 +8,7 @@
 package svnserver.repository.git;
 
 import com.google.common.io.ByteStreams;
+import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -27,10 +28,7 @@ import svnserver.auth.User;
 import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.git.filter.GitFilter;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,18 +46,18 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
   private final GitWriter writer;
   @NotNull
   private final GitEntry entry;
-  @Nullable
+  @NotNull
   private final User user;
-  @Nullable
-  private SVNDeltaProcessor window;
   @Nullable
   private final GitObject<ObjectId> originalId;
   @Nullable
   private final String originalMd5;
   @Nullable
-  private GitObject<ObjectId> objectId;
-  @Nullable
   private final GitFilter oldFilter;
+  @Nullable
+  private SVNDeltaProcessor window;
+  @Nullable
+  private GitObject<ObjectId> objectId;
   @Nullable
   private GitFilter newFilter;
 
@@ -68,7 +66,7 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
   @Nullable
   private String md5;
 
-  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @Nullable User user) throws IOException, SVNException {
+  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @NotNull User user) throws IOException, SVNException {
     this.writer = writer;
     this.entry = entry;
     this.user = user;
@@ -92,6 +90,19 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
   @Override
   public Map<String, String> getProperties() {
     return props;
+  }
+
+  @Override
+  public void validateChecksum(@NotNull String md5) throws SVNException {
+    if (window != null) {
+      if (!md5.equals(this.md5)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
+      }
+    } else if (originalMd5 != null) {
+      if (!originalMd5.equals(md5)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
+      }
+    }
   }
 
   @Nullable GitObject<ObjectId> getOriginalId() {
@@ -150,7 +161,11 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
 
       newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
-      window.applyTextDelta((oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes), newFilter.outputStream(temporaryStream, user), true);
+
+      final InputStream base = (oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes);
+      final OutputStream target = newFilter.outputStream(temporaryStream, user);
+
+      window.applyTextDelta(base, new UncheckedCloseOutputStream(target), true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
@@ -178,19 +193,8 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
       log.info("Created blob {} for file: {}", objectId.getObject().getName(), entry.getFullPath());
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
-    }
-  }
-
-  @Override
-  public void validateChecksum(@NotNull String md5) throws SVNException {
-    if (window != null) {
-      if (!md5.equals(this.md5)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
-      }
-    } else if (originalMd5 != null) {
-      if (!originalMd5.equals(md5)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH));
-      }
+    } catch (RuntimeIOException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e.getCause());
     }
   }
 
@@ -201,5 +205,23 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
     if (oldFilter != null)
       return oldFilter.getName();
     throw new IllegalStateException();
+  }
+
+  /**
+   * Dirty hack to workaround silent ignoring of IOException in {@link SVNDeltaProcessor#textDeltaEnd()}
+   */
+  private static final class UncheckedCloseOutputStream extends FilterOutputStream {
+    private UncheckedCloseOutputStream(@NotNull OutputStream out) {
+      super(out);
+    }
+
+    @Override
+    public void close() throws IOException {
+      try {
+        super.close();
+      } catch (IOException e) {
+        throw new RuntimeIOException(e);
+      }
+    }
   }
 }

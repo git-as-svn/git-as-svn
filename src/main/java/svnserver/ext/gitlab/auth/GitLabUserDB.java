@@ -57,14 +57,6 @@ public final class GitLabUserDB implements UserDB {
   }
 
   @Override
-  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
-    final String externalId = userInfo.getExternalId();
-    if (externalId != null) {
-      env.put("GL_ID", PREFIX_USER + externalId);
-    }
-  }
-
-  @Override
   public User check(@NotNull String userName, @NotNull String password) {
     try {
       final GitlabSession session = context.connect(userName, password);
@@ -125,6 +117,14 @@ public final class GitLabUserDB implements UserDB {
       }
     }
     return null;
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
+    final String externalId = userInfo.getExternalId();
+    if (externalId != null) {
+      env.put("GL_ID", PREFIX_USER + externalId);
+    }
   }
 
   @Nullable

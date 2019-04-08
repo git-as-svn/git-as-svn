@@ -79,7 +79,7 @@ shared:
       # Use X-Forwarded-* headers
       forwarded: true
   # Git LFS server
-  - !lfs
+  - !localLfs
     # Secret token for git-lfs-authenticate script
     # secretToken:
     path: /var/git/lfs

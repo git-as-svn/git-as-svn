@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.mapping;
 
+import com.google.common.hash.Hashing;
 import org.gitlab.api.models.GitlabProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -35,6 +38,10 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 final class GitLabMapping implements VcsRepositoryMapping {
+
+  @NotNull
+  private static final String HASHED_PATH = "@hashed";
+
   @NotNull
   private final NavigableMap<String, GitLabProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -82,7 +89,10 @@ final class GitLabMapping implements VcsRepositoryMapping {
     final GitLabProject oldProject = mapping.get(projectKey);
     if (oldProject == null || oldProject.getProjectId() != project.getId()) {
       final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
-      final File repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
+      final String sha256 = Hashing.sha256().hashString(project.getId().toString(), Charset.defaultCharset()).toString();
+      File repoPath = Paths.get(basePath.toString(), HASHED_PATH, sha256.substring(0, 2), sha256.substring(2, 4), sha256 + ".git").toFile();
+      if (!repoPath.exists())
+        repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
       final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
       local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));
       final VcsRepository repository = config.getTemplate().create(local, repoPath);

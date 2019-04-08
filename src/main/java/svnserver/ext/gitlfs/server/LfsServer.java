@@ -15,12 +15,11 @@ import ru.bozaro.gitlfs.server.PointerServlet;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
 import svnserver.context.Shared;
-import svnserver.ext.gitlfs.config.LfsConfig;
+import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.web.server.WebServer;
 
 import javax.servlet.Servlet;
-import java.text.MessageFormat;
 import java.util.Collection;
 
 /**
@@ -44,7 +43,7 @@ public final class LfsServer implements Shared {
 
   public LfsServer(@NotNull String secretToken, int tokenExpireSec, float tokenEnsureTime) {
     this.secretToken = secretToken;
-    this.tokenExpireSec = tokenExpireSec > 0 ? tokenExpireSec : LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC;
+    this.tokenExpireSec = tokenExpireSec > 0 ? tokenExpireSec : LocalLfsConfig.DEFAULT_TOKEN_EXPIRE_SEC;
     this.tokenEnsureTime = Math.max(0.0f, Math.min(tokenEnsureTime, 1.0f));
   }
 

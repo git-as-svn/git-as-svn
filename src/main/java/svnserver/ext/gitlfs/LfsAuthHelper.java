@@ -18,7 +18,7 @@ import ru.bozaro.gitlfs.server.ServerError;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.SharedContext;
-import svnserver.ext.gitlfs.config.LfsConfig;
+import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.TokenHelper;
 
@@ -34,25 +34,11 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class LfsAuthHelper {
-  public enum AuthMode {
-    Anonymous,
-    Username,
-    External;
-
-    @Nullable
-    public static AuthMode find(@Nullable String value) {
-      for (AuthMode authMode : values())
-        if (authMode.name().toLowerCase(Locale.ENGLISH).equals(value))
-          return authMode;
-      return null;
-    }
-  }
-
   @NotNull
   public static Link createToken(
       @NotNull SharedContext context,
       @NotNull URI baseLfsUrl,
-      @NotNull String userId,
+      @Nullable String userId,
       @NotNull AuthMode authMode,
       int tokenExpireSec,
       float tokenEnsureTime
@@ -62,10 +48,14 @@ public final class LfsAuthHelper {
       final User user;
       if (authMode == AuthMode.Anonymous) {
         user = User.getAnonymous();
-      } else if (authMode == AuthMode.Username) {
-        user = userDB.lookupByUserName(userId);
+      } else if (userId == null) {
+        throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'userId' not specified");
       } else {
-        user = userDB.lookupByExternal(userId);
+        if (authMode == AuthMode.Username) {
+          user = userDB.lookupByUserName(userId);
+        } else {
+          user = userDB.lookupByExternal(userId);
+        }
       }
       if (user == null) {
         //throw new NotFoundException();
@@ -78,11 +68,23 @@ public final class LfsAuthHelper {
   }
 
   @NotNull
-  public static NumericDate getExpire(int tokenExpireSec) {
-    // Calculate expire time and token.
-    NumericDate expireAt = NumericDate.now();
-    expireAt.addSeconds(tokenExpireSec <= 0 ? LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec);
-    return expireAt;
+  private static Link createToken(
+      @NotNull SharedContext context,
+      @NotNull URI baseLfsUrl,
+      @NotNull User user,
+      int tokenExpireSec,
+      float tokenEnsureTime
+  ) {
+    int expireSec = tokenExpireSec <= 0 ? LocalLfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec;
+    int ensureSec = (int) Math.ceil(expireSec * tokenEnsureTime);
+    NumericDate now = NumericDate.now();
+    NumericDate expireAt = NumericDate.fromSeconds(now.getValue() + expireSec);
+    NumericDate ensureAt = NumericDate.fromSeconds(now.getValue() + ensureSec);
+    return new Link(
+        baseLfsUrl,
+        createTokenHeader(context, user, expireAt),
+        new Date(ensureAt.getValueInMillis())
+    );
   }
 
   @NotNull
@@ -97,22 +99,24 @@ public final class LfsAuthHelper {
   }
 
   @NotNull
-  private static Link createToken(
-      @NotNull SharedContext context,
-      @NotNull URI baseLfsUrl,
-      @NotNull User user,
-      int tokenExpireSec,
-      float tokenEnsureTime
-  ) {
-    int expireSec = tokenExpireSec <= 0 ? LfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec;
-    int ensureSec = (int) Math.ceil(expireSec * tokenEnsureTime);
-    NumericDate now = NumericDate.now();
-    NumericDate expireAt = NumericDate.fromSeconds(now.getValue() + expireSec);
-    NumericDate ensureAt = NumericDate.fromSeconds(now.getValue() + ensureSec);
-    return new Link(
-        baseLfsUrl,
-        createTokenHeader(context, user, expireAt),
-        new Date(ensureAt.getValueInMillis())
-    );
+  public static NumericDate getExpire(int tokenExpireSec) {
+    // Calculate expire time and token.
+    NumericDate expireAt = NumericDate.now();
+    expireAt.addSeconds(tokenExpireSec <= 0 ? LocalLfsConfig.DEFAULT_TOKEN_EXPIRE_SEC : tokenExpireSec);
+    return expireAt;
+  }
+
+  public enum AuthMode {
+    Anonymous,
+    Username,
+    External;
+
+    @Nullable
+    public static AuthMode find(@Nullable String value) {
+      for (AuthMode authMode : values())
+        if (authMode.name().toLowerCase(Locale.ENGLISH).equals(value))
+          return authMode;
+      return null;
+    }
   }
 }

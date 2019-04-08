@@ -15,7 +15,7 @@ import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.DateHelper;
 import svnserver.HashHelper;
 import svnserver.auth.User;
-import svnserver.ext.gitlfs.config.LfsLayout;
+import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
 import java.io.File;
@@ -35,7 +35,7 @@ import java.util.zip.GZIPOutputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class LfsLocalWriter extends LfsWriter {
-  private final LfsLayout layout;
+  private final LocalLfsConfig.LfsLayout layout;
   @NotNull
   private final File dataRoot;
   @Nullable
@@ -56,7 +56,7 @@ public class LfsLocalWriter extends LfsWriter {
   private final MessageDigest digestSha;
   private long size;
 
-  public LfsLocalWriter(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress, @Nullable User user) throws IOException {
+  public LfsLocalWriter(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress, @Nullable User user) throws IOException {
     this.layout = layout;
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;

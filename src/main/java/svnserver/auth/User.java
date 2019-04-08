@@ -32,10 +32,6 @@ public final class User {
   @Nullable
   private final String externalId;
 
-  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
-    return new User(userName, realName, email, externalId, false);
-  }
-
   protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous) {
     this.userName = userName;
     this.realName = realName;
@@ -44,24 +40,18 @@ public final class User {
     this.isAnonymous = isAnonymous;
   }
 
+  @NotNull
+  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
+    return new User(userName, realName, email, externalId, false);
+  }
+
+  public static User getAnonymous() {
+    return anonymousUser;
+  }
+
   @Nullable
   public String getExternalId() {
     return externalId;
-  }
-
-  @NotNull
-  public String getUserName() {
-    return userName;
-  }
-
-  @NotNull
-  public String getRealName() {
-    return realName;
-  }
-
-  @Nullable
-  public String getEmail() {
-    return email;
   }
 
   public boolean isAnonymous() {
@@ -81,9 +71,27 @@ public final class User {
     env.put("GAS_LOGIN", getUserName());
   }
 
-  @Override
-  public String toString() {
+  @Nullable
+  public String getEmail() {
+    return email;
+  }
+
+  @NotNull
+  public String getRealName() {
+    return realName;
+  }
+
+  @NotNull
+  public String getUserName() {
     return userName;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = userName.hashCode();
+    result = 31 * result + realName.hashCode();
+    result = 31 * result + (email != null ? email.hashCode() : 0);
+    return result;
   }
 
   @Override
@@ -101,14 +109,7 @@ public final class User {
   }
 
   @Override
-  public int hashCode() {
-    int result = userName.hashCode();
-    result = 31 * result + realName.hashCode();
-    result = 31 * result + (email != null ? email.hashCode() : 0);
-    return result;
-  }
-
-  public static User getAnonymous() {
-    return anonymousUser;
+  public String toString() {
+    return userName;
   }
 }
