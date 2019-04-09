@@ -22,7 +22,7 @@ shared:
   #  * detecticting add/remove repositories via GitLab System Hook
   #  * git-lfs-authenticate script (optionaly)
   - !web
-    baseUrl: http://git-as-svn.local/
+    # baseUrl: http://git-as-svn.local/
     listen:
     - !http
       host: localhost
