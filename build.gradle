@@ -9,9 +9,6 @@ buildscript {
     maven {
       url "https://repo.spring.io/plugins-release"
     }
-    maven {
-      url "https://oss.sonatype.org/content/repositories/snapshots"
-    }
     jcenter()
   }
 
@@ -19,7 +16,7 @@ buildscript {
     classpath "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
     classpath "org.ajoberstar:gradle-git:1.7.2"
     classpath "io.spring.gradle:docbook-reference-plugin:0.3.1"
-    classpath "com.github.ben-manes:gradle-versions-plugin:0.20.0"
+    classpath "com.github.ben-manes:gradle-versions-plugin:0.21.0"
   }
 }
 
@@ -32,7 +29,7 @@ allprojects {
     mavenLocal()
     mavenCentral()
     maven {
-      url "https://oss.sonatype.org/content/repositories/snapshots"
+      url "https://repository.mulesoft.org/nexus/content/repositories/public"
     }
   }
 }
@@ -71,9 +68,9 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
   }
 
   dependencies {
-    compile "org.jetbrains:annotations:16.0.3"
-    compile "org.atteo.classindex:classindex:3.4"
-    compile "org.slf4j:slf4j-api:1.7.25"
+    compile "org.jetbrains:annotations:17.0.0"
+    compile "org.atteo.classindex:classindex:3.6"
+    compile "org.slf4j:slf4j-api:1.7.26"
 
     testCompile "org.testng:testng:6.14.3"
   }
@@ -95,26 +92,26 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 }
 
 dependencies {
-  compile "org.eclipse.jgit:org.eclipse.jgit:5.1.2.201810061102-r"
-  compile "org.tmatesoft.svnkit:svnkit:1.9.3"
-  compile "org.yaml:snakeyaml:1.23"
+  compile "org.eclipse.jgit:org.eclipse.jgit:5.3.0.201903130848-r"
+  compile "org.tmatesoft.svnkit:svnkit:1.10.0"
+  compile "org.yaml:snakeyaml:1.24"
   compile "com.beust:jcommander:1.72"
   compile "org.ini4j:ini4j:0.5.4"
   compile "org.mapdb:mapdb:3.0.7"
-  compile "com.unboundid:unboundid-ldapsdk:4.0.8"
-  compile "org.eclipse.jetty:jetty-server:9.4.14.v20181114"
-  compile "org.eclipse.jetty:jetty-servlet:9.4.14.v20181114"
+  compile "com.unboundid:unboundid-ldapsdk:4.0.10"
+  compile "org.eclipse.jetty:jetty-server:9.4.15.v20190215"
+  compile "org.eclipse.jetty:jetty-servlet:9.4.15.v20190215"
   compile "org.gitlab:java-gitlab-api:4.1.0"
-  compile "org.bitbucket.b_c:jose4j:0.6.4"
-  compile "com.github.zeripath:java-gitea-api:1.7.0-SNAPSHOT"
+  compile "org.bitbucket.b_c:jose4j:0.6.5"
+  compile "com.github.zeripath:java-gitea-api:1.7.4"
 
   compile "ru.bozaro.gitlfs:gitlfs-pointer:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
   compile "ru.bozaro.gitlfs:gitlfs-server:0.11.1"
-  compile "com.google.oauth-client:google-oauth-client:1.25.0"
-  compile "com.google.http-client:google-http-client-jackson2:1.25.0"
+  compile "com.google.oauth-client:google-oauth-client:1.28.0"
+  compile "com.google.http-client:google-http-client-jackson2:1.29.0"
 
-  runtime "org.apache.logging.log4j:log4j-slf4j18-impl:2.11.1"
+  runtime "org.apache.logging.log4j:log4j-slf4j18-impl:2.11.2"
 
   testCompile("org.testcontainers:testcontainers:1.11.1")
 }
