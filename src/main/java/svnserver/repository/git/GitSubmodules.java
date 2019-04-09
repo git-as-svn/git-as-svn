@@ -52,11 +52,10 @@ public final class GitSubmodules implements Shared {
   }
 
   @Nullable GitObject<RevCommit> findCommit(@NotNull ObjectId objectId) throws IOException {
-    for (Repository repo : repositories) {
-      if (repo.hasObject(objectId)) {
+    for (Repository repo : repositories)
+      if (repo.getObjectDatabase().has(objectId))
         return new GitObject<>(repo, new RevWalk(repo).parseCommit(objectId));
-      }
-    }
+
     return null;
   }
 
