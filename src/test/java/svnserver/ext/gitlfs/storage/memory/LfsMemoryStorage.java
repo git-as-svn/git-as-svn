@@ -16,7 +16,6 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -24,13 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsMemoryStorage implements LfsStorage {
+public final class LfsMemoryStorage implements LfsStorage {
   @NotNull
   private final ConcurrentHashMap<String, byte[]> storage = new ConcurrentHashMap<>();
 
   @Nullable
   @Override
-  public LfsReader getReader(@NotNull String oid) throws IOException {
+  public LfsReader getReader(@NotNull String oid) {
     final byte[] content = storage.get(oid);
     if (content == null) {
       return null;
@@ -40,7 +39,7 @@ public class LfsMemoryStorage implements LfsStorage {
 
   @NotNull
   @Override
-  public LfsWriter getWriter(@Nullable User user) throws IOException {
+  public LfsWriter getWriter(@NotNull User user) {
     return new LfsMemoryWriter(storage);
   }
 

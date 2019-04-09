@@ -33,6 +33,7 @@ import java.util.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SessionContext {
+
   @NotNull
   private final SvnServerParser parser;
   @NotNull
@@ -67,28 +68,13 @@ public final class SessionContext {
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
   }
 
-  public boolean isCompressionEnabled() {
-    return server.isCompressionEnabled() && hasCapability("svndiff1");
-  }
-
-  public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
-    if (!user.isAnonymous()) {
-      throw new IllegalStateException();
-    }
-    this.user = server.authenticate(parser, writer, repositoryInfo, allowAnonymous);
-  }
-
-  public boolean hasCapability(@NotNull String capability) {
-    return capabilities.contains(capability);
+  @NotNull
+  public VcsRepository getRepository() {
+    return repositoryInfo.getRepository();
   }
 
   public void setParent(@NotNull SVNURL url) throws SVNException {
     this.parent = getRepositoryPath(url);
-  }
-
-  @NotNull
-  public String getRepositoryPath(@NotNull String localPath) throws SVNException {
-    return StringHelper.joinPath(parent, localPath);
   }
 
   @NotNull
@@ -108,14 +94,29 @@ public final class SessionContext {
     return StringHelper.normalize(path.substring(root.length()));
   }
 
+  public boolean isCompressionEnabled() {
+    return server.isCompressionEnabled() && hasCapability("svndiff1");
+  }
+
+  public boolean hasCapability(@NotNull String capability) {
+    return capabilities.contains(capability);
+  }
+
+  public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
+    if (!user.isAnonymous()) {
+      throw new IllegalStateException();
+    }
+    this.user = server.authenticate(parser, writer, repositoryInfo, allowAnonymous);
+  }
+
   @NotNull
   public User getUser() {
     return user;
   }
 
   @NotNull
-  public VcsRepository getRepository() {
-    return repositoryInfo.getRepository();
+  public RepositoryInfo getRepositoryInfo() {
+    return repositoryInfo;
   }
 
   @NotNull
@@ -148,6 +149,11 @@ public final class SessionContext {
   @Nullable
   public VcsFile getFile(int rev, @NotNull String path) throws SVNException, IOException {
     return getRepository().getRevisionInfo(rev).getFile(getRepositoryPath(path));
+  }
+
+  @NotNull
+  public String getRepositoryPath(@NotNull String localPath) {
+    return StringHelper.joinPath(parent, localPath);
   }
 
   @Nullable

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svnserver.auth.User;
-import svnserver.ext.gitlfs.config.LfsLayout;
+import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
@@ -25,7 +25,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsLocalStorage implements LfsStorage {
+public final class LfsLocalStorage implements LfsStorage {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(LfsLocalStorage.class);
 
@@ -41,14 +41,14 @@ public class LfsLocalStorage implements LfsStorage {
   public static final String META_REAL_NAME = "author-name";
 
   @NotNull
-  private final LfsLayout layout;
+  private final LocalLfsConfig.LfsLayout layout;
   @NotNull
   private final File dataRoot;
   @Nullable
   private final File metaRoot;
   private final boolean compress;
 
-  public LfsLocalStorage(@NotNull LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress) {
+  public LfsLocalStorage(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress) {
     this.layout = layout;
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;
@@ -66,12 +66,12 @@ public class LfsLocalStorage implements LfsStorage {
 
   @NotNull
   @Override
-  public LfsWriter getWriter(@Nullable User user) throws IOException {
+  public LfsWriter getWriter(@NotNull User user) throws IOException {
     return new LfsLocalWriter(layout, dataRoot, metaRoot, compress, user);
   }
 
   @Nullable
-  static File getPath(@NotNull LfsLayout layout, @NotNull File root, @NotNull String oid, @NotNull String suffix) {
+  static File getPath(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File root, @NotNull String oid, @NotNull String suffix) {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
     return new File(root, layout.getPath(oid.substring(offset)) + suffix);

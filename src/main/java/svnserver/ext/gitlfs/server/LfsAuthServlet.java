@@ -78,7 +78,7 @@ final class LfsAuthServlet extends HttpServlet {
       @Nullable String secretToken,
       @Nullable String userId,
       @Nullable String mode
-      ) throws ServerError {
+  ) throws ServerError {
     // Check secretToken
     if (StringUtils.isEmptyOrNull(secretToken))
       throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter \"secretToken\" not specified");
@@ -88,10 +88,7 @@ final class LfsAuthServlet extends HttpServlet {
 
     final LfsAuthHelper.AuthMode authMode = LfsAuthHelper.AuthMode.find(mode);
     if (authMode == null)
-      throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode");
-
-    if (userId == null)
-      throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, "Parameter \"mode\" not specified");
+      throw new ServerError(HttpServletResponse.SC_BAD_REQUEST, String.format("Unsupported mode: %s", mode));
 
     return LfsAuthHelper.createToken(context.getShared(), uri != null ? uri : getWebServer().getUrl(req).resolve(baseLfsUrl), userId, authMode, tokenExpireSec, tokenExpireTime);
   }
@@ -106,12 +103,6 @@ final class LfsAuthServlet extends HttpServlet {
   @Nullable
   private static String getStringParam(@NotNull HttpServletRequest req, @NotNull String name) {
     return req.getParameter(name);
-  }
-
-  private static boolean getBoolParam(@NotNull HttpServletRequest req, @NotNull String name, boolean defaultValue) {
-    final String value = getStringParam(req, name);
-    if (value == null) return defaultValue;
-    return !(value.equals("0") || value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no"));
   }
 
   @NotNull

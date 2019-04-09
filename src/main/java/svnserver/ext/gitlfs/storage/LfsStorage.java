@@ -40,5 +40,5 @@ public interface LfsStorage extends Local {
    * @throws IOException
    */
   @NotNull
-  LfsWriter getWriter(@Nullable User user) throws IOException;
+  LfsWriter getWriter(@NotNull User user) throws IOException;
 }

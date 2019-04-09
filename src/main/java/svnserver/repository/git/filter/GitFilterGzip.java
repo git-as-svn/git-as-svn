@@ -63,7 +63,7 @@ public class GitFilterGzip implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException {
+  public OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException {
     return new GZIPOutputStream(stream);
   }
 }

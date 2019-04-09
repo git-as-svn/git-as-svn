@@ -25,7 +25,7 @@ import java.io.InputStream;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsHttpReader implements LfsReader {
+public final class LfsHttpReader implements LfsReader {
   @NotNull
   private final LfsHttpStorage owner;
   @NotNull
@@ -33,7 +33,7 @@ public class LfsHttpReader implements LfsReader {
   @NotNull
   private Links links;
 
-  public LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta, @NotNull Links links) throws IOException {
+  public LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta, @NotNull Links links) {
     this.owner = owner;
     this.links = links;
     this.meta = meta;
@@ -58,7 +58,7 @@ public class LfsHttpReader implements LfsReader {
 
   @Nullable
   @Override
-  public InputStream openGzipStream() throws IOException {
+  public InputStream openGzipStream() {
     return null;
   }
 

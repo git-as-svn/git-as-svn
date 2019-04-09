@@ -178,14 +178,8 @@ shared:
       port: 8123
       # Use X-Forwarded-* headers
       forwarded: true
-  # GitLab LFS server
-  - !lfs
-    # Secret token for git-lfs-authenticate script
-    # secretToken:
-    path: /mnt/storage/lfs-objects
-    saveMeta: false
-    compress: false
-    layout: GitLab
+  # GitLab LFS Client
+  - !gitlabLfs {}
   # GitLab server
   - !gitlab
     url: http://localhost:3000/
@@ -413,14 +407,8 @@ shared:
       port: 8123
       # Use X-Forwarded-* headers
       forwarded: true
-  # GitLab LFS server
-  - !lfs
-    # Secret token for git-lfs-authenticate script
-    # secretToken:
-    path: /mnt/storage/lfs-objects
-    saveMeta: false
-    compress: false
-    layout: GitLab
+  # GitLab LFS Client
+  - !gitlabLfs {}
   # GitLab server
   - !gitlab
     url: http://localhost:3000/
@@ -500,7 +488,7 @@ userDB:
 
 shared:
   # Gitea LFS server - uses the GitLab layout
-  - !lfs
+  - !localLfs
     path: /data/git/lfs
     saveMeta: false
     compress: false

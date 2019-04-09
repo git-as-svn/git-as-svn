@@ -67,7 +67,7 @@ public class GitFilterLink implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) {
+  public OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) {
     return new OutputWrapper(stream);
   }
 

@@ -57,7 +57,7 @@ public final class GitFilterDeny implements GitFilter {
 
   @NotNull
   @Override
-  public OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException {
+  public OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException, SVNException {
     throw new SvnForbiddenException();
   }
 }

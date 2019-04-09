@@ -54,8 +54,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class SvnServer extends Thread {
   @NotNull
-  private static AtomicInteger threadNumber = new AtomicInteger(1);
-  @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
   @NotNull
@@ -69,7 +67,8 @@ public final class SvnServer extends Thread {
       SVNErrorCode.IO_WRITE_ERROR,
       SVNErrorCode.IO_PIPE_READ_ERROR
   )));
-
+  @NotNull
+  private static AtomicInteger threadNumber = new AtomicInteger(1);
   @NotNull
   private final Map<String, BaseCmd<?>> commands = new HashMap<>();
   @NotNull
@@ -232,12 +231,6 @@ public final class SvnServer extends Thread {
     }
   }
 
-  private static <T> void processCommand(@NotNull SessionContext context, @NotNull BaseCmd<T> cmd, @NotNull SvnServerParser parser) throws IOException, SVNException {
-    final T param = MessageParser.parse(cmd.getArguments(), parser);
-    parser.readToken(ListEndToken.class);
-    cmd.process(context, param);
-  }
-
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
     // Анонсируем поддерживаемые функции.
     writer
@@ -274,6 +267,35 @@ public final class SvnServer extends Thread {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.VERSION_MISMATCH, "Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)"));
     }
     return clientInfo;
+  }
+
+  private boolean hasAnonymousAuthenticator(RepositoryInfo repositoryInfo) throws IOException {
+    try {
+      repositoryInfo.getRepository().getContext().sure(VcsAccess.class).checkRead(User.getAnonymous(), null);
+      return true;
+    } catch (SVNException e) {
+      return false;
+    }
+  }
+
+  private void sendAnnounce(@NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException {
+    writer
+        .listBegin()
+        .word("success")
+        .listBegin()
+        .string(repositoryInfo.getRepository().getUuid())
+        .string(repositoryInfo.getBaseUrl().toString())
+        .listBegin()
+        //.word("mergeinfo")
+        .listEnd()
+        .listEnd()
+        .listEnd();
+  }
+
+  private static <T> void processCommand(@NotNull SessionContext context, @NotNull BaseCmd<T> cmd, @NotNull SvnServerParser parser) throws IOException, SVNException {
+    final T param = MessageParser.parse(cmd.getArguments(), parser);
+    parser.readToken(ListEndToken.class);
+    cmd.process(context, param);
   }
 
   @NotNull
@@ -319,29 +341,6 @@ public final class SvnServer extends Thread {
       log.info("User: {}", user);
       return user;
     }
-  }
-
-  private boolean hasAnonymousAuthenticator(RepositoryInfo repositoryInfo) throws IOException {
-    try {
-      repositoryInfo.getRepository().getContext().sure(VcsAccess.class).checkRead(User.getAnonymous(), null);
-      return true;
-    } catch (SVNException e) {
-      return false;
-    }
-  }
-
-  private void sendAnnounce(@NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException {
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .string(repositoryInfo.getRepository().getUuid())
-        .string(repositoryInfo.getBaseUrl().toString())
-        .listBegin()
-        //.word("mergeinfo")
-        .listEnd()
-        .listEnd()
-        .listEnd();
   }
 
   private static void sendError(SvnServerWriter writer, String msg) throws IOException {

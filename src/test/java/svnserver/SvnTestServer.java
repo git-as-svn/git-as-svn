@@ -60,9 +60,9 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public static final String PASSWORD = "passw0rd";
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SvnTestServer.class);
+  public static final String USER_NAME = "tester";
   @NotNull
-  private static final String USER_NAME = "tester";
+  private static final Logger log = LoggerFactory.getLogger(SvnTestServer.class);
   @NotNull
   private static final String REAL_NAME = "Test User";
   @NotNull
@@ -94,6 +94,7 @@ public final class SvnTestServer implements SvnTester {
                         @Nullable UserDBConfig userDBConfig,
                         @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator,
                         boolean anonymousRead,
+                        boolean withLfs,
                         @NotNull SharedConfig... shared) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
@@ -133,7 +134,10 @@ public final class SvnTestServer implements SvnTester {
     }
 
     Collections.addAll(config.getShared(), shared);
-    config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
+
+    if (withLfs) {
+      config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
+    }
 
     server = new SvnServer(tempDirectory, config);
     server.start();
@@ -187,22 +191,27 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
-    return createEmpty(null, false);
+    return createEmpty(null, false, true);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, boolean withLfs, @NotNull SharedConfig... shared) throws Exception {
+    return createEmpty(userDBConfig, null, anonymousRead, withLfs, shared);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, boolean withLfs, @NotNull SharedConfig... shared) throws Exception {
+    return new SvnTestServer(TestHelper.emptyRepository(), "master", "", false, userDBConfig, mappingConfigCreator, anonymousRead, withLfs, shared);
   }
 
   @NotNull
   public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
-    return createEmpty(userDBConfig, null, anonymousRead, shared);
-  }
-
-  @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
-    return new SvnTestServer(TestHelper.emptyRepository(), "master", "", false, userDBConfig, mappingConfigCreator, anonymousRead, shared);
+    return createEmpty(userDBConfig, null, anonymousRead, true, shared);
   }
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "master", true, null, null, true);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "master", true, null, null, true, true);
   }
 
   @NotNull

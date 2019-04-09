@@ -26,8 +26,8 @@ import java.io.File;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-@ConfigType("lfs")
-public final class LfsConfig implements SharedConfig, LfsStorageFactory {
+@ConfigType("localLfs")
+public final class LocalLfsConfig implements SharedConfig, LfsStorageFactory {
   // Default client token expiration time.
   public static final int DEFAULT_TOKEN_EXPIRE_SEC = 3600;
   // Allow batch API request only if token is not expired in token ensure time (part of tokenExpireTime).
@@ -54,11 +54,38 @@ public final class LfsConfig implements SharedConfig, LfsStorageFactory {
   public LfsStorage createStorage(@NotNull LocalContext context) {
     File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
     File metaRoot = saveMeta ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
-    return new LfsLocalStorage(getLayout(), dataRoot, metaRoot, compress);
+    return new LfsLocalStorage(layout, dataRoot, metaRoot, compress);
   }
 
-  @NotNull
-  public LfsLayout getLayout() {
-    return layout;
+  /**
+   * Git LFS file layout.
+   *
+   * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+   */
+  public enum LfsLayout {
+    OneLevel {
+      @NotNull
+      @Override
+      public String getPath(@NotNull String oid) {
+        return oid.substring(0, 2) + "/" + oid;
+      }
+    },
+    TwoLevels {
+      @NotNull
+      @Override
+      public String getPath(@NotNull String oid) {
+        return oid.substring(0, 2) + "/" + oid.substring(2, 4) + "/" + oid;
+      }
+    },
+    GitLab {
+      @NotNull
+      @Override
+      public String getPath(@NotNull String oid) {
+        return oid.substring(0, 2) + "/" + oid.substring(2, 4) + "/" + oid.substring(4);
+      }
+    };
+
+    @NotNull
+    public abstract String getPath(@NotNull String oid);
   }
 }

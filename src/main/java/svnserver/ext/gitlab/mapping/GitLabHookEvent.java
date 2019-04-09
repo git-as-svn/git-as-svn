@@ -24,6 +24,8 @@ import java.io.Reader;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GitLabHookEvent {
+  @NotNull
+  private static final ObjectMapper mapper = new ObjectMapper();
   @JsonProperty("event_name")
   private String eventName;
   @JsonProperty("path_with_namespace")
@@ -45,7 +47,6 @@ public class GitLabHookEvent {
 
   @NotNull
   public static GitLabHookEvent parseEvent(@NotNull Reader reader) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
     return mapper.readValue(reader, GitLabHookEvent.class);
   }
 }

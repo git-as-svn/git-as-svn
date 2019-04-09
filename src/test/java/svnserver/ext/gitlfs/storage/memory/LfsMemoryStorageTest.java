@@ -10,6 +10,7 @@ package svnserver.ext.gitlfs.storage.memory;
 import com.google.common.io.CharStreams;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 
@@ -31,7 +32,7 @@ public class LfsMemoryStorageTest {
     Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
     // Write new file
-    try (final LfsWriter writer = storage.getWriter(null)) {
+    try (final LfsWriter writer = storage.getWriter(User.getAnonymous())) {
       writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
     }
@@ -54,13 +55,13 @@ public class LfsMemoryStorageTest {
     Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
     // Write new file
-    try (final LfsWriter writer = storage.getWriter(null)) {
+    try (final LfsWriter writer = storage.getWriter(User.getAnonymous())) {
       writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
     }
 
     // Write new file
-    try (final LfsWriter writer = storage.getWriter(null)) {
+    try (final LfsWriter writer = storage.getWriter(User.getAnonymous())) {
       writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
     }

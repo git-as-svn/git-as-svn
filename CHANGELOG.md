@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+ * !lfs renamed to !localLfs in git-as-svn.conf
+ * Experimental support for GitLab LFS. #175, #212, #213.
+
 ## 1.7.6.1
 
  * Fix broken URL construction in git-lfs-authenticate

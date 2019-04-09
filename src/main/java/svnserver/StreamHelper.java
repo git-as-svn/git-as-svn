@@ -18,7 +18,6 @@ import java.io.InputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class StreamHelper {
-  private static final int BUFFER_SIZE = 32 * 1024;
 
   private StreamHelper() {
   }

@@ -10,7 +10,6 @@ package svnserver.repository.git.filter;
 import org.atteo.classindex.IndexSubclasses;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.repository.git.GitObject;
@@ -28,23 +27,23 @@ import java.io.OutputStream;
 @IndexSubclasses
 public interface GitFilter {
   /**
-   * Filter name.
-   *
-   * @return Filter name.
-   */
-  @NotNull
-  String getName();
-
-  /**
    * Get object content hash.
    *
    * @param objectId Object reference.
    * @return Object content hash.
    */
   @NotNull
-  default String getContentHash(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  default String getContentHash(@NotNull GitObject<? extends ObjectId> objectId) {
     return getName() + " " + objectId.getObject().getName();
   }
+
+  /**
+   * Filter name.
+   *
+   * @return Filter name.
+   */
+  @NotNull
+  String getName();
 
   /**
    * Get object md5 sum.
@@ -80,5 +79,5 @@ public interface GitFilter {
    * @return Return output stream for writing original file data.
    */
   @NotNull
-  OutputStream outputStream(@NotNull OutputStream stream, @Nullable User user) throws IOException, SVNException;
+  OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException, SVNException;
 }

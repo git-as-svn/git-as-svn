@@ -24,7 +24,7 @@ import java.security.MessageDigest;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsHttpWriter extends LfsWriter {
+public final class LfsHttpWriter extends LfsWriter {
   @NotNull
   private final LfsHttpStorage owner;
   @NotNull
@@ -34,7 +34,7 @@ public class LfsHttpWriter extends LfsWriter {
   @NotNull
   private final MessageDigest digestSha;
 
-  public LfsHttpWriter(@NotNull LfsHttpStorage owner, @NotNull User user) {
+  LfsHttpWriter(@NotNull LfsHttpStorage owner, @NotNull User user) {
     this.owner = owner;
     this.user = user;
     this.digestSha = HashHelper.sha256();

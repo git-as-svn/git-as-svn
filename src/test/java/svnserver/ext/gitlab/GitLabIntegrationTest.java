@@ -12,6 +12,7 @@ import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.Assert;
@@ -24,18 +25,24 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import svnserver.StreamHelper;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
+import svnserver.auth.User;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
 import svnserver.ext.gitlab.config.GitLabConfig;
 import svnserver.ext.gitlab.config.GitLabContext;
+import svnserver.ext.gitlab.config.GitLabLfsConfig;
 import svnserver.ext.gitlab.config.GitLabToken;
 import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
+import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -75,15 +82,25 @@ public final class GitLabIntegrationTest {
       gitlabVersion = "latest";
     }
 
-    final int gitlabPort = 80;
+    final int hostGitLabPort = 9999;
+    // This is supposed to be 80, but GitLab binds to port from external_url
+    // See https://stackoverflow.com/questions/39351563/gitlab-docker-not-working-if-external-url-is-set
+    final int containerGitLabPort = 9999;
 
-    gitlab = new GenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
+    gitlab = new FixedHostPortGenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
+        // We have a chicken-and-egg problem here. In order to set external_url, we need to know container address,
+        // but we do not know container address until container is started.
+        // So, for now use fixed port :(
+        .withFixedExposedPort(hostGitLabPort, containerGitLabPort)
+        // This is kinda stupid that we need to do withExposedPorts even when we have withFixedExposedPort
+        .withExposedPorts(containerGitLabPort)
+        .withEnv("GITLAB_OMNIBUS_CONFIG", String.format("external_url 'http://localhost:%s/'", hostGitLabPort))
         .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
-        .withExposedPorts(gitlabPort)
         .waitingFor(Wait.forHttp("/users/sign_in")
             .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
+
     gitlab.start();
-    gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(gitlabPort);
+    gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(containerGitLabPort);
 
     rootToken = createToken(root, rootPassword, true);
 
@@ -141,7 +158,7 @@ public final class GitLabIntegrationTest {
   @NotNull
   private SvnTestServer createServer(@NotNull GitLabToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GitLabConfig gitLabConfig = new GitLabConfig(gitlabUrl, token);
-    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, gitLabConfig);
+    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, false, gitLabConfig, new GitLabLfsConfig());
   }
 
   @Test
@@ -164,6 +181,27 @@ public final class GitLabIntegrationTest {
   @NotNull
   private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull GitlabProject gitlabProject, @NotNull String username, @NotNull String password) throws SVNException {
     return SvnTestServer.openSvnRepository(server.getUrl().appendPath(gitlabProject.getPathWithNamespace(), false), username, password);
+  }
+
+  @Test
+  void uploadToLfs() throws Exception {
+    final GitLabLfsStorage storage = new GitLabLfsStorage(gitlabUrl + "/" + gitlabProject.getPathWithNamespace(), root, rootPassword);
+    final String expected = "hello 12345";
+
+    final String oid;
+    try (LfsWriter writer = storage.getWriter(User.create(root, root, root, root))) {
+      writer.write(expected.getBytes(StandardCharsets.UTF_8));
+      oid = writer.finish(null);
+    }
+
+    final byte[] buff = new byte[10240];
+    final int length;
+    try (@NotNull InputStream reader = storage.getReader(oid).openStream()) {
+      length = StreamHelper.readFully(reader, buff, 0, buff.length);
+    }
+
+    final String actual = new String(buff, 0, length, StandardCharsets.UTF_8);
+    Assert.assertEquals(actual, expected);
   }
 
   @Test
