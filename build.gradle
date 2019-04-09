@@ -96,7 +96,7 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 
 dependencies {
   compile "org.eclipse.jgit:org.eclipse.jgit:5.1.2.201810061102-r"
-  compile "org.tmatesoft.svnkit:svnkit:1.10.0"
+  compile "org.tmatesoft.svnkit:svnkit:1.9.3"
   compile "org.yaml:snakeyaml:1.23"
   compile "com.beust:jcommander:1.72"
   compile "org.ini4j:ini4j:0.5.4"
