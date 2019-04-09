@@ -1,6 +1,6 @@
 # Changes
 
-## 1.8
+## 1.8.0
 
  * `!lfs` renamed to `!localLfs` in git-as-svn.conf
  * Experimental support for GitLab LFS (`!gitlabLfs`). #175, #212, #213.
