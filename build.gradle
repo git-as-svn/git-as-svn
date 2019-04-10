@@ -77,7 +77,7 @@ configure(allprojects.findAll { !it.path.startsWith(":docbook") }) {
 
   test {
     useTestNG()
-    maxHeapSize = "384m"
+    maxHeapSize = "256m"
 
     testLogging {
       exceptionFormat = 'full'

@@ -31,6 +31,9 @@ addons:
     - debhelper
     - gnome-doc-utils
 
+before_script:
+  - export JAVA_OPTS=-Xmx256m
+
 jobs:
   include:
     # Gitlab
