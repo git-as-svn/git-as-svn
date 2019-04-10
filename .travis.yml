@@ -35,6 +35,9 @@ jobs:
   include:
     # Gitlab
     - stage: test
+      env: GITLAB_VERSION=latest
+      jdk: oraclejdk8
+    - stage: test
       env: GITLAB_VERSION=11.0.3-ce.0 # Gitlab >= 11.0 no longer has API v3 (issue #176)
       jdk: oraclejdk8
     - stage: test
