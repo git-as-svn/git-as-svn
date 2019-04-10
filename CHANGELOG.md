@@ -1,5 +1,9 @@
 # Changes
 
+## 1.8.1
+
+ * Update dependencies: jgit-5.3.0, svnkit-1.10.0, jetty-9.4.15, java-gitea-api-1.7.4, unboundid-ldapsdk-4.0.10 and others
+
 ## 1.8.0
 
  * `!lfs` renamed to `!localLfs` in git-as-svn.conf
