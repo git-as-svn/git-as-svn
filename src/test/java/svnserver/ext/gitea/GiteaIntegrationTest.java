@@ -8,7 +8,6 @@
 package svnserver.ext.gitea;
 
 import io.gitea.ApiClient;
-import io.gitea.api.AdminApi;
 import io.gitea.api.RepositoryApi;
 import io.gitea.api.UserApi;
 import io.gitea.auth.ApiKeyAuth;
@@ -99,16 +98,16 @@ public final class GiteaIntegrationTest {
     gitea.start();
     gitea.followOutput(logConsumer);
 
-    giteaUrl = "http://" + gitea.getContainerIpAddress() + ":" + gitea.getMappedPort(giteaPort) + "/";
-    giteaApiUrl = giteaUrl + "api/v1";
+    giteaUrl = "http://" + gitea.getContainerIpAddress() + ":" + gitea.getMappedPort(giteaPort);
+    giteaApiUrl = giteaUrl + "/api/v1";
 
     ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
-    boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
+    boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
     String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     {
       ExecResult result = gitea.execInContainer("gitea", "admin", "create-user", "--name", administrator,
-        "--password", administratorPassword, "--email", "administrator@example.com", "--admin",
-        mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
+          "--password", administratorPassword, "--email", "administrator@example.com", "--admin",
+          mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
       System.out.println(result.getStdout());
       System.err.println(result.getStderr());
     }
@@ -170,11 +169,11 @@ public final class GiteaIntegrationTest {
   private User createUser(@NotNull String username, @NotNull String email, @NotNull String password) throws Exception {
     // Need to create user using command line because users now default to requiring to change password
     ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
-    boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
+    boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
     String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     gitea.execInContainer("gitea", "admin", "create-user", "--name", username,
-      "--password", password, "--email", email,
-      mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
+        "--password", password, "--email", email,
+        mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
     ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
     UserApi userApi = new UserApi(sudo(apiClient, username));
 

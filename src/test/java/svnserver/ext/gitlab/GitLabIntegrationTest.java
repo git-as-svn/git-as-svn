@@ -12,7 +12,6 @@ import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.Assert;
@@ -64,6 +63,7 @@ public final class GitLabIntegrationTest {
   @NotNull
   private static final String userPassword = "git-as-svn";
 
+  private GenericContainer<?> dnsProxy;
   private GenericContainer<?> gitlab;
   private String gitlabUrl;
   private GitLabToken rootToken;
@@ -82,25 +82,27 @@ public final class GitLabIntegrationTest {
       gitlabVersion = "latest";
     }
 
-    final int hostGitLabPort = 9999;
-    // This is supposed to be 80, but GitLab binds to port from external_url
-    // See https://stackoverflow.com/questions/39351563/gitlab-docker-not-working-if-external-url-is-set
-    final int containerGitLabPort = 9999;
+    // 1. Docker uses short container id as a hostname
+    // 2. GitLab uses hostname as an external_url (and uses that in various links, including LFS API)
+    // So, in order to allow host machine to resolve container hostname, start up a small DNS proxy
+    dnsProxy = new GenericContainer<>("defreitas/dns-proxy-server")
+        .withFileSystemBind("/var/run/docker.sock", "/var/run/docker.sock")
+        .withFileSystemBind("/etc/resolv.conf", "/etc/resolv.conf");
+    dnsProxy.start();
 
-    gitlab = new FixedHostPortGenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
-        // We have a chicken-and-egg problem here. In order to set external_url, we need to know container address,
-        // but we do not know container address until container is started.
-        // So, for now use fixed port :(
-        .withFixedExposedPort(hostGitLabPort, containerGitLabPort)
-        // This is kinda stupid that we need to do withExposedPorts even when we have withFixedExposedPort
-        .withExposedPorts(containerGitLabPort)
-        .withEnv("GITLAB_OMNIBUS_CONFIG", String.format("external_url 'http://localhost:%s/'", hostGitLabPort))
+    gitlab = new GenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
+        // Reduce GitLab memory usage as much as possible. Otherwise, we get random 502 errors on Travis
+        .withEnv("GITLAB_OMNIBUS_CONFIG", "unicorn['worker_timeout'] = 300; nginx['proxy_read_timeout'] = 3600; unicorn['worker_processes'] = 1; sidekiq['concurrency'] = 1")
+
         .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
-        .waitingFor(Wait.forHttp("/users/sign_in")
+        .withExposedPorts(80)
+        .waitingFor(Wait.forHttp("/api/v4/projects")
             .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
 
     gitlab.start();
-    gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(containerGitLabPort);
+
+    // Unfortunately, testcontainers doesn't have API to get short container id
+    gitlabUrl = "http://" + gitlab.getContainerId().substring(0, 12);
 
     rootToken = createToken(root, rootPassword, true);
 
@@ -141,6 +143,11 @@ public final class GitLabIntegrationTest {
     if (gitlab != null) {
       gitlab.stop();
       gitlab = null;
+    }
+
+    if (dnsProxy != null) {
+      dnsProxy.stop();
+      dnsProxy = null;
     }
   }
 
