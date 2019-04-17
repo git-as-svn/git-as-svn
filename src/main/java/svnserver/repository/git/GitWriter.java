@@ -36,7 +36,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitWriter implements VcsWriter {
+public final class GitWriter {
   private static final int MAX_PROPERTY_ERRROS = 50;
 
   @NotNull
@@ -65,19 +65,16 @@ public final class GitWriter implements VcsWriter {
   }
 
   @NotNull
-  @Override
   public VcsDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
     return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), null, user);
   }
 
   @NotNull
-  @Override
   public VcsDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
     return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), (GitFile) file, user);
   }
 
   @NotNull
-  @Override
   public VcsCommitBuilder createCommitBuilder(@NotNull LockManagerWrite lockManager, @NotNull Map<String, String> locks) throws IOException, SVNException {
     return new GitCommitBuilder(lockManager, locks, gitBranch);
   }

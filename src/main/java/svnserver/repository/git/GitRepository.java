@@ -690,7 +690,7 @@ public final class GitRepository implements VcsRepository {
 
   @NotNull
   @Override
-  public VcsWriter createWriter(@NotNull User user) throws SVNException {
+  public GitWriter createWriter(@NotNull User user) throws SVNException {
     if (user.getEmail() == null || user.getEmail().isEmpty()) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Users with undefined email can't create commits"));
     }

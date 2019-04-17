@@ -23,6 +23,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.*;
+import svnserver.repository.git.GitWriter;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockManagerWrite;
 import svnserver.server.SessionContext;
@@ -57,6 +58,35 @@ import java.util.Map;
  */
 
 public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
+  private static final int MAX_PASS_COUNT = 10;
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
+
+  @NotNull
+  @Override
+  public Class<CommitParams> getArguments() {
+    return CommitParams.class;
+  }
+
+  @Override
+  protected void processCommand(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
+    final SvnServerWriter writer = context.getWriter();
+    writer
+        .listBegin()
+        .word("success")
+        .listBegin()
+        .listEnd()
+        .listEnd();
+    log.debug("Enter editor mode");
+    EditorPipeline pipeline = new EditorPipeline(context, args);
+    pipeline.editorCommand(context);
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
+    context.checkWrite(context.getRepositoryPath(""));
+  }
+
   public static final class LockInfo {
 
     @NotNull
@@ -86,7 +116,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
   public static class OpenRootParams {
     @NotNull
-    private final int rev[];
+    private final int[] rev;
     @NotNull
     private final String token;
 
@@ -104,7 +134,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final String token;
     @NotNull
-    private final int rev[];
+    private final int[] rev;
 
     public OpenParams(@NotNull String name, @NotNull String parentToken, @NotNull String token, @NotNull int[] rev) {
       this.name = name;
@@ -147,7 +177,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final String name;
     @NotNull
-    private final int rev[];
+    private final int[] rev;
     @NotNull
     private final String parentToken;
 
@@ -204,35 +234,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       this.token = token;
       this.chunk = chunk;
     }
-  }
-
-  private static final int MAX_PASS_COUNT = 10;
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
-
-  @NotNull
-  @Override
-  public Class<CommitParams> getArguments() {
-    return CommitParams.class;
-  }
-
-  @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
-    final SvnServerWriter writer = context.getWriter();
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .listEnd()
-        .listEnd();
-    log.debug("Enter editor mode");
-    EditorPipeline pipeline = new EditorPipeline(context, args);
-    pipeline.editorCommand(context);
-  }
-
-  @Override
-  protected void permissionCheck(@NotNull SessionContext context, @NotNull CommitParams args) throws IOException, SVNException {
-    context.checkWrite(context.getRepositoryPath(""));
   }
 
   private static class FileUpdater {
@@ -295,7 +296,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final Map<String, String> locks;
     @NotNull
-    private final VcsWriter writer;
+    private final GitWriter writer;
     private boolean keepLocks;
     private boolean aborted = false;
 
@@ -337,81 +338,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         result.put(context.getRepositoryPath(lock.path), lock.lockToken);
       }
       return result;
-    }
-
-    private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
-      final EntryUpdater dir = paths.get(args.token);
-      if (dir == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + args.token));
-      }
-      changeProp(dir.props, args);
-    }
-
-    private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
-      changeProp(getFile(args.token).deltaConsumer.getProperties(), args);
-    }
-
-    private void changeProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
-      if (args.value.length > 0) {
-        props.put(args.name, args.value[0]);
-      } else {
-        props.remove(args.name);
-      }
-    }
-
-    private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws SVNException, IOException {
-      final String fullPath = context.getRepositoryPath("");
-      final String[] rootPath = fullPath.split("/");
-      EntryUpdater lastUpdater = rootEntry;
-      for (int i = 1; i < rootPath.length; ++i) {
-        String name = rootPath[i];
-        final VcsFile entry = lastUpdater.getEntry(name);
-        final EntryUpdater updater = new EntryUpdater(entry, entry, true);
-        lastUpdater.changes.add(treeBuilder -> {
-          treeBuilder.openDir(name);
-          updateDir(treeBuilder, updater);
-          treeBuilder.closeDir();
-        });
-        lastUpdater = updater;
-      }
-      final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      if (rev >= 0) {
-        if (lastUpdater.source == null) {
-          throw new IllegalStateException();
-        }
-        checkUpToDate(lastUpdater.source, rev, false);
-        final Map<String, String> props = lastUpdater.props;
-        lastUpdater.changes.add(treeBuilder -> treeBuilder.checkDirProperties(props));
-      }
-      paths.put(args.token, lastUpdater);
-    }
-
-    private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
-      final EntryUpdater parent = getParent(args.parentToken);
-      final int rev = args.rev.length > 0 ? args.rev[0] : -1;
-      log.debug("Modify dir: {} (rev: {})", args.name, rev);
-      final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
-      final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
-      if ((rev >= 0) && (parent.head)) {
-        checkUpToDate(sourceDir, rev, false);
-      }
-      paths.put(args.token, dir);
-      parent.changes.add(treeBuilder -> {
-        treeBuilder.openDir(StringHelper.baseName(args.name));
-        updateDir(treeBuilder, dir);
-        if (rev >= 0) {
-          treeBuilder.checkDirProperties(dir.props);
-        }
-        treeBuilder.closeDir();
-      });
-    }
-
-    @NotNull
-    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
-      for (VcsConsumer<VcsCommitBuilder> consumer : updater.changes) {
-        consumer.accept(treeBuilder);
-      }
-      return treeBuilder;
     }
 
     private void addDir(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
@@ -457,6 +383,22 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, false));
     }
 
+    private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
+      final EntryUpdater dir = paths.get(args.token);
+      if (dir == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + args.token));
+      }
+      changeProp(dir.props, args);
+    }
+
+    private void changeProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
+      if (args.value.length > 0) {
+        props.put(args.name, args.value[0]);
+      } else {
+        props.remove(args.name);
+      }
+    }
+
     private void deleteEntry(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
@@ -467,6 +409,19 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         checkUpToDate(entry, rev, true);
       }
       parent.changes.add(treeBuilder -> treeBuilder.delete(entry.getFileName()));
+    }
+
+    private void changeFileProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
+      changeProp(getFile(args.token).deltaConsumer.getProperties(), args);
+    }
+
+    @NotNull
+    private FileUpdater getFile(@NotNull String token) throws SVNException {
+      final FileUpdater file = files.get(token);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
+      }
+      return file;
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
@@ -483,11 +438,31 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
-    private void checkUpToDate(@NotNull VcsFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
-      if (vcsFile.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
+    private void openRoot(@NotNull SessionContext context, @NotNull OpenRootParams args) throws SVNException, IOException {
+      final String fullPath = context.getRepositoryPath("");
+      final String[] rootPath = fullPath.split("/");
+      EntryUpdater lastUpdater = rootEntry;
+      for (int i = 1; i < rootPath.length; ++i) {
+        String name = rootPath[i];
+        final VcsFile entry = lastUpdater.getEntry(name);
+        final EntryUpdater updater = new EntryUpdater(entry, entry, true);
+        lastUpdater.changes.add(treeBuilder -> {
+          treeBuilder.openDir(name);
+          updateDir(treeBuilder, updater);
+          treeBuilder.closeDir();
+        });
+        lastUpdater = updater;
       }
-      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
+      final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      if (rev >= 0) {
+        if (lastUpdater.source == null) {
+          throw new IllegalStateException();
+        }
+        checkUpToDate(lastUpdater.source, rev, false);
+        final Map<String, String> props = lastUpdater.props;
+        lastUpdater.changes.add(treeBuilder -> treeBuilder.checkDirProperties(props));
+      }
+      paths.put(args.token, lastUpdater);
     }
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -500,10 +475,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
     }
 
-    private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
-      getFile(args.token).deltaConsumer.applyTextDelta(null, args.checksum.length == 0 ? null : args.checksum[0]);
-    }
-
     private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException, IOException {
       getFile(args.token).reader.nextWindow(args.chunk, 0, args.chunk.length, "", getFile(args.token).deltaConsumer);
     }
@@ -513,35 +484,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private FileUpdater getFile(@NotNull String token) throws SVNException {
-      final FileUpdater file = files.get(token);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
+    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
+      for (VcsConsumer<VcsCommitBuilder> consumer : updater.changes) {
+        consumer.accept(treeBuilder);
       }
-      return file;
-    }
-
-    @NotNull
-    private EntryUpdater getParent(@NotNull String parentToken) throws SVNException {
-      final EntryUpdater parent = paths.get(parentToken);
-      if (parent == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
-      }
-      return parent;
-    }
-
-    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
-      paths.remove(args.token);
-    }
-
-    private void abortEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
-      final SvnServerWriter writer = context.getWriter();
-      writer
-          .listBegin()
-          .word("success")
-          .listBegin()
-          .listEnd()
-          .listEnd();
+      return treeBuilder;
     }
 
     private void closeEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
@@ -570,6 +517,60 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         }
       });
       context.push(new CheckPermissionStep((svnContext) -> complete(svnContext, revision), null));
+      final SvnServerWriter writer = context.getWriter();
+      writer
+          .listBegin()
+          .word("success")
+          .listBegin()
+          .listEnd()
+          .listEnd();
+    }
+
+    private void checkUpToDate(@NotNull VcsFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
+      if (vcsFile.getLastChange().getId() > rev) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
+      }
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
+    }
+
+    private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
+      final EntryUpdater parent = getParent(args.parentToken);
+      final int rev = args.rev.length > 0 ? args.rev[0] : -1;
+      log.debug("Modify dir: {} (rev: {})", args.name, rev);
+      final VcsFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
+      final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
+      if ((rev >= 0) && (parent.head)) {
+        checkUpToDate(sourceDir, rev, false);
+      }
+      paths.put(args.token, dir);
+      parent.changes.add(treeBuilder -> {
+        treeBuilder.openDir(StringHelper.baseName(args.name));
+        updateDir(treeBuilder, dir);
+        if (rev >= 0) {
+          treeBuilder.checkDirProperties(dir.props);
+        }
+        treeBuilder.closeDir();
+      });
+    }
+
+    @NotNull
+    private EntryUpdater getParent(@NotNull String parentToken) throws SVNException {
+      final EntryUpdater parent = paths.get(parentToken);
+      if (parent == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid path token: " + parentToken));
+      }
+      return parent;
+    }
+
+    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
+      paths.remove(args.token);
+    }
+
+    private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
+      getFile(args.token).deltaConsumer.applyTextDelta(null, args.checksum.length == 0 ? null : args.checksum[0]);
+    }
+
+    private void abortEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
       final SvnServerWriter writer = context.getWriter();
       writer
           .listBegin()
