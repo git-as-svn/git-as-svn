@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleaded
+
+ * File locking code cleanup. All existing svn locks will expire after upgrade.
+
 ## 1.9.0
 
  * Major code cleanup

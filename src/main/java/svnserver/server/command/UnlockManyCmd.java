@@ -70,7 +70,7 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
     }
     try {
       context.getRepository().wrapLockWrite((lockManager) -> {
-        lockManager.unlock(context, args.breakLock, targets);
+        lockManager.unlock(args.breakLock, targets);
         return Boolean.TRUE;
       });
       for (PathToken path : args.paths)

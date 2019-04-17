@@ -18,7 +18,7 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @FunctionalInterface
-public interface LockWorker<T, M extends LockManagerRead> {
+public interface LockWorker<T> {
   @NotNull
-  T exec(@NotNull M lockManager) throws SVNException, IOException;
+  T exec(@NotNull LockManager lockManager) throws SVNException, IOException;
 }

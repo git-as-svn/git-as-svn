@@ -89,7 +89,7 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
 
     final LockDesc[] locks;
     try {
-      locks = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context, comment, args.stealLock, targets));
+      locks = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), comment, args.stealLock, targets));
       for (LockDesc lock : locks) {
         writer.listBegin().word("success");
         LockCmd.writeLock(writer, lock);

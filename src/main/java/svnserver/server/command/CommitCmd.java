@@ -25,7 +25,7 @@ import svnserver.parser.token.ListEndToken;
 import svnserver.repository.VcsConsumer;
 import svnserver.repository.git.*;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManagerWrite;
+import svnserver.repository.locks.LockManager;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
@@ -332,6 +332,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       exitCommands.put("abort-edit", new LambdaCmd<>(NoParams.class, this::abortEdit));
     }
 
+    @NotNull
     private static Map<String, String> getLocks(@NotNull SessionContext context, @NotNull LockInfo[] locks) throws SVNException {
       final Map<String, String> result = new HashMap<>();
       for (LockInfo lock : locks) {
@@ -582,7 +583,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private List<LockDesc> getLocks(LockManagerWrite lockManager, Map<String, String> locks) {
+    private List<LockDesc> getLocks(@NotNull LockManager lockManager, @NotNull Map<String, String> locks) {
       final List<LockDesc> result = new ArrayList<>();
       for (Map.Entry<String, String> entry : locks.entrySet()) {
         final LockDesc lock = lockManager.getLock(entry.getKey());

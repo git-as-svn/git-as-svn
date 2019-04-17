@@ -36,7 +36,6 @@ import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.push.GitPushEmbedded;
-import svnserver.repository.locks.PersistentLockFactory;
 import svnserver.repository.mapping.RepositoryListMapping;
 import svnserver.server.SvnServer;
 import svnserver.tester.SvnTester;
@@ -290,7 +289,7 @@ public final class SvnTestServer implements SvnTester {
 
     @NotNull
     @Override
-    public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+    public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
       final LocalContext local = new LocalContext(context, "test");
       final AclConfig aclConfig = new AclConfig(anonymousRead);
       local.add(VcsAccess.class, aclConfig.create());
@@ -299,8 +298,7 @@ public final class SvnTestServer implements SvnTester {
           repository,
           new GitPushEmbedded(local, "", "", ""),
           branch,
-          true,
-          new PersistentLockFactory(local)
+          true
       )));
     }
   }

@@ -14,8 +14,6 @@ import io.gitea.model.Repository;
 import io.gitea.model.User;
 import io.gitea.model.UserSearchList;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.GitRepositoryConfig;
 import svnserver.config.RepositoryMappingConfig;
@@ -39,8 +37,6 @@ import java.util.function.Consumer;
 @ConfigType("giteaMapping")
 public final class GiteaMappingConfig implements RepositoryMappingConfig {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GiteaMapper.class);
-  @NotNull
   private GitRepositoryConfig template;
   @NotNull
   private String path;
@@ -52,13 +48,13 @@ public final class GiteaMappingConfig implements RepositoryMappingConfig {
     this("/var/git/repositories/", GitCreateMode.ERROR);
   }
 
-  public GiteaMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
-    this(path.getAbsolutePath(), createMode);
-  }
-
   private GiteaMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode) {
     this.path = path;
     template = new GitRepositoryConfig(createMode);
+  }
+
+  public GiteaMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
+    this(path.getAbsolutePath(), createMode);
   }
 
   @NotNull
@@ -88,13 +84,13 @@ public final class GiteaMappingConfig implements RepositoryMappingConfig {
     // Get repositories.
 
     final GiteaMapping mapping = new GiteaMapping(context, this);
-    
+
     try {
       final UserSearchList usersList = userApi.userSearch(null, null, null);
-    
+
       for (User u : usersList.getData()) {
         List<Repository> repositories = userApi.userListRepos(u.getLogin());
-        for (Repository repository: repositories) {
+        for (Repository repository : repositories) {
           mapping.addRepository(repository);
         }
       }

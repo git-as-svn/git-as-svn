@@ -36,7 +36,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
   @NotNull
   @Override
-  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
     final Map<String, GitRepository> repos = new HashMap<>();
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {

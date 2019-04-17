@@ -12,17 +12,14 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.RenameDetector;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mapdb.DataInput2;
-import org.mapdb.DataOutput2;
+import org.mapdb.DB;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
-import org.mapdb.serializer.GroupSerializerObjectArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -46,9 +43,9 @@ import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
-import svnserver.repository.locks.LockManagerFactory;
-import svnserver.repository.locks.LockManagerRead;
-import svnserver.repository.locks.LockManagerWrite;
+import svnserver.repository.locks.LockDesc;
+import svnserver.repository.locks.LockDescSerializer;
+import svnserver.repository.locks.LockManager;
 import svnserver.repository.locks.LockWorker;
 
 import java.io.IOException;
@@ -56,9 +53,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiFunction;
 
 /**
  * Implementation for Git repository.
@@ -72,86 +69,9 @@ public final class GitRepository implements AutoCloseable {
   private static final int MARK_NO_FILE = -1;
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
-  @NotNull
-  private static final GroupSerializerObjectArray<ObjectId> objectIdSerializer = new GroupSerializerObjectArray<ObjectId>() {
-    @Override
-    public void serialize(@NotNull DataOutput2 out, @NotNull ObjectId value) throws IOException {
-      value.copyRawTo(out);
-    }
 
-    @Override
-    public ObjectId deserialize(@NotNull DataInput2 input, int available) throws IOException {
-      final byte[] raw = new byte[fixedSize()];
-      input.readFully(raw);
-      return ObjectId.fromRaw(raw);
-    }
-
-    @Override
-    public int fixedSize() {
-      return Constants.OBJECT_ID_LENGTH;
-    }
-
-    @Override
-    public boolean isTrusted() {
-      return true;
-    }
-  };
-  @NotNull
-  private static final GroupSerializerObjectArray<CacheRevision> cacheRevisionSerializer = new GroupSerializerObjectArray<CacheRevision>() {
-    @Override
-    public void serialize(@NotNull DataOutput2 out, @NotNull CacheRevision value) throws IOException {
-      final ObjectId objectId = value.getGitCommitId();
-      out.writeBoolean(objectId != null);
-      if (objectId != null)
-        objectIdSerializer.serialize(out, objectId);
-
-      out.writeInt(value.getRenames().size());
-      for (Map.Entry<String, String> en : value.getRenames().entrySet()) {
-        Serializer.STRING.serialize(out, en.getKey());
-        Serializer.STRING.serialize(out, en.getValue());
-      }
-
-      out.writeInt(value.getFileChange().size());
-      for (Map.Entry<String, CacheChange> en : value.getFileChange().entrySet()) {
-        Serializer.STRING.serialize(out, en.getKey());
-
-        final ObjectId oldFile = en.getValue().getOldFile();
-        out.writeBoolean(oldFile != null);
-        if (oldFile != null)
-          objectIdSerializer.serialize(out, oldFile);
-
-        final ObjectId newFile = en.getValue().getNewFile();
-        out.writeBoolean(newFile != null);
-        if (newFile != null)
-          objectIdSerializer.serialize(out, newFile);
-      }
-    }
-
-    @Override
-    public CacheRevision deserialize(@NotNull DataInput2 input, int available) throws IOException {
-      final ObjectId objectId = input.readBoolean() ? objectIdSerializer.deserialize(input, available) : null;
-
-      final Map<String, String> renames = new TreeMap<>();
-      final int renamesCount = input.readInt();
-      for (int i = 0; i < renamesCount; ++i) {
-        renames.put(Serializer.STRING.deserialize(input, available), Serializer.STRING.deserialize(input, available));
-      }
-
-      final Map<String, CacheChange> fileChange = new TreeMap<>();
-      final int fileChangeCount = input.readInt();
-      for (int i = 0; i < fileChangeCount; ++i) {
-        final String name = Serializer.STRING.deserialize(input, available);
-        final ObjectId oldFile = input.readBoolean() ? objectIdSerializer.deserialize(input, available) : null;
-        final ObjectId newFile = input.readBoolean() ? objectIdSerializer.deserialize(input, available) : null;
-        fileChange.put(name, new CacheChange(oldFile, newFile));
-      }
-
-      return new CacheRevision(objectId, renames, fileChange);
-    }
-  };
   private static final int revisionCacheVersion = 2;
-  @NotNull
-  private final LockManagerFactory lockManagerFactory;
+  private static final int lockDescCacheVersion = 2;
   @NotNull
   private final Repository repository;
   @NotNull
@@ -190,22 +110,43 @@ public final class GitRepository implements AutoCloseable {
   @NotNull
   private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
   private final boolean renameDetection;
+  @NotNull
+  private final ReadWriteLock lockManagerRwLock = new ReentrantReadWriteLock();
+  @NotNull
+  private final LockManager lockManager;
+  @NotNull
+  private final DB db;
 
   public GitRepository(@NotNull LocalContext context,
                        @NotNull Repository repository,
                        @NotNull GitPusher pusher,
                        @NotNull String branch,
-                       boolean renameDetection,
-                       @NotNull LockManagerFactory lockManagerFactory) throws IOException {
+                       boolean renameDetection) throws IOException {
     this.context = context;
     final SharedContext shared = context.getShared();
     shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(repository);
     this.repository = repository;
-    this.binaryCache = shared.getCacheDB().hashMap("cache.binary", Serializer.STRING, Serializer.BOOLEAN).createOrOpen();
-    this.revisionCache = context.getShared().getCacheDB().hashMap(String.format("cache-revision.%s.%s.v%s", context.getName(), renameDetection ? 1 : 0, revisionCacheVersion), objectIdSerializer, cacheRevisionSerializer).createOrOpen();
+    db = shared.getCacheDB();
+    this.binaryCache = db.hashMap("cache.binary", Serializer.STRING, Serializer.BOOLEAN).createOrOpen();
+
+    final String revisionCacheName = String.format(
+        "cache-revision.%s.%s.v%s", context.getName(), renameDetection ? 1 : 0, revisionCacheVersion
+    );
+    this.revisionCache = db.hashMap(
+        revisionCacheName,
+        ObjectIdSerializer.instance,
+        CacheRevisionSerializer.instance
+    ).createOrOpen();
+
     this.pusher = pusher;
     this.renameDetection = renameDetection;
-    this.lockManagerFactory = lockManagerFactory;
+
+    final String lockCacheName = String.format("locks.%s.%s", context.getName(), lockDescCacheVersion);
+    final SortedMap<String, LockDesc> lockMap = db.treeMap(
+        lockCacheName, Serializer.STRING, LockDescSerializer.instance
+    ).createOrOpen();
+    lockManager = new LockManager(this, lockMap);
+
     this.gitFilters = GitFilterHelper.createFilters(context);
 
     final Ref svnBranchRef = LayoutHelper.initRepository(repository, branch);
@@ -231,12 +172,6 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  public static String loadContent(@NotNull ObjectReader reader, @NotNull ObjectId objectId) throws IOException {
-    final byte[] bytes = reader.open(objectId).getCachedBytes();
-    return new String(bytes, StandardCharsets.UTF_8);
-  }
-
-  @NotNull
   public LocalContext getContext() {
     return context;
   }
@@ -245,11 +180,26 @@ public final class GitRepository implements AutoCloseable {
     context.getShared().sure(GitSubmodules.class).unregister(repository);
   }
 
+  public void updateRevisions() throws IOException, SVNException {
+    boolean gotNewRevisions = false;
+
+    while (true) {
+      loadRevisions();
+      if (!cacheRevisions()) {
+        break;
+      }
+      gotNewRevisions = true;
+    }
+
+    if (gotNewRevisions) {
+      final boolean locksChanged = wrapLockWrite(LockManager::cleanupInvalidLocks);
+      if (locksChanged)
+        context.getShared().getCacheDB().commit();
+    }
+  }
+
   /**
    * Load all cached revisions.
-   *
-   * @throws IOException
-   * @throws SVNException
    */
   private void loadRevisions() throws IOException, SVNException {
     // Fast check.
@@ -311,11 +261,8 @@ public final class GitRepository implements AutoCloseable {
 
   /**
    * Create cache for new revisions.
-   *
-   * @throws IOException
-   * @throws SVNException
    */
-  public boolean cacheRevisions() throws IOException {
+  private boolean cacheRevisions() throws IOException {
     // Fast check.
     lock.readLock().lock();
     try {
@@ -385,24 +332,11 @@ public final class GitRepository implements AutoCloseable {
     }
   }
 
-  public void updateRevisions() throws IOException, SVNException {
-    boolean gotNewRevisions = false;
-
-    while (true) {
-      loadRevisions();
-      if (!cacheRevisions()) {
-        break;
-      }
-      gotNewRevisions = true;
-    }
-
-    if (gotNewRevisions) {
-      wrapLockWrite((lockManager) -> {
-        lockManager.validateLocks();
-        return Boolean.TRUE;
-      });
-      context.getShared().getCacheDB().commit();
-    }
+  @NotNull
+  public <T> T wrapLockWrite(@NotNull LockWorker<T> work) throws SVNException, IOException {
+    final T result = wrapLock(lockManagerRwLock.writeLock(), work);
+    db.commit();
+    return result;
   }
 
   private void loadRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
@@ -449,8 +383,13 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  public <T> T wrapLockWrite(@NotNull LockWorker<T, LockManagerWrite> work) throws SVNException, IOException {
-    return lockManagerFactory.wrapLockWrite(this, work);
+  private <T> T wrapLock(@NotNull Lock lock, @NotNull LockWorker<T> work) throws IOException, SVNException {
+    lock.lock();
+    try {
+      return work.exec(lockManager);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @NotNull
@@ -474,6 +413,15 @@ public final class GitRepository implements AutoCloseable {
       revisionCache.put(cacheKey, result);
     }
     return result;
+  }
+
+  @NotNull
+  private GitFile getSubversionTree(@NotNull ObjectReader reader, @Nullable RevCommit commit, int revisionId) throws IOException, SVNException {
+    final RevCommit revCommit = LayoutHelper.loadOriginalCommit(reader, commit);
+    if (revCommit == null) {
+      return new GitFileEmptyTree(this, "", revisionId - 1);
+    }
+    return GitFileTreeEntry.create(this, revCommit.getTree(), revisionId);
   }
 
   @NotNull
@@ -504,16 +452,7 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  private GitFile getSubversionTree(@NotNull ObjectReader reader, @Nullable RevCommit commit, int revisionId) throws IOException, SVNException {
-    final RevCommit revCommit = LayoutHelper.loadOriginalCommit(reader, commit);
-    if (revCommit == null) {
-      return new GitFileEmptyTree(this, "", revisionId - 1);
-    }
-    return GitFileTreeEntry.create(this, revCommit.getTree(), revisionId);
-  }
-
-  @NotNull
-  public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull VcsSupplier<Iterable<GitTreeEntry>> entryProvider) throws IOException, SVNException {
+  GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull VcsSupplier<Iterable<GitTreeEntry>> entryProvider) throws IOException, SVNException {
     if (treeEntry.getFileMode().getObjectType() == Constants.OBJ_BLOB)
       return GitProperty.emptyArray;
 
@@ -536,7 +475,7 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  private GitProperty[] parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException, SVNException {
+  private GitProperty[] parseGitProperty(@NotNull String fileName, @NotNull GitObject<ObjectId> objectId) throws IOException {
     final GitPropertyFactory factory = PropertyMapping.getFactory(fileName);
     if (factory == null)
       return GitProperty.emptyArray;
@@ -557,12 +496,14 @@ public final class GitRepository implements AutoCloseable {
     return property;
   }
 
-  private boolean isTreeEmpty(RevTree tree) throws IOException {
-    return new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), tree).eof();
+  @NotNull
+  static String loadContent(@NotNull ObjectReader reader, @NotNull ObjectId objectId) throws IOException {
+    final byte[] bytes = reader.open(objectId).getCachedBytes();
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   @NotNull
-  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) {
+  GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) {
     if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
       return gitFilters.get(GitFilterRaw.NAME);
     }
@@ -616,7 +557,7 @@ public final class GitRepository implements AutoCloseable {
     return repository;
   }
 
-  public boolean isObjectBinary(@Nullable GitFilter filter, @Nullable GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  boolean isObjectBinary(@Nullable GitFilter filter, @Nullable GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
     if (objectId == null || filter == null) return false;
     final String key = filter.getName() + " " + objectId.getObject().name();
     Boolean result = binaryCache.get(key);
@@ -651,7 +592,7 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  public GitRevision sureRevisionInfo(int revision) {
+  GitRevision sureRevisionInfo(int revision) {
     final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
     if (revisionInfo == null) {
       throw new IllegalStateException("No such revision " + revision);
@@ -709,7 +650,7 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  public Iterable<GitTreeEntry> loadTree(@Nullable GitTreeEntry tree) throws IOException {
+  Iterable<GitTreeEntry> loadTree(@Nullable GitTreeEntry tree) throws IOException {
     final GitObject<ObjectId> treeId = getTreeObject(tree);
     // Loading tree.
     if (treeId == null) {
@@ -750,48 +691,12 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @Nullable
-  public GitObject<RevCommit> loadLinkedCommit(@NotNull ObjectId objectId) throws IOException {
+  private GitObject<RevCommit> loadLinkedCommit(@NotNull ObjectId objectId) throws IOException {
     return context.getShared().sure(GitSubmodules.class).findCommit(objectId);
   }
 
   @NotNull
-  public <T> T wrapLockRead(@NotNull LockWorker<T, LockManagerRead> work) throws SVNException, IOException {
-    return lockManagerFactory.wrapLockRead(this, work);
+  public <T> T wrapLockRead(@NotNull LockWorker<T> work) throws SVNException, IOException {
+    return wrapLock(lockManagerRwLock.readLock(), work);
   }
-
-  private static class CacheInfo {
-    private final int id;
-    @NotNull
-    private RevCommit commit;
-    @NotNull
-    private List<CacheInfo> childs = new ArrayList<>();
-    @NotNull
-    private List<CacheInfo> parents = new ArrayList<>();
-    @Nullable
-    private String svnBranch;
-
-    private CacheInfo(int id, @NotNull RevCommit commit) {
-      this.id = id;
-      this.commit = commit;
-    }
-  }
-
-  private static class ComputeBranchName implements BiFunction<RevCommit, CacheInfo, CacheInfo> {
-    @NotNull
-    private final String svnBranch;
-
-    public ComputeBranchName(@NotNull String svnBranch) {
-      this.svnBranch = svnBranch;
-    }
-
-    @NotNull
-    @Override
-    public CacheInfo apply(@NotNull RevCommit revCommit, @NotNull CacheInfo old) {
-      if (old.svnBranch == null || LayoutHelper.compareBranches(old.svnBranch, svnBranch) > 0) {
-        old.svnBranch = svnBranch;
-      }
-      return old;
-    }
-  }
-
 }
