@@ -18,8 +18,8 @@ import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.mapping.RepositoryListMapping;
 
@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final class GitLabMapping implements VcsRepositoryMapping {
+final class GitLabMapping implements RepositoryMapping {
 
   @NotNull
   private static final String HASHED_PATH = "@hashed";

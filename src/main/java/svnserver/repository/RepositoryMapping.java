@@ -18,7 +18,7 @@ import svnserver.context.Shared;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface VcsRepositoryMapping extends Shared {
+public interface RepositoryMapping extends Shared {
   @Nullable
   RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException;
 }

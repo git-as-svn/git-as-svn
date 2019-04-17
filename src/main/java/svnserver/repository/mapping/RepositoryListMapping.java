@@ -13,7 +13,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
 import svnserver.repository.RepositoryInfo;
-import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.git.GitRepository;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class RepositoryListMapping implements VcsRepositoryMapping {
+public final class RepositoryListMapping implements RepositoryMapping {
   @NotNull
   private final NavigableMap<String, GitRepository> mapping;
 

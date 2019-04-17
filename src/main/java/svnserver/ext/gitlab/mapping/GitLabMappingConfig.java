@@ -23,7 +23,7 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.ext.web.server.WebServer;
-import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.git.GitCreateMode;
 
 import javax.servlet.ServletException;
@@ -102,7 +102,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
     final GitLabContext gitlab = context.sure(GitLabContext.class);
     final GitlabAPI api = gitlab.connect();
     // Get repositories.

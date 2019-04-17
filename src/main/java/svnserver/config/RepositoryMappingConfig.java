@@ -10,7 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.SharedContext;
-import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.RepositoryMapping;
 
 import java.io.IOException;
 
@@ -21,5 +21,5 @@ import java.io.IOException;
  */
 public interface RepositoryMappingConfig {
   @NotNull
-  VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException;
+  RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException;
 }

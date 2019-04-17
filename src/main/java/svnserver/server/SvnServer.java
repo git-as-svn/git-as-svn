@@ -26,8 +26,8 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
@@ -74,7 +74,7 @@ public final class SvnServer extends Thread {
   @NotNull
   private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
   @NotNull
-  private final VcsRepositoryMapping repositoryMapping;
+  private final RepositoryMapping repositoryMapping;
   @NotNull
   private final Config config;
   @NotNull
@@ -130,7 +130,7 @@ public final class SvnServer extends Thread {
 
     repositoryMapping = config.getRepositoryMapping().create(context, config.canUseParallelIndexing());
 
-    context.add(VcsRepositoryMapping.class, repositoryMapping);
+    context.add(RepositoryMapping.class, repositoryMapping);
 
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());

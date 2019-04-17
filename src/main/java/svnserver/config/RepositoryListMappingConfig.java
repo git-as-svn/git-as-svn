@@ -12,8 +12,8 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.mapping.RepositoryListMapping;
 
@@ -36,7 +36,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
   @NotNull
   @Override
-  public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
     final Map<String, GitRepository> repos = new HashMap<>();
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {

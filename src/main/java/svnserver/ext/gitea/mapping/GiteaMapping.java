@@ -17,8 +17,8 @@ import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.mapping.RepositoryListMapping;
 
@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
-final class GiteaMapping implements VcsRepositoryMapping {
+final class GiteaMapping implements RepositoryMapping {
   @NotNull
   private final NavigableMap<String, GiteaProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
