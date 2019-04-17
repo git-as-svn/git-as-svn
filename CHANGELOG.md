@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.9.0
 
  * Major code cleanup
  * `repository: !git` changed to just `repository:` in git-as-svn.conf
