@@ -367,9 +367,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final GitDeltaConsumer deltaConsumer;
-      context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
+      final String fullPath = StringHelper.joinPath(parent.entry.getFullPath(), args.name);
+      context.checkWrite(fullPath);
       if (args.copyParams.copyFrom != null) {
-        log.debug("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
+        log.debug("Copy file: {} from {} (rev: {})", fullPath, args.copyParams.copyFrom, args.copyParams.rev);
         final GitFile file = context.getFile(args.copyParams.rev, args.copyParams.copyFrom);
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find path: " + args.copyParams.copyFrom + "@" + args.copyParams.rev));
