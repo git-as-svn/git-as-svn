@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -33,18 +33,6 @@ import java.util.List;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final int[] rev;
-
-    public Params(@NotNull String path, @NotNull int[] rev) {
-      this.path = path;
-      this.rev = rev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -56,7 +44,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
     SvnServerWriter writer = context.getWriter();
     String fullPath = context.getRepositoryPath(args.path);
 
-    final VcsRepository repository = context.getRepository();
+    final GitRepository repository = context.getRepository();
     final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final List<VcsFile> files = new ArrayList<>();
     int index = -1;
@@ -88,5 +76,17 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final int[] rev;
+
+    public Params(@NotNull String path, @NotNull int[] rev) {
+      this.path = path;
+      this.rev = rev;
+    }
   }
 }

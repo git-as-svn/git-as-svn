@@ -19,8 +19,8 @@ import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.git.GitRepository;
 import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.File;
@@ -95,7 +95,7 @@ final class GitLabMapping implements VcsRepositoryMapping {
         repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
       final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
       local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));
-      final VcsRepository repository = config.getTemplate().create(local, repoPath);
+      final GitRepository repository = config.getTemplate().create(local, repoPath);
       final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
       if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {
         return newProject;

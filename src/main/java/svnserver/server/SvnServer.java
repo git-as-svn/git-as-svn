@@ -27,8 +27,8 @@ import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
@@ -194,7 +194,7 @@ public final class SvnServer extends Thread {
     }
     final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
     context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
-    final VcsRepository repository = context.getRepository();
+    final GitRepository repository = context.getRepository();
     repository.updateRevisions();
     sendAnnounce(writer, repositoryInfo);
 

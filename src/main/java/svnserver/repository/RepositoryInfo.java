@@ -9,6 +9,7 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
+import svnserver.repository.git.GitRepository;
 
 /**
  * Mapped repository info.
@@ -19,9 +20,9 @@ public final class RepositoryInfo {
   @NotNull
   private final SVNURL baseUrl;
   @NotNull
-  private final VcsRepository repository;
+  private final GitRepository repository;
 
-  public RepositoryInfo(@NotNull SVNURL baseUrl, @NotNull VcsRepository repository) {
+  public RepositoryInfo(@NotNull SVNURL baseUrl, @NotNull GitRepository repository) {
     this.baseUrl = baseUrl;
     this.repository = repository;
   }
@@ -32,7 +33,7 @@ public final class RepositoryInfo {
   }
 
   @NotNull
-  public VcsRepository getRepository() {
+  public GitRepository getRepository() {
     return repository;
   }
 }

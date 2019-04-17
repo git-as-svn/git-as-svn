@@ -13,8 +13,8 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.git.GitRepository;
 import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.IOException;
@@ -34,17 +34,10 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
   @NotNull
   private Map<String, Entry> repositories = new TreeMap<>();
 
-  public static class Entry {
-    @NotNull
-    private AccessConfig access = new AclConfig();
-    @NotNull
-    private RepositoryConfig repository;
-  }
-
   @NotNull
   @Override
   public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
-    final Map<String, VcsRepository> repos = new HashMap<>();
+    final Map<String, GitRepository> repos = new HashMap<>();
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
@@ -52,7 +45,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
       repos.put(entry.getKey(), entry.getValue().repository.create(local));
     }
 
-    final Consumer<VcsRepository> init = repository -> {
+    final Consumer<GitRepository> init = repository -> {
       try {
         repository.updateRevisions();
       } catch (IOException | SVNException e) {
@@ -67,5 +60,12 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
     }
 
     return new RepositoryListMapping(repos);
+  }
+
+  public static class Entry {
+    @NotNull
+    private AccessConfig access = new AclConfig();
+    @NotNull
+    private RepositoryConfig repository;
   }
 }

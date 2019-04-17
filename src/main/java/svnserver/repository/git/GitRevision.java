@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final class GitRevision implements VcsRevision {
+public final class GitRevision implements VcsRevision {
   @NotNull
   private final GitRepository repo;
   @NotNull
@@ -68,22 +68,6 @@ final class GitRevision implements VcsRevision {
   @Override
   public int getId() {
     return revision;
-  }
-
-  @Nullable RevCommit getGitNewCommit() {
-    return gitNewCommit;
-  }
-
-  @NotNull
-  @Override
-  public Map<String, ? extends VcsLogEntry> getChanges() throws IOException, SVNException {
-    if (gitNewCommit == null) {
-      return Collections.emptyMap();
-    }
-    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit.getTree(), revision - 1);
-    final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
-
-    return ChangeHelper.collectChanges(oldTree, newTree, false);
   }
 
   @NotNull
@@ -147,9 +131,25 @@ final class GitRevision implements VcsRevision {
     return result;
   }
 
+  @NotNull
+  @Override
+  public Map<String, ? extends VcsLogEntry> getChanges() throws IOException, SVNException {
+    if (gitNewCommit == null) {
+      return Collections.emptyMap();
+    }
+    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit.getTree(), revision - 1);
+    final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
+
+    return ChangeHelper.collectChanges(oldTree, newTree, false);
+  }
+
   @Nullable
   @Override
   public VcsCopyFrom getCopyFrom(@NotNull String fullPath) {
     return renames.get(fullPath);
+  }
+
+  @Nullable RevCommit getGitNewCommit() {
+    return gitNewCommit;
   }
 }

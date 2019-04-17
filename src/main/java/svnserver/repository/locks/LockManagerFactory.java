@@ -9,7 +9,7 @@ package svnserver.repository.locks;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitRepository;
 
 import java.io.IOException;
 
@@ -19,9 +19,7 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public interface LockManagerFactory {
-  @NotNull
-  <T> T wrapLockRead(@NotNull VcsRepository repository, @NotNull LockWorker<T, LockManagerRead> work) throws IOException, SVNException;
+  @NotNull <T> T wrapLockRead(@NotNull GitRepository repository, @NotNull LockWorker<T, LockManagerRead> work) throws IOException, SVNException;
 
-  @NotNull
-  <T> T wrapLockWrite(@NotNull VcsRepository repository, @NotNull LockWorker<T, LockManagerWrite> work) throws IOException, SVNException;
+  @NotNull <T> T wrapLockWrite(@NotNull GitRepository repository, @NotNull LockWorker<T, LockManagerWrite> work) throws IOException, SVNException;
 }

@@ -14,8 +14,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -33,11 +33,11 @@ public final class TreeMapLockManager implements LockManagerWrite {
   private final static char SEPARATOR = ':';
 
   @NotNull
-  private final VcsRepository repo;
+  private final GitRepository repo;
   @NotNull
   private final SortedMap<String, LockDesc> locks;
 
-  TreeMapLockManager(@NotNull VcsRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
+  TreeMapLockManager(@NotNull GitRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
     this.locks = locks;
     this.repo = repo;
   }
@@ -73,17 +73,6 @@ public final class TreeMapLockManager implements LockManagerWrite {
       }
     }
     return result;
-  }
-
-  @NotNull
-  @Override
-  public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
-    return depth.visit(new TreeMapLockDepthVisitor(locks, repo.getUuid() + SEPARATOR + path));
-  }
-
-  @Override
-  public LockDesc getLock(@NotNull String path) {
-    return locks.get(repo.getUuid() + SEPARATOR + path);
   }
 
   @Override
@@ -133,5 +122,16 @@ public final class TreeMapLockManager implements LockManagerWrite {
 
   private static String createLockId() {
     return UUID.randomUUID().toString();
+  }
+
+  @NotNull
+  @Override
+  public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
+    return depth.visit(new TreeMapLockDepthVisitor(locks, repo.getUuid() + SEPARATOR + path));
+  }
+
+  @Override
+  public LockDesc getLock(@NotNull String path) {
+    return locks.get(repo.getUuid() + SEPARATOR + path);
   }
 }

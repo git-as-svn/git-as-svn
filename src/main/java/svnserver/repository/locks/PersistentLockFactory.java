@@ -15,7 +15,7 @@ import org.mapdb.Serializer;
 import org.mapdb.serializer.GroupSerializerObjectArray;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitRepository;
 
 import java.io.IOException;
 import java.util.SortedMap;
@@ -46,20 +46,20 @@ public final class PersistentLockFactory implements LockManagerFactory {
 
   @NotNull
   @Override
-  public <T> T wrapLockRead(@NotNull VcsRepository repo, @NotNull LockWorker<T, LockManagerRead> work) throws IOException, SVNException {
+  public <T> T wrapLockRead(@NotNull GitRepository repo, @NotNull LockWorker<T, LockManagerRead> work) throws IOException, SVNException {
     return wrapLock(rwLock.readLock(), repo, work);
   }
 
   @NotNull
   @Override
-  public <T> T wrapLockWrite(@NotNull VcsRepository repo, @NotNull LockWorker<T, LockManagerWrite> work) throws IOException, SVNException {
+  public <T> T wrapLockWrite(@NotNull GitRepository repo, @NotNull LockWorker<T, LockManagerWrite> work) throws IOException, SVNException {
     final T result = wrapLock(rwLock.writeLock(), repo, work);
     db.commit();
     return result;
   }
 
   @NotNull
-  private <T> T wrapLock(@NotNull Lock lock, @NotNull VcsRepository repo, @NotNull LockWorker<T, ? super TreeMapLockManager> work) throws IOException, SVNException {
+  private <T> T wrapLock(@NotNull Lock lock, @NotNull GitRepository repo, @NotNull LockWorker<T, ? super TreeMapLockManager> work) throws IOException, SVNException {
     lock.lock();
     try {
       return work.exec(new TreeMapLockManager(repo, map));

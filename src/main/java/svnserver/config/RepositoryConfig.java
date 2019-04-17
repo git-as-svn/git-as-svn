@@ -10,7 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitRepository;
 
 import java.io.IOException;
 
@@ -21,5 +21,5 @@ import java.io.IOException;
  */
 public interface RepositoryConfig {
   @NotNull
-  VcsRepository create(@NotNull LocalContext context) throws IOException, SVNException;
+  GitRepository create(@NotNull LocalContext context) throws IOException, SVNException;
 }

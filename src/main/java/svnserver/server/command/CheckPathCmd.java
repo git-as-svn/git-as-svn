@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -32,23 +32,6 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final int[] rev;
-
-    public Params(@NotNull String path, @NotNull int[] rev) {
-      this.path = path;
-      this.rev = rev;
-    }
-
-    @Nullable
-    public Integer getRev() {
-      return rev.length < 1 ? null : rev[0];
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -58,7 +41,7 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     String fullPath = context.getRepositoryPath(args.path);
-    final VcsRepository repository = context.getRepository();
+    final GitRepository repository = context.getRepository();
     final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     VcsFile fileInfo = info.getFile(fullPath);
     final SVNNodeKind kind;
@@ -75,5 +58,22 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
         .word(kind.toString()) // kind
         .listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final int[] rev;
+
+    public Params(@NotNull String path, @NotNull int[] rev) {
+      this.path = path;
+      this.rev = rev;
+    }
+
+    @Nullable
+    public Integer getRev() {
+      return rev.length < 1 ? null : rev[0];
+    }
   }
 }

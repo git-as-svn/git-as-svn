@@ -56,8 +56,6 @@ public interface VcsCommitBuilder {
    * @param name          File name.
    * @param deltaConsumer Delta consumer from the same repository.
    * @param modify        Modification flag (true - entry modification, false - new entry).
-   * @see svnserver.repository.VcsRepository#createFile()
-   * @see svnserver.repository.VcsRepository#modifyFile(VcsFile)
    */
   void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException;
 

@@ -20,7 +20,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
@@ -69,7 +69,7 @@ public final class SessionContext {
   }
 
   @NotNull
-  public VcsRepository getRepository() {
+  public GitRepository getRepository() {
     return repositoryInfo.getRepository();
   }
 
