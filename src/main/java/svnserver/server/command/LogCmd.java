@@ -13,7 +13,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsCopyFrom;
-import svnserver.repository.VcsLogEntry;
+import svnserver.repository.git.GitLogEntry;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
@@ -86,10 +86,10 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
           .listBegin()
           .listBegin();
       if (args.changedPaths) {
-        final Map<String, ? extends VcsLogEntry> changes = revisionInfo.getChanges();
+        final Map<String, GitLogEntry> changes = revisionInfo.getChanges();
         writer.separator();
-        for (Map.Entry<String, ? extends VcsLogEntry> entry : changes.entrySet()) {
-          final VcsLogEntry logEntry = entry.getValue();
+        for (Map.Entry<String, GitLogEntry> entry : changes.entrySet()) {
+          final GitLogEntry logEntry = entry.getValue();
           final char change = logEntry.getChange();
           if (change == 0) continue;
           writer

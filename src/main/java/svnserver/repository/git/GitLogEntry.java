@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsCopyFrom;
-import svnserver.repository.VcsLogEntry;
 import svnserver.repository.git.filter.GitFilter;
 
 import java.io.IOException;
@@ -26,7 +25,7 @@ import java.util.Objects;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitLogEntry implements VcsLogEntry {
+public final class GitLogEntry {
   @Nullable
   private final GitFile oldEntry;
   @Nullable
@@ -47,7 +46,6 @@ public final class GitLogEntry implements VcsLogEntry {
     return newEntry;
   }
 
-  @Override
   public char getChange() throws IOException, SVNException {
     if (newEntry == null)
       return SVNLogEntryPath.TYPE_DELETED;
@@ -61,7 +59,42 @@ public final class GitLogEntry implements VcsLogEntry {
     return isModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
   }
 
-  @Override
+  public boolean isModified() throws IOException, SVNException {
+    try {
+      if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
+        // Type modified.
+        if (!Objects.equals(newEntry.getFileMode(), oldEntry.getFileMode())) return true;
+        // Content modified.
+        if ((!newEntry.isDirectory()) && (!oldEntry.isDirectory())) {
+          if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
+        }
+        // Probably properties modified
+        final boolean sameProperties = Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())
+            && Objects.equals(getFilterName(newEntry), getFilterName(oldEntry));
+        if (!sameProperties) {
+          return isPropertyModified();
+        }
+      }
+      return false;
+    } catch (SvnForbiddenException e) {
+      // By default - entry is modified.
+      return true;
+    }
+  }
+
+  @Nullable
+  private static String getFilterName(@NotNull GitFile file) {
+    final GitFilter filter = file.getFilter();
+    return filter == null ? null : filter.getName();
+  }
+
+  public boolean isPropertyModified() throws IOException, SVNException {
+    if ((newEntry == null) || (oldEntry == null)) return false;
+    final Map<String, String> newProps = newEntry.getProperties();
+    final Map<String, String> oldProps = oldEntry.getProperties();
+    return !Objects.equals(newProps, oldProps);
+  }
+
   public @NotNull SVNNodeKind getKind() {
     if (newEntry != null)
       return newEntry.getKind();
@@ -92,44 +125,7 @@ public final class GitLogEntry implements VcsLogEntry {
     return filter == null ? null : filter.getName();
   }
 
-  public boolean isPropertyModified() throws IOException, SVNException {
-    if ((newEntry == null) || (oldEntry == null)) return false;
-    final Map<String, String> newProps = newEntry.getProperties();
-    final Map<String, String> oldProps = oldEntry.getProperties();
-    return !Objects.equals(newProps, oldProps);
-  }
-
-  public boolean isModified() throws IOException, SVNException {
-    try {
-      if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
-        // Type modified.
-        if (!Objects.equals(newEntry.getFileMode(), oldEntry.getFileMode())) return true;
-        // Content modified.
-        if ((!newEntry.isDirectory()) && (!oldEntry.isDirectory())) {
-          if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
-        }
-        // Probably properties modified
-        final boolean sameProperties = Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())
-            && Objects.equals(getFilterName(newEntry), getFilterName(oldEntry));
-        if (!sameProperties) {
-          return isPropertyModified();
-        }
-      }
-      return false;
-    } catch (SvnForbiddenException e) {
-      // By default - entry is modified.
-      return true;
-    }
-  }
-
-  @Override
   public @Nullable VcsCopyFrom getCopyFrom() throws IOException {
     return newEntry == null ? null : newEntry.getCopyFrom();
-  }
-
-  @Nullable
-  private static String getFilterName(@NotNull GitFile file) {
-    final GitFilter filter = file.getFilter();
-    return filter == null ? null : filter.getName();
   }
 }

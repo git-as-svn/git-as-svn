@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsCopyFrom;
-import svnserver.repository.VcsLogEntry;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -131,7 +130,7 @@ public final class GitRevision {
   }
 
   @NotNull
-  public Map<String, ? extends VcsLogEntry> getChanges() throws IOException, SVNException {
+  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
     }
