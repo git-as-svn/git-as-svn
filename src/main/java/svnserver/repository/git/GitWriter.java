@@ -65,12 +65,12 @@ public final class GitWriter {
   }
 
   @NotNull
-  public VcsDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
+  public GitDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
     return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), null, user);
   }
 
   @NotNull
-  public VcsDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
+  public GitDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
     return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), (GitFile) file, user);
   }
 
@@ -121,40 +121,6 @@ public final class GitWriter {
     }
 
     @Override
-    public void checkUpToDate(@NotNull String path, int rev, boolean checkLock) throws SVNException, IOException {
-      final GitFile file = revision.getFile(path);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
-      } else if (file.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
-      }
-      if (checkLock) {
-        checkLockFile(file);
-      }
-    }
-
-    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
-      final String fullPath = file.getFullPath();
-      if (file.isDirectory()) {
-        final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);
-        while (iter.hasNext()) {
-          checkLockDesc(iter.next());
-        }
-      } else {
-        checkLockDesc(lockManager.getLock(fullPath));
-      }
-    }
-
-    private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
-      if (lockDesc != null) {
-        final String token = locks.get(lockDesc.getPath());
-        if (token == null || !lockDesc.getToken().equals(token)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, lockDesc.getPath()));
-        }
-      }
-    }
-
-    @Override
     public void addDir(@NotNull String name, @Nullable VcsFile sourceDir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       if (current.getEntries().containsKey(name)) {
@@ -195,33 +161,6 @@ public final class GitWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
       }
       commitActions.add(CommitAction::closeDir);
-    }
-
-    @Override
-    public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
-      final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
-      final GitTreeUpdate current = treeStack.element();
-      final GitTreeEntry entry = current.getEntries().get(name);
-      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
-      if (modify ^ (entry != null)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
-      }
-      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
-      if (objectId == null) {
-        // Content not updated.
-        if (originalId == null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
-        }
-        return;
-      }
-      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
-      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
-    }
-
-    private FileMode getFileMode(@NotNull Map<String, String> props) {
-      if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
-      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
-      return FileMode.REGULAR_FILE;
     }
 
     @Override
@@ -273,6 +212,12 @@ public final class GitWriter {
       }
     }
 
+    private PersonIdent createIdent(User userInfo) {
+      final String realName = userInfo.getRealName();
+      final String email = userInfo.getEmail();
+      return new PersonIdent(realName, email == null ? "" : email);
+    }
+
     private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
       final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
@@ -280,6 +225,40 @@ public final class GitWriter {
         validateAction.accept(validator);
       }
       validator.done();
+    }
+
+    @Override
+    public void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
+      final GitDeltaConsumer gitDeltaConsumer = deltaConsumer;
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry entry = current.getEntries().get(name);
+      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
+      if (modify ^ (entry != null)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
+      }
+      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
+      if (objectId == null) {
+        // Content not updated.
+        if (originalId == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
+        }
+        return;
+      }
+      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
+      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
+    }
+
+    @Override
+    public void checkUpToDate(@NotNull String path, int rev, boolean checkLock) throws SVNException, IOException {
+      final GitFile file = revision.getFile(path);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
+      } else if (file.getLastChange().getId() > rev) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
+      }
+      if (checkLock) {
+        checkLockFile(file);
+      }
     }
 
     private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
@@ -291,10 +270,16 @@ public final class GitWriter {
       return validator.done();
     }
 
-    private PersonIdent createIdent(User userInfo) {
-      final String realName = userInfo.getRealName();
-      final String email = userInfo.getEmail();
-      return new PersonIdent(realName, email == null ? "" : email);
+    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
+      final String fullPath = file.getFullPath();
+      if (file.isDirectory()) {
+        final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);
+        while (iter.hasNext()) {
+          checkLockDesc(iter.next());
+        }
+      } else {
+        checkLockDesc(lockManager.getLock(fullPath));
+      }
     }
 
     @NotNull
@@ -306,6 +291,21 @@ public final class GitWriter {
       }
       fullPath.append(name);
       return fullPath.toString();
+    }
+
+    private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
+      if (lockDesc != null) {
+        final String token = locks.get(lockDesc.getPath());
+        if (token == null || !lockDesc.getToken().equals(token)) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, lockDesc.getPath()));
+        }
+      }
+    }
+
+    private FileMode getFileMode(@NotNull Map<String, String> props) {
+      if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
+      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
+      return FileMode.REGULAR_FILE;
     }
   }
 

@@ -22,7 +22,11 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.repository.*;
+import svnserver.repository.VcsCommitBuilder;
+import svnserver.repository.VcsConsumer;
+import svnserver.repository.VcsEntry;
+import svnserver.repository.VcsFile;
+import svnserver.repository.git.GitDeltaConsumer;
 import svnserver.repository.git.GitRevision;
 import svnserver.repository.git.GitWriter;
 import svnserver.repository.locks.LockDesc;
@@ -239,11 +243,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
   private static class FileUpdater {
     @NotNull
-    private final VcsDeltaConsumer deltaConsumer;
+    private final GitDeltaConsumer deltaConsumer;
     @NotNull
     private final SVNDeltaReader reader = new SVNDeltaReader();
 
-    public FileUpdater(@NotNull VcsDeltaConsumer deltaConsumer) {
+    public FileUpdater(@NotNull GitDeltaConsumer deltaConsumer) {
       this.deltaConsumer = deltaConsumer;
     }
   }
@@ -367,7 +371,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
-      final VcsDeltaConsumer deltaConsumer;
+      final GitDeltaConsumer deltaConsumer;
       context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       if (args.copyParams.copyFrom != null) {
         log.debug("Copy file: {} (rev: {}) from {} (rev: {})", parent, args.copyParams.copyFrom, args.copyParams.rev);
@@ -435,23 +439,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       paths.put(args.token, lastUpdater);
     }
 
-    private void changeProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
-      if (args.value.length > 0) {
-        props.put(args.name, args.value[0]);
-      } else {
-        props.remove(args.name);
-      }
-    }
-
-    @NotNull
-    private FileUpdater getFile(@NotNull String token) throws SVNException {
-      final FileUpdater file = files.get(token);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
-      }
-      return file;
-    }
-
     private void openDir(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
       final EntryUpdater parent = getParent(args.parentToken);
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
@@ -472,24 +459,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       });
     }
 
-    private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
-      final FileUpdater file = files.remove(args.token);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + args.token));
-      }
-      if (args.checksum.length != 0) {
-        file.deltaConsumer.validateChecksum(args.checksum[0]);
-      }
-    }
-
-    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException, IOException {
-      getFile(args.token).reader.nextWindow(args.chunk, 0, args.chunk.length, "", getFile(args.token).deltaConsumer);
-    }
-
-    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException, IOException {
-      getFile(args.token).deltaConsumer.textDeltaEnd(null);
-    }
-
     @NotNull
     private EntryUpdater getParent(@NotNull String parentToken) throws SVNException {
       final EntryUpdater parent = paths.get(parentToken);
@@ -499,29 +468,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       return parent;
     }
 
-    private void checkUpToDate(@NotNull VcsFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
-      if (vcsFile.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
-      }
-      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
-    }
-
-    private void abortEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
-      final SvnServerWriter writer = context.getWriter();
-      writer
-          .listBegin()
-          .word("success")
-          .listBegin()
-          .listEnd()
-          .listEnd();
-    }
-
-    @NotNull
-    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
-      for (VcsConsumer<VcsCommitBuilder> consumer : updater.changes) {
-        consumer.accept(treeBuilder);
-      }
-      return treeBuilder;
+    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
+      paths.remove(args.token);
     }
 
     private void openFile(@NotNull SessionContext context, @NotNull OpenParams args) throws SVNException, IOException {
@@ -530,7 +478,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       log.debug("Modify file: {} (rev: {})", args.name, rev);
       VcsFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
-      final VcsDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
+      final GitDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
       if (parent.head && (rev >= 0)) {
         checkUpToDate(vcsFile, rev, true);
@@ -538,8 +486,21 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
-    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
-      paths.remove(args.token);
+    private void checkUpToDate(@NotNull VcsFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
+      if (vcsFile.getLastChange().getId() > rev) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
+      }
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
+    }
+
+    private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
+      final FileUpdater file = files.remove(args.token);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + args.token));
+      }
+      if (args.checksum.length != 0) {
+        file.deltaConsumer.validateChecksum(args.checksum[0]);
+      }
     }
 
     private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
@@ -579,6 +540,49 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           .listBegin()
           .listEnd()
           .listEnd();
+    }
+
+    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException, IOException {
+      getFile(args.token).reader.nextWindow(args.chunk, 0, args.chunk.length, "", getFile(args.token).deltaConsumer);
+    }
+
+    @NotNull
+    private FileUpdater getFile(@NotNull String token) throws SVNException {
+      final FileUpdater file = files.get(token);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
+      }
+      return file;
+    }
+
+    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException, IOException {
+      getFile(args.token).deltaConsumer.textDeltaEnd(null);
+    }
+
+    private void abortEdit(@NotNull SessionContext context, @NotNull NoParams args) throws IOException {
+      final SvnServerWriter writer = context.getWriter();
+      writer
+          .listBegin()
+          .word("success")
+          .listBegin()
+          .listEnd()
+          .listEnd();
+    }
+
+    @NotNull
+    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
+      for (VcsConsumer<VcsCommitBuilder> consumer : updater.changes) {
+        consumer.accept(treeBuilder);
+      }
+      return treeBuilder;
+    }
+
+    private void changeProp(@NotNull Map<String, String> props, @NotNull ChangePropParams args) {
+      if (args.value.length > 0) {
+        props.put(args.name, args.value[0]);
+      } else {
+        props.remove(args.name);
+      }
     }
 
     @NotNull

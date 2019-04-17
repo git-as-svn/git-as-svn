@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
+import svnserver.repository.git.GitDeltaConsumer;
 import svnserver.repository.git.GitRevision;
 
 import java.io.IOException;
@@ -58,7 +59,7 @@ public interface VcsCommitBuilder {
    * @param deltaConsumer Delta consumer from the same repository.
    * @param modify        Modification flag (true - entry modification, false - new entry).
    */
-  void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException;
+  void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException;
 
   /**
    * Delete directory or file.
@@ -82,8 +83,8 @@ public interface VcsCommitBuilder {
   /**
    * Check last modification revision of path.
    *
-   * @param path         Full path.
-   * @param rev          Revision.
+   * @param path      Full path.
+   * @param rev       Revision.
    * @param checkLock Check locks for this entry.
    */
   void checkUpToDate(String path, int rev, boolean checkLock) throws SVNException, IOException;
