@@ -27,7 +27,7 @@ import svnserver.repository.VcsConsumer;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManagerWrite;
+import svnserver.repository.locks.LockManager;
 
 import java.io.IOException;
 import java.util.*;
@@ -76,7 +76,7 @@ public final class GitWriter {
   }
 
   @NotNull
-  public GitWriter.GitCommitBuilder createCommitBuilder(@NotNull LockManagerWrite lockManager, @NotNull Map<String, String> locks) throws IOException, SVNException {
+  public GitWriter.GitCommitBuilder createCommitBuilder(@NotNull LockManager lockManager, @NotNull Map<String, String> locks) throws IOException, SVNException {
     return new GitCommitBuilder(lockManager, locks, gitBranch);
   }
 
@@ -98,13 +98,13 @@ public final class GitWriter {
     @NotNull
     private final String branch;
     @NotNull
-    private final LockManagerWrite lockManager;
+    private final LockManager lockManager;
     @NotNull
     private final Map<String, String> locks;
     @NotNull
     private final List<VcsConsumer<CommitAction>> commitActions = new ArrayList<>();
 
-    public GitCommitBuilder(@NotNull LockManagerWrite lockManager, @NotNull Map<String, String> locks, @NotNull String branch) throws IOException, SVNException {
+    public GitCommitBuilder(@NotNull LockManager lockManager, @NotNull Map<String, String> locks, @NotNull String branch) throws IOException {
       this.branch = branch;
       this.lockManager = lockManager;
       this.locks = locks;
