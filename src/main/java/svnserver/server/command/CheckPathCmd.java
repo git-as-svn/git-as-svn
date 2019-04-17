@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsFile;
+import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
@@ -43,7 +43,7 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
     String fullPath = context.getRepositoryPath(args.path);
     final GitRepository repository = context.getRepository();
     final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    VcsFile fileInfo = info.getFile(fullPath);
+    final GitFile fileInfo = info.getFile(fullPath);
     final SVNNodeKind kind;
     if (fileInfo != null) {
       kind = fileInfo.getKind();

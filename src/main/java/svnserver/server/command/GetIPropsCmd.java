@@ -12,7 +12,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsFile;
+import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
@@ -46,7 +46,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
 
     final GitRepository repository = context.getRepository();
     final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    final List<VcsFile> files = new ArrayList<>();
+    final List<GitFile> files = new ArrayList<>();
     int index = -1;
     while (true) {
       index = fullPath.indexOf('/', index + 1);
@@ -54,7 +54,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
         break;
       }
       final String subPath = fullPath.substring(0, index);
-      final VcsFile fileInfo = info.getFile(subPath);
+      final GitFile fileInfo = info.getFile(subPath);
       if (fileInfo == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, subPath));
       }
@@ -65,7 +65,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
         .word("success")
         .listBegin()
         .listBegin();
-    for (VcsFile file : files) {
+    for (GitFile file : files) {
       writer
           .listBegin()
           .string(file.getFullPath())

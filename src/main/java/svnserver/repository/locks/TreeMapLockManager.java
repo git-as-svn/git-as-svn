@@ -13,7 +13,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
-import svnserver.repository.VcsFile;
+import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
@@ -51,7 +51,7 @@ public final class TreeMapLockManager implements LockManagerWrite {
       // Create new locks list.
       for (int i = 0; i < targets.length; ++i) {
         final LockTarget target = targets[i];
-        final VcsFile file = revision.getFile(target.getPath());
+        final GitFile file = revision.getFile(target.getPath());
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, target.getPath()));
         }
@@ -96,7 +96,7 @@ public final class TreeMapLockManager implements LockManagerWrite {
       while (iter.hasNext()) {
         final Map.Entry<String, LockDesc> entry = iter.next();
         final LockDesc item = entry.getValue();
-        final VcsFile file = revision.getFile(item.getPath());
+        final GitFile file = revision.getFile(item.getPath());
         if ((file == null) || file.isDirectory() || (!item.getHash().equals(file.getContentHash()))) {
           iter.remove();
         }
@@ -112,7 +112,7 @@ public final class TreeMapLockManager implements LockManagerWrite {
     for (LockDesc lockDesc : lockDescs) {
       final String pathKey = repo.getUuid() + SEPARATOR + lockDesc.getPath();
       if (!locks.containsKey(pathKey)) {
-        final VcsFile file = revision.getFile(lockDesc.getPath());
+        final GitFile file = revision.getFile(lockDesc.getPath());
         if ((file != null) && (!file.isDirectory())) {
           locks.put(pathKey, new LockDesc(lockDesc.getPath(), file.getContentHash(), lockDesc.getToken(), lockDesc.getOwner(), lockDesc.getComment(), lockDesc.getCreated()));
         }

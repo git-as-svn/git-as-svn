@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.VcsFile;
+import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
@@ -45,7 +45,7 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
     final String fullPath = context.getRepositoryPath(args.path);
     final GitRepository repository = context.getRepository();
     final GitRevision revision = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
-    final VcsFile fileInfo = revision.getFile(fullPath);
+    final GitFile fileInfo = revision.getFile(fullPath);
 
     if (fileInfo == null)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));

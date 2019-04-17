@@ -22,7 +22,10 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.ReferenceLink;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.repository.*;
+import svnserver.repository.Depth;
+import svnserver.repository.VcsCommitBuilder;
+import svnserver.repository.VcsConsumer;
+import svnserver.repository.VcsEntry;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockDesc;
@@ -70,8 +73,8 @@ public final class GitWriter {
   }
 
   @NotNull
-  public GitDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), (GitFile) file, user);
+  public GitDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull GitFile file) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), file, user);
   }
 
   @NotNull
@@ -121,14 +124,13 @@ public final class GitWriter {
     }
 
     @Override
-    public void addDir(@NotNull String name, @Nullable VcsFile sourceDir) throws SVNException, IOException {
+    public void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       if (current.getEntries().containsKey(name)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
-      final GitFile source = (GitFile) sourceDir;
       commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, repo.loadTree(source == null ? null : source.getTreeEntry())));
+      treeStack.push(new GitTreeUpdate(name, repo.loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
     }
 
     @Override
@@ -161,6 +163,27 @@ public final class GitWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
       }
       commitActions.add(CommitAction::closeDir);
+    }
+
+    @Override
+    public void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
+      final GitDeltaConsumer gitDeltaConsumer = deltaConsumer;
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry entry = current.getEntries().get(name);
+      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
+      if (modify ^ (entry != null)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
+      }
+      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
+      if (objectId == null) {
+        // Content not updated.
+        if (originalId == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
+        }
+        return;
+      }
+      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
+      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
     }
 
     @Override
@@ -218,6 +241,17 @@ public final class GitWriter {
       return new PersonIdent(realName, email == null ? "" : email);
     }
 
+    @NotNull
+    private String getFullPath(String name) {
+      final StringBuilder fullPath = new StringBuilder();
+      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
+      while (iter.hasNext()) {
+        fullPath.append(iter.next().getName()).append('/');
+      }
+      fullPath.append(name);
+      return fullPath.toString();
+    }
+
     private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
       final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
@@ -225,27 +259,6 @@ public final class GitWriter {
         validateAction.accept(validator);
       }
       validator.done();
-    }
-
-    @Override
-    public void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
-      final GitDeltaConsumer gitDeltaConsumer = deltaConsumer;
-      final GitTreeUpdate current = treeStack.element();
-      final GitTreeEntry entry = current.getEntries().get(name);
-      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
-      if (modify ^ (entry != null)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
-      }
-      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
-      if (objectId == null) {
-        // Content not updated.
-        if (originalId == null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
-        }
-        return;
-      }
-      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
-      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
     }
 
     @Override
@@ -261,15 +274,6 @@ public final class GitWriter {
       }
     }
 
-    private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
-      final GitFilterMigration validator = new GitFilterMigration(root);
-      for (VcsConsumer<CommitAction> validateAction : commitActions) {
-        validateAction.accept(validator);
-      }
-      return validator.done();
-    }
-
     private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
       final String fullPath = file.getFullPath();
       if (file.isDirectory()) {
@@ -280,17 +284,6 @@ public final class GitWriter {
       } else {
         checkLockDesc(lockManager.getLock(fullPath));
       }
-    }
-
-    @NotNull
-    private String getFullPath(String name) {
-      final StringBuilder fullPath = new StringBuilder();
-      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
-      while (iter.hasNext()) {
-        fullPath.append(iter.next().getName()).append('/');
-      }
-      fullPath.append(name);
-      return fullPath.toString();
     }
 
     private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
@@ -306,6 +299,15 @@ public final class GitWriter {
       if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
       if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
       return FileMode.REGULAR_FILE;
+    }
+
+    private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
+      final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
+      final GitFilterMigration validator = new GitFilterMigration(root);
+      for (VcsConsumer<CommitAction> validateAction : commitActions) {
+        validateAction.accept(validator);
+      }
+      return validator.done();
     }
   }
 

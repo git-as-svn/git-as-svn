@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.repository.git.GitDeltaConsumer;
+import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRevision;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public interface VcsCommitBuilder {
    * @param name      New directory name.
    * @param sourceDir Directory information.
    */
-  void addDir(@NotNull String name, @Nullable VcsFile sourceDir) throws SVNException, IOException;
+  void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException;
 
   /**
    * Enter into directory.
