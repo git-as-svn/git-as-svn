@@ -314,7 +314,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
             if (failure.errorFile.isEmpty()) {
               log.warn("Received client error: {} {}", failure.errorCode, failure.errorMessage);
             } else {
-              log.warn("Received client error [%s:%d]: {} {}", failure.errorFile, failure.errorLine, failure.errorCode, failure.errorMessage);
+              log.warn("Received client error [{}:{}]: {} {}", failure.errorFile, failure.errorLine, failure.errorCode, failure.errorMessage);
             }
             failures.add(failure);
           }
@@ -518,7 +518,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
                 private boolean header = true;
 
                 @Override
-                public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+                public void applyTextDelta(String path, String baseChecksum) {
                 }
 
                 @Override
@@ -541,7 +541,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
                 }
 
                 @Override
-                public void textDeltaEnd(String path) throws SVNException {
+                public void textDeltaEnd(String path) {
                 }
               }, true);
               if (!validateMd5.equals(md5)) {
@@ -682,7 +682,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull GitFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException, SVNException {
+    private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull GitFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException {
       if (params.isIncludeInternalProps()) {
         for (Map.Entry<String, String> prop : newFile.getRevProperties().entrySet()) {
           changeProp(writer, type, tokenId, prop.getKey(), prop.getValue());
@@ -764,7 +764,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       private final Deque<HeaderEntry> pathStack;
       private boolean writed = false;
 
-      public HeaderEntry(@NotNull SessionContext context, @Nullable GitFile file, @NotNull HeaderWriter beginWriter, @NotNull HeaderWriter endWriter, @NotNull Deque<HeaderEntry> pathStack) throws IOException {
+      private HeaderEntry(@NotNull SessionContext context, @Nullable GitFile file, @NotNull HeaderWriter beginWriter, @NotNull HeaderWriter endWriter, @NotNull Deque<HeaderEntry> pathStack) {
         this.context = context;
         this.file = file;
         this.beginWriter = beginWriter;
