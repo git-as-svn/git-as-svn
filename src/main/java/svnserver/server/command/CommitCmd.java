@@ -23,11 +23,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.VcsConsumer;
-import svnserver.repository.VcsEntry;
-import svnserver.repository.git.GitDeltaConsumer;
-import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRevision;
-import svnserver.repository.git.GitWriter;
+import svnserver.repository.git.*;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockManagerWrite;
 import svnserver.server.SessionContext;
@@ -254,7 +250,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   private static class EntryUpdater {
     // New parent entry (destination)
     @NotNull
-    private final VcsEntry entry;
+    private final GitEntry entry;
     // Old source entry (source)
     @Nullable
     private final GitFile source;
@@ -264,7 +260,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final List<VcsConsumer<GitWriter.GitCommitBuilder>> changes = new ArrayList<>();
     private final boolean head;
 
-    private EntryUpdater(@NotNull VcsEntry entry, @Nullable GitFile source, boolean head) throws IOException, SVNException {
+    private EntryUpdater(@NotNull GitEntry entry, @Nullable GitFile source, boolean head) throws IOException, SVNException {
       this.entry = entry;
       this.source = source;
       this.head = head;

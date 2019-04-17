@@ -24,7 +24,6 @@ import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.repository.Depth;
 import svnserver.repository.VcsConsumer;
-import svnserver.repository.VcsEntry;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockDesc;
@@ -67,13 +66,13 @@ public final class GitWriter {
   }
 
   @NotNull
-  public GitDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), null, user);
+  public GitDeltaConsumer createFile(@NotNull GitEntry parent, @NotNull String name) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, parent.createChild(name, false), null, user);
   }
 
   @NotNull
-  public GitDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull GitFile file) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), file, user);
+  public GitDeltaConsumer modifyFile(@NotNull GitEntry parent, @NotNull String name, @NotNull GitFile file) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, parent.createChild(name, false), file, user);
   }
 
   @NotNull
