@@ -15,6 +15,8 @@ import svnserver.StringHelper;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class LockDesc {
+  @NotNull
+  public static final LockDesc[] emptyArray = {};
 
   @NotNull
   private final String path;

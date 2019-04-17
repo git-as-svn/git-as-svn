@@ -14,7 +14,7 @@ import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsLogEntry;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -52,45 +52,6 @@ import java.util.Map;
  * @author a.navrotskiy
  */
 public final class LogCmd extends BaseCmd<LogCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String[] targetPath;
-    @NotNull
-    private final int[] startRev;
-    @NotNull
-    private final int[] endRev;
-    private final boolean changedPaths;
-    private final boolean strictNode;
-    private final int limit;
-    /**
-     * TODO: issue #26.
-     */
-    private final boolean includeMergedRevisions;
-
-    public Params(@NotNull String[] targetPath,
-                  @NotNull int[] startRev,
-                  @NotNull int[] endRev,
-                  boolean changedPaths,
-                  boolean strictNode,
-                  int limit,
-                  boolean includeMergedRevisions,
-                  /**
-                   * Broken-minded SVN feature we're unlikely to support EVER.
-                   */
-                  @SuppressWarnings("UnusedParameters")
-                  @NotNull String revpropsMode,
-                  @SuppressWarnings("UnusedParameters")
-                  @NotNull String[] revprops) {
-      this.targetPath = targetPath;
-      this.startRev = startRev;
-      this.endRev = endRev;
-      this.changedPaths = changedPaths;
-      this.strictNode = strictNode;
-      this.limit = limit;
-      this.includeMergedRevisions = includeMergedRevisions;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -109,18 +70,18 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + Math.max(startRev, endRev)));
     }
 
-    final List<VcsRevision> log;
+    final List<GitRevision> log;
     if (startRev >= endRev) {
       log = getLog(context, args, startRev, endRev, args.limit);
     } else {
-      final List<VcsRevision> logReverse = getLog(context, args, endRev, startRev, -1);
+      final List<GitRevision> logReverse = getLog(context, args, endRev, startRev, -1);
       final int minIndex = args.limit <= 0 ? 0 : Math.max(0, logReverse.size() - args.limit);
       log = new ArrayList<>(logReverse.size() - minIndex);
       for (int i = logReverse.size() - 1; i >= minIndex; i--) {
         log.add(logReverse.get(i));
       }
     }
-    for (VcsRevision revisionInfo : log) {
+    for (GitRevision revisionInfo : log) {
       writer
           .listBegin()
           .listBegin();
@@ -176,7 +137,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         .listEnd();
   }
 
-  private List<VcsRevision> getLog(@NotNull SessionContext context, @NotNull Params args, int endRev, int startRev, int limit) throws IOException, SVNException {
+  private List<GitRevision> getLog(@NotNull SessionContext context, @NotNull Params args, int endRev, int startRev, int limit) throws SVNException {
     final List<VcsCopyFrom> targetPaths = new ArrayList<>();
     int revision = -1;
     for (String target : args.targetPath) {
@@ -187,10 +148,10 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         revision = Math.max(revision, lastChange);
       }
     }
-    final List<VcsRevision> result = new ArrayList<>();
+    final List<GitRevision> result = new ArrayList<>();
     int logLimit = limit;
     while (revision >= startRev) {
-      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
+      final GitRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
       result.add(revisionInfo);
       if (--logLimit == 0) break;
 
@@ -224,5 +185,44 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       revision = nextRevision;
     }
     return result;
+  }
+
+  public static class Params {
+    @NotNull
+    private final String[] targetPath;
+    @NotNull
+    private final int[] startRev;
+    @NotNull
+    private final int[] endRev;
+    private final boolean changedPaths;
+    private final boolean strictNode;
+    private final int limit;
+    /**
+     * TODO: issue #26.
+     */
+    private final boolean includeMergedRevisions;
+
+    public Params(@NotNull String[] targetPath,
+                  @NotNull int[] startRev,
+                  @NotNull int[] endRev,
+                  boolean changedPaths,
+                  boolean strictNode,
+                  int limit,
+                  boolean includeMergedRevisions,
+                  /**
+                   * Broken-minded SVN feature we're unlikely to support EVER.
+                   */
+                  @SuppressWarnings("UnusedParameters")
+                  @NotNull String revpropsMode,
+                  @SuppressWarnings("UnusedParameters")
+                  @NotNull String[] revprops) {
+      this.targetPath = targetPath;
+      this.startRev = startRev;
+      this.endRev = endRev;
+      this.changedPaths = changedPaths;
+      this.strictNode = strictNode;
+      this.limit = limit;
+      this.includeMergedRevisions = includeMergedRevisions;
+    }
   }
 }

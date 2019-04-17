@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRevision;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     String fullPath = context.getRepositoryPath(args.path);
     final GitRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     VcsFile fileInfo = info.getFile(fullPath);
     final SVNNodeKind kind;
     if (fileInfo != null) {

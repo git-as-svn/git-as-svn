@@ -12,8 +12,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRevision;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -44,7 +44,7 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String fullPath = context.getRepositoryPath(args.path);
     final GitRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
+    final GitRevision revision = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
     final VcsFile fileInfo = revision.getFile(fullPath);
 
     if (fileInfo == null)

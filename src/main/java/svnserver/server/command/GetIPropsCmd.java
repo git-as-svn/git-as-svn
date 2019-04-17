@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRevision;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -45,7 +45,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
     String fullPath = context.getRepositoryPath(args.path);
 
     final GitRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final List<VcsFile> files = new ArrayList<>();
     int index = -1;
     while (true) {

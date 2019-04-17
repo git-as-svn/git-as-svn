@@ -12,7 +12,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -37,16 +37,6 @@ import java.util.Map;
  * @author a.navrotskiy
  */
 public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
-  public static class Params {
-    private final int startRev;
-    private final int endRev;
-
-    public Params(int startRev, int endRev) {
-      this.startRev = startRev;
-      this.endRev = endRev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -60,7 +50,7 @@ public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
     }
     final SvnServerWriter writer = context.getWriter();
     for (int revision = args.startRev; revision <= args.endRev; revision++) {
-      final VcsRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
+      final GitRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
       writer
           .listBegin()
           .word("revprops")
@@ -82,6 +72,16 @@ public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
         .word("success")
         .listBegin().listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    private final int startRev;
+    private final int endRev;
+
+    public Params(int startRev, int endRev) {
+      this.startRev = startRev;
+      this.endRev = endRev;
+    }
   }
 
 }

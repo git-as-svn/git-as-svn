@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRevision;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -51,7 +51,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
     final SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
     final GitRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final VcsFile fileInfo = revision.getFile(fullPath);
 
     if (fileInfo == null)
@@ -70,7 +70,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .separator();
     if (args.wantContents) {
       for (VcsFile item : fileInfo.getEntries()) {
-        final VcsRevision lastChange = item.getLastChange();
+        final GitRevision lastChange = item.getLastChange();
         writer
             .listBegin()
             .string(item.getFileName()) // name

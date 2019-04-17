@@ -35,7 +35,6 @@ import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsCopyFrom;
-import svnserver.repository.VcsRevision;
 import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
@@ -594,7 +593,7 @@ public final class GitRepository implements AutoCloseable {
   }
 
   @NotNull
-  public VcsRevision getRevisionByDate(long dateTime) {
+  public GitRevision getRevisionByDate(long dateTime) {
     lock.readLock().lock();
     try {
       final Map.Entry<Long, GitRevision> entry = revisionByDate.floorEntry(dateTime);

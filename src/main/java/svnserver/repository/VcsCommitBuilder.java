@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
+import svnserver.repository.git.GitRevision;
 
 import java.io.IOException;
 import java.util.Map;
@@ -76,7 +77,7 @@ public interface VcsCommitBuilder {
    * @throws IOException
    */
   @Nullable
-  VcsRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException;
+  GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException;
 
   /**
    * Check last modification revision of path.

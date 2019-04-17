@@ -14,8 +14,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
 import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRevision;
 import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -47,7 +47,7 @@ public final class TreeMapLockManager implements LockManagerWrite {
   public LockDesc[] lock(@NotNull SessionContext context, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException, IOException {
     final LockDesc[] result = new LockDesc[targets.length];
     if (targets.length > 0) {
-      final VcsRevision revision = repo.getLatestRevision();
+      final GitRevision revision = repo.getLatestRevision();
       // Create new locks list.
       for (int i = 0; i < targets.length; ++i) {
         final LockTarget target = targets[i];
@@ -91,7 +91,7 @@ public final class TreeMapLockManager implements LockManagerWrite {
   @Override
   public void validateLocks() throws SVNException {
     try {
-      final VcsRevision revision = repo.getLatestRevision();
+      final GitRevision revision = repo.getLatestRevision();
       final Iterator<Map.Entry<String, LockDesc>> iter = locks.entrySet().iterator();
       while (iter.hasNext()) {
         final Map.Entry<String, LockDesc> entry = iter.next();
@@ -108,7 +108,7 @@ public final class TreeMapLockManager implements LockManagerWrite {
 
   @Override
   public void renewLocks(@NotNull LockDesc[] lockDescs) throws IOException, SVNException {
-    final VcsRevision revision = repo.getLatestRevision();
+    final GitRevision revision = repo.getLatestRevision();
     for (LockDesc lockDesc : lockDescs) {
       final String pathKey = repo.getUuid() + SEPARATOR + lockDesc.getPath();
       if (!locks.containsKey(pathKey)) {

@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsLogEntry;
-import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitRevision implements VcsRevision {
+public final class GitRevision {
   @NotNull
   private final GitRepository repo;
   @NotNull
@@ -65,13 +65,11 @@ public final class GitRevision implements VcsRevision {
     return cacheCommit;
   }
 
-  @Override
   public int getId() {
     return revision;
   }
 
   @NotNull
-  @Override
   public Map<String, String> getProperties(boolean includeInternalProps) {
     final Map<String, String> props = new HashMap<>();
     if (includeInternalProps) {
@@ -91,13 +89,7 @@ public final class GitRevision implements VcsRevision {
     }
   }
 
-  @Override
-  public long getDate() {
-    return date;
-  }
-
   @Nullable
-  @Override
   public String getAuthor() {
     if (gitNewCommit == null)
       return null;
@@ -107,13 +99,20 @@ public final class GitRevision implements VcsRevision {
   }
 
   @Nullable
-  @Override
   public String getLog() {
     return gitNewCommit == null ? null : gitNewCommit.getFullMessage().trim();
   }
 
+  @NotNull
+  public String getDateString() {
+    return StringHelper.formatDate(getDate());
+  }
+
+  public long getDate() {
+    return date;
+  }
+
   @Nullable
-  @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
     if (gitNewCommit == null) {
       return new GitFileEmptyTree(repo, "", revision);
@@ -132,7 +131,6 @@ public final class GitRevision implements VcsRevision {
   }
 
   @NotNull
-  @Override
   public Map<String, ? extends VcsLogEntry> getChanges() throws IOException, SVNException {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
@@ -144,7 +142,6 @@ public final class GitRevision implements VcsRevision {
   }
 
   @Nullable
-  @Override
   public VcsCopyFrom getCopyFrom(@NotNull String fullPath) {
     return renames.get(fullPath);
   }

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import svnserver.repository.git.GitRevision;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,7 +65,7 @@ public interface VcsFile extends VcsEntry {
   Iterable<? extends VcsFile> getEntries() throws IOException, SVNException;
 
   @NotNull
-  VcsRevision getLastChange() throws IOException;
+  GitRevision getLastChange() throws IOException;
 
   @Nullable
   VcsCopyFrom getCopyFrom() throws IOException;
