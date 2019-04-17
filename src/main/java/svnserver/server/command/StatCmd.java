@@ -8,27 +8,21 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
-import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
 
 /**
- * Change current path in repository.
- * <p>
  * <pre>
- * stat
- *    params:   ( path:string [ rev:number ] )
- *    response: ( ? entry:dirent )
- *    dirent:   ( name:string kind:node-kind size:number has-props:bool
- *    created-rev:number [ created-date:string ]
- *    [ last-author:string ] )
- *    New in svn 1.2.  If path is non-existent, an empty response is returned.
+ *   stat
+ *     params:   ( path:string [ rev:number ] )
+ *     response: ( ? entry:dirent )
+ *     dirent:   ( kind:node-kind size:number has-props:bool
+ *                 created-rev:number [ created-date:string ]
+ *                 [ last-author:string ] )
+ *     New in svn 1.2.  If path is non-existent, an empty response is returned.
  * </pre>
  *
  * @author a.navrotskiy
@@ -42,27 +36,29 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    final int revision = getRevisionOrLatest(args.rev, context);
     final String fullPath = context.getRepositoryPath(args.path);
-    final GitRepository repository = context.getRepository();
-    final GitRevision revision = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
-    final GitFile fileInfo = revision.getFile(fullPath);
-
-    if (fileInfo == null)
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
+    final GitFile file = context.getFile(revision, fullPath);
 
     context.getWriter()
         .listBegin()
         .word("success")
         .listBegin()
-        .listBegin()
-        .listBegin()
-        .word(fileInfo.getKind().toString()) // kind
-        .number(fileInfo.getSize()) // size
-        .bool(!fileInfo.getProperties().isEmpty()) // has properties
-        .number(fileInfo.getLastChange().getId()) // last change revision
-        .listBegin().stringNullable(fileInfo.getLastChange().getDateString()).listEnd() // last change date
-        .listBegin().stringNullable(fileInfo.getLastChange().getAuthor()).listEnd() // last change author
-        .listEnd()
+        .listBegin();
+
+    if (file != null) {
+      context.getWriter()
+          .listBegin()
+          .word(file.getKind().toString()) // kind
+          .number(file.getSize()) // size
+          .bool(!file.getProperties().isEmpty()) // has properties
+          .number(file.getLastChange().getId()) // last change revision
+          .listBegin().stringNullable(file.getLastChange().getDateString()).listEnd() // last change date
+          .listBegin().stringNullable(file.getLastChange().getAuthor()).listEnd() // last change author
+          .listEnd();
+    }
+
+    context.getWriter()
         .listEnd()
         .listEnd()
         .listEnd();
