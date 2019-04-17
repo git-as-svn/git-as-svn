@@ -13,15 +13,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
-import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
 
 /**
- * Change current path in repository.
- * <p>
  * <pre>
  * check-path
  *    params:   ( path:string [ rev:number ] )
@@ -40,16 +36,10 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    String fullPath = context.getRepositoryPath(args.path);
-    final GitRepository repository = context.getRepository();
-    final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    final GitFile fileInfo = info.getFile(fullPath);
-    final SVNNodeKind kind;
-    if (fileInfo != null) {
-      kind = fileInfo.getKind();
-    } else {
-      kind = SVNNodeKind.NONE;
-    }
+    final int revision = getRevisionOrLatest(args.rev, context);
+    final GitFile file = context.getFile(revision, args.path);
+    final SVNNodeKind kind = file == null ? SVNNodeKind.NONE : file.getKind();
+
     final SvnServerWriter writer = context.getWriter();
     writer
         .listBegin()

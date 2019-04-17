@@ -5,6 +5,7 @@
  * Major code cleanup
  * `repository: !git` changed to just `repository:` in git-as-svn.conf
  * `access: !acl` changed to just `acl:` in git-as-svn.conf
+ * `svn stat` is now compatible with native svn for nonexistent paths
 
 ## 1.8.1
 

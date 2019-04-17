@@ -114,7 +114,10 @@ public final class GitRevision {
   @Nullable
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
     if (gitNewCommit == null) {
-      return new GitFileEmptyTree(repo, "", revision);
+      if (fullPath.isEmpty())
+        return new GitFileEmptyTree(repo, "", revision);
+      else
+        return null;
     }
     GitFile result = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
     for (String pathItem : fullPath.split("/")) {
