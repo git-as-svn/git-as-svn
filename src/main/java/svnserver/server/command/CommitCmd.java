@@ -22,7 +22,6 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
-import svnserver.repository.VcsCommitBuilder;
 import svnserver.repository.VcsConsumer;
 import svnserver.repository.VcsEntry;
 import svnserver.repository.git.GitDeltaConsumer;
@@ -262,7 +261,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final Map<String, String> props;
     @NotNull
-    private final List<VcsConsumer<VcsCommitBuilder>> changes = new ArrayList<>();
+    private final List<VcsConsumer<GitWriter.GitCommitBuilder>> changes = new ArrayList<>();
     private final boolean head;
 
     private EntryUpdater(@NotNull VcsEntry entry, @Nullable GitFile source, boolean head) throws IOException, SVNException {
@@ -554,8 +553,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private VcsCommitBuilder updateDir(@NotNull VcsCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
-      for (VcsConsumer<VcsCommitBuilder> consumer : updater.changes) {
+    private GitWriter.GitCommitBuilder updateDir(@NotNull GitWriter.GitCommitBuilder treeBuilder, @NotNull EntryUpdater updater) throws IOException, SVNException {
+      for (VcsConsumer<GitWriter.GitCommitBuilder> consumer : updater.changes) {
         consumer.accept(treeBuilder);
       }
       return treeBuilder;
@@ -569,13 +568,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
     }
 
-    private void checkUpToDate(@NotNull GitFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
-      if (vcsFile.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
-      }
-      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
-    }
-
     @NotNull
     private FileUpdater getFile(@NotNull String token) throws SVNException {
       final FileUpdater file = files.get(token);
@@ -583,6 +575,13 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + token));
       }
       return file;
+    }
+
+    private void checkUpToDate(@NotNull GitFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
+      if (vcsFile.getLastChange().getId() > rev) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
+      }
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
     }
 
     @NotNull
