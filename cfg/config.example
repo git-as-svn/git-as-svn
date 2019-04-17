@@ -30,7 +30,7 @@ cacheConfig: !persistentCache
 repositoryMapping: !listMapping
   repositories:
     example:
-      access: !acl
+      acl:
         groups:
           - name: developers
             users:
@@ -42,7 +42,7 @@ repositoryMapping: !listMapping
             # use 'at' (@) for groups
             allowed:
               - '@developers'
-      repository: !git
+      repository:
         # Allowed pushers:
         # !pushEmbedded - use embedded push (fast, no dependencies)
         #   update: "update"            - name of update hook

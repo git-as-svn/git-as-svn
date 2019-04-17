@@ -41,7 +41,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
-      local.add(VcsAccess.class, entry.getValue().access.create(local));
+      local.add(VcsAccess.class, entry.getValue().acl.create());
       repos.put(entry.getKey(), entry.getValue().repository.create(local));
     }
 
@@ -64,8 +64,8 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
   public static class Entry {
     @NotNull
-    private AccessConfig access = new AclConfig();
+    private AclConfig acl = new AclConfig();
     @NotNull
-    private RepositoryConfig repository;
+    private GitRepositoryConfig repository;
   }
 }
