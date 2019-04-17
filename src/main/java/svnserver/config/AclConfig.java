@@ -8,19 +8,13 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.ACL;
-import svnserver.config.serializer.ConfigType;
-import svnserver.context.LocalContext;
 import svnserver.repository.VcsAccess;
-
-import java.io.IOException;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-@ConfigType("acl")
-public final class AclConfig implements AccessConfig {
+public final class AclConfig {
 
   @NotNull
   private GroupConfig[] groups = GroupConfig.emptyArray;
@@ -57,8 +51,7 @@ public final class AclConfig implements AccessConfig {
   }
 
   @NotNull
-  @Override
-  public VcsAccess create(@NotNull LocalContext context) throws IOException, SVNException {
+  public VcsAccess create() {
     return new ACL(this);
   }
 }

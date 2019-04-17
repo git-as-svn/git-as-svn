@@ -13,9 +13,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StreamHelper;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -41,27 +41,6 @@ import java.io.InputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final int[] rev;
-    private final boolean wantProps;
-    private final boolean wantContents;
-    /**
-     * TODO: issue #30.
-     */
-    private final boolean wantIProps;
-
-    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents, boolean wantIProps) {
-      this.path = path;
-      this.rev = rev;
-      this.wantProps = wantProps;
-      this.wantContents = wantContents;
-      this.wantIProps = wantIProps;
-    }
-  }
-
   private static final int WINDOW_SIZE = 1024 * 100;
 
   @NotNull
@@ -78,9 +57,9 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     if (fullPath.endsWith("/"))
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not cat all targets because some targets are directories"));
 
-    final VcsRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    final VcsFile fileInfo = revision.getFile(fullPath);
+    final GitRepository repository = context.getRepository();
+    final GitRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitFile fileInfo = revision.getFile(fullPath);
     if (fileInfo == null)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
 
@@ -113,6 +92,27 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
           .listBegin()
           .listEnd()
           .listEnd();
+    }
+  }
+
+  public static class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final int[] rev;
+    private final boolean wantProps;
+    private final boolean wantContents;
+    /**
+     * TODO: issue #30.
+     */
+    private final boolean wantIProps;
+
+    public Params(@NotNull String path, @NotNull int[] rev, boolean wantProps, boolean wantContents, boolean wantIProps) {
+      this.path = path;
+      this.rev = rev;
+      this.wantProps = wantProps;
+      this.wantContents = wantContents;
+      this.wantIProps = wantIProps;
     }
   }
 

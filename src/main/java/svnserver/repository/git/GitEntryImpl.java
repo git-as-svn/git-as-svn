@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
-import svnserver.repository.VcsFile;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
@@ -63,7 +62,7 @@ class GitEntryImpl implements GitEntry {
 
   @Nullable
   @Override
-  public VcsFile getEntry(@NotNull String name) throws IOException, SVNException {
+  public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
     return null;
   }
 

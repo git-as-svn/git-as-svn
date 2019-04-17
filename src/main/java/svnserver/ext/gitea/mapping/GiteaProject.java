@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitRepository;
 
 import java.io.IOException;
 
@@ -26,7 +26,7 @@ public class GiteaProject implements AutoCloseable {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GiteaProject.class);
   @NotNull
-  private final VcsRepository repository;
+  private final GitRepository repository;
   @NotNull
   private final LocalContext context;
   private final long projectId;
@@ -35,7 +35,7 @@ public class GiteaProject implements AutoCloseable {
 
   private volatile boolean ready = false;
 
-  GiteaProject(@NotNull LocalContext context, @NotNull VcsRepository repository, long projectId, String owner, String repositoryName) {
+  GiteaProject(@NotNull LocalContext context, @NotNull GitRepository repository, long projectId, String owner, String repositoryName) {
     this.context = context;
     this.repository = repository;
     this.projectId = projectId;
@@ -69,7 +69,7 @@ public class GiteaProject implements AutoCloseable {
   }
 
   @NotNull
-  public VcsRepository getRepository() {
+  public GitRepository getRepository() {
     return repository;
   }
 

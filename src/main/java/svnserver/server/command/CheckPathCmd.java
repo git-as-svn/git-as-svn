@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -32,6 +32,34 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
+  @NotNull
+  @Override
+  public Class<Params> getArguments() {
+    return Params.class;
+  }
+
+  @Override
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    String fullPath = context.getRepositoryPath(args.path);
+    final GitRepository repository = context.getRepository();
+    final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitFile fileInfo = info.getFile(fullPath);
+    final SVNNodeKind kind;
+    if (fileInfo != null) {
+      kind = fileInfo.getKind();
+    } else {
+      kind = SVNNodeKind.NONE;
+    }
+    final SvnServerWriter writer = context.getWriter();
+    writer
+        .listBegin()
+        .word("success")
+        .listBegin()
+        .word(kind.toString()) // kind
+        .listEnd()
+        .listEnd();
+  }
+
   public static class Params {
     @NotNull
     private final String path;
@@ -47,33 +75,5 @@ public final class CheckPathCmd extends BaseCmd<CheckPathCmd.Params> {
     public Integer getRev() {
       return rev.length < 1 ? null : rev[0];
     }
-  }
-
-  @NotNull
-  @Override
-  public Class<Params> getArguments() {
-    return Params.class;
-  }
-
-  @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    String fullPath = context.getRepositoryPath(args.path);
-    final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    VcsFile fileInfo = info.getFile(fullPath);
-    final SVNNodeKind kind;
-    if (fileInfo != null) {
-      kind = fileInfo.getKind();
-    } else {
-      kind = SVNNodeKind.NONE;
-    }
-    final SvnServerWriter writer = context.getWriter();
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .word(kind.toString()) // kind
-        .listEnd()
-        .listEnd();
   }
 }

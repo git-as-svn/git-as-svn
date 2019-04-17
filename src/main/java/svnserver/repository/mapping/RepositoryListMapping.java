@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
 import svnserver.repository.RepositoryInfo;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.RepositoryMapping;
+import svnserver.repository.git.GitRepository;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -25,11 +25,11 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class RepositoryListMapping implements VcsRepositoryMapping {
+public final class RepositoryListMapping implements RepositoryMapping {
   @NotNull
-  private final NavigableMap<String, VcsRepository> mapping;
+  private final NavigableMap<String, GitRepository> mapping;
 
-  public RepositoryListMapping(@NotNull Map<String, VcsRepository> mapping) {
+  public RepositoryListMapping(@NotNull Map<String, GitRepository> mapping) {
     this.mapping = new TreeMap<>();
 
     mapping.forEach((path, repository) -> {
@@ -40,7 +40,7 @@ public final class RepositoryListMapping implements VcsRepositoryMapping {
   @Nullable
   @Override
   public RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException {
-    final Map.Entry<String, VcsRepository> entry = getMapped(mapping, url.getPath());
+    final Map.Entry<String, GitRepository> entry = getMapped(mapping, url.getPath());
     if (entry != null) {
       return new RepositoryInfo(
           SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort() == SVNURL.getDefaultPortNumber(url.getProtocol()) ? -1 : url.getPort(), entry.getKey(), true),

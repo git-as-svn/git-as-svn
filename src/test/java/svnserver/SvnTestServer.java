@@ -32,8 +32,8 @@ import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepositoryMapping;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.push.GitPushEmbedded;
 import svnserver.repository.locks.PersistentLockFactory;
@@ -290,10 +290,10 @@ public final class SvnTestServer implements SvnTester {
 
     @NotNull
     @Override
-    public VcsRepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+    public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
       final LocalContext local = new LocalContext(context, "test");
       final AclConfig aclConfig = new AclConfig(anonymousRead);
-      local.add(VcsAccess.class, aclConfig.create(local));
+      local.add(VcsAccess.class, aclConfig.create());
       return new RepositoryListMapping(Collections.singletonMap(prefix, new GitRepository(
           local,
           repository,

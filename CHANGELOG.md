@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+
+ * Major code cleanup
+ * `repository: !git` changed to just `repository:` in git-as-svn.conf
+ * `access: !acl` changed to just `acl:` in git-as-svn.conf
+
 ## 1.8.1
 
  * Update dependencies: jgit-5.3.0, svnkit-1.10.0, jetty-9.4.15, java-gitea-api-1.7.4, unboundid-ldapsdk-4.0.10 and others

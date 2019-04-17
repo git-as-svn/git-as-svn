@@ -21,11 +21,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
-import svnserver.repository.VcsDeltaConsumer;
 import svnserver.repository.git.filter.GitFilter;
 
 import java.io.*;
@@ -37,7 +37,7 @@ import java.util.Map;
  *
  * @author a.navrotskiy
  */
-final class GitDeltaConsumer implements VcsDeltaConsumer {
+public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
   @NotNull
@@ -87,12 +87,10 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
   }
 
   @NotNull
-  @Override
   public Map<String, String> getProperties() {
     return props;
   }
 
-  @Override
   public void validateChecksum(@NotNull String md5) throws SVNException {
     if (window != null) {
       if (!md5.equals(this.md5)) {
@@ -147,7 +145,6 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
     return !beforeId.equals(objectId);
   }
 
-  @Override
   public void applyTextDelta(String path, @Nullable String baseChecksum) throws SVNException {
     try {
       if ((originalMd5 != null) && (baseChecksum != null)) {
@@ -171,7 +168,6 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
     }
   }
 
-  @Override
   public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
     if (window == null)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
@@ -179,7 +175,6 @@ final class GitDeltaConsumer implements VcsDeltaConsumer {
     return window.textDeltaChunk(diffWindow);
   }
 
-  @Override
   public void textDeltaEnd(String path) throws SVNException {
     try (TemporaryOutputStream.Holder holder = temporaryStream.holder()) {
       if (window == null)

@@ -12,9 +12,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -40,6 +40,56 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
+  @NotNull
+  @Override
+  public Class<Params> getArguments() {
+    return Params.class;
+  }
+
+  @Override
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    final SvnServerWriter writer = context.getWriter();
+    final String fullPath = context.getRepositoryPath(args.path);
+    final GitRepository repository = context.getRepository();
+    final GitRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitFile fileInfo = revision.getFile(fullPath);
+
+    if (fileInfo == null)
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
+
+    if (!fileInfo.isDirectory())
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, fullPath + " is not a directory in revision " + revision.getId()));
+
+    writer
+        .listBegin()
+        .word("success")
+        .listBegin()
+        .number(revision.getId()) // rev
+        .writeMap(args.wantProps ? fileInfo.getAllProperties() : null) // props
+        .listBegin()
+        .separator();
+    if (args.wantContents) {
+      for (GitFile item : fileInfo.getEntries()) {
+        final GitRevision lastChange = item.getLastChange();
+        writer
+            .listBegin()
+            .string(item.getFileName()) // name
+            .word(item.getKind().toString()) // node-kind
+            .number(item.getSize()) // size
+            .bool(!item.getProperties().isEmpty()) // has-props
+            .number(lastChange.getId()) // created-rev
+            .listBegin().stringNullable(lastChange.getDateString()).listEnd() // created-date
+            .listBegin().stringNullable(lastChange.getAuthor()).listEnd() // last-author
+            .listEnd()
+            .separator();
+      }
+    }
+    writer
+        .listEnd()
+        .listEnd()
+        .listEnd();
+  }
+
   public static class Params {
     @NotNull
     private final String path;
@@ -79,55 +129,5 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
       this.wantContents = wantContents;
       this.wantIProps = wantIProps;
     }
-  }
-
-  @NotNull
-  @Override
-  public Class<Params> getArguments() {
-    return Params.class;
-  }
-
-  @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    final SvnServerWriter writer = context.getWriter();
-    final String fullPath = context.getRepositoryPath(args.path);
-    final VcsRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    final VcsFile fileInfo = revision.getFile(fullPath);
-
-    if (fileInfo == null)
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
-
-    if (!fileInfo.isDirectory())
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, fullPath + " is not a directory in revision " + revision.getId()));
-
-    writer
-        .listBegin()
-        .word("success")
-        .listBegin()
-        .number(revision.getId()) // rev
-        .writeMap(args.wantProps ? fileInfo.getAllProperties() : null) // props
-        .listBegin()
-        .separator();
-    if (args.wantContents) {
-      for (VcsFile item : fileInfo.getEntries()) {
-        final VcsRevision lastChange = item.getLastChange();
-        writer
-            .listBegin()
-            .string(item.getFileName()) // name
-            .word(item.getKind().toString()) // node-kind
-            .number(item.getSize()) // size
-            .bool(!item.getProperties().isEmpty()) // has-props
-            .number(lastChange.getId()) // created-rev
-            .listBegin().stringNullable(lastChange.getDateString()).listEnd() // created-date
-            .listBegin().stringNullable(lastChange.getAuthor()).listEnd() // last-author
-            .listEnd()
-            .separator();
-      }
-    }
-    writer
-        .listEnd()
-        .listEnd()
-        .listEnd();
   }
 }

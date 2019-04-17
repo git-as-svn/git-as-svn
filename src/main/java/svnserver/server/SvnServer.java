@@ -26,9 +26,9 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.RepositoryInfo;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRepositoryMapping;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
@@ -74,7 +74,7 @@ public final class SvnServer extends Thread {
   @NotNull
   private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
   @NotNull
-  private final VcsRepositoryMapping repositoryMapping;
+  private final RepositoryMapping repositoryMapping;
   @NotNull
   private final Config config;
   @NotNull
@@ -100,37 +100,44 @@ public final class SvnServer extends Thread {
     context = SharedContext.create(basePath, config.getCacheConfig().createCache(basePath), threadFactory, config.getShared());
     context.add(UserDB.class, config.getUserDB().create(context));
 
-    commands.put("commit", new CommitCmd());
-    commands.put("diff", new DeltaCmd(DiffParams.class));
-    commands.put("get-locations", new GetLocationsCmd());
-    commands.put("get-location-segments", new GetLocationSegmentsCmd());
+    // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
+
+    commands.put("reparent", new ReparentCmd());
     commands.put("get-latest-rev", new GetLatestRevCmd());
     commands.put("get-dated-rev", new GetDatedRevCmd());
-    commands.put("get-dir", new GetDirCmd());
-    commands.put("get-file", new GetFileCmd());
-    commands.put("get-iprops", new GetIPropsCmd());
-    commands.put("log", new LogCmd());
-    commands.put("reparent", new ReparentCmd());
-    commands.put("check-path", new CheckPathCmd());
-    commands.put("replay", new ReplayCmd());
-    commands.put("replay-range", new ReplayRangeCmd());
-    commands.put("rev-prop", new RevPropCmd());
+    // change-rev-prop
+    // change-rev-prop-2
     commands.put("rev-proplist", new RevPropListCmd());
+    commands.put("rev-prop", new RevPropCmd());
+    commands.put("commit", new CommitCmd());
+    commands.put("get-file", new GetFileCmd());
+    commands.put("get-dir", new GetDirCmd());
+    commands.put("check-path", new CheckPathCmd());
     commands.put("stat", new StatCmd());
-    commands.put("status", new DeltaCmd(StatusParams.class));
-    commands.put("switch", new DeltaCmd(SwitchParams.class));
+    // get-mergeinfo
     commands.put("update", new DeltaCmd(UpdateParams.class));
-
+    commands.put("switch", new DeltaCmd(SwitchParams.class));
+    commands.put("status", new DeltaCmd(StatusParams.class));
+    commands.put("diff", new DeltaCmd(DiffParams.class));
+    commands.put("log", new LogCmd());
+    commands.put("get-locations", new GetLocationsCmd());
+    commands.put("get-location-segments", new GetLocationSegmentsCmd());
+    // TODO: get-file-revs (#231)
     commands.put("lock", new LockCmd());
     commands.put("lock-many", new LockManyCmd());
     commands.put("unlock", new UnlockCmd());
     commands.put("unlock-many", new UnlockManyCmd());
     commands.put("get-lock", new GetLockCmd());
     commands.put("get-locks", new GetLocksCmd());
+    commands.put("replay", new ReplayCmd());
+    commands.put("replay-range", new ReplayRangeCmd());
+    // get-deleted-rev
+    commands.put("get-iprops", new GetIPropsCmd());
+    // TODO: list (#162)
 
     repositoryMapping = config.getRepositoryMapping().create(context, config.canUseParallelIndexing());
 
-    context.add(VcsRepositoryMapping.class, repositoryMapping);
+    context.add(RepositoryMapping.class, repositoryMapping);
 
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
@@ -194,7 +201,7 @@ public final class SvnServer extends Thread {
     }
     final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
     context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
-    final VcsRepository repository = context.getRepository();
+    final GitRepository repository = context.getRepository();
     repository.updateRevisions();
     sendAnnounce(writer, repositoryInfo);
 

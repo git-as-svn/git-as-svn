@@ -13,9 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
-import svnserver.repository.VcsRepository;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitLocation;
 import svnserver.repository.git.GitRepository;
@@ -24,8 +22,6 @@ import svnserver.repository.locks.PersistentLockFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Repository configuration.
@@ -33,8 +29,7 @@ import java.util.List;
  * @author a.navrotskiy
  */
 @SuppressWarnings("FieldCanBeLocal")
-@ConfigType("git")
-public final class GitRepositoryConfig implements RepositoryConfig {
+public final class GitRepositoryConfig {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitRepositoryConfig.class);
   @NotNull
@@ -57,6 +52,18 @@ public final class GitRepositoryConfig implements RepositoryConfig {
   }
 
   @NotNull
+  public GitRepository create(@NotNull LocalContext context) throws IOException, SVNException {
+    return create(context, ConfigHelper.joinPath(context.getShared().getBasePath(), path));
+  }
+
+  @NotNull
+  public GitRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
+    context.add(GitLocation.class, new GitLocation(fullPath));
+
+    return new GitRepository(context, createRepository(context, fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
+  }
+
+  @NotNull
   private Repository createRepository(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
     if (!fullPath.exists()) {
       log.info("[{}]: storage {} not found, create mode: {}", context.getName(), fullPath, createMode);
@@ -64,18 +71,5 @@ public final class GitRepositoryConfig implements RepositoryConfig {
     }
     log.info("[{}]: using existing storage {}", context.getName(), fullPath);
     return new FileRepository(fullPath);
-  }
-
-  @NotNull
-  @Override
-  public VcsRepository create(@NotNull LocalContext context) throws IOException, SVNException {
-    return create(context, ConfigHelper.joinPath(context.getShared().getBasePath(), path));
-  }
-
-  @NotNull
-  public VcsRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException, SVNException {
-    context.add(GitLocation.class, new GitLocation(fullPath));
-
-    return new GitRepository(context, createRepository(context, fullPath), pusher.create(context), branch, renameDetection, new PersistentLockFactory(context));
   }
 }

@@ -12,9 +12,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -33,18 +33,6 @@ import java.util.List;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final int[] rev;
-
-    public Params(@NotNull String path, @NotNull int[] rev) {
-      this.path = path;
-      this.rev = rev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -56,9 +44,9 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
     SvnServerWriter writer = context.getWriter();
     String fullPath = context.getRepositoryPath(args.path);
 
-    final VcsRepository repository = context.getRepository();
-    final VcsRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
-    final List<VcsFile> files = new ArrayList<>();
+    final GitRepository repository = context.getRepository();
+    final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final List<GitFile> files = new ArrayList<>();
     int index = -1;
     while (true) {
       index = fullPath.indexOf('/', index + 1);
@@ -66,7 +54,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
         break;
       }
       final String subPath = fullPath.substring(0, index);
-      final VcsFile fileInfo = info.getFile(subPath);
+      final GitFile fileInfo = info.getFile(subPath);
       if (fileInfo == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, subPath));
       }
@@ -77,7 +65,7 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
         .word("success")
         .listBegin()
         .listBegin();
-    for (VcsFile file : files) {
+    for (GitFile file : files) {
       writer
           .listBegin()
           .string(file.getFullPath())
@@ -88,5 +76,17 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final int[] rev;
+
+    public Params(@NotNull String path, @NotNull int[] rev) {
+      this.path = path;
+      this.rev = rev;
+    }
   }
 }

@@ -22,7 +22,8 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.ReferenceLink;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.repository.*;
+import svnserver.repository.Depth;
+import svnserver.repository.VcsConsumer;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockDesc;
@@ -36,7 +37,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitWriter implements VcsWriter {
+public final class GitWriter {
   private static final int MAX_PROPERTY_ERRROS = 50;
 
   @NotNull
@@ -65,20 +66,17 @@ public final class GitWriter implements VcsWriter {
   }
 
   @NotNull
-  @Override
-  public VcsDeltaConsumer createFile(@NotNull VcsEntry parent, @NotNull String name) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), null, user);
+  public GitDeltaConsumer createFile(@NotNull GitEntry parent, @NotNull String name) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, parent.createChild(name, false), null, user);
   }
 
   @NotNull
-  @Override
-  public VcsDeltaConsumer modifyFile(@NotNull VcsEntry parent, @NotNull String name, @NotNull VcsFile file) throws IOException, SVNException {
-    return new GitDeltaConsumer(this, ((GitEntry) parent).createChild(name, false), (GitFile) file, user);
+  public GitDeltaConsumer modifyFile(@NotNull GitEntry parent, @NotNull String name, @NotNull GitFile file) throws IOException, SVNException {
+    return new GitDeltaConsumer(this, parent.createChild(name, false), file, user);
   }
 
   @NotNull
-  @Override
-  public VcsCommitBuilder createCommitBuilder(@NotNull LockManagerWrite lockManager, @NotNull Map<String, String> locks) throws IOException, SVNException {
+  public GitWriter.GitCommitBuilder createCommitBuilder(@NotNull LockManagerWrite lockManager, @NotNull Map<String, String> locks) throws IOException, SVNException {
     return new GitCommitBuilder(lockManager, locks, gitBranch);
   }
 
@@ -92,7 +90,7 @@ public final class GitWriter implements VcsWriter {
     return inserter;
   }
 
-  private class GitCommitBuilder implements VcsCommitBuilder {
+  public class GitCommitBuilder {
     @NotNull
     private final Deque<GitTreeUpdate> treeStack;
     @NotNull
@@ -123,52 +121,26 @@ public final class GitWriter implements VcsWriter {
       return repo.loadTree(new GitTreeEntry(repo.getRepository(), FileMode.TREE, commit.getTree(), ""));
     }
 
-    @Override
-    public void checkUpToDate(@NotNull String path, int rev, boolean checkLock) throws SVNException, IOException {
-      final GitFile file = revision.getFile(path);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
-      } else if (file.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
-      }
-      if (checkLock) {
-        checkLockFile(file);
-      }
-    }
-
-    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
-      final String fullPath = file.getFullPath();
-      if (file.isDirectory()) {
-        final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);
-        while (iter.hasNext()) {
-          checkLockDesc(iter.next());
-        }
-      } else {
-        checkLockDesc(lockManager.getLock(fullPath));
-      }
-    }
-
-    private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
-      if (lockDesc != null) {
-        final String token = locks.get(lockDesc.getPath());
-        if (token == null || !lockDesc.getToken().equals(token)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, lockDesc.getPath()));
-        }
-      }
-    }
-
-    @Override
-    public void addDir(@NotNull String name, @Nullable VcsFile sourceDir) throws SVNException, IOException {
+    public void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       if (current.getEntries().containsKey(name)) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
-      final GitFile source = (GitFile) sourceDir;
       commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, repo.loadTree(source == null ? null : source.getTreeEntry())));
+      treeStack.push(new GitTreeUpdate(name, repo.loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
     }
 
-    @Override
+    @NotNull
+    private String getFullPath(String name) {
+      final StringBuilder fullPath = new StringBuilder();
+      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
+      while (iter.hasNext()) {
+        fullPath.append(iter.next().getName()).append('/');
+      }
+      fullPath.append(name);
+      return fullPath.toString();
+    }
+
     public void openDir(@NotNull String name) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry originalDir = current.getEntries().remove(name);
@@ -179,12 +151,10 @@ public final class GitWriter implements VcsWriter {
       treeStack.push(new GitTreeUpdate(name, repo.loadTree(originalDir)));
     }
 
-    @Override
     public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
       commitActions.add(action -> action.checkProperties(null, props, null));
     }
 
-    @Override
     public void closeDir() throws SVNException, IOException {
       final GitTreeUpdate last = treeStack.pop();
       final GitTreeUpdate current = treeStack.element();
@@ -200,9 +170,8 @@ public final class GitWriter implements VcsWriter {
       commitActions.add(CommitAction::closeDir);
     }
 
-    @Override
-    public void saveFile(@NotNull String name, @NotNull VcsDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
-      final GitDeltaConsumer gitDeltaConsumer = (GitDeltaConsumer) deltaConsumer;
+    public void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
+      final GitDeltaConsumer gitDeltaConsumer = deltaConsumer;
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry entry = current.getEntries().get(name);
       final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
@@ -227,7 +196,6 @@ public final class GitWriter implements VcsWriter {
       return FileMode.REGULAR_FILE;
     }
 
-    @Override
     public void delete(@NotNull String name) throws SVNException, IOException {
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry entry = current.getEntries().remove(name);
@@ -236,7 +204,6 @@ public final class GitWriter implements VcsWriter {
       }
     }
 
-    @Override
     public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
       final GitTreeUpdate root = treeStack.element();
       ObjectId treeId = root.buildTree(inserter);
@@ -276,13 +243,10 @@ public final class GitWriter implements VcsWriter {
       }
     }
 
-    private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
-      final GitPropertyValidator validator = new GitPropertyValidator(root);
-      for (VcsConsumer<CommitAction> validateAction : commitActions) {
-        validateAction.accept(validator);
-      }
-      validator.done();
+    private PersonIdent createIdent(User userInfo) {
+      final String realName = userInfo.getRealName();
+      final String email = userInfo.getEmail();
+      return new PersonIdent(realName, email == null ? "" : email);
     }
 
     private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
@@ -294,21 +258,46 @@ public final class GitWriter implements VcsWriter {
       return validator.done();
     }
 
-    private PersonIdent createIdent(User userInfo) {
-      final String realName = userInfo.getRealName();
-      final String email = userInfo.getEmail();
-      return new PersonIdent(realName, email == null ? "" : email);
+    private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
+      final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
+      final GitPropertyValidator validator = new GitPropertyValidator(root);
+      for (VcsConsumer<CommitAction> validateAction : commitActions) {
+        validateAction.accept(validator);
+      }
+      validator.done();
     }
 
-    @NotNull
-    private String getFullPath(String name) {
-      final StringBuilder fullPath = new StringBuilder();
-      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
-      while (iter.hasNext()) {
-        fullPath.append(iter.next().getName()).append('/');
+    public void checkUpToDate(@NotNull String path, int rev, boolean checkLock) throws SVNException, IOException {
+      final GitFile file = revision.getFile(path);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
+      } else if (file.getLastChange().getId() > rev) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
       }
-      fullPath.append(name);
-      return fullPath.toString();
+      if (checkLock) {
+        checkLockFile(file);
+      }
+    }
+
+    private void checkLockFile(@NotNull GitFile file) throws SVNException {
+      final String fullPath = file.getFullPath();
+      if (file.isDirectory()) {
+        final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);
+        while (iter.hasNext()) {
+          checkLockDesc(iter.next());
+        }
+      } else {
+        checkLockDesc(lockManager.getLock(fullPath));
+      }
+    }
+
+    private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
+      if (lockDesc != null) {
+        final String token = locks.get(lockDesc.getPath());
+        if (!lockDesc.getToken().equals(token)) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, lockDesc.getPath()));
+        }
+      }
     }
   }
 

@@ -10,6 +10,7 @@ package svnserver.repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.StringHelper;
+import svnserver.repository.git.GitFile;
 
 import java.io.IOException;
 
@@ -25,7 +26,7 @@ public enum SendCopyFrom {
   Never {
     @Nullable
     @Override
-    public VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull VcsFile file) {
+    public VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull GitFile file) {
       return null;
     }
   },
@@ -35,7 +36,7 @@ public enum SendCopyFrom {
   Always {
     @Nullable
     @Override
-    public VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull VcsFile file) throws IOException {
+    public VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull GitFile file) throws IOException {
       return file.getCopyFrom();
     }
   },
@@ -45,12 +46,12 @@ public enum SendCopyFrom {
   OnlyRelative {
     @Nullable
     @Override
-    public VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull VcsFile file) throws IOException {
+    public VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull GitFile file) throws IOException {
       final VcsCopyFrom copyFrom = file.getCopyFrom();
       return copyFrom != null && StringHelper.isParentPath(basePath, copyFrom.getPath()) ? copyFrom : null;
     }
   };
 
   @Nullable
-  public abstract VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull VcsFile file) throws IOException;
+  public abstract VcsCopyFrom getCopyFrom(@NotNull String basePath, @NotNull GitFile file) throws IOException;
 }

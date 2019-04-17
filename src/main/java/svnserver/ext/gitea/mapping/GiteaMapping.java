@@ -7,6 +7,21 @@
  */
 package svnserver.ext.gitea.mapping;
 
+import io.gitea.model.Repository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import svnserver.StringHelper;
+import svnserver.config.ConfigHelper;
+import svnserver.context.LocalContext;
+import svnserver.context.SharedContext;
+import svnserver.repository.RepositoryInfo;
+import svnserver.repository.RepositoryMapping;
+import svnserver.repository.VcsAccess;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.mapping.RepositoryListMapping;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -15,29 +30,13 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-
-import io.gitea.model.Repository;
-import svnserver.StringHelper;
-import svnserver.config.ConfigHelper;
-import svnserver.context.LocalContext;
-import svnserver.context.SharedContext;
-import svnserver.repository.RepositoryInfo;
-import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRepositoryMapping;
-import svnserver.repository.mapping.RepositoryListMapping;
-
 /**
  * Simple repository mapping by predefined list.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
-final class GiteaMapping implements VcsRepositoryMapping {
+final class GiteaMapping implements RepositoryMapping {
   @NotNull
   private final NavigableMap<String, GiteaProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -83,7 +82,7 @@ final class GiteaMapping implements VcsRepositoryMapping {
       final File repoPath = ConfigHelper.joinPath(basePath, repository.getFullName().toLowerCase(Locale.ENGLISH) + ".git");
       final LocalContext local = new LocalContext(context, repository.getFullName());
       local.add(VcsAccess.class, new GiteaAccess(local, config, repository));
-      final VcsRepository vcsRepository = config.getTemplate().create(local, repoPath);
+      final GitRepository vcsRepository = config.getTemplate().create(local, repoPath);
       final GiteaProject newProject = new GiteaProject(local, vcsRepository, repository.getId(), repository.getOwner().getLogin(), projectName);
       if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == repository.getId() ? value : newProject) == newProject) {
         return newProject;

@@ -24,7 +24,7 @@ import svnserver.parser.token.ListEndToken;
 import svnserver.repository.Depth;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsCopyFrom;
-import svnserver.repository.VcsFile;
+import svnserver.repository.git.GitFile;
 import svnserver.server.SessionContext;
 import svnserver.server.step.CheckPermissionStep;
 
@@ -62,6 +62,8 @@ import java.util.*;
 public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
   @NotNull
+  private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
+  @NotNull
   private final Class<? extends DeltaParams> arguments;
 
   public DeltaCmd(@NotNull Class<? extends DeltaParams> arguments) {
@@ -72,6 +74,13 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
   @Override
   public Class<? extends DeltaParams> getArguments() {
     return arguments;
+  }
+
+  @Override
+  protected void processCommand(@NotNull SessionContext context, @NotNull DeltaParams args) throws IOException, SVNException {
+    log.debug("Enter report mode");
+    ReportPipeline pipeline = new ReportPipeline(args);
+    pipeline.reportCommand(context);
   }
 
   public static class DeleteParams {
@@ -113,16 +122,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
   }
 
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
-
-  @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull DeltaParams args) throws IOException, SVNException {
-    log.debug("Enter report mode");
-    ReportPipeline pipeline = new ReportPipeline(args);
-    pipeline.reportCommand(context);
-  }
-
   private static class FailureInfo {
     private final int errorCode;
     private final String errorMessage;
@@ -157,7 +156,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
   }
 
   public static class ReportPipeline {
-    private int lastTokenId;
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
     @NotNull
@@ -170,56 +168,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private final Map<String, SetPathParams> paths = new HashMap<>();
     @NotNull
     private final Deque<HeaderEntry> pathStack = new ArrayDeque<>();
-
-    @FunctionalInterface
-    private interface HeaderWriter {
-      void write(@NotNull SvnServerWriter writer) throws IOException, SVNException;
-    }
-
-    private static class HeaderEntry implements AutoCloseable {
-
-      @NotNull
-      private final SessionContext context;
-      @Nullable
-      private final VcsFile file;
-      @NotNull
-      private final HeaderWriter beginWriter;
-      @NotNull
-      private final HeaderWriter endWriter;
-      private final Deque<HeaderEntry> pathStack;
-      private boolean writed = false;
-
-      public HeaderEntry(@NotNull SessionContext context, @Nullable VcsFile file, @NotNull HeaderWriter beginWriter, @NotNull HeaderWriter endWriter, @NotNull Deque<HeaderEntry> pathStack) throws IOException {
-        this.context = context;
-        this.file = file;
-        this.beginWriter = beginWriter;
-        this.endWriter = endWriter;
-        this.pathStack = pathStack;
-        pathStack.addLast(this);
-      }
-
-      public void write() throws IOException, SVNException {
-        if (!writed) {
-          writed = true;
-          beginWriter.write(context.getWriter());
-        }
-      }
-
-      @Override
-      public void close() throws IOException, SVNException {
-        if (writed) {
-          endWriter.write(context.getWriter());
-        }
-        pathStack.removeLast();
-      }
-    }
-
-    private SvnServerWriter getWriter(@NotNull SessionContext context) throws IOException, SVNException {
-      for (HeaderEntry entry : pathStack) {
-        entry.write();
-      }
-      return context.getWriter();
-    }
+    private int lastTokenId;
 
     public ReportPipeline(@NotNull DeltaParams params) {
       this.params = params;
@@ -228,6 +177,13 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       commands.put("set-path", new LambdaCmd<>(SetPathParams.class, this::setPathReport));
       commands.put("abort-report", new LambdaCmd<>(NoParams.class, this::abortReport));
       commands.put("finish-report", new LambdaCmd<>(NoParams.class, this::finishReport));
+    }
+
+    private SvnServerWriter getWriter(@NotNull SessionContext context) throws IOException, SVNException {
+      for (HeaderEntry entry : pathStack) {
+        entry.write();
+      }
+      return context.getWriter();
     }
 
     private void abortReport(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
@@ -250,18 +206,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       forcePath(wcPath);
     }
 
-    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
-      context.push(this::reportCommand);
-      final String wcPath = wcPath(args.path);
-      paths.put(wcPath, args);
-      forcePath(wcPath);
-    }
-
-    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException {
-      context.push(this::reportCommand);
-      final String wcPath = wcPath(args.path);
-      forcePath(wcPath);
-      deletedPaths.add(wcPath);
+    @NotNull
+    private String wcPath(@NotNull String name) {
+      return joinPath(params.getPath(), name);
     }
 
     private void forcePath(@NotNull String wcPath) {
@@ -274,6 +221,26 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         }
         path = parent;
       }
+    }
+
+    @NotNull
+    private String joinPath(@NotNull String prefix, @NotNull String name) {
+      if (name.isEmpty()) return prefix;
+      return prefix.isEmpty() ? name : (prefix + "/" + name);
+    }
+
+    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
+      context.push(this::reportCommand);
+      final String wcPath = wcPath(args.path);
+      paths.put(wcPath, args);
+      forcePath(wcPath);
+    }
+
+    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException {
+      context.push(this::reportCommand);
+      final String wcPath = wcPath(args.path);
+      forcePath(wcPath);
+      deletedPaths.add(wcPath);
     }
 
     private void complete(@NotNull SessionContext context) throws IOException, SVNException {
@@ -308,13 +275,13 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final String fullPath = context.getRepositoryPath(path);
 
       final SVNURL targetPath = params.getTargetPath();
-      final VcsFile newFile;
+      final GitFile newFile;
       if (targetPath == null)
         newFile = context.getFile(rev, fullPath);
       else
         newFile = context.getFile(rev, targetPath);
 
-      final VcsFile oldFile = getPrevFile(context, path, context.getFile(rootRev, fullPath));
+      final GitFile oldFile = getPrevFile(context, path, context.getFile(rootRev, fullPath));
       updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty(), rootParams.depth, params.getDepth());
       writer
           .listBegin()
@@ -388,20 +355,20 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     private String createTokenId() {
-      return "t" + String.valueOf(++lastTokenId);
+      return "t" + ++lastTokenId;
     }
 
     private void updateDir(@NotNull SessionContext context,
                            @NotNull String wcPath,
-                           @Nullable VcsFile prevFile,
-                           @NotNull VcsFile newFile,
+                           @Nullable GitFile prevFile,
+                           @NotNull GitFile newFile,
                            @NotNull String parentTokenId,
                            boolean rootDir,
                            @NotNull Depth wcDepth,
                            @NotNull Depth requestedDepth) throws IOException, SVNException {
       final String tokenId;
       final HeaderEntry header;
-      VcsFile oldFile;
+      GitFile oldFile;
       try {
         newFile.getEntries();
       } catch (SvnForbiddenException ignored) {
@@ -445,24 +412,24 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     private void updateDirEntries(@NotNull SessionContext context,
                                   @NotNull String wcPath,
-                                  @Nullable VcsFile oldFile,
-                                  @NotNull VcsFile newFile,
+                                  @Nullable GitFile oldFile,
+                                  @NotNull GitFile newFile,
                                   @NotNull String tokenId,
                                   @NotNull Depth wcDepth,
                                   @NotNull Depth requestedDepth) throws IOException, SVNException {
       final Depth.Action dirAction = wcDepth.determineAction(requestedDepth, true);
       final Depth.Action fileAction = wcDepth.determineAction(requestedDepth, false);
 
-      final Map<String, VcsFile> newEntries = new TreeMap<>();
-      for (VcsFile entry : newFile.getEntries()) {
+      final Map<String, GitFile> newEntries = new TreeMap<>();
+      for (GitFile entry : newFile.getEntries()) {
         newEntries.put(entry.getFileName(), entry);
       }
 
       final Set<String> forced = new HashSet<>(forcedPaths.getOrDefault(wcPath, Collections.emptySet()));
-      final Map<String, VcsFile> oldEntries;
+      final Map<String, GitFile> oldEntries;
       if (oldFile != null) {
         oldEntries = new TreeMap<>();
-        for (VcsFile oldEntry : oldFile.getEntries()) {
+        for (GitFile oldEntry : oldFile.getEntries()) {
           final String entryPath = joinPath(wcPath, oldEntry.getFileName());
           if (newEntries.containsKey(oldEntry.getFileName())) {
             oldEntries.put(oldEntry.getFileName(), oldEntry);
@@ -483,9 +450,9 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         removeEntry(context, entryPath, newFile.getLastChange().getId(), tokenId);
       }
 
-      for (VcsFile newEntry : newFile.getEntries()) {
+      for (GitFile newEntry : newFile.getEntries()) {
         final String entryPath = joinPath(wcPath, newEntry.getFileName());
-        final VcsFile oldEntry = getPrevFile(context, entryPath, oldEntries.get(newEntry.getFileName()));
+        final GitFile oldEntry = getPrevFile(context, entryPath, oldEntries.get(newEntry.getFileName()));
 
         final Depth.Action action = newEntry.isDirectory() ? dirAction : fileAction;
 
@@ -501,7 +468,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void updateProps(@NotNull SessionContext context, @NotNull String type, @NotNull String tokenId, @Nullable VcsFile oldFile, @NotNull VcsFile newFile) throws IOException, SVNException {
+    private void updateProps(@NotNull SessionContext context, @NotNull String type, @NotNull String tokenId, @Nullable GitFile oldFile, @NotNull GitFile newFile) throws IOException, SVNException {
       final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : new HashMap<>();
       if (oldFile == null) {
         getWriter(context);
@@ -516,7 +483,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void updateFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile prevFile, @NotNull VcsFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
+    private void updateFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable GitFile prevFile, @NotNull GitFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
       final String tokenId = createTokenId();
       final String md5 = newFile.getMd5();
       try (final HeaderEntry header = sendEntryHeader(context, wcPath, prevFile, newFile, "file", parentTokenId, tokenId, writer -> writer
@@ -529,7 +496,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd()
           .listEnd()
           .listEnd())) {
-        final VcsFile oldFile = header.file;
+        final GitFile oldFile = header.file;
         if (oldFile == null || !newFile.getContentHash().equals(oldFile.getContentHash())) {
           final SvnServerWriter writer = getWriter(context);
           writer
@@ -595,7 +562,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     @NotNull
-    private InputStream openStream(@Nullable VcsFile file) throws IOException, SVNException {
+    private InputStream openStream(@Nullable GitFile file) throws IOException, SVNException {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 
@@ -614,7 +581,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     @Nullable
-    private VcsFile getPrevFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile) throws IOException, SVNException {
+    private GitFile getPrevFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable GitFile oldFile) throws IOException, SVNException {
       if (deletedPaths.contains(wcPath))
         return null;
 
@@ -630,8 +597,8 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     private void updateEntry(@NotNull SessionContext context,
                              @NotNull String wcPath,
-                             @Nullable VcsFile oldFile,
-                             @Nullable VcsFile newFile,
+                             @Nullable GitFile oldFile,
+                             @Nullable GitFile newFile,
                              @NotNull String parentTokenId,
                              boolean rootDir,
                              @NotNull Depth wcDepth,
@@ -697,10 +664,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     @NotNull
-    private HeaderEntry sendEntryHeader(@NotNull SessionContext context, @NotNull String wcPath, @Nullable VcsFile oldFile, @NotNull VcsFile newFile, @NotNull String type, @NotNull String parentTokenId, @NotNull String tokenId, @NotNull HeaderWriter endWriter) throws IOException, SVNException {
+    private HeaderEntry sendEntryHeader(@NotNull SessionContext context, @NotNull String wcPath, @Nullable GitFile oldFile, @NotNull GitFile newFile, @NotNull String type, @NotNull String parentTokenId, @NotNull String tokenId, @NotNull HeaderWriter endWriter) throws IOException, SVNException {
       if (oldFile == null) {
         final VcsCopyFrom copyFrom = params.getSendCopyFrom().getCopyFrom(wcPath(""), newFile);
-        final VcsFile entryFile = copyFrom != null ? context.getRepository().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath()) : null;
+        final GitFile entryFile = copyFrom != null ? context.getRepository().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath()) : null;
         final HeaderEntry entry = new HeaderEntry(context, entryFile, writer -> {
           sendNewEntry(writer, "add-" + type, wcPath, parentTokenId, tokenId, copyFrom);
           sendRevProps(writer, newFile, type, tokenId);
@@ -715,7 +682,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
-    private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull VcsFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException, SVNException {
+    private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull GitFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException, SVNException {
       if (params.isIncludeInternalProps()) {
         for (Map.Entry<String, String> prop : newFile.getRevProperties().entrySet()) {
           changeProp(writer, type, tokenId, prop.getKey(), prop.getValue());
@@ -760,17 +727,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd();
     }
 
-    @NotNull
-    private String wcPath(@NotNull String name) {
-      return joinPath(params.getPath(), name);
-    }
-
-    @NotNull
-    private String joinPath(@NotNull String prefix, @NotNull String name) {
-      if (name.isEmpty()) return prefix;
-      return prefix.isEmpty() ? name : (prefix + "/" + name);
-    }
-
     @SuppressWarnings("unchecked")
     private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
@@ -787,6 +743,49 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         log.error("Unsupported command: {}", cmd);
         BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
         parser.skipItems();
+      }
+    }
+
+    @FunctionalInterface
+    private interface HeaderWriter {
+      void write(@NotNull SvnServerWriter writer) throws IOException, SVNException;
+    }
+
+    private static class HeaderEntry implements AutoCloseable {
+
+      @NotNull
+      private final SessionContext context;
+      @Nullable
+      private final GitFile file;
+      @NotNull
+      private final HeaderWriter beginWriter;
+      @NotNull
+      private final HeaderWriter endWriter;
+      private final Deque<HeaderEntry> pathStack;
+      private boolean writed = false;
+
+      public HeaderEntry(@NotNull SessionContext context, @Nullable GitFile file, @NotNull HeaderWriter beginWriter, @NotNull HeaderWriter endWriter, @NotNull Deque<HeaderEntry> pathStack) throws IOException {
+        this.context = context;
+        this.file = file;
+        this.beginWriter = beginWriter;
+        this.endWriter = endWriter;
+        this.pathStack = pathStack;
+        pathStack.addLast(this);
+      }
+
+      public void write() throws IOException, SVNException {
+        if (!writed) {
+          writed = true;
+          beginWriter.write(context.getWriter());
+        }
+      }
+
+      @Override
+      public void close() throws IOException, SVNException {
+        if (writed) {
+          endWriter.write(context.getWriter());
+        }
+        pathStack.removeLast();
       }
     }
   }

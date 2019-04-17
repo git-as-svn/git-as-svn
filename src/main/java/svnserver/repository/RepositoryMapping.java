@@ -5,21 +5,20 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.context.LocalContext;
-import svnserver.repository.VcsRepository;
-
-import java.io.IOException;
+import org.tmatesoft.svn.core.SVNURL;
+import svnserver.context.Shared;
 
 /**
- * Repository configuration.
+ * Resolving repository by URL.
  *
- * @author a.navrotskiy
+ * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface RepositoryConfig {
-  @NotNull
-  VcsRepository create(@NotNull LocalContext context) throws IOException, SVNException;
+public interface RepositoryMapping extends Shared {
+  @Nullable
+  RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException;
 }

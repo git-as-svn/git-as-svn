@@ -33,7 +33,9 @@ import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.repository.*;
+import svnserver.repository.SvnForbiddenException;
+import svnserver.repository.VcsCopyFrom;
+import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.cache.CacheChange;
 import svnserver.repository.git.cache.CacheRevision;
 import svnserver.repository.git.filter.GitFilter;
@@ -63,60 +65,25 @@ import java.util.function.BiFunction;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitRepository implements VcsRepository {
-  private static final int REPORT_DELAY = 2500;
-  private static final int MARK_NO_FILE = -1;
-
-  @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
-  @NotNull
-  private final LockManagerFactory lockManagerFactory;
+public final class GitRepository implements AutoCloseable {
   @NotNull
   static final byte[] emptyBytes = new byte[0];
+  private static final int REPORT_DELAY = 2500;
+  private static final int MARK_NO_FILE = -1;
   @NotNull
-  private final Repository repository;
-  @NotNull
-  private final GitPusher pusher;
-  @NotNull
-  private final List<GitRevision> revisions = new ArrayList<>();
-  @NotNull
-  private final TreeMap<Long, GitRevision> revisionByDate = new TreeMap<>();
-  @NotNull
-  private final Map<ObjectId, GitRevision> revisionByHash = new HashMap<>();
-  @NotNull
-  private final ReadWriteLock lastUpdatesLock = new ReentrantReadWriteLock();
-  @NotNull
-  private final Map<String, int[]> lastUpdates = new HashMap<>();
-  @NotNull
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  // Lock for prevent concurrent pushes.
-  @NotNull
-  private final Object pushLock = new Object();
-  @NotNull
-  private final String uuid;
-  @NotNull
-  private final String gitBranch;
-  @NotNull
-  private final String svnBranch;
-  @NotNull
-  private final LocalContext context;
-  @NotNull
-  private final HTreeMap<String, Boolean> binaryCache;
-  @NotNull
-  private final HTreeMap<ObjectId, CacheRevision> revisionCache;
-  @NotNull
-  private final Map<String, GitFilter> gitFilters;
-  @NotNull
-  private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
-  @NotNull
-  private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
-  private final boolean renameDetection;
-
+  private static final Logger log = LoggerFactory.getLogger(GitRepository.class);
   @NotNull
   private static final GroupSerializerObjectArray<ObjectId> objectIdSerializer = new GroupSerializerObjectArray<ObjectId>() {
     @Override
     public void serialize(@NotNull DataOutput2 out, @NotNull ObjectId value) throws IOException {
       value.copyRawTo(out);
+    }
+
+    @Override
+    public ObjectId deserialize(@NotNull DataInput2 input, int available) throws IOException {
+      final byte[] raw = new byte[fixedSize()];
+      input.readFully(raw);
+      return ObjectId.fromRaw(raw);
     }
 
     @Override
@@ -128,15 +95,7 @@ public final class GitRepository implements VcsRepository {
     public boolean isTrusted() {
       return true;
     }
-
-    @Override
-    public ObjectId deserialize(@NotNull DataInput2 input, int available) throws IOException {
-      final byte[] raw = new byte[fixedSize()];
-      input.readFully(raw);
-      return ObjectId.fromRaw(raw);
-    }
   };
-
   @NotNull
   private static final GroupSerializerObjectArray<CacheRevision> cacheRevisionSerializer = new GroupSerializerObjectArray<CacheRevision>() {
     @Override
@@ -190,8 +149,47 @@ public final class GitRepository implements VcsRepository {
       return new CacheRevision(objectId, renames, fileChange);
     }
   };
-
   private static final int revisionCacheVersion = 2;
+  @NotNull
+  private final LockManagerFactory lockManagerFactory;
+  @NotNull
+  private final Repository repository;
+  @NotNull
+  private final GitPusher pusher;
+  @NotNull
+  private final List<GitRevision> revisions = new ArrayList<>();
+  @NotNull
+  private final TreeMap<Long, GitRevision> revisionByDate = new TreeMap<>();
+  @NotNull
+  private final Map<ObjectId, GitRevision> revisionByHash = new HashMap<>();
+  @NotNull
+  private final ReadWriteLock lastUpdatesLock = new ReentrantReadWriteLock();
+  @NotNull
+  private final Map<String, int[]> lastUpdates = new HashMap<>();
+  @NotNull
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  // Lock for prevent concurrent pushes.
+  @NotNull
+  private final Object pushLock = new Object();
+  @NotNull
+  private final String uuid;
+  @NotNull
+  private final String gitBranch;
+  @NotNull
+  private final String svnBranch;
+  @NotNull
+  private final LocalContext context;
+  @NotNull
+  private final HTreeMap<String, Boolean> binaryCache;
+  @NotNull
+  private final HTreeMap<ObjectId, CacheRevision> revisionCache;
+  @NotNull
+  private final Map<String, GitFilter> gitFilters;
+  @NotNull
+  private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
+  @NotNull
+  private final Map<ObjectId, GitProperty[]> filePropertyCache = new ConcurrentHashMap<>();
+  private final boolean renameDetection;
 
   public GitRepository(@NotNull LocalContext context,
                        @NotNull Repository repository,
@@ -220,17 +218,6 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  @Override
-  public LocalContext getContext() {
-    return context;
-  }
-
-  @Override
-  public void close() {
-    context.getShared().sure(GitSubmodules.class).unregister(repository);
-  }
-
-  @NotNull
   private static String loadRepositoryId(@NotNull Repository repository, @NotNull Ref ref) throws IOException {
     ObjectId oid = ref.getObjectId();
     final RevWalk revWalk = new RevWalk(repository);
@@ -241,6 +228,21 @@ public final class GitRepository implements VcsRepository {
       }
       oid = revCommit.getParent(0);
     }
+  }
+
+  @NotNull
+  public static String loadContent(@NotNull ObjectReader reader, @NotNull ObjectId objectId) throws IOException {
+    final byte[] bytes = reader.open(objectId).getCachedBytes();
+    return new String(bytes, StandardCharsets.UTF_8);
+  }
+
+  @NotNull
+  public LocalContext getContext() {
+    return context;
+  }
+
+  public void close() {
+    context.getShared().sure(GitSubmodules.class).unregister(repository);
   }
 
   /**
@@ -304,23 +306,6 @@ public final class GitRepository implements VcsRepository {
       log.info("[{}]: {} cached revision loaded: {} ms", context.getName(), newRevs.size(), endTime - beginTime);
     } finally {
       lock.writeLock().unlock();
-    }
-  }
-
-  private static class CacheInfo {
-    private final int id;
-    @NotNull
-    private RevCommit commit;
-    @NotNull
-    private List<CacheInfo> childs = new ArrayList<>();
-    @NotNull
-    private List<CacheInfo> parents = new ArrayList<>();
-    @Nullable
-    private String svnBranch;
-
-    private CacheInfo(int id, @NotNull RevCommit commit) {
-      this.id = id;
-      this.commit = commit;
     }
   }
 
@@ -400,39 +385,6 @@ public final class GitRepository implements VcsRepository {
     }
   }
 
-  @NotNull
-  private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
-    final ObjectId cacheKey = newCommit.copy();
-
-    CacheRevision result = revisionCache.get(cacheKey);
-    if (result == null) {
-      final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
-      final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
-      final GitFile newTree = getSubversionTree(reader, newCommit, revisionId);
-      final Map<String, CacheChange> fileChange = new TreeMap<>();
-      for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
-        fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
-      }
-      result = new CacheRevision(
-          baseCommit,
-          collectRename(oldTree, newTree),
-          fileChange
-      );
-      revisionCache.put(cacheKey, result);
-    }
-    return result;
-  }
-
-  @NotNull
-  private GitFile getSubversionTree(@NotNull ObjectReader reader, @Nullable RevCommit commit, int revisionId) throws IOException, SVNException {
-    final RevCommit revCommit = LayoutHelper.loadOriginalCommit(reader, commit);
-    if (revCommit == null) {
-      return new GitFileEmptyTree(this, "", revisionId - 1);
-    }
-    return GitFileTreeEntry.create(this, revCommit.getTree(), revisionId);
-  }
-
-  @Override
   public void updateRevisions() throws IOException, SVNException {
     boolean gotNewRevisions = false;
 
@@ -451,10 +403,6 @@ public final class GitRepository implements VcsRepository {
       });
       context.getShared().getCacheDB().commit();
     }
-  }
-
-  private boolean isTreeEmpty(RevTree tree) throws IOException {
-    return new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), tree).eof();
   }
 
   private void loadRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
@@ -501,6 +449,34 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
+  public <T> T wrapLockWrite(@NotNull LockWorker<T, LockManagerWrite> work) throws SVNException, IOException {
+    return lockManagerFactory.wrapLockWrite(this, work);
+  }
+
+  @NotNull
+  private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
+    final ObjectId cacheKey = newCommit.copy();
+
+    CacheRevision result = revisionCache.get(cacheKey);
+    if (result == null) {
+      final RevCommit baseCommit = LayoutHelper.loadOriginalCommit(reader, newCommit);
+      final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
+      final GitFile newTree = getSubversionTree(reader, newCommit, revisionId);
+      final Map<String, CacheChange> fileChange = new TreeMap<>();
+      for (Map.Entry<String, GitLogEntry> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
+        fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
+      }
+      result = new CacheRevision(
+          baseCommit,
+          collectRename(oldTree, newTree),
+          fileChange
+      );
+      revisionCache.put(cacheKey, result);
+    }
+    return result;
+  }
+
+  @NotNull
   private Map<String, String> collectRename(@NotNull GitFile oldTree, @NotNull GitFile newTree) throws IOException {
     if (!renameDetection) {
       return Collections.emptyMap();
@@ -528,6 +504,15 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
+  private GitFile getSubversionTree(@NotNull ObjectReader reader, @Nullable RevCommit commit, int revisionId) throws IOException, SVNException {
+    final RevCommit revCommit = LayoutHelper.loadOriginalCommit(reader, commit);
+    if (revCommit == null) {
+      return new GitFileEmptyTree(this, "", revisionId - 1);
+    }
+    return GitFileTreeEntry.create(this, revCommit.getTree(), revisionId);
+  }
+
+  @NotNull
   public GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull VcsSupplier<Iterable<GitTreeEntry>> entryProvider) throws IOException, SVNException {
     if (treeEntry.getFileMode().getObjectType() == Constants.OBJ_BLOB)
       return GitProperty.emptyArray;
@@ -548,27 +533,6 @@ public final class GitRepository implements VcsRepository {
       directoryPropertyCache.put(treeEntry.getObjectId().getObject(), props);
     }
     return props;
-  }
-
-  @NotNull
-  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) {
-    if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
-      return gitFilters.get(GitFilterRaw.NAME);
-    }
-    if (fileMode == FileMode.SYMLINK) {
-      return gitFilters.get(GitFilterLink.NAME);
-    }
-    for (int i = props.length - 1; i >= 0; --i) {
-      final String filterName = props[i].getFilterName();
-      if (filterName != null) {
-        final GitFilter filter = gitFilters.get(filterName);
-        if (filter == null) {
-          throw new InvalidStreamException("Unknown filter requested: " + filterName);
-        }
-        return filter;
-      }
-    }
-    return gitFilters.get(GitFilterRaw.NAME);
   }
 
   @NotNull
@@ -593,8 +557,32 @@ public final class GitRepository implements VcsRepository {
     return property;
   }
 
+  private boolean isTreeEmpty(RevTree tree) throws IOException {
+    return new CanonicalTreeParser(GitRepository.emptyBytes, repository.newObjectReader(), tree).eof();
+  }
+
   @NotNull
-  @Override
+  public GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) {
+    if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
+      return gitFilters.get(GitFilterRaw.NAME);
+    }
+    if (fileMode == FileMode.SYMLINK) {
+      return gitFilters.get(GitFilterLink.NAME);
+    }
+    for (int i = props.length - 1; i >= 0; --i) {
+      final String filterName = props[i].getFilterName();
+      if (filterName != null) {
+        final GitFilter filter = gitFilters.get(filterName);
+        if (filter == null) {
+          throw new InvalidStreamException("Unknown filter requested: " + filterName);
+        }
+        return filter;
+      }
+    }
+    return gitFilters.get(GitFilterRaw.NAME);
+  }
+
+  @NotNull
   public GitRevision getLatestRevision() {
     lock.readLock().lock();
     try {
@@ -605,8 +593,7 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  @Override
-  public VcsRevision getRevisionByDate(long dateTime) {
+  public GitRevision getRevisionByDate(long dateTime) {
     lock.readLock().lock();
     try {
       final Map.Entry<Long, GitRevision> entry = revisionByDate.floorEntry(dateTime);
@@ -620,7 +607,6 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  @Override
   public String getUuid() {
     return uuid;
   }
@@ -644,20 +630,10 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  @Override
   public GitRevision getRevisionInfo(int revision) throws SVNException {
     final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
     if (revisionInfo == null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision " + revision));
-    }
-    return revisionInfo;
-  }
-
-  @NotNull
-  public GitRevision sureRevisionInfo(int revision) {
-    final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
-    if (revisionInfo == null) {
-      throw new IllegalStateException("No such revision " + revision);
     }
     return revisionInfo;
   }
@@ -675,6 +651,15 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
+  public GitRevision sureRevisionInfo(int revision) {
+    final GitRevision revisionInfo = getRevisionInfoUnsafe(revision);
+    if (revisionInfo == null) {
+      throw new IllegalStateException("No such revision " + revision);
+    }
+    return revisionInfo;
+  }
+
+  @NotNull
   public GitRevision getRevision(@NotNull ObjectId revisionId) throws SVNException {
     lock.readLock().lock();
     try {
@@ -689,15 +674,13 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  @Override
-  public VcsWriter createWriter(@NotNull User user) throws SVNException {
+  public GitWriter createWriter(@NotNull User user) throws SVNException {
     if (user.getEmail() == null || user.getEmail().isEmpty()) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Users with undefined email can't create commits"));
     }
     return new GitWriter(this, pusher, pushLock, gitBranch, user);
   }
 
-  @Override
   public int getLastChange(@NotNull String nodePath, int beforeRevision) {
     if (nodePath.isEmpty()) return beforeRevision;
 
@@ -723,12 +706,6 @@ public final class GitRepository implements VcsRepository {
     }
 
     return MARK_NO_FILE;
-  }
-
-  @NotNull
-  public static String loadContent(@NotNull ObjectReader reader, @NotNull ObjectId objectId) throws IOException {
-    final byte[] bytes = reader.open(objectId).getCachedBytes();
-    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   @NotNull
@@ -778,15 +755,25 @@ public final class GitRepository implements VcsRepository {
   }
 
   @NotNull
-  @Override
   public <T> T wrapLockRead(@NotNull LockWorker<T, LockManagerRead> work) throws SVNException, IOException {
     return lockManagerFactory.wrapLockRead(this, work);
   }
 
-  @NotNull
-  @Override
-  public <T> T wrapLockWrite(@NotNull LockWorker<T, LockManagerWrite> work) throws SVNException, IOException {
-    return lockManagerFactory.wrapLockWrite(this, work);
+  private static class CacheInfo {
+    private final int id;
+    @NotNull
+    private RevCommit commit;
+    @NotNull
+    private List<CacheInfo> childs = new ArrayList<>();
+    @NotNull
+    private List<CacheInfo> parents = new ArrayList<>();
+    @Nullable
+    private String svnBranch;
+
+    private CacheInfo(int id, @NotNull RevCommit commit) {
+      this.id = id;
+      this.commit = commit;
+    }
   }
 
   private static class ComputeBranchName implements BiFunction<RevCommit, CacheInfo, CacheInfo> {

@@ -8,19 +8,30 @@
 package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.repository.VcsEntry;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.git.prop.GitProperty;
+
+import java.io.IOException;
 
 /**
  * Git entry.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface GitEntry extends VcsEntry {
+public interface GitEntry {
   @NotNull
   GitProperty[] getRawProperties();
 
-  @Override
+  @NotNull
+  String getFileName();
+
+  @NotNull
+  String getFullPath();
+
   @NotNull
   GitEntry createChild(@NotNull String name, boolean isDir);
+
+  @Nullable
+  GitFile getEntry(@NotNull String name) throws IOException, SVNException;
 }

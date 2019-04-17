@@ -13,9 +13,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.Depth;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -33,11 +33,11 @@ public final class TreeMapLockManager implements LockManagerWrite {
   private final static char SEPARATOR = ':';
 
   @NotNull
-  private final VcsRepository repo;
+  private final GitRepository repo;
   @NotNull
   private final SortedMap<String, LockDesc> locks;
 
-  TreeMapLockManager(@NotNull VcsRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
+  TreeMapLockManager(@NotNull GitRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
     this.locks = locks;
     this.repo = repo;
   }
@@ -47,11 +47,11 @@ public final class TreeMapLockManager implements LockManagerWrite {
   public LockDesc[] lock(@NotNull SessionContext context, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException, IOException {
     final LockDesc[] result = new LockDesc[targets.length];
     if (targets.length > 0) {
-      final VcsRevision revision = repo.getLatestRevision();
+      final GitRevision revision = repo.getLatestRevision();
       // Create new locks list.
       for (int i = 0; i < targets.length; ++i) {
         final LockTarget target = targets[i];
-        final VcsFile file = revision.getFile(target.getPath());
+        final GitFile file = revision.getFile(target.getPath());
         if (file == null) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, target.getPath()));
         }
@@ -75,17 +75,6 @@ public final class TreeMapLockManager implements LockManagerWrite {
     return result;
   }
 
-  @NotNull
-  @Override
-  public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
-    return depth.visit(new TreeMapLockDepthVisitor(locks, repo.getUuid() + SEPARATOR + path));
-  }
-
-  @Override
-  public LockDesc getLock(@NotNull String path) {
-    return locks.get(repo.getUuid() + SEPARATOR + path);
-  }
-
   @Override
   public void unlock(@NotNull SessionContext context, boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException {
     for (UnlockTarget target : targets) {
@@ -102,12 +91,12 @@ public final class TreeMapLockManager implements LockManagerWrite {
   @Override
   public void validateLocks() throws SVNException {
     try {
-      final VcsRevision revision = repo.getLatestRevision();
+      final GitRevision revision = repo.getLatestRevision();
       final Iterator<Map.Entry<String, LockDesc>> iter = locks.entrySet().iterator();
       while (iter.hasNext()) {
         final Map.Entry<String, LockDesc> entry = iter.next();
         final LockDesc item = entry.getValue();
-        final VcsFile file = revision.getFile(item.getPath());
+        final GitFile file = revision.getFile(item.getPath());
         if ((file == null) || file.isDirectory() || (!item.getHash().equals(file.getContentHash()))) {
           iter.remove();
         }
@@ -119,11 +108,11 @@ public final class TreeMapLockManager implements LockManagerWrite {
 
   @Override
   public void renewLocks(@NotNull LockDesc[] lockDescs) throws IOException, SVNException {
-    final VcsRevision revision = repo.getLatestRevision();
+    final GitRevision revision = repo.getLatestRevision();
     for (LockDesc lockDesc : lockDescs) {
       final String pathKey = repo.getUuid() + SEPARATOR + lockDesc.getPath();
       if (!locks.containsKey(pathKey)) {
-        final VcsFile file = revision.getFile(lockDesc.getPath());
+        final GitFile file = revision.getFile(lockDesc.getPath());
         if ((file != null) && (!file.isDirectory())) {
           locks.put(pathKey, new LockDesc(lockDesc.getPath(), file.getContentHash(), lockDesc.getToken(), lockDesc.getOwner(), lockDesc.getComment(), lockDesc.getCreated()));
         }
@@ -133,5 +122,16 @@ public final class TreeMapLockManager implements LockManagerWrite {
 
   private static String createLockId() {
     return UUID.randomUUID().toString();
+  }
+
+  @NotNull
+  @Override
+  public Iterator<LockDesc> getLocks(@NotNull String path, @NotNull Depth depth) throws SVNException {
+    return depth.visit(new TreeMapLockDepthVisitor(locks, repo.getUuid() + SEPARATOR + path));
+  }
+
+  @Override
+  public LockDesc getLock(@NotNull String path) {
+    return locks.get(repo.getUuid() + SEPARATOR + path);
   }
 }

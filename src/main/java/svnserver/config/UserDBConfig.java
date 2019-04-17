@@ -15,6 +15,7 @@ import svnserver.context.SharedContext;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public interface UserDBConfig {
+  @NotNull
   UserDBConfig[] emptyArray = {};
 
   @NotNull

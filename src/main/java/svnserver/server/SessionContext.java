@@ -19,8 +19,8 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
@@ -69,7 +69,7 @@ public final class SessionContext {
   }
 
   @NotNull
-  public VcsRepository getRepository() {
+  public GitRepository getRepository() {
     return repositoryInfo.getRepository();
   }
 
@@ -147,7 +147,7 @@ public final class SessionContext {
    * @throws IOException
    */
   @Nullable
-  public VcsFile getFile(int rev, @NotNull String path) throws SVNException, IOException {
+  public GitFile getFile(int rev, @NotNull String path) throws SVNException, IOException {
     return getRepository().getRevisionInfo(rev).getFile(getRepositoryPath(path));
   }
 
@@ -157,7 +157,7 @@ public final class SessionContext {
   }
 
   @Nullable
-  public VcsFile getFile(int rev, @NotNull SVNURL url) throws SVNException, IOException {
+  public GitFile getFile(int rev, @NotNull SVNURL url) throws SVNException, IOException {
     final String path = getRepositoryPath(url);
     checkRead(path);
     return getRepository().getRevisionInfo(rev).getFile(path);

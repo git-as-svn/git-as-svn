@@ -10,7 +10,7 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -28,14 +28,6 @@ import java.io.IOException;
  */
 public final class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
 
-  public static class Params {
-    private final int revision;
-
-    public Params(int revision) {
-      this.revision = revision;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -45,7 +37,7 @@ public final class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final VcsRevision revision = context.getRepository().getRevisionInfo(args.revision);
+    final GitRevision revision = context.getRepository().getRevisionInfo(args.revision);
     writer
         .listBegin()
         .word("success")
@@ -53,5 +45,13 @@ public final class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
         .writeMap(revision.getProperties(true))
         .listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    private final int revision;
+
+    public Params(int revision) {
+      this.revision = revision;
+    }
   }
 }

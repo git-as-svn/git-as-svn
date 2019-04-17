@@ -14,15 +14,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsCopyFrom;
-import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final class GitRevision implements VcsRevision {
+public final class GitRevision {
   @NotNull
   private final GitRepository repo;
   @NotNull
@@ -65,33 +64,11 @@ final class GitRevision implements VcsRevision {
     return cacheCommit;
   }
 
-  @Override
   public int getId() {
     return revision;
   }
 
-  @Nullable RevCommit getGitNewCommit() {
-    return gitNewCommit;
-  }
-
   @NotNull
-  @Override
-  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
-    if (gitNewCommit == null) {
-      return Collections.emptyMap();
-    }
-    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit.getTree(), revision - 1);
-    final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
-
-    final Map<String, GitLogEntry> changes = new TreeMap<>();
-    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
-      changes.put(entry.getKey(), new GitLogEntry(entry.getValue(), renames));
-    }
-    return changes;
-  }
-
-  @NotNull
-  @Override
   public Map<String, String> getProperties(boolean includeInternalProps) {
     final Map<String, String> props = new HashMap<>();
     if (includeInternalProps) {
@@ -111,13 +88,7 @@ final class GitRevision implements VcsRevision {
     }
   }
 
-  @Override
-  public long getDate() {
-    return date;
-  }
-
   @Nullable
-  @Override
   public String getAuthor() {
     if (gitNewCommit == null)
       return null;
@@ -127,13 +98,20 @@ final class GitRevision implements VcsRevision {
   }
 
   @Nullable
-  @Override
   public String getLog() {
     return gitNewCommit == null ? null : gitNewCommit.getFullMessage().trim();
   }
 
+  @NotNull
+  public String getDateString() {
+    return StringHelper.formatDate(getDate());
+  }
+
+  public long getDate() {
+    return date;
+  }
+
   @Nullable
-  @Override
   public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
     if (gitNewCommit == null) {
       return new GitFileEmptyTree(repo, "", revision);
@@ -151,9 +129,23 @@ final class GitRevision implements VcsRevision {
     return result;
   }
 
+  @NotNull
+  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
+    if (gitNewCommit == null) {
+      return Collections.emptyMap();
+    }
+    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit.getTree(), revision - 1);
+    final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
+
+    return ChangeHelper.collectChanges(oldTree, newTree, false);
+  }
+
   @Nullable
-  @Override
   public VcsCopyFrom getCopyFrom(@NotNull String fullPath) {
     return renames.get(fullPath);
+  }
+
+  @Nullable RevCommit getGitNewCommit() {
+    return gitNewCommit;
   }
 }

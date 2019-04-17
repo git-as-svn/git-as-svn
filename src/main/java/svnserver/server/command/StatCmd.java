@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.repository.VcsFile;
-import svnserver.repository.VcsRepository;
-import svnserver.repository.VcsRevision;
+import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
@@ -34,18 +34,6 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public final class StatCmd extends BaseCmd<StatCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final int[] rev;
-
-    public Params(@NotNull String path, @NotNull int[] rev) {
-      this.path = path;
-      this.rev = rev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -55,9 +43,9 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String fullPath = context.getRepositoryPath(args.path);
-    final VcsRepository repository = context.getRepository();
-    final VcsRevision revision = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
-    final VcsFile fileInfo = revision.getFile(fullPath);
+    final GitRepository repository = context.getRepository();
+    final GitRevision revision = repository.getRevisionInfo(getRevision(args.rev, repository.getLatestRevision().getId()));
+    final GitFile fileInfo = revision.getFile(fullPath);
 
     if (fileInfo == null)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));
@@ -78,5 +66,17 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final int[] rev;
+
+    public Params(@NotNull String path, @NotNull int[] rev) {
+      this.path = path;
+      this.rev = rev;
+    }
   }
 }
