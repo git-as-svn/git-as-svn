@@ -26,9 +26,9 @@ final class ChangeHelper {
   }
 
   @NotNull
-  static Map<String, GitLogPair> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
-    final Map<String, GitLogPair> changes = new HashMap<>();
-    final GitLogPair logEntry = new GitLogPair(oldTree, newTree);
+  static Map<String, GitLogEntry> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
+    final Map<String, GitLogEntry> changes = new HashMap<>();
+    final GitLogEntry logEntry = new GitLogEntry(oldTree, newTree);
     if (oldTree == null || logEntry.isModified()) {
       changes.put("/", logEntry);
     }
@@ -40,8 +40,8 @@ final class ChangeHelper {
     return changes;
   }
 
-  private static void collectChanges(@NotNull Map<String, GitLogPair> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry, boolean fullRemoved) throws IOException, SVNException {
-    for (GitLogPair pair : compareEntry) {
+  private static void collectChanges(@NotNull Map<String, GitLogEntry> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry, boolean fullRemoved) throws IOException, SVNException {
+    for (GitLogEntry pair : compareEntry) {
       final GitFile newEntry = pair.getNewEntry();
       final GitFile oldEntry = pair.getOldEntry();
       if (newEntry == null && oldEntry == null) {
@@ -51,23 +51,23 @@ final class ChangeHelper {
         if (!newEntry.equals(oldEntry)) {
           final String fullPath = StringHelper.joinPath(compareEntry.path, newEntry.getFileName());
           if (newEntry.isDirectory()) {
-            final GitLogPair oldChange = changes.put(fullPath, pair);
+            final GitLogEntry oldChange = changes.put(fullPath, pair);
             if (oldChange != null) {
-              changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
+              changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newEntry));
             }
             queue.add(new TreeCompareEntry(fullPath, ((oldEntry != null) && oldEntry.isDirectory()) ? oldEntry : null, newEntry));
           } else if (oldEntry == null || pair.isModified()) {
-            final GitLogPair oldChange = changes.put(fullPath, pair);
+            final GitLogEntry oldChange = changes.put(fullPath, pair);
             if (oldChange != null) {
-              changes.put(fullPath, new GitLogPair(oldChange.getOldEntry(), newEntry));
+              changes.put(fullPath, new GitLogEntry(oldChange.getOldEntry(), newEntry));
             }
           }
         }
       } else {
         final String fullPath = StringHelper.joinPath(compareEntry.path, oldEntry.getFileName());
-        final GitLogPair oldChange = changes.put(fullPath, pair);
+        final GitLogEntry oldChange = changes.put(fullPath, pair);
         if (oldChange != null) {
-          changes.put(fullPath, new GitLogPair(oldEntry, oldChange.getNewEntry()));
+          changes.put(fullPath, new GitLogEntry(oldEntry, oldChange.getNewEntry()));
         }
       }
       if (fullRemoved && oldEntry != null && oldEntry.isDirectory()) {
@@ -79,7 +79,7 @@ final class ChangeHelper {
     }
   }
 
-  private static class TreeCompareEntry implements Iterable<GitLogPair> {
+  private static class TreeCompareEntry implements Iterable<GitLogEntry> {
     @NotNull
     private final String path;
     @NotNull
@@ -105,12 +105,12 @@ final class ChangeHelper {
 
     @NotNull
     @Override
-    public Iterator<GitLogPair> iterator() {
+    public Iterator<GitLogEntry> iterator() {
       return new LogPairIterator(oldTree, newTree);
     }
   }
 
-  private static class LogPairIterator implements Iterator<GitLogPair> {
+  private static class LogPairIterator implements Iterator<GitLogEntry> {
     @NotNull
     private final Iterator<GitFile> oldIter;
     @NotNull
@@ -138,7 +138,7 @@ final class ChangeHelper {
     }
 
     @Override
-    public GitLogPair next() {
+    public GitLogEntry next() {
       final int compare;
       if (newItem == null) {
         compare = -1;
@@ -166,7 +166,7 @@ final class ChangeHelper {
       } else {
         newEntry = null;
       }
-      return new GitLogPair(oldEntry, newEntry);
+      return new GitLogEntry(oldEntry, newEntry);
     }
   }
 }

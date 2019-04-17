@@ -11,7 +11,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitLogPair;
+import svnserver.repository.git.GitLogEntry;
 import svnserver.repository.git.GitObject;
 
 /**
@@ -31,7 +31,7 @@ public final class CacheChange {
     newFile = null;
   }
 
-  public CacheChange(@NotNull GitLogPair logPair) {
+  public CacheChange(@NotNull GitLogEntry logPair) {
     this(getFileId(logPair.getOldEntry()), getFileId(logPair.getNewEntry()));
   }
 

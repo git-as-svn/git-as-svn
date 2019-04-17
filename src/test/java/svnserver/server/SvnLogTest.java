@@ -26,7 +26,7 @@ import static svnserver.SvnTestHelper.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnLogTest {
+public final class SvnLogTest {
   private static class LogEntry {
     private final long revision;
     @Nullable
@@ -91,8 +91,6 @@ public class SvnLogTest {
       .build();
   /**
    * Check simple svn log behaviour.
-   *
-   * @throws Exception
    */
   @Test
   public void simple() throws Exception {
@@ -416,6 +414,6 @@ public class SvnLogTest {
   private void checkLogLimit(@NotNull SVNRepository repo, long r1, long r2, int limit, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
     final List<LogEntry> actual = new ArrayList<>();
     repo.log(new String[]{path}, r1, r2, true, false, limit, logEntry -> actual.add(new LogEntry(logEntry)));
-    ArrayAsserts.assertArrayEquals(expecteds, actual.toArray(new LogEntry[actual.size()]));
+    ArrayAsserts.assertArrayEquals(expecteds, actual.toArray(new LogEntry[0]));
   }
 }

@@ -410,7 +410,7 @@ public final class GitRepository implements VcsRepository {
       final GitFile oldTree = getSubversionTree(reader, newCommit.getParentCount() > 0 ? newCommit.getParent(0) : null, revisionId - 1);
       final GitFile newTree = getSubversionTree(reader, newCommit, revisionId);
       final Map<String, CacheChange> fileChange = new TreeMap<>();
-      for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
+      for (Map.Entry<String, GitLogEntry> entry : ChangeHelper.collectChanges(oldTree, newTree, true).entrySet()) {
         fileChange.put(entry.getKey(), new CacheChange(entry.getValue()));
       }
       result = new CacheRevision(

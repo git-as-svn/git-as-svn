@@ -12,72 +12,124 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsLogEntry;
+import svnserver.repository.git.filter.GitFilter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Git modification type.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final class GitLogEntry implements VcsLogEntry {
-  @NotNull
-  private final GitLogPair pair;
+public final class GitLogEntry implements VcsLogEntry {
   @Nullable
-  private final VcsCopyFrom copyFrom;
+  private final GitFile oldEntry;
+  @Nullable
+  private final GitFile newEntry;
 
-  GitLogEntry(@NotNull GitLogPair pair, @NotNull Map<String, VcsCopyFrom> renames) {
-    this.pair = pair;
-    this.copyFrom = pair.getNewEntry() != null ? renames.get(pair.getNewEntry().getFullPath()) : null;
+  GitLogEntry(@Nullable GitFile oldEntry, @Nullable GitFile newEntry) {
+    this.oldEntry = oldEntry;
+    this.newEntry = newEntry;
+  }
+
+  @Nullable
+  public GitFile getOldEntry() {
+    return oldEntry;
+  }
+
+  @Nullable
+  public GitFile getNewEntry() {
+    return newEntry;
   }
 
   @Override
   public char getChange() throws IOException, SVNException {
-    if (pair.getNewEntry() == null)
+    if (newEntry == null)
       return SVNLogEntryPath.TYPE_DELETED;
 
-    if (pair.getOldEntry() == null)
+    if (oldEntry == null)
       return SVNLogEntryPath.TYPE_ADDED;
 
-    if (pair.getNewEntry().getKind() != pair.getOldEntry().getKind())
+    if (newEntry.getKind() != oldEntry.getKind())
       return SVNLogEntryPath.TYPE_REPLACED;
 
     return isModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
   }
 
-  @NotNull
   @Override
-  public SVNNodeKind getKind() {
-    if (pair.getNewEntry() != null)
-      return pair.getNewEntry().getKind();
+  public @NotNull SVNNodeKind getKind() {
+    if (newEntry != null)
+      return newEntry.getKind();
 
-    if (pair.getOldEntry() != null)
-      return pair.getOldEntry().getKind();
+    if (oldEntry != null)
+      return oldEntry.getKind();
 
     throw new IllegalStateException();
   }
 
-  @Nullable
-  @Override
-  public VcsCopyFrom getCopyFrom() {
-    return copyFrom;
-  }
-
-  @Override
   public boolean isContentModified() throws IOException, SVNException {
-    return pair.isContentModified();
+    if (newEntry == null || newEntry.isDirectory())
+      return false;
+
+    if (oldEntry == null || oldEntry.isDirectory())
+      return false;
+
+    if (Objects.equals(filterName(newEntry), filterName(oldEntry))) {
+      return !Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId());
+    } else {
+      return !newEntry.getMd5().equals(oldEntry.getMd5());
+    }
   }
 
-  @Override
+  @Nullable
+  private static String filterName(@NotNull GitFile gitFile) {
+    final GitFilter filter = gitFile.getFilter();
+    return filter == null ? null : filter.getName();
+  }
+
   public boolean isPropertyModified() throws IOException, SVNException {
-    return pair.isPropertyModified();
+    if ((newEntry == null) || (oldEntry == null)) return false;
+    final Map<String, String> newProps = newEntry.getProperties();
+    final Map<String, String> oldProps = oldEntry.getProperties();
+    return !Objects.equals(newProps, oldProps);
+  }
+
+  public boolean isModified() throws IOException, SVNException {
+    try {
+      if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
+        // Type modified.
+        if (!Objects.equals(newEntry.getFileMode(), oldEntry.getFileMode())) return true;
+        // Content modified.
+        if ((!newEntry.isDirectory()) && (!oldEntry.isDirectory())) {
+          if (!Objects.equals(newEntry.getObjectId(), oldEntry.getObjectId())) return true;
+        }
+        // Probably properties modified
+        final boolean sameProperties = Objects.equals(newEntry.getUpstreamProperties(), oldEntry.getUpstreamProperties())
+            && Objects.equals(getFilterName(newEntry), getFilterName(oldEntry));
+        if (!sameProperties) {
+          return isPropertyModified();
+        }
+      }
+      return false;
+    } catch (SvnForbiddenException e) {
+      // By default - entry is modified.
+      return true;
+    }
   }
 
   @Override
-  public boolean isModified() throws IOException, SVNException {
-    return pair.isModified();
+  public @Nullable VcsCopyFrom getCopyFrom() throws IOException {
+    return newEntry == null ? null : newEntry.getCopyFrom();
+  }
+
+  @Nullable
+  private static String getFilterName(@NotNull GitFile file) {
+    final GitFilter filter = file.getFilter();
+    return filter == null ? null : filter.getName();
   }
 }

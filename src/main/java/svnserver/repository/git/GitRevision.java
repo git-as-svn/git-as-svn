@@ -16,13 +16,13 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.SvnConstants;
 import svnserver.repository.VcsCopyFrom;
+import svnserver.repository.VcsLogEntry;
 import svnserver.repository.VcsRevision;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,18 +76,14 @@ final class GitRevision implements VcsRevision {
 
   @NotNull
   @Override
-  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
+  public Map<String, ? extends VcsLogEntry> getChanges() throws IOException, SVNException {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
     }
     final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit.getTree(), revision - 1);
     final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
 
-    final Map<String, GitLogEntry> changes = new TreeMap<>();
-    for (Map.Entry<String, GitLogPair> entry : ChangeHelper.collectChanges(oldTree, newTree, false).entrySet()) {
-      changes.put(entry.getKey(), new GitLogEntry(entry.getValue(), renames));
-    }
-    return changes;
+    return ChangeHelper.collectChanges(oldTree, newTree, false);
   }
 
   @NotNull

@@ -32,5 +32,5 @@ public interface VcsLogEntry {
   boolean isModified() throws IOException, SVNException;
 
   @Nullable
-  VcsCopyFrom getCopyFrom();
+  VcsCopyFrom getCopyFrom() throws IOException;
 }

@@ -15,13 +15,11 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsFile;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,10 +42,6 @@ public interface GitFile extends GitEntry, VcsFile {
 
   @Nullable
   GitFilter getFilter();
-
-  @NotNull
-  @Override
-  GitProperty[] getRawProperties();
 
   @Nullable
   GitTreeEntry getTreeEntry();
@@ -84,21 +78,6 @@ public interface GitFile extends GitEntry, VcsFile {
 
   @NotNull
   @Override
-  String getMd5() throws IOException, SVNException;
-
-  @NotNull
-  @Override
-  String getContentHash() throws IOException, SVNException;
-
-  @Override
-  long getSize() throws IOException, SVNException;
-
-  @NotNull
-  @Override
-  InputStream openStream() throws IOException, SVNException;
-
-  @NotNull
-  @Override
   default SVNNodeKind getKind() {
     final int objType = getFileMode().getObjectType();
     switch (objType) {
@@ -129,10 +108,6 @@ public interface GitFile extends GitEntry, VcsFile {
     }
     return repo.sureRevisionInfo(lastChange);
   }
-
-  @Nullable
-  @Override
-  VcsCopyFrom getCopyFrom() throws IOException;
 
   @Nullable
   GitFile getEntry(@NotNull String name) throws IOException, SVNException;
