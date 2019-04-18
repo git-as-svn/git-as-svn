@@ -19,14 +19,12 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * Change current path in repository.
- * <p>
  * <pre>
- * get-locations
- *   params:   ( path:string peg-rev:number ( rev:number ... ) )
- * Before sending response, server sends location entries, ending with "done".
- *   location-entry: ( rev:number abs-path:number ) | done
- *   response: ( )
+ *   get-locations
+ *     params:   ( path:string peg-rev:number ( rev:number ... ) )
+ *     Before sending response, server sends location entries, ending with "done".
+ *     location-entry: ( rev:number abs-path:number ) | done
+ *     response: ( )
  * </pre>
  *
  * @author a.navrotskiy

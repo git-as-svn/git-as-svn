@@ -18,14 +18,12 @@ import svnserver.server.SessionContext;
 import java.io.IOException;
 
 /**
- * Change current path in repository.
- * <p>
  * <pre>
- * get-location-segments
- *   params:   ( path:string [ start-rev:number ] [ end-rev:number ] )
- * Before sending response, server sends location entries, ending with "done".
- *   location-entry: ( range-start:number range-end:number [ abs-path:string ] ) | done
- *   response: ( )
+ *   get-location-segments
+ *     params:   ( path:string [ start-rev:number ] [ end-rev:number ] )
+ *     Before sending response, server sends location entries, ending with "done".
+ *     location-entry: ( range-start:number range-end:number [ abs-path:string ] ) | done
+ *     response: ( )
  * </pre>
  *
  * @author a.navrotskiy

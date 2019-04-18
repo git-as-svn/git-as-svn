@@ -22,7 +22,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnServerWriter {
+public final class SvnServerWriter implements AutoCloseable {
   @NotNull
   private final OutputStream stream;
   private int depth = 0;
@@ -42,15 +42,15 @@ public final class SvnServerWriter {
   }
 
   @NotNull
+  public SvnServerWriter word(char c) throws IOException {
+    return word(String.valueOf(c));
+  }
+
+  @NotNull
   public SvnServerWriter word(@NotNull String word) throws IOException {
     WordToken.write(stream, word);
     if (depth == 0) stream.flush();
     return this;
-  }
-
-  @NotNull
-  public SvnServerWriter word(char c) throws IOException {
-    return word(String.valueOf(c));
   }
 
   @SuppressWarnings("QuestionableName")
@@ -126,5 +126,11 @@ public final class SvnServerWriter {
     }
     listEnd();
     return this;
+  }
+
+  @Override
+  public void close() {
+    if (depth != 0)
+      throw new IllegalStateException("Unmatched parentheses");
   }
 }

@@ -128,8 +128,8 @@ public class SvnServerParserTest {
       data[i] = (byte) i;
     }
     final byte[] streamData;
-    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      final SvnServerWriter writer = new SvnServerWriter(outputStream);
+    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+         final SvnServerWriter writer = new SvnServerWriter(outputStream)) {
       writer.write(new StringToken(data));
       writer.write(new StringToken(data));
       writer.write(new WordToken("end"));

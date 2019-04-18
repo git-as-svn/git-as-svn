@@ -53,12 +53,24 @@ public abstract class BaseCmd<T> {
     context.checkRead(context.getRepositoryPath(""));
   }
 
-  protected int getRevision(int[] rev, int defaultRevision) {
-    return rev.length > 0 ? rev[0] : defaultRevision;
+  protected int getRevision(@NotNull int[] rev, int defaultRevision) {
+    if (rev.length > 0) {
+      final int revNum = rev[0];
+      if (revNum >= 0)
+        return revNum;
+    }
+
+    return defaultRevision;
   }
 
-  protected int getRevisionOrLatest(int[] rev, @NotNull SessionContext context) throws IOException, SVNException {
-    return rev.length > 0 ? rev[0] : context.getRepository().getLatestRevision().getId();
+  protected int getRevisionOrLatest(@NotNull int[] rev, @NotNull SessionContext context) {
+    if (rev.length > 0) {
+      final int revNum = rev[0];
+      if (revNum >= 0)
+        return revNum;
+    }
+
+    return context.getRepository().getLatestRevision().getId();
   }
 
   public static void sendError(@NotNull SvnServerWriter writer, @NotNull SVNErrorMessage errorMessage) throws IOException {

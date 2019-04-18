@@ -173,9 +173,10 @@ public final class SvnServer extends Thread {
       long sessionId = lastSessionId.incrementAndGet();
       context.getThreadPoolExecutor().execute(() -> {
         log.info("New connection from: {}", client.getRemoteSocketAddress());
-        try (Socket clientSocket = client) {
+        try (Socket clientSocket = client;
+             SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(clientSocket.getOutputStream()))) {
           connections.put(sessionId, client);
-          serveClient(clientSocket);
+          serveClient(clientSocket, writer);
         } catch (EOFException | SocketException ignore) {
           // client disconnect is not a error
         } catch (SVNException | IOException e) {
@@ -188,9 +189,8 @@ public final class SvnServer extends Thread {
     }
   }
 
-  private void serveClient(@NotNull Socket socket) throws IOException, SVNException {
+  private void serveClient(@NotNull Socket socket, @NotNull SvnServerWriter writer) throws IOException, SVNException {
     socket.setTcpNoDelay(true);
-    final SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(socket.getOutputStream()));
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
