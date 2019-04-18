@@ -262,7 +262,7 @@ public final class SvnServer extends Thread {
     writer
         //.word(SVNCapability.COMMIT_REVPROPS.toString())
         .word(SVNCapability.DEPTH.toString())
-        //.word(SVNCapability.PARTIAL_REPLAY.toString())
+        //.word(SVNCapability.PARTIAL_REPLAY.toString()) TODO: issue #237
         //.word("accepts-svndiff2") TODO: issue #163
         .word("edit-pipeline")
         .word(SVNCapability.LOG_REVPROPS.toString())
