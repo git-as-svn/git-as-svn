@@ -71,6 +71,27 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
   }
 
   @NotNull
+  static Map<String, String> getPropertiesDiff(@Nullable GitFile oldFile, @Nullable GitFile newFile) throws IOException, SVNException {
+    final Map<String, String> result = new TreeMap<>();
+    final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : Collections.emptyMap();
+    final Map<String, String> newProps = newFile != null ? newFile.getProperties() : Collections.emptyMap();
+
+    for (Map.Entry<String, String> en : oldProps.entrySet()) {
+      final String newProp = newProps.get(en.getKey());
+      if (!en.getValue().equals(newProp))
+        result.put(en.getKey(), newProp);
+    }
+
+    for (Map.Entry<String, String> en : newProps.entrySet()) {
+      final String oldProp = oldProps.get(en.getKey());
+      if (!en.getValue().equals(oldProp))
+        result.put(en.getKey(), en.getValue());
+    }
+
+    return result;
+  }
+
+  @NotNull
   @Override
   public Class<? extends DeltaParams> getArguments() {
     return arguments;
@@ -469,18 +490,12 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     private void updateProps(@NotNull SessionContext context, @NotNull String type, @NotNull String tokenId, @Nullable GitFile oldFile, @NotNull GitFile newFile) throws IOException, SVNException {
-      final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : new HashMap<>();
-      if (oldFile == null) {
+      final Map<String, String> propsDiff = getPropertiesDiff(oldFile, newFile);
+      if (oldFile == null)
         getWriter(context);
-      }
-      for (Map.Entry<String, String> entry : newFile.getProperties().entrySet()) {
-        if (!entry.getValue().equals(oldProps.remove(entry.getKey()))) {
-          changeProp(getWriter(context), type, tokenId, entry.getKey(), entry.getValue());
-        }
-      }
-      for (String propName : oldProps.keySet()) {
-        changeProp(getWriter(context), type, tokenId, propName, null);
-      }
+
+      for (Map.Entry<String, String> entry : propsDiff.entrySet())
+        changeProp(getWriter(context), type, tokenId, entry.getKey(), entry.getValue());
     }
 
     private void updateFile(@NotNull SessionContext context, @NotNull String wcPath, @Nullable GitFile prevFile, @NotNull GitFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
