@@ -25,6 +25,7 @@ public class PersistentCacheConfig implements CacheConfig {
   @SuppressWarnings("FieldCanBeLocal")
   @NotNull
   private String path = "git-as-svn.mapdb";
+  private boolean enableTransactions = true;
 
   @NotNull
   @Override
@@ -34,9 +35,14 @@ public class PersistentCacheConfig implements CacheConfig {
     cacheBase.getParentFile().mkdirs();
 
     try {
-      return DBMaker.fileDB(cacheBase)
+      final DBMaker.Maker maker = DBMaker.fileDB(cacheBase)
           .closeOnJvmShutdown()
-          .fileMmapEnableIfSupported()
+          .fileMmapEnableIfSupported();
+
+      if (enableTransactions)
+        maker.transactionEnable();
+
+      return maker
           .make();
     } catch (DBException e) {
       throw new DBException(String.format("Failed to open %s: %s", cacheBase, e.getMessage()), e);
