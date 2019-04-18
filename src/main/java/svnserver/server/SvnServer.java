@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import svnserver.auth.AnonymousAuthenticator;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
@@ -53,6 +54,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnServer extends Thread {
+  /**
+   * {@link SVNCapability#GET_FILE_REVS_REVERSED is wrong.
+   */
+  @NotNull
+  public static final String fileRevsReverseCapability = "file-revs-reverse";
+
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
@@ -122,7 +129,7 @@ public final class SvnServer extends Thread {
     commands.put("log", new LogCmd());
     commands.put("get-locations", new GetLocationsCmd());
     commands.put("get-location-segments", new GetLocationSegmentsCmd());
-    // TODO: get-file-revs (#231)
+    commands.put("get-file-revs", new GetFileRevsCmd());
     commands.put("lock", new LockCmd());
     commands.put("lock-many", new LockManyCmd());
     commands.put("unlock", new UnlockCmd());
@@ -239,7 +246,6 @@ public final class SvnServer extends Thread {
   }
 
   private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
-    // Анонсируем поддерживаемые функции.
     writer
         .listBegin()
         .word("success")
@@ -249,20 +255,25 @@ public final class SvnServer extends Thread {
         .listBegin()
         .listEnd()
         .listBegin();
-    // Begin capabilities block.
-    writer
-        .word("edit-pipeline")      // This is required.
-        .word("absent-entries")     // We support absent-dir and absent-dir editor commands
-        //.word("commit-revprops")  // We don't currently have _any_ revprop support
-        //.word("mergeinfo")        // Nope, not yet
-        .word("depth")
-        .word("inherited-props")    // Need for .gitattributes and .gitignore
-        .word("log-revprops");      // svn log --with-all-revprops
 
-    if (config.isCompressionEnabled()) {
+    if (config.isCompressionEnabled())
       writer.word("svndiff1");         // We support svndiff1 (compression)
-    }
-    // End capabilities block.
+
+    writer
+        //.word(SVNCapability.COMMIT_REVPROPS.toString())
+        .word(SVNCapability.DEPTH.toString())
+        //.word(SVNCapability.PARTIAL_REPLAY.toString())
+        //.word("accepts-svndiff2") TODO: issue #163
+        .word("edit-pipeline")
+        .word(SVNCapability.LOG_REVPROPS.toString())
+        //.word(SVNCapability.EPHEMERAL_PROPS.toString())
+        .word(fileRevsReverseCapability)
+        .word("absent-entries")
+        .word(SVNCapability.INHERITED_PROPS.toString())
+        //.word("list") TODO: issue #162
+        //.word(SVNCapability.ATOMIC_REVPROPS.toString())
+    ;
+
     writer
         .listEnd()
         .listEnd()

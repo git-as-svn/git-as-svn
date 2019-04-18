@@ -63,13 +63,11 @@ public final class SvnTestHelper {
     Assert.assertTrue(check.isEmpty());
   }
 
-  @NotNull
-  public static SVNCommitInfo createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content, @Nullable Map<String, String> props) throws SVNException, IOException {
-    return createFile(repo, filePath, content.getBytes(StandardCharsets.UTF_8), props);
+  public static void createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content, @Nullable Map<String, String> props) throws SVNException, IOException {
+    createFile(repo, filePath, content.getBytes(StandardCharsets.UTF_8), props);
   }
 
-  @NotNull
-  public static SVNCommitInfo createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] content, @Nullable Map<String, String> props) throws SVNException, IOException {
+  public static void createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] content, @Nullable Map<String, String> props) throws SVNException, IOException {
     final ISVNEditor editor = repo.getCommitEditor("Create file: " + filePath, null, false, null);
     editor.openRoot(-1);
     int index = 0;
@@ -92,11 +90,10 @@ public final class SvnTestHelper {
     for (int i = 0; i < depth; ++i) {
       editor.closeDir();
     }
-    return editor.closeEdit();
+    Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL);
   }
 
-  @NotNull
-  public static SVNCommitInfo deleteFile(@NotNull SVNRepository repo, @NotNull String filePath) throws SVNException, IOException {
+  public static void deleteFile(@NotNull SVNRepository repo, @NotNull String filePath) throws SVNException {
     long latestRevision = repo.getLatestRevision();
     final ISVNEditor editor = repo.getCommitEditor("Delete file: " + filePath, null, false, null);
     editor.openRoot(-1);
@@ -114,16 +111,14 @@ public final class SvnTestHelper {
     for (int i = 0; i < depth; ++i) {
       editor.closeDir();
     }
-    return editor.closeEdit();
+    Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL);
   }
 
-  @NotNull
-  public static SVNCommitInfo modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String newData, long fileRev) throws SVNException, IOException {
-    return modifyFile(repo, filePath, newData.getBytes(StandardCharsets.UTF_8), fileRev);
+  public static void modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String newData, long fileRev) throws SVNException, IOException {
+    modifyFile(repo, filePath, newData.getBytes(StandardCharsets.UTF_8), fileRev);
   }
 
-  @NotNull
-  public static SVNCommitInfo modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] newData, long fileRev) throws SVNException, IOException {
+  public static void modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] newData, long fileRev) throws SVNException, IOException {
     final ByteArrayOutputStream oldData = new ByteArrayOutputStream();
     repo.getFile(filePath, fileRev, null, oldData);
 
@@ -144,7 +139,7 @@ public final class SvnTestHelper {
     for (int i = 0; i < depth; ++i) {
       editor.closeDir();
     }
-    return editor.closeEdit();
+    Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL);
   }
 
   public static void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable String oldData, @Nullable String newData) throws SVNException, IOException {

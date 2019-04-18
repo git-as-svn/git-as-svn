@@ -29,7 +29,7 @@ import static svnserver.SvnTestHelper.createFile;
 @Listeners(SvnTesterExternalListener.class)
 public final class CheckPathAndStatCmdTest {
   @NotNull
-  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+  final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
       .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
       .build();
 
@@ -58,7 +58,7 @@ public final class CheckPathAndStatCmdTest {
   @NotNull
   private SvnTester create(@NotNull SvnTesterFactory factory) throws Exception {
     SvnTester tester = factory.create();
-    Assert.assertNotEquals(createFile(tester.openSvnRepository(), "/existent", "", propsEolNative), SVNCommitInfo.NULL);
+    createFile(tester.openSvnRepository(), "/existent", "", propsEolNative);
     return tester;
   }
 

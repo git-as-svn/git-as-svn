@@ -135,6 +135,10 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         .listEnd();
   }
 
+  /**
+   * TODO: This method is very similar to GetFileRevsCmd#walkFileHistory. Maybe they can be combined?
+   */
+  @NotNull
   private List<GitRevision> getLog(@NotNull SessionContext context, @NotNull Params args, int endRev, int startRev, int limit) throws SVNException {
     final List<VcsCopyFrom> targetPaths = new ArrayList<>();
     int revision = -1;

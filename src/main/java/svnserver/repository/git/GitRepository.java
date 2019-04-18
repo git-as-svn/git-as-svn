@@ -64,7 +64,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class GitRepository implements AutoCloseable {
   @NotNull
-  static final byte[] emptyBytes = new byte[0];
+  public static final byte[] emptyBytes = {};
   private static final int REPORT_DELAY = 2500;
   private static final int MARK_NO_FILE = -1;
   @NotNull
