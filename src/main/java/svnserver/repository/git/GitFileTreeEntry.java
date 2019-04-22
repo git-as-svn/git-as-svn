@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of git-as-svn. It is subject to the license terms
  * in the LICENSE file found in the top-level directory of this distribution
  * and at http://www.gnu.org/licenses/gpl-2.0.html. No part of git-as-svn,
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.filter.GitFilter;
@@ -25,6 +24,8 @@ import svnserver.repository.git.prop.PropertyMapping;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+
+import static ru.bozaro.gitlfs.common.Constants.MIME_BINARY;
 
 /**
  * Git file.
@@ -112,7 +113,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
       }
       if (fileMode.getObjectType() == Constants.OBJ_BLOB && repo.isObjectBinary(filter, getObjectId())) {
         props.remove(SVNProperty.EOL_STYLE);
-        props.put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
+        props.put(SVNProperty.MIME_TYPE, MIME_BINARY);
       }
     }
     return props;
@@ -126,7 +127,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @NotNull
   @Override
-  public String getContentHash() throws IOException, SVNException {
+  public String getContentHash() {
     return filter.getContentHash(treeEntry.getObjectId());
   }
 
@@ -167,7 +168,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @Nullable
   @Override
-  public VcsCopyFrom getCopyFrom() throws IOException {
+  public VcsCopyFrom getCopyFrom() {
     return getLastChange().getCopyFrom(getFullPath());
   }
 
@@ -195,17 +196,21 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   }
 
   private static class EntriesCache implements VcsSupplier<Iterable<GitTreeEntry>> {
+    @NotNull
     private final GitRepository repo;
+    @NotNull
     private final GitTreeEntry treeEntry;
-    public Iterable<GitTreeEntry> rawEntriesCache;
+    @Nullable
+    private Iterable<GitTreeEntry> rawEntriesCache;
 
-    public EntriesCache(GitRepository repo, GitTreeEntry treeEntry) {
+    private EntriesCache(@NotNull GitRepository repo, @NotNull GitTreeEntry treeEntry) {
       this.repo = repo;
       this.treeEntry = treeEntry;
     }
 
     @Override
-    public Iterable<GitTreeEntry> get() throws SVNException, IOException {
+    @NotNull
+    public Iterable<GitTreeEntry> get() throws IOException {
       if (rawEntriesCache == null) {
         rawEntriesCache = repo.loadTree(treeEntry);
       }
