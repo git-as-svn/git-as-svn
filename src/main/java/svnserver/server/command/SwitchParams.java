@@ -38,6 +38,6 @@ public final class SwitchParams extends DeltaParams {
       boolean sendCopyFromArgs,
       boolean ignoreAncestry
   ) throws SVNException {
-    super(rev, target, url, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs ? SendCopyFrom.Always : SendCopyFrom.Never, ignoreAncestry, true);
+    super(rev, target, url, true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs ? SendCopyFrom.Always : SendCopyFrom.Never, ignoreAncestry, true, 0);
   }
 }

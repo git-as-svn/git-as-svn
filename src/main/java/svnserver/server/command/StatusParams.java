@@ -33,6 +33,6 @@ public final class StatusParams extends DeltaParams {
       @NotNull int[] rev,
       @NotNull String depth
   ) throws SVNException {
-    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), SendCopyFrom.Never, false, true);
+    super(rev, target, "", false, Depth.parse(depth, recurse, Depth.Empty), SendCopyFrom.Never, false, true, 0);
   }
 }

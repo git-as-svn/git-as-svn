@@ -95,6 +95,9 @@ public final class MessageParser {
       tokenParser.readToken();
     }
     try {
+      if (!ctor.isAccessible())
+        ctor.setAccessible(true);
+
       return (T) ctor.newInstance(params);
     } catch (ReflectiveOperationException e) {
       throw new IllegalStateException(e);

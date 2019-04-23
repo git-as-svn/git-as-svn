@@ -113,7 +113,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
                    * <p>
                    * However,
                    * <ul>
-                   * <li>fields are not optional, so we still have fill them with junk values</li>
+                   * <li>fields are not optional, so we have to fill them with junk values</li>
                    * <li>They're trivial to calculate.</li>
                    * <li>For additional lulz, see the email thread on dev@svn, 2012-03-28, subject
                    * "buildbot failure in ASF Buildbot on svn-slik-w2k3-x64-ra",
