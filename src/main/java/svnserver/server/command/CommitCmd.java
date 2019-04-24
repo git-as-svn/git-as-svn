@@ -619,21 +619,28 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         context.push(this::editorCommand);
         command = commands.get(cmd);
       }
-      if (command != null && !aborted) {
-        try {
-          Object param = MessageParser.parse(command.getArguments(), parser);
-          parser.readToken(ListEndToken.class);
-          command.process(context, param);
-        } catch (SVNException e) {
-          aborted = true;
-          throw e;
-        } catch (Throwable e) {
-          log.warn("Exception during in cmd " + cmd, e);
-          aborted = true;
-          throw e;
-        }
-      } else {
+
+      if (command == null) {
         context.skipUnsupportedCommand(cmd);
+        return;
+      }
+
+      if (aborted) {
+        parser.skipItems();
+        return;
+      }
+
+      try {
+        Object param = MessageParser.parse(command.getArguments(), parser);
+        parser.readToken(ListEndToken.class);
+        command.process(context, param);
+      } catch (SVNException e) {
+        aborted = true;
+        throw e;
+      } catch (Throwable e) {
+        log.warn("Exception during in cmd " + cmd, e);
+        aborted = true;
+        throw e;
       }
     }
   }

@@ -244,13 +244,14 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       final String cmd = parser.readText();
       log.debug("Report command: {}", cmd);
       final BaseCmd command = commands.get(cmd);
-      if (command != null) {
-        Object param = MessageParser.parse(command.getArguments(), parser);
-        parser.readToken(ListEndToken.class);
-        command.process(context, param);
-      } else {
+      if (command == null) {
         context.skipUnsupportedCommand(cmd);
+        return;
       }
+
+      Object param = MessageParser.parse(command.getArguments(), parser);
+      parser.readToken(ListEndToken.class);
+      command.process(context, param);
     }
 
     @NotNull

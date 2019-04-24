@@ -92,9 +92,6 @@ public final class MessageParser {
       params[i] = parse(ctorParams[i].getType(), getDepth(tokenParser) == depth ? tokenParser : null);
     }
     while (tokenParser != null && getDepth(tokenParser) >= depth) {
-      if (tokenParser.useStrictProtocol())
-        tokenParser.readToken(ListEndToken.class);
-      else
         tokenParser.readToken();
     }
 

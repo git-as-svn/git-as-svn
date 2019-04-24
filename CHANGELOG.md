@@ -5,9 +5,6 @@
  * File locking code cleanup. All existing svn locks will expire after upgrade.
  * Implement `get-file-revs` command. This is expected to speed up `svn blame` severely. #231
  * [Prospective blame](https://subversion.apache.org/docs/release-notes/1.9#prospective-blame) support added
- * Introduce 'strict protocol' mode. git-as-svn no longer silently skips unsupported command options and instead raises exception
-   if client sends unexpected data. This is required to make sure we're 100% network-compatible with native Subversion and do not
-   silently ignore important data. In case of unexpected bugs, this mode can be disabled with `strictProtocol: false` in git-as-svn.conf
 
 ## 1.9.0
 
