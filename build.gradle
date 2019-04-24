@@ -99,7 +99,6 @@ dependencies {
   compile "org.ini4j:ini4j:0.5.4"
   compile "org.mapdb:mapdb:3.0.7"
   compile "com.unboundid:unboundid-ldapsdk:4.0.10"
-  compile "org.eclipse.jetty:jetty-server:9.4.15.v20190215"
   compile "org.eclipse.jetty:jetty-servlet:9.4.15.v20190215"
   compile "org.gitlab:java-gitlab-api:4.1.0"
   compile "org.bitbucket.b_c:jose4j:0.6.5"
