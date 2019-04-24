@@ -27,6 +27,7 @@ import svnserver.repository.git.*;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockManager;
 import svnserver.server.SessionContext;
+import svnserver.server.msg.PropertyEntry;
 import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
@@ -37,21 +38,20 @@ import java.util.Map;
 
 /**
  * Commit client changes.
- * <p><pre>
- * get-dir
- * commit
- *    params:   ( logmsg:string ? ( ( lock-path:string lock-token:string ) ... )
- *    keep-locks:bool ? rev-props:proplist )
- *    response: ( )
- *    Upon receiving response, client switches to editor command set.
- *    Upon successful completion of edit, server sends auth-request.
- *    After auth exchange completes, server sends commit-info.
- *    If rev-props is present, logmsg is ignored.  Only the svn:log entry in
- *    rev-props (if any) will be used.
- *    commit-info: ( new-rev:number date:string author:string
- *    ? ( post-commit-err:string ) )
- *    NOTE: when revving this, make 'logmsg' optional, or delete that parameter
- *    and have the log message specified in 'rev-props'.
+ * <pre>
+ *   commit
+ *     params:   ( logmsg:string ? ( ( lock-path:string lock-token:string ) ... )
+ *                 keep-locks:bool ? rev-props:proplist )
+ *     response: ( )
+ *     Upon receiving response, client switches to editor command set.
+ *     Upon successful completion of edit, server sends auth-request.
+ *     After auth exchange completes, server sends commit-info.
+ *     If rev-props is present, logmsg is ignored.  Only the svn:log entry in
+ *     rev-props (if any) will be used.
+ *     commit-info: ( new-rev:number date:string author:string
+ *                    ? ( post-commit-err:string ) )
+ *     NOTE: when revving this, make 'logmsg' optional, or delete that parameter
+ *           and have the log message specified in 'rev-props'.
  * </pre>
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
@@ -106,11 +106,14 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final String message;
     @NotNull
     private final LockInfo[] locks;
+    @NotNull
+    private final PropertyEntry[] revProps;
 
-    public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks) {
+    public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks, @NotNull PropertyEntry[] revProps) {
       this.message = message;
       this.locks = locks;
       this.keepLocks = keepLocks;
+      this.revProps = revProps;
     }
   }
 
@@ -242,7 +245,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final SVNDeltaReader reader = new SVNDeltaReader();
 
-    public FileUpdater(@NotNull GitDeltaConsumer deltaConsumer) {
+    FileUpdater(@NotNull GitDeltaConsumer deltaConsumer) {
       this.deltaConsumer = deltaConsumer;
     }
   }
@@ -267,8 +270,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       this.props = source == null ? new HashMap<>() : new HashMap<>(source.getProperties());
     }
 
-    @NotNull
-    public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
+    @NotNull GitFile getEntry(@NotNull String name) throws IOException, SVNException {
       if (source == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name));
       }
@@ -300,7 +302,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private boolean keepLocks;
     private boolean aborted = false;
 
-    public EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
+    EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
       this.keepLocks = params.keepLocks;
       this.writer = context.getRepository().createWriter(context.getUser());
@@ -333,7 +335,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private static Map<String, String> getLocks(@NotNull SessionContext context, @NotNull LockInfo[] locks) throws SVNException {
+    private static Map<String, String> getLocks(@NotNull SessionContext context, @NotNull LockInfo[] locks) {
       final Map<String, String> result = new HashMap<>();
       for (LockInfo lock : locks) {
         result.put(context.getRepositoryPath(lock.path), lock.lockToken);
@@ -470,11 +472,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
-    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
+    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) {
       paths.remove(args.token);
     }
 
-    private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
+    private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException {
       final FileUpdater file = files.remove(args.token);
       if (file == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Invalid file token: " + args.token));
@@ -484,15 +486,15 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
     }
 
-    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException, IOException {
+    private void deltaChunk(@NotNull SessionContext context, @NotNull DeltaChunkParams args) throws SVNException {
       getFile(args.token).reader.nextWindow(args.chunk, 0, args.chunk.length, "", getFile(args.token).deltaConsumer);
     }
 
-    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException, IOException {
+    private void deltaEnd(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException {
       getFile(args.token).deltaConsumer.textDeltaEnd(null);
     }
 
-    private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException, IOException {
+    private void deltaApply(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException {
       getFile(args.token).deltaConsumer.applyTextDelta(null, args.checksum.length == 0 ? null : args.checksum[0]);
     }
 
@@ -575,7 +577,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       return file;
     }
 
-    private void checkUpToDate(@NotNull GitFile vcsFile, int rev, boolean checkLock) throws IOException, SVNException {
+    private void checkUpToDate(@NotNull GitFile vcsFile, int rev, boolean checkLock) throws SVNException {
       if (vcsFile.getLastChange().getId() > rev) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
       }
@@ -608,7 +610,6 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @SuppressWarnings("unchecked")
     private void editorCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
-      final SvnServerWriter writer = context.getWriter();
       parser.readToken(ListBeginToken.class);
       final String cmd = parser.readText();
       log.debug("Editor command: {}", cmd);
@@ -618,7 +619,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         context.push(this::editorCommand);
         command = commands.get(cmd);
       }
-      if ((command != null) && (!aborted)) {
+      if (command != null && !aborted) {
         try {
           Object param = MessageParser.parse(command.getArguments(), parser);
           parser.readToken(ListEndToken.class);
@@ -631,12 +632,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           aborted = true;
           throw e;
         }
-      } else if (command != null) {
-        parser.skipItems();
       } else {
-        log.error("Unsupported command: {}", cmd);
-        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
-        parser.skipItems();
+        context.skipUnsupportedCommand(cmd);
       }
     }
   }

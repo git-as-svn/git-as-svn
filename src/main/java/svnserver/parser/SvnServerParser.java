@@ -32,18 +32,24 @@ public final class SvnServerParser {
   private final InputStream stream;
   private int depth = 0;
 
+  private final boolean strictProtocol;
   @NotNull
   private final byte[] buffer;
   private int offset = 0;
   private int limit = 0;
 
-  public SvnServerParser(@NotNull InputStream stream, int bufferSize) {
+  public SvnServerParser(@NotNull InputStream stream, boolean strictProtocol, int bufferSize) {
     this.stream = stream;
+    this.strictProtocol = strictProtocol;
     this.buffer = new byte[Math.max(1, bufferSize)];
   }
 
+  public SvnServerParser(@NotNull InputStream stream, boolean strictProtocol) {
+    this(stream, strictProtocol, DEFAULT_BUFFER_SIZE);
+  }
+
   public SvnServerParser(@NotNull InputStream stream) {
-    this(stream, DEFAULT_BUFFER_SIZE);
+    this(stream, true, DEFAULT_BUFFER_SIZE);
   }
 
   @NotNull
@@ -103,7 +109,7 @@ public final class SvnServerParser {
    */
   @SuppressWarnings("OverlyComplexMethod")
   @NotNull
-  public SvnServerToken readToken() throws IOException {
+  SvnServerToken readToken() throws IOException {
     byte read = skipSpaces();
     if (read == '(') {
       depth++;
@@ -260,5 +266,8 @@ public final class SvnServerParser {
       }
     }
   }
-}
 
+  boolean useStrictProtocol() {
+    return strictProtocol;
+  }
+}

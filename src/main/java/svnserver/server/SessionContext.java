@@ -9,6 +9,8 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -21,6 +23,7 @@ import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRepository;
+import svnserver.server.command.BaseCmd;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
@@ -33,6 +36,9 @@ import java.util.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SessionContext {
+
+  @NotNull
+  private static final Logger log = LoggerFactory.getLogger(SessionContext.class);
 
   @NotNull
   private final SvnServerParser parser;
@@ -95,11 +101,7 @@ public final class SessionContext {
   }
 
   public boolean isCompressionEnabled() {
-    return server.isCompressionEnabled() && hasCapability("svndiff1");
-  }
-
-  public boolean hasCapability(@NotNull String capability) {
-    return capabilities.contains(capability);
+    return server.isCompressionEnabled() && capabilities.contains("svndiff1");
   }
 
   public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
@@ -112,11 +114,6 @@ public final class SessionContext {
   @NotNull
   public User getUser() {
     return user;
-  }
-
-  @NotNull
-  public RepositoryInfo getRepositoryInfo() {
-    return repositoryInfo;
   }
 
   @NotNull
@@ -143,8 +140,6 @@ public final class SessionContext {
    * @param rev  Target revision.
    * @param path Target path or url.
    * @return Return file object.
-   * @throws SVNException
-   * @throws IOException
    */
   @Nullable
   public GitFile getFile(int rev, @NotNull String path) throws SVNException, IOException {
@@ -169,5 +164,11 @@ public final class SessionContext {
 
   public void checkWrite(@Nullable String path) throws SVNException, IOException {
     acl.checkWrite(user, path);
+  }
+
+  public void skipUnsupportedCommand(@NotNull String cmd) throws IOException {
+    log.error("Unsupported command: {}", cmd);
+    BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
+    parser.skipItems();
   }
 }

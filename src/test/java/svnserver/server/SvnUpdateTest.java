@@ -27,7 +27,7 @@ import java.io.File;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnUpdateTest {
+public final class SvnUpdateTest {
   /**
    * Bug: svn up doesnt remove file #18
    * <pre>
@@ -45,8 +45,6 @@ public class SvnUpdateTest {
    * -rw-rw-r-- 1 bozaro bozaro 1 авг.  15 00:50 test.txt
    * bozaro@landfill:/tmp/test/git-as-svn$
    * </pre>
-   *
-   * @throws Exception
    */
   @Test
   public void addAndUpdate() throws Exception {

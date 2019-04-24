@@ -59,7 +59,7 @@ public final class MessageParser {
 
   @SuppressWarnings("unchecked")
   @NotNull
-  private static <T> T parseObject(Class<T> type, @Nullable SvnServerParser tokenParser) throws IOException {
+  private static <T> T parseObject(@NotNull Class<T> type, @Nullable SvnServerParser tokenParser) throws IOException {
     if (tokenParser != null && tokenParser.readItem(ListBeginToken.class) == null)
       tokenParser = null;
 
@@ -92,8 +92,12 @@ public final class MessageParser {
       params[i] = parse(ctorParams[i].getType(), getDepth(tokenParser) == depth ? tokenParser : null);
     }
     while (tokenParser != null && getDepth(tokenParser) >= depth) {
-      tokenParser.readToken();
+      if (tokenParser.useStrictProtocol())
+        tokenParser.readToken(ListEndToken.class);
+      else
+        tokenParser.readToken();
     }
+
     try {
       if (!ctor.isAccessible())
         ctor.setAccessible(true);

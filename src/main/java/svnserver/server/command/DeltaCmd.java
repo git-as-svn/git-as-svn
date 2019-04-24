@@ -240,7 +240,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     @SuppressWarnings("unchecked")
     private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
       final SvnServerParser parser = context.getParser();
-      final SvnServerWriter writer = context.getWriter();
       parser.readToken(ListBeginToken.class);
       final String cmd = parser.readText();
       log.debug("Report command: {}", cmd);
@@ -250,9 +249,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         parser.readToken(ListEndToken.class);
         command.process(context, param);
       } else {
-        log.error("Unsupported command: {}", cmd);
-        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
-        parser.skipItems();
+        context.skipUnsupportedCommand(cmd);
       }
     }
 
