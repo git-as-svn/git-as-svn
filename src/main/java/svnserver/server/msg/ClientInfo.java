@@ -13,8 +13,10 @@ import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * Информация о подключенном клиенте.
- * <p>
- * response: ( version:number ( cap:word ... ) url:string ? ra-client:string ( ? client:string ) )
+ * <pre>
+ *     response: ( version:number ( cap:word ... ) url:string
+ *               ? ra-client:string ( ? client:string ) )
+ * </pre>
  *
  * @author a.navrotskiy
  */
@@ -25,13 +27,16 @@ public class ClientInfo {
   @NotNull
   private final SVNURL url;
   @NotNull
-  private final String userAgent;
+  private final String raClient;
+  @NotNull
+  private final String[] client;
 
-  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String userAgent) throws SVNException {
+  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String raClient, @NotNull String[] client) throws SVNException {
     this.protocolVersion = protocolVersion;
     this.capabilities = capabilities;
     this.url = SVNURL.parseURIEncoded(url);
-    this.userAgent = userAgent;
+    this.raClient = raClient;
+    this.client = client;
   }
 
   public int getProtocolVersion() {
@@ -49,7 +54,7 @@ public class ClientInfo {
   }
 
   @NotNull
-  public String getUserAgent() {
-    return userAgent;
+  public String getRaClient() {
+    return raClient;
   }
 }

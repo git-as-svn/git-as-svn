@@ -22,7 +22,6 @@ import svnserver.config.Config;
 import svnserver.context.SharedContext;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
-import svnserver.parser.SvnServerToken;
 import svnserver.parser.SvnServerWriter;
 import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
@@ -58,7 +57,7 @@ public final class SvnServer extends Thread {
    * {@link SVNCapability#GET_FILE_REVS_REVERSED is wrong.
    */
   @NotNull
-  public static final String fileRevsReverseCapability = "file-revs-reverse";
+  private static final String fileRevsReverseCapability = "file-revs-reverse";
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
@@ -220,19 +219,15 @@ public final class SvnServer extends Thread {
           continue;
         }
 
-        final SvnServerToken token = parser.readToken();
-        if (token != ListBeginToken.instance) {
-          throw new IOException("Unexpected token: " + token);
-        }
+        parser.readToken(ListBeginToken.class);
+
         final String cmd = parser.readText();
         final BaseCmd<?> command = commands.get(cmd);
         if (command != null) {
           log.debug("Receive command: {}", cmd);
           processCommand(context, command, parser);
         } else {
-          log.warn("Unsupported command: {}", cmd);
-          BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
-          parser.skipItems();
+          context.skipUnsupportedCommand(cmd);
         }
       } catch (SVNException e) {
         if (WARNING_CODES.contains(e.getErrorMessage().getErrorCode())) {
@@ -270,8 +265,8 @@ public final class SvnServer extends Thread {
         .word(fileRevsReverseCapability)
         .word("absent-entries")
         .word(SVNCapability.INHERITED_PROPS.toString())
-        //.word("list") TODO: issue #162
-        //.word(SVNCapability.ATOMIC_REVPROPS.toString())
+    //.word("list") TODO: issue #162
+    //.word(SVNCapability.ATOMIC_REVPROPS.toString())
     ;
 
     writer

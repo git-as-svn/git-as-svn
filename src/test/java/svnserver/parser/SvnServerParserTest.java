@@ -27,18 +27,18 @@ public class SvnServerParserTest {
   public void testSimpleParse() throws IOException {
     try (InputStream stream = new ByteArrayInputStream("( word 22 10:string 1:x 1:  8:Тест ( sublist ) ) ".getBytes(StandardCharsets.UTF_8))) {
       final SvnServerParser parser = new SvnServerParser(stream);
-      Assert.assertEquals(parser.readToken(), ListBeginToken.instance);
-      Assert.assertEquals(parser.readToken(), new WordToken("word"));
-      Assert.assertEquals(parser.readToken(), new NumberToken(22));
-      Assert.assertEquals(parser.readToken(), new StringToken("string 1:x"));
-      Assert.assertEquals(parser.readToken(), new StringToken(" "));
-      Assert.assertEquals(parser.readToken(), new StringToken("Тест"));
-      Assert.assertEquals(parser.readToken(), ListBeginToken.instance);
-      Assert.assertEquals(parser.readToken(), new WordToken("sublist"));
-      Assert.assertEquals(parser.readToken(), ListEndToken.instance);
-      Assert.assertEquals(parser.readToken(), ListEndToken.instance);
+      Assert.assertEquals(parser.readToken(ListBeginToken.class), ListBeginToken.instance);
+      Assert.assertEquals(parser.readToken(WordToken.class), new WordToken("word"));
+      Assert.assertEquals(parser.readToken(NumberToken.class), new NumberToken(22));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken("string 1:x"));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken(" "));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken("Тест"));
+      Assert.assertEquals(parser.readToken(ListBeginToken.class), ListBeginToken.instance);
+      Assert.assertEquals(parser.readToken(WordToken.class), new WordToken("sublist"));
+      Assert.assertEquals(parser.readToken(ListEndToken.class), ListEndToken.instance);
+      Assert.assertEquals(parser.readToken(ListEndToken.class), ListEndToken.instance);
       try {
-        parser.readToken();
+        parser.readToken(ListEndToken.class);
         Assert.fail();
       } catch (EOFException ignored) {
       }
@@ -49,19 +49,19 @@ public class SvnServerParserTest {
   @Test
   public void testSimpleParseSmallBuffer() throws IOException {
     try (InputStream stream = new ByteArrayInputStream("( word 22 10:string 1:x 1:  8:Тест ( sublist ) ) ".getBytes(StandardCharsets.UTF_8))) {
-      final SvnServerParser parser = new SvnServerParser(stream, 10);
-      Assert.assertEquals(parser.readToken(), ListBeginToken.instance);
-      Assert.assertEquals(parser.readToken(), new WordToken("word"));
-      Assert.assertEquals(parser.readToken(), new NumberToken(22));
-      Assert.assertEquals(parser.readToken(), new StringToken("string 1:x"));
-      Assert.assertEquals(parser.readToken(), new StringToken(" "));
-      Assert.assertEquals(parser.readToken(), new StringToken("Тест"));
-      Assert.assertEquals(parser.readToken(), ListBeginToken.instance);
-      Assert.assertEquals(parser.readToken(), new WordToken("sublist"));
-      Assert.assertEquals(parser.readToken(), ListEndToken.instance);
-      Assert.assertEquals(parser.readToken(), ListEndToken.instance);
+      final SvnServerParser parser = new SvnServerParser(stream, true, 10);
+      Assert.assertEquals(parser.readToken(ListBeginToken.class), ListBeginToken.instance);
+      Assert.assertEquals(parser.readToken(WordToken.class), new WordToken("word"));
+      Assert.assertEquals(parser.readToken(NumberToken.class), new NumberToken(22));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken("string 1:x"));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken(" "));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken("Тест"));
+      Assert.assertEquals(parser.readToken(ListBeginToken.class), ListBeginToken.instance);
+      Assert.assertEquals(parser.readToken(WordToken.class), new WordToken("sublist"));
+      Assert.assertEquals(parser.readToken(ListEndToken.class), ListEndToken.instance);
+      Assert.assertEquals(parser.readToken(ListEndToken.class), ListEndToken.instance);
       try {
-        parser.readToken();
+        parser.readToken(ListEndToken.class);
         Assert.fail();
       } catch (EOFException ignored) {
       }
@@ -88,7 +88,7 @@ public class SvnServerParserTest {
       ClientInfo req = MessageParser.parse(ClientInfo.class, parser);
       Assert.assertEquals(req.getProtocolVersion(), 2);
       Assert.assertEquals(req.getUrl().toString(), "svn://localhost");
-      Assert.assertEquals(req.getUserAgent(), "SVN/1.8.8 (x86_64-pc-linux-gnu)");
+      Assert.assertEquals(req.getRaClient(), "SVN/1.8.8 (x86_64-pc-linux-gnu)");
       ArrayAsserts.assertArrayEquals(new String[]{
           "edit-pipeline",
           "svndiff1",
@@ -108,7 +108,7 @@ public class SvnServerParserTest {
       ClientInfo req = MessageParser.parse(ClientInfo.class, parser);
       Assert.assertEquals(req.getProtocolVersion(), 2);
       Assert.assertEquals(req.getUrl().toString(), "svn://localhost");
-      Assert.assertEquals(req.getUserAgent(), "");
+      Assert.assertEquals(req.getRaClient(), "");
       ArrayAsserts.assertArrayEquals(new String[]{
           "edit-pipeline",
           "svndiff1",
@@ -137,9 +137,9 @@ public class SvnServerParserTest {
     }
     try (ByteArrayInputStream inputStream = new ByteArrayInputStream(streamData)) {
       final SvnServerParser parser = new SvnServerParser(inputStream);
-      Assert.assertEquals(parser.readToken(), new StringToken(data));
-      Assert.assertEquals(parser.readToken(), new StringToken(data));
-      Assert.assertEquals(parser.readToken(), new WordToken("end"));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken(data));
+      Assert.assertEquals(parser.readToken(StringToken.class), new StringToken(data));
+      Assert.assertEquals(parser.readToken(WordToken.class), new WordToken("end"));
     }
   }
 }
