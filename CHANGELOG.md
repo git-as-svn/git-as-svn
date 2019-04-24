@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleaded
+## 1.10.0
 
  * File locking code cleanup. All existing svn locks will expire after upgrade.
  * Implement `get-file-revs` command. This is expected to speed up `svn blame` severely. #231
