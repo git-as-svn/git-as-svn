@@ -27,7 +27,6 @@ public final class Config {
   private String host = "0.0.0.0";
   @NotNull
   private String realm = "";
-  private boolean strictProtocol = true;
 
   @NotNull
   private RepositoryMappingConfig repositoryMapping = new RepositoryListMappingConfig();
@@ -121,9 +120,5 @@ public final class Config {
 
   public void setCompressionEnabled(boolean compressionEnabled) {
     this.compressionEnabled = compressionEnabled;
-  }
-
-  public boolean useStrictProtocol() {
-    return strictProtocol;
   }
 }
