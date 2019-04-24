@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlfs.storage.local;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.pointer.Constants;
@@ -37,6 +37,12 @@ public class LfsLocalReader implements LfsReader {
   @NotNull
   private final Map<String, String> meta;
 
+  private LfsLocalReader(@NotNull Map<String, String> meta, @Nullable File dataPath, @Nullable File gzipPath) {
+    this.meta = meta;
+    this.dataPath = dataPath;
+    this.gzipPath = gzipPath;
+  }
+
   @Nullable
   public static LfsLocalReader create(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
     final Map<String, String> meta;
@@ -48,7 +54,7 @@ public class LfsLocalReader implements LfsReader {
         return null;
       }
       try (InputStream stream = new FileInputStream(metaPath)) {
-        meta = Pointer.parsePointer(ByteStreams.toByteArray(stream));
+        meta = Pointer.parsePointer(IOUtils.toByteArray(stream));
       }
       if (meta == null) {
         throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());
@@ -74,12 +80,6 @@ public class LfsLocalReader implements LfsReader {
     }
     if (dataPath == null && gzipPath == null) return null;
     return new LfsLocalReader(meta, dataPath, gzipPath);
-  }
-
-  private LfsLocalReader(@NotNull Map<String, String> meta, @Nullable File dataPath, @Nullable File gzipPath) throws IOException {
-    this.meta = meta;
-    this.dataPath = dataPath;
-    this.gzipPath = gzipPath;
   }
 
   @NotNull

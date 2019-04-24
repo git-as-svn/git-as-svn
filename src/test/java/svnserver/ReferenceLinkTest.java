@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of git-as-svn. It is subject to the license terms
  * in the LICENSE file found in the top-level directory of this distribution
  * and at http://www.gnu.org/licenses/gpl-2.0.html. No part of git-as-svn,
@@ -7,7 +7,7 @@
  */
 package svnserver;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -52,8 +49,7 @@ public class ReferenceLinkTest {
     log.info("Localization path: " + poDir.getAbsolutePath());
     Assert.assertTrue(poDir.isDirectory());
 
-    final Set<String> expected = Arrays.asList(poDir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".po")))
-        .stream()
+    final Set<String> expected = Arrays.stream(Objects.requireNonNull(poDir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".po"))))
         .map((file) -> {
           final String name = file.getName();
           return name.substring(0, name.length() - 3);
@@ -74,7 +70,7 @@ public class ReferenceLinkTest {
       return;
 
     try (InputStream stream = new URL(referenceLink.getLink(lang)).openStream()) {
-      ByteStreams.toByteArray(stream);
+      IOUtils.toByteArray(stream);
     }
   }
 }

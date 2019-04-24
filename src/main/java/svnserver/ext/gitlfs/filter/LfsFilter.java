@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlfs.filter;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
@@ -68,7 +68,7 @@ public final class LfsFilter implements GitFilter {
     final ObjectLoader loader = objectId.openObject();
     final ObjectStream stream = loader.openStream();
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
-    int length = ByteStreams.read(stream, header, 0, header.length);
+    int length = IOUtils.read(stream, header, 0, header.length);
     if (length < header.length) {
       final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
       if (pointer != null) {
@@ -103,7 +103,7 @@ public final class LfsFilter implements GitFilter {
     final ObjectLoader loader = objectId.openObject();
     final ObjectStream stream = loader.openStream();
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
-    int length = ByteStreams.read(stream, header, 0, header.length);
+    int length = IOUtils.read(stream, header, 0, header.length);
     if (length < header.length) {
       final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
       if (pointer != null) {
@@ -119,7 +119,7 @@ public final class LfsFilter implements GitFilter {
     final ObjectLoader loader = objectId.openObject();
     final ObjectStream stream = loader.openStream();
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
-    int length = ByteStreams.read(stream, header, 0, header.length);
+    int length = IOUtils.read(stream, header, 0, header.length);
     if (length < header.length) {
       final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
       if (pointer != null) {

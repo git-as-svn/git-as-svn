@@ -7,7 +7,7 @@
  */
 package svnserver;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -21,23 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Artem V. Navrotskiy
  */
-public class TemporaryOutputStream extends OutputStream {
-  public interface Holder extends AutoCloseable {
-    @NotNull
-    Holder copy();
-
-    @Override
-    void close() throws IOException;
-  }
-
-  private interface CloseAction extends AutoCloseable {
-    @Override
-    void close() throws IOException;
-  }
-
+public final class TemporaryOutputStream extends OutputStream {
   @SuppressWarnings("MagicNumber")
   private static final int MAX_MEMORY_SIZE = 8 * 1024 * 1024;
-
   private final int maxMemorySize;
   @NotNull
   private final ByteArrayOutputStream memoryStream = new ByteArrayOutputStream();
@@ -48,19 +34,23 @@ public class TemporaryOutputStream extends OutputStream {
   @Nullable
   private FileOutputStream fileOutputStream;
   private long totalSize = 0;
-
   public TemporaryOutputStream() {
     this(MAX_MEMORY_SIZE);
+  }
+  public TemporaryOutputStream(int maxMemorySize) {
+    this.maxMemorySize = maxMemorySize;
+    this.holder = new FileHolder(this::cleanup);
+  }
+
+  private void cleanup() throws IOException {
+    if (file != null && !file.delete()) {
+      throw new IOException("Can't delete temporary file: " + file.getAbsolutePath());
+    }
   }
 
   public TemporaryOutputStream(@NotNull InputStream stream) throws IOException {
     this(MAX_MEMORY_SIZE);
-    ByteStreams.copy(stream, this);
-  }
-
-  public TemporaryOutputStream(int maxMemorySize) {
-    this.maxMemorySize = maxMemorySize;
-    this.holder = new FileHolder(this::cleanup);
+    IOUtils.copy(stream, this);
   }
 
   @Override
@@ -72,20 +62,6 @@ public class TemporaryOutputStream extends OutputStream {
     }
     ensureFile().write(b);
     totalSize++;
-  }
-
-  public long size() {
-    return totalSize;
-  }
-
-  public Holder holder() {
-    return holder.copy();
-  }
-
-  @TestOnly
-  @Nullable
-  File tempFile() {
-    return file;
   }
 
   @NotNull
@@ -112,18 +88,6 @@ public class TemporaryOutputStream extends OutputStream {
     totalSize += len;
   }
 
-  @NotNull
-  public InputStream toInputStream() throws IOException {
-    if (fileOutputStream != null) {
-      flush();
-    }
-    if (file != null) {
-      return new TemporaryInputStream(memoryStream.toByteArray(), file, holder);
-    } else {
-      return new ByteArrayInputStream(memoryStream.toByteArray());
-    }
-  }
-
   @Override
   public void flush() throws IOException {
     if (fileOutputStream != null) {
@@ -139,10 +103,43 @@ public class TemporaryOutputStream extends OutputStream {
     holder.close();
   }
 
-  private void cleanup() throws IOException {
-    if (file != null && !file.delete()) {
-      throw new IOException("Can't delete temporary file: " + file.getAbsolutePath());
+  public long size() {
+    return totalSize;
+  }
+
+  public Holder holder() {
+    return holder.copy();
+  }
+
+  @TestOnly
+  @Nullable
+  File tempFile() {
+    return file;
+  }
+
+  @NotNull
+  public InputStream toInputStream() throws IOException {
+    if (fileOutputStream != null) {
+      flush();
     }
+    if (file != null) {
+      return new TemporaryInputStream(memoryStream.toByteArray(), file, holder);
+    } else {
+      return new ByteArrayInputStream(memoryStream.toByteArray());
+    }
+  }
+
+  public interface Holder extends AutoCloseable {
+    @NotNull
+    Holder copy();
+
+    @Override
+    void close() throws IOException;
+  }
+
+  private interface CloseAction extends AutoCloseable {
+    @Override
+    void close() throws IOException;
   }
 
   private static class TemporaryInputStream extends InputStream {
@@ -198,7 +195,7 @@ public class TemporaryOutputStream extends OutputStream {
     @NotNull
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public FileHolder(@NotNull CloseAction action) {
+    FileHolder(@NotNull CloseAction action) {
       this(action, new AtomicInteger(1));
     }
 

@@ -8,7 +8,7 @@
 package svnserver.ext.gitlfs.server;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -39,7 +39,7 @@ import java.util.Objects;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsContentManager implements ContentManager {
+public final class LfsContentManager implements ContentManager {
   private final int tokenExpireSec;
   private final float tokenEnsureTime;
   @NotNull
@@ -99,7 +99,7 @@ public class LfsContentManager implements ContentManager {
       @Override
       public void saveObject(@NotNull Meta meta, @NotNull InputStream content) throws IOException {
         try (final LfsWriter writer = storage.getWriter(Objects.requireNonNull(user))) {
-          ByteStreams.copy(content, writer);
+          IOUtils.copy(content, writer);
           writer.finish(LfsStorage.OID_PREFIX + meta.getOid());
         }
       }
@@ -135,6 +135,7 @@ public class LfsContentManager implements ContentManager {
         throw new ForbiddenError();
       }
     }
+
     return user;
   }
 

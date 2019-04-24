@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +50,6 @@ public enum GitCreateMode {
     }
   };
 
-  @NotNull
-  public abstract Repository createRepository(@NotNull File file, @NotNull String branch) throws IOException;
-
   protected static Repository createRepository(@NotNull File file) throws IOException {
     if (file.exists() || file.mkdirs()) {
       final FileRepository repository = new FileRepository(file);
@@ -87,7 +84,10 @@ public enum GitCreateMode {
     if (stream == null) {
       throw new FileNotFoundException(resourceName);
     }
-    return inserter.insert(Constants.OBJ_BLOB, ByteStreams.toByteArray(stream));
+    return inserter.insert(Constants.OBJ_BLOB, IOUtils.toByteArray(stream));
   }
+
+  @NotNull
+  public abstract Repository createRepository(@NotNull File file, @NotNull String branch) throws IOException;
 
 }

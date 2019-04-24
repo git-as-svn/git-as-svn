@@ -7,7 +7,7 @@
  */
 package svnserver;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -117,14 +117,14 @@ public class TemporaryOutputStreamTest {
     final InputStream inputStream1 = outputStream.toInputStream();
     final InputStream inputStream2 = outputStream.toInputStream();
 
-    final byte[] actualData1 = ByteStreams.toByteArray(inputStream1);
+    final byte[] actualData1 = IOUtils.toByteArray(inputStream1);
     inputStream1.close();
     inputStream1.close();
 
     outputStream.close();
     outputStream.close();
 
-    final byte[] actualData2 = ByteStreams.toByteArray(inputStream2);
+    final byte[] actualData2 = IOUtils.toByteArray(inputStream2);
     checkFileExists(outputStream, true);
     inputStream2.close();
     checkFileExists(outputStream, false);

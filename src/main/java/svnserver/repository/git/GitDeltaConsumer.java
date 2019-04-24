@@ -7,7 +7,7 @@
  */
 package svnserver.repository.git;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -134,7 +134,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       ) {
         try (InputStream inputStream = newFilter.inputStream(objectId);
              OutputStream outputStream = filter.outputStream(content, user)) {
-          ByteStreams.copy(inputStream, outputStream);
+          IOUtils.copy(inputStream, outputStream);
         }
         try (InputStream inputStream = content.toInputStream()) {
           objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, content.size(), inputStream));
@@ -211,7 +211,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
       try {
         super.close();
       } catch (IOException e) {
