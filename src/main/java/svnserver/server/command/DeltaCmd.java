@@ -123,7 +123,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     @NotNull
     private final Depth depth;
 
-    public SetPathParams(@NotNull String path, int rev, boolean startEmpty, @NotNull String[] lockToken, @NotNull String depth) {
+    SetPathParams(@NotNull String path, int rev, boolean startEmpty, @NotNull String[] lockToken, @NotNull String depth) {
       this.path = path;
       this.rev = rev;
       this.startEmpty = startEmpty;
@@ -176,7 +176,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
   }
 
-  public static class ReportPipeline {
+  static class ReportPipeline {
     @NotNull
     private final Map<String, BaseCmd<?>> commands;
     @NotNull
@@ -191,7 +191,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private final Deque<HeaderEntry> pathStack = new ArrayDeque<>();
     private int lastTokenId;
 
-    public ReportPipeline(@NotNull DeltaParams params) {
+    ReportPipeline(@NotNull DeltaParams params) {
       this.params = params;
       commands = new HashMap<>();
       commands.put("delete-path", new LambdaCmd<>(DeleteParams.class, this::deletePath));
@@ -200,6 +200,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       commands.put("finish-report", new LambdaCmd<>(NoParams.class, this::finishReport));
     }
 
+    @NotNull
     private SvnServerWriter getWriter(@NotNull SessionContext context) throws IOException, SVNException {
       for (HeaderEntry entry : pathStack) {
         entry.write();
@@ -221,10 +222,38 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       context.push(new CheckPermissionStep(this::complete, null));
     }
 
-    public void setPathReport(@NotNull String path, int rev, boolean startEmpty, @NotNull SVNDepth depth) throws SVNException {
+    void setPathReport(@NotNull String path, int rev, boolean startEmpty, @NotNull SVNDepth depth) {
+      internalSetPathReport(new SetPathParams(path, rev, startEmpty, new String[0], depth.getName()), path);
+    }
+
+    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
+      context.push(this::reportCommand);
+      internalSetPathReport(args, args.path);
+    }
+
+    private void internalSetPathReport(@NotNull DeltaCmd.SetPathParams args, String path) {
       final String wcPath = wcPath(path);
-      paths.put(wcPath, new SetPathParams(path, rev, startEmpty, new String[0], depth.getName()));
+      paths.put(wcPath, args);
       forcePath(wcPath);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
+      final SvnServerParser parser = context.getParser();
+      final SvnServerWriter writer = context.getWriter();
+      parser.readToken(ListBeginToken.class);
+      final String cmd = parser.readText();
+      log.debug("Report command: {}", cmd);
+      final BaseCmd command = commands.get(cmd);
+      if (command != null) {
+        Object param = MessageParser.parse(command.getArguments(), parser);
+        parser.readToken(ListEndToken.class);
+        command.process(context, param);
+      } else {
+        log.error("Unsupported command: {}", cmd);
+        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
+        parser.skipItems();
+      }
     }
 
     @NotNull
@@ -250,14 +279,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return prefix.isEmpty() ? name : (prefix + "/" + name);
     }
 
-    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) throws SVNException {
-      context.push(this::reportCommand);
-      final String wcPath = wcPath(args.path);
-      paths.put(wcPath, args);
-      forcePath(wcPath);
-    }
-
-    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) throws SVNException {
+    private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) {
       context.push(this::reportCommand);
       final String wcPath = wcPath(args.path);
       forcePath(wcPath);
@@ -265,55 +287,8 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     private void complete(@NotNull SessionContext context) throws IOException, SVNException {
-      sendResponse(context, params.getPath(), params.getRev(context));
-    }
-
-    protected void sendDelta(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
-      final SetPathParams rootParams = paths.get(wcPath(""));
-      if (rootParams == null)
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA));
-
       final SvnServerWriter writer = getWriter(context);
-      writer
-          .listBegin()
-          .word("target-rev")
-          .listBegin().number(rev).listEnd()
-          .listEnd();
-
-      final String tokenId = createTokenId();
-
-      final int rootRev = rootParams.rev;
-      writer
-          .listBegin()
-          .word("open-root")
-          .listBegin()
-          .listBegin()
-          .number(rootRev)
-          .listEnd()
-          .string(tokenId)
-          .listEnd()
-          .listEnd();
-      final String fullPath = context.getRepositoryPath(path);
-
-      final SVNURL targetPath = params.getTargetPath();
-      final GitFile newFile;
-      if (targetPath == null)
-        newFile = context.getFile(rev, fullPath);
-      else
-        newFile = context.getFile(rev, targetPath);
-
-      final GitFile oldFile = getPrevFile(context, path, context.getFile(rootRev, fullPath));
-      updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty(), rootParams.depth, params.getDepth());
-      writer
-          .listBegin()
-          .word("close-dir")
-          .listBegin().string(tokenId).listEnd()
-          .listEnd();
-    }
-
-    protected void sendResponse(@NotNull SessionContext context, @NotNull String path, int rev) throws IOException, SVNException {
-      final SvnServerWriter writer = getWriter(context);
-      sendDelta(context, path, rev);
+      sendDelta(context);
       writer
           .listBegin()
           .word("close-edit")
@@ -375,6 +350,52 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       }
     }
 
+    void sendDelta(@NotNull SessionContext context) throws IOException, SVNException {
+      final String path = params.getPath();
+      final int targetRev = params.getRev(context);
+      final SetPathParams rootParams = paths.get(wcPath(""));
+      if (rootParams == null)
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA));
+
+      final SvnServerWriter writer = getWriter(context);
+      writer
+          .listBegin()
+          .word("target-rev")
+          .listBegin().number(targetRev).listEnd()
+          .listEnd();
+
+      final String tokenId = createTokenId();
+
+      final int rootRev = rootParams.rev;
+      writer
+          .listBegin()
+          .word("open-root")
+          .listBegin()
+          .listBegin()
+          .number(rootRev)
+          .listEnd()
+          .string(tokenId)
+          .listEnd()
+          .listEnd();
+      final String fullPath = context.getRepositoryPath(path);
+
+      final SVNURL targetPath = params.getTargetPath();
+      final GitFile newFile;
+      if (targetPath == null)
+        newFile = context.getFile(targetRev, fullPath);
+      else
+        newFile = context.getFile(targetRev, targetPath);
+
+      final GitFile oldFile = getPrevFile(context, path, context.getFile(rootRev, fullPath));
+      updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty(), rootParams.depth, params.getDepth());
+      writer
+          .listBegin()
+          .word("close-dir")
+          .listBegin().string(tokenId).listEnd()
+          .listEnd();
+    }
+
+    @NotNull
     private String createTokenId() {
       return "t" + ++lastTokenId;
     }
@@ -524,7 +545,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
               .listEnd()
               .listEnd();
 
-          if (params.needDeltas()) {
+          if (params.sendDeltas()) {
             final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             try (InputStream source = openStream(oldFile);
                  InputStream target = newFile.openStream()) {
@@ -681,7 +702,8 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     @NotNull
     private HeaderEntry sendEntryHeader(@NotNull SessionContext context, @NotNull String wcPath, @Nullable GitFile oldFile, @NotNull GitFile newFile, @NotNull String type, @NotNull String parentTokenId, @NotNull String tokenId, @NotNull HeaderWriter endWriter) throws IOException, SVNException {
       if (oldFile == null) {
-        final VcsCopyFrom copyFrom = params.getSendCopyFrom().getCopyFrom(wcPath(""), newFile);
+        final VcsCopyFrom copyFrom = getCopyFrom(newFile);
+
         final GitFile entryFile = copyFrom != null ? context.getRepository().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath()) : null;
         final HeaderEntry entry = new HeaderEntry(context, entryFile, writer -> {
           sendNewEntry(writer, "add-" + type, wcPath, parentTokenId, tokenId, copyFrom);
@@ -695,6 +717,18 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           sendRevProps(writer, newFile, type, tokenId);
         }, endWriter, pathStack);
       }
+    }
+
+    @Nullable
+    private VcsCopyFrom getCopyFrom(@NotNull GitFile newFile) throws IOException {
+      final VcsCopyFrom copyFrom = params.getSendCopyFrom().getCopyFrom(wcPath(""), newFile);
+      if (copyFrom == null)
+        return null;
+
+      if (copyFrom.getRevision() < params.getLowRevision())
+        return null;
+
+      return copyFrom;
     }
 
     private void sendRevProps(@NotNull SvnServerWriter writer, @NotNull GitFile newFile, @NotNull String type, @NotNull String tokenId) throws IOException {
@@ -740,25 +774,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listEnd()
           .listEnd()
           .listEnd();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
-      final SvnServerParser parser = context.getParser();
-      final SvnServerWriter writer = context.getWriter();
-      parser.readToken(ListBeginToken.class);
-      final String cmd = parser.readText();
-      log.debug("Report command: {}", cmd);
-      final BaseCmd command = commands.get(cmd);
-      if (command != null) {
-        Object param = MessageParser.parse(command.getArguments(), parser);
-        parser.readToken(ListEndToken.class);
-        command.process(context, param);
-      } else {
-        log.error("Unsupported command: {}", cmd);
-        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd));
-        parser.skipItems();
-      }
     }
 
     @FunctionalInterface

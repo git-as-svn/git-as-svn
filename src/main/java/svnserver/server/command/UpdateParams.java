@@ -37,6 +37,6 @@ public final class UpdateParams extends DeltaParams {
       boolean sendCopyFromArgs,
       boolean ignoreAncestry
   ) throws SVNException {
-    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs ? SendCopyFrom.Always : SendCopyFrom.Never, ignoreAncestry, true);
+    super(rev, target, "", true, Depth.parse(depth, recurse, Depth.Files), sendCopyFromArgs ? SendCopyFrom.Always : SendCopyFrom.Never, ignoreAncestry, true, 0);
   }
 }

@@ -38,6 +38,6 @@ public final class DiffParams extends DeltaParams {
       boolean textDeltas,
       @NotNull String depth
   ) throws SVNException {
-    super(rev, target, url, textDeltas, Depth.parse(depth, recurse, Depth.Files), SendCopyFrom.Never, ignoreAncestry, true);
+    super(rev, target, url, textDeltas, Depth.parse(depth, recurse, Depth.Files), SendCopyFrom.Never, ignoreAncestry, true, 0);
   }
 }

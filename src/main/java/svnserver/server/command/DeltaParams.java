@@ -15,8 +15,6 @@ import svnserver.repository.Depth;
 import svnserver.repository.SendCopyFrom;
 import svnserver.server.SessionContext;
 
-import java.io.IOException;
-
 /**
  * Delta parameters.
  *
@@ -44,7 +42,9 @@ public class DeltaParams {
 
   private final boolean textDeltas;
 
-  public DeltaParams(
+  private final int lowRevision;
+
+  DeltaParams(
       @NotNull int[] rev,
       @NotNull String path,
       @NotNull String targetPath,
@@ -60,9 +60,9 @@ public class DeltaParams {
        * <p>
        * Worse, in SVN it is possible to delete file and create it back in the same commit, effectively breaking its history.
        */
-      @SuppressWarnings("UnusedParameters")
-      boolean ignoreAncestry,
-      boolean includeInternalProps
+      @SuppressWarnings("UnusedParameters") boolean ignoreAncestry,
+      boolean includeInternalProps,
+      int lowRevision
   ) throws SVNException {
     this.rev = rev;
     this.path = path;
@@ -71,10 +71,11 @@ public class DeltaParams {
     this.sendCopyFrom = sendCopyFrom;
     this.textDeltas = textDeltas;
     this.includeInternalProps = includeInternalProps;
+    this.lowRevision = lowRevision;
   }
 
   @Nullable
-  public SVNURL getTargetPath() {
+  SVNURL getTargetPath() {
     return targetPath;
   }
 
@@ -83,11 +84,11 @@ public class DeltaParams {
     return path;
   }
 
-  public int getRev(@NotNull SessionContext context) throws IOException {
+  int getRev(@NotNull SessionContext context) {
     return rev.length > 0 ? rev[0] : context.getRepository().getLatestRevision().getId();
   }
 
-  public boolean needDeltas() {
+  boolean sendDeltas() {
     return textDeltas;
   }
 
@@ -97,11 +98,15 @@ public class DeltaParams {
   }
 
   @NotNull
-  public SendCopyFrom getSendCopyFrom() {
+  SendCopyFrom getSendCopyFrom() {
     return sendCopyFrom;
   }
 
-  public boolean isIncludeInternalProps() {
+  boolean isIncludeInternalProps() {
     return includeInternalProps;
+  }
+
+  public int getLowRevision() {
+    return lowRevision;
   }
 }

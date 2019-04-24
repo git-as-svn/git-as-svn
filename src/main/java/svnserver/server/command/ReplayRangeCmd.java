@@ -16,7 +16,6 @@ import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Send revisions as is.
@@ -54,18 +53,9 @@ public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
       writer
           .listBegin()
           .word("revprops")
-          .listBegin();
-      for (Map.Entry<String, String> entry : revisionInfo.getProperties(true).entrySet()) {
-        writer
-            .listBegin()
-            .string(entry.getKey())
-            .string(entry.getValue())
-            .listEnd();
-      }
-      writer
-          .listEnd()
+          .writeMap(revisionInfo.getProperties(true))
           .listEnd();
-      ReplayCmd.replayRevision(context, revision, true);
+      ReplayCmd.replayRevision(context, revision, args.lowRevision, args.sendDeltas);
     }
     writer
         .listBegin()
@@ -77,11 +67,14 @@ public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
   public static class Params {
     private final int startRev;
     private final int endRev;
+    private final int lowRevision;
+    private final boolean sendDeltas;
 
-    public Params(int startRev, int endRev) {
+    public Params(int startRev, int endRev, int lowRevision, boolean sendDeltas) {
       this.startRev = startRev;
       this.endRev = endRev;
+      this.lowRevision = lowRevision;
+      this.sendDeltas = sendDeltas;
     }
   }
-
 }

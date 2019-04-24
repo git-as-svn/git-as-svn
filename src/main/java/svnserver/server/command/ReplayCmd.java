@@ -31,14 +31,6 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public final class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
-  public static class Params {
-    private final int revision;
-
-    public Params(int revision) {
-      this.revision = revision;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -47,7 +39,7 @@ public final class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
 
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    replayRevision(context, args.revision, true);
+    replayRevision(context, args.revision, args.lowRevision, args.sendDeltas);
 
     final SvnServerWriter writer = context.getWriter();
     writer
@@ -57,10 +49,23 @@ public final class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
         .listEnd();
   }
 
-  static void replayRevision(@NotNull SessionContext context, int revision, boolean sendDeltas) throws IOException, SVNException {
-    final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(new DeltaParams(new int[]{revision}, "", "", sendDeltas, Depth.Infinity, SendCopyFrom.OnlyRelative, false, false));
+  static void replayRevision(@NotNull SessionContext context, int revision, int lowRevision, boolean sendDeltas) throws IOException, SVNException {
+    final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(
+        new DeltaParams(
+            new int[]{revision},
+            "",
+            "",
+            sendDeltas,
+            Depth.Infinity,
+            SendCopyFrom.OnlyRelative,
+            false,
+            false,
+            lowRevision
+        )
+    );
+
     pipeline.setPathReport("", revision - 1, false, SVNDepth.INFINITY);
-    pipeline.sendDelta(context, "", revision);
+    pipeline.sendDelta(context);
 
     final SvnServerWriter writer = context.getWriter();
     writer
@@ -68,5 +73,17 @@ public final class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
         .word("finish-replay")
         .listBegin().listEnd()
         .listEnd();
+  }
+
+  public static class Params {
+    private final int revision;
+    private final int lowRevision;
+    private final boolean sendDeltas;
+
+    public Params(int revision, int lowRevision, boolean sendDeltas) {
+      this.revision = revision;
+      this.lowRevision = lowRevision;
+      this.sendDeltas = sendDeltas;
+    }
   }
 }
