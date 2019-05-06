@@ -32,6 +32,9 @@ addons:
     - gnome-doc-utils
 
 jobs:
+  allow_failures:
+    - env: GITEA_VERSION=latest
+
   include:
     # Gitlab
     - stage: test
@@ -55,7 +58,10 @@ jobs:
       env: GITEA_VERSION=latest
       jdk: oraclejdk8
     - stage: test
-      env: GITEA_VERSION=1.6
+      env: GITEA_VERSION=1.8 # Just latest release we pass tests against (as of 06 May 2019)
+      jdk: oraclejdk8
+    - stage: test
+      env: GITEA_VERSION=1.6 # The earliest Gitea version that git-as-svn can work with
       jdk: oraclejdk8
 
     # Different JDKs
