@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.10.1
 
  * Fix PLAIN auth not working with passwords longer than 51 character. #242
 
