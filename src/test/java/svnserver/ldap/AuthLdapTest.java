@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class AuthLdapTest {
 
   /**
-   * Test for #156.
+   * Test for #156, #242.
    */
   @Test
   void nativeClient() throws Exception {
@@ -43,7 +43,7 @@ public final class AuthLdapTest {
         EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
-      final String[] command = {svn, "--non-interactive", "ls", "--username=ldapadmin", "--password=ldapadmin", server.getUrl().toString()};
+      final String[] command = {svn, "--non-interactive", "ls", "--username=ldapadmin", "--password=" + EmbeddedDirectoryServer.ADMIN_PASSWORD, server.getUrl().toString()};
       final int exitCode = new ProcessBuilder(command)
           .redirectError(ProcessBuilder.Redirect.INHERIT)
           .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -55,7 +55,7 @@ public final class AuthLdapTest {
 
   @Test
   public void validUser() throws Throwable {
-    checkUser("ldapadmin", "ldapadmin");
+    checkUser("ldapadmin", EmbeddedDirectoryServer.ADMIN_PASSWORD);
   }
 
   private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
@@ -79,7 +79,7 @@ public final class AuthLdapTest {
 
       final List<Callable<Void>> tasks = new ArrayList<>();
       for (int i = 0; i < 1000; ++i) {
-        tasks.add(new SuccessAuth(userDB, done, "ldapadmin", "ldapadmin"));
+        tasks.add(new SuccessAuth(userDB, done, "ldapadmin", EmbeddedDirectoryServer.ADMIN_PASSWORD));
         tasks.add(new SuccessAuth(userDB, done, "simple", "simple"));
         tasks.add(new InvalidAuth(userDB, done, "simple", "hacker"));
       }
@@ -102,7 +102,7 @@ public final class AuthLdapTest {
 
   @Test
   public void invalidUser() {
-    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin2", "ldapadmin"));
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin2", EmbeddedDirectoryServer.ADMIN_PASSWORD));
   }
 
   @Test

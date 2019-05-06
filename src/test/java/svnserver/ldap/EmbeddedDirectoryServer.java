@@ -27,6 +27,8 @@ import java.net.URL;
 public final class EmbeddedDirectoryServer implements AutoCloseable {
 
   @NotNull
+  static final String ADMIN_PASSWORD = "123456789012345678901234567890123456789012345678901234567890";
+  @NotNull
   private final InMemoryDirectoryServer server;
   @NotNull
   private final DN baseDn;
@@ -54,10 +56,9 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
     server.shutDown(true);
   }
 
-  @NotNull
-  public UserDBConfig createUserConfig() {
+  @NotNull UserDBConfig createUserConfig() {
     final LdapUserDBConfig config = new LdapUserDBConfig();
-    config.setBind(new LdapBindSimple(LdapBindSimple.BindType.Plain, "u:ldapadmin", "ldapadmin"));
+    config.setBind(new LdapBindSimple(LdapBindSimple.BindType.Plain, "u:ldapadmin", ADMIN_PASSWORD));
     config.setConnectionUrl("ldap://127.0.0.1:" + server.getListenPort() + "/" + baseDn);
     config.setSearchFilter("");
     config.setLoginAttribute("uid");

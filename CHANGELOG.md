@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+ * Fix PLAIN auth not working with passwords longer than 51 character. #242
+
 ## 1.10.0
 
  * File locking code cleanup. All existing svn locks will expire after upgrade.
