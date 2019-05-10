@@ -39,37 +39,39 @@ jobs:
     # Gitlab
     - stage: test
       env: GITLAB_VERSION=latest
-      jdk: oraclejdk8
+      jdk: openjdk8
     - stage: test
       env: GITLAB_VERSION=11.0.3-ce.0 # Gitlab >= 11.0 no longer has API v3 (issue #176)
-      jdk: oraclejdk8
+      jdk: openjdk8
     - stage: test
       env: GITLAB_VERSION=10.2.5-ce.0 # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
-      jdk: oraclejdk8
+      jdk: openjdk8
     - stage: test
       env: GITLAB_VERSION=9.5.10-ce.0 # Last 9.x build, actually nothing special about it
-      jdk: oraclejdk8
+      jdk: openjdk8
     - stage: test
       env: GITLAB_VERSION=9.3.3-ce.0 # We use this in production
-      jdk: oraclejdk8
+      jdk: openjdk8
 
     # Gitea
     - stage: test
       env: GITEA_VERSION=latest
-      jdk: oraclejdk8
+      jdk: openjdk8
     - stage: test
       env: GITEA_VERSION=1.8 # Just latest release we pass tests against (as of 06 May 2019)
-      jdk: oraclejdk8
+      jdk: openjdk8
     - stage: test
       env: GITEA_VERSION=1.6 # The earliest Gitea version that git-as-svn can work with
-      jdk: oraclejdk8
+      jdk: openjdk8
 
     # Different JDKs
     - stage: test
-      jdk: oraclejdk11
+      jdk: openjdk11
+    - stage: test
+      jdk: openjdk12
 
     - stage: deploy
-      jdk: oraclejdk8 # Deploy releases using oldest supported jdk
+      jdk: openjdk8 # Deploy releases using oldest supported jdk
       script: ./gradlew assembleDist
       before_deploy:
         # Set the packages name and details in the descriptor file
