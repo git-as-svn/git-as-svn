@@ -32,9 +32,6 @@ addons:
     - gnome-doc-utils
 
 jobs:
-  allow_failures:
-    - env: GITEA_VERSION=latest
-
   include:
     # Gitlab
     - stage: test
