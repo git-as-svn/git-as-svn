@@ -8,7 +8,6 @@
 package svnserver.ext.gitea;
 
 import io.gitea.ApiClient;
-import io.gitea.api.AdminApi;
 import io.gitea.api.RepositoryApi;
 import io.gitea.api.UserApi;
 import io.gitea.auth.ApiKeyAuth;
@@ -17,7 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container.ExecResult;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -29,6 +30,7 @@ import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import svnserver.StreamHelper;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.config.RepositoryMappingConfig;
@@ -37,9 +39,13 @@ import svnserver.ext.gitea.config.GiteaConfig;
 import svnserver.ext.gitea.config.GiteaContext;
 import svnserver.ext.gitea.config.GiteaToken;
 import svnserver.ext.gitea.mapping.GiteaMappingConfig;
+import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Function;
@@ -83,21 +89,16 @@ public final class GiteaIntegrationTest {
     }
 
     final int giteaPort = 3000;
-    final int svnPort = 3690;
-    final int sshPort = 22;
     final String path = "/user/login";
 
-    gitea = new GenericContainer<>("gitea/gitea:" + giteaVersion)
-        .withExposedPorts(giteaPort, svnPort, sshPort)
+    gitea = new FixedHostPortGenericContainer<>("gitea/gitea:" + giteaVersion)
+        .withFixedExposedPort(giteaPort, giteaPort)
+        .withExposedPorts(giteaPort)
         .waitingFor(Wait.forHttp(path).forPort(giteaPort)
-            .withStartupTimeout(Duration.of(120, ChronoUnit.SECONDS)));
-    Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(log);
-
-    gitea.addEnv("INSTALL_LOCK", "true");
-    gitea.addEnv("SECRET_KEY", "CmjF5WBUNZytE2C80JuogljLs5enS0zSTlikbP2HyG8IUy15UjkLNvTNsyYW7wN");
-    gitea.addEnv("RUN_MODE", "prod");
+            .withStartupTimeout(Duration.of(120, ChronoUnit.SECONDS)))
+        .withClasspathResourceMapping("/svnserver/ext/gitea/app.ini", "/data/gitea/conf/app.ini", BindMode.READ_WRITE)
+        .withLogConsumer(new Slf4jLogConsumer(log));
     gitea.start();
-    gitea.followOutput(logConsumer);
 
     giteaUrl = "http://" + gitea.getContainerIpAddress() + ":" + gitea.getMappedPort(giteaPort) + "/";
     giteaApiUrl = giteaUrl + "api/v1";
@@ -107,8 +108,8 @@ public final class GiteaIntegrationTest {
     String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     {
       ExecResult result = gitea.execInContainer("gitea", "admin", "create-user", "--name", administrator,
-        "--password", administratorPassword, "--email", "administrator@example.com", "--admin",
-        mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
+          "--password", administratorPassword, "--email", "administrator@example.com", "--admin",
+          mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
       System.out.println(result.getStdout());
       System.err.println(result.getStderr());
     }
@@ -139,12 +140,9 @@ public final class GiteaIntegrationTest {
     Assert.assertNotNull(testPrivateRepository);
   }
 
-  // Gitea API methods
   @NotNull
-  private ApiClient sudo(ApiClient apiClient, String username) {
-    ApiKeyAuth sudoParam = (ApiKeyAuth) apiClient.getAuthentication("SudoParam");
-    sudoParam.setApiKey(username);
-    return apiClient;
+  private User createUser(@NotNull String username, @NotNull String password) throws Exception {
+    return createUser(username, username + "@example.com", password);
   }
 
   @NotNull
@@ -162,49 +160,47 @@ public final class GiteaIntegrationTest {
   }
 
   @NotNull
-  private User createUser(@NotNull String username, @NotNull String password) throws Exception {
-    return createUser(username, username + "@example.com", password);
-  }
-
-  @NotNull
   private User createUser(@NotNull String username, @NotNull String email, @NotNull String password) throws Exception {
     // Need to create user using command line because users now default to requiring to change password
     ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
     boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
     String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     gitea.execInContainer("gitea", "admin", "create-user", "--name", username,
-      "--password", password, "--email", email,
-      mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
+        "--password", password, "--email", email,
+        mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
     ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
     UserApi userApi = new UserApi(sudo(apiClient, username));
 
     return userApi.userGetCurrent();
   }
 
-  private void repoAddCollaborator(@NotNull String owner, @NotNull String repo, @NotNull String collaborator) throws Exception {
-    ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
-    RepositoryApi repositoryApi = new RepositoryApi(apiClient);
-    AddCollaboratorOption aco = new AddCollaboratorOption();
-    aco.setPermission("write");
-    repositoryApi.repoAddCollaborator(owner, repo, collaborator, aco);
-  }
-
-  // SvnTest Methods
+  // Gitea API methods
   @NotNull
-  private SvnTestServer createServer(@NotNull GiteaToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
-    final GiteaConfig giteaConfig = new GiteaConfig(giteaApiUrl, token);
-    return SvnTestServer.createEmpty(new GiteaUserDBConfig(), mappingConfigCreator, false, true, giteaConfig);
+  private ApiClient sudo(ApiClient apiClient, String username) {
+    ApiKeyAuth sudoParam = (ApiKeyAuth) apiClient.getAuthentication("SudoParam");
+    sudoParam.setApiKey(username);
+    return apiClient;
   }
 
-  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
-    try (SvnTestServer server = createServer(administratorToken, null)) {
-      server.openSvnRepository(login, password).getLatestRevision();
+  @Test
+  void uploadToLfs() throws Exception {
+    final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
+    final String expected = "hello 12345";
+
+    final String oid;
+    try (LfsWriter writer = storage.getWriter(svnserver.auth.User.create(administrator, administrator, administrator, administrator))) {
+      writer.write(expected.getBytes(StandardCharsets.UTF_8));
+      oid = writer.finish(null);
     }
-  }
 
-  @NotNull
-  private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull Repository repository, @NotNull String username, @NotNull String password) throws SVNException {
-    return SvnTestServer.openSvnRepository(server.getUrl().appendPath(repository.getFullName(), false), username, password);
+    final byte[] buff = new byte[10240];
+    final int length;
+    try (@NotNull InputStream reader = storage.getReader(oid).openStream()) {
+      length = StreamHelper.readFully(reader, buff, 0, buff.length);
+    }
+
+    final String actual = new String(buff, 0, length, StandardCharsets.UTF_8);
+    Assert.assertEquals(actual, expected);
   }
 
   // Tests
@@ -232,6 +228,19 @@ public final class GiteaIntegrationTest {
   @Test
   void testCheckAdminLogin() throws Exception {
     checkUser(administrator, administratorPassword);
+  }
+
+  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
+    try (SvnTestServer server = createServer(administratorToken, null)) {
+      server.openSvnRepository(login, password).getLatestRevision();
+    }
+  }
+
+  // SvnTest Methods
+  @NotNull
+  private SvnTestServer createServer(@NotNull GiteaToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
+    final GiteaConfig giteaConfig = new GiteaConfig(giteaApiUrl, token);
+    return SvnTestServer.createEmpty(new GiteaUserDBConfig(), mappingConfigCreator, false, false, giteaConfig);
   }
 
   @Test
@@ -265,6 +274,19 @@ public final class GiteaIntegrationTest {
       // Collaborator can get private repo
       openSvnRepository(server, testPrivateRepository, collaborator, collaboratorPassword).getLatestRevision();
     }
+  }
+
+  @NotNull
+  private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull Repository repository, @NotNull String username, @NotNull String password) throws SVNException {
+    return SvnTestServer.openSvnRepository(server.getUrl().appendPath(repository.getFullName(), false), username, password);
+  }
+
+  private void repoAddCollaborator(@NotNull String owner, @NotNull String repo, @NotNull String collaborator) throws Exception {
+    ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
+    RepositoryApi repositoryApi = new RepositoryApi(apiClient);
+    AddCollaboratorOption aco = new AddCollaboratorOption();
+    aco.setPermission("write");
+    repositoryApi.repoAddCollaborator(owner, repo, collaborator, aco);
   }
 
   @AfterClass

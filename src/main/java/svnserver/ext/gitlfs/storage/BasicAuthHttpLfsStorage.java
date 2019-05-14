@@ -5,13 +5,14 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.ext.gitlab;
+package svnserver.ext.gitlfs.storage;
 
+import org.eclipse.jgit.lib.Constants;
 import org.jetbrains.annotations.NotNull;
 import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.client.auth.BasicAuthProvider;
 import svnserver.auth.User;
-import svnserver.ext.gitlab.config.GitLabToken;
+import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.network.LfsHttpStorage;
 
 import java.net.URI;
@@ -21,18 +22,12 @@ import java.net.URI;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitLabLfsStorage extends LfsHttpStorage {
-  @NotNull
-  private static final String LFS_PATH = ".git/info/lfs";
+public final class BasicAuthHttpLfsStorage extends LfsHttpStorage {
   @NotNull
   private final Client client;
 
-  public GitLabLfsStorage(@NotNull String repositoryUrl, @NotNull GitLabToken gitLabToken) {
-    this(repositoryUrl, "UNUSED", gitLabToken.getValue());
-  }
-
-  public GitLabLfsStorage(@NotNull String repositoryUrl, @NotNull String username, @NotNull String password) {
-    client = new Client(new BasicAuthProvider(URI.create(repositoryUrl + LFS_PATH), username, password));
+  public BasicAuthHttpLfsStorage(@NotNull String repositoryUrl, @NotNull String username, @NotNull String password) {
+    client = new Client(new BasicAuthProvider(URI.create(repositoryUrl + Constants.DOT_GIT_EXT + "/" + LfsServer.SERVLET_BASE), username, password));
   }
 
   @NotNull

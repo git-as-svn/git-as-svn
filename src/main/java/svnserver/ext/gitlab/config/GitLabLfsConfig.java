@@ -12,7 +12,7 @@ import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.ext.gitlab.GitLabLfsStorage;
+import svnserver.ext.gitlfs.storage.BasicAuthHttpLfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 
@@ -39,6 +39,6 @@ public final class GitLabLfsConfig implements SharedConfig, LfsStorageFactory {
     // This is done in order to keep objective view on repository state for git-as-svn (unknown things can break otherwise).
     final GitLabToken token = gitLabContext.getToken();
 
-    return new GitLabLfsStorage(repositoryUrl, token);
+    return new BasicAuthHttpLfsStorage(repositoryUrl, "UNUSED", token.getValue());
   }
 }

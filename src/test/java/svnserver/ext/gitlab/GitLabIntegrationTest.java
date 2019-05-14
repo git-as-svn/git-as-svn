@@ -36,6 +36,7 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.ext.gitlab.config.GitLabLfsConfig;
 import svnserver.ext.gitlab.config.GitLabToken;
 import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
+import svnserver.ext.gitlfs.storage.BasicAuthHttpLfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.git.GitCreateMode;
 
@@ -185,7 +186,7 @@ public final class GitLabIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
-    final GitLabLfsStorage storage = new GitLabLfsStorage(gitlabUrl + "/" + gitlabProject.getPathWithNamespace(), root, rootPassword);
+    final BasicAuthHttpLfsStorage storage = new BasicAuthHttpLfsStorage(gitlabUrl + "/" + gitlabProject.getPathWithNamespace(), root, rootPassword);
     final String expected = "hello 12345";
 
     final String oid;

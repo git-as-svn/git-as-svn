@@ -104,9 +104,9 @@ dependencies {
   compile "org.bitbucket.b_c:jose4j:0.6.5"
   compile "com.github.zeripath:java-gitea-api:1.7.4"
 
-  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.11.1"
-  compile "ru.bozaro.gitlfs:gitlfs-client:0.11.1"
-  compile "ru.bozaro.gitlfs:gitlfs-server:0.11.1"
+  compile "ru.bozaro.gitlfs:gitlfs-pointer:0.13.0"
+  compile "ru.bozaro.gitlfs:gitlfs-client:0.13.0"
+  compile "ru.bozaro.gitlfs:gitlfs-server:0.13.0"
   compile "com.google.oauth-client:google-oauth-client:1.28.0"
   compile "com.google.http-client:google-http-client-jackson2:1.29.0"
 

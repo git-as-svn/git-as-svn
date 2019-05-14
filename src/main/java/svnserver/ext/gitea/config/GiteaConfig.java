@@ -11,14 +11,16 @@ import org.jetbrains.annotations.NotNull;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
-
-import java.io.IOException;
+import svnserver.ext.gitlfs.storage.BasicAuthHttpLfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 
 /**
  * Gitea access settings.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 @ConfigType("gitea")
 public final class GiteaConfig implements SharedConfig {
@@ -26,6 +28,7 @@ public final class GiteaConfig implements SharedConfig {
   private String url;
   @NotNull
   private String token;
+  private boolean lfs = true;
 
   public GiteaConfig() {
     this("http://localhost/", "");
@@ -51,7 +54,17 @@ public final class GiteaConfig implements SharedConfig {
   }
 
   @Override
-  public void create(@NotNull SharedContext context) throws IOException {
-    context.add(GiteaContext.class, new GiteaContext(this));
+  public void create(@NotNull SharedContext context) {
+    final GiteaContext giteaContext = new GiteaContext(this);
+    context.add(GiteaContext.class, giteaContext);
+
+    if (lfs) {
+      context.add(LfsStorageFactory.class, localContext -> createLfsStorage(url, localContext.getName(), getToken()));
+    }
+  }
+
+  @NotNull
+  public static LfsStorage createLfsStorage(@NotNull String giteaUrl, @NotNull String repositoryName, GiteaToken token) {
+    return new BasicAuthHttpLfsStorage(giteaUrl + repositoryName, token.getValue(), "x-oauth-basic");
   }
 }
