@@ -9,7 +9,6 @@ package svnserver.ext.gitea.config;
 
 import io.gitea.ApiClient;
 import io.gitea.auth.ApiKeyAuth;
-
 import org.jetbrains.annotations.NotNull;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
@@ -61,6 +60,11 @@ public final class GiteaContext implements Shared {
     ApiKeyAuth sudoParam = (ApiKeyAuth) apiClient.getAuthentication("SudoParam");
     sudoParam.setApiKey(username);
     return apiClient;
+  }
+
+  @NotNull
+  public GiteaToken getToken() {
+    return config.getToken();
   }
 
   @NotNull

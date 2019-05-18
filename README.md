@@ -106,7 +106,7 @@ You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/
 Also you need to set ```baseUrl``` parameter in ```!web``` section of git-as-svn configuration file.
 
 ## Gitea Integration
-There is also integration with Gitea >=v1.6. (Requires Sudo API) Remember to run git-as-svn as the git user.
+There is also integration with [Gitea](https://gitea.io) >= v1.7.2. (Requires Sudo API) Remember to run git-as-svn as the git user.
 
 ## SVN+SSH
 SSH support for Gitlab and Gitea is now available. Look at the manual.

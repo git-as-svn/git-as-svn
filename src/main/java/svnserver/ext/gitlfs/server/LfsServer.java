@@ -29,7 +29,7 @@ import java.util.Collection;
  */
 public final class LfsServer implements Shared {
   @NotNull
-  private static final String SERVLET_BASE = "info/lfs";
+  public static final String SERVLET_BASE = "info/lfs";
   @NotNull
   public static final String SERVLET_AUTH = "lfs_authenticate";
   @NotNull

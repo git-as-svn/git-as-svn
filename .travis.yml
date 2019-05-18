@@ -55,10 +55,7 @@ jobs:
       env: GITEA_VERSION=latest
       jdk: openjdk8
     - stage: test
-      env: GITEA_VERSION=1.8 # Just latest release we pass tests against (as of 06 May 2019)
-      jdk: openjdk8
-    - stage: test
-      env: GITEA_VERSION=1.6 # The earliest Gitea version that git-as-svn can work with
+      env: GITEA_VERSION=1.7.2 # The earliest supported Gitea version
       jdk: openjdk8
 
     # Different JDKs

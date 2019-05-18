@@ -29,10 +29,9 @@ shared:
       port: 8123
       # Use X-Forwarded-* headers
       forwarded: true
-  # GitLab LFS Client
-  - !gitlabLfs {}
   # GitLab server
   - !gitlab
     url: http://localhost:3000/
     hookUrl: http://localhost:8123/
     token: qytzQc6uYiQfsoqJxGuG
+    #lfs: true

@@ -12,8 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
-
-import java.io.IOException;
+import svnserver.ext.gitlfs.storage.BasicAuthHttpLfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 
 /**
  * Gitlab access settings.
@@ -30,13 +31,10 @@ public final class GitLabConfig implements SharedConfig {
   private TokenType tokenType;
   @NotNull
   private String hookUrl = "http://localhost:8123/hooks/gitlab";
+  private boolean lfs = true;
 
   public GitLabConfig() {
     this("http://localhost/", TokenType.PRIVATE_TOKEN, "");
-  }
-
-  public GitLabConfig(@NotNull String url, @NotNull GitLabToken token) {
-    this(url, token.getType(), token.getValue());
   }
 
   private GitLabConfig(@NotNull String url, @NotNull TokenType tokenType, @NotNull String token) {
@@ -45,14 +43,13 @@ public final class GitLabConfig implements SharedConfig {
     this.tokenType = tokenType;
   }
 
-  @NotNull
-  public String getUrl() {
-    return url;
+  public GitLabConfig(@NotNull String url, @NotNull GitLabToken token) {
+    this(url, token.getType(), token.getValue());
   }
 
   @NotNull
-  public GitLabToken getToken() {
-    return new GitLabToken(tokenType, token);
+  public String getUrl() {
+    return url;
   }
 
   @NotNull String getHookUrl() {
@@ -60,7 +57,27 @@ public final class GitLabConfig implements SharedConfig {
   }
 
   @Override
-  public void create(@NotNull SharedContext context) throws IOException {
-    context.add(GitLabContext.class, new GitLabContext(this));
+  public void create(@NotNull SharedContext context) {
+    final GitLabContext gitLabContext = new GitLabContext(this);
+    context.add(GitLabContext.class, gitLabContext);
+
+    if (lfs) {
+      context.add(LfsStorageFactory.class, localContext -> createLfsStorage(url, localContext.getName(), getToken()));
+    }
+  }
+
+  @NotNull
+  public static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull GitLabToken token) {
+    return createLfsStorage(gitLabUrl, repositoryName, "UNUSED", token.getValue());
+  }
+
+  @NotNull
+  public GitLabToken getToken() {
+    return new GitLabToken(tokenType, token);
+  }
+
+  @NotNull
+  public static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull String username, @NotNull String password) {
+    return new BasicAuthHttpLfsStorage(gitLabUrl + repositoryName, username, password);
   }
 }

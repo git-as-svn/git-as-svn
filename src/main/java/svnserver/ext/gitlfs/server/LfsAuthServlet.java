@@ -66,7 +66,7 @@ final class LfsAuthServlet extends HttpServlet {
           getStringParam(req, "mode")
       );
       resp.setContentType("application/json");
-      JsonHelper.createMapper().writeValue(resp.getOutputStream(), token);
+      JsonHelper.mapper.writeValue(resp.getOutputStream(), token);
     } catch (ServerError e) {
       getWebServer().sendError(req, resp, e);
     }

@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+ * Add support for Gitea LFS server. Gitea >= 1.7.2 is required now.
+ * `!gitlabLfs {}` was replaced with `lfs: true` parameter in `!gitlab` section
+
 ## 1.10.1
 
  * Fix PLAIN auth not working with passwords longer than 51 character. #242
@@ -24,7 +29,7 @@
 ## 1.8.0
 
  * `!lfs` renamed to `!localLfs` in git-as-svn.conf
- * Experimental support for GitLab LFS (`!gitlabLfs`). #175, #212, #213.
+ * Experimental support for GitLab LFS (`!gitlabLfs {}`). #175, #212, #213.
 
 ## 1.7.6.1
 

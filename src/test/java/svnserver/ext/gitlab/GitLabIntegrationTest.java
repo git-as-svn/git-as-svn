@@ -33,9 +33,9 @@ import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
 import svnserver.ext.gitlab.config.GitLabConfig;
 import svnserver.ext.gitlab.config.GitLabContext;
-import svnserver.ext.gitlab.config.GitLabLfsConfig;
 import svnserver.ext.gitlab.config.GitLabToken;
 import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
+import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.git.GitCreateMode;
 
@@ -158,7 +158,7 @@ public final class GitLabIntegrationTest {
   @NotNull
   private SvnTestServer createServer(@NotNull GitLabToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GitLabConfig gitLabConfig = new GitLabConfig(gitlabUrl, token);
-    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, false, gitLabConfig, new GitLabLfsConfig());
+    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, false, gitLabConfig);
   }
 
   @Test
@@ -185,7 +185,7 @@ public final class GitLabIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
-    final GitLabLfsStorage storage = new GitLabLfsStorage(gitlabUrl + "/" + gitlabProject.getPathWithNamespace(), root, rootPassword);
+    final @NotNull LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl + "/", gitlabProject.getPathWithNamespace(), root, rootPassword);
     final String expected = "hello 12345";
 
     final String oid;
