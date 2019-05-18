@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 1.11.0
 
  * Add support for Gitea LFS server. Gitea >= 1.7.2 is required now.
  * `!gitlabLfs {}` was replaced with `lfs: true` parameter in `!gitlab` section
