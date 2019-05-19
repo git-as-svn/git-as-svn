@@ -1,7 +1,28 @@
 !config:
-realm: Example realm
-compressionEnabled: true
-parallelIndexing: true
+
+# Specifies IP to listen to for svn:// connections
+#
+# host: 0.0.0.0
+
+# Specifies port number to listen to for svn:// connections
+#
+# port: 3690
+
+# Subversion realm name. Subversion uses this for credentials caching
+#
+# realm: git-as-svn realm
+
+# If enabled, git-as-svn compresses wire traffic
+# compressionEnabled: true
+
+# If enabled, git-as-svn indexed repositories in parallel during startup
+# This results in higher memory usage so may require adjustments to JVM memory options
+#
+# parallelIndexing: true
+
+# Sets cache location
+cacheConfig: !persistentCache
+  path: /var/cache/git-as-svn/git-as-svn.mapdb
 
 # Use GitLab repositories
 repositoryMapping: !gitlabMapping
@@ -9,9 +30,12 @@ repositoryMapping: !gitlabMapping
   # Uncomment following to only handle repositories with specified tags (add them to repositories via Settings -> General -> Tags in GitLab)
   # repositoryTags:
   #   - git-as-svn
-  template:
-    branch: master
-    renameDetection: true
+
+  # Common settings for all repositories exposed to svn://
+  # template:
+  #   branches:
+  #     - master
+  #   renameDetection: true
 
 # Use GitLab user database
 userDB:

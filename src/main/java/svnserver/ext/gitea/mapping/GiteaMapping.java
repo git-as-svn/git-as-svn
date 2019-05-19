@@ -10,23 +10,17 @@ package svnserver.ext.gitea.mapping;
 import io.gitea.model.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
 import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.repository.RepositoryInfo;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Locale;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -36,7 +30,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
-final class GiteaMapping implements RepositoryMapping {
+final class GiteaMapping implements RepositoryMapping<GiteaProject> {
   @NotNull
   private final NavigableMap<String, GiteaProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -54,25 +48,13 @@ final class GiteaMapping implements RepositoryMapping {
     return context;
   }
 
-  @Nullable
-  @Override
-  public RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException {
-    final Map.Entry<String, GiteaProject> entry = RepositoryListMapping.getMapped(mapping, url.getPath());
-    if (entry != null && entry.getValue().isReady()) {
-      return new RepositoryInfo(
-          SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort() == SVNURL.getDefaultPortNumber(url.getProtocol()) ? -1 : url.getPort(), entry.getKey(), true),
-          entry.getValue().getRepository()
-      );
-    }
-    return null;
-  }
-
   @NotNull
-  Collection<GiteaProject> getRepositories() {
-    return mapping.values();
+  @Override
+  public NavigableMap<String, GiteaProject> getMapping() {
+    return mapping;
   }
 
-  @Nullable GiteaProject addRepository(@NotNull Repository repository) throws IOException, SVNException {
+  @Nullable GiteaProject addRepository(@NotNull Repository repository) throws IOException {
     final String projectName = repository.getFullName();
     final String projectKey = StringHelper.normalizeDir(projectName);
     final GiteaProject oldProject = mapping.get(projectKey);

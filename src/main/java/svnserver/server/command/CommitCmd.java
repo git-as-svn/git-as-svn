@@ -106,14 +106,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final String message;
     @NotNull
     private final LockInfo[] locks;
-    @NotNull
-    private final PropertyEntry[] revProps;
 
     public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks, @NotNull PropertyEntry[] revProps) {
       this.message = message;
       this.locks = locks;
       this.keepLocks = keepLocks;
-      this.revProps = revProps;
     }
   }
 
@@ -305,8 +302,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
       this.keepLocks = params.keepLocks;
-      this.writer = context.getRepository().createWriter(context.getUser());
-      final GitFile entry = context.getRepository().getLatestRevision().getFile("");
+      this.writer = context.getBranch().createWriter(context.getUser());
+      final GitFile entry = context.getBranch().getLatestRevision().getFile("");
       if (entry == null) {
         throw new IllegalStateException("Repository root entry not found.");
       }
@@ -508,7 +505,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (!files.isEmpty()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
-      final GitRevision revision = context.getRepository().wrapLockWrite((lockManager) -> {
+      final GitRevision revision = context.getBranch().getRepository().wrapLockWrite((lockManager) -> {
         final List<LockDesc> oldLocks = getLocks(lockManager, locks);
         for (int pass = 0; ; ++pass) {
           if (pass >= MAX_PASS_COUNT) {
@@ -517,7 +514,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
           final GitRevision newRevision = updateDir(writer.createCommitBuilder(lockManager, locks), rootEntry).commit(context.getUser(), message);
           if (newRevision != null) {
             if (keepLocks) {
-              lockManager.renewLocks(oldLocks.toArray(LockDesc.emptyArray));
+              lockManager.renewLocks(context.getBranch(), oldLocks.toArray(LockDesc.emptyArray));
             }
             return newRevision;
           }

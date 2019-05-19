@@ -40,7 +40,7 @@ public final class GetDatedRevCmd extends BaseCmd<GetDatedRevCmd.Params> {
         .listBegin()
         .word("success")
         .listBegin()
-        .number(context.getRepository().getRevisionByDate(dateTime.getTime().getTime()).getId())
+        .number(context.getBranch().getRevisionByDate(dateTime.getTime().getTime()).getId())
         .listEnd()
         .listEnd();
   }

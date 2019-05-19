@@ -14,8 +14,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.repository.Depth;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 
 import java.io.IOException;
@@ -32,20 +32,17 @@ import java.util.UUID;
 public final class LockManager {
 
   @NotNull
-  private final GitRepository repo;
-  @NotNull
   private final SortedMap<String, LockDesc> locks;
 
-  public LockManager(@NotNull GitRepository repo, @NotNull SortedMap<String, LockDesc> locks) {
+  public LockManager(@NotNull SortedMap<String, LockDesc> locks) {
     this.locks = locks;
-    this.repo = repo;
   }
 
   @NotNull
-  public LockDesc[] lock(@NotNull User user, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException, IOException {
+  public LockDesc[] lock(@NotNull User user, @NotNull GitBranch branch, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws SVNException, IOException {
     final LockDesc[] result = new LockDesc[targets.length];
     if (targets.length > 0) {
-      final GitRevision revision = repo.getLatestRevision();
+      final GitRevision revision = branch.getLatestRevision();
       // Create new locks list.
       for (int i = 0; i < targets.length; ++i) {
         final LockTarget target = targets[i];
@@ -57,13 +54,13 @@ public final class LockManager {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, target.getPath()));
         }
         final LockDesc currentLock = locks.get(target.getPath());
-        if ((!stealLock) && (currentLock != null)) {
+        if (!stealLock && currentLock != null)
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path is already locked by {1}: {0}", target.getPath(), currentLock.getOwner()));
-        }
+
         if (target.getRev() < file.getLastChange().getId()) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, target.getPath()));
         }
-        result[i] = new LockDesc(file.getFullPath(), file.getContentHash(), createLockId(), user.getUserName(), comment, 0);
+        result[i] = new LockDesc(file.getFullPath(), branch, file.getContentHash(), createLockId(), user.getUserName(), comment, 0);
       }
       // Add locks.
       for (LockDesc lockDesc : result) {
@@ -73,10 +70,15 @@ public final class LockManager {
     return result;
   }
 
+  @NotNull
+  private static String createLockId() {
+    return UUID.randomUUID().toString();
+  }
+
   public void unlock(boolean breakLock, @NotNull UnlockTarget[] targets) throws SVNException {
     for (UnlockTarget target : targets) {
       final LockDesc lock = locks.get(target.getPath());
-      if ((lock == null) || (!(breakLock || lock.getToken().equals(target.getToken())))) {
+      if (lock == null || !(breakLock || lock.getToken().equals(target.getToken()))) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, target.getPath()));
       }
     }
@@ -85,16 +87,18 @@ public final class LockManager {
     }
   }
 
-  public boolean cleanupInvalidLocks() throws SVNException {
+  public boolean cleanupInvalidLocks(@NotNull GitBranch branch) throws SVNException {
     boolean changed = false;
     try {
-      final GitRevision revision = repo.getLatestRevision();
+      final GitRevision revision = branch.getLatestRevision();
       final Iterator<Map.Entry<String, LockDesc>> iter = locks.entrySet().iterator();
       while (iter.hasNext()) {
-        final Map.Entry<String, LockDesc> entry = iter.next();
-        final LockDesc item = entry.getValue();
+        final LockDesc item = iter.next().getValue();
+        if (!branch.getShortBranchName().equals(item.getBranch()))
+          continue;
+
         final GitFile file = revision.getFile(item.getPath());
-        if ((file == null) || file.isDirectory() || (!item.getHash().equals(file.getContentHash()))) {
+        if (file == null || file.isDirectory() || !file.getContentHash().equals(item.getHash())) {
           iter.remove();
           changed = true;
         }
@@ -106,22 +110,17 @@ public final class LockManager {
     return changed;
   }
 
-  public void renewLocks(@NotNull LockDesc[] lockDescs) throws IOException, SVNException {
-    final GitRevision revision = repo.getLatestRevision();
+  public void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) throws IOException, SVNException {
+    final GitRevision revision = branch.getLatestRevision();
     for (LockDesc lockDesc : lockDescs) {
       final String pathKey = lockDesc.getPath();
       if (!locks.containsKey(pathKey)) {
         final GitFile file = revision.getFile(lockDesc.getPath());
-        if ((file != null) && (!file.isDirectory())) {
-          locks.put(pathKey, new LockDesc(lockDesc.getPath(), file.getContentHash(), lockDesc.getToken(), lockDesc.getOwner(), lockDesc.getComment(), lockDesc.getCreated()));
+        if (file != null && !file.isDirectory()) {
+          locks.put(pathKey, new LockDesc(lockDesc.getPath(), branch, file.getContentHash(), lockDesc.getToken(), lockDesc.getOwner(), lockDesc.getComment(), lockDesc.getCreated()));
         }
       }
     }
-  }
-
-  @NotNull
-  private static String createLockId() {
-    return UUID.randomUUID().toString();
   }
 
   @NotNull

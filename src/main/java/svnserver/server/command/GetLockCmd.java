@@ -27,15 +27,6 @@ import java.io.IOException;
  */
 public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
 
-  public static final class Params {
-    @NotNull
-    private final String path;
-
-    public Params(@NotNull String path) {
-      this.path = path;
-    }
-  }
-
   @NotNull
   @Override
   public Class<? extends Params> getArguments() {
@@ -47,7 +38,7 @@ public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
     final SvnServerWriter writer = context.getWriter();
     final String path = context.getRepositoryPath(args.path);
 
-    final Holder<LockDesc> holder = context.getRepository().wrapLockRead((lockManager) -> new Holder<>(lockManager.getLock(context.getRepositoryPath(path))));
+    final Holder<LockDesc> holder = context.getBranch().getRepository().wrapLockRead((lockManager) -> new Holder<>(lockManager.getLock(context.getRepositoryPath(path))));
     writer.listBegin()
         .word("success")
         .listBegin()
@@ -57,5 +48,14 @@ public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
+  }
+
+  public static final class Params {
+    @NotNull
+    private final String path;
+
+    public Params(@NotNull String path) {
+      this.path = path;
+    }
   }
 }

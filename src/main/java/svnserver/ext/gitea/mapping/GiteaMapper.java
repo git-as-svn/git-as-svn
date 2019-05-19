@@ -7,20 +7,18 @@
  */
 package svnserver.ext.gitea.mapping;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedList;
-
+import io.gitea.ApiClient;
+import io.gitea.ApiException;
+import io.gitea.api.RepositoryApi;
+import io.gitea.model.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 
-import io.gitea.ApiClient;
-import io.gitea.ApiException;
-import io.gitea.api.RepositoryApi;
-import io.gitea.model.Repository;
-
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMapping {
   @NotNull
@@ -40,13 +38,13 @@ public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMap
   public void run() {
     try {
       while (true) {
-        synchronized(toAdd) {
+        synchronized (toAdd) {
           for (Iterator<String> it = toRemove.iterator(); it.hasNext(); ) {
             String projectName = it.next();
             mapping.removeRepository(projectName);
             it.remove();
           }
-          for (Iterator<String> it = toAdd.iterator(); it.hasNext();) {
+          for (Iterator<String> it = toAdd.iterator(); it.hasNext(); ) {
             String projectName = it.next();
             String owner = projectName.substring(0, projectName.indexOf('/'));
             String repo = projectName.substring(projectName.indexOf('/') + 1);
@@ -66,22 +64,22 @@ public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMap
         }
         sleep(1000);
       }
-    } catch(InterruptedException e) {
+    } catch (InterruptedException e) {
       return;
     }
   }
 
   @Override
   public void addRepository(String owner, String repo) {
-    synchronized(toAdd) {
+    synchronized (toAdd) {
       toAdd.add(owner + "/" + repo);
     }
   }
 
   @Override
   public void removeRepositories(String owner) {
-    synchronized(toAdd) {
-      for (GiteaProject project : mapping.getRepositories()) {
+    synchronized (toAdd) {
+      for (GiteaProject project : mapping.getMapping().values()) {
         if (project.getOwner().equals(owner)) {
           toRemove.add(project.getRepositoryName());
           toAdd.remove(project.getRepositoryName());
@@ -92,7 +90,7 @@ public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMap
 
   @Override
   public void removeRepository(String owner, String repo) {
-    synchronized(toAdd) {
+    synchronized (toAdd) {
       toRemove.add(owner + "/" + repo);
       toAdd.remove(owner + "/" + repo);
     }

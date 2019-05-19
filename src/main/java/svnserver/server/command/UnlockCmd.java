@@ -50,7 +50,7 @@ public final class UnlockCmd extends BaseCmd<UnlockCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String path = context.getRepositoryPath(args.path);
     final String lockToken = args.lockToken.length == 0 ? null : args.lockToken[0];
-    context.getRepository().wrapLockWrite((lockManager) -> {
+    context.getBranch().getRepository().wrapLockWrite((lockManager) -> {
       lockManager.unlock(args.breakLock, new UnlockTarget[]{new UnlockTarget(context.getRepositoryPath(path), lockToken)});
       return Boolean.TRUE;
     });

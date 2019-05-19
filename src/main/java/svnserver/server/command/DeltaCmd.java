@@ -702,7 +702,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       if (oldFile == null) {
         final VcsCopyFrom copyFrom = getCopyFrom(newFile);
 
-        final GitFile entryFile = copyFrom != null ? context.getRepository().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath()) : null;
+        final GitFile entryFile = copyFrom != null ? context.getBranch().getRevisionInfo(copyFrom.getRevision()).getFile(copyFrom.getPath()) : null;
         final HeaderEntry entry = new HeaderEntry(context, entryFile, writer -> {
           sendNewEntry(writer, "add-" + type, wcPath, parentTokenId, tokenId, copyFrom);
           sendRevProps(writer, newFile, type, tokenId);

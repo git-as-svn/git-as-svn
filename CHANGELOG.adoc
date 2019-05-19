@@ -1,5 +1,11 @@
 = Changes
 
+== Unreleased
+
+ * URL scheme has changed, now it is `svn://<host>/<repo>/<branch>`. Use `svn relocate` to fix existing SVN working copies.
+ * It is no longer valid to map a single repository under multiple paths.
+   Use `branches` tag to expose multiple branches of a single repository to SVN.
+
 == 1.11.1
 
  * `!giteaSSHKeys` is no longer supported

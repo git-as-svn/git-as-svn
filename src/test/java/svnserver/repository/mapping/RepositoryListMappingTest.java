@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import svnserver.repository.RepositoryMapping;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -32,6 +33,16 @@ public class RepositoryListMappingTest {
     checkMapped(map, "/", "/bar");
   }
 
+  private void checkMapped(@NotNull NavigableMap<String, String> map, @Nullable String expected, @NotNull String prefix) {
+    final Map.Entry<String, String> entry = RepositoryMapping.getMapped(map, prefix);
+    if (expected == null) {
+      Assert.assertNull(entry, prefix);
+    } else {
+      Assert.assertNotNull(entry, prefix);
+      Assert.assertEquals(expected, entry.getKey(), prefix);
+    }
+  }
+
   @Test
   public void testRepositoryByPrefix() {
     final TreeMap<String, String> map = new Builder()
@@ -51,16 +62,6 @@ public class RepositoryListMappingTest {
     checkMapped(map, "/foo.test/", "/foo.test/foo");
   }
 
-  private void checkMapped(@NotNull NavigableMap<String, String> map, @Nullable String expected, @NotNull String prefix) {
-    final Map.Entry<String, String> entry = RepositoryListMapping.getMapped(map, prefix);
-    if (expected == null) {
-      Assert.assertNull(entry, prefix);
-    } else {
-      Assert.assertNotNull(entry, prefix);
-      Assert.assertEquals(expected, entry.getKey(), prefix);
-    }
-  }
-
   public static class Builder {
     @NotNull
     private final Map<String, String> mapping = new TreeMap<>();
@@ -70,7 +71,7 @@ public class RepositoryListMappingTest {
       return this;
     }
 
-    public TreeMap<String, String> build() {
+    TreeMap<String, String> build() {
       return new TreeMap<>(mapping);
     }
   }

@@ -28,7 +28,7 @@ import svnserver.parser.token.ListEndToken;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
-import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitBranch;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
@@ -80,7 +80,7 @@ public final class SvnServer extends Thread {
   @NotNull
   private final Map<Long, Socket> connections = new ConcurrentHashMap<>();
   @NotNull
-  private final RepositoryMapping repositoryMapping;
+  private final RepositoryMapping<?> repositoryMapping;
   @NotNull
   private final Config config;
   @NotNull
@@ -200,15 +200,15 @@ public final class SvnServer extends Thread {
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
-    final RepositoryInfo repositoryInfo = repositoryMapping.getRepository(clientInfo.getUrl());
+    final RepositoryInfo repositoryInfo = RepositoryMapping.findRepositoryInfo(repositoryMapping, clientInfo.getUrl());
     if (repositoryInfo == null) {
       BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + clientInfo.getUrl()));
       return;
     }
     final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
     context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
-    final GitRepository repository = context.getRepository();
-    repository.updateRevisions();
+    final GitBranch branch = context.getBranch();
+    branch.updateRevisions();
     sendAnnounce(writer, repositoryInfo);
 
     while (!isInterrupted()) {
@@ -284,7 +284,7 @@ public final class SvnServer extends Thread {
 
   private boolean hasAnonymousAuthenticator(RepositoryInfo repositoryInfo) throws IOException {
     try {
-      repositoryInfo.getRepository().getContext().sure(VcsAccess.class).checkRead(User.getAnonymous(), null);
+      repositoryInfo.getBranch().getRepository().getContext().sure(VcsAccess.class).checkRead(User.getAnonymous(), null);
       return true;
     } catch (SVNException e) {
       return false;
@@ -296,7 +296,7 @@ public final class SvnServer extends Thread {
         .listBegin()
         .word("success")
         .listBegin()
-        .string(repositoryInfo.getRepository().getUuid())
+        .string(repositoryInfo.getBranch().getUuid())
         .string(repositoryInfo.getBaseUrl().toString())
         .listBegin()
         //.word("mergeinfo")
@@ -325,7 +325,7 @@ public final class SvnServer extends Thread {
         .listBegin()
         .word(String.join(" ", authenticators.stream().map(Authenticator::getMethodName).toArray(String[]::new)))
         .listEnd()
-        .string(config.getRealm().isEmpty() ? repositoryInfo.getRepository().getUuid() : config.getRealm())
+        .string(config.getRealm().isEmpty() ? repositoryInfo.getBranch().getUuid() : config.getRealm())
         .listEnd()
         .listEnd();
 

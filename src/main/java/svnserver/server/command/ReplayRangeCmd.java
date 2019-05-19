@@ -49,7 +49,7 @@ public final class ReplayRangeCmd extends BaseCmd<ReplayRangeCmd.Params> {
     }
     final SvnServerWriter writer = context.getWriter();
     for (int revision = args.startRev; revision <= args.endRev; revision++) {
-      final GitRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
+      final GitRevision revisionInfo = context.getBranch().getRevisionInfo(revision);
       writer
           .listBegin()
           .word("revprops")

@@ -34,7 +34,7 @@ import static ru.bozaro.gitlfs.common.Constants.MIME_BINARY;
  */
 final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   @NotNull
-  private final GitRepository repo;
+  private final GitBranch branch;
   @NotNull
   private final GitFilter filter;
   @NotNull
@@ -48,34 +48,52 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   @Nullable
   private Iterable<GitFile> treeEntriesCache;
 
-  private GitFileTreeEntry(@NotNull GitRepository repo, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision, @NotNull EntriesCache entriesCache) throws IOException, SVNException {
-    super(parentProps, parentPath, repo.collectProperties(treeEntry, entriesCache), treeEntry.getFileName(), treeEntry.getFileMode());
-    this.repo = repo;
+  private GitFileTreeEntry(@NotNull GitBranch branch, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision, @NotNull EntriesCache entriesCache) throws IOException, SVNException {
+    super(parentProps, parentPath, branch.getRepository().collectProperties(treeEntry, entriesCache), treeEntry.getFileName(), treeEntry.getFileMode());
+    this.branch = branch;
     this.revision = revision;
     this.treeEntry = treeEntry;
     this.entriesCache = entriesCache;
-    this.filter = repo.getFilter(treeEntry.getFileMode(), this.getRawProperties());
+    this.filter = branch.getRepository().getFilter(treeEntry.getFileMode(), this.getRawProperties());
   }
 
   @NotNull
-  public static GitFile create(@NotNull GitRepository repo, @NotNull RevTree tree, int revision) throws IOException, SVNException {
-    return create(repo, PropertyMapping.getRootProperties(), "", new GitTreeEntry(repo.getRepository(), FileMode.TREE, tree, ""), revision);
+  public static GitFile create(@NotNull GitBranch branch, @NotNull RevTree tree, int revision) throws IOException, SVNException {
+    return create(branch, PropertyMapping.getRootProperties(), "", new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, tree, ""), revision);
   }
 
   @NotNull
-  private static GitFile create(@NotNull GitRepository repo, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision) throws IOException, SVNException {
-    return new GitFileTreeEntry(repo, parentProps, parentPath, treeEntry, revision, new EntriesCache(repo, treeEntry));
+  private static GitFile create(@NotNull GitBranch branch, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision) throws IOException, SVNException {
+    return new GitFileTreeEntry(branch, parentProps, parentPath, treeEntry, revision, new EntriesCache(branch.getRepository(), treeEntry));
   }
 
   @NotNull
   @Override
-  public GitRepository getRepo() {
-    return repo;
+  public String getContentHash() {
+    return filter.getContentHash(treeEntry.getObjectId());
+  }
+
+  @NotNull
+  @Override
+  public String getMd5() throws IOException, SVNException {
+    return filter.getMd5(treeEntry.getObjectId());
   }
 
   @Override
-  public int getRevision() {
-    return revision;
+  public long getSize() throws IOException, SVNException {
+    return isDirectory() ? 0L : filter.getSize(treeEntry.getObjectId());
+  }
+
+  @NotNull
+  @Override
+  public InputStream openStream() throws IOException, SVNException {
+    return filter.inputStream(treeEntry.getObjectId());
+  }
+
+  @Nullable
+  @Override
+  public VcsCopyFrom getCopyFrom() {
+    return getLastChange().getCopyFrom(getFullPath());
   }
 
   @NotNull
@@ -86,11 +104,6 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   @NotNull
   public GitTreeEntry getTreeEntry() {
     return treeEntry;
-  }
-
-  @NotNull
-  public FileMode getFileMode() {
-    return treeEntry.getFileMode();
   }
 
   @NotNull
@@ -111,7 +124,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
       if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
         props.put(SVNProperty.EXECUTABLE, "*");
       }
-      if (fileMode.getObjectType() == Constants.OBJ_BLOB && repo.isObjectBinary(filter, getObjectId())) {
+      if (fileMode.getObjectType() == Constants.OBJ_BLOB && branch.getRepository().isObjectBinary(filter, getObjectId())) {
         props.remove(SVNProperty.EOL_STYLE);
         props.put(SVNProperty.MIME_TYPE, MIME_BINARY);
       }
@@ -121,25 +134,18 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @NotNull
   @Override
-  public String getMd5() throws IOException, SVNException {
-    return filter.getMd5(treeEntry.getObjectId());
+  public GitBranch getBranch() {
+    return branch;
+  }
+
+  @Override
+  public int getRevision() {
+    return revision;
   }
 
   @NotNull
-  @Override
-  public String getContentHash() {
-    return filter.getContentHash(treeEntry.getObjectId());
-  }
-
-  @Override
-  public long getSize() throws IOException, SVNException {
-    return isDirectory() ? 0L : filter.getSize(treeEntry.getObjectId());
-  }
-
-  @NotNull
-  @Override
-  public InputStream openStream() throws IOException, SVNException {
-    return filter.inputStream(treeEntry.getObjectId());
+  public FileMode getFileMode() {
+    return treeEntry.getFileMode();
   }
 
   @NotNull
@@ -149,7 +155,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
       final List<GitFile> result = new ArrayList<>();
       final String fullPath = getFullPath();
       for (GitTreeEntry entry : entriesCache.get()) {
-        result.add(GitFileTreeEntry.create(repo, getRawProperties(), fullPath, entry, revision));
+        result.add(GitFileTreeEntry.create(branch, getRawProperties(), fullPath, entry, revision));
       }
       treeEntriesCache = result;
     }
@@ -160,16 +166,16 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
     for (GitTreeEntry entry : entriesCache.get()) {
       if (entry.getFileName().equals(name)) {
-        return create(repo, getRawProperties(), getFullPath(), entry, revision);
+        return create(branch, getRawProperties(), getFullPath(), entry, revision);
       }
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public VcsCopyFrom getCopyFrom() {
-    return getLastChange().getCopyFrom(getFullPath());
+  public int hashCode() {
+    return treeEntry.hashCode()
+        + Arrays.hashCode(getRawProperties()) * 31;
   }
 
   @Override
@@ -179,12 +185,6 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
     GitFileTreeEntry that = (GitFileTreeEntry) o;
     return Objects.equals(treeEntry, that.treeEntry)
         && Arrays.equals(getRawProperties(), that.getRawProperties());
-  }
-
-  @Override
-  public int hashCode() {
-    return treeEntry.hashCode()
-        + Arrays.hashCode(getRawProperties()) * 31;
   }
 
   @Override

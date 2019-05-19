@@ -1,29 +1,26 @@
 !config:
 
-# Specifies IP to listen to for client connections
+# Specifies IP to listen to for svn:// connections
 #
 # host: 0.0.0.0
 
-# Specifies a port number to listen to for client connections
+# Specifies port number to listen to for svn:// connections
 #
 # port: 3690
 
-# Sets  the  authentication  realm  of the repository.  If two repositories have the same password database,
-# they should have the same realm, and vice versa; this association allows
-# clients to use a single cached password for several repositories.
-# The default realm value is the repository's uuid.
+# Subversion realm name. Subversion uses this for credentials caching
 #
-# realm: Example realm
+# realm: git-as-svn realm
 
-# Enable/disable SVN traffic compression
-#
+# If enabled, git-as-svn compresses wire traffic
 # compressionEnabled: true
 
-# Use parallel repository indexing on startup
+# If enabled, git-as-svn indexed repositories in parallel during startup
+# This results in higher memory usage so may require adjustments to JVM memory options
 #
 # parallelIndexing: true
 
-# Set cache location
+# Sets cache location
 cacheConfig: !persistentCache
   path: /var/cache/git-as-svn/git-as-svn.mapdb
 
@@ -58,7 +55,8 @@ repositoryMapping: !listMapping
         # - EMPTY - create empty repository
         # - EXAMPLE - create repository with example data
         createMode: EXAMPLE
-        branch: master
+        branches:
+          - master
         path: /var/git/repositories/example.git
         renameDetection: true
 

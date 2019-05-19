@@ -85,7 +85,7 @@ public class DeltaParams {
   }
 
   int getRev(@NotNull SessionContext context) {
-    return rev.length > 0 ? rev[0] : context.getRepository().getLatestRevision().getId();
+    return rev.length > 0 ? rev[0] : context.getBranch().getLatestRevision().getId();
   }
 
   boolean sendDeltas() {
