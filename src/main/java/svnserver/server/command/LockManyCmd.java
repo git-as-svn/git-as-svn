@@ -32,6 +32,52 @@ import java.io.IOException;
  */
 public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
 
+  @NotNull
+  @Override
+  public Class<? extends Params> getArguments() {
+    return Params.class;
+  }
+
+  @Override
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    final SvnServerWriter writer = context.getWriter();
+    final int latestRev = context.getBranch().getLatestRevision().getId();
+    final String comment = args.comment.length == 0 ? null : args.comment[0];
+
+    final LockTarget[] targets = new LockTarget[args.paths.length];
+    for (int i = 0; i < args.paths.length; ++i) {
+      final String path = context.getRepositoryPath(args.paths[i].path);
+      final int rev = getRevision(args.paths[i].rev, latestRev);
+      targets[i] = new LockTarget(path, rev);
+    }
+
+    final LockDesc[] locks;
+    try {
+      locks = context.getBranch().getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), context.getBranch(), comment, args.stealLock, targets));
+      for (LockDesc lock : locks) {
+        writer.listBegin().word("success");
+        LockCmd.writeLock(writer, lock);
+        writer.listEnd();
+      }
+    } catch (SVNException e) {
+      sendError(writer, e.getErrorMessage());
+    }
+
+    writer.word("done");
+    writer.listBegin()
+        .word("success")
+        .listBegin()
+        .listEnd()
+        .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    for (PathRev pathRev : args.paths) {
+      context.checkWrite(context.getRepositoryPath(pathRev.path));
+    }
+  }
+
   public static final class PathRev {
     @NotNull
     private final String path;
@@ -65,52 +111,6 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
       this.comment = comment;
       this.stealLock = stealLock;
       this.paths = paths;
-    }
-  }
-
-  @NotNull
-  @Override
-  public Class<? extends Params> getArguments() {
-    return Params.class;
-  }
-
-  @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    final SvnServerWriter writer = context.getWriter();
-    final int latestRev = context.getRepository().getLatestRevision().getId();
-    final String comment = args.comment.length == 0 ? null : args.comment[0];
-
-    final LockTarget[] targets = new LockTarget[args.paths.length];
-    for (int i = 0; i < args.paths.length; ++i) {
-      final String path = context.getRepositoryPath(args.paths[i].path);
-      final int rev = getRevision(args.paths[i].rev, latestRev);
-      targets[i] = new LockTarget(path, rev);
-    }
-
-    final LockDesc[] locks;
-    try {
-      locks = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), comment, args.stealLock, targets));
-      for (LockDesc lock : locks) {
-        writer.listBegin().word("success");
-        LockCmd.writeLock(writer, lock);
-        writer.listEnd();
-      }
-    } catch (SVNException e) {
-      sendError(writer, e.getErrorMessage());
-    }
-
-    writer.word("done");
-    writer.listBegin()
-        .word("success")
-        .listBegin()
-        .listEnd()
-        .listEnd();
-  }
-
-  @Override
-  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    for (PathRev pathRev : args.paths) {
-      context.checkWrite(context.getRepositoryPath(pathRev.path));
     }
   }
 }

@@ -13,6 +13,7 @@ import svnserver.TestHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  * Test for GitCreateMode.
@@ -31,9 +32,9 @@ public class GitCreateModeTest {
   }
 
   private void smoke(@NotNull GitCreateMode mode) throws IOException {
-    File tempDir = TestHelper.createTempDir("git-as-svn");
+    final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      mode.createRepository(tempDir, "master");
+      mode.createRepository(tempDir, Collections.singleton("master"));
     } finally {
       TestHelper.deleteDirectory(tempDir);
     }

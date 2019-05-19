@@ -76,7 +76,7 @@ public interface GitFile extends GitEntry {
   default Map<String, String> getRevProperties() {
     final Map<String, String> props = new HashMap<>();
     final GitRevision last = getLastChange();
-    props.put(SVNProperty.UUID, getRepo().getUuid());
+    props.put(SVNProperty.UUID, getBranch().getUuid());
     props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
     putProperty(props, SVNProperty.COMMITTED_DATE, last.getDateString());
     putProperty(props, SVNProperty.LAST_AUTHOR, last.getAuthor());
@@ -90,16 +90,16 @@ public interface GitFile extends GitEntry {
 
   @NotNull
   default GitRevision getLastChange() {
-    final GitRepository repo = getRepo();
-    final int lastChange = repo.getLastChange(getFullPath(), getRevision());
+    final GitBranch branch = getBranch();
+    final int lastChange = branch.getLastChange(getFullPath(), getRevision());
     if (lastChange < 0) {
       throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + getFileName() + "@" + getRevision());
     }
-    return repo.sureRevisionInfo(lastChange);
+    return branch.sureRevisionInfo(lastChange);
   }
 
   @NotNull
-  GitRepository getRepo();
+  GitBranch getBranch();
 
   static void putProperty(@NotNull Map<String, String> props, @NotNull String name, @Nullable String value) {
     if (value != null) {

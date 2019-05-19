@@ -44,7 +44,7 @@ public final class GitWriter {
   private static final Logger log = LoggerFactory.getLogger(GitWriter.class);
 
   @NotNull
-  private final GitRepository repo;
+  private final GitBranch branch;
   @NotNull
   private final ObjectInserter inserter;
   @NotNull
@@ -56,12 +56,12 @@ public final class GitWriter {
   @NotNull
   private final User user;
 
-  public GitWriter(@NotNull GitRepository repo, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @NotNull User user) {
-    this.repo = repo;
+  public GitWriter(@NotNull GitBranch branch, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @NotNull User user) {
+    this.branch = branch;
     this.pusher = pusher;
     this.pushLock = pushLock;
     this.gitBranch = gitBranch;
-    this.inserter = repo.getRepository().newObjectInserter();
+    this.inserter = branch.getRepository().getGit().newObjectInserter();
     this.user = user;
   }
 
@@ -81,8 +81,8 @@ public final class GitWriter {
   }
 
   @NotNull
-  public GitRepository getRepository() {
-    return repo;
+  public GitBranch getBranch() {
+    return branch;
   }
 
   @NotNull
@@ -108,7 +108,7 @@ public final class GitWriter {
       this.branch = branch;
       this.lockManager = lockManager;
       this.locks = locks;
-      this.revision = repo.getLatestRevision();
+      this.revision = GitWriter.this.branch.getLatestRevision();
       this.treeStack = new ArrayDeque<>();
       this.treeStack.push(new GitTreeUpdate("", getOriginalTree()));
     }
@@ -118,7 +118,7 @@ public final class GitWriter {
       if (commit == null) {
         return Collections.emptyList();
       }
-      return repo.loadTree(new GitTreeEntry(repo.getRepository(), FileMode.TREE, commit.getTree(), ""));
+      return GitWriter.this.branch.getRepository().loadTree(new GitTreeEntry(GitWriter.this.branch.getRepository().getGit(), FileMode.TREE, commit.getTree(), ""));
     }
 
     public void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException {
@@ -127,7 +127,7 @@ public final class GitWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
       commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, repo.loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
+      treeStack.push(new GitTreeUpdate(name, GitWriter.this.branch.getRepository().loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
     }
 
     @NotNull
@@ -148,7 +148,7 @@ public final class GitWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
       commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, repo.loadTree(originalDir)));
+      treeStack.push(new GitTreeUpdate(name, GitWriter.this.branch.getRepository().loadTree(originalDir)));
     }
 
     public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
@@ -164,7 +164,7 @@ public final class GitWriter {
       }
       final ObjectId subtreeId = last.buildTree(inserter);
       log.debug("Create tree {} for dir: {}", subtreeId.name(), fullPath);
-      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(repo.getRepository(), subtreeId), last.getName())) != null) {
+      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(GitWriter.this.branch.getRepository().getGit(), subtreeId), last.getName())) != null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
       }
       commitActions.add(CommitAction::closeDir);
@@ -223,23 +223,23 @@ public final class GitWriter {
       inserter.flush();
       log.info("Create commit {}: {}", commitId.name(), StringHelper.getFirstLine(message));
 
-      if (filterMigration(new RevWalk(repo.getRepository()).parseTree(treeId)) != 0) {
+      if (filterMigration(new RevWalk(GitWriter.this.branch.getRepository().getGit()).parseTree(treeId)) != 0) {
         log.info("Need recreate tree after filter migration.");
         return null;
       }
 
       synchronized (pushLock) {
         log.info("Validate properties");
-        validateProperties(new RevWalk(repo.getRepository()).parseTree(treeId));
+        validateProperties(new RevWalk(GitWriter.this.branch.getRepository().getGit()).parseTree(treeId));
 
         log.info("Try to push commit in branch: {}", branch);
-        if (!pusher.push(repo.getRepository(), commitId, branch, userInfo)) {
+        if (!pusher.push(GitWriter.this.branch.getRepository().getGit(), commitId, branch, userInfo)) {
           log.info("Non fast forward push rejected");
           return null;
         }
         log.info("Commit is pushed");
-        repo.updateRevisions();
-        return repo.getRevision(commitId);
+        GitWriter.this.branch.updateRevisions();
+        return GitWriter.this.branch.getRevision(commitId);
       }
     }
 
@@ -250,7 +250,7 @@ public final class GitWriter {
     }
 
     private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
+      final GitFile root = GitFileTreeEntry.create(GitWriter.this.branch, tree, 0);
       final GitFilterMigration validator = new GitFilterMigration(root);
       for (VcsConsumer<CommitAction> validateAction : commitActions) {
         validateAction.accept(validator);
@@ -259,7 +259,7 @@ public final class GitWriter {
     }
 
     private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(repo, tree, 0);
+      final GitFile root = GitFileTreeEntry.create(GitWriter.this.branch, tree, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
       for (VcsConsumer<CommitAction> validateAction : commitActions) {
         validateAction.accept(validator);

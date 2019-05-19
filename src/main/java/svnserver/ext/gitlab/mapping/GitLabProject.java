@@ -12,16 +12,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
+import svnserver.repository.git.BranchProvider;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitRepository;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.NavigableMap;
 
 /**
  * GitLab project information.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabProject implements AutoCloseable {
+public final class GitLabProject implements AutoCloseable, BranchProvider {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitLabProject.class);
   @NotNull
@@ -41,7 +45,10 @@ public class GitLabProject implements AutoCloseable {
   void initRevisions() throws IOException, SVNException {
     if (!ready) {
       log.info("[{}]: initing...", context.getName());
-      repository.updateRevisions();
+
+      for (GitBranch branch : repository.getBranches().values())
+        branch.updateRevisions();
+
       ready = true;
     }
   }
@@ -60,10 +67,6 @@ public class GitLabProject implements AutoCloseable {
     return repository;
   }
 
-  boolean isReady() {
-    return ready;
-  }
-
   @Override
   public void close() {
     try {
@@ -71,5 +74,11 @@ public class GitLabProject implements AutoCloseable {
     } catch (Exception e) {
       log.error("Can't close context for repository: " + context.getName(), e);
     }
+  }
+
+  @NotNull
+  @Override
+  public NavigableMap<String, GitBranch> getBranches() {
+    return ready ? repository.getBranches() : Collections.emptyNavigableMap();
   }
 }

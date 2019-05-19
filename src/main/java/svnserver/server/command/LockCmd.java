@@ -29,23 +29,6 @@ import java.io.IOException;
  */
 public final class LockCmd extends BaseCmd<LockCmd.Params> {
 
-  public static final class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final String[] comment;
-    private final boolean stealLock;
-    @NotNull
-    private final int[] rev;
-
-    public Params(@NotNull String path, @NotNull String[] comment, boolean stealLock, @NotNull int[] rev) {
-      this.path = path;
-      this.comment = comment;
-      this.stealLock = stealLock;
-      this.rev = rev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<? extends Params> getArguments() {
@@ -58,12 +41,11 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
     final String path = context.getRepositoryPath(args.path);
     final LockTarget lockTarget = new LockTarget(path, rev);
     final String comment = args.comment.length == 0 ? null : args.comment[0];
-    final LockDesc[] lockDescs = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), comment, args.stealLock, new LockTarget[]{lockTarget}));
+    final LockDesc[] lockDescs = context.getBranch().getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), context.getBranch(), comment, args.stealLock, new LockTarget[]{lockTarget}));
     if (lockDescs.length != 1) {
       throw new IllegalStateException();
     }
     final SvnServerWriter writer = context.getWriter();
-    // TODO: is it correct?
     writer.listBegin()
         .word("success")
         .listBegin();
@@ -90,5 +72,22 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
           .listBegin()
           .listEnd()
           .listEnd();
+  }
+
+  public static final class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final String[] comment;
+    private final boolean stealLock;
+    @NotNull
+    private final int[] rev;
+
+    public Params(@NotNull String path, @NotNull String[] comment, boolean stealLock, @NotNull int[] rev) {
+      this.path = path;
+      this.comment = comment;
+      this.stealLock = stealLock;
+      this.rev = rev;
+    }
   }
 }

@@ -12,9 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.context.LocalContext;
+import svnserver.repository.git.BranchProvider;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitRepository;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.NavigableMap;
 
 /**
  * Gitea project information.
@@ -22,7 +26,7 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
-public class GiteaProject implements AutoCloseable {
+public class GiteaProject implements AutoCloseable, BranchProvider {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GiteaProject.class);
   @NotNull
@@ -46,7 +50,10 @@ public class GiteaProject implements AutoCloseable {
   void initRevisions() throws IOException, SVNException {
     if (!ready) {
       log.info("[{}]: initing...", context.getName());
-      repository.updateRevisions();
+
+      for (GitBranch branch : repository.getBranches().values())
+        branch.updateRevisions();
+
       ready = true;
     }
   }
@@ -84,5 +91,11 @@ public class GiteaProject implements AutoCloseable {
     } catch (Exception e) {
       log.error("Can't close context for repository: " + context.getName(), e);
     }
+  }
+
+  @NotNull
+  @Override
+  public NavigableMap<String, GitBranch> getBranches() {
+    return ready ? repository.getBranches() : Collections.emptyNavigableMap();
   }
 }

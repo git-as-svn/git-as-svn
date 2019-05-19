@@ -11,24 +11,18 @@ import com.google.common.hash.Hashing;
 import org.gitlab.api.models.GitlabProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
 import svnserver.config.ConfigHelper;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
-import svnserver.repository.RepositoryInfo;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.mapping.RepositoryListMapping;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -37,7 +31,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final class GitLabMapping implements RepositoryMapping {
+final class GitLabMapping implements RepositoryMapping<GitLabProject> {
 
   @NotNull
   private static final String HASHED_PATH = "@hashed";
@@ -59,26 +53,13 @@ final class GitLabMapping implements RepositoryMapping {
     return context;
   }
 
-  @Nullable
-  @Override
-  public RepositoryInfo getRepository(@NotNull SVNURL url) throws SVNException {
-    final Map.Entry<String, GitLabProject> entry = RepositoryListMapping.getMapped(mapping, url.getPath());
-    if (entry != null && entry.getValue().isReady()) {
-      return new RepositoryInfo(
-          SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort() == SVNURL.getDefaultPortNumber(url.getProtocol()) ? -1 : url.getPort(), entry.getKey(), true),
-          entry.getValue().getRepository()
-      );
-    }
-    return null;
-  }
-
   @NotNull
-  Collection<GitLabProject> getRepositories() {
-    return mapping.values();
+  public NavigableMap<String, GitLabProject> getMapping() {
+    return mapping;
   }
 
   @Nullable
-  GitLabProject updateRepository(@NotNull GitlabProject project) throws IOException, SVNException {
+  GitLabProject updateRepository(@NotNull GitlabProject project) throws IOException {
     if (!tagsMatch(project)) {
       removeRepository(project.getId(), project.getPathWithNamespace());
       return null;

@@ -20,18 +20,21 @@ public final class LockDesc {
 
   @NotNull
   private final String path;
+  @Nullable
+  private final String branch;
   @NotNull
   private final String token;
   @NotNull
   private final String owner;
   @Nullable
   private final String comment;
-  @NotNull
+  @Nullable
   private final String hash;
   private final long created;
 
-  public LockDesc(@NotNull String path, @NotNull String hash, @NotNull String token, @NotNull String owner, @Nullable String comment, long created) {
+  public LockDesc(@NotNull String path, String branch, @Nullable String hash, @NotNull String token, @NotNull String owner, @Nullable String comment, long created) {
     this.path = path;
+    this.branch = branch;
     this.hash = hash;
     this.token = token;
     this.owner = owner;
@@ -44,7 +47,12 @@ public final class LockDesc {
     return path;
   }
 
-  @NotNull
+  @Nullable
+  public String getBranch() {
+    return branch;
+  }
+
+  @Nullable
   public String getHash() {
     return hash;
   }

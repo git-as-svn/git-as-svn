@@ -102,7 +102,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException, SVNException {
+  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
     final GitLabContext gitlab = context.sure(GitLabContext.class);
     final GitlabAPI api = gitlab.connect();
     // Get repositories.
@@ -133,14 +133,14 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
       try {
         repository.initRevisions();
       } catch (IOException | SVNException e) {
-        throw new RuntimeException(String.format("[%s]: failed to initialize", repository.getContext().getName()), e);
+        throw new RuntimeException(String.format("[%s]: failed to initialize", repository), e);
       }
     };
 
     if (canUseParallelIndexing) {
-      mapping.getRepositories().parallelStream().forEach(init);
+      mapping.getMapping().values().parallelStream().forEach(init);
     } else {
-      mapping.getRepositories().forEach(init);
+      mapping.getMapping().values().forEach(init);
     }
 
     return mapping;

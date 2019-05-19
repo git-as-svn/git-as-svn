@@ -112,9 +112,9 @@ public final class GiteaMappingConfig implements RepositoryMappingConfig {
     };
 
     if (canUseParallelIndexing) {
-      mapping.getRepositories().parallelStream().forEach(init);
+      mapping.getMapping().values().parallelStream().forEach(init);
     } else {
-      mapping.getRepositories().forEach(init);
+      mapping.getMapping().values().forEach(init);
     }
 
     return mapping;

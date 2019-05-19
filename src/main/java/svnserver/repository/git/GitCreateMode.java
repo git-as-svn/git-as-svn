@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 /**
  * Git create repository behaviour.
@@ -26,30 +27,33 @@ public enum GitCreateMode {
   ERROR {
     @NotNull
     @Override
-    public Repository createRepository(@NotNull File file, @NotNull String branch) throws IOException {
+    public Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException {
       throw new FileNotFoundException(file.getPath());
     }
   },
   EMPTY {
     @NotNull
     @Override
-    public Repository createRepository(@NotNull File file, @NotNull String branch) throws IOException {
+    public Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException {
       return createRepository(file);
     }
   },
   EXAMPLE {
     @NotNull
     @Override
-    public Repository createRepository(@NotNull File file, @NotNull String branch) throws IOException {
+    public Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException {
       final Repository repository = createRepository(file);
       final ObjectId revision = createFirstRevision(repository);
-      final RefUpdate refUpdate = repository.updateRef(Constants.R_HEADS + branch);
-      refUpdate.setNewObjectId(revision);
-      refUpdate.update();
+      for (String branch : branches) {
+        final RefUpdate refUpdate = repository.updateRef(Constants.R_HEADS + branch);
+        refUpdate.setNewObjectId(revision);
+        refUpdate.update();
+      }
       return repository;
     }
   };
 
+  @NotNull
   protected static Repository createRepository(@NotNull File file) throws IOException {
     if (file.exists() || file.mkdirs()) {
       final FileRepository repository = new FileRepository(file);
@@ -88,6 +92,5 @@ public enum GitCreateMode {
   }
 
   @NotNull
-  public abstract Repository createRepository(@NotNull File file, @NotNull String branch) throws IOException;
-
+  public abstract Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException;
 }

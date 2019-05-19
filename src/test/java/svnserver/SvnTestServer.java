@@ -36,16 +36,12 @@ import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.push.GitPushEmbedded;
-import svnserver.repository.mapping.RepositoryListMapping;
 import svnserver.server.SvnServer;
 import svnserver.tester.SvnTester;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -98,7 +94,6 @@ public final class SvnTestServer implements SvnTester {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
     this.safeBranch = safeBranch;
-    this.prefix = prefix;
     tempDirectory = TestHelper.createTempDir("git-as-svn");
     final String srcBranch = branch == null ? repository.getBranch() : branch;
     if (safeBranch) {
@@ -112,6 +107,8 @@ public final class SvnTestServer implements SvnTester {
     } else {
       testBranch = srcBranch;
     }
+
+    this.prefix = prefix + "/" + testBranch;
 
     final Config config = new Config(BIND_HOST, 0);
     config.setCompressionEnabled(false);
@@ -168,7 +165,12 @@ public final class SvnTestServer implements SvnTester {
   @Override
   @NotNull
   public SVNURL getUrl() throws SVNException {
-    return SVNURL.create("svn", null, BIND_HOST, server.getPort(), prefix, true);
+    return getUrl(true);
+  }
+
+  @NotNull
+  public SVNURL getUrl(boolean withPrefix) throws SVNException {
+    return SVNURL.create("svn", null, BIND_HOST, server.getPort(), withPrefix ? prefix : "", true);
   }
 
   @NotNull
@@ -293,13 +295,16 @@ public final class SvnTestServer implements SvnTester {
       final LocalContext local = new LocalContext(context, "test");
       final AclConfig aclConfig = new AclConfig(anonymousRead);
       local.add(VcsAccess.class, aclConfig.create());
-      return new RepositoryListMapping(Collections.singletonMap(prefix, new GitRepository(
+
+      final GitRepository repository = new GitRepository(
           local,
-          repository,
+          this.repository,
           new GitPushEmbedded(local, "", "", ""),
-          branch,
+          Collections.singleton(branch),
           true
-      )));
+      );
+
+      return () -> new TreeMap<>(Collections.singletonMap(prefix, repository));
     }
   }
 }

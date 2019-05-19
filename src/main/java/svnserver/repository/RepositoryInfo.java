@@ -9,7 +9,7 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
-import svnserver.repository.git.GitRepository;
+import svnserver.repository.git.GitBranch;
 
 /**
  * Mapped repository info.
@@ -20,11 +20,11 @@ public final class RepositoryInfo {
   @NotNull
   private final SVNURL baseUrl;
   @NotNull
-  private final GitRepository repository;
+  private final GitBranch branch;
 
-  public RepositoryInfo(@NotNull SVNURL baseUrl, @NotNull GitRepository repository) {
+  public RepositoryInfo(@NotNull SVNURL baseUrl, @NotNull GitBranch branch) {
     this.baseUrl = baseUrl;
-    this.repository = repository;
+    this.branch = branch;
   }
 
   @NotNull
@@ -33,7 +33,7 @@ public final class RepositoryInfo {
   }
 
   @NotNull
-  public GitRepository getRepository() {
-    return repository;
+  public GitBranch getBranch() {
+    return branch;
   }
 }

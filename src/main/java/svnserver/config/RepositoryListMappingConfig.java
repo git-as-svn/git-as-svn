@@ -9,18 +9,18 @@ package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.StringHelper;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.mapping.RepositoryListMapping;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -37,29 +37,43 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
   @NotNull
   @Override
   public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
-    final Map<String, GitRepository> repos = new HashMap<>();
+    final NavigableMap<String, GitRepository> repos = new TreeMap<>();
+
+    final Set<String> uniquePaths = new HashSet<>();
+    repositories.values().stream().map(entry -> entry.repository.getPath()).forEach(s -> {
+      if (!uniquePaths.add(new File(s).getAbsolutePath()))
+        throw new IllegalStateException("Duplicate repositories in config: " + s);
+    });
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
       local.add(VcsAccess.class, entry.getValue().acl.create());
-      repos.put(entry.getKey(), entry.getValue().repository.create(local));
+      repos.put(StringHelper.normalizeDir(entry.getKey()), entry.getValue().repository.create(local));
     }
 
-    final Consumer<GitRepository> init = repository -> {
+    final Consumer<GitBranch> init = repository -> {
       try {
         repository.updateRevisions();
       } catch (IOException | SVNException e) {
-        throw new RuntimeException(String.format("[%s]: failed to initialize", repository.getContext().getName()), e);
+        throw new RuntimeException(String.format("[%s]: failed to initialize", repository), e);
       }
     };
 
     if (canUseParallelIndexing) {
-      repos.values().parallelStream().forEach(init);
+      repos
+          .values()
+          .parallelStream()
+          .flatMap(repo -> repo.getBranches().values().parallelStream())
+          .forEach(init);
     } else {
-      repos.values().forEach(init);
+      repos
+          .values()
+          .stream()
+          .flatMap(repo -> repo.getBranches().values().stream())
+          .forEach(init);
     }
 
-    return new RepositoryListMapping(repos);
+    return () -> repos;
   }
 
   public static class Entry {

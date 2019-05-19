@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsCopyFrom;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
@@ -72,18 +73,18 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
       }
 
       final String fullPath = context.getRepositoryPath(args.path);
-      final GitRepository repository = context.getRepository();
-      int rev = repository.getLastChange(fullPath, endRev);
+      final GitBranch branch = context.getBranch();
+      int rev = branch.getLastChange(fullPath, endRev);
       if (rev < 0) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, fullPath + " not found in revision " + endRev));
       }
 
-      final GitFile head = repository.getRevisionInfo(rev).getFile(fullPath);
+      final GitFile head = branch.getRevisionInfo(rev).getFile(fullPath);
       if (head == null)
         throw new IllegalStateException();
 
       final List<GitFile> history = new ArrayList<>();
-      walkFileHistory(repository, head, startRev, history::add);
+      walkFileHistory(branch, head, startRev, history::add);
       if (reverse)
         Collections.reverse(history);
 
@@ -153,7 +154,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
   /**
    * TODO: This method is very similar to LogCmd#getLog. Maybe they can be combined?
    */
-  private void walkFileHistory(@NotNull GitRepository repository, @NotNull GitFile start, int stopRev, @NotNull FileHistoryWalker walker) throws SVNException, IOException {
+  private void walkFileHistory(@NotNull GitBranch branch, @NotNull GitFile start, int stopRev, @NotNull FileHistoryWalker walker) throws SVNException, IOException {
     @Nullable
     GitFile head = start;
 
@@ -162,7 +163,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
 
       VcsCopyFrom copyFrom = head.getCopyFrom();
       if (copyFrom == null) {
-        final int prevRev = repository.getLastChange(head.getFullPath(), head.getRevision() - 1);
+        final int prevRev = branch.getLastChange(head.getFullPath(), head.getRevision() - 1);
         if (prevRev >= 0) {
           // Same path, earlier commit
           copyFrom = new VcsCopyFrom(prevRev, head.getFullPath());
@@ -176,7 +177,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
       if (copyFrom.getRevision() < stopRev)
         break;
 
-      final GitRevision prevRevision = repository.getRevisionInfo(copyFrom.getRevision());
+      final GitRevision prevRevision = branch.getRevisionInfo(copyFrom.getRevision());
       final GitFile file = prevRevision.getFile(copyFrom.getPath());
       if (file == null)
         throw new IllegalStateException();

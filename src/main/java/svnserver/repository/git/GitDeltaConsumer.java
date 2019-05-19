@@ -115,7 +115,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       if (oldFilter == null) {
         throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
-      migrateFilter(writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
+      migrateFilter(writer.getBranch().getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
     }
     return objectId;
   }
@@ -126,7 +126,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
     }
     final GitObject<ObjectId> beforeId = objectId;
     if (!newFilter.equals(filter)) {
-      final Repository repo = writer.getRepository().getRepository();
+      final Repository repo = writer.getBranch().getRepository().getGit();
 
       try (
           final TemporaryOutputStream content = new TemporaryOutputStream();
@@ -156,7 +156,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       if (window != null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
+      newFilter = writer.getBranch().getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
 
       final InputStream base = (oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes);
@@ -180,7 +180,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       if (window == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      final Repository repo = writer.getRepository().getRepository();
+      final Repository repo = writer.getBranch().getRepository().getGit();
       md5 = window.textDeltaEnd();
       try (InputStream stream = temporaryStream.toInputStream()) {
         objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));

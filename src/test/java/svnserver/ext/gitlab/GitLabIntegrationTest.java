@@ -180,7 +180,7 @@ public final class GitLabIntegrationTest {
 
   @NotNull
   private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull GitlabProject gitlabProject, @NotNull String username, @NotNull String password) throws SVNException {
-    return SvnTestServer.openSvnRepository(server.getUrl().appendPath(gitlabProject.getPathWithNamespace(), false), username, password);
+    return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(gitlabProject.getPathWithNamespace() + "/master", false), username, password);
   }
 
   @Test

@@ -12,8 +12,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
@@ -50,8 +50,8 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
     final String fullPath = context.getRepositoryPath(args.path);
-    final GitRepository repository = context.getRepository();
-    final GitRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitBranch branch = context.getBranch();
+    final GitRevision revision = branch.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final GitFile fileInfo = revision.getFile(fullPath);
 
     if (fileInfo == null)
@@ -106,7 +106,7 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
                   @NotNull int[] rev,
                   boolean wantProps,
                   boolean wantContents,
-                  /**
+        /*
                    * This is a broken-minded SVN feature we are unlikely to support ever.
                    * <p>
                    * Client can declare what fields it wants to be sent for child nodes (wantContents=true).
