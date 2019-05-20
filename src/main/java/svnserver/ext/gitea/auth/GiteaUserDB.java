@@ -28,7 +28,6 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitea.config.GiteaContext;
-import svnserver.ext.gitea.keys.GiteaKeysMapper;
 
 /**
  * Gitea user authentiation.
@@ -51,12 +50,9 @@ public final class GiteaUserDB implements UserDB {
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
   private final GiteaContext context;
-  @NotNull
-  private GiteaKeysMapper keysMapper;
 
   GiteaUserDB(@NotNull SharedContext context) {
     this.context = context.sure(GiteaContext.class);
-    this.keysMapper = context.get(GiteaKeysMapper.class);
   }
 
   @NotNull
@@ -134,29 +130,21 @@ public final class GiteaUserDB implements UserDB {
     }
     final Long keyId = removePrefix(external, PREFIX_KEY);
     if (keyId != null) {
-      if (keysMapper != null) {
-        String userName = keysMapper.getUserName(external);
-        if (userName != null) {
-          log.info("Matched {} with {}", external, userName);
-          return lookupByUserName(userName);
-        }
-      } else {
-        try {
-          final UserApi userApi = new UserApi(context.connect());
-          PublicKey key = userApi.userCurrentGetKey(keyId);
-          if (key.getUser() != null) {
-            log.info("Matched {} with {}", external, key.getUser().getLogin());
-            return createUser(key.getUser());
-          } else {
-            log.info("Matched {} with a key, but no User is associated.", external);
-            return null;
-          }
-        } catch (ApiException e) {
-          if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
-            log.warn("User lookup by userId error: " + external, e);
-          }
+      try {
+        final UserApi userApi = new UserApi(context.connect());
+        PublicKey key = userApi.userCurrentGetKey(keyId);
+        if (key.getUser() != null) {
+          log.info("Matched {} with {}", external, key.getUser().getLogin());
+          return createUser(key.getUser());
+        } else {
+          log.info("Matched {} with a key, but no User is associated.", external);
           return null;
         }
+      } catch (ApiException e) {
+        if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+          log.warn("User lookup by userId error: " + external, e);
+        }
+        return null;
       }
     }
     log.info("Unable to match {}", external);
