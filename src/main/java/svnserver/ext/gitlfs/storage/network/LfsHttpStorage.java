@@ -90,7 +90,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
       final ObjectRes meta = new ObjectRes(item.getOid(), item.getSize(), item.getLinks());
       return new LfsHttpReader(this, meta.getMeta(), meta);
     } catch (RequestException e) {
-      log.error("HTTP request error:" + e.getMessage() + "\n" + e.getRequestInfo());
+      log.error("HTTP request error:" + e.getMessage() + "\n", e);
       throw e;
     }
   }
