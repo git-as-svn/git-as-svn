@@ -1,5 +1,10 @@
 # Changes
 
+## 1.11.1
+
+ * `!giteaSSHKeys` is no longer supported
+ * Fix date formatting to be compatible with git-lfs. Was broken in 1.11.0
+
 ## 1.11.0
 
  * Add support for Gitea LFS server. Gitea >= 1.7.2 is required now.
