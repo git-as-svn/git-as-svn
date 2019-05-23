@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Simple test for LfsLocalStorage.
@@ -41,7 +42,7 @@ public class LfsLocalStorageTest {
   public void simple(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
@@ -69,7 +70,7 @@ public class LfsLocalStorageTest {
   public void nometa(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(LocalLfsConfig.LfsLayout.GitLab, new File(tempDir, "data"), null, compress);
+      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.GitLab, new File(tempDir, "data"), null, compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 
@@ -97,7 +98,7 @@ public class LfsLocalStorageTest {
   public void alreadyAdded(boolean compress) throws IOException {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
 

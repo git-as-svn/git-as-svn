@@ -10,9 +10,9 @@ package svnserver.ext.gitlfs.storage.local;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.common.JsonHelper;
 import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
-import svnserver.DateHelper;
 import svnserver.HashHelper;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.config.LocalLfsConfig;
@@ -23,7 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
-import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,13 +47,12 @@ public class LfsLocalWriter extends LfsWriter {
   private final boolean compress;
   @Nullable
   private final User user;
-
-  @Nullable
-  private OutputStream dataStream;
   @NotNull
   private final MessageDigest digestMd5;
   @NotNull
   private final MessageDigest digestSha;
+  @Nullable
+  private OutputStream dataStream;
   private long size;
 
   public LfsLocalWriter(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress, @Nullable User user) throws IOException {
@@ -103,6 +102,16 @@ public class LfsLocalWriter extends LfsWriter {
     size += len;
   }
 
+  @Override
+  public void close() throws IOException {
+    if (dataStream != null) {
+      dataStream.close();
+      dataStream = null;
+      //noinspection ResultOfMethodCallIgnored
+      dataTemp.delete();
+    }
+  }
+
   @NotNull
   @Override
   public String finish(@Nullable String expectedOid) throws IOException {
@@ -150,7 +159,7 @@ public class LfsLocalWriter extends LfsWriter {
           map.put(Constants.SIZE, String.valueOf(size));
           map.put(Constants.OID, oid);
           map.put(LfsLocalStorage.HASH_MD5, Hex.encodeHexString(md5));
-          map.put(LfsLocalStorage.CREATE_TIME, DateHelper.toISO8601(Instant.now()));
+          map.put(LfsLocalStorage.CREATE_TIME, JsonHelper.dateFormat.format(new Date()));
           if ((user != null) && (!user.isAnonymous())) {
             if (user.getEmail() != null) {
               map.put(LfsLocalStorage.META_EMAIL, user.getEmail());
@@ -170,15 +179,5 @@ public class LfsLocalWriter extends LfsWriter {
       }
     }
     return oid;
-  }
-
-  @Override
-  public void close() throws IOException {
-    if (dataStream != null) {
-      dataStream.close();
-      dataStream = null;
-      //noinspection ResultOfMethodCallIgnored
-      dataTemp.delete();
-    }
   }
 }

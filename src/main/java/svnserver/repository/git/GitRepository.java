@@ -24,16 +24,13 @@ import svnserver.context.SharedContext;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.filter.GitFilter;
-import svnserver.repository.git.filter.GitFilterHelper;
 import svnserver.repository.git.filter.GitFilterLink;
 import svnserver.repository.git.filter.GitFilterRaw;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
-import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockDescSerializer;
-import svnserver.repository.locks.LockManager;
+import svnserver.repository.locks.LockStorage;
 import svnserver.repository.locks.LockWorker;
 
 import java.io.IOException;
@@ -54,7 +51,6 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
   @NotNull
   public static final byte[] emptyBytes = {};
 
-  private static final int lockDescCacheVersion = 3;
   @NotNull
   private final Repository git;
   @NotNull
@@ -73,7 +69,7 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
   @NotNull
   private final ReadWriteLock lockManagerRwLock = new ReentrantReadWriteLock();
   @NotNull
-  private final LockManager lockManager;
+  private final LockStorage lockStorage;
   @NotNull
   private final DB db;
   @NotNull
@@ -83,7 +79,9 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
                        @NotNull Repository git,
                        @NotNull GitPusher pusher,
                        @NotNull Set<String> branches,
-                       boolean renameDetection) throws IOException {
+                       boolean renameDetection,
+                       @NotNull LockStorage lockStorage,
+                       @NotNull Map<String, GitFilter> filters) throws IOException {
     this.context = context;
     final SharedContext shared = context.getShared();
     shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(git);
@@ -93,14 +91,10 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
 
     this.pusher = pusher;
     this.renameDetection = renameDetection;
+    this.lockStorage = lockStorage;
 
-    final String lockCacheName = String.format("locks.%s.%s", context.getName(), lockDescCacheVersion);
-    final SortedMap<String, LockDesc> lockMap = db.treeMap(
-        lockCacheName, Serializer.STRING, LockDescSerializer.instance
-    ).createOrOpen();
-    lockManager = new LockManager(lockMap);
+    this.gitFilters = filters;
 
-    this.gitFilters = GitFilterHelper.createFilters(context);
     for (String branch : branches)
       this.branches.put(StringHelper.normalizeDir(branch), new GitBranch(this, branch));
   }
@@ -134,14 +128,14 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
   private <T> T wrapLock(@NotNull Lock lock, @NotNull LockWorker<T> work) throws IOException, SVNException {
     lock.lock();
     try {
-      return work.exec(lockManager);
+      return work.exec(lockStorage);
     } finally {
       lock.unlock();
     }
   }
 
   @NotNull
-  GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull VcsSupplier<Iterable<GitTreeEntry>> entryProvider) throws IOException, SVNException {
+  GitProperty[] collectProperties(@NotNull GitTreeEntry treeEntry, @NotNull VcsSupplier<Iterable<GitTreeEntry>> entryProvider) throws IOException {
     if (treeEntry.getFileMode().getObjectType() == Constants.OBJ_BLOB)
       return GitProperty.emptyArray;
 
@@ -217,7 +211,7 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
     return git;
   }
 
-  boolean isObjectBinary(@Nullable GitFilter filter, @Nullable GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  boolean isObjectBinary(@Nullable GitFilter filter, @Nullable GitObject<? extends ObjectId> objectId) throws IOException {
     if (objectId == null || filter == null) return false;
     final String key = filter.getName() + " " + objectId.getObject().name();
     Boolean result = binaryCache.get(key);

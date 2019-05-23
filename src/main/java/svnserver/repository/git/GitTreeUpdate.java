@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.TreeFormatter;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.IOException;
 import java.util.*;
@@ -45,7 +44,7 @@ final class GitTreeUpdate {
     return entries;
   }
 
-  @NotNull ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException, SVNException {
+  @NotNull ObjectId buildTree(@NotNull ObjectInserter inserter) throws IOException {
     final TreeFormatter treeBuilder = new TreeFormatter();
     final List<GitTreeEntry> sortedEntries = new ArrayList<>(entries.values());
     Collections.sort(sortedEntries);

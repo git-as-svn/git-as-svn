@@ -11,8 +11,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
@@ -31,9 +29,9 @@ import java.util.Map;
  */
 public class GitFilterLink implements GitFilter {
   @NotNull
-  private static final byte[] LINK_PREFIX = "link ".getBytes(StandardCharsets.ISO_8859_1);
-  @NotNull
   public static final String NAME = "link";
+  @NotNull
+  private static final byte[] LINK_PREFIX = "link ".getBytes(StandardCharsets.ISO_8859_1);
   @NotNull
   private final Map<String, String> cacheMd5;
 
@@ -49,7 +47,7 @@ public class GitFilterLink implements GitFilter {
 
   @NotNull
   @Override
-  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     return GitFilterHelper.getMd5(this, cacheMd5, null, objectId);
   }
 

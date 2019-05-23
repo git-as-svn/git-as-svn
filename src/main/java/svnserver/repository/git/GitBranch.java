@@ -149,7 +149,7 @@ public final class GitBranch {
     }
 
     if (gotNewRevisions) {
-      final boolean locksChanged = repository.wrapLockWrite(lockManager -> lockManager.cleanupInvalidLocks(this));
+      final boolean locksChanged = repository.wrapLockWrite(lockStorage -> lockStorage.cleanupInvalidLocks(this));
       if (locksChanged)
         repository.getContext().getShared().getCacheDB().commit();
     }
@@ -158,7 +158,7 @@ public final class GitBranch {
   /**
    * Load all cached revisions.
    */
-  private void loadRevisions() throws IOException, SVNException {
+  private void loadRevisions() throws IOException {
     // Fast check.
     lock.readLock().lock();
     try {
@@ -289,7 +289,7 @@ public final class GitBranch {
     }
   }
 
-  private void loadRevisionInfo(@NotNull RevCommit commit) throws IOException, SVNException {
+  private void loadRevisionInfo(@NotNull RevCommit commit) throws IOException {
     final ObjectReader reader = repository.getGit().newObjectReader();
     final CacheRevision cacheRevision = loadCacheRevision(reader, commit, revisions.size());
     final int revisionId = revisions.size();
@@ -333,7 +333,7 @@ public final class GitBranch {
   }
 
   @NotNull
-  private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException, SVNException {
+  private CacheRevision loadCacheRevision(@NotNull ObjectReader reader, @NotNull RevCommit newCommit, int revisionId) throws IOException {
     final ObjectId cacheKey = newCommit.copy();
 
     CacheRevision result = revisionCache.get(cacheKey);
@@ -356,7 +356,7 @@ public final class GitBranch {
   }
 
   @NotNull
-  private GitFile getSubversionTree(@NotNull ObjectReader reader, @Nullable RevCommit commit, int revisionId) throws IOException, SVNException {
+  private GitFile getSubversionTree(@NotNull ObjectReader reader, @Nullable RevCommit commit, int revisionId) throws IOException {
     final RevCommit revCommit = LayoutHelper.loadOriginalCommit(reader, commit);
     if (revCommit == null) {
       return new GitFileEmptyTree(this, "", revisionId - 1);

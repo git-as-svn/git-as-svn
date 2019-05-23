@@ -8,7 +8,10 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.common.LockConflictException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockTarget;
@@ -39,7 +42,7 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
     final SvnServerWriter writer = context.getWriter();
     final int latestRev = context.getBranch().getLatestRevision().getId();
     final String comment = args.comment.length == 0 ? null : args.comment[0];
@@ -53,7 +56,13 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
 
     final LockDesc[] locks;
     try {
-      locks = context.getBranch().getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), context.getBranch(), comment, args.stealLock, targets));
+      locks = context.getBranch().getRepository().wrapLockWrite(lockStorage -> {
+        try {
+          return lockStorage.lock(context.getUser(), context.getBranch(), comment, args.stealLock, targets);
+        } catch (LockConflictException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path is already locked: {0}", e.getLock().getPath()));
+        }
+      });
       for (LockDesc lock : locks) {
         writer.listBegin().word("success");
         LockCmd.writeLock(writer, lock);

@@ -114,6 +114,10 @@ public final class SvnTestServer implements SvnTester {
     config.setCompressionEnabled(false);
     config.setCacheConfig(new MemoryCacheConfig());
 
+    if (withLfs) {
+      config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
+    }
+
     if (mappingConfigCreator != null) {
       config.setRepositoryMapping(mappingConfigCreator.apply(tempDirectory));
     } else {
@@ -130,10 +134,6 @@ public final class SvnTestServer implements SvnTester {
     }
 
     Collections.addAll(config.getShared(), shared);
-
-    if (withLfs) {
-      config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
-    }
 
     server = new SvnServer(tempDirectory, config);
     server.start();
@@ -275,15 +275,15 @@ public final class SvnTestServer implements SvnTester {
 
   private static final class TestRepositoryConfig implements RepositoryMappingConfig {
     @NotNull
-    private final Repository repository;
+    private final Repository git;
     @NotNull
     private final String branch;
     @NotNull
     private final String prefix;
     private final boolean anonymousRead;
 
-    private TestRepositoryConfig(@NotNull Repository repository, @NotNull String branch, @NotNull String prefix, boolean anonymousRead) {
-      this.repository = repository;
+    private TestRepositoryConfig(@NotNull Repository git, @NotNull String branch, @NotNull String prefix, boolean anonymousRead) {
+      this.git = git;
       this.branch = branch;
       this.prefix = prefix;
       this.anonymousRead = anonymousRead;
@@ -296,9 +296,10 @@ public final class SvnTestServer implements SvnTester {
       final AclConfig aclConfig = new AclConfig(anonymousRead);
       local.add(VcsAccess.class, aclConfig.create());
 
-      final GitRepository repository = new GitRepository(
+      final GitRepository repository = GitRepositoryConfig.createRepository(
           local,
-          this.repository,
+          LfsStorageFactory.tryCreateStorage(local),
+          git,
           new GitPushEmbedded(local, "", "", ""),
           Collections.singleton(branch),
           true

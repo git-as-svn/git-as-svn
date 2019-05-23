@@ -9,7 +9,6 @@ package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.repository.SvnForbiddenException;
 
@@ -26,7 +25,7 @@ final class ChangeHelper {
   }
 
   @NotNull
-  static Map<String, GitLogEntry> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException, SVNException {
+  static Map<String, GitLogEntry> collectChanges(@Nullable GitFile oldTree, @NotNull GitFile newTree, boolean fullRemoved) throws IOException {
     final Map<String, GitLogEntry> changes = new HashMap<>();
     final GitLogEntry logEntry = new GitLogEntry(oldTree, newTree);
     if (oldTree == null || logEntry.isModified()) {
@@ -40,7 +39,7 @@ final class ChangeHelper {
     return changes;
   }
 
-  private static void collectChanges(@NotNull Map<String, GitLogEntry> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry, boolean fullRemoved) throws IOException, SVNException {
+  private static void collectChanges(@NotNull Map<String, GitLogEntry> changes, Queue<TreeCompareEntry> queue, @NotNull TreeCompareEntry compareEntry, boolean fullRemoved) throws IOException {
     for (GitLogEntry pair : compareEntry) {
       final GitFile newEntry = pair.getNewEntry();
       final GitFile oldEntry = pair.getOldEntry();
@@ -87,14 +86,14 @@ final class ChangeHelper {
     @NotNull
     private final Iterable<GitFile> newTree;
 
-    private TreeCompareEntry(@NotNull String path, @Nullable GitFile oldTree, @Nullable GitFile newTree) throws IOException, SVNException {
+    private TreeCompareEntry(@NotNull String path, @Nullable GitFile oldTree, @Nullable GitFile newTree) throws IOException {
       this.path = path;
       this.oldTree = getIterable(oldTree);
       this.newTree = getIterable(newTree);
     }
 
     @NotNull
-    private static Iterable<GitFile> getIterable(@Nullable GitFile tree) throws IOException, SVNException {
+    private static Iterable<GitFile> getIterable(@Nullable GitFile tree) throws IOException {
       try {
         return tree != null ? tree.getEntries() : Collections.emptyList();
       } catch (SvnForbiddenException e) {

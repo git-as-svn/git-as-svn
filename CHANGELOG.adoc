@@ -2,6 +2,10 @@
 
 == Unreleased
 
+ * Experimental support for https://github.com/git-lfs/git-lfs/blob/master/docs/api/locking.md[LFS locking API]
+   Now git-as-svn forwards locking requests to LFS server. git-as-svn internal LFS server now supports LFS locks.
+   Locks are now scoped to whole repositories instead of being per-branch.
+   All existing svn locks will expire after upgrade.
  * URL scheme has changed, now it is `svn://<host>/<repo>/<branch>`. Use `svn relocate` to fix existing SVN working copies.
  * It is no longer valid to map a single repository under multiple paths.
    Use `branches` tag to expose multiple branches of a single repository to SVN.

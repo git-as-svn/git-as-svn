@@ -38,7 +38,10 @@ public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
     final SvnServerWriter writer = context.getWriter();
     final String path = context.getRepositoryPath(args.path);
 
-    final Holder<LockDesc> holder = context.getBranch().getRepository().wrapLockRead((lockManager) -> new Holder<>(lockManager.getLock(context.getRepositoryPath(path))));
+    final Holder<LockDesc> holder = context.getBranch().getRepository().wrapLockRead(lockStorage -> {
+      @NotNull final LockDesc[] locks = lockStorage.getLocks(context.getUser(), context.getBranch(), context.getRepositoryPath(path), null);
+      return new Holder<>(locks.length < 1 ? null : locks[0]);
+    });
     writer.listBegin()
         .word("success")
         .listBegin()

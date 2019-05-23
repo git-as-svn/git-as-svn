@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.repository.VcsCopyFrom;
@@ -36,21 +35,24 @@ public interface GitFile extends GitEntry {
     return new GitEntryImpl(getRawProperties(), getFullPath(), GitProperty.emptyArray, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE);
   }
 
+  @Nullable
+  GitFile getEntry(@NotNull String name) throws IOException;
+
   /**
    * Get native repository content hash for cheap content modification check.
    */
   @NotNull
-  default String getContentHash() throws IOException, SVNException {
+  default String getContentHash() throws IOException {
     return getMd5();
   }
 
   @NotNull
-  String getMd5() throws IOException, SVNException;
+  String getMd5() throws IOException;
 
-  long getSize() throws IOException, SVNException;
+  long getSize() throws IOException;
 
   @NotNull
-  InputStream openStream() throws IOException, SVNException;
+  InputStream openStream() throws IOException;
 
   @Nullable
   VcsCopyFrom getCopyFrom() throws IOException;
@@ -65,7 +67,7 @@ public interface GitFile extends GitEntry {
   GitObject<ObjectId> getObjectId();
 
   @NotNull
-  default Map<String, String> getAllProperties() throws IOException, SVNException {
+  default Map<String, String> getAllProperties() throws IOException {
     Map<String, String> props = new HashMap<>();
     props.putAll(getRevProperties());
     props.putAll(getProperties());
@@ -84,7 +86,7 @@ public interface GitFile extends GitEntry {
   }
 
   @NotNull
-  default Map<String, String> getProperties() throws IOException, SVNException {
+  default Map<String, String> getProperties() throws IOException {
     return getUpstreamProperties();
   }
 
@@ -140,8 +142,5 @@ public interface GitFile extends GitEntry {
   FileMode getFileMode();
 
   @NotNull
-  Iterable<GitFile> getEntries() throws IOException, SVNException;
-
-  @Nullable
-  GitFile getEntry(@NotNull String name) throws IOException, SVNException;
+  Iterable<GitFile> getEntries() throws IOException;
 }

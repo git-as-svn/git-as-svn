@@ -38,7 +38,13 @@ public final class LockDescSerializer extends GroupSerializerObjectArray<LockDes
     }
 
     out.writeUTF(value.getToken());
-    out.writeUTF(value.getOwner());
+
+    if (value.getOwner() != null) {
+      out.writeBoolean(true);
+      out.writeUTF(value.getOwner());
+    } else {
+      out.writeBoolean(false);
+    }
 
     if (value.getComment() != null) {
       out.writeBoolean(true);
@@ -56,7 +62,7 @@ public final class LockDescSerializer extends GroupSerializerObjectArray<LockDes
     final String branch = input.readBoolean() ? input.readUTF() : null;
     final String hash = input.readBoolean() ? input.readUTF() : null;
     final String token = input.readUTF();
-    final String owner = input.readUTF();
+    final String owner = input.readBoolean() ? input.readUTF() : null;
     final String comment = input.readBoolean() ? input.readUTF() : null;
     final long created = input.readLong();
     return new LockDesc(path, branch, hash, token, owner, comment, created);

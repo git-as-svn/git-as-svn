@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
@@ -112,7 +111,7 @@ public final class GitRevision {
   }
 
   @Nullable
-  public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
+  public GitFile getFile(@NotNull String fullPath) throws IOException {
     if (gitNewCommit == null) {
       if (fullPath.isEmpty())
         return new GitFileEmptyTree(branch, "", revision);
@@ -133,7 +132,7 @@ public final class GitRevision {
   }
 
   @NotNull
-  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
+  public Map<String, GitLogEntry> getChanges() throws IOException {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
     }

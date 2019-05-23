@@ -20,5 +20,5 @@ import java.io.IOException;
 @FunctionalInterface
 public interface LockWorker<T> {
   @NotNull
-  T exec(@NotNull LockManager lockManager) throws SVNException, IOException;
+  T exec(@NotNull LockStorage lockStorage) throws SVNException, IOException;
 }

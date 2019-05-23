@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import ru.bozaro.gitlfs.server.ContentManager;
 import ru.bozaro.gitlfs.server.ContentServlet;
+import ru.bozaro.gitlfs.server.LocksServlet;
 import ru.bozaro.gitlfs.server.PointerServlet;
 import svnserver.context.Local;
 import svnserver.context.LocalContext;
@@ -53,12 +54,13 @@ public final class LfsServer implements Shared {
 
     final String pathSpec =  String.format("/%s.git/", name).replaceAll("/+", "/");
     final ContentManager pointerManager = new LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureTime);
-    final ContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0.0f);
+    final LfsContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0.0f);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
         ImmutableMap.<String, Servlet>builder()
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, secretToken, tokenExpireSec, tokenEnsureTime))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT))
             .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(contentManager))
+            .put(pathSpec + SERVLET_BASE + "/locks/*", new LocksServlet(new LfsLockManager(contentManager)))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));

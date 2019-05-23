@@ -7,6 +7,7 @@
  */
 package svnserver.server.command;
 
+import org.bouncycastle.util.Arrays;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
@@ -38,7 +39,10 @@ public final class GetLocksCmd extends BaseCmd<GetLocksCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String path = context.getRepositoryPath(args.path);
     final SvnServerWriter writer = context.getWriter();
-    final Iterator<LockDesc> locks = context.getBranch().getRepository().wrapLockRead((lockManager) -> lockManager.getLocks(context.getRepositoryPath(path), args.depth));
+    final Iterator<LockDesc> locks = context.getBranch().getRepository().wrapLockRead(
+        lockStorage -> new Arrays.Iterator<>(lockStorage.getLocks(context.getUser(), context.getBranch(), context.getRepositoryPath(path), null))
+    );
+
     writer
         .listBegin()
         .word("success")

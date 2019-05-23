@@ -8,7 +8,10 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.common.LockConflictException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.UnlockTarget;
 import svnserver.server.SessionContext;
@@ -46,8 +49,12 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
       targets[i] = new UnlockTarget(context.getRepositoryPath(path), lockToken);
     }
     try {
-      context.getBranch().getRepository().wrapLockWrite((lockManager) -> {
-        lockManager.unlock(args.breakLock, targets);
+      context.getBranch().getRepository().wrapLockWrite(lockStorage -> {
+        try {
+          lockStorage.unlock(context.getUser(), context.getBranch(), args.breakLock, targets);
+        } catch (LockConflictException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, e.getLock().getPath()));
+        }
         return Boolean.TRUE;
       });
       for (PathToken path : args.paths)

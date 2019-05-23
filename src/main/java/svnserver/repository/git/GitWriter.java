@@ -22,12 +22,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.ReferenceLink;
 import svnserver.StringHelper;
 import svnserver.auth.User;
-import svnserver.repository.Depth;
 import svnserver.repository.VcsConsumer;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManager;
+import svnserver.repository.locks.LockStorage;
 
 import java.io.IOException;
 import java.util.*;
@@ -66,17 +65,17 @@ public final class GitWriter {
   }
 
   @NotNull
-  public GitDeltaConsumer createFile(@NotNull GitEntry parent, @NotNull String name) throws IOException, SVNException {
+  public GitDeltaConsumer createFile(@NotNull GitEntry parent, @NotNull String name) throws IOException {
     return new GitDeltaConsumer(this, parent.createChild(name, false), null, user);
   }
 
   @NotNull
-  public GitDeltaConsumer modifyFile(@NotNull GitEntry parent, @NotNull String name, @NotNull GitFile file) throws IOException, SVNException {
+  public GitDeltaConsumer modifyFile(@NotNull GitEntry parent, @NotNull String name, @NotNull GitFile file) throws IOException {
     return new GitDeltaConsumer(this, parent.createChild(name, false), file, user);
   }
 
   @NotNull
-  public GitWriter.GitCommitBuilder createCommitBuilder(@NotNull LockManager lockManager, @NotNull Map<String, String> locks) throws IOException, SVNException {
+  public GitWriter.GitCommitBuilder createCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks) throws IOException {
     return new GitCommitBuilder(lockManager, locks, gitBranch);
   }
 
@@ -98,13 +97,13 @@ public final class GitWriter {
     @NotNull
     private final String branch;
     @NotNull
-    private final LockManager lockManager;
+    private final LockStorage lockManager;
     @NotNull
     private final Map<String, String> locks;
     @NotNull
     private final List<VcsConsumer<CommitAction>> commitActions = new ArrayList<>();
 
-    public GitCommitBuilder(@NotNull LockManager lockManager, @NotNull Map<String, String> locks, @NotNull String branch) throws IOException {
+    public GitCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks, @NotNull String branch) throws IOException {
       this.branch = branch;
       this.lockManager = lockManager;
       this.locks = locks;
@@ -279,24 +278,18 @@ public final class GitWriter {
       }
     }
 
-    private void checkLockFile(@NotNull GitFile file) throws SVNException {
+    private void checkLockFile(@NotNull GitFile file) throws IOException, SVNException {
       final String fullPath = file.getFullPath();
-      if (file.isDirectory()) {
-        final Iterator<LockDesc> iter = lockManager.getLocks(fullPath, Depth.Infinity);
-        while (iter.hasNext()) {
-          checkLockDesc(iter.next());
-        }
-      } else {
-        checkLockDesc(lockManager.getLock(fullPath));
-      }
+      final LockDesc[] iter = lockManager.getLocks(user, getBranch(), fullPath, null);
+      for (LockDesc lock : iter)
+        checkLockDesc(lock);
     }
 
     private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
       if (lockDesc != null) {
         final String token = locks.get(lockDesc.getPath());
-        if (!lockDesc.getToken().equals(token)) {
+        if (!lockDesc.getToken().equals(token))
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, lockDesc.getPath()));
-        }
       }
     }
   }
@@ -314,7 +307,7 @@ public final class GitWriter {
       return treeStack.element();
     }
 
-    public final void openDir(@NotNull String name) throws IOException, SVNException {
+    public final void openDir(@NotNull String name) throws IOException {
       final GitFile file = treeStack.element().getEntry(name);
       if (file == null) {
         throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
@@ -322,7 +315,7 @@ public final class GitWriter {
       treeStack.push(file);
     }
 
-    public abstract void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException, SVNException;
+    public abstract void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException;
 
     public final void closeDir() {
       treeStack.pop();
@@ -337,7 +330,7 @@ public final class GitWriter {
     }
 
     @Override
-    public void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException, SVNException {
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException {
       final GitFile dir = getElement();
       final GitFile node = name == null ? dir : dir.getEntry(name);
       if (node == null) {
@@ -352,7 +345,7 @@ public final class GitWriter {
       }
     }
 
-    public int done() throws SVNException {
+    public int done() {
       return migrateCount;
     }
   }
@@ -367,7 +360,7 @@ public final class GitWriter {
     }
 
     @Override
-    public void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException, SVNException {
+    public void checkProperties(@Nullable String name, @NotNull Map<String, String> props, @Nullable GitDeltaConsumer deltaConsumer) throws IOException {
       final GitFile dir = getElement();
       final GitFile node = name == null ? dir : dir.getEntry(name);
       if (node == null) {

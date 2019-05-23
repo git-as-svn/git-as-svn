@@ -66,7 +66,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   @Nullable
   private String md5;
 
-  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @NotNull User user) throws IOException, SVNException {
+  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @NotNull User user) throws IOException {
     this.writer = writer;
     this.entry = entry;
     this.user = user;
@@ -108,7 +108,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   }
 
   @Nullable
-  public GitObject<ObjectId> getObjectId() throws IOException, SVNException {
+  public GitObject<ObjectId> getObjectId() throws IOException {
     if ((originalId != null) && originalId.equals(objectId) && (newFilter == null)) {
       this.newFilter = oldFilter;
       this.objectId = originalId;
@@ -120,7 +120,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
     return objectId;
   }
 
-  boolean migrateFilter(@NotNull GitFilter filter) throws IOException, SVNException {
+  boolean migrateFilter(@NotNull GitFilter filter) throws IOException {
     if (newFilter == null || objectId == null) {
       throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
     }

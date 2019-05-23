@@ -18,5 +18,5 @@ import java.io.IOException;
  */
 @FunctionalInterface
 public interface VcsSupplier<T> {
-  T get() throws SVNException, IOException;
+  T get() throws IOException;
 }

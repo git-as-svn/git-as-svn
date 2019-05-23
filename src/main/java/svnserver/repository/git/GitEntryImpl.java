@@ -10,7 +10,6 @@ package svnserver.repository.git;
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
 import svnserver.repository.git.prop.GitProperty;
 
@@ -60,15 +59,15 @@ class GitEntryImpl implements GitEntry {
     return fullPathCache;
   }
 
-  @Nullable
-  @Override
-  public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
-    return null;
-  }
-
   @NotNull
   @Override
   public GitEntry createChild(@NotNull String name, boolean isDir) {
     return new GitEntryImpl(props, getFullPath(), GitProperty.emptyArray, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE);
+  }
+
+  @Nullable
+  @Override
+  public GitFile getEntry(@NotNull String name) throws IOException {
+    return null;
   }
 }

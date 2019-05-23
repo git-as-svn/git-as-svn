@@ -7,24 +7,19 @@
  */
 package svnserver.repository.git.filter;
 
-import org.atteo.classindex.ClassIndex;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.DB;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.HashHelper;
 import svnserver.StringHelper;
-import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Modifier;
 import java.security.MessageDigest;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,7 +33,7 @@ public final class GitFilterHelper {
   private GitFilterHelper() {
   }
 
-  public static long getSize(@NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @NotNull Map<String, Long> cacheSize, @NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public static long getSize(@NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @NotNull Map<String, Long> cacheSize, @NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     final Long size = cacheSize.get(objectId.getObject().name());
     if (size != null) {
       return size;
@@ -47,27 +42,7 @@ public final class GitFilterHelper {
   }
 
   @NotNull
-  public static String getMd5(@NotNull GitFilter filter, @NotNull Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize, @NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
-    final String md5 = cacheMd5.get(objectId.getObject().name());
-    if (md5 != null) {
-      return md5;
-    }
-    //noinspection ConstantConditions
-    return createMetadata(objectId, filter, cacheMd5, cacheSize).md5;
-  }
-
-  @NotNull
-  public static HTreeMap<String, String> getCacheMd5(@NotNull GitFilter filter, @NotNull DB cacheDb) {
-    return cacheDb.hashMap("cache.filter." + filter.getName() + ".md5", Serializer.STRING, Serializer.STRING).createOrOpen();
-  }
-
-  @NotNull
-  public static HTreeMap<String, Long> getCacheSize(@NotNull GitFilter filter, @NotNull DB cacheDb) {
-    return cacheDb.hashMap("cache.filter." + filter.getName() + ".size", Serializer.STRING, Serializer.LONG).createOrOpen();
-  }
-
-  @NotNull
-  private static Metadata createMetadata(@NotNull GitObject<? extends ObjectId> objectId, @NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize) throws IOException, SVNException {
+  private static Metadata createMetadata(@NotNull GitObject<? extends ObjectId> objectId, @NotNull GitFilter filter, @Nullable Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize) throws IOException {
     final byte[] buffer = new byte[BUFFER_SIZE];
     try (final InputStream stream = filter.inputStream(objectId)) {
       final MessageDigest digest = cacheMd5 != null ? HashHelper.md5() : null;
@@ -95,22 +70,23 @@ public final class GitFilterHelper {
   }
 
   @NotNull
-  public static Map<String, GitFilter> createFilters(@NotNull LocalContext context) {
-    final Map<String, GitFilter> result = new HashMap<>();
-    for (Class<? extends GitFilter> type : ClassIndex.getSubclasses(GitFilter.class)) {
-      if (Modifier.isAbstract(type.getModifiers())) continue;
-      if (!Modifier.isPublic(type.getModifiers())) continue;
-      try {
-        final GitFilter filter = type.getConstructor(LocalContext.class).newInstance(context);
-        final GitFilter oldFilter = result.put(filter.getName(), filter);
-        if (oldFilter != null) {
-          throw new RuntimeException("Found two classes mapped for same file: " + oldFilter.getClass() + " and " + type);
-        }
-      } catch (ReflectiveOperationException e) {
-        throw new RuntimeException(e);
-      }
+  public static String getMd5(@NotNull GitFilter filter, @NotNull Map<String, String> cacheMd5, @Nullable Map<String, Long> cacheSize, @NotNull GitObject<? extends ObjectId> objectId) throws IOException {
+    final String md5 = cacheMd5.get(objectId.getObject().name());
+    if (md5 != null) {
+      return md5;
     }
-    return result;
+    //noinspection ConstantConditions
+    return createMetadata(objectId, filter, cacheMd5, cacheSize).md5;
+  }
+
+  @NotNull
+  public static HTreeMap<String, String> getCacheMd5(@NotNull GitFilter filter, @NotNull DB cacheDb) {
+    return cacheDb.hashMap("cache.filter." + filter.getName() + ".md5", Serializer.STRING, Serializer.STRING).createOrOpen();
+  }
+
+  @NotNull
+  public static HTreeMap<String, Long> getCacheSize(@NotNull GitFilter filter, @NotNull DB cacheDb) {
+    return cacheDb.hashMap("cache.filter." + filter.getName() + ".size", Serializer.STRING, Serializer.LONG).createOrOpen();
   }
 
   private static class Metadata {

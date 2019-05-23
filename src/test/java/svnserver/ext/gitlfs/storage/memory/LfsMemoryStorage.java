@@ -15,17 +15,23 @@ import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.locks.LocalLockManager;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Memory storage for LFS files.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class LfsMemoryStorage implements LfsStorage {
+public final class LfsMemoryStorage extends LocalLockManager implements LfsStorage {
   @NotNull
   private final ConcurrentHashMap<String, byte[]> storage = new ConcurrentHashMap<>();
+
+  public LfsMemoryStorage() {
+    super(new ConcurrentSkipListMap<>());
+  }
 
   @Nullable
   @Override

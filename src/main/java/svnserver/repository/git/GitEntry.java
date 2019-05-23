@@ -9,7 +9,6 @@ package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.git.prop.GitProperty;
 
 import java.io.IOException;
@@ -33,5 +32,5 @@ public interface GitEntry {
   GitEntry createChild(@NotNull String name, boolean isDir);
 
   @Nullable
-  GitFile getEntry(@NotNull String name) throws IOException, SVNException;
+  GitFile getEntry(@NotNull String name) throws IOException;
 }

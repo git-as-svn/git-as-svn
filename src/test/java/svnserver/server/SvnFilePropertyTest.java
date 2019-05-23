@@ -56,6 +56,10 @@ public class SvnFilePropertyTest {
   private final static Map<String, String> propsBinary = ImmutableMap.<String, String>builder()
       .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
       .build();
+  @NotNull
+  private final static Map<String, String> propsNeedsLock = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.NEEDS_LOCK, "*")
+      .build();
 
   /**
    * Check commit .gitattributes.
@@ -224,6 +228,18 @@ public class SvnFilePropertyTest {
 
       checkFileContent(repo, "/non-link.bin", content);
       checkFileContent(repo, "/link.bin", content);
+    }
+  }
+
+  @Test
+  public void needsLock() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final String content = "link foo/bar.txt";
+      createFile(repo, "/link.bin", content, propsEolNative);
+      createFile(repo, "/.gitattributes", "*.bin -text lockable", propsEolNative);
+      checkFileProp(repo, "/link.bin", propsNeedsLock);
     }
   }
 

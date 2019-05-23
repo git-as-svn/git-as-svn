@@ -13,7 +13,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsSupplier;
@@ -48,7 +47,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   @Nullable
   private Iterable<GitFile> treeEntriesCache;
 
-  private GitFileTreeEntry(@NotNull GitBranch branch, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision, @NotNull EntriesCache entriesCache) throws IOException, SVNException {
+  private GitFileTreeEntry(@NotNull GitBranch branch, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision, @NotNull EntriesCache entriesCache) throws IOException {
     super(parentProps, parentPath, branch.getRepository().collectProperties(treeEntry, entriesCache), treeEntry.getFileName(), treeEntry.getFileMode());
     this.branch = branch;
     this.revision = revision;
@@ -58,12 +57,12 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   }
 
   @NotNull
-  public static GitFile create(@NotNull GitBranch branch, @NotNull RevTree tree, int revision) throws IOException, SVNException {
+  public static GitFile create(@NotNull GitBranch branch, @NotNull RevTree tree, int revision) throws IOException {
     return create(branch, PropertyMapping.getRootProperties(), "", new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, tree, ""), revision);
   }
 
   @NotNull
-  private static GitFile create(@NotNull GitBranch branch, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision) throws IOException, SVNException {
+  private static GitFile create(@NotNull GitBranch branch, @NotNull GitProperty[] parentProps, @NotNull String parentPath, @NotNull GitTreeEntry treeEntry, int revision) throws IOException {
     return new GitFileTreeEntry(branch, parentProps, parentPath, treeEntry, revision, new EntriesCache(branch.getRepository(), treeEntry));
   }
 
@@ -75,18 +74,18 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @NotNull
   @Override
-  public String getMd5() throws IOException, SVNException {
+  public String getMd5() throws IOException {
     return filter.getMd5(treeEntry.getObjectId());
   }
 
   @Override
-  public long getSize() throws IOException, SVNException {
+  public long getSize() throws IOException {
     return isDirectory() ? 0L : filter.getSize(treeEntry.getObjectId());
   }
 
   @NotNull
   @Override
-  public InputStream openStream() throws IOException, SVNException {
+  public InputStream openStream() throws IOException {
     return filter.inputStream(treeEntry.getObjectId());
   }
 
@@ -113,7 +112,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @NotNull
   @Override
-  public Map<String, String> getProperties() throws IOException, SVNException {
+  public Map<String, String> getProperties() throws IOException {
     final Map<String, String> props = getUpstreamProperties();
     final FileMode fileMode = getFileMode();
     if (fileMode.equals(FileMode.SYMLINK)) {
@@ -150,7 +149,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @NotNull
   @Override
-  public Iterable<GitFile> getEntries() throws IOException, SVNException {
+  public Iterable<GitFile> getEntries() throws IOException {
     if (treeEntriesCache == null) {
       final List<GitFile> result = new ArrayList<>();
       final String fullPath = getFullPath();
@@ -163,7 +162,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
   }
 
   @Nullable
-  public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
+  public GitFile getEntry(@NotNull String name) throws IOException {
     for (GitTreeEntry entry : entriesCache.get()) {
       if (entry.getFileName().equals(name)) {
         return create(branch, getRawProperties(), getFullPath(), entry, revision);
