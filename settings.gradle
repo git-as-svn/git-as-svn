@@ -1,5 +1,0 @@
-rootProject.name = "git-as-svn"
-
-include "docbook"
-include "docbook:ru_RU"
-include "docbook:en_US"
