@@ -1,0 +1,24 @@
+[[prereq]]
+= Prerequisites
+
+Server:
+
+ * Java 8+
+ * Git repository
+
+Client:
+
+ * Any Subversion 1.8+ compatible client: console `svn`, TortoiseSVN, SvnKit, SmartSVN, etc
+
+== Recommendations for Git-repositories
+
+=== File .gitattributes
+
+By default Git using native line ending for text files.
+
+To keep text files original content by default you need add to begin of
+file `.gitattributes` line:
+
+----
+*   -text
+----

@@ -1,0 +1,26 @@
+= git-as-svn User Manual
+Artem Navrotskiy <bozaro@users.noreply.github.com>; Marat Radchenko <marat@slonopotamus.org>
+v{project-version}, {date}
+ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,1600]]
+:doctype: book
+:toc:
+:toclevels: 4
+:leveloffset: +1
+:sectnums:
+:icons: font
+
+include::about.adoc[]
+
+include::prereq.adoc[]
+
+include::install.adoc[]
+
+include::gitlab.adoc[]
+
+include::gitea.adoc[]
+
+include::props.adoc[]
+
+include::ssh.adoc[]
+
+:leveloffset: -1

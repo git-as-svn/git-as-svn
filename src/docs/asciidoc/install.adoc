@@ -1,0 +1,156 @@
+[[install]]
+= Installation
+
+== Quick start
+
+To try git-as-svn you need:
+
+1.  Install Java 8 or later;
+2.  Download archive from site
+https://github.com/bozaro/git-as-svn/releases/latest;
+3.  After unpacking the archive change working path to the uncompressed
+directory and run the command:
++
+----
+bin/git-as-svn --config doc/config-local.example --show-config
+----
+
+This will start git-as-svn server with following configuration:
+
+1.  The server is accessible via svn-protocol on port 3690.
++
+You can check server with command like:
++
+----
+svn ls svn://localhost/example
+----
+2.  To access the server, you can use the user:
++
+Login: test
++
+Password: test
+3.  Cache and repository will be created in `build` directory:
+* `example.git` — repository directory, accessible via svn-protocol;
+* `git-as-svn.mapdb*` — cache files for expensive computed data.
+
+== Installation on Debian/Ubuntu
+
+You can install git-as-svn repository on Debian/Ubuntu using the
+commands:
+
+[source,bash]
+----
+# Add bintray GPG key
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 379CE192D401AB61
+# Add package source
+echo "deb https://dl.bintray.com/bozaro/git-as-svn debian main" | sudo tee /etc/apt/sources.list.d/git-as-svn.list
+# Install package
+sudo apt-get update
+sudo apt-get install git-as-svn
+sudo apt-get install git-as-svn-lfs
+----
+
+=== Package git-as-svn
+
+This package contains the git-as-svn.
+
+After you install git-as-svn is run in daemon mode and is
+available on the svn-protocol on port 3690. The daemon runs as `git`
+user.
+
+To access the server, you can use the user:
+
+Login: test
+
+Password: test
+
+You can check configuration with command like:
+
+[source,bash]
+----
+svn ls --username test --password test svn://localhost/example/
+----
+
+==== Used directories
+
+This package by default is configured to use the following directories:
+
+/etc/git-as-svn::
+This directory contains configuration files.
++
+/usr/share/doc/git-as-svn::
+This directory contains this documentation to the installed version.
++
+/var/git/lfs::
+This directory contains configuration files.
++
+It must be writable by user `git`.
++
+/var/git/repositories::
+This directory is used by default to store the Git-repositories.
++
+Repositories must be writable for the user `git`.
++
+/var/log/git-as-svn::
+This directory is used to record log files.
++
+It must be writable by user `git`.
++
+Log rotation can be changed in `/etc/git-as-svn/log4j2.xml` configuration file.
++
+/var/cache/git-as-svn::
+This directory is used to store the git-as-svn cache.
++
+It must be writable by user `git`.
++
+The loss of the contents of this directory is not critical for
+operation and does not entail the loss of user data.
+
+[[git-lfs-authenticate]]
+=== Package git-as-svn-lfs
+
+This package contains the `git-lfs-authenticate` script.
+
+Script `git-lfs-authenticate` is used for provide authentication data
+for HTTP access to Git LFS server for Git-users working with Git
+repository by SSH
+(https://github.com/github/git-lfs/blob/master/docs/api/README.md).
+
+This script communicates through a Unix Domain Socket with Git as
+Subversion.
+
+It send to Git as Subverison user name (`mode` = `username`) or user
+identifier (`mode` = `external`) taken from environment variable.
+Environment variable name is defined in configuration file via
+`variable` parameter (default value: `GL_ID`).
+
+To check the settings of the script can be run locally on the server the
+following command:
+
+[source,bash]
+----
+# Set environment variable defined in configuration file
+export GL_ID=key-1
+# Check access to repository
+sudo su git -c "git-lfs-authenticate example download"
+----
+
+Or on the client the following command:
+
+[source,bash]
+----
+ssh git@remote -C "git-lfs-authenticate example download"
+----
+
+The output should look something like this:
+
+[source,json]
+----
+{
+  "href": "https://api.github.com/lfs/bozaro/git-as-svn",
+  "header": {
+    "Authorization": "Bearer SOME-SECRET-TOKEN"
+  },
+  "expires_at": "2016-02-19T18:56:59Z"
+}
+----

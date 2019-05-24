@@ -55,7 +55,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class WebServer implements Shared {
   @NotNull
-  public static final String DEFAULT_REALM = "Git as Subversion server";
+  public static final String DEFAULT_REALM = "git-as-svn server";
   @NotNull
   private static final String AUTH_BASIC = "Basic ";
   @NotNull
