@@ -37,7 +37,7 @@ public final class RevPropCmd extends BaseCmd<RevPropCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final GitRevision revision = context.getRepository().getRevisionInfo(args.revision);
+    final GitRevision revision = context.getBranch().getRevisionInfo(args.revision);
     writer
         .listBegin()
         .word("success")

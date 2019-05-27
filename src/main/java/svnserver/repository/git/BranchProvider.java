@@ -5,18 +5,14 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.repository;
+package svnserver.repository.git;
 
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
+import java.util.NavigableMap;
 
-/**
- * Consumer with VCS exceptions.
- *
- * @author a.navrotskiy
- */
 @FunctionalInterface
-public interface VcsSupplier<T> {
-  T get() throws IOException;
+public interface BranchProvider {
+  @NotNull
+  NavigableMap<String, GitBranch> getBranches();
 }

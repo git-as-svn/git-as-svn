@@ -66,7 +66,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   @Nullable
   private String md5;
 
-  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @NotNull User user) throws IOException, SVNException {
+  GitDeltaConsumer(@NotNull GitWriter writer, @NotNull GitEntry entry, @Nullable GitFile file, @NotNull User user) throws IOException {
     this.writer = writer;
     this.entry = entry;
     this.user = user;
@@ -108,25 +108,25 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   }
 
   @Nullable
-  public GitObject<ObjectId> getObjectId() throws IOException, SVNException {
+  public GitObject<ObjectId> getObjectId() throws IOException {
     if ((originalId != null) && originalId.equals(objectId) && (newFilter == null)) {
       this.newFilter = oldFilter;
       this.objectId = originalId;
       if (oldFilter == null) {
         throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
       }
-      migrateFilter(writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
+      migrateFilter(writer.getBranch().getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties()));
     }
     return objectId;
   }
 
-  boolean migrateFilter(@NotNull GitFilter filter) throws IOException, SVNException {
+  boolean migrateFilter(@NotNull GitFilter filter) throws IOException {
     if (newFilter == null || objectId == null) {
       throw new IllegalStateException("Original object ID defined, but original Filter is not defined");
     }
     final GitObject<ObjectId> beforeId = objectId;
     if (!newFilter.equals(filter)) {
-      final Repository repo = writer.getRepository().getRepository();
+      final Repository repo = writer.getBranch().getRepository().getGit();
 
       try (
           final TemporaryOutputStream content = new TemporaryOutputStream();
@@ -156,7 +156,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       if (window != null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      newFilter = writer.getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
+      newFilter = writer.getBranch().getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
 
       final InputStream base = (oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes);
@@ -180,7 +180,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       if (window == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
-      final Repository repo = writer.getRepository().getRepository();
+      final Repository repo = writer.getBranch().getRepository().getGit();
       md5 = window.textDeltaEnd();
       try (InputStream stream = temporaryStream.toInputStream()) {
         objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));

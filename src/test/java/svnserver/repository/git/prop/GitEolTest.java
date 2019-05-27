@@ -9,14 +9,12 @@ package svnserver.repository.git.prop;
 
 import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +27,7 @@ import java.util.TreeMap;
  */
 public class GitEolTest {
   @DataProvider(name = "parseAttributesData")
-  public static Object[][] parseAttributesData() throws IOException {
+  public static Object[][] parseAttributesData() {
     final GitProperty[] attr = GitProperty.joinProperties(
         new GitAttributesFactory().rootDefaults(),
         new GitAttributesFactory().create(
@@ -65,66 +63,6 @@ public class GitEolTest {
     return result;
   }
 
-  @Test(dataProvider = "parseAttributesData")
-  public void parseAttributes(@NotNull Params params) throws IOException {
-    params.check();
-  }
-
-  private void checkProps(@NotNull GitProperty[] gitProperties, @Nullable String local, @Nullable String global, @Nullable String mine, @NotNull FileMode fileMode, @NotNull String... path) {
-    GitProperty[] props = gitProperties;
-    for (int i = 0; i < path.length; ++i) {
-      final String name = path[i];
-      final FileMode mode = i == path.length - 1 ? fileMode : FileMode.TREE;
-      props = createForChild(props, name, mode);
-    }
-    final Map<String, String> text = new HashMap<>();
-    for (GitProperty prop : props) {
-      prop.apply(text);
-    }
-    Assert.assertEquals(text.remove("svn:eol-style"), local);
-    Assert.assertEquals(text.remove("svn:auto-props"), global);
-    Assert.assertEquals(text.remove("svn:mime-type"), mine);
-    Assert.assertTrue(text.isEmpty(), text.toString());
-  }
-
-  public static class Params {
-    @NotNull
-    private final GitProperty[] attr;
-    @NotNull
-    private final String path;
-    @NotNull
-    private final Map<String, String> expected = new TreeMap<>();
-
-    public Params(@NotNull GitProperty[] attr, @NotNull String path) {
-      this.attr = attr;
-      this.path = path;
-    }
-
-    public Params prop(@NotNull String key, @NotNull String value) {
-      expected.put(key, value);
-      return this;
-    }
-
-    @Override
-    public String toString() {
-      return path;
-    }
-
-    public void check() {
-      GitProperty[] gitProperties = createForPath(attr, path);
-      final Map<String, String> svnProperties = new HashMap<>();
-      for (GitProperty prop : gitProperties) {
-        prop.apply(svnProperties);
-      }
-      for (Map.Entry<String, String> entry : expected.entrySet()) {
-        Assert.assertEquals(svnProperties.get(entry.getKey()), entry.getValue(), entry.getKey());
-      }
-      for (Map.Entry<String, String> entry : svnProperties.entrySet()) {
-        Assert.assertEquals(entry.getValue(), expected.get(entry.getKey()), entry.getKey());
-      }
-    }
-  }
-
   @NotNull
   private static GitProperty[] createForPath(@NotNull GitProperty[] baseProps, @NotNull String path) {
     GitProperty[] props = baseProps;
@@ -150,5 +88,48 @@ public class GitEolTest {
       }
     }
     return Arrays.copyOf(result, count);
+  }
+
+  @Test(dataProvider = "parseAttributesData")
+  public void parseAttributes(@NotNull Params params) {
+    params.check();
+  }
+
+  public static class Params {
+    @NotNull
+    private final GitProperty[] attr;
+    @NotNull
+    private final String path;
+    @NotNull
+    private final Map<String, String> expected = new TreeMap<>();
+
+    Params(@NotNull GitProperty[] attr, @NotNull String path) {
+      this.attr = attr;
+      this.path = path;
+    }
+
+    Params prop(@NotNull String key, @NotNull String value) {
+      expected.put(key, value);
+      return this;
+    }
+
+    @Override
+    public String toString() {
+      return path;
+    }
+
+    public void check() {
+      GitProperty[] gitProperties = createForPath(attr, path);
+      final Map<String, String> svnProperties = new HashMap<>();
+      for (GitProperty prop : gitProperties) {
+        prop.apply(svnProperties);
+      }
+      for (Map.Entry<String, String> entry : expected.entrySet()) {
+        Assert.assertEquals(svnProperties.get(entry.getKey()), entry.getValue(), entry.getKey());
+      }
+      for (Map.Entry<String, String> entry : svnProperties.entrySet()) {
+        Assert.assertEquals(entry.getValue(), expected.get(entry.getKey()), entry.getKey());
+      }
+    }
   }
 }

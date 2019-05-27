@@ -23,9 +23,9 @@ import java.util.*;
  */
 public final class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<LockDesc>> {
   @NotNull
-  private SortedMap<String, LockDesc> locks;
-  @NotNull
   private final String pathKey;
+  @NotNull
+  private SortedMap<String, LockDesc> locks;
 
   TreeMapLockDepthVisitor(@NotNull SortedMap<String, LockDesc> locks, @NotNull String pathKey) {
     this.pathKey = pathKey;
@@ -34,14 +34,14 @@ public final class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<Lock
 
   @NotNull
   @Override
-  public Iterator<LockDesc> visitEmpty() throws SVNException {
+  public Iterator<LockDesc> visitEmpty() {
     final LockDesc desc = locks.get(pathKey);
     return desc == null ? Collections.emptyIterator() : Collections.singletonList(desc).iterator();
   }
 
   @NotNull
   @Override
-  public Iterator<LockDesc> visitFiles() throws SVNException {
+  public Iterator<LockDesc> visitFiles() {
     return new LockDescIterator(locks, pathKey) {
       @Override
       protected boolean filter(@NotNull Map.Entry<String, LockDesc> item) {
@@ -52,13 +52,13 @@ public final class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<Lock
 
   @NotNull
   @Override
-  public Iterator<LockDesc> visitImmediates() throws SVNException {
+  public Iterator<LockDesc> visitImmediates() {
     return visitFiles();
   }
 
   @NotNull
   @Override
-  public Iterator<LockDesc> visitInfinity() throws SVNException {
+  public Iterator<LockDesc> visitInfinity() {
     return new LockDescIterator(locks, pathKey) {
       @Override
       protected boolean filter(@NotNull Map.Entry<String, LockDesc> item) {
@@ -87,20 +87,6 @@ public final class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<Lock
       this.nextItem = findNext();
     }
 
-    @Override
-    public boolean hasNext() {
-      return nextItem != null;
-    }
-
-    @Override
-    public LockDesc next() {
-      LockDesc result = nextItem;
-      if (result != null) {
-        nextItem = findNext();
-      }
-      return result;
-    }
-
     private LockDesc findNext() {
       while (iterator.hasNext()) {
         Map.Entry<String, LockDesc> item = iterator.next();
@@ -114,5 +100,19 @@ public final class TreeMapLockDepthVisitor implements DepthVisitor<Iterator<Lock
     }
 
     protected abstract boolean filter(@NotNull Map.Entry<String, LockDesc> item);
+
+    @Override
+    public boolean hasNext() {
+      return nextItem != null;
+    }
+
+    @Override
+    public LockDesc next() {
+      LockDesc result = nextItem;
+      if (result != null) {
+        nextItem = findNext();
+      }
+      return result;
+    }
   }
 }

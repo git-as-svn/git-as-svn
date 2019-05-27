@@ -8,12 +8,13 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
-import svnserver.DateHelper;
+import ru.bozaro.gitlfs.common.JsonHelper;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
-import java.util.Calendar;
+import java.text.ParseException;
+import java.util.Date;
 
 /**
  * Change current path in repository.
@@ -35,12 +36,18 @@ public final class GetDatedRevCmd extends BaseCmd<GetDatedRevCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
     final SvnServerWriter writer = context.getWriter();
-    final Calendar dateTime = DateHelper.parseDateTime(args.date);
+    final Date dateTime;
+    try {
+      dateTime = JsonHelper.dateFormat.parse(args.date);
+    } catch (ParseException e) {
+      throw new IOException(e);
+    }
+
     writer
         .listBegin()
         .word("success")
         .listBegin()
-        .number(context.getRepository().getRevisionByDate(dateTime.getTime().getTime()).getId())
+        .number(context.getBranch().getRevisionByDate(dateTime.getTime()).getId())
         .listEnd()
         .listEnd();
   }

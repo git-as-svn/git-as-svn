@@ -59,7 +59,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final SvnServerWriter writer = context.getWriter();
-    final int head = context.getRepository().getLatestRevision().getId();
+    final int head = context.getBranch().getLatestRevision().getId();
     int endRev = getRevision(args.endRev, head);
     int startRev = getRevision(args.startRev, 1);
 
@@ -144,7 +144,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
     int revision = -1;
     for (String target : args.targetPath) {
       final String fullTargetPath = context.getRepositoryPath(target);
-      final int lastChange = context.getRepository().getLastChange(fullTargetPath, endRev);
+      final int lastChange = context.getBranch().getLastChange(fullTargetPath, endRev);
       if (lastChange >= startRev) {
         targetPaths.add(new VcsCopyFrom(lastChange, fullTargetPath));
         revision = Math.max(revision, lastChange);
@@ -153,7 +153,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
     final List<GitRevision> result = new ArrayList<>();
     int logLimit = limit;
     while (revision >= startRev) {
-      final GitRevision revisionInfo = context.getRepository().getRevisionInfo(revision);
+      final GitRevision revisionInfo = context.getBranch().getRevisionInfo(revision);
       result.add(revisionInfo);
       if (--logLimit == 0) break;
 
@@ -162,7 +162,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
       while (iter.hasNext()) {
         final VcsCopyFrom entry = iter.next();
         if (revision == entry.getRevision()) {
-          final int lastChange = context.getRepository().getLastChange(entry.getPath(), revision - 1);
+          final int lastChange = context.getBranch().getLastChange(entry.getPath(), revision - 1);
           if (lastChange >= revision) {
             throw new IllegalStateException();
           }

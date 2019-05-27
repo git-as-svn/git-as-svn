@@ -61,7 +61,7 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid revision range: peg: " + pegRev + ", start: " + startRev + ", end " + endRev));
     }
     String fullPath = context.getRepositoryPath(args.path);
-    final int lastChange = context.getRepository().getLastChange(fullPath, pegRev);
+    final int lastChange = context.getBranch().getLastChange(fullPath, pegRev);
     if (lastChange < 0) {
       writer.word("done");
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: " + fullPath + "@" + pegRev));
@@ -70,7 +70,7 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
     while (maxRev >= endRev) {
       int minRev = maxRev;
       while (true) {
-        int change = context.getRepository().getLastChange(fullPath, minRev - 1);
+        int change = context.getBranch().getLastChange(fullPath, minRev - 1);
         if (change >= 0) {
           minRev = change;
         } else {
@@ -85,7 +85,7 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
             .listBegin().string(fullPath).listEnd()
             .listEnd();
       }
-      final VcsCopyFrom copyFrom = context.getRepository().getRevisionInfo(minRev).getCopyFrom(fullPath);
+      final VcsCopyFrom copyFrom = context.getBranch().getRevisionInfo(minRev).getCopyFrom(fullPath);
       if (copyFrom != null) {
         maxRev = copyFrom.getRevision();
         fullPath = copyFrom.getPath();

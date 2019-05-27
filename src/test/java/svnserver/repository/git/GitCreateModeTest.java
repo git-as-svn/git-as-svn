@@ -7,12 +7,14 @@
  */
 package svnserver.repository.git;
 
+import org.eclipse.jgit.lib.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 import svnserver.TestHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  * Test for GitCreateMode.
@@ -25,17 +27,17 @@ public class GitCreateModeTest {
     smoke(GitCreateMode.EMPTY);
   }
 
-  @Test
-  public void testExample() throws IOException {
-    smoke(GitCreateMode.EXAMPLE);
-  }
-
   private void smoke(@NotNull GitCreateMode mode) throws IOException {
-    File tempDir = TestHelper.createTempDir("git-as-svn");
+    final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      mode.createRepository(tempDir, "master");
+      mode.createRepository(tempDir, Collections.singleton(Constants.MASTER));
     } finally {
       TestHelper.deleteDirectory(tempDir);
     }
+  }
+
+  @Test
+  public void testExample() throws IOException {
+    smoke(GitCreateMode.EXAMPLE);
   }
 }

@@ -55,10 +55,14 @@ public final class LfsContentManager implements ContentManager {
   }
 
   @NotNull
+  LfsStorage getStorage() {
+    return storage;
+  }
+
+  @NotNull
   @Override
   public Downloader checkDownloadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
-    final VcsAccess access = context.sure(VcsAccess.class);
-    final User user = checkAccess(request, access::checkRead);
+    final User user = checkDownload(request);
     final Map<String, String> header = createHeader(request, user);
     return new Downloader() {
       @NotNull
@@ -90,36 +94,24 @@ public final class LfsContentManager implements ContentManager {
   }
 
   @NotNull
-  @Override
-  public Uploader checkUploadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
+  User checkDownload(@NotNull HttpServletRequest request) throws IOException, UnauthorizedError, ForbiddenError {
     final VcsAccess access = context.sure(VcsAccess.class);
-    final User user = checkAccess(request, access::checkWrite);
-    final Map<String, String> header = createHeader(request, user);
-    return new Uploader() {
-      @Override
-      public void saveObject(@NotNull Meta meta, @NotNull InputStream content) throws IOException {
-        try (final LfsWriter writer = storage.getWriter(Objects.requireNonNull(user))) {
-          IOUtils.copy(content, writer);
-          writer.finish(LfsStorage.OID_PREFIX + meta.getOid());
-        }
-      }
-
-      @NotNull
-      @Override
-      public Map<String, String> createHeader(@NotNull Map<String, String> defaultHeader) {
-        return header;
-      }
-    };
+    return checkAccess(request, access::checkRead);
   }
 
-  @Nullable
-  @Override
-  public Meta getMetadata(@NotNull String hash) throws IOException {
-    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
-    if (reader == null) {
-      return null;
+  @NotNull
+  private Map<String, String> createHeader(@NotNull HttpServletRequest request, @NotNull User user) {
+    final String auth = request.getHeader(Constants.HEADER_AUTHORIZATION);
+    if (auth == null) {
+      return Collections.emptyMap();
     }
-    return new Meta(reader.getOid(true), reader.getSize());
+    if (auth.startsWith(WebServer.AUTH_TOKEN)) {
+      return ImmutableMap.<String, String>builder()
+          .put(Constants.HEADER_AUTHORIZATION, auth)
+          .build();
+    } else {
+      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getExpire(tokenExpireSec));
+    }
   }
 
   @NotNull
@@ -140,29 +132,53 @@ public final class LfsContentManager implements ContentManager {
   }
 
   @NotNull
-  private Map<String, String> createHeader(@NotNull HttpServletRequest request, @NotNull User user) {
-    final String auth = request.getHeader(Constants.HEADER_AUTHORIZATION);
-    if (auth == null) {
-      return Collections.emptyMap();
-    }
-    if (auth.startsWith(WebServer.AUTH_TOKEN)) {
-      return ImmutableMap.<String, String>builder()
-          .put(Constants.HEADER_AUTHORIZATION, auth)
-          .build();
-    } else {
-      return LfsAuthHelper.createTokenHeader(context.getShared(), user, LfsAuthHelper.getExpire(tokenExpireSec));
-    }
-  }
-
-  @NotNull
   private User getAuthInfo(@NotNull HttpServletRequest request) {
     final WebServer server = context.getShared().sure(WebServer.class);
     final User user = server.getAuthInfo(request.getHeader(Constants.HEADER_AUTHORIZATION), Math.round(tokenExpireSec * tokenEnsureTime));
     return user == null ? User.getAnonymous() : user;
   }
 
+  @NotNull
+  @Override
+  public Uploader checkUploadAccess(@NotNull HttpServletRequest request) throws IOException, ForbiddenError, UnauthorizedError {
+    final User user = checkUpload(request);
+    final Map<String, String> header = createHeader(request, user);
+    return new Uploader() {
+      @Override
+      public void saveObject(@NotNull Meta meta, @NotNull InputStream content) throws IOException {
+        try (final LfsWriter writer = storage.getWriter(Objects.requireNonNull(user))) {
+          IOUtils.copy(content, writer);
+          writer.finish(LfsStorage.OID_PREFIX + meta.getOid());
+        }
+      }
+
+      @NotNull
+      @Override
+      public Map<String, String> createHeader(@NotNull Map<String, String> defaultHeader) {
+        return header;
+      }
+    };
+  }
+
+  @NotNull
+  User checkUpload(@NotNull HttpServletRequest request) throws IOException, UnauthorizedError, ForbiddenError {
+    final VcsAccess access = context.sure(VcsAccess.class);
+    return checkAccess(request, access::checkWrite);
+  }
+
+  @Nullable
+  @Override
+  public Meta getMetadata(@NotNull String hash) throws IOException {
+    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+    if (reader == null) {
+      return null;
+    }
+    return new Meta(reader.getOid(true), reader.getSize());
+  }
+
   @FunctionalInterface
   public interface Checker {
     void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
   }
+
 }

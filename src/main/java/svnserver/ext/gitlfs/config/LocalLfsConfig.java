@@ -18,6 +18,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 import svnserver.repository.git.GitLocation;
+import svnserver.repository.locks.LocalLockManager;
 
 import java.io.File;
 
@@ -52,9 +53,10 @@ public final class LocalLfsConfig implements SharedConfig, LfsStorageFactory {
 
   @NotNull
   public LfsStorage createStorage(@NotNull LocalContext context) {
-    File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
-    File metaRoot = saveMeta ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
-    return new LfsLocalStorage(layout, dataRoot, metaRoot, compress);
+    final File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
+    final File metaRoot = saveMeta ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
+
+    return new LfsLocalStorage(LocalLockManager.getPersistentStorage(context), layout, dataRoot, metaRoot, compress);
   }
 
   /**

@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import svnserver.StringHelper;
+import svnserver.auth.User;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
@@ -25,16 +26,13 @@ import svnserver.parser.token.ListEndToken;
 import svnserver.repository.VcsConsumer;
 import svnserver.repository.git.*;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockManager;
+import svnserver.repository.locks.LockStorage;
 import svnserver.server.SessionContext;
 import svnserver.server.msg.PropertyEntry;
 import svnserver.server.step.CheckPermissionStep;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Commit client changes.
@@ -106,14 +104,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final String message;
     @NotNull
     private final LockInfo[] locks;
-    @NotNull
-    private final PropertyEntry[] revProps;
 
     public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks, @NotNull PropertyEntry[] revProps) {
       this.message = message;
       this.locks = locks;
       this.keepLocks = keepLocks;
-      this.revProps = revProps;
     }
   }
 
@@ -305,8 +300,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
       this.message = params.message;
       this.keepLocks = params.keepLocks;
-      this.writer = context.getRepository().createWriter(context.getUser());
-      final GitFile entry = context.getRepository().getLatestRevision().getFile("");
+      this.writer = context.getBranch().createWriter(context.getUser());
+      final GitFile entry = context.getBranch().getLatestRevision().getFile("");
       if (entry == null) {
         throw new IllegalStateException("Repository root entry not found.");
       }
@@ -508,17 +503,15 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       if (!files.isEmpty()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
-      final GitRevision revision = context.getRepository().wrapLockWrite((lockManager) -> {
-        final List<LockDesc> oldLocks = getLocks(lockManager, locks);
+      final GitRevision revision = context.getBranch().getRepository().wrapLockWrite(lockStorage -> {
+        final List<LockDesc> oldLocks = keepLocks ? getLocks(context.getUser(), lockStorage, locks) : Collections.emptyList();
         for (int pass = 0; ; ++pass) {
           if (pass >= MAX_PASS_COUNT) {
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Cant commit changes to upstream repository."));
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Can't commit changes to upstream repository."));
           }
-          final GitRevision newRevision = updateDir(writer.createCommitBuilder(lockManager, locks), rootEntry).commit(context.getUser(), message);
+          final GitRevision newRevision = updateDir(writer.createCommitBuilder(lockStorage, locks), rootEntry).commit(context.getUser(), message);
           if (newRevision != null) {
-            if (keepLocks) {
-              lockManager.renewLocks(oldLocks.toArray(LockDesc.emptyArray));
-            }
+            lockStorage.renewLocks(context.getBranch(), oldLocks.toArray(LockDesc.emptyArray));
             return newRevision;
           }
         }
@@ -585,12 +578,13 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
 
     @NotNull
-    private List<LockDesc> getLocks(@NotNull LockManager lockManager, @NotNull Map<String, String> locks) {
+    private List<LockDesc> getLocks(@NotNull User user, @NotNull LockStorage lockManager, @NotNull Map<String, String> locks) throws IOException {
       final List<LockDesc> result = new ArrayList<>();
       for (Map.Entry<String, String> entry : locks.entrySet()) {
-        final LockDesc lock = lockManager.getLock(entry.getKey());
-        if (lock != null && lock.getToken().equals(entry.getValue())) {
-          result.add(lock);
+        for (LockDesc lock : lockManager.getLocks(user, writer.getBranch(), entry.getKey(), entry.getValue())) {
+          if (lock.getToken().equals(entry.getValue())) {
+            result.add(lock);
+          }
         }
       }
       return result;

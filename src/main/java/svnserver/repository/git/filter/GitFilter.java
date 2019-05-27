@@ -10,7 +10,6 @@ package svnserver.repository.git.filter;
 import org.atteo.classindex.IndexSubclasses;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.repository.git.GitObject;
 
@@ -52,7 +51,7 @@ public interface GitFilter {
    * @return Object md5 sum.
    */
   @NotNull
-  String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException;
+  String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException;
 
   /**
    * Get object size.
@@ -60,7 +59,7 @@ public interface GitFilter {
    * @param objectId Object reference.
    * @return Object size in bytes.
    */
-  long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException;
+  long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException;
 
   /**
    * Get object stream.
@@ -69,7 +68,7 @@ public interface GitFilter {
    * @return Object stream.
    */
   @NotNull
-  InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException;
+  InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException;
 
   /**
    * Create stream wrapper for object.
@@ -79,5 +78,5 @@ public interface GitFilter {
    * @return Return output stream for writing original file data.
    */
   @NotNull
-  OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException, SVNException;
+  OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException;
 }

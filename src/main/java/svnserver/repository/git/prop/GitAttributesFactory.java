@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.repository.git.path.Wildcard;
 import svnserver.repository.git.path.matcher.path.AlwaysMatcher;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
@@ -43,7 +42,7 @@ public final class GitAttributesFactory implements GitPropertyFactory {
 
   @NotNull
   @Override
-  public GitProperty[] create(@NotNull String content) throws IOException {
+  public GitProperty[] create(@NotNull String content) {
     final List<GitProperty> properties = new ArrayList<>();
     for (String line : content.split("(?:#[^\n]*)?\n")) {
       final String[] tokens = line.trim().split("\\s+");
@@ -51,6 +50,7 @@ public final class GitAttributesFactory implements GitPropertyFactory {
         final Wildcard wildcard = new Wildcard(tokens[0]);
         processProperty(properties, wildcard, SVNProperty.MIME_TYPE, getMimeType(tokens));
         processProperty(properties, wildcard, SVNProperty.EOL_STYLE, getEol(tokens));
+        processProperty(properties, wildcard, SVNProperty.NEEDS_LOCK, getNeedsLock(tokens));
 
         final String filter = getFilter(tokens);
         if (filter != null) {
@@ -60,7 +60,7 @@ public final class GitAttributesFactory implements GitPropertyFactory {
         log.warn("Found invalid git pattern: {}", line);
       }
     }
-    return properties.toArray(new GitProperty[properties.size()]);
+    return properties.toArray(GitProperty.emptyArray);
   }
 
   @NotNull
@@ -86,7 +86,7 @@ public final class GitAttributesFactory implements GitPropertyFactory {
   }
 
   @Nullable
-  private String getMimeType(String[] tokens) {
+  private String getMimeType(@NotNull String[] tokens) {
     for (int i = 1; i < tokens.length; ++i) {
       String token = tokens[i];
       if (token.startsWith("binary")) {
@@ -103,7 +103,7 @@ public final class GitAttributesFactory implements GitPropertyFactory {
   }
 
   @Nullable
-  private String getEol(String[] tokens) {
+  private String getEol(@NotNull String[] tokens) {
     for (int i = 1; i < tokens.length; ++i) {
       final String token = tokens[i];
       if (token.startsWith(EOL_PREFIX)) {
@@ -129,7 +129,16 @@ public final class GitAttributesFactory implements GitPropertyFactory {
   }
 
   @Nullable
-  private String getFilter(String[] tokens) {
+  private String getNeedsLock(@NotNull String[] tokens) {
+    for (int i = 1; i < tokens.length; ++i)
+      if (tokens[i].equals("lockable"))
+        return "*";
+
+    return null;
+  }
+
+  @Nullable
+  private String getFilter(@NotNull String[] tokens) {
     for (int i = 1; i < tokens.length; ++i) {
       final String token = tokens[i];
       if (token.startsWith(FILTER_PREFIX)) {

@@ -11,13 +11,11 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.PropertyMapping;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 
@@ -26,27 +24,51 @@ import java.util.Collections;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-final  class GitFileEmptyTree extends GitEntryImpl implements GitFile {
+final class GitFileEmptyTree extends GitEntryImpl implements GitFile {
   @NotNull
-  private final GitRepository repo;
+  private final GitBranch branch;
 
   private final int revision;
 
-  GitFileEmptyTree(@NotNull GitRepository repo, @NotNull String parentPath, int revision) {
+  GitFileEmptyTree(@NotNull GitBranch branch, @NotNull String parentPath, int revision) {
     super(PropertyMapping.getRootProperties(), parentPath, GitProperty.emptyArray, "", FileMode.TREE);
-    this.repo = repo;
+    this.branch = branch;
     this.revision = revision;
+  }
+
+  @Nullable
+  @Override
+  public GitFile getEntry(@NotNull String name) {
+    return null;
   }
 
   @NotNull
   @Override
-  public GitRepository getRepo() {
-    return repo;
+  public String getContentHash() {
+    throw new IllegalStateException("Can't get content hash without object.");
+  }
+
+  @NotNull
+  @Override
+  public String getMd5() {
+    throw new IllegalStateException("Can't get md5 without object.");
   }
 
   @Override
-  public int getRevision() {
-    return revision;
+  public long getSize() {
+    return 0L;
+  }
+
+  @NotNull
+  @Override
+  public InputStream openStream() {
+    throw new IllegalStateException("Can't get open stream without object.");
+  }
+
+  @Nullable
+  @Override
+  public VcsCopyFrom getCopyFrom() {
+    return getLastChange().getCopyFrom(getFullPath());
   }
 
   @Nullable
@@ -59,17 +81,6 @@ final  class GitFileEmptyTree extends GitEntryImpl implements GitFile {
     return null;
   }
 
-  @NotNull
-  public FileMode getFileMode() {
-    return FileMode.TREE;
-  }
-
-  @Nullable
-  @Override
-  public GitFile getEntry(@NotNull String name) throws IOException, SVNException {
-    return null;
-  }
-
   @Nullable
   public GitObject<ObjectId> getObjectId() {
     return null;
@@ -77,37 +88,24 @@ final  class GitFileEmptyTree extends GitEntryImpl implements GitFile {
 
   @NotNull
   @Override
-  public String getMd5() throws IOException, SVNException {
-    throw new IllegalStateException("Can't get md5 without object.");
+  public GitBranch getBranch() {
+    return branch;
+  }
+
+  @Override
+  public int getRevision() {
+    return revision;
+  }
+
+  @NotNull
+  public FileMode getFileMode() {
+    return FileMode.TREE;
   }
 
   @NotNull
   @Override
-  public String getContentHash() throws IOException, SVNException {
-    throw new IllegalStateException("Can't get content hash without object.");
-  }
-
-  @Override
-  public long getSize() throws IOException, SVNException {
-    return 0L;
-  }
-
-  @NotNull
-  @Override
-  public InputStream openStream() throws IOException, SVNException {
-    throw new IllegalStateException("Can't get open stream without object.");
-  }
-
-  @NotNull
-  @Override
-  public Iterable<GitFile> getEntries() throws IOException, SVNException {
+  public Iterable<GitFile> getEntries() {
     return Collections.emptyList();
-  }
-
-  @Nullable
-  @Override
-  public VcsCopyFrom getCopyFrom() throws IOException {
-    return getLastChange().getCopyFrom(getFullPath());
   }
 
   @Override

@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public final class UnlockTarget {
   @NotNull
   private final String path;
+  @Nullable
   private final String token;
 
   public UnlockTarget(@NotNull String path, @Nullable String token) {

@@ -12,8 +12,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
@@ -30,9 +28,9 @@ import java.util.Map;
  */
 public final class GitFilterRaw implements GitFilter {
   @NotNull
-  private final Map<String, String> cacheMd5;
-  @NotNull
   public static final String NAME = "raw";
+  @NotNull
+  private final Map<String, String> cacheMd5;
 
   public GitFilterRaw(@NotNull LocalContext context) {
     this.cacheMd5 = GitFilterHelper.getCacheMd5(this, context.getShared().getCacheDB());
@@ -46,7 +44,7 @@ public final class GitFilterRaw implements GitFilter {
 
   @NotNull
   @Override
-  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     return GitFilterHelper.getMd5(this, cacheMd5, null, objectId);
   }
 

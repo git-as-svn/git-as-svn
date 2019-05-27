@@ -9,7 +9,10 @@ package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.common.LockConflictException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockTarget;
@@ -29,23 +32,6 @@ import java.io.IOException;
  */
 public final class LockCmd extends BaseCmd<LockCmd.Params> {
 
-  public static final class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final String[] comment;
-    private final boolean stealLock;
-    @NotNull
-    private final int[] rev;
-
-    public Params(@NotNull String path, @NotNull String[] comment, boolean stealLock, @NotNull int[] rev) {
-      this.path = path;
-      this.comment = comment;
-      this.stealLock = stealLock;
-      this.rev = rev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<? extends Params> getArguments() {
@@ -58,12 +44,17 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
     final String path = context.getRepositoryPath(args.path);
     final LockTarget lockTarget = new LockTarget(path, rev);
     final String comment = args.comment.length == 0 ? null : args.comment[0];
-    final LockDesc[] lockDescs = context.getRepository().wrapLockWrite((lockManager) -> lockManager.lock(context.getUser(), comment, args.stealLock, new LockTarget[]{lockTarget}));
+    final LockDesc[] lockDescs = context.getBranch().getRepository().wrapLockWrite(lockStorage -> {
+      try {
+        return lockStorage.lock(context.getUser(), context.getBranch(), comment, args.stealLock, new LockTarget[]{lockTarget});
+      } catch (LockConflictException e) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path is already locked: {0}", e.getLock().getPath()));
+      }
+    });
     if (lockDescs.length != 1) {
       throw new IllegalStateException();
     }
     final SvnServerWriter writer = context.getWriter();
-    // TODO: is it correct?
     writer.listBegin()
         .word("success")
         .listBegin();
@@ -84,11 +75,28 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
           .listBegin()
           .string(lockDesc.getPath())
           .string(lockDesc.getToken())
-          .string(lockDesc.getOwner())
+          .string(lockDesc.getOwner() == null ? "" : lockDesc.getOwner())
           .listBegin().stringNullable(lockDesc.getComment()).listEnd()
           .string(lockDesc.getCreatedString())
           .listBegin()
           .listEnd()
           .listEnd();
+  }
+
+  public static final class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final String[] comment;
+    private final boolean stealLock;
+    @NotNull
+    private final int[] rev;
+
+    public Params(@NotNull String path, @NotNull String[] comment, boolean stealLock, @NotNull int[] rev) {
+      this.path = path;
+      this.comment = comment;
+      this.stealLock = stealLock;
+      this.rev = rev;
+    }
   }
 }

@@ -30,7 +30,7 @@ public final class StringHelper {
   public static String toHex(byte[] data) {
     final StringBuilder result = new StringBuilder();
     for (byte i : data) {
-      result.append(DIGITS[(i >> 4) & 0x0F]);
+      result.append(DIGITS[i >> 4 & 0x0F]);
       result.append(DIGITS[i & 0x0F]);
     }
     return result.toString();
@@ -75,7 +75,7 @@ public final class StringHelper {
     } else if (result.length() == 1) {
       return "/";
     }
-    return result.endsWith("/") ? result : (result + "/");
+    return result.endsWith("/") ? result : result + "/";
   }
 
   @NotNull
@@ -97,16 +97,17 @@ public final class StringHelper {
    * @return Returns true, if parentPath is base path of childPath.
    */
   public static boolean isParentPath(@NotNull String parentPath, @NotNull String childPath) {
-    if (childPath.startsWith(parentPath)) {
-      int parentLength = parentPath.length();
-      if (childPath.length() == parentLength)
-        return true;
-      if (childPath.charAt(parentLength) == '/')
-        return true;
-      if ((parentLength > 0) && (childPath.charAt(parentLength - 1) == '/'))
-        return true;
-    }
-    return false;
+    if (!childPath.startsWith(parentPath))
+      return false;
+
+    final int parentLength = parentPath.length();
+    if (childPath.length() == parentLength)
+      return true;
+
+    if (childPath.charAt(parentLength) == '/')
+      return true;
+
+    return parentLength > 0 && childPath.charAt(parentLength - 1) == '/';
   }
 
   /**
@@ -119,7 +120,7 @@ public final class StringHelper {
   @Nullable
   public static String getChildPath(@NotNull String parentPath, @NotNull String fullChildPath) {
     if (parentPath.isEmpty()) {
-      if ((fullChildPath.length() > 1) && (fullChildPath.charAt(1) == '/')) {
+      if (fullChildPath.length() > 1 && fullChildPath.charAt(1) == '/') {
         return fullChildPath.substring(1);
       }
       return fullChildPath;
@@ -141,6 +142,6 @@ public final class StringHelper {
     if (message == null)
       return null;
     int eol = message.indexOf('\n');
-    return (eol >= 0) ? message.substring(0, eol) : message;
+    return eol >= 0 ? message.substring(0, eol) : message;
   }
 }

@@ -9,8 +9,6 @@ package svnserver.repository.git.filter;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.repository.git.GitObject;
@@ -29,6 +27,9 @@ import java.util.zip.GZIPOutputStream;
  */
 public class GitFilterGzip implements GitFilter {
   @NotNull
+  public static final String NAME = "gzip";
+
+  @NotNull
   private final Map<String, String> cacheMd5;
   @NotNull
   private final Map<String, Long> cacheSize;
@@ -41,17 +42,17 @@ public class GitFilterGzip implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return "gzip";
+    return NAME;
   }
 
   @NotNull
   @Override
-  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     return GitFilterHelper.getMd5(this, cacheMd5, cacheSize, objectId);
   }
 
   @Override
-  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     return GitFilterHelper.getSize(this, cacheMd5, cacheSize, objectId);
   }
 

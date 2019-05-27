@@ -23,6 +23,21 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public abstract class BaseCmd<T> {
+  public static void sendError(@NotNull SvnServerWriter writer, @NotNull SVNErrorMessage errorMessage) throws IOException {
+    writer
+        .listBegin()
+        .word("failure")
+        .listBegin()
+        .listBegin()
+        .number(errorMessage.getErrorCode().getCode())
+        .string(errorMessage.getMessage())
+        .string("")
+        .number(0)
+        .listEnd()
+        .listEnd()
+        .listEnd();
+  }
+
   /**
    * Arguments class.
    *
@@ -63,28 +78,13 @@ public abstract class BaseCmd<T> {
     return defaultRevision;
   }
 
-  protected int getRevisionOrLatest(@NotNull int[] rev, @NotNull SessionContext context) {
+  int getRevisionOrLatest(@NotNull int[] rev, @NotNull SessionContext context) {
     if (rev.length > 0) {
       final int revNum = rev[0];
       if (revNum >= 0)
         return revNum;
     }
 
-    return context.getRepository().getLatestRevision().getId();
-  }
-
-  public static void sendError(@NotNull SvnServerWriter writer, @NotNull SVNErrorMessage errorMessage) throws IOException {
-    writer
-        .listBegin()
-        .word("failure")
-        .listBegin()
-        .listBegin()
-        .number(errorMessage.getErrorCode().getCode())
-        .string(errorMessage.getMessage())
-        .string("")
-        .number(0)
-        .listEnd()
-        .listEnd()
-        .listEnd();
+    return context.getBranch().getLatestRevision().getId();
   }
 }

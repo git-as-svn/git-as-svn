@@ -9,7 +9,6 @@ package svnserver.repository.git;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import svnserver.repository.SvnForbiddenException;
@@ -46,7 +45,7 @@ public final class GitLogEntry {
     return newEntry;
   }
 
-  public char getChange() throws IOException, SVNException {
+  public char getChange() throws IOException {
     if (newEntry == null)
       return SVNLogEntryPath.TYPE_DELETED;
 
@@ -59,7 +58,7 @@ public final class GitLogEntry {
     return isModified() ? SVNLogEntryPath.TYPE_MODIFIED : 0;
   }
 
-  public boolean isModified() throws IOException, SVNException {
+  public boolean isModified() throws IOException {
     try {
       if ((newEntry != null) && (oldEntry != null) && !newEntry.equals(oldEntry)) {
         // Type modified.
@@ -88,7 +87,7 @@ public final class GitLogEntry {
     return filter == null ? null : filter.getName();
   }
 
-  public boolean isPropertyModified() throws IOException, SVNException {
+  public boolean isPropertyModified() throws IOException {
     if ((newEntry == null) || (oldEntry == null)) return false;
     final Map<String, String> newProps = newEntry.getProperties();
     final Map<String, String> oldProps = oldEntry.getProperties();
@@ -105,7 +104,7 @@ public final class GitLogEntry {
     throw new IllegalStateException();
   }
 
-  public boolean isContentModified() throws IOException, SVNException {
+  public boolean isContentModified() throws IOException {
     if (newEntry == null || newEntry.isDirectory())
       return false;
 

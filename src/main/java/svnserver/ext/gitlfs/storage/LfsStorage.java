@@ -9,8 +9,15 @@ package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.common.data.Lock;
 import svnserver.auth.User;
 import svnserver.context.Local;
+import svnserver.repository.git.GitBranch;
+import svnserver.repository.locks.LockDesc;
+import svnserver.repository.locks.LockStorage;
+import svnserver.repository.locks.LockTarget;
+import svnserver.repository.locks.UnlockTarget;
 
 import java.io.IOException;
 
@@ -19,7 +26,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public interface LfsStorage extends Local {
+public interface LfsStorage extends Local, LockStorage {
   @NotNull
   String OID_PREFIX = "sha256:";
 
@@ -37,7 +44,7 @@ public interface LfsStorage extends Local {
    * Create writer for object.
    *
    * @return Object writer.
-   * @throws IOException
+   * @throws IOException .
    */
   @NotNull
   LfsWriter getWriter(@NotNull User user) throws IOException;

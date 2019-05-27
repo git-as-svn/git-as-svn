@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
@@ -31,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class GitRevision {
   @NotNull
-  private final GitRepository repo;
+  private final GitBranch branch;
   @NotNull
   private final ObjectId cacheCommit;
   @Nullable
@@ -44,14 +43,14 @@ public final class GitRevision {
   private final long date;
   private final int revision;
 
-  GitRevision(@NotNull GitRepository repo,
+  GitRevision(@NotNull GitBranch branch,
               @NotNull ObjectId cacheCommit,
               int revision,
               @NotNull Map<String, VcsCopyFrom> renames,
               @Nullable RevCommit gitOldCommit,
               @Nullable RevCommit gitNewCommit,
               int commitTimeSec) {
-    this.repo = repo;
+    this.branch = branch;
     this.cacheCommit = cacheCommit;
     this.revision = revision;
     this.renames = renames;
@@ -112,14 +111,14 @@ public final class GitRevision {
   }
 
   @Nullable
-  public GitFile getFile(@NotNull String fullPath) throws IOException, SVNException {
+  public GitFile getFile(@NotNull String fullPath) throws IOException {
     if (gitNewCommit == null) {
       if (fullPath.isEmpty())
-        return new GitFileEmptyTree(repo, "", revision);
+        return new GitFileEmptyTree(branch, "", revision);
       else
         return null;
     }
-    GitFile result = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
+    GitFile result = GitFileTreeEntry.create(branch, gitNewCommit.getTree(), revision);
     for (String pathItem : fullPath.split("/")) {
       if (pathItem.isEmpty()) {
         continue;
@@ -133,12 +132,12 @@ public final class GitRevision {
   }
 
   @NotNull
-  public Map<String, GitLogEntry> getChanges() throws IOException, SVNException {
+  public Map<String, GitLogEntry> getChanges() throws IOException {
     if (gitNewCommit == null) {
       return Collections.emptyMap();
     }
-    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(repo, "", revision - 1) : GitFileTreeEntry.create(repo, gitOldCommit.getTree(), revision - 1);
-    final GitFile newTree = GitFileTreeEntry.create(repo, gitNewCommit.getTree(), revision);
+    final GitFile oldTree = gitOldCommit == null ? new GitFileEmptyTree(branch, "", revision - 1) : GitFileTreeEntry.create(branch, gitOldCommit.getTree(), revision - 1);
+    final GitFile newTree = GitFileTreeEntry.create(branch, gitNewCommit.getTree(), revision);
 
     return ChangeHelper.collectChanges(oldTree, newTree, false);
   }

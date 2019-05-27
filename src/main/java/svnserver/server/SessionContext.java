@@ -21,8 +21,8 @@ import svnserver.parser.SvnServerParser;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.VcsAccess;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
 import svnserver.server.command.BaseCmd;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
@@ -69,14 +69,14 @@ public final class SessionContext {
     this.server = server;
     this.user = User.getAnonymous();
     this.repositoryInfo = repositoryInfo;
-    this.acl = getRepository().getContext().sure(VcsAccess.class);
+    this.acl = getBranch().getRepository().getContext().sure(VcsAccess.class);
     setParent(clientInfo.getUrl());
     this.capabilities = new HashSet<>(Arrays.asList(clientInfo.getCapabilities()));
   }
 
   @NotNull
-  public GitRepository getRepository() {
-    return repositoryInfo.getRepository();
+  public GitBranch getBranch() {
+    return repositoryInfo.getBranch();
   }
 
   public void setParent(@NotNull SVNURL url) throws SVNException {
@@ -143,7 +143,7 @@ public final class SessionContext {
    */
   @Nullable
   public GitFile getFile(int rev, @NotNull String path) throws SVNException, IOException {
-    return getRepository().getRevisionInfo(rev).getFile(getRepositoryPath(path));
+    return getBranch().getRevisionInfo(rev).getFile(getRepositoryPath(path));
   }
 
   @NotNull
@@ -155,7 +155,7 @@ public final class SessionContext {
   public GitFile getFile(int rev, @NotNull SVNURL url) throws SVNException, IOException {
     final String path = getRepositoryPath(url);
     checkRead(path);
-    return getRepository().getRevisionInfo(rev).getFile(path);
+    return getBranch().getRevisionInfo(rev).getFile(path);
   }
 
   public void checkRead(@Nullable String path) throws SVNException, IOException {

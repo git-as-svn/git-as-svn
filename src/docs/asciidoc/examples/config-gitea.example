@@ -1,22 +1,55 @@
 !config:
-realm: Gitea Realm
-compressionEnabled: true
-parallelIndexing: true
 
-# Use Gitea repositories
+# Specifies IP to listen to for svn:// connections
+#
+# host: 0.0.0.0
+
+# Specifies port number to listen to for svn:// connections
+#
+# port: 3690
+
+# Subversion realm name. Subversion uses this for credentials caching
+#
+# realm: git-as-svn realm
+
+# If enabled, git-as-svn compresses wire traffic
+# compressionEnabled: true
+
+# If enabled, git-as-svn indexed repositories in parallel during startup
+# This results in higher memory usage so may require adjustments to JVM memory options
+#
+# parallelIndexing: true
+
+# Sets cache location
+cacheConfig: !persistentCache
+  path: /var/cache/git-as-svn/git-as-svn.mapdb
+
+# Tells git-as-svn to use Gitea API for repository list
 repositoryMapping: !giteaMapping
-  path: /data/git/repositories
-  template:
-    branch: master
-    renameDetection: true
 
-# Use Gitea user database
+  # Filesystem location where Gitea stores repositories
+  # Note that git-as-svn needs write access in order to be able to commit
+  path: /data/git/repositories
+
+  # Common settings for all repositories exposed to svn://
+  # template:
+  #   branches:
+  #     - master
+  #   renameDetection: true
+
+# Tells git-as-svn to use Gitea API for user authentication
 userDB: !giteaUsers {}
 
 shared:
-  # Gitea server
+  # Configures Gitea API for git-as-svn
   - !gitea
+
+	# URL where your Gitea instance API is available
     url: http://localhost:3000/api/v1
-    #lfs: true
-    #token: de0c16fdc2c2ec5bcb4917922900015d3bceb82b
+
+	# Tells git-as-svn to store Git-LFS objects through Gitea LFS API
+    # lfs: true
+
+	# Gitea access token
+	# Note that git-as-svn requires Gitea Sudo permission in order to authenticate users
     token: 90c68b84fb04e364c2ea3fc42a6a2193144bc07d

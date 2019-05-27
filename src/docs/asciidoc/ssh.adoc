@@ -111,8 +111,8 @@ check whether we are trying to perform svn and handle it if so.
 The suggested config, at least for Gitlab docker and assuming that
 git-as-svn has been installed in `/opt/git-as-svn` is:
 
-* `/etc/gitlab/gitlab.rb`:
-+
+./etc/gitlab/gitlab.rb
+[source,ruby]
 ----
 ...
 ################################################################################
@@ -124,59 +124,15 @@ gitlab_shell['auth_file'] = "/var/opt/gitlab/ssh-shadow/authorized_keys"
 ...
 
 ----
-* `/opt/git-as-svn/config.yaml`:
-+
+
+./opt/git-as-svn/config.yaml
+[source,yaml]
 ----
-!config:
-realm: Git-as-svn Realm
-compressionEnabled: true
-parallelIndexing: true
-
-# Use GitLab repositories
-repositoryMapping: !gitlabMapping
-  path: /var/opt/gitlab/git-data/repositories/
-  # Uncomment following to only handle repositories with specified tags (add them to repositories via Settings -> General -> Tags in GitLab)
-  # repositoryTags:
-  #   - git-as-svn
-  template:
-    branch: master
-    renameDetection: true
-
-# Wrap the Gitlab user database with sshKeyUsers
-userDB:
-  !sshKeyUsers
-    userDB: !gitlabUsers {}
-    sshKeysToken: CHANGE_THIS_TO_SOMETHING_SECRET
-
-shared:
-  # Web server settings
-  # Used for:
-  #  * detecticting add/remove repositories via GitLab System Hook
-  #  * git-lfs-authenticate script (optionaly)
-  - !web
-    # baseUrl: http://git-as-svn.local/
-    listen:
-    - !http
-      host: localhost
-      port: 8123
-      # Use X-Forwarded-* headers
-      forwarded: true
-  # GitLab server
-  - !gitlab
-    url: http://localhost:3000/
-    hookUrl: http://localhost:8123/
-    token: qytzQc6uYiQfsoqJxGuG
-    #lfs: true
-  # Manage authorized_keys
-  - !sshKeys
-    shadowSSHDirectory: /var/opt/gitlab/ssh-shadow
-    realSSHDirectory: /var/opt/gitlab/.ssh
-    originalAppPath: /opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell
-    svnservePath: /opt/git-as-svn/bin/git-as-svn-svnserve
-
+include::examples/config-gitlab-ssh.example[]
 ----
-* `/opt/git-as-svn/bin/git-as-svn-svnserve`:
-+
+
+./opt/git-as-svn/bin/git-as-svn-svnserve
+[source,bash]
 ----
 #!/bin/bash
 
@@ -202,8 +158,9 @@ else
 fi
 
 ----
-* `/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel`:
-+
+
+./opt/git-as-svn/bin/git-as-svn-svnserve-tunnel
+[source,bash]
 ----
 #!/bin/bash
 
@@ -319,8 +276,7 @@ alone for git, just replacing it for svn
 
 The first option is described below.
 
-* `/assets/sshd_config`:
-+
+./assets/sshd_config
 ----
 ...
 # AuthorizedKeysCommand /opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell-authorized-keys-check git %u %k
@@ -330,8 +286,9 @@ AuthorizedKeysCommandUser git
 ...
 
 ----
-* `/opt/git-as-svn/bin/git-as-svn-authorized-keys-command`:
-+
+
+./opt/git-as-svn/bin/git-as-svn-authorized-keys-command
+[source,bash]
 ----
 #!/bin/bash
 
@@ -352,50 +309,11 @@ SVN_SERVE_PATH="/opt/git-as-svn/bin/git-as-svn-svnserve"
 exec -a "\$ORIGINAL_AUTHORIZED_COMMAND"  "\$ORIGINAL_AUTHORIZED_COMMAND" "\$@" | sed -e 's|command="'"\$ORIGINAL_APP_PATH"'|command="'"\$SVN_SERVE_PATH"'|'
 
 ----
-* `/opt/git-as-svn/config.yaml`:
-+
+
+./opt/git-as-svn/config.yaml
+[source,yaml]
 ----
-!config:
-realm: Git-as-svn Realm
-compressionEnabled: true
-parallelIndexing: true
-
-# Use GitLab repositories
-repositoryMapping: !gitlabMapping
-  path: /var/opt/gitlab/git-data/repositories/
-  # Uncomment following to only handle repositories with specified tags (add them to repositories via Settings -> General -> Tags in GitLab)
-  # repositoryTags:
-  #   - git-as-svn
-  template:
-    branch: master
-    renameDetection: true
-
-# Wrap the Gitlab user database with sshKeyUsers
-userDB:
-  !sshKeyUsers
-    userDB: !gitlabUsers {}
-    sshKeysToken: CHANGE_THIS_TO_SOMETHING_SECRET
-
-shared:
-  # Web server settings
-  # Used for:
-  #  * detecticting add/remove repositories via GitLab System Hook
-  #  * git-lfs-authenticate script (optionaly)
-  - !web
-    # baseUrl: http://git-as-svn.local/
-    listen:
-    - !http
-      host: localhost
-      port: 8123
-      # Use X-Forwarded-* headers
-      forwarded: true
-  # GitLab server
-  - !gitlab
-    url: http://localhost:3000/
-    hookUrl: http://localhost:8123/
-    #lfs: true
-    token: qytzQc6uYiQfsoqJxGuG
-
+include::examples/config-gitlab.example[]
 ----
 * `/opt/git-as-svn/bin/git-as-svn-svnserve` and
 `/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel` same as above.
@@ -422,8 +340,8 @@ are trying to perform svn and handle it if so.
 The suggested config, at least for Gitea docker, and assuming that
 git-as-svn has been installed in `/app/git-as-svn` is:
 
-* `/data/gitea/conf/app.ini`:
-+
+./data/gitea/conf/app.ini
+[source,ini]
 ----
 ...
 [server]
@@ -432,43 +350,15 @@ SSH_ROOT_PATH=/data/git/ssh-shadow
 ...
 
 ----
-* `/app/git-as-svn/config.yaml`:
-+
+
+./app/git-as-svn/config.yaml
+[source,yaml]
 ----
-!config:
-realm: Git-as-svn Realm
-compressionEnabled: true
-parallelIndexing: true
-
-# Use Gitea repositories
-repositoryMapping: !giteaMapping
-  path: /data/git/repositories
-  template:
-    branch: master
-    renameDetection: true
-
-# Use Gitea user database
-userDB:
-  !sshKeyUsers
-    userDB: !giteaUsers {}
-    sshKeysToken: CHANGE_THIS_TO_SOMETHING_SECRET
-
-shared:
-  # Gitea server
-  - !gitea
-    url: http://localhost:3000/api/v1
-    #lfs: true
-    #token: de0c16fdc2c2ec5bcb4917922900015d3bceb82b
-    token: 90c68b84fb04e364c2ea3fc42a6a2193144bc07d
-  - !sshKeys
-    shadowSSHDirectory: /data/git/ssh-shadow
-    realSSHDirectory: /data/git/.ssh
-    originalAppPath: /app/gitea/gitea
-    svnservePath: /app/gitea/git-as-svn-svnserve
-
+include::examples/config-gitea-ssh.example[]
 ----
-* `/app/git-as-svn/bin/git-as-svn-svnserve`:
-+
+
+./app/git-as-svn/bin/git-as-svn-svnserve
+[source,bash]
 ----
 #!/bin/bash
 
@@ -511,8 +401,8 @@ So we would need to move the original gitea from `/app/gitea/gitea` to
 And either create `/app/gitea/gitea` as a symbolic link or just copy the
 below `/app/git-as-svn/bin/git-as-svn-svnserve` as it.
 
-`/app/git-as-svn/bin/git-as-svn-svnserve`:
-
+./app/git-as-svn/bin/git-as-svn-svnserve
+[source,bash]
 ----
 #!/bin/bash
 

@@ -278,7 +278,7 @@ public final class GiteaIntegrationTest {
 
   @NotNull
   private SVNRepository openSvnRepository(@NotNull SvnTestServer server, @NotNull Repository repository, @NotNull String username, @NotNull String password) throws SVNException {
-    return SvnTestServer.openSvnRepository(server.getUrl().appendPath(repository.getFullName(), false), username, password);
+    return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(repository.getFullName() + "/master", false), username, password);
   }
 
   private void repoAddCollaborator(@NotNull String owner, @NotNull String repo, @NotNull String collaborator) throws Exception {

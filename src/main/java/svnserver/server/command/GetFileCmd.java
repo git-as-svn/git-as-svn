@@ -13,8 +13,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StreamHelper;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
@@ -57,8 +57,8 @@ public final class GetFileCmd extends BaseCmd<GetFileCmd.Params> {
     if (fullPath.endsWith("/"))
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not cat all targets because some targets are directories"));
 
-    final GitRepository repository = context.getRepository();
-    final GitRevision revision = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitBranch branch = context.getBranch();
+    final GitRevision revision = branch.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final GitFile fileInfo = revision.getFile(fullPath);
     if (fileInfo == null)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, fullPath + " not found in revision " + revision.getId()));

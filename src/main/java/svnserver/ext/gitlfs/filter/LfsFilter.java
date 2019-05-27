@@ -13,7 +13,6 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.auth.User;
@@ -22,7 +21,6 @@ import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.server.LfsServerEntry;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
-import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.git.GitObject;
@@ -41,14 +39,15 @@ import java.util.Map;
  */
 public final class LfsFilter implements GitFilter {
   @NotNull
-  private static final String NAME = "lfs";
+  public static final String NAME = "lfs";
+
   @Nullable
   private final LfsStorage storage;
   @NotNull
   private final Map<String, String> cacheMd5;
 
-  public LfsFilter(@NotNull LocalContext context) throws IOException, SVNException {
-    this.storage = LfsStorageFactory.tryCreateStorage(context);
+  public LfsFilter(@NotNull LocalContext context, @Nullable LfsStorage lfsStorage) {
+    this.storage = lfsStorage;
     this.cacheMd5 = GitFilterHelper.getCacheMd5(this, context.getShared().getCacheDB());
     final LfsServer lfsServer = context.getShared().get(LfsServer.class);
     if (storage != null && lfsServer != null) {
@@ -64,7 +63,7 @@ public final class LfsFilter implements GitFilter {
 
   @NotNull
   @Override
-  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException, SVNException {
+  public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     final ObjectLoader loader = objectId.openObject();
     final ObjectStream stream = loader.openStream();
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];

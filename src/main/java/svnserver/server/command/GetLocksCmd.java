@@ -7,6 +7,7 @@
  */
 package svnserver.server.command;
 
+import org.bouncycastle.util.Arrays;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
@@ -28,18 +29,6 @@ import java.util.Iterator;
  */
 public final class GetLocksCmd extends BaseCmd<GetLocksCmd.Params> {
 
-  public static final class Params {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final Depth depth;
-
-    public Params(@NotNull String path, @NotNull String[] depth) {
-      this.path = path;
-      this.depth = depth.length == 0 ? Depth.Infinity : Depth.parse(depth[0]);
-    }
-  }
-
   @NotNull
   @Override
   public Class<? extends Params> getArguments() {
@@ -50,7 +39,10 @@ public final class GetLocksCmd extends BaseCmd<GetLocksCmd.Params> {
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final String path = context.getRepositoryPath(args.path);
     final SvnServerWriter writer = context.getWriter();
-    final Iterator<LockDesc> locks = context.getRepository().wrapLockRead((lockManager) -> lockManager.getLocks(context.getRepositoryPath(path), args.depth));
+    final Iterator<LockDesc> locks = context.getBranch().getRepository().wrapLockRead(
+        lockStorage -> new Arrays.Iterator<>(lockStorage.getLocks(context.getUser(), context.getBranch(), context.getRepositoryPath(path), null))
+    );
+
     writer
         .listBegin()
         .word("success")
@@ -64,5 +56,17 @@ public final class GetLocksCmd extends BaseCmd<GetLocksCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
+  }
+
+  public static final class Params {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final Depth depth;
+
+    public Params(@NotNull String path, @NotNull String[] depth) {
+      this.path = path;
+      this.depth = depth.length == 0 ? Depth.Infinity : Depth.parse(depth[0]);
+    }
   }
 }

@@ -57,7 +57,7 @@ public final class GetLocationsCmd extends BaseCmd<GetLocationsCmd.Params> {
     final int[] sortedRevs = Arrays.copyOf(args.revs, args.revs.length);
     Arrays.sort(sortedRevs);
     String fullPath = context.getRepositoryPath(args.path);
-    int lastChange = context.getRepository().getLastChange(fullPath, args.pegRev);
+    int lastChange = context.getBranch().getLastChange(fullPath, args.pegRev);
     if (lastChange < 0) {
       writer.word("done");
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: " + fullPath + "@" + args.pegRev));
@@ -69,12 +69,12 @@ public final class GetLocationsCmd extends BaseCmd<GetLocationsCmd.Params> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: " + fullPath + "@" + args.pegRev + " at revision " + revision));
       }
       while ((revision < lastChange) && (lastChange >= 0)) {
-        int change = context.getRepository().getLastChange(fullPath, lastChange - 1);
+        int change = context.getBranch().getLastChange(fullPath, lastChange - 1);
         if (change >= 0) {
           lastChange = change;
           continue;
         }
-        final VcsCopyFrom copyFrom = context.getRepository().getRevisionInfo(lastChange).getCopyFrom(fullPath);
+        final VcsCopyFrom copyFrom = context.getBranch().getRevisionInfo(lastChange).getCopyFrom(fullPath);
         if (copyFrom != null) {
           lastChange = copyFrom.getRevision();
           fullPath = copyFrom.getPath();

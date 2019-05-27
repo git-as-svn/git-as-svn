@@ -34,7 +34,7 @@ import static svnserver.SvnTestHelper.sendDeltaAndClose;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnCheckoutTest {
+public final class SvnCheckoutTest {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnCheckoutTest.class);
 

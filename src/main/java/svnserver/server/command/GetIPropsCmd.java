@@ -12,8 +12,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
@@ -44,8 +44,8 @@ public final class GetIPropsCmd extends BaseCmd<GetIPropsCmd.Params> {
     SvnServerWriter writer = context.getWriter();
     String fullPath = context.getRepositoryPath(args.path);
 
-    final GitRepository repository = context.getRepository();
-    final GitRevision info = repository.getRevisionInfo(getRevisionOrLatest(args.rev, context));
+    final GitBranch branch = context.getBranch();
+    final GitRevision info = branch.getRevisionInfo(getRevisionOrLatest(args.rev, context));
     final List<GitFile> files = new ArrayList<>();
     int index = -1;
     while (true) {

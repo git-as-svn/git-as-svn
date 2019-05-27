@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.repository.VcsCopyFrom;
@@ -36,21 +35,24 @@ public interface GitFile extends GitEntry {
     return new GitEntryImpl(getRawProperties(), getFullPath(), GitProperty.emptyArray, name, isDir ? FileMode.TREE : FileMode.REGULAR_FILE);
   }
 
+  @Nullable
+  GitFile getEntry(@NotNull String name) throws IOException;
+
   /**
    * Get native repository content hash for cheap content modification check.
    */
   @NotNull
-  default String getContentHash() throws IOException, SVNException {
+  default String getContentHash() throws IOException {
     return getMd5();
   }
 
   @NotNull
-  String getMd5() throws IOException, SVNException;
+  String getMd5() throws IOException;
 
-  long getSize() throws IOException, SVNException;
+  long getSize() throws IOException;
 
   @NotNull
-  InputStream openStream() throws IOException, SVNException;
+  InputStream openStream() throws IOException;
 
   @Nullable
   VcsCopyFrom getCopyFrom() throws IOException;
@@ -65,7 +67,7 @@ public interface GitFile extends GitEntry {
   GitObject<ObjectId> getObjectId();
 
   @NotNull
-  default Map<String, String> getAllProperties() throws IOException, SVNException {
+  default Map<String, String> getAllProperties() throws IOException {
     Map<String, String> props = new HashMap<>();
     props.putAll(getRevProperties());
     props.putAll(getProperties());
@@ -76,7 +78,7 @@ public interface GitFile extends GitEntry {
   default Map<String, String> getRevProperties() {
     final Map<String, String> props = new HashMap<>();
     final GitRevision last = getLastChange();
-    props.put(SVNProperty.UUID, getRepo().getUuid());
+    props.put(SVNProperty.UUID, getBranch().getUuid());
     props.put(SVNProperty.COMMITTED_REVISION, String.valueOf(last.getId()));
     putProperty(props, SVNProperty.COMMITTED_DATE, last.getDateString());
     putProperty(props, SVNProperty.LAST_AUTHOR, last.getAuthor());
@@ -84,22 +86,22 @@ public interface GitFile extends GitEntry {
   }
 
   @NotNull
-  default Map<String, String> getProperties() throws IOException, SVNException {
+  default Map<String, String> getProperties() throws IOException {
     return getUpstreamProperties();
   }
 
   @NotNull
   default GitRevision getLastChange() {
-    final GitRepository repo = getRepo();
-    final int lastChange = repo.getLastChange(getFullPath(), getRevision());
+    final GitBranch branch = getBranch();
+    final int lastChange = branch.getLastChange(getFullPath(), getRevision());
     if (lastChange < 0) {
       throw new IllegalStateException("Internal error: can't find lastChange revision for file: " + getFileName() + "@" + getRevision());
     }
-    return repo.sureRevisionInfo(lastChange);
+    return branch.sureRevisionInfo(lastChange);
   }
 
   @NotNull
-  GitRepository getRepo();
+  GitBranch getBranch();
 
   static void putProperty(@NotNull Map<String, String> props, @NotNull String name, @Nullable String value) {
     if (value != null) {
@@ -140,8 +142,5 @@ public interface GitFile extends GitEntry {
   FileMode getFileMode();
 
   @NotNull
-  Iterable<GitFile> getEntries() throws IOException, SVNException;
-
-  @Nullable
-  GitFile getEntry(@NotNull String name) throws IOException, SVNException;
+  Iterable<GitFile> getEntries() throws IOException;
 }

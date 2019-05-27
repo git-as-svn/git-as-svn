@@ -8,7 +8,10 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.common.LockConflictException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.repository.locks.UnlockTarget;
 import svnserver.server.SessionContext;
@@ -28,29 +31,6 @@ import java.io.IOException;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
-  public static final class PathToken {
-    @NotNull
-    private final String path;
-    @NotNull
-    private final String[] lockToken;
-
-    public PathToken(@NotNull String path, @NotNull String[] lockToken) {
-      this.path = path;
-      this.lockToken = lockToken;
-    }
-  }
-
-  public static final class Params {
-    private final boolean breakLock;
-    @NotNull
-    private final PathToken[] paths;
-
-    public Params(boolean breakLock, @NotNull PathToken[] paths) {
-      this.breakLock = breakLock;
-      this.paths = paths;
-    }
-  }
-
   @NotNull
   @Override
   public Class<? extends Params> getArguments() {
@@ -58,7 +38,7 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException {
     final SvnServerWriter writer = context.getWriter();
 
     final UnlockTarget[] targets = new UnlockTarget[args.paths.length];
@@ -69,8 +49,12 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
       targets[i] = new UnlockTarget(context.getRepositoryPath(path), lockToken);
     }
     try {
-      context.getRepository().wrapLockWrite((lockManager) -> {
-        lockManager.unlock(args.breakLock, targets);
+      context.getBranch().getRepository().wrapLockWrite(lockStorage -> {
+        try {
+          lockStorage.unlock(context.getUser(), context.getBranch(), args.breakLock, targets);
+        } catch (LockConflictException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, e.getLock().getPath()));
+        }
         return Boolean.TRUE;
       });
       for (PathToken path : args.paths)
@@ -97,6 +81,29 @@ public final class UnlockManyCmd extends BaseCmd<UnlockManyCmd.Params> {
   protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     for (PathToken pathRev : args.paths) {
       context.checkWrite(context.getRepositoryPath(pathRev.path));
+    }
+  }
+
+  public static final class PathToken {
+    @NotNull
+    private final String path;
+    @NotNull
+    private final String[] lockToken;
+
+    public PathToken(@NotNull String path, @NotNull String[] lockToken) {
+      this.path = path;
+      this.lockToken = lockToken;
+    }
+  }
+
+  public static final class Params {
+    private final boolean breakLock;
+    @NotNull
+    private final PathToken[] paths;
+
+    public Params(boolean breakLock, @NotNull PathToken[] paths) {
+      this.breakLock = breakLock;
+      this.paths = paths;
     }
   }
 }
