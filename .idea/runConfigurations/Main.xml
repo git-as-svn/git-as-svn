@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Main" type="Application" factoryName="Application" singleton="true" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="svnserver.server.Main" />
-    <module name="git-as-svn_main" />
-    <option name="PROGRAM_PARAMETERS" value="-c cfg/config-local.example" />
+    <module name="git-as-svn.main" />
+    <option name="PROGRAM_PARAMETERS" value="-c src/test/resources/config-local.example" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="svnserver.server.*" />

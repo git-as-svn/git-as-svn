@@ -1,0 +1,12 @@
+[[gitea]]
+= Gitea integration
+
+There is also integration with https://gitea.io[Gitea] >= v1.7.2.
+(Requires Sudo API) Remember to run git-as-svn as `git` user.
+
+== Configuration file example
+
+[source,yaml]
+----
+include::examples/config-gitea.example[]
+----

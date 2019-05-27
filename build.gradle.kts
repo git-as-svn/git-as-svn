@@ -1,8 +1,8 @@
-import com.github.benmanes.gradle.versions.VersionsPlugin
-import nl.javadude.gradle.plugins.license.LicensePlugin
 import org.ajoberstar.grgit.Grgit
+import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import java.io.ByteArrayOutputStream
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -15,19 +15,24 @@ plugins {
     id("com.github.ben-manes.versions") version "0.21.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "3.1.1"
+    id("org.asciidoctor.jvm.convert") version "2.2.0"
+    id("org.asciidoctor.jvm.pdf") version "2.2.0"
+    id("org.asciidoctor.jvm.epub") version "2.2.0"
     idea
     application
 }
 
-repositories {
-    // For grgit
-    jcenter()
-}
+version = "1.11.1"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
 idea {
     project.jdkName = javaVersion.name
+
+    module {
+        isDownloadJavadoc = true
+        isDownloadSources = true
+    }
 }
 
 java {
@@ -35,46 +40,30 @@ java {
     targetCompatibility = javaVersion
 }
 
-allprojects {
-    version = "1.11.1"
+repositories {
+    mavenCentral()
 
-    apply<IdeaPlugin>()
-    apply<VersionsPlugin>()
-    apply<LicensePlugin>()
+    // For asciidoctor, grgit
+    jcenter()
 
-    repositories {
-        mavenCentral()
+    // For svnkit
+    maven("https://repository.mulesoft.org/nexus/content/repositories/public/")
+}
 
-        // For svnkit
-        maven("https://repository.mulesoft.org/nexus/content/repositories/public/")
-    }
+license {
+    header = rootProject.file("license_header.txt")
+    exclude("**/*.json")
+}
 
-    license {
-        header = rootProject.file("license_header.txt")
-        exclude("**/*.json")
-    }
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+}
 
-    tasks.withType<JavaCompile> {
-        options.encoding = "UTF-8"
-    }
-
-    tasks.withType<Test> {
-        useTestNG {
-            testLogging {
-                exceptionFormat = TestExceptionFormat.FULL
-                showStandardStreams = true
-            }
-        }
-    }
-
-    idea {
-        module {
-            isDownloadJavadoc = true
-            isDownloadSources = true
-
-            // Workaround for https://youtrack.jetbrains.com/issue/IDEA-175172
-            outputDir = file("build/classes/main")
-            testOutputDir = file("build/classes/test")
+tasks.withType<Test> {
+    useTestNG {
+        testLogging {
+            exceptionFormat = TestExceptionFormat.FULL
+            showStandardStreams = true
         }
     }
 }
@@ -85,7 +74,7 @@ application {
 }
 
 tasks.getByName<JavaExec>("run") {
-    args = listOf("-c", "$projectDir/cfg/config-local.example")
+    args = listOf("-c", "$projectDir/src/test/resources/config-local.example")
 }
 
 dependencies {
@@ -131,31 +120,59 @@ tasks.jar {
     }
 }
 
-val createDocs by tasks.creating(Copy::class) {
-    from("$projectDir/cfg") {
-        include("*.example")
+val compileDocs by tasks.creating(Copy::class) {
+    group = "documentation"
+    dependsOn(tasks.asciidoctor, tasks.asciidoctorEpub, tasks.asciidoctorPdf)
+
+    from("$buildDir/docs/asciidoc") {
+        into("htmlsingle")
     }
+    from("$buildDir/docs/asciidocEpub")
+    from("$buildDir/docs/asciidocPdf")
     from("$projectDir") {
-        include("*.md", "LICENSE")
+        include("*.adoc", "LICENSE")
     }
     into(file("$buildDir/doc"))
 }
 
-val copyTools by tasks.creating(Copy::class) {
-    from("$projectDir/tools") {
-        include("*")
+tasks.asciidoctor {
+    configure()
+
+    resources {
+        from("src/docs/asciidoc") {
+            include("examples/**")
+            include("images/**")
+        }
     }
-    into(file("$buildDir/tools"))
+}
+
+tasks.asciidoctorEpub {
+    configure()
+    ebookFormats("epub3")
+}
+
+tasks.asciidoctorPdf {
+    configure()
+}
+
+fun AbstractAsciidoctorTask.configure() {
+    baseDirFollowsSourceDir()
+    sources(delegateClosureOf<PatternSet> {
+        include("git-as-svn.adoc")
+    })
+    attributes(mapOf(
+            "date" to DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US).format(getCommitDate())
+    ))
 }
 
 distributions {
     main {
         contents {
-            from(createDocs) {
-                into("doc")
+            into("doc") {
+                from(compileDocs)
             }
-            from(copyTools) {
-                into("tools")
+            into("tools") {
+                from("$projectDir/tools")
             }
         }
     }
@@ -180,16 +197,15 @@ val debianControl by tasks.creating(Copy::class) {
     from("$projectDir/src/main/deb") {
         include("**/changelog")
 
-        val commitDate = Grgit.open(mapOf("dir" to projectDir)).head().dateTime
         expand(mapOf(
                 "version" to project.version,
-                "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(commitDate)
+                "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(getCommitDate())
         ))
     }
     into(file("$buildDir/debPackage/package"))
 }
 
-val distDeb by tasks.creating(Exec::class) {
+val compileDeb by tasks.creating(Exec::class) {
     dependsOn(tasks.installDist, debianControl)
 
     workingDir = file("$buildDir/debPackage/package")
@@ -208,8 +224,9 @@ val distDeb by tasks.creating(Exec::class) {
     }
 }
 
-val assembleDeb by tasks.creating(Copy::class) {
-    dependsOn(distDeb)
+val distDeb by tasks.creating(Copy::class) {
+    group = "distribution"
+    dependsOn(compileDeb)
 
     from("$buildDir/debPackage") {
         include("*.deb")
@@ -218,7 +235,7 @@ val assembleDeb by tasks.creating(Copy::class) {
 }
 
 tasks.assembleDist {
-    dependsOn(assembleDeb)
+    dependsOn(distDeb)
 }
 
 tasks.distZip {
@@ -235,4 +252,8 @@ fun createLauncherClassPath(): String {
     val fullArtifacts = configurations.archives.get().artifacts.map { it.file } + configurations.runtime.get().files
     val vendorJars = fullArtifacts.minus(projectArtifacts).map { it.name }
     return vendorJars.joinToString(" ")
+}
+
+fun getCommitDate(): ZonedDateTime {
+    return Grgit.open(mapOf("dir" to projectDir)).head().dateTime
 }

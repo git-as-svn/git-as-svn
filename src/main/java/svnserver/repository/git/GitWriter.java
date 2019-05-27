@@ -427,7 +427,7 @@ public final class GitWriter {
           message.append("  ").append(configFile).append('\n');
         }
         message.append("\n" +
-            "For more detailed information you can see:").append("\n").append(ReferenceLink.Properties.getLinks());
+            "For more detailed information, see:").append("\n").append(ReferenceLink.Properties.getLink());
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
       }
     }

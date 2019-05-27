@@ -31,7 +31,7 @@ public class Main {
 
   public static void main(@NotNull String[] args) throws IOException, SVNException, InterruptedException {
     try {
-      log.info("Git as svn version: {}", VersionInfo.getVersionInfo());
+      log.info("git-as-svn version: {}", VersionInfo.getVersionInfo());
       final CmdArgs cmd = new CmdArgs();
       final JCommander jc = new JCommander(cmd);
       jc.parse(args);
