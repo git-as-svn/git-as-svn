@@ -51,7 +51,7 @@ public class DeltaParams {
       boolean textDeltas,
       @NotNull Depth depth,
       @NotNull SendCopyFrom sendCopyFrom,
-      /**
+      /*
        * Broken-minded SVN feature we're unlikely to support EVER.
        * <p>
        * If {@code ignoreAncestry} is {@code false} and file was deleted and created back between source and target revisions,
@@ -106,7 +106,7 @@ public class DeltaParams {
     return includeInternalProps;
   }
 
-  public int getLowRevision() {
+  int getLowRevision() {
     return lowRevision;
   }
 }

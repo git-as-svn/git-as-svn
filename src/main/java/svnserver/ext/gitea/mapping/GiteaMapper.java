@@ -20,16 +20,20 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMapping {
+final class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMapping {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(GiteaMapper.class);
 
-  private LinkedList<String> toAdd = new LinkedList<>();
-  private LinkedList<String> toRemove = new LinkedList<>();
-  private GiteaMapping mapping;
-  private RepositoryApi repositoryApi;
+  @NotNull
+  private final LinkedList<String> toAdd = new LinkedList<>();
+  @NotNull
+  private final LinkedList<String> toRemove = new LinkedList<>();
+  @NotNull
+  private final GiteaMapping mapping;
+  @NotNull
+  private final RepositoryApi repositoryApi;
 
-  public GiteaMapper(ApiClient apiClient, GiteaMapping mapping) {
+  GiteaMapper(@NotNull ApiClient apiClient, @NotNull GiteaMapping mapping) {
     this.repositoryApi = new RepositoryApi(apiClient);
     this.mapping = mapping;
     this.start();
@@ -65,19 +69,19 @@ public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMap
         sleep(1000);
       }
     } catch (InterruptedException e) {
-      return;
+      // noop
     }
   }
 
   @Override
-  public void addRepository(String owner, String repo) {
+  public void addRepository(@NotNull String owner, @NotNull String repo) {
     synchronized (toAdd) {
       toAdd.add(owner + "/" + repo);
     }
   }
 
   @Override
-  public void removeRepositories(String owner) {
+  public void removeRepositories(@NotNull String owner) {
     synchronized (toAdd) {
       for (GiteaProject project : mapping.getMapping().values()) {
         if (project.getOwner().equals(owner)) {
@@ -89,7 +93,7 @@ public class GiteaMapper extends Thread implements DirectoryWatcher.DirectoryMap
   }
 
   @Override
-  public void removeRepository(String owner, String repo) {
+  public void removeRepository(@NotNull String owner, @NotNull String repo) {
     synchronized (toAdd) {
       toRemove.add(owner + "/" + repo);
       toAdd.remove(owner + "/" + repo);

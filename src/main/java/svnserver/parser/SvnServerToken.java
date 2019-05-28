@@ -20,7 +20,6 @@ public interface SvnServerToken {
    * Запись token-а в поток.
    *
    * @param stream Поток.
-   * @throws IOException
    */
   void write(OutputStream stream) throws IOException;
 }

@@ -11,10 +11,12 @@ import org.eclipse.jgit.util.Holder;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
+import svnserver.repository.Depth;
 import svnserver.repository.locks.LockDesc;
 import svnserver.server.SessionContext;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * <pre>
@@ -39,8 +41,8 @@ public final class GetLockCmd extends BaseCmd<GetLockCmd.Params> {
     final String path = context.getRepositoryPath(args.path);
 
     final Holder<LockDesc> holder = context.getBranch().getRepository().wrapLockRead(lockStorage -> {
-      @NotNull final LockDesc[] locks = lockStorage.getLocks(context.getUser(), context.getBranch(), context.getRepositoryPath(path), null);
-      return new Holder<>(locks.length < 1 ? null : locks[0]);
+      final Iterator<LockDesc> it = lockStorage.getLocks(context.getUser(), context.getBranch(), context.getRepositoryPath(path), Depth.Empty);
+      return new Holder<>(it.hasNext() ? it.next() : null);
     });
     writer.listBegin()
         .word("success")

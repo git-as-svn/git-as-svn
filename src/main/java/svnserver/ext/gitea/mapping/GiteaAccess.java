@@ -7,34 +7,30 @@
  */
 package svnserver.ext.gitea.mapping;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import io.gitea.ApiClient;
+import io.gitea.ApiException;
+import io.gitea.api.RepositoryApi;
+import io.gitea.model.Permission;
+import io.gitea.model.Repository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.User;
+import svnserver.context.LocalContext;
+import svnserver.ext.gitea.config.GiteaContext;
+import svnserver.repository.VcsAccess;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-
-import io.gitea.ApiClient;
-import io.gitea.ApiException;
-import io.gitea.api.RepositoryApi;
-import io.gitea.model.Permission;
-import io.gitea.model.Repository;
-import svnserver.auth.User;
-import svnserver.context.LocalContext;
-import svnserver.ext.gitea.config.GiteaContext;
-import svnserver.repository.VcsAccess;
 
 /**
  * Access control by Gitea server.
@@ -44,15 +40,13 @@ import svnserver.repository.VcsAccess;
  */
 final class GiteaAccess implements VcsAccess {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GiteaAccess.class);
-  @NotNull
   private final LoadingCache<String, Repository> cache;
   @NotNull
   private final HashMap<String, String> environment;
 
   GiteaAccess(@NotNull LocalContext local, @NotNull GiteaMappingConfig config, Repository repository) {
     final long projectId = repository.getId();
-    this.environment = new HashMap<String, String>();
+    this.environment = new HashMap<>();
     this.environment.put("GITEA_REPO_ID", "" + repository.getId());
     this.environment.put("GITEA_REPO_IS_WIKI", "false");
     this.environment.put("GITEA_REPO_NAME", repository.getName());
@@ -89,8 +83,7 @@ final class GiteaAccess implements VcsAccess {
               final ApiClient apiClient = context.connect(userName);
               final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
 
-              final Repository repository = repositoryApi.repoGetByID(projectId);
-              return repository;
+              return repositoryApi.repoGetByID(projectId);
             } catch (ApiException e) {
               if (e.getCode() == 404) {
                 throw new FileNotFoundException();
@@ -100,11 +93,6 @@ final class GiteaAccess implements VcsAccess {
             }
           }
         });
-  }
-
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> environment) {
-    environment.putAll(this.environment);
   }
 
   @Override
@@ -132,11 +120,9 @@ final class GiteaAccess implements VcsAccess {
     }
     try {
       final Repository repository = getCachedProject(user);
-      if (repository != null) {
-        final Permission permission = repository.getPermissions();
-        if (permission.isAdmin() || permission.isPush()) {
-          return;
-        }
+      final Permission permission = repository.getPermissions();
+      if (permission.isAdmin() || permission.isPush()) {
+        return;
       }
       throw new SVNException(
           SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to write this repository"));
@@ -144,6 +130,11 @@ final class GiteaAccess implements VcsAccess {
       throw new SVNException(
           SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this repository"));
     }
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> environment) {
+    environment.putAll(this.environment);
   }
 
   @NotNull

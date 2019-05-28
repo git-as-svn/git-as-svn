@@ -8,7 +8,6 @@
 package svnserver.ext.keys;
 
 import org.jetbrains.annotations.NotNull;
-
 import svnserver.auth.UserDB;
 import svnserver.config.UserDBConfig;
 import svnserver.config.serializer.ConfigType;
@@ -17,21 +16,21 @@ import svnserver.context.SharedContext;
 @ConfigType("sshKeyUsers")
 public class KeyUserDBConfig implements UserDBConfig {
 
-    @NotNull
-    private UserDBConfig userDB;
+  @NotNull
+  private UserDBConfig userDB;
 
-    @NotNull
-    private String sshKeysToken;
+  @NotNull
+  private String sshKeysToken = "";
 
-	@Override
-	public @NotNull UserDB create(@NotNull SharedContext context) {
-        UserDB internal = userDB.create(context);
-		return new KeyUserDB(internal, sshKeysToken);
-    }
+  @Override
+  public @NotNull UserDB create(@NotNull SharedContext context) {
+    UserDB internal = userDB.create(context);
+    return new KeyUserDB(internal, sshKeysToken);
+  }
 
-    @NotNull
-    public String getSshKeysToken() {
-        return sshKeysToken;
-    }
+  @NotNull
+  public String getSshKeysToken() {
+    return sshKeysToken;
+  }
 
 }

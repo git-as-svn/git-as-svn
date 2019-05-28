@@ -10,9 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.auth.LocalUserDB;
-import svnserver.auth.User;
 import svnserver.auth.UserDB;
-import svnserver.auth.UserWithPassword;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 

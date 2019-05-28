@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import svnserver.ReferenceLink;
 import svnserver.StringHelper;
 import svnserver.auth.User;
+import svnserver.repository.Depth;
 import svnserver.repository.VcsConsumer;
 import svnserver.repository.git.prop.PropertyMapping;
 import svnserver.repository.git.push.GitPusher;
@@ -51,15 +52,12 @@ public final class GitWriter {
   @NotNull
   private final Object pushLock;
   @NotNull
-  private final String gitBranch;
-  @NotNull
   private final User user;
 
-  public GitWriter(@NotNull GitBranch branch, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull String gitBranch, @NotNull User user) {
+  GitWriter(@NotNull GitBranch branch, @NotNull GitPusher pusher, @NotNull Object pushLock, @NotNull User user) {
     this.branch = branch;
     this.pusher = pusher;
     this.pushLock = pushLock;
-    this.gitBranch = gitBranch;
     this.inserter = branch.getRepository().getGit().newObjectInserter();
     this.user = user;
   }
@@ -76,7 +74,7 @@ public final class GitWriter {
 
   @NotNull
   public GitWriter.GitCommitBuilder createCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks) throws IOException {
-    return new GitCommitBuilder(lockManager, locks, gitBranch);
+    return new GitCommitBuilder(lockManager, locks);
   }
 
   @NotNull
@@ -84,8 +82,7 @@ public final class GitWriter {
     return branch;
   }
 
-  @NotNull
-  public ObjectInserter getInserter() {
+  @NotNull ObjectInserter getInserter() {
     return inserter;
   }
 
@@ -95,19 +92,16 @@ public final class GitWriter {
     @NotNull
     private final GitRevision revision;
     @NotNull
-    private final String branch;
-    @NotNull
     private final LockStorage lockManager;
     @NotNull
     private final Map<String, String> locks;
     @NotNull
     private final List<VcsConsumer<CommitAction>> commitActions = new ArrayList<>();
 
-    public GitCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks, @NotNull String branch) throws IOException {
-      this.branch = branch;
+    GitCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks) throws IOException {
       this.lockManager = lockManager;
       this.locks = locks;
-      this.revision = GitWriter.this.branch.getLatestRevision();
+      this.revision = branch.getLatestRevision();
       this.treeStack = new ArrayDeque<>();
       this.treeStack.push(new GitTreeUpdate("", getOriginalTree()));
     }
@@ -117,7 +111,7 @@ public final class GitWriter {
       if (commit == null) {
         return Collections.emptyList();
       }
-      return GitWriter.this.branch.getRepository().loadTree(new GitTreeEntry(GitWriter.this.branch.getRepository().getGit(), FileMode.TREE, commit.getTree(), ""));
+      return branch.getRepository().loadTree(new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, commit.getTree(), ""));
     }
 
     public void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException {
@@ -126,7 +120,7 @@ public final class GitWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
       }
       commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, GitWriter.this.branch.getRepository().loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
+      treeStack.push(new GitTreeUpdate(name, branch.getRepository().loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
     }
 
     @NotNull
@@ -147,10 +141,10 @@ public final class GitWriter {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
       }
       commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, GitWriter.this.branch.getRepository().loadTree(originalDir)));
+      treeStack.push(new GitTreeUpdate(name, branch.getRepository().loadTree(originalDir)));
     }
 
-    public void checkDirProperties(@NotNull Map<String, String> props) throws SVNException, IOException {
+    public void checkDirProperties(@NotNull Map<String, String> props) {
       commitActions.add(action -> action.checkProperties(null, props, null));
     }
 
@@ -163,7 +157,7 @@ public final class GitWriter {
       }
       final ObjectId subtreeId = last.buildTree(inserter);
       log.debug("Create tree {} for dir: {}", subtreeId.name(), fullPath);
-      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(GitWriter.this.branch.getRepository().getGit(), subtreeId), last.getName())) != null) {
+      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(branch.getRepository().getGit(), subtreeId), last.getName())) != null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
       }
       commitActions.add(CommitAction::closeDir);
@@ -195,7 +189,7 @@ public final class GitWriter {
       return FileMode.REGULAR_FILE;
     }
 
-    public void delete(@NotNull String name) throws SVNException, IOException {
+    public void delete(@NotNull String name) throws SVNException {
       final GitTreeUpdate current = treeStack.element();
       final GitTreeEntry entry = current.getEntries().remove(name);
       if (entry == null) {
@@ -222,23 +216,23 @@ public final class GitWriter {
       inserter.flush();
       log.info("Create commit {}: {}", commitId.name(), StringHelper.getFirstLine(message));
 
-      if (filterMigration(new RevWalk(GitWriter.this.branch.getRepository().getGit()).parseTree(treeId)) != 0) {
+      if (filterMigration(new RevWalk(branch.getRepository().getGit()).parseTree(treeId)) != 0) {
         log.info("Need recreate tree after filter migration.");
         return null;
       }
 
       synchronized (pushLock) {
         log.info("Validate properties");
-        validateProperties(new RevWalk(GitWriter.this.branch.getRepository().getGit()).parseTree(treeId));
+        validateProperties(new RevWalk(branch.getRepository().getGit()).parseTree(treeId));
 
         log.info("Try to push commit in branch: {}", branch);
-        if (!pusher.push(GitWriter.this.branch.getRepository().getGit(), commitId, branch, userInfo)) {
+        if (!pusher.push(branch.getRepository().getGit(), commitId, branch.getGitBranch(), userInfo)) {
           log.info("Non fast forward push rejected");
           return null;
         }
         log.info("Commit is pushed");
-        GitWriter.this.branch.updateRevisions();
-        return GitWriter.this.branch.getRevision(commitId);
+        branch.updateRevisions();
+        return branch.getRevision(commitId);
       }
     }
 
@@ -249,7 +243,7 @@ public final class GitWriter {
     }
 
     private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(GitWriter.this.branch, tree, 0);
+      final GitFile root = GitFileTreeEntry.create(branch, tree, 0);
       final GitFilterMigration validator = new GitFilterMigration(root);
       for (VcsConsumer<CommitAction> validateAction : commitActions) {
         validateAction.accept(validator);
@@ -258,7 +252,7 @@ public final class GitWriter {
     }
 
     private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(GitWriter.this.branch, tree, 0);
+      final GitFile root = GitFileTreeEntry.create(branch, tree, 0);
       final GitPropertyValidator validator = new GitPropertyValidator(root);
       for (VcsConsumer<CommitAction> validateAction : commitActions) {
         validateAction.accept(validator);
@@ -278,11 +272,11 @@ public final class GitWriter {
       }
     }
 
-    private void checkLockFile(@NotNull GitFile file) throws IOException, SVNException {
+    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
       final String fullPath = file.getFullPath();
-      final LockDesc[] iter = lockManager.getLocks(user, getBranch(), fullPath, null);
-      for (LockDesc lock : iter)
-        checkLockDesc(lock);
+      final Iterator<LockDesc> iter = lockManager.getLocks(user, branch, fullPath, Depth.Infinity);
+      while (iter.hasNext())
+        checkLockDesc(iter.next());
     }
 
     private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
@@ -298,16 +292,17 @@ public final class GitWriter {
     @NotNull
     private final Deque<GitFile> treeStack;
 
-    public CommitAction(@NotNull GitFile root) {
+    CommitAction(@NotNull GitFile root) {
       this.treeStack = new ArrayDeque<>();
       this.treeStack.push(root);
     }
 
-    protected GitFile getElement() {
+    @NotNull
+    GitFile getElement() {
       return treeStack.element();
     }
 
-    public final void openDir(@NotNull String name) throws IOException {
+    final void openDir(@NotNull String name) throws IOException {
       final GitFile file = treeStack.element().getEntry(name);
       if (file == null) {
         throw new IllegalStateException("Invalid state: can't find file " + name + " in created commit.");
@@ -325,7 +320,7 @@ public final class GitWriter {
   private class GitFilterMigration extends CommitAction {
     private int migrateCount = 0;
 
-    public GitFilterMigration(@NotNull GitFile root) {
+    GitFilterMigration(@NotNull GitFile root) {
       super(root);
     }
 
@@ -345,7 +340,7 @@ public final class GitWriter {
       }
     }
 
-    public int done() {
+    int done() {
       return migrateCount;
     }
   }
@@ -355,7 +350,7 @@ public final class GitWriter {
     private final Map<String, Set<String>> propertyMismatch = new TreeMap<>();
     private int errorCount = 0;
 
-    public GitPropertyValidator(@NotNull GitFile root) {
+    GitPropertyValidator(@NotNull GitFile root) {
       super(root);
     }
 
@@ -400,7 +395,7 @@ public final class GitWriter {
       }
     }
 
-    public void done() throws SVNException {
+    void done() throws SVNException {
       if (!propertyMismatch.isEmpty()) {
         final StringBuilder message = new StringBuilder();
         for (Map.Entry<String, Set<String>> entry : propertyMismatch.entrySet()) {

@@ -211,7 +211,7 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
                   boolean strictNode,
                   int limit,
                   boolean includeMergedRevisions,
-                  /**
+        /*
                    * Broken-minded SVN feature we're unlikely to support EVER.
                    */
                   @SuppressWarnings("UnusedParameters")

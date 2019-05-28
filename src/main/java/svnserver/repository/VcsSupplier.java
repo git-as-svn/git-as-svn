@@ -7,8 +7,6 @@
  */
 package svnserver.repository;
 
-import org.tmatesoft.svn.core.SVNException;
-
 import java.io.IOException;
 
 /**

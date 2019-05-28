@@ -7,57 +7,47 @@
  */
 package svnserver.ext.keys;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.nio.file.WatchEvent.Kind;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import svnserver.context.Shared;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.WatchEvent.Kind;
+import java.util.HashSet;
 
 /**
  * SSHDirectoryWatcher.
  *
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
-public class SSHDirectoryWatcher extends Thread implements Shared {
-  private static final Kind<?>[] KINDS = new Kind<?>[] { StandardWatchEventKinds.ENTRY_CREATE,
-      StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE };
+final class SSHDirectoryWatcher extends Thread implements Shared {
+  @NotNull
+  private static final Kind<?>[] KINDS = new Kind<?>[]{StandardWatchEventKinds.ENTRY_CREATE,
+      StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE};
+  @NotNull
   private static final String AUTHORIZED_KEYS = "authorized_keys";
 
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SSHDirectoryWatcher.class);
-
-  @NotNull
-  private Path basePath;
-  @NotNull
-  private Path realSSHPath;
-  @NotNull
-  private String originalAppPath;
-  @NotNull
-  private String svnServePath;
   @NotNull
   private final WatchService watchService;
   @Nullable
   private final KeysMapper mapper;
-
   @NotNull
-  private static Path getPath(@NotNull String path) {
-    return FileSystems.getDefault().getPath(path);
-  }
+  private final Path basePath;
+  @NotNull
+  private final Path realSSHPath;
+  @NotNull
+  private final String originalAppPath;
+  @NotNull
+  private final String svnServePath;
 
-  public SSHDirectoryWatcher(@NotNull KeysConfig config, @Nullable KeysMapper mapper) {
+  SSHDirectoryWatcher(@NotNull KeysConfig config, @Nullable KeysMapper mapper) {
     this.originalAppPath = config.getOriginalAppPath();
     this.svnServePath = config.getSvnservePath();
     this.mapper = mapper;
@@ -69,6 +59,11 @@ public class SSHDirectoryWatcher extends Thread implements Shared {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  private static Path getPath(@NotNull String path) {
+    return FileSystems.getDefault().getPath(path);
   }
 
   public void run() {
@@ -100,7 +95,7 @@ public class SSHDirectoryWatcher extends Thread implements Shared {
         }
       }
     } catch (InterruptedException e) {
-      return;
+      // noop
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -114,11 +109,11 @@ public class SSHDirectoryWatcher extends Thread implements Shared {
     HashSet<String> keysSet = new HashSet<>();
 
     try (
-      BufferedReader reader = Files.newBufferedReader(authPath);
-      BufferedWriter writer = Files.newBufferedWriter(realAuthPath);
+        BufferedReader reader = Files.newBufferedReader(authPath);
+        BufferedWriter writer = Files.newBufferedWriter(realAuthPath)
     ) {
       reader.lines().map(s -> {
-        if (s.indexOf(originalAppPath) > -1) {
+        if (s.contains(originalAppPath)) {
           int indexOfKey = s.indexOf("key-");
           keysSet.add(s.substring(indexOfKey, s.indexOf(' ', indexOfKey)));
           return s.replace(originalAppPath, svnServePath);

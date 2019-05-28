@@ -7,27 +7,26 @@
  */
 package svnserver.ext.gitea.auth;
 
-import java.net.HttpURLConnection;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.gitea.ApiClient;
 import io.gitea.ApiException;
 import io.gitea.api.UserApi;
 import io.gitea.model.PublicKey;
 import io.gitea.model.UserSearchList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitea.config.GiteaContext;
+
+import java.net.HttpURLConnection;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Gitea user authentiation.
@@ -42,10 +41,6 @@ public final class GiteaUserDB implements UserDB {
   private static final String PREFIX_USER = "user-";
   @NotNull
   private static final String PREFIX_KEY = "key-";
-
-  @NotNull
-  private String secretToken;
-
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull
@@ -59,16 +54,6 @@ public final class GiteaUserDB implements UserDB {
   @Override
   public Collection<Authenticator> authenticators() {
     return authenticators;
-  }
-
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
-    final String externalId = userInfo.getExternalId();
-    env.put("SSH_ORIGINAL_COMMAND", "git");
-    env.put("GITEA_PUSHER_EMAIL", userInfo.getEmail());
-    if (externalId != null) {
-      env.put("GITEA_PUSHER_ID", userInfo.getExternalId());
-    }
   }
 
   @Override
@@ -149,6 +134,16 @@ public final class GiteaUserDB implements UserDB {
     }
     log.info("Unable to match {}", external);
     return null;
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
+    final String externalId = userInfo.getExternalId();
+    env.put("SSH_ORIGINAL_COMMAND", "git");
+    env.put("GITEA_PUSHER_EMAIL", userInfo.getEmail());
+    if (externalId != null) {
+      env.put("GITEA_PUSHER_ID", userInfo.getExternalId());
+    }
   }
 
   @Nullable

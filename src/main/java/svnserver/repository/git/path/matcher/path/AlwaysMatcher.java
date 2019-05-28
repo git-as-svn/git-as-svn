@@ -8,7 +8,6 @@
 package svnserver.repository.git.path.matcher.path;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.repository.git.path.PathMatcher;
 
 /**
@@ -23,7 +22,7 @@ public final class AlwaysMatcher implements PathMatcher {
   private AlwaysMatcher() {
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PathMatcher createChild(@NotNull String name, boolean isDir) {
     return this;
@@ -34,7 +33,7 @@ public final class AlwaysMatcher implements PathMatcher {
     return true;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getSvnMaskGlobal() {
     return "*";

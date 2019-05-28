@@ -32,7 +32,7 @@ public interface RepositoryMapping<T extends BranchProvider> extends Shared {
     if (repo == null || !StringHelper.isParentPath(repo.getKey(), path))
       return null;
 
-    final String branchPath = repo.getKey().isEmpty() ? path : path.substring(repo.getKey().length() - 1);;
+    final String branchPath = repo.getKey().isEmpty() ? path : path.substring(repo.getKey().length() - 1);
     final Map.Entry<String, GitBranch> branch = repo.getValue().getBranches().floorEntry(branchPath);
     if (branch == null || !StringHelper.isParentPath(branch.getKey(), branchPath))
       return null;

@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs.storage.network;
 
+import org.bouncycastle.util.Arrays;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.Depth;
 import svnserver.repository.git.GitBranch;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockTarget;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -112,7 +115,71 @@ public abstract class LfsHttpStorage implements LfsStorage {
 
   @NotNull
   @Override
-  public LockDesc[] lock(@NotNull User user, @Nullable GitBranch branch, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws IOException, LockConflictException {
+  public LockDesc lock(@NotNull User user, @Nullable GitBranch branch, @NotNull String path) throws LockConflictException, IOException {
+    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
+    final Client client = lfsClient(user);
+    return LockDesc.toLockDesc(client.lock(path, ref));
+  }
+
+  @Nullable
+  @Override
+  public LockDesc unlock(@NotNull User user, @Nullable GitBranch branch, boolean breakLock, @NotNull String lockId) throws IOException {
+    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
+    final Client client = lfsClient(user);
+
+    final Lock result = client.unlock(lockId, breakLock, ref);
+    return result == null ? null : LockDesc.toLockDesc(result);
+  }
+
+  @NotNull
+  @Override
+  public final LockDesc[] getLocks(@NotNull User user, @Nullable GitBranch branch, @Nullable String path, @Nullable String lockId) throws IOException {
+    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
+    final List<Lock> locks = lfsClient(user).listLocks(path, lockId, ref);
+    final List<LockDesc> result = locks.stream().map(LockDesc::toLockDesc).collect(Collectors.toList());
+    return result.toArray(LockDesc.emptyArray);
+  }
+
+  @NotNull
+  @Override
+  public final VerifyLocksResult verifyLocks(@NotNull User user, @Nullable GitBranch branch) throws IOException {
+    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
+    return lfsClient(user).verifyLocks(ref);
+  }
+
+  @NotNull
+  @Override
+  public final LockDesc[] unlock(@NotNull User user, @Nullable GitBranch branch, boolean breakLock, @NotNull UnlockTarget[] targets) throws IOException {
+    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
+    final Client client = lfsClient(user);
+
+    // TODO: this is not atomic :( Waiting for batch LFS locking API
+
+    final List<LockDesc> result = new ArrayList<>();
+    for (UnlockTarget target : targets) {
+      final String lockId;
+      if (target.getToken() == null) {
+        final LockDesc[] locks = getLocks(user, branch, target.getPath(), (String) null);
+
+        if (locks.length > 1 && locks[0].getPath().equals(target.getPath()))
+          lockId = locks[0].getToken();
+        else
+          continue;
+      } else {
+        lockId = target.getToken();
+      }
+
+      final Lock lock = client.unlock(lockId, breakLock, ref);
+      if (lock != null)
+        result.add(LockDesc.toLockDesc(lock));
+    }
+
+    return result.toArray(LockDesc.emptyArray);
+  }
+
+  @NotNull
+  @Override
+  public final LockDesc[] lock(@NotNull User user, @Nullable GitBranch branch, @Nullable String comment, boolean stealLock, @NotNull LockTarget[] targets) throws IOException, LockConflictException {
     final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
     final Client client = lfsClient(user);
 
@@ -138,56 +205,17 @@ public abstract class LfsHttpStorage implements LfsStorage {
     return result.toArray(LockDesc.emptyArray);
   }
 
-  @NotNull
   @Override
-  public LockDesc[] unlock(@NotNull User user, @Nullable GitBranch branch, boolean breakLock, @NotNull UnlockTarget[] targets) throws IOException {
-    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
-    final Client client = lfsClient(user);
-
-    final List<LockDesc> result = new ArrayList<>();
-    for (UnlockTarget target : targets) {
-      final String lockId;
-      if (target.getToken() == null) {
-        final LockDesc[] locks = getLocks(user, branch, target.getPath(), null);
-
-        if (locks.length > 1 && locks[0].getPath().equals(target.getPath()))
-          lockId = locks[0].getToken();
-        else
-          continue;
-      } else {
-        lockId = target.getToken();
-      }
-
-      final Lock lock = client.unlock(lockId, breakLock, ref);
-      if (lock != null)
-        result.add(LockDesc.toLockDesc(lock));
-    }
-
-    return result.toArray(LockDesc.emptyArray);
-  }
-
-  @Override
-  public boolean cleanupInvalidLocks(@NotNull GitBranch branch) {
+  public final boolean cleanupInvalidLocks(@NotNull GitBranch branch) {
     return false;
   }
 
   @Override
-  public void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) {
+  public final void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) {
   }
 
-  @NotNull
   @Override
-  public LockDesc[] getLocks(@NotNull User user, @Nullable GitBranch branch, @Nullable String path, @Nullable String lockId) throws IOException {
-    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
-    final List<Lock> locks = lfsClient(user).listLocks(path, lockId, ref);
-    final List<LockDesc> result = locks.stream().map(LockDesc::toLockDesc).collect(Collectors.toList());
-    return result.toArray(LockDesc.emptyArray);
-  }
-
-  @NotNull
-  @Override
-  public VerifyLocksResult verifyLocks(@NotNull User user, @Nullable GitBranch branch) throws IOException {
-    final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
-    return lfsClient(user).verifyLocks(ref);
+  public @NotNull Iterator<LockDesc> getLocks(@NotNull User user, @NotNull GitBranch branch, @NotNull String path, @NotNull Depth depth) throws IOException {
+    return new Arrays.Iterator<>(getLocks(user, branch, path, (String) null));
   }
 }

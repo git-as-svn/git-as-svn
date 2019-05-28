@@ -29,8 +29,6 @@ public interface GitPusher {
    * @param branch     Branch name
    * @param userInfo   User info
    * @return Return true if data is pushed successfully. And false on non fast-forward push failure.
-   * @throws SVNException
-   * @throws IOException
    */
   boolean push(@NotNull Repository repository, @NotNull ObjectId commitId, @NotNull String branch, @NotNull User userInfo) throws SVNException, IOException;
 }

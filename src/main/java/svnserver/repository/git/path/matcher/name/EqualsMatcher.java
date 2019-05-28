@@ -36,10 +36,17 @@ public final class EqualsMatcher implements NameMatcher {
     return false;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getSvnMask() {
     return name;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + (dirOnly ? 1 : 0);
+    return result;
   }
 
   @Override
@@ -51,13 +58,6 @@ public final class EqualsMatcher implements NameMatcher {
 
     return (dirOnly == that.dirOnly)
         && name.equals(that.name);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + (dirOnly ? 1 : 0);
-    return result;
   }
 
   @Override

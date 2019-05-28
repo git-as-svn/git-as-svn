@@ -29,8 +29,9 @@ import java.util.regex.PatternSyntaxException;
 final class GitIgnore implements GitProperty {
 
   @NotNull
+  private static final String[] emptyStrings = new String[0];
+  @NotNull
   private static final Logger log = LoggerFactory.getLogger(GitIgnore.class);
-
   @NotNull
   private final List<PathMatcher> matchers;
   // svn:global-ignores
@@ -65,30 +66,8 @@ final class GitIgnore implements GitProperty {
         log.warn("Found invalid git pattern: {}", line);
       }
     }
-    local = localList.toArray(new String[localList.size()]);
-    global = globalList.toArray(new String[globalList.size()]);
-  }
-
-  private GitIgnore(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<PathMatcher> matchers) {
-    this.local = local.toArray(new String[local.size()]);
-    this.global = global.toArray(new String[global.size()]);
-    this.matchers = matchers;
-  }
-
-  private static void processMatcher(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<PathMatcher> matchers, @Nullable PathMatcher matcher) {
-    if (matcher == null) {
-      return;
-    }
-    final String maskGlobal = matcher.getSvnMaskGlobal();
-    if (maskGlobal != null) {
-      global.add(maskGlobal);
-      return;
-    }
-    final String maskLocal = matcher.getSvnMaskLocal();
-    if (maskLocal != null) {
-      local.add(maskLocal);
-    }
-    matchers.add(matcher);
+    local = localList.toArray(emptyStrings);
+    global = globalList.toArray(emptyStrings);
   }
 
   private String trimLine(@NotNull String line) {
@@ -108,6 +87,28 @@ final class GitIgnore implements GitProperty {
     return line.substring(0, end);
   }
 
+  private static void processMatcher(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<PathMatcher> matchers, @Nullable PathMatcher matcher) {
+    if (matcher == null) {
+      return;
+    }
+    final String maskGlobal = matcher.getSvnMaskGlobal();
+    if (maskGlobal != null) {
+      global.add(maskGlobal);
+      return;
+    }
+    final String maskLocal = matcher.getSvnMaskLocal();
+    if (maskLocal != null) {
+      local.add(maskLocal);
+    }
+    matchers.add(matcher);
+  }
+
+  private GitIgnore(@NotNull List<String> local, @NotNull List<String> global, @NotNull List<PathMatcher> matchers) {
+    this.local = local.toArray(emptyStrings);
+    this.global = global.toArray(emptyStrings);
+    this.matchers = matchers;
+  }
+
   @Override
   public void apply(@NotNull Map<String, String> props) {
     if (global.length > 0) {
@@ -116,12 +117,6 @@ final class GitIgnore implements GitProperty {
     if (local.length > 0) {
       props.compute(SVNProperty.IGNORE, (key, value) -> addIgnore(value, local));
     }
-  }
-
-  @Nullable
-  @Override
-  public String getFilterName() {
-    return null;
   }
 
   private static String addIgnore(@Nullable String oldValue, @NotNull String[] ignores) {
@@ -157,6 +152,20 @@ final class GitIgnore implements GitProperty {
     return new GitIgnore(localList, globalList, childMatchers);
   }
 
+  @Nullable
+  @Override
+  public String getFilterName() {
+    return null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = matchers.hashCode();
+    result = 31 * result + Arrays.hashCode(global);
+    result = 31 * result + Arrays.hashCode(local);
+    return result;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -167,13 +176,5 @@ final class GitIgnore implements GitProperty {
     return Arrays.equals(global, gitIgnore.global)
         && Arrays.equals(local, gitIgnore.local)
         && matchers.equals(gitIgnore.matchers);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = matchers.hashCode();
-    result = 31 * result + Arrays.hashCode(global);
-    result = 31 * result + Arrays.hashCode(local);
-    return result;
   }
 }

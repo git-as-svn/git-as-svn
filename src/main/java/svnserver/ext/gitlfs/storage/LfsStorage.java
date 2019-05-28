@@ -9,15 +9,9 @@ package svnserver.ext.gitlfs.storage;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
-import ru.bozaro.gitlfs.common.data.Lock;
 import svnserver.auth.User;
 import svnserver.context.Local;
-import svnserver.repository.git.GitBranch;
-import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockStorage;
-import svnserver.repository.locks.LockTarget;
-import svnserver.repository.locks.UnlockTarget;
 
 import java.io.IOException;
 

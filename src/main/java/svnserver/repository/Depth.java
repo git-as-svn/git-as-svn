@@ -19,7 +19,7 @@ public enum Depth {
   Unknown {
     @NotNull
     @Override
-    public <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException {
+    public <R> R visit(@NotNull DepthVisitor<R> visitor) {
       return visitor.visitUnknown();
     }
 
@@ -98,6 +98,14 @@ public enum Depth {
   private final String value = name().toLowerCase(Locale.ENGLISH);
 
   @NotNull
+  public static Depth parse(@NotNull String value, boolean recurse, @NotNull Depth nonRecurse) {
+    if (value.isEmpty())
+      return recurse ? Infinity : nonRecurse;
+
+    return parse(value);
+  }
+
+  @NotNull
   public static Depth parse(@NotNull String value) {
     for (Depth depth : values())
       if (depth.value.equals(value))
@@ -107,18 +115,15 @@ public enum Depth {
   }
 
   @NotNull
-  public static Depth parse(@NotNull String value, boolean recurse, @NotNull Depth nonRecurse) {
-    if (value.isEmpty())
-      return recurse ? Infinity : nonRecurse;
-
-    return parse(value);
-  }
-
-  @NotNull
   public abstract <R> R visit(@NotNull DepthVisitor<R> visitor) throws SVNException;
 
   @NotNull
   public abstract Action determineAction(@NotNull Depth requestedDepth, boolean directory);
+
+  @NotNull
+  public final Depth deepen() {
+    return this == Immediates ? Empty : this;
+  }
 
   public enum Action {
     // Ignore this entry (it's either below the requested depth, or
@@ -132,10 +137,5 @@ public enum Depth {
     Upgrade,
     // Handle this entry normally
     Normal,
-  }
-
-  @NotNull
-  public final Depth deepen() {
-    return this == Immediates ? Empty : this;
   }
 }

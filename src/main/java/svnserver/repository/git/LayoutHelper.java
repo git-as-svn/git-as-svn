@@ -52,7 +52,7 @@ public final class LayoutHelper {
   private static final String PREFIX_ANONIMOUS = "unnamed/";
 
   @NotNull
-  public static Ref initRepository(@NotNull Repository repository, String branch) throws IOException {
+  static Ref initRepository(@NotNull Repository repository, String branch) throws IOException {
     Ref ref = repository.exactRef(PREFIX_REF + branch);
     if (ref == null) {
       Ref old = repository.exactRef(OLD_CACHE_REF);
@@ -81,12 +81,35 @@ public final class LayoutHelper {
     return ref;
   }
 
+  @NotNull
+  private static ObjectId createFirstRevision(@NotNull Repository repository) throws IOException {
+    // Generate UUID.
+    final ObjectInserter inserter = repository.newObjectInserter();
+    ObjectId uuidId = inserter.insert(Constants.OBJ_BLOB, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
+    // Create svn empty tree.
+    final ObjectId treeId = inserter.insert(new TreeFormatter());
+    // Create commit tree.
+    final TreeFormatter rootBuilder = new TreeFormatter();
+    rootBuilder.append(ENTRY_ROOT, FileMode.TREE, treeId);
+    rootBuilder.append(ENTRY_UUID, FileMode.REGULAR_FILE, uuidId);
+    new ObjectChecker().checkTree(rootBuilder.toByteArray());
+    final ObjectId rootId = inserter.insert(rootBuilder);
+    // Create first commit with message.
+    final CommitBuilder commitBuilder = new CommitBuilder();
+    commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
+    commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
+    commitBuilder.setMessage("#0: Initial revision");
+    commitBuilder.setTreeId(rootId);
+    final ObjectId commitId = inserter.insert(commitBuilder);
+    inserter.flush();
+    return commitId;
+  }
+
   /**
    * Get active branches with commits from repository.
    *
    * @param repository Repository.
    * @return Branches with commits.
-   * @throws IOException
    */
   public static Map<String, RevCommit> getBranches(@NotNull Repository repository) throws IOException {
     final RevWalk revWalk = new RevWalk(repository);
@@ -104,43 +127,6 @@ public final class LayoutHelper {
       }
     }
     return result;
-  }
-
-  public static ObjectId createCacheCommit(@NotNull ObjectInserter inserter, @NotNull ObjectId parent, @NotNull RevCommit commit, int revisionId, @NotNull Map<String, ObjectId> revBranches) throws IOException {
-    final TreeFormatter treeBuilder = new TreeFormatter();
-    treeBuilder.append(ENTRY_COMMIT_REF, commit);
-    treeBuilder.append("svn", FileMode.TREE, createSvnLayoutTree(inserter, revBranches));
-
-    new ObjectChecker().checkTree(treeBuilder.toByteArray());
-    final ObjectId rootTree = inserter.insert(treeBuilder);
-
-    final CommitBuilder commitBuilder = new CommitBuilder();
-    commitBuilder.setAuthor(commit.getAuthorIdent());
-    commitBuilder.setCommitter(commit.getCommitterIdent());
-    commitBuilder.setMessage("#" + revisionId + ": " + commit.getFullMessage());
-    commitBuilder.addParentId(parent);
-    // Add reference to original commit as parent for prevent commit removing by `git gc` (see #118).
-    commitBuilder.addParentId(commit);
-    commitBuilder.setTreeId(rootTree);
-    return inserter.insert(commitBuilder);
-  }
-
-  @Nullable
-  public static RevCommit loadOriginalCommit(@NotNull ObjectReader reader, @Nullable ObjectId cacheCommit) throws IOException {
-    final RevWalk revWalk = new RevWalk(reader);
-    if (cacheCommit != null) {
-      final RevCommit revCommit = revWalk.parseCommit(cacheCommit);
-      revWalk.parseTree(revCommit.getTree());
-
-      final CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, reader, revCommit.getTree());
-      while (!treeParser.eof()) {
-        if (treeParser.getEntryPathString().equals(ENTRY_COMMIT_REF)) {
-          return revWalk.parseCommit(treeParser.getEntryObjectId());
-        }
-        treeParser.next();
-      }
-    }
-    return null;
   }
 
   /**
@@ -164,6 +150,87 @@ public final class LayoutHelper {
       }
       return null;
     }
+  }
+
+  static ObjectId createCacheCommit(@NotNull ObjectInserter inserter, @NotNull ObjectId parent, @NotNull RevCommit commit, int revisionId, @NotNull Map<String, ObjectId> revBranches) throws IOException {
+    final TreeFormatter treeBuilder = new TreeFormatter();
+    treeBuilder.append(ENTRY_COMMIT_REF, commit);
+    treeBuilder.append("svn", FileMode.TREE, createSvnLayoutTree(inserter, revBranches));
+
+    new ObjectChecker().checkTree(treeBuilder.toByteArray());
+    final ObjectId rootTree = inserter.insert(treeBuilder);
+
+    final CommitBuilder commitBuilder = new CommitBuilder();
+    commitBuilder.setAuthor(commit.getAuthorIdent());
+    commitBuilder.setCommitter(commit.getCommitterIdent());
+    commitBuilder.setMessage("#" + revisionId + ": " + commit.getFullMessage());
+    commitBuilder.addParentId(parent);
+    // Add reference to original commit as parent for prevent commit removing by `git gc` (see #118).
+    commitBuilder.addParentId(commit);
+    commitBuilder.setTreeId(rootTree);
+    return inserter.insert(commitBuilder);
+  }
+
+  @Nullable
+  private static ObjectId createSvnLayoutTree(@NotNull ObjectInserter inserter, @NotNull Map<String, ObjectId> revBranches) throws IOException {
+    final Deque<TreeFormatter> stack = new ArrayDeque<>();
+    stack.add(new TreeFormatter());
+    String dir = "";
+    final ObjectChecker checker = new ObjectChecker();
+    for (Map.Entry<String, ObjectId> entry : new TreeMap<>(revBranches).entrySet()) {
+      final String path = entry.getKey();
+      // Save already added nodes.
+      while (!path.startsWith(dir)) {
+        final int index = dir.lastIndexOf('/', dir.length() - 2) + 1;
+        final TreeFormatter tree = stack.pop();
+        checker.checkTree(tree.toByteArray());
+        stack.element().append(dir.substring(index, dir.length() - 1), FileMode.TREE, inserter.insert(tree));
+        dir = dir.substring(0, index);
+      }
+      // Go deeper.
+      for (int index = path.indexOf('/', dir.length()) + 1; index < path.length(); index = path.indexOf('/', index) + 1) {
+        dir = path.substring(0, index);
+        stack.push(new TreeFormatter());
+      }
+      // Add commit to tree.
+      {
+        final int index = path.lastIndexOf('/', path.length() - 2) + 1;
+        stack.element().append(path.substring(index, path.length() - 1), FileMode.GITLINK, entry.getValue());
+      }
+    }
+    // Save already added nodes.
+    while (!dir.isEmpty()) {
+      int index = dir.lastIndexOf('/', dir.length() - 2) + 1;
+      final TreeFormatter tree = stack.pop();
+      checker.checkTree(tree.toByteArray());
+      stack.element().append(dir.substring(index, dir.length() - 1), FileMode.TREE, inserter.insert(tree));
+      dir = dir.substring(0, index);
+    }
+    // Save root tree to disk.
+    final TreeFormatter rootTree = stack.pop();
+    checker.checkTree(rootTree.toByteArray());
+    if (!stack.isEmpty()) {
+      throw new IllegalStateException();
+    }
+    return inserter.insert(rootTree);
+  }
+
+  @Nullable
+  static RevCommit loadOriginalCommit(@NotNull ObjectReader reader, @Nullable ObjectId cacheCommit) throws IOException {
+    final RevWalk revWalk = new RevWalk(reader);
+    if (cacheCommit != null) {
+      final RevCommit revCommit = revWalk.parseCommit(cacheCommit);
+      revWalk.parseTree(revCommit.getTree());
+
+      final CanonicalTreeParser treeParser = new CanonicalTreeParser(GitRepository.emptyBytes, reader, revCommit.getTree());
+      while (!treeParser.eof()) {
+        if (treeParser.getEntryPathString().equals(ENTRY_COMMIT_REF)) {
+          return revWalk.parseCommit(treeParser.getEntryObjectId());
+        }
+        treeParser.next();
+      }
+    }
+    return null;
   }
 
   /**
@@ -256,7 +323,7 @@ public final class LayoutHelper {
   }
 
   @NotNull
-  public static String loadRepositoryId(@NotNull ObjectReader objectReader, ObjectId commit) throws IOException {
+  static String loadRepositoryId(@NotNull ObjectReader objectReader, ObjectId commit) throws IOException {
     RevWalk revWalk = new RevWalk(objectReader);
     TreeWalk treeWalk = TreeWalk.forPath(objectReader, ENTRY_UUID, revWalk.parseCommit(commit).getTree());
     if (treeWalk != null) {
@@ -270,73 +337,5 @@ public final class LayoutHelper {
     private final Set<RevCommit> childs = new HashSet<>();
     @NotNull
     private final Set<RevCommit> parents = new HashSet<>();
-  }
-
-  @NotNull
-  private static ObjectId createFirstRevision(@NotNull Repository repository) throws IOException {
-    // Generate UUID.
-    final ObjectInserter inserter = repository.newObjectInserter();
-    ObjectId uuidId = inserter.insert(Constants.OBJ_BLOB, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
-    // Create svn empty tree.
-    final ObjectId treeId = inserter.insert(new TreeFormatter());
-    // Create commit tree.
-    final TreeFormatter rootBuilder = new TreeFormatter();
-    rootBuilder.append(ENTRY_ROOT, FileMode.TREE, treeId);
-    rootBuilder.append(ENTRY_UUID, FileMode.REGULAR_FILE, uuidId);
-    new ObjectChecker().checkTree(rootBuilder.toByteArray());
-    final ObjectId rootId = inserter.insert(rootBuilder);
-    // Create first commit with message.
-    final CommitBuilder commitBuilder = new CommitBuilder();
-    commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
-    commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
-    commitBuilder.setMessage("#0: Initial revision");
-    commitBuilder.setTreeId(rootId);
-    final ObjectId commitId = inserter.insert(commitBuilder);
-    inserter.flush();
-    return commitId;
-  }
-
-  @Nullable
-  private static ObjectId createSvnLayoutTree(@NotNull ObjectInserter inserter, @NotNull Map<String, ObjectId> revBranches) throws IOException {
-    final Deque<TreeFormatter> stack = new ArrayDeque<>();
-    stack.add(new TreeFormatter());
-    String dir = "";
-    final ObjectChecker checker = new ObjectChecker();
-    for (Map.Entry<String, ObjectId> entry : new TreeMap<>(revBranches).entrySet()) {
-      final String path = entry.getKey();
-      // Save already added nodes.
-      while (!path.startsWith(dir)) {
-        final int index = dir.lastIndexOf('/', dir.length() - 2) + 1;
-        final TreeFormatter tree = stack.pop();
-        checker.checkTree(tree.toByteArray());
-        stack.element().append(dir.substring(index, dir.length() - 1), FileMode.TREE, inserter.insert(tree));
-        dir = dir.substring(0, index);
-      }
-      // Go deeper.
-      for (int index = path.indexOf('/', dir.length()) + 1; index < path.length(); index = path.indexOf('/', index) + 1) {
-        dir = path.substring(0, index);
-        stack.push(new TreeFormatter());
-      }
-      // Add commit to tree.
-      {
-        final int index = path.lastIndexOf('/', path.length() - 2) + 1;
-        stack.element().append(path.substring(index, path.length() - 1), FileMode.GITLINK, entry.getValue());
-      }
-    }
-    // Save already added nodes.
-    while (!dir.isEmpty()) {
-      int index = dir.lastIndexOf('/', dir.length() - 2) + 1;
-      final TreeFormatter tree = stack.pop();
-      checker.checkTree(tree.toByteArray());
-      stack.element().append(dir.substring(index, dir.length() - 1), FileMode.TREE, inserter.insert(tree));
-      dir = dir.substring(0, index);
-    }
-    // Save root tree to disk.
-    final TreeFormatter rootTree = stack.pop();
-    checker.checkTree(rootTree.toByteArray());
-    if (!stack.isEmpty()) {
-      throw new IllegalStateException();
-    }
-    return inserter.insert(rootTree);
   }
 }

@@ -19,8 +19,6 @@ import ru.bozaro.gitlfs.server.LockManager;
 import ru.bozaro.gitlfs.server.UnauthorizedError;
 import svnserver.auth.User;
 import svnserver.repository.locks.LockDesc;
-import svnserver.repository.locks.LockTarget;
-import svnserver.repository.locks.UnlockTarget;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -63,25 +61,25 @@ final class LfsLockManager implements LockManager {
     @Override
     @NotNull
     public Lock lock(@NotNull String path, @Nullable Ref ref) throws LockConflictException, IOException {
-      final LockDesc[] lock;
+      final LockDesc lock;
       try {
-        lock = lfsContentManager.getStorage().lock(user, null, null, false, new LockTarget[]{new LockTarget(path, -1)});
+        lock = lfsContentManager.getStorage().lock(user, null, path);
       } catch (SVNException e) {
         throw new IOException(e);
       }
-      return LockDesc.toLock(lock[0]);
+      return LockDesc.toLock(lock);
     }
 
     @Override
     @Nullable
     public Lock unlock(@NotNull String lockId, boolean force, @Nullable Ref ref) throws LockConflictException, IOException {
-      final LockDesc[] lock;
+      final LockDesc lock;
       try {
-        lock = lfsContentManager.getStorage().unlock(user, null, force, new UnlockTarget[]{new UnlockTarget(null, lockId)});
+        lock = lfsContentManager.getStorage().unlock(user, null, force, lockId);
       } catch (SVNException e) {
         throw new IOException(e);
       }
-      return lock.length < 1 ? null : LockDesc.toLock(lock[0]);
+      return lock == null ? null : LockDesc.toLock(lock);
     }
 
     @NotNull

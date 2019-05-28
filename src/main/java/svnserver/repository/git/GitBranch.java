@@ -47,6 +47,7 @@ public final class GitBranch {
   private final String svnBranch;
   @NotNull
   private final GitRepository repository;
+  @NotNull
   private final String shortBranchName;
   /**
    * Lock for prevent concurrent pushes.
@@ -99,6 +100,11 @@ public final class GitBranch {
       }
       oid = revCommit.getParent(0);
     }
+  }
+
+  @NotNull
+  String getGitBranch() {
+    return gitBranch;
   }
 
   @NotNull
@@ -465,7 +471,7 @@ public final class GitBranch {
     if (user.getEmail() == null || user.getEmail().isEmpty()) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Users with undefined email can't create commits"));
     }
-    return new GitWriter(this, repository.getPusher(), pushLock, gitBranch, user);
+    return new GitWriter(this, repository.getPusher(), pushLock, user);
   }
 
   @NotNull

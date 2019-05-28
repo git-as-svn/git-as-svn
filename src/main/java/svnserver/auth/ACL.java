@@ -81,7 +81,7 @@ public final class ACL implements VcsAccess {
     if (allowed.equals(EveryoneMarker))
       entry = new EveryoneAclEntry();
     else if (allowed.startsWith("@")) {
-      final String group = allowed.substring(1, allowed.length());
+      final String group = allowed.substring(1);
 
       if (!groups.contains(group))
         throw new IllegalArgumentException("ACL entry " + path + " uses unknown group: " + group);
@@ -93,6 +93,79 @@ public final class ACL implements VcsAccess {
 
     if (!path2acl.computeIfAbsent(path, s -> new HashSet<>()).add(entry))
       throw new IllegalArgumentException("Duplicate ACL entry " + path + ": " + allowed);
+  }
+
+  private interface AclEntry {
+    boolean allows(@NotNull String user);
+  }
+
+  private class GroupAclEntry implements AclEntry {
+    @NotNull
+    private final String group;
+
+    private GroupAclEntry(@NotNull String group) {
+      this.group = group;
+    }
+
+    @Override
+    public boolean allows(@NotNull String user) {
+      return user2groups.getOrDefault(user, Collections.emptySet()).contains(group);
+    }
+
+    @Override
+    public int hashCode() {
+      return group.hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof GroupAclEntry && group.equals(((GroupAclEntry) o).group);
+    }
+  }
+
+  private class UserAclEntry implements AclEntry {
+    @NotNull
+    private final String user;
+
+    private UserAclEntry(@NotNull String user) {
+      this.user = user;
+    }
+
+    @Override
+    public boolean allows(@NotNull String user) {
+      return user.equals(this.user);
+    }
+
+    @Override
+    public int hashCode() {
+      return user.hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof UserAclEntry && user.equals(((UserAclEntry) o).user);
+    }
+  }
+
+  private class EveryoneAclEntry implements AclEntry {
+
+    private EveryoneAclEntry() {
+    }
+
+    @Override
+    public boolean allows(@NotNull String user) {
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof EveryoneAclEntry;
+    }
   }
 
   @Override
@@ -133,76 +206,4 @@ public final class ACL implements VcsAccess {
     return false;
   }
 
-  private interface AclEntry {
-    boolean allows(@NotNull String user);
-  }
-
-  private class GroupAclEntry implements AclEntry {
-    @NotNull
-    private final String group;
-
-    private GroupAclEntry(@NotNull String group) {
-      this.group = group;
-    }
-
-    @Override
-    public boolean allows(@NotNull String user) {
-      return user2groups.getOrDefault(user, Collections.emptySet()).contains(group);
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof GroupAclEntry && group.equals(((GroupAclEntry) o).group);
-    }
-
-    @Override
-    public int hashCode() {
-      return group.hashCode();
-    }
-  }
-
-  private class UserAclEntry implements AclEntry {
-    @NotNull
-    private final String user;
-
-    private UserAclEntry(@NotNull String user) {
-      this.user = user;
-    }
-
-    @Override
-    public boolean allows(@NotNull String user) {
-      return user.equals(this.user);
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof UserAclEntry && user.equals(((UserAclEntry) o).user);
-    }
-
-    @Override
-    public int hashCode() {
-      return user.hashCode();
-    }
-  }
-
-  private class EveryoneAclEntry implements AclEntry {
-
-    private EveryoneAclEntry() {
-    }
-
-    @Override
-    public boolean allows(@NotNull String user) {
-      return true;
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof EveryoneAclEntry;
-    }
-
-    @Override
-    public int hashCode() {
-      return getClass().hashCode();
-    }
-  }
 }
