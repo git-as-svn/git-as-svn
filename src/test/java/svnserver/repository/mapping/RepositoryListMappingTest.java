@@ -11,6 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import svnserver.SvnTestServer;
 import svnserver.repository.RepositoryMapping;
 
 import java.util.Map;
@@ -23,6 +27,21 @@ import java.util.TreeMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class RepositoryListMappingTest {
+
+  @Test
+  public void repoRootRelocate() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNURL url = server.getUrl(false);
+      try {
+        SvnTestServer.openSvnRepository(url, SvnTestServer.USER_NAME, SvnTestServer.PASSWORD).getLatestRevision();
+      } catch (SVNException e) {
+        Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.RA_SVN_REPOS_NOT_FOUND);
+        final String expected = String.format("Repository branch not found. Use `svn relocate %s/master` to fix your working copy", url.toString());
+        Assert.assertEquals(e.getErrorMessage().getMessageTemplate(), expected);
+      }
+    }
+  }
+
   @Test
   public void testEmpty() {
     final TreeMap<String, String> map = new Builder()

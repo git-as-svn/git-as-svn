@@ -30,7 +30,7 @@ public abstract class BaseCmd<T> {
         .listBegin()
         .listBegin()
         .number(errorMessage.getErrorCode().getCode())
-        .string(errorMessage.getMessage())
+        .string(errorMessage.getMessageTemplate())
         .string("")
         .number(0)
         .listEnd()

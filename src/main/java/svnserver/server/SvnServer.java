@@ -71,7 +71,8 @@ public final class SvnServer extends Thread {
       SVNErrorCode.REPOS_HOOK_FAILURE,
       SVNErrorCode.WC_NOT_UP_TO_DATE,
       SVNErrorCode.IO_WRITE_ERROR,
-      SVNErrorCode.IO_PIPE_READ_ERROR
+      SVNErrorCode.IO_PIPE_READ_ERROR,
+      SVNErrorCode.RA_SVN_REPOS_NOT_FOUND
   )));
   @NotNull
   private static AtomicInteger threadNumber = new AtomicInteger(1);
@@ -200,11 +201,11 @@ public final class SvnServer extends Thread {
     final SvnServerParser parser = new SvnServerParser(socket.getInputStream());
 
     final ClientInfo clientInfo = exchangeCapabilities(parser, writer);
-    final RepositoryInfo repositoryInfo = RepositoryMapping.findRepositoryInfo(repositoryMapping, clientInfo.getUrl());
-    if (repositoryInfo == null) {
-      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + clientInfo.getUrl()));
+
+    final RepositoryInfo repositoryInfo = RepositoryMapping.findRepositoryInfo(repositoryMapping, clientInfo.getUrl(), writer);
+    if (repositoryInfo == null)
       return;
-    }
+
     final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
     context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
     final GitBranch branch = context.getBranch();

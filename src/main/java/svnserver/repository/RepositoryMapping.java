@@ -9,13 +9,18 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import svnserver.StringHelper;
 import svnserver.context.Shared;
+import svnserver.parser.SvnServerWriter;
 import svnserver.repository.git.BranchProvider;
 import svnserver.repository.git.GitBranch;
+import svnserver.server.command.BaseCmd;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -26,16 +31,32 @@ import java.util.NavigableMap;
  */
 public interface RepositoryMapping<T extends BranchProvider> extends Shared {
   @Nullable
-  static <T extends BranchProvider> RepositoryInfo findRepositoryInfo(@NotNull RepositoryMapping<T> mapping, @NotNull SVNURL url) throws SVNException {
+  static <T extends BranchProvider> RepositoryInfo findRepositoryInfo(@NotNull RepositoryMapping<T> mapping, @NotNull SVNURL url, @NotNull SvnServerWriter writer) throws SVNException, IOException {
     final String path = StringHelper.normalizeDir(url.getPath());
     final Map.Entry<String, T> repo = mapping.getMapping().floorEntry(path);
-    if (repo == null || !StringHelper.isParentPath(repo.getKey(), path))
+    if (repo == null || !StringHelper.isParentPath(repo.getKey(), path)) {
+      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + url));
       return null;
+    }
 
     final String branchPath = repo.getKey().isEmpty() ? path : path.substring(repo.getKey().length() - 1);
-    final Map.Entry<String, GitBranch> branch = repo.getValue().getBranches().floorEntry(branchPath);
-    if (branch == null || !StringHelper.isParentPath(branch.getKey(), branchPath))
+    final NavigableMap<String, GitBranch> branches = repo.getValue().getBranches();
+
+    if (branchPath.length() <= 1) {
+      final String branchName = repo.getValue().getBranches().size() == 1
+          ? repo.getValue().getBranches().values().iterator().next().getShortBranchName()
+          : "<branchname>";
+      final String msg = String.format("Repository branch not found. Use `svn relocate %s/%s` to fix your working copy", url, branchName);
+      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, msg));
       return null;
+    }
+
+    final Map.Entry<String, GitBranch> branch = branches.floorEntry(branchPath);
+
+    if (branch == null || !StringHelper.isParentPath(branch.getKey(), branchPath)) {
+      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + url));
+      return null;
+    }
 
     return new RepositoryInfo(
         SVNURL.create(
