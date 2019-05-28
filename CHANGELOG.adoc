@@ -1,6 +1,6 @@
 = Changes
 
-== Unreleased
+== 1.12.0
 
  * Experimental support for https://github.com/git-lfs/git-lfs/blob/master/docs/api/locking.md[LFS locking API]
    Now git-as-svn forwards locking requests to LFS server. git-as-svn internal LFS server now supports LFS locks.
