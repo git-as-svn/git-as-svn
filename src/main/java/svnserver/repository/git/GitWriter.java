@@ -197,6 +197,7 @@ public final class GitWriter {
       }
     }
 
+    @Nullable
     public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
       final GitTreeUpdate root = treeStack.element();
       ObjectId treeId = root.buildTree(inserter);

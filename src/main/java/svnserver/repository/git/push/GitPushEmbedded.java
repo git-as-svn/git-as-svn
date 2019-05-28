@@ -63,6 +63,7 @@ public final class GitPushEmbedded implements GitPusher {
     final RefUpdate.Result result = refUpdate.update();
     switch (result) {
       case REJECTED:
+      case LOCK_FAILURE:
         return false;
       case NEW:
       case FAST_FORWARD:
