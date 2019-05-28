@@ -17,7 +17,7 @@ export DH_OPTIONS
 override_dh_install:
 	dh_install
 
-	cp ../../../cfg/config.example	$(GAS)/etc/git-as-svn/git-as-svn.conf
+	cp ../../../src/docs/asciidoc/examples/config.example	$(GAS)/etc/git-as-svn/git-as-svn.conf
 	ln -s ../share/git-as-svn/bin/git-as-svn $(GAS)/usr/bin
 
 override_dh_fixperms:
