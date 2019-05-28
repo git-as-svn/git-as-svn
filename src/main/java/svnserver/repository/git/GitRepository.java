@@ -167,7 +167,7 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
   }
 
   @NotNull
-  private GitProperty[] cachedParseGitProperty(GitObject<ObjectId> objectId, GitPropertyFactory factory) throws IOException {
+  private GitProperty[] cachedParseGitProperty(@NotNull GitObject<ObjectId> objectId, @NotNull GitPropertyFactory factory) throws IOException {
     GitProperty[] property = filePropertyCache.get(objectId.getObject());
     if (property == null) {
       property = factory.create(loadContent(objectId.getRepo().newObjectReader(), objectId.getObject()));
