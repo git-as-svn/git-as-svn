@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlfs.storage.network;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -20,14 +19,20 @@ import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jgit.util.Holder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.DBMaker;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.client.auth.CachedAuthProvider;
 import ru.bozaro.gitlfs.client.exceptions.RequestException;
+import ru.bozaro.gitlfs.common.JsonHelper;
 import ru.bozaro.gitlfs.common.data.Link;
 import ru.bozaro.gitlfs.common.data.Operation;
 import svnserver.SvnTestHelper;
@@ -89,7 +94,8 @@ public final class LfsHttpStorageTest {
 
     localContext.add(VcsAccess.class, new VcsAccessEveryone());
 
-    localContext.add(LfsStorage.class, new LfsMemoryStorage());
+    final LfsMemoryStorage backendStorage = new LfsMemoryStorage();
+    localContext.add(LfsStorage.class, backendStorage);
     // Register storage
     sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
 
@@ -97,10 +103,36 @@ public final class LfsHttpStorageTest {
       final URI url = URI.create(String.format("http://%s:%s/example.git/%s", http.getHost(), http.getLocalPort(), LfsServer.SERVLET_AUTH));
 
       try (SvnTestServer server = SvnTestServer.createEmpty(null, false, false, new GitAsSvnLfsHttpStorage(url))) {
-        SvnTestHelper.createFile(server.openSvnRepository(), ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
+        final SVNRepository svnRepository = server.openSvnRepository();
+        SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
 
-        SvnTestHelper.createFile(server.openSvnRepository(), "1.txt", "some text", null);
-        SvnTestHelper.checkFileContent(server.openSvnRepository(), "1.txt", "some text");
+        SvnTestHelper.createFile(svnRepository, "1.txt", "some text", null);
+        SvnTestHelper.checkFileContent(svnRepository, "1.txt", "some text");
+
+        Assert.assertEquals(backendStorage.getFiles().size(), 1);
+        final byte[] lfsBytes = backendStorage.getFiles().values().iterator().next();
+        Assert.assertNotNull(lfsBytes);
+        Assert.assertEquals(new String(lfsBytes, StandardCharsets.UTF_8), "some text");
+
+        final Holder<SVNLock> lockHolder = new Holder<>(null);
+        svnRepository.lock(Collections.singletonMap("1.txt", svnRepository.getLatestRevision()), null, false, new ISVNLockHandler() {
+          @Override
+          public void handleLock(String path, SVNLock lock, SVNErrorMessage error) {
+            Assert.assertEquals(path, "/1.txt");
+            lockHolder.set(lock);
+          }
+
+          @Override
+          public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) {
+            Assert.fail();
+          }
+        });
+        final SVNLock lock = lockHolder.get();
+        Assert.assertNotNull(lock);
+        Assert.assertEquals(lock.getPath(), "/1.txt");
+        Assert.assertNotNull(lock.getID());
+        Assert.assertEquals(lock.getOwner(), SvnTestServer.USER_NAME);
+
       }
     } finally {
       jetty.stop();
@@ -183,7 +215,6 @@ public final class LfsHttpStorageTest {
     @Override
     protected @NotNull Client lfsClient(@NotNull User user) {
       final HttpClient httpClient = HttpClients.createDefault();
-      final ObjectMapper mapper = WebServer.createJsonMapper();
 
       return new Client(new CachedAuthProvider() {
 
@@ -204,7 +235,7 @@ public final class LfsHttpStorageTest {
           try {
             final HttpResponse response = httpClient.execute(post);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-              return mapper.readValue(response.getEntity().getContent(), Link.class);
+              return JsonHelper.mapper.readValue(response.getEntity().getContent(), Link.class);
             }
             throw new RequestException(post, response);
           } finally {

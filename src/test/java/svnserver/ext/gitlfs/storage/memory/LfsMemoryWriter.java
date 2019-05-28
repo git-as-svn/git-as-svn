@@ -22,21 +22,21 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsMemoryWriter extends LfsWriter {
-  @NotNull
-  private final ConcurrentHashMap<String, byte[]> storage;
+final class LfsMemoryWriter extends LfsWriter {
   @NotNull
   private static final String OID_PREFIX = "sha256:";
+  @NotNull
+  private final ConcurrentHashMap<String, byte[]> storage;
   @Nullable
   private ByteArrayOutputStream stream;
 
-  public LfsMemoryWriter(@NotNull ConcurrentHashMap<String, byte[]> storage) {
+  LfsMemoryWriter(@NotNull ConcurrentHashMap<String, byte[]> storage) {
     this.storage = storage;
     this.stream = new ByteArrayOutputStream();
   }
 
   @Override
-  public void write(int b) throws IOException {
+  public void write(int b) {
     if (stream == null) {
       throw new IllegalStateException();
     }
@@ -44,11 +44,16 @@ public class LfsMemoryWriter extends LfsWriter {
   }
 
   @Override
-  public void write(@NotNull byte[] b, int off, int len) throws IOException {
+  public void write(@NotNull byte[] b, int off, int len) {
     if (stream == null) {
       throw new IllegalStateException();
     }
     stream.write(b, off, len);
+  }
+
+  @Override
+  public void close() {
+    stream = null;
   }
 
   @NotNull
@@ -66,10 +71,5 @@ public class LfsMemoryWriter extends LfsWriter {
     storage.putIfAbsent(oid, content);
     stream = null;
     return oid;
-  }
-
-  @Override
-  public void close() throws IOException {
-    stream = null;
   }
 }

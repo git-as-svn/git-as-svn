@@ -115,7 +115,7 @@ public final class SvnTestServer implements SvnTester {
     config.setCacheConfig(new MemoryCacheConfig());
 
     if (withLfs) {
-      config.getShared().add(context -> context.add(LfsStorageFactory.class, new LfsMemoryStorage.Factory()));
+      config.getShared().add(context -> context.add(LfsStorageFactory.class, localContext -> new LfsMemoryStorage()));
     }
 
     if (mappingConfigCreator != null) {

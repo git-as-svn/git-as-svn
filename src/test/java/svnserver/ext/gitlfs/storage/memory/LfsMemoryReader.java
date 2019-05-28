@@ -15,7 +15,6 @@ import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -23,23 +22,23 @@ import java.io.InputStream;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsMemoryReader implements LfsReader {
+final class LfsMemoryReader implements LfsReader {
   @NotNull
   private final byte[] content;
 
-  public LfsMemoryReader(@NotNull byte[] content) {
+  LfsMemoryReader(@NotNull byte[] content) {
     this.content = content;
   }
 
   @NotNull
   @Override
-  public InputStream openStream() throws IOException {
+  public InputStream openStream() {
     return new ByteArrayInputStream(content);
   }
 
   @Nullable
   @Override
-  public InputStream openGzipStream() throws IOException {
+  public InputStream openGzipStream() {
     return null;
   }
 

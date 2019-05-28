@@ -10,13 +10,12 @@ package svnserver.ext.gitlfs.storage.memory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.auth.User;
-import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
-import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.locks.LocalLockManager;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -27,33 +26,30 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 public final class LfsMemoryStorage extends LocalLockManager implements LfsStorage {
   @NotNull
-  private final ConcurrentHashMap<String, byte[]> storage = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, byte[]> files = new ConcurrentHashMap<>();
 
   public LfsMemoryStorage() {
     super(new ConcurrentSkipListMap<>());
   }
 
+  @NotNull
+  public Map<String, byte[]> getFiles() {
+    return files;
+  }
+
   @Nullable
   @Override
   public LfsReader getReader(@NotNull String oid) {
-    final byte[] content = storage.get(oid);
-    if (content == null) {
+    final byte[] content = files.get(oid);
+    if (content == null)
       return null;
-    }
+
     return new LfsMemoryReader(content);
   }
 
   @NotNull
   @Override
   public LfsWriter getWriter(@NotNull User user) {
-    return new LfsMemoryWriter(storage);
-  }
-
-  public static class Factory implements LfsStorageFactory {
-    @NotNull
-    @Override
-    public LfsStorage createStorage(@NotNull LocalContext context) {
-      return new LfsMemoryStorage();
-    }
+    return new LfsMemoryWriter(files);
   }
 }
