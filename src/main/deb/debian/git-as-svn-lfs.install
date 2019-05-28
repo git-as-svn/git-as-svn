@@ -1,2 +1,2 @@
-../../../../tools/git-lfs-authenticate.cfg	/etc/git-as-svn/
-../../../../tools/git-lfs-authenticate	/usr/bin/
+../../../tools/git-lfs-authenticate.cfg	/etc/git-as-svn/
+../../../tools/git-lfs-authenticate	/usr/bin/
