@@ -29,5 +29,5 @@ override_dh_fixperms:
 #	chown git:git -R $(GAS)/var/log/git-as-svn
 
 override_dh_compress:
-	gzip -9nf $(GAS)/usr/share/doc/git-as-svn/LICENSE $(GAS)/usr/share/doc/git-as-svn/README.md $(GAS)/usr/share/doc/git-as-svn/changelog
+	gzip -9nf $(GAS)/usr/share/doc/git-as-svn/LICENSE $(GAS)/usr/share/doc/git-as-svn/README.adoc $(GAS)/usr/share/doc/git-as-svn/changelog
 	gzip -9nf $(LFS)/usr/share/doc/git-as-svn-lfs/changelog
