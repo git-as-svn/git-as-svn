@@ -211,17 +211,6 @@ val compileDeb by tasks.creating(Exec::class) {
     workingDir = file("$buildDir/debPackage/package")
     executable = "dpkg-buildpackage"
     args("-uc", "-us")
-
-    onlyIf {
-        val result = exec {
-            executable = "bash"
-            args = listOf("-l", "-c", "dpkg-buildpackage")
-            isIgnoreExitValue = true
-            standardOutput = ByteArrayOutputStream()
-            errorOutput = standardOutput
-        }
-        result.exitValue == 0
-    }
 }
 
 val distDeb by tasks.creating(Copy::class) {
