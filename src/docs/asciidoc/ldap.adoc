@@ -1,0 +1,52 @@
+[[ldap]]
+= LDAP (Lightweight Directory Access Protocol)
+
+git-as-svn supports LDAP for user authentication using either of two modes: `!ldapBindSimple` or `!ldapBindDn`
+
+./etc/git-as-svn/git-as-svn.conf
+[source,yaml]
+----
+# Authenticates a user by binding to the directory with the DN of the entry for that user and the password
+# presented by the user. If this simple bind succeeds the user is considered to be authenticated.
+userDB: !ldapUsers
+
+  # LDAP server URL
+  # It usually specifies the domain name of the directory server to connect to,
+  # and optionally the port number and distinguished name (DN) of the required root naming context.
+  #
+  connectionUrl: ldap://localhost:389/ou=groups,dc=mycompany,dc=com
+  
+  # Optional LDAP SSL CA certificate for secure LDAP connections
+  #
+  # ldapCertPem: /path/to/ldap.pem
+  
+  # Pattern specifying the LDAP search filter to use after substitution of the username.
+  #
+  searchFilter: (&(objectClass=person)(objectClass=user))
+  
+  # LDAP bind: either simple or DN (default - anonymous bind):
+  #
+  # bind: !ldapBindSimple
+  #   username: somebody
+  #   password: secret
+  #
+  # bind: !ldapBindDn
+  #   bindDn: cn=somebody,ou=groups,dc=mycompany,dc=com
+  #   password: secret
+  #
+  
+  # LDAP attribute, containing user login.
+  # Default: sAMAccountName
+  #
+  # loginAttribute: sAMAccountName
+  
+  # LDAP attribute, containing user name.
+  # Default: name
+  #
+  # nameAttribute: name
+  
+  # LDAP attribute, containing user email.
+  # Default: mail
+  #
+  # emailAttribute: mail
+----

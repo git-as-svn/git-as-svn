@@ -1,22 +1,28 @@
 !config:
 
 # Specifies IP to listen to for svn:// connections
+# Default: 0.0.0.0
 #
 # host: 0.0.0.0
 
 # Specifies port number to listen to for svn:// connections
+# Default: 3690
 #
 # port: 3690
 
 # Subversion realm name. Subversion uses this for credentials caching
+# Default: repository UUID
 #
 # realm: git-as-svn realm
 
 # If enabled, git-as-svn compresses wire traffic
+# Default: true
+#
 # compressionEnabled: true
 
 # If enabled, git-as-svn indexed repositories in parallel during startup
 # This results in higher memory usage so may require adjustments to JVM memory options
+# Default: true
 #
 # parallelIndexing: true
 
@@ -28,28 +34,42 @@ cacheConfig: !persistentCache
 repositoryMapping: !giteaMapping
 
   # Filesystem location where Gitea stores repositories
-  # Note that git-as-svn needs write access in order to be able to commit
+  # Note that git-as-svn requires write access
   path: /data/git/repositories
 
   # Common settings for all repositories exposed to svn://
+  #
   # template:
   #   branches:
   #     - master
   #   renameDetection: true
 
-# Tells git-as-svn to use Gitea API for user authentication
-userDB: !giteaUsers {}
+userDB:
+  !sshKeyUsers
+  # Tells git-as-svn to use Gitea API for user authentication
+  userDB: !giteaUsers {}
+  sshKeysToken: CHANGE_THIS_TO_SOMETHING_SECRET
 
 shared:
+
   # Configures Gitea API for git-as-svn
   - !gitea
 
-	# URL where your Gitea instance API is available
+    # URL where your Gitea instance API is running
     url: http://localhost:3000/api/v1
 
-	# Tells git-as-svn to store Git-LFS objects through Gitea LFS API
+    # Tells git-as-svn to store Git-LFS objects through Gitea LFS API
     # lfs: true
 
-	# Gitea access token
-	# Note that git-as-svn requires Gitea Sudo permission in order to authenticate users
+    # Gitea access token
+    # Note that git-as-svn requires Gitea Sudo permission in order to authenticate users
     token: 90c68b84fb04e364c2ea3fc42a6a2193144bc07d
+
+  - !sshKeys
+    shadowSSHDirectory: /data/git/ssh-shadow
+    realSSHDirectory: /data/git/.ssh
+    originalAppPath: /app/gitea/gitea
+    svnservePath: /app/gitea/git-as-svn-svnserve
+  # If your gitea instance is using AuthorizedKeysCommand
+  # look at tools/git-as-svn-authorized-keys-command
+  # You don't need sshKeys in that case

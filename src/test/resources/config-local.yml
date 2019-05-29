@@ -1,0 +1,48 @@
+!config:
+
+cacheConfig: !persistentCache
+  path: ../build/git-as-svn.mapdb
+
+repositoryMapping: !listMapping
+  repositories:
+    example:
+      acl:
+        groups:
+          - name: developers
+            users:
+              - test
+
+        access:
+          - path: /
+            allowed:
+              - '@developers'
+      repository:
+        pusher: !pushEmbedded
+          update: update
+          preReceive: pre-receive
+          postReceive: post-receive
+        createMode: EXAMPLE
+        branches:
+          - master
+        path: ../build/example.git
+        renameDetection: true
+
+shared:
+  - !submodules [
+  ]
+  - !web
+    listen:
+      - !http
+        host: localhost
+        port: 8123
+        forwarded: true
+  - !localLfs
+    secretToken: ChangeMe
+    path: ../build/lfs
+
+userDB: !localUsers
+  users:
+    - username: test
+      password: test
+      email: test@noreply.fake
+      realName: Test User

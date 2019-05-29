@@ -1,7 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import java.io.ByteArrayOutputStream
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -53,6 +52,7 @@ repositories {
 license {
     header = rootProject.file("license_header.txt")
     exclude("**/*.json")
+    exclude("**/*.yml")
 }
 
 tasks.withType<JavaCompile> {
@@ -74,7 +74,7 @@ application {
 }
 
 tasks.getByName<JavaExec>("run") {
-    args = listOf("-c", "$projectDir/src/test/resources/config-local.example")
+    args = listOf("-c", "$projectDir/src/test/resources/config-local.yml")
 }
 
 dependencies {
