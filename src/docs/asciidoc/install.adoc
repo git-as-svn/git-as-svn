@@ -1,7 +1,7 @@
 [[install]]
 = Installation
 
-IMPORTANT: Subversion 1.8 is a minimal supported feature because git-as-svn relies on https://subversion.apache.org/docs/release-notes/1.8.html#iprops[inherited properties] Subversion feature.
+IMPORTANT: Subversion versions prior to 1.8 are *not* supported because git-as-svn relies on https://subversion.apache.org/docs/release-notes/1.8.html#iprops[inherited properties] Subversion feature.
 
 == .gitattributes
 
