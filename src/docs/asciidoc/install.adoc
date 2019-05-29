@@ -8,7 +8,7 @@ IMPORTANT: Subversion versions prior to 1.8 are *not* supported because git-as-s
 By default, Git uses native line ending for text files and determines whether file is text or not using heuristics
 that do not match Subversion behavior.
 
-In order to fix this discrepancy, add following to your `.gitattributes` file:
+In order to fix this discrepancy, add the following to your `.gitattributes` file:
 
 ..gitattributes
 ----

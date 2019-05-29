@@ -10,7 +10,7 @@ control system can be solved in different ways.
 
 image:images/github.png[image]
 
-Website: https://github.com
+Website: https://help.github.com/en/articles/support-for-subversion-clients
 
 This is probably the closest analogue.
 

@@ -37,14 +37,15 @@ Git style::
   The basic idea is that the developer works in the local branch. His
   changes do not affect the work of other developers, but nonetheless
   they can be tested on CI farm, review by another developer and etc.
-  +
-  This allows each developer to work independently, as best he can. He
-  can change and saving intermediate versions of documents, taking full
-  advantage of the version control system (including access to the
-  change history) even without network connection to the server.
-  +
-  Unfortunately, this approach does not work with not mergeable
-  documents (for example, binary files).
++
+This allows each developer to work independently, as best he can. He
+can change and saving intermediate versions of documents, taking full
+advantage of the version control system (including access to the
+change history) even without network connection to the server.
++
+Unfortunately, this approach does not work with not mergeable
+documents (for example, binary files).
+
 Subversion style::
   The use of a centralized version control system is more convenient in
   the case of documents do not support the merge (for example, with
