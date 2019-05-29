@@ -24,7 +24,7 @@ repositoryMapping: !listMapping
         createMode: EXAMPLE
         branches:
           - master
-        path: ../build/example.git
+        path: ../../../build/example.git
         renameDetection: true
 
 shared:
