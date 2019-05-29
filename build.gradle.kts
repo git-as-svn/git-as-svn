@@ -160,8 +160,10 @@ fun AbstractAsciidoctorTask.configure() {
     sources(delegateClosureOf<PatternSet> {
         include("git-as-svn.adoc")
     })
+    val commitDateTime = getCommitDateTime()
     attributes(mapOf(
-            "date" to DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US).format(getCommitDate())
+            "docdate" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE),
+            "doctime" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_TIME)
     ))
 }
 
@@ -199,7 +201,7 @@ val debianControl by tasks.creating(Copy::class) {
 
         expand(mapOf(
                 "version" to project.version,
-                "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(getCommitDate())
+                "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(getCommitDateTime())
         ))
     }
     into(file("$buildDir/debPackage/package"))
@@ -243,6 +245,6 @@ fun createLauncherClassPath(): String {
     return vendorJars.joinToString(" ")
 }
 
-fun getCommitDate(): ZonedDateTime {
+fun getCommitDateTime(): ZonedDateTime {
     return Grgit.open(mapOf("dir" to projectDir)).head().dateTime
 }
