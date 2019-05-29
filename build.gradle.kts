@@ -162,6 +162,7 @@ fun AbstractAsciidoctorTask.configure() {
     })
     val commitDateTime = getCommitDateTime()
     attributes(mapOf(
+            "source-highlighter" to "coderay",
             "docdate" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE),
             "doctime" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_TIME)
     ))
