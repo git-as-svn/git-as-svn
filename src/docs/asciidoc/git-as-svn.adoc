@@ -1,9 +1,9 @@
 = git-as-svn User Manual
-Artem Navrotskiy <bozaro@users.noreply.github.com>; Marat Radchenko <marat@slonopotamus.org>; Andrew Thornton <art27@cantab.net>
+Artem Navrotskiy <https://github.com/bozaro[@bozaro]>; Marat Radchenko <https://github.com/slonopotamus[@slonopotamus]>; Andrew Thornton <https://github.com/zeripath[@zeripath]>
 v{project-version}, {date}
 ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,1600]]
 :doctype: book
-:toc:
+:toc: left
 :toclevels: 4
 :sectnums:
 :icons: font
