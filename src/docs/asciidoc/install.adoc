@@ -1,41 +1,26 @@
 [[install]]
 = Installation
 
-== Quick start
+IMPORTANT: Subversion 1.8 is a minimal supported feature because git-as-svn relies on https://subversion.apache.org/docs/release-notes/1.8.html#iprops[inherited properties] Subversion feature.
 
-To try git-as-svn you need:
+== .gitattributes
 
-1.  Install Java 8 or later;
-2.  Download archive from site
-https://github.com/bozaro/git-as-svn/releases/latest;
-3.  After unpacking the archive change working path to the uncompressed
-directory and run the command:
-+
+By default, Git uses native line ending for text files and determines whether file is text or not using heuristics
+that do not match Subversion behavior.
+
+In order to fix this discrepancy, add following to your `.gitattributes` file:
+
+..gitattributes
 ----
-bin/git-as-svn --config doc/config-local.example --show-config
+*   -text
 ----
 
-This will start git-as-svn server with following configuration:
-
-1.  The server is accessible via svn-protocol on port 3690.
-+
-You can check server with command like:
-+
-----
-svn ls svn://localhost/example
-----
-2.  To access the server, you can use the user:
-+
-Login: test
-+
-Password: test
-3.  Cache and repository will be created in `build` directory:
-* `example.git` — repository directory, accessible via svn-protocol;
-* `git-as-svn.mapdb*` — cache files for expensive computed data.
+This will force Git to store files as-is unless end-of-line conversion is explicitly configured for them.
+See https://git-scm.com/docs/gitattributes[gitattributes documentation] for additional info.
 
 == Installation on Debian/Ubuntu
 
-You can install git-as-svn repository on Debian/Ubuntu using the
+You can install git-as-svn repository on Debian/Ubuntu using the following
 commands:
 
 [source,bash]
@@ -50,7 +35,7 @@ sudo apt-get install git-as-svn
 sudo apt-get install git-as-svn-lfs
 ----
 
-=== Package git-as-svn
+=== git-as-svn package
 
 This package contains the git-as-svn.
 
@@ -76,20 +61,20 @@ svn ls --username test --password test svn://localhost/example/
 This package by default is configured to use the following directories:
 
 /etc/git-as-svn::
-This directory contains configuration files.
+This directory contains git-as-svn configuration files.
 +
 /usr/share/doc/git-as-svn::
-This directory contains this documentation to the installed version.
+This directory contains git-as-svn documentation.
 +
 /var/git/lfs::
-This directory contains configuration files.
+This directory contains Git Large File Storage files.
 +
 It must be writable by user `git`.
 +
 /var/git/repositories::
 This directory is used by default to store the Git-repositories.
 +
-Repositories must be writable for the user `git`.
+It must be writable by user `git`.
 +
 /var/log/git-as-svn::
 This directory is used to record log files.
@@ -106,51 +91,39 @@ It must be writable by user `git`.
 The loss of the contents of this directory is not critical for
 operation and does not entail the loss of user data.
 
-[[git-lfs-authenticate]]
-=== Package git-as-svn-lfs
+[[git-as-svn-lfs]]
+=== git-as-svn-lfs package
 
-This package contains the `git-lfs-authenticate` script.
+This package contains the `git-lfs-authenticate` script required for <<lfs.adoc#lfs, git-as-svn builtin LFS server>>
 
-Script `git-lfs-authenticate` is used for provide authentication data
-for HTTP access to Git LFS server for Git-users working with Git
-repository by SSH
-(https://github.com/github/git-lfs/blob/master/docs/api/README.md).
+== Manual download
 
-This script communicates through a Unix Domain Socket with Git as
-Subversion.
+To try git-as-svn you need:
 
-It send to Git as Subverison user name (`mode` = `username`) or user
-identifier (`mode` = `external`) taken from environment variable.
-Environment variable name is defined in configuration file via
-`variable` parameter (default value: `GL_ID`).
-
-To check the settings of the script can be run locally on the server the
-following command:
-
-[source,bash]
+1.  Install Java 8 or later;
+2.  Download archive from site
+https://github.com/bozaro/git-as-svn/releases/latest;
+3.  After unpacking the archive change working path to the uncompressed
+directory and run the command:
++
 ----
-# Set environment variable defined in configuration file
-export GL_ID=key-1
-# Check access to repository
-sudo su git -c "git-lfs-authenticate example download"
+bin/git-as-svn --config doc/examples/config.yml --show-config
 ----
 
-Or on the client the following command:
+This will start git-as-svn server with following configuration:
 
-[source,bash]
+1.  The server is accessible via svn-protocol on port 3690.
++
+You can check server with command like:
++
 ----
-ssh git@remote -C "git-lfs-authenticate example download"
+svn ls svn://localhost/example
 ----
-
-The output should look something like this:
-
-[source,json]
-----
-{
-  "href": "https://api.github.com/lfs/bozaro/git-as-svn",
-  "header": {
-    "Authorization": "Bearer SOME-SECRET-TOKEN"
-  },
-  "expires_at": "2016-02-19T18:56:59Z"
-}
-----
+2.  To access the server, you can use the user:
++
+Login: test
++
+Password: test
+3.  Cache and repository will be created in `build` directory:
+* `example.git` — repository directory, accessible via svn-protocol;
+* `git-as-svn.mapdb*` — cache files for expensive computed data.

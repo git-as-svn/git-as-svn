@@ -5,22 +5,31 @@ ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,
 :doctype: book
 :toc:
 :toclevels: 4
-:leveloffset: +1
 :sectnums:
 :icons: font
 
-include::about.adoc[]
+[NOTE]
+====
+If you find errors or omissions in this document, please don't hesitate to
+http://github.com/bozaro/git-as-svn/issues[submit an issue or open a pull request] with a fix.
+====
 
-include::prereq.adoc[]
+include::about.adoc[leveloffset=+1]
 
-include::install.adoc[]
+include::install.adoc[leveloffset=+1]
 
-include::gitlab.adoc[]
+include::gitlab.adoc[leveloffset=+1]
 
-include::gitea.adoc[]
+include::gitea.adoc[leveloffset=+1]
 
-include::props.adoc[]
+include::lfs.adoc[leveloffset=+1]
 
-include::ssh.adoc[]
+include::ldap.adoc[leveloffset=+1]
 
-:leveloffset: -1
+include::props.adoc[leveloffset=+1]
+
+include::alternatives.adoc[leveloffset=+1]
+
+include::ssh.adoc[leveloffset=+1]
+
+include::internals.adoc[leveloffset=+1]

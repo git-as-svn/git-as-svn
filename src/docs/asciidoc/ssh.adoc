@@ -125,10 +125,10 @@ gitlab_shell['auth_file'] = "/var/opt/gitlab/ssh-shadow/authorized_keys"
 
 ----
 
-./opt/git-as-svn/config.yaml
+./etc/git-as-svn/git-as-svn.conf
 [source,yaml]
 ----
-include::examples/config-gitlab-ssh.example[]
+include::examples/config-gitlab-ssh.yml[]
 ----
 
 ./opt/git-as-svn/bin/git-as-svn-svnserve
@@ -310,10 +310,10 @@ exec -a "\$ORIGINAL_AUTHORIZED_COMMAND"  "\$ORIGINAL_AUTHORIZED_COMMAND" "\$@" |
 
 ----
 
-./opt/git-as-svn/config.yaml
+./etc/git-as-svn/git-as-svn.conf
 [source,yaml]
 ----
-include::examples/config-gitlab.example[]
+include::examples/config-gitlab.yml[]
 ----
 * `/opt/git-as-svn/bin/git-as-svn-svnserve` and
 `/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel` same as above.
@@ -354,7 +354,7 @@ SSH_ROOT_PATH=/data/git/ssh-shadow
 ./app/git-as-svn/config.yaml
 [source,yaml]
 ----
-include::examples/config-gitea-ssh.example[]
+include::examples/config-gitea-ssh.yml[]
 ----
 
 ./app/git-as-svn/bin/git-as-svn-svnserve

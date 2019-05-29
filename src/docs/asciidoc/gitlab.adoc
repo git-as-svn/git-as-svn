@@ -1,71 +1,28 @@
 [[gitlab]]
 = GitLab integration
 
+git-as-svn supports integration with https://gitlab.com/[GitLab] >= 9.3.3.
+
+This includes:
+
+ * User authentication against GitLab
+ * Access control depending on user permissions in GitLab
+ * Usage of GitLab LFS server for transparent handling of LFS files for svn users
+ * Automatic discovery of new repositories created in GitLab
+ * Running GitLab repository hooks if any installed
+
+IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[access token]
+
+IMPORTANT: git-as-svn uses direct file access to Git repositories, so it needs to run
+from the same user as GitLab
+
 == Configuration file example
 
+./etc/git-as-svn/git-as-svn.conf
 [source,yaml]
 ----
-include::examples/config-gitlab.example[]
+include::examples/config-gitlab.yml[]
 ----
-
-== Recommended GitLab patches
-
-For integration with GitLab install the following patches on GitLab:
-
-* https://github.com/gitlabhq/gitlab-shell/pull/230[#230
-(gitlab-shell)]: Add git-lfs-authenticate to server white list (merged
-to 7.14.1);
-* https://github.com/gitlabhq/gitlab-shell/pull/237[#237
-(gitlab-shell)]: Execute git-lfs-authenticate command with original
-arguments (merged to 8.2.0);
-* https://github.com/gitlabhq/gitlabhq/pull/9591[#9591 (gitlabhq)]: Add
-API for lookup user information by SSH key ID (merged to 8.0.0);
-* https://github.com/gitlabhq/gitlabhq/pull/9728[#9728 (gitlabhq)]: Show
-"Empty Repository Page" for repository without branches (merged to
-8.2.0).
-
-== GitLab intergration points
-
-There are some intgeration points with GitLab:
-
-* The list of repositories
-+
-Git as a Subversion automatically retrieves the list of repositories on
-startup via the GitLab API.
-+
-Further, this list is updated by System Hook, which is registered
-automatically.
-* Authorization and authentication of users
-+
-For authenticating users and repository permission control is also used
-GitLab API.
-* Git Hooks
-+
-When you commit using git-as-svn the GitLab hooks are executed.
-These hooks, in particular, allow to see information about new commits
-without delay via the GitLab WEB interface.
-+
-GitLab Hooks require GitLab user ID information (GL_ID environment
-variable) received at user authorization.
-+
-IMPORTANT: Because of this, in the case of integration with GitLab user
-authentication must be via GitLab.
-+
-* Git LFS
-+
-In the case of GitLFS need to specify the path to GitLab LFS storage.
-+
-GitLab from version 8.2 uses single LFS-files storage shared between all
-repositories. Files are stored in a separate directory as raw data.
-+
-Integration with LFS repository GitLab occurs at the file level. GitLab
-API is not used.
-* Git LFS authorization for SSH users
-+
-Unfortunately, GitLab does't provide the git-lfs-authenticate script,
-which is responsible for SSO authorization SSH-user Git on the server
-LFS. To configure this script, see
-link:#git-lfs-authenticate[section_title].
 
 == Adding a SVN-link to GitLab interface
 
@@ -73,38 +30,3 @@ To add a SVN-link to GitLab interface need to take latest commit of
 branch https://github.com/bozaro/gitlabhq/commits/svn_url.
 
 image:images/gitlab_svn_url.png[image]
-
-== LFS for Git HTTP users
-
-=== Reverse proxy
-
-You need add git-as-svn to GitLab reverse proxy by modifying ```/var/opt/gitlab/nginx/conf/gitlab-http.conf``` file:
-
- * Add git-as-svn upstream server:
-```
- upstream gitsvn {
-   server      localhost:8123  fail_timeout=5s;
-   keepalive   100;
- }
-```
- * Add resource redirection:
-```
-   location ~ ^.*\.git/info/lfs/ {
-     proxy_read_timeout      300;
-     proxy_connect_timeout   300;
-     proxy_redirect          off;
-
-     proxy_http_version  1.1;
-     proxy_set_header    Connection          "";
-
-     proxy_set_header    Host                $http_host;
-     proxy_set_header    X-Real-IP           $remote_addr;
-     proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
-     proxy_set_header    X-Forwarded-Proto   $scheme;
-     proxy_set_header    X-Frame-Options     SAMEORIGIN;
-
-     proxy_pass http://gitsvn;
-   }
-```
-
-Also you need to set ```baseUrl``` parameter in ```!web``` section of git-as-svn configuration file.

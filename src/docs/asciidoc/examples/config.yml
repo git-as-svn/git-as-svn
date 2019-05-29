@@ -1,28 +1,34 @@
 !config:
 
 # Specifies IP to listen to for svn:// connections
+# Default: 0.0.0.0
 #
 # host: 0.0.0.0
 
 # Specifies port number to listen to for svn:// connections
+# Default: 3690
 #
 # port: 3690
 
 # Subversion realm name. Subversion uses this for credentials caching
+# Default: repository UUID
 #
 # realm: git-as-svn realm
 
 # If enabled, git-as-svn compresses wire traffic
+# Default: true
+#
 # compressionEnabled: true
 
 # If enabled, git-as-svn indexed repositories in parallel during startup
 # This results in higher memory usage so may require adjustments to JVM memory options
+# Default: true
 #
 # parallelIndexing: true
 
 # Sets cache location
 cacheConfig: !persistentCache
-  path: ../build/git-as-svn.mapdb
+  path: /var/cache/git-as-svn/git-as-svn.mapdb
 
 repositoryMapping: !listMapping
   repositories:
@@ -57,7 +63,7 @@ repositoryMapping: !listMapping
         createMode: EXAMPLE
         branches:
           - master
-        path: ../build/example.git
+        path: /var/git/repositories/example.git
         renameDetection: true
 
 shared:
@@ -71,27 +77,26 @@ shared:
   - !web
     # baseUrl: http://git-as-svn.local/
     listen:
-    - !http
-      host: localhost
-      port: 8123
-      # Use X-Forwarded-* headers
-      forwarded: true
+      - !http
+        host: localhost
+        port: 8123
+        # Use X-Forwarded-* headers
+        forwarded: true
   # Git LFS server
   - !localLfs
     # Secret token for git-lfs-authenticate script
-    secretToken: ChangeMe
-    path: ../build/lfs
+    # secretToken:
+    path: /var/git/lfs
 
 # Simple in-memory user database
-userDB: !cacheUsers
-  userDB: !localUsers
-    users:
-      - username: test
-        # Clear-text password is required to perform CRAM-MD5 authentication
-        password: test
-        # Email and real name are used to create Git commits
-        email: test@noreply.fake
-        realName: Test User
+userDB: !localUsers
+  users:
+    - username: test
+      # Clear-text password is required to perform CRAM-MD5 authentication
+      password: test
+      # Email and real name are used to create Git commits
+      email: test@noreply.fake
+      realName: Test User
 
 # Authenticates a user by binding to the directory with the DN of the entry for that user and the password
 # presented by the user. If this simple bind succeeds the user is considered to be authenticated.

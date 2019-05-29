@@ -1,0 +1,95 @@
+= Internal implementation details
+
+== Where Subversion data is stored?
+
+To represent Subversion repository need to store information about how
+Subversion-revision number corresponds to which Git-commit. We can't
+compute this information every time on startup, because first
+`git push --force` change revision order. This information stored
+persistent in git reference `refs/git-as-svn/*`. In particular because
+it does not require a separate backup Subversion data. Because of this
+separate backup Subversion data is not necessary.
+
+Also part of the data necessary for the Subversion repository, is very
+expensive to get based on Git repository.
+
+For example:
+
+* the revision number with the previous change file;
+* information about where the file was copied;
+* MD5 file hash.
+
+In order not to find out their every startup, the data is cached in
+files. The loss of the cache is not critical for the operation and
+backup does not make sense.
+
+File locking information is currently stored in the cache file.
+
+== Описание хранения информации в хранилище
+
+== Для чего нужно хранилище
+
+Хранилище данных о ревизиях нужно для:
+
+ * Сохранения информации об списке измененных файлов (в svn очень часто нужно
+ выяснять, в какой из предыдущих ревизий поменялся файл);
+ * Сохранения информации о том, к какой ревизии/ветке относится коммит;
+ * Сохранения идентификатора svn-репозитория.
+
+Так же побочным эффектом служит формирование дерева с svn layout-ом для более
+простой работы svn update/switch/log/diff и т.п.
+
+=== Формат хранения информации о ревизиях
+
+Для хранения информации о ревизиях используется ссылка `refs/git-as-svn/v1`.
+
+Эта ссылка содержит в себе набор коммитов, выстроенных в цеполчку по первому
+родителю. Порядковый номер коммита от начала соответвует номеру ревизии в SVN.
+
+==== Содержимое коммита
+
+Данные самого коммита:
+
+ * Первый родитель всегда ссылается на предыдущий коммит;
+ * Комментарий коммита берется из оригинального коммита. Именно этот комментарий выводится в svn log;
+ * Автор коммита берется из оригинального коммита;
+
+Дерево коммита:
+
+ * svn (tree) - дерево, которое соответсвует svn layout-у данного коммита;
+ * commit.ref (commit) - ссылка на оригинальный коммит (для коммитов, которые связаны с удалением/созданием веток может отсутствовать);
+
+==== Revision 0
+
+Ревизия 0 несколько отличается от остальных коммитов.
+
+В отличие от остальных коммитов:
+
+ * Она всегда содержит путое дерево svn;
+ * В ней лежит файл `uuid` с идентификатором репозитория.
+
+== How does commit work?
+
+One of the most important parts of the system — to save the changes.
+
+In general, the following algorithm:
+
+1.  At the moment the command `svn commit` client sends to the server of
+your changes. The server remembers them. At this point comes the first
+check the relevance of customer data.
+2.  The server takes the branch HEAD and begins to create new commit on
+the basis of client received delta. At this moment there is yet another
+check of the relevance of customer data.
+3.  Validating svn properties for changed data.
+4.  The server tries to push the new commit in the current branch of the
+same repository via console Git client. Next, the result of a push:
+* if commits pushed successfully — loading the latest changes from git
+commits and rejoice;
+* if push is not fast forward — load the latest changes from git commits
+and go to step 2;
+* if push declined by hooks — inform the client;
+* on another error — inform the client;
+
+Thus, through the use console Git client for push, we avoid the race
+condition pouring directly change Git repository, and get the native
+hooks as a nice bonus.

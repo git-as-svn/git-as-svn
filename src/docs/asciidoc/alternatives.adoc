@@ -1,0 +1,42 @@
+[[comparison]]
+= Alternatives
+
+image:images/git-as-svn.png[image]
+
+The problem of combining Git and Subversion work style with a version
+control system can be solved in different ways.
+
+== GitHub Subversion support
+
+image:images/github.png[image]
+
+Website: https://github.com
+
+This is probably the closest analogue.
+
+The main problem of this implementation is inseparable from GitHub.
+Also, all of a sudden, this implementation does not support Git LFS.
+
+In the case of GitHub it is also not clear where the stored mapping
+between Subversion-revision and Git-commit. This can be a problem when
+restoring repositories after emergency situations.
+
+== SubGit
+
+image:images/subgit.png[image]
+
+Website: https://subgit.com
+
+Quite an interesting implementation which supports master-master
+replication with Git and Subversion repositories. Thereby providing
+synchronization of repositories is not clear.
+
+== Subversion repository and git svn
+
+image:images/git-svn.png[image]
+
+This method allows you to use Git with Subversion repository, but using
+a shared Git repository between multiple developers very difficult.
+
+At the same time, the developer has to use a specific command-line tool
+for working with the repository.

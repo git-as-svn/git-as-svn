@@ -1,0 +1,99 @@
+[[lfs]]
+= LFS server
+
+git-as-svn has built-in https://git-lfs.github.com/[Git Large File Storage] server
+
+== Configuration file example
+
+./etc/git-as-svn/git-as-svn.conf
+[source,yaml]
+----
+shared:
+  - !web
+    # baseUrl: http://git-as-svn.local/
+    listen:
+    - !http
+      host: localhost
+      port: 8123
+      # Use X-Forwarded-* headers
+      forwarded: true
+  # Git LFS server
+  - !localLfs
+    # Secret token for git-lfs-authenticate script
+    # secretToken:
+    path: /var/git/lfs
+----
+
+== git-lfs-authenticate
+
+Script `git-lfs-authenticate` (provided by <<install.adoc#git-as-svn-lfs,git-as-svn-lfs package>>)
+is used by git-lfs to obtain credentials for HTTP access to Git LFS server for Git-users working with Git
+repository by SSH
+(https://github.com/github/git-lfs/blob/master/docs/api/README.md).
+
+To check the settings of the script can be run locally on the server the
+following command:
+
+[source,bash]
+----
+# Set environment variable defined in configuration file
+export GL_ID=key-1
+# Check access to repository
+sudo su git -c "git-lfs-authenticate example download"
+----
+
+Or on the client the following command:
+
+[source,bash]
+----
+ssh git@remote -C "git-lfs-authenticate example download"
+----
+
+The output should look something like this:
+
+[source,json]
+----
+{
+  "href": "https://api.github.com/lfs/bozaro/git-as-svn",
+  "header": {
+    "Authorization": "Bearer SOME-SECRET-TOKEN"
+  },
+  "expires_at": "2016-02-19T18:56:59Z"
+}
+----
+
+== Running git-a-svn behind Nginx reverse proxy
+
+ * Add git-as-svn upstream server:
++
+./etc/nginx/nginx.conf
+----
+ upstream gitsvn {
+   server      localhost:8123  fail_timeout=5s;
+   keepalive   100;
+ }
+----
+
+ * Add resource redirection:
++
+./etc/nginx/nginx.conf
+----
+   location ~ ^.*\.git/info/lfs/ {
+     proxy_read_timeout      300;
+     proxy_connect_timeout   300;
+     proxy_redirect          off;
+
+     proxy_http_version  1.1;
+     proxy_set_header    Connection          "";
+
+     proxy_set_header    Host                $http_host;
+     proxy_set_header    X-Real-IP           $remote_addr;
+     proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+     proxy_set_header    X-Forwarded-Proto   $scheme;
+     proxy_set_header    X-Frame-Options     SAMEORIGIN;
+
+     proxy_pass http://gitsvn;
+   }
+----
+
+Also you need to set `baseUrl` parameter in `!web` section of git-as-svn configuration file.
