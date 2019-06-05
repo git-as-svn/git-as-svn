@@ -14,8 +14,6 @@ import svnserver.config.UserDBConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
-import java.util.Arrays;
-
 /**
  * Complex authentication.
  * Can combine multiple authenticators.
@@ -33,10 +31,12 @@ public final class CombineUserDBConfig implements UserDBConfig {
 
   @NotNull
   @Override
-  public UserDB create(@NotNull SharedContext context) {
-    return new CombineUserDB(Arrays.stream(items)
-        .map(item -> item.create(context))
-        .toArray(UserDB[]::new)
-    );
+  public UserDB create(@NotNull SharedContext context) throws Exception {
+    final UserDB[] result = new UserDB[items.length];
+
+    for (int i = 0; i < items.length; ++i)
+      result[i] = items[i].create(context);
+
+    return new CombineUserDB(result);
   }
 }

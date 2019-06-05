@@ -12,13 +12,11 @@ import com.beust.jcommander.Parameter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.VersionInfo;
 import svnserver.config.Config;
 import svnserver.config.serializer.ConfigSerializer;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Entry point.
@@ -29,36 +27,31 @@ public class Main {
   @NotNull
   private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
 
-  public static void main(@NotNull String[] args) throws IOException, SVNException, InterruptedException {
-    try {
-      log.info("git-as-svn version: {}", VersionInfo.getVersionInfo());
-      final CmdArgs cmd = new CmdArgs();
-      final JCommander jc = new JCommander(cmd);
-      jc.parse(args);
-      if (cmd.help) {
-        jc.usage();
-        return;
-      }
-      // Load config
-      ConfigSerializer serializer = new ConfigSerializer();
-      Config config = serializer.load(cmd.configuration);
-      if (cmd.showConfig) {
-        log.info("Actual config:\n{}", serializer.dump(config));
-      }
-      final SvnServer server = new SvnServer(cmd.configuration.getAbsoluteFile().getParentFile(), config);
-      server.start();
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-        try {
-          server.shutdown(config.getShutdownTimeout());
-        } catch (Exception e) {
-          log.error("Can't shutdown correctly", e);
-        }
-      }));
-      server.join();
-    } catch (Throwable e) {
-      log.error("Fatal error: " + e.getMessage(), e);
-      throw e;
+  public static void main(@NotNull String[] args) throws Exception {
+    log.info("git-as-svn version: {}", VersionInfo.getVersionInfo());
+    final CmdArgs cmd = new CmdArgs();
+    final JCommander jc = new JCommander(cmd);
+    jc.parse(args);
+    if (cmd.help) {
+      jc.usage();
+      return;
     }
+    // Load config
+    ConfigSerializer serializer = new ConfigSerializer();
+    Config config = serializer.load(cmd.configuration);
+    if (cmd.showConfig) {
+      log.info("Actual config:\n{}", serializer.dump(config));
+    }
+    final SvnServer server = new SvnServer(cmd.configuration.getAbsoluteFile().getParentFile(), config);
+    server.start();
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        server.shutdown(config.getShutdownTimeout());
+      } catch (Exception e) {
+        log.error("Can't shutdown correctly", e);
+      }
+    }));
+    server.join();
   }
 
   public static class CmdArgs {

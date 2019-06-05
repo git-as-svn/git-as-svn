@@ -12,6 +12,7 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldif.LDIFReader;
 import org.jetbrains.annotations.NotNull;
+import svnserver.auth.ldap.config.LdapBind;
 import svnserver.auth.ldap.config.LdapBindSimple;
 import svnserver.auth.ldap.config.LdapUserDBConfig;
 import svnserver.config.UserDBConfig;
@@ -23,20 +24,28 @@ import java.net.URL;
  * Embedded LDAP server.
  *
  * @author Artem V. Navrotskiy (bozaro at buzzsoft.ru)
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class EmbeddedDirectoryServer implements AutoCloseable {
 
+  @NotNull
+  static final String ADMIN_USERNAME = "ldapadmin";
   @NotNull
   static final String ADMIN_PASSWORD = "123456789012345678901234567890123456789012345678901234567890";
   @NotNull
   private final InMemoryDirectoryServer server;
   @NotNull
   private final DN baseDn;
+  private final DirectoryServerNet serverNet;
 
-  private EmbeddedDirectoryServer(@NotNull String dn, @NotNull URL ldifStream) throws Exception {
+  private EmbeddedDirectoryServer(@NotNull String dn, @NotNull URL ldifStream, @NotNull DirectoryServerNet serverNet) throws Exception {
     baseDn = new DN(dn);
+    this.serverNet = serverNet;
 
     final InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig(dn);
+
+    config.setListenerConfigs(serverNet.getListenerConfig());
+
     server = new InMemoryDirectoryServer(config);
 
     try (InputStream in = ldifStream.openStream()) {
@@ -47,8 +56,8 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
   }
 
   @NotNull
-  public static EmbeddedDirectoryServer create() throws Exception {
-    return new EmbeddedDirectoryServer("dc=example,dc=com", EmbeddedDirectoryServer.class.getResource("ldap.ldif"));
+  public static EmbeddedDirectoryServer create(@NotNull DirectoryServerNet serverNet) throws Exception {
+    return new EmbeddedDirectoryServer("dc=example,dc=com", EmbeddedDirectoryServer.class.getResource("ldap.ldif"), serverNet);
   }
 
   @Override
@@ -57,14 +66,19 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
   }
 
   @NotNull UserDBConfig createUserConfig() {
-    final LdapUserDBConfig config = new LdapUserDBConfig();
-    config.setBind(new LdapBindSimple(LdapBindSimple.BindType.Plain, "u:ldapadmin", ADMIN_PASSWORD));
-    config.setConnectionUrl("ldap://127.0.0.1:" + server.getListenPort() + "/" + baseDn);
-    config.setSearchFilter("");
-    config.setLoginAttribute("uid");
-    config.setEmailAttribute("mail");
-    config.setNameAttribute("givenName");
-    config.setMaxConnections(3);
-    return config;
+    final String connectionUrl = String.format("%s://localhost:%s/%s", serverNet.getUrlSchema(), server.getListenPort(), baseDn);
+    final LdapBind ldapBind = new LdapBindSimple(LdapBindSimple.BindType.Plain, "u:" + ADMIN_USERNAME, ADMIN_PASSWORD);
+
+    return new LdapUserDBConfig(
+        connectionUrl,
+        ldapBind,
+        "",
+        "uid",
+        "givenName",
+        "mail",
+        serverNet.getCertificatePath(),
+        3,
+        ""
+    );
   }
 }

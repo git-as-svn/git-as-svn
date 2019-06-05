@@ -5,19 +5,23 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.config;
+package svnserver.ldap;
 
+import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import org.jetbrains.annotations.NotNull;
-import svnserver.auth.UserDB;
-import svnserver.context.SharedContext;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public interface UserDBConfig {
-  @NotNull
-  UserDBConfig[] emptyArray = {};
+interface DirectoryServerNet {
 
   @NotNull
-  UserDB create(@NotNull SharedContext context) throws Exception;
+  InMemoryListenerConfig getListenerConfig() throws Exception;
+
+  @NotNull
+  String getUrlSchema();
+
+  @Nullable
+  String getCertificatePath();
 }
