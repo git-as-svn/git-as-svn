@@ -42,7 +42,7 @@ public final class CacheUserDBConfig implements UserDBConfig {
   private long expireTimeMs = 15000;
 
   @NotNull
-  public UserDB create(@NotNull SharedContext context) {
+  public UserDB create(@NotNull SharedContext context) throws Exception {
     return new CacheUserDB(userDB.create(context), CacheBuilder.newBuilder()
         .maximumSize(maximumSize)
         .expireAfterWrite(expireTimeMs, TimeUnit.MILLISECONDS)

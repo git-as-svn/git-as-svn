@@ -9,7 +9,6 @@ package svnserver.auth.ldap;
 
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
-import org.eclipse.jgit.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,17 +28,10 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileInputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -50,6 +42,7 @@ import java.util.Locale;
  * LDAP authentication.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class LdapUserDB implements UserDB {
   @NotNull
@@ -66,22 +59,18 @@ public final class LdapUserDB implements UserDB {
   @Nullable
   private final String fakeMailSuffix;
 
-  public LdapUserDB(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
-    try {
-      URI ldapUri = URI.create(config.getConnectionUrl());
-      this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
-      final ServerSet serverSet = createServerSet(context, config);
-      final BindRequest bindRequest = config.getBind().createBindRequest();
-      this.pool = new LDAPConnectionPool(serverSet, bindRequest, 1, config.getMaxConnections());
-      this.fakeMailSuffix = createFakeMailSuffix(config);
-      this.config = config;
-    } catch (LDAPException e) {
-      throw new IllegalStateException(e);
-    }
+  public LdapUserDB(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) throws Exception {
+    URI ldapUri = URI.create(config.getConnectionUrl());
+    this.baseDn = ldapUri.getPath().isEmpty() ? "" : ldapUri.getPath().substring(1);
+    final ServerSet serverSet = createServerSet(context, config);
+    final BindRequest bindRequest = config.getBind().createBindRequest();
+    this.pool = new LDAPConnectionPool(serverSet, bindRequest, 1, config.getMaxConnections());
+    this.fakeMailSuffix = createFakeMailSuffix(config);
+    this.config = config;
   }
 
   @NotNull
-  private static ServerSet createServerSet(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
+  private static ServerSet createServerSet(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) throws Exception {
     final URI ldapUri = URI.create(config.getConnectionUrl());
     final SocketFactory factory;
     final int defaultPort;
@@ -112,80 +101,54 @@ public final class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  private static SocketFactory createSslFactory(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) {
-    try {
-      final String certPem = config.getLdapCertPem();
-      if (certPem != null) {
-        final File certFile = ConfigHelper.joinPath(context.getBasePath(), certPem);
-        log.info("Loading CA certificate from: {}", certFile.getAbsolutePath());
-        final byte[] cert = Files.readAllBytes(certFile.toPath());
-        final TrustManager trustManager = createTrustManager(cert);
-        return new SSLUtil(trustManager).createSSLSocketFactory();
-      } else {
-        log.info("CA certificate not defined. Using JVM default SSL context");
-        return SSLContext.getDefault().getSocketFactory();
-      }
-    } catch (GeneralSecurityException e) {
-      throw new IllegalStateException(e);
-    } catch (IOException e) {
-      throw new IllegalStateException("Can't load certificate file", e);
+  private static SocketFactory createSslFactory(@NotNull SharedContext context, @NotNull LdapUserDBConfig config) throws Exception {
+    final String certPem = config.getLdapCertPem();
+    if (certPem == null) {
+      log.info("LDAP certificate not defined. Using JVM default SSL context");
+      return SSLContext.getDefault().getSocketFactory();
     }
+
+    final File certFile = ConfigHelper.joinPath(context.getBasePath(), certPem);
+
+    log.info("Loading LDAP certificate from: {}", certFile);
+
+    final TrustManager[] trustManagers = createTrustManagers(certFile);
+    final SSLUtil sslUtil = new SSLUtil(trustManagers);
+    return sslUtil.createSSLSocketFactory();
   }
 
   @NotNull
-  private static TrustManager createTrustManager(@NotNull byte[] pem) throws GeneralSecurityException {
+  private static KeyStore assembleKeyStore(@NotNull X509Certificate certificate) throws Exception {
+    final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+    keyStore.load(null);
+    keyStore.setCertificateEntry("alias", certificate);
+
+    return keyStore;
+  }
+
+  @NotNull
+  public static X509Certificate loadCertificate(@NotNull File certFile) throws Exception {
+    final X509Certificate certificate;
+
+    final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+    try (FileInputStream is = new FileInputStream(certFile)) {
+      certificate = (X509Certificate) certificateFactory.generateCertificate(is);
+    }
+
+    if (certificate == null)
+      throw new IllegalArgumentException(String.format("Failed to read certificate from %s", certFile));
+
+    return certificate;
+  }
+
+  @NotNull
+  private static TrustManager[] createTrustManagers(@NotNull File certFile) throws Exception {
+    final X509Certificate certificate = loadCertificate(certFile);
+    final KeyStore keyStore = assembleKeyStore(certificate);
     final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    final KeyStore keystore = getKeyStoreFromDER(parseDERFromPEM(pem, "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----"));
-    factory.init(keystore);
-
-    final TrustManager[] trustManagers = factory.getTrustManagers();
-    return new X509TrustManager() {
-      @Override
-      public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-        for (TrustManager trustManager : trustManagers) {
-          ((X509TrustManager) trustManager).checkClientTrusted(x509Certificates, s);
-        }
-      }
-
-      @Override
-      public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-        for (TrustManager trustManager : trustManagers) {
-          ((X509TrustManager) trustManager).checkServerTrusted(x509Certificates, s);
-        }
-      }
-
-      @Override
-      public X509Certificate[] getAcceptedIssuers() {
-        return new X509Certificate[0];
-      }
-    };
-  }
-
-  @NotNull
-  private static KeyStore getKeyStoreFromDER(@NotNull byte[] certBytes) throws GeneralSecurityException {
-    try {
-      final CertificateFactory factory = CertificateFactory.getInstance("X.509");
-      final KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-      keystore.load(null);
-      keystore.setCertificateEntry("alias", factory.generateCertificate(new ByteArrayInputStream(certBytes)));
-      return keystore;
-    } catch (IOException e) {
-      throw new KeyStoreException(e);
-    }
-  }
-
-  @NotNull
-  private static byte[] parseDERFromPEM(@NotNull byte[] pem, @NotNull String beginDelimiter, @NotNull String endDelimiter) throws GeneralSecurityException {
-    final String data = new String(pem, StandardCharsets.ISO_8859_1);
-    String[] tokens = data.split(beginDelimiter);
-    if (tokens.length != 2) {
-      throw new GeneralSecurityException("Invalid PEM certificate data. Delimiter not found: " + beginDelimiter);
-    }
-    tokens = tokens[1].split(endDelimiter);
-    if (tokens.length != 2) {
-      throw new GeneralSecurityException("Invalid PEM certificate data. Delimiter not found: " + endDelimiter);
-    }
-    return Base64.decode(tokens[0]);
+    factory.init(keyStore);
+    return factory.getTrustManagers();
   }
 
   @Override

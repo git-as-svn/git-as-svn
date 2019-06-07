@@ -14,7 +14,7 @@ import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
 @ConfigType("sshKeyUsers")
-public class KeyUserDBConfig implements UserDBConfig {
+public final class KeyUserDBConfig implements UserDBConfig {
 
   @NotNull
   private UserDBConfig userDB;
@@ -23,14 +23,8 @@ public class KeyUserDBConfig implements UserDBConfig {
   private String sshKeysToken = "";
 
   @Override
-  public @NotNull UserDB create(@NotNull SharedContext context) {
+  public @NotNull UserDB create(@NotNull SharedContext context) throws Exception {
     UserDB internal = userDB.create(context);
     return new KeyUserDB(internal, sshKeysToken);
   }
-
-  @NotNull
-  public String getSshKeysToken() {
-    return sshKeysToken;
-  }
-
 }

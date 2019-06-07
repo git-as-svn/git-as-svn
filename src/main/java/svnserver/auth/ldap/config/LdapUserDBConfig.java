@@ -18,7 +18,6 @@ import svnserver.context.SharedContext;
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-@SuppressWarnings("FieldCanBeLocal")
 @ConfigType("ldapUsers")
 public final class LdapUserDBConfig implements UserDBConfig {
   /**
@@ -27,37 +26,37 @@ public final class LdapUserDBConfig implements UserDBConfig {
    * and optionally the port number and distinguished name (DN) of the required root naming context.
    */
   @NotNull
-  private String connectionUrl = "ldap://localhost:389/ou=groups,dc=mycompany,dc=com";
+  private String connectionUrl;
 
   /**
    * Bind configuration.
    */
   @NotNull
-  private LdapBind bind = LdapBindAnonymous.instance;
+  private LdapBind bind;
 
   /**
    * Common part of search filter.
    */
   @NotNull
-  private String searchFilter = "";
+  private String searchFilter;
 
   /**
    * LDAP attribute, containing user login.
    */
   @NotNull
-  private String loginAttribute = "sAMAccountName";
+  private String loginAttribute;
 
   /**
    * LDAP attribute, containing user name.
    */
   @NotNull
-  private String nameAttribute = "name";
+  private String nameAttribute;
 
   /**
    * LDAP attribute, containing user email.
    */
   @NotNull
-  private String emailAttribute = "mail";
+  private String emailAttribute;
 
   /**
    * Certificate for validation LDAP server with SSL connection.
@@ -70,20 +69,50 @@ public final class LdapUserDBConfig implements UserDBConfig {
    * If empty - don't generate emails.
    */
   @NotNull
-  private String fakeMailSuffix = "";
+  private String fakeMailSuffix;
 
   /**
    * Maximum LDAP connections.
    */
-  private int maxConnections = 10;
+  private int maxConnections;
+
+  public LdapUserDBConfig() {
+    this(
+        "ldap://localhost:389/ou=groups,dc=mycompany,dc=com",
+        LdapBindAnonymous.instance,
+        "",
+        "sAMAccountName",
+        "name",
+        "mail",
+        null,
+        10,
+        ""
+    );
+  }
+
+  public LdapUserDBConfig(@NotNull String connectionUrl,
+                          @NotNull LdapBind bind,
+                          @NotNull String searchFilter,
+                          @NotNull String loginAttribute,
+                          @NotNull String nameAttribute,
+                          @NotNull String emailAttribute,
+                          @Nullable String ldapCertPem,
+                          int maxConnections,
+                          @NotNull String fakeMailSuffix) {
+    this.connectionUrl = connectionUrl;
+    this.bind = bind;
+    this.searchFilter = searchFilter;
+    this.loginAttribute = loginAttribute;
+    this.nameAttribute = nameAttribute;
+    this.emailAttribute = emailAttribute;
+    this.ldapCertPem = ldapCertPem;
+    this.maxConnections = maxConnections;
+    this.fakeMailSuffix = fakeMailSuffix;
+  }
 
   @NotNull
   public String getLoginAttribute() {
     return loginAttribute;
-  }
-
-  public void setLoginAttribute(@NotNull String loginAttribute) {
-    this.loginAttribute = loginAttribute;
   }
 
   @NotNull
@@ -91,17 +120,9 @@ public final class LdapUserDBConfig implements UserDBConfig {
     return emailAttribute;
   }
 
-  public void setEmailAttribute(@NotNull String emailAttribute) {
-    this.emailAttribute = emailAttribute;
-  }
-
   @NotNull
   public String getNameAttribute() {
     return nameAttribute;
-  }
-
-  public void setNameAttribute(@NotNull String nameAttribute) {
-    this.nameAttribute = nameAttribute;
   }
 
   @NotNull
@@ -109,26 +130,14 @@ public final class LdapUserDBConfig implements UserDBConfig {
     return searchFilter;
   }
 
-  public void setSearchFilter(@NotNull String searchFilter) {
-    this.searchFilter = searchFilter;
-  }
-
   @NotNull
   public LdapBind getBind() {
     return bind;
   }
 
-  public void setBind(@NotNull LdapBind bind) {
-    this.bind = bind;
-  }
-
   @NotNull
   public String getConnectionUrl() {
     return connectionUrl;
-  }
-
-  public void setConnectionUrl(@NotNull String connectionUrl) {
-    this.connectionUrl = connectionUrl;
   }
 
   @Nullable
@@ -140,10 +149,6 @@ public final class LdapUserDBConfig implements UserDBConfig {
     return maxConnections;
   }
 
-  public void setMaxConnections(int maxConnections) {
-    this.maxConnections = maxConnections;
-  }
-
   @NotNull
   public String getFakeMailSuffix() {
     return fakeMailSuffix;
@@ -151,7 +156,7 @@ public final class LdapUserDBConfig implements UserDBConfig {
 
   @NotNull
   @Override
-  public UserDB create(@NotNull SharedContext context) {
+  public UserDB create(@NotNull SharedContext context) throws Exception {
     return new LdapUserDB(context, this);
   }
 }

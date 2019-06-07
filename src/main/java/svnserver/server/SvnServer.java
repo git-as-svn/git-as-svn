@@ -93,7 +93,7 @@ public final class SvnServer extends Thread {
   @NotNull
   private final SharedContext context;
 
-  public SvnServer(@NotNull File basePath, @NotNull Config config) throws IOException, SVNException {
+  public SvnServer(@NotNull File basePath, @NotNull Config config) throws Exception {
     super("SvnServer");
     setDaemon(true);
     this.config = config;

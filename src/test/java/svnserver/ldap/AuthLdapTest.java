@@ -10,6 +10,7 @@ package svnserver.ldap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.SkipException;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
@@ -18,6 +19,7 @@ import svnserver.SvnTestServer;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -30,20 +32,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class AuthLdapTest {
 
+  @DataProvider
+  public static Object[][] sslModes() throws Exception {
+    final File cert = new File(AuthLdapTest.class.getResource("cert.pem").toURI());
+    final File key = new File(AuthLdapTest.class.getResource("key.pem").toURI());
+
+    return new Object[][]{
+        {RawDirectoryServerNet.instance},
+        {new SslDirectoryServerNet(cert, key)},
+    };
+  }
+
   /**
    * Test for #156, #242.
    */
-  @Test
-  void nativeClient() throws Exception {
+  @Test(dataProvider = "sslModes")
+  void nativeClient(@NotNull DirectoryServerNet serverNet) throws Exception {
     final String svn = SvnTestHelper.findExecutable("svn");
     if (svn == null)
       throw new SkipException("Native svn executable not found");
 
     try (
-        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create(serverNet);
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
-      final String[] command = {svn, "--non-interactive", "ls", "--username=ldapadmin", "--password=" + EmbeddedDirectoryServer.ADMIN_PASSWORD, server.getUrl().toString()};
+      final String[] command = {svn, "--non-interactive", "ls", "--username=" + EmbeddedDirectoryServer.ADMIN_USERNAME, "--password=" + EmbeddedDirectoryServer.ADMIN_PASSWORD, server.getUrl().toString()};
       final int exitCode = new ProcessBuilder(command)
           .redirectError(ProcessBuilder.Redirect.INHERIT)
           .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -53,14 +66,14 @@ public final class AuthLdapTest {
     }
   }
 
-  @Test
-  public void validUser() throws Throwable {
-    checkUser("ldapadmin", EmbeddedDirectoryServer.ADMIN_PASSWORD);
+  @Test(dataProvider = "sslModes")
+  public void validUser(@NotNull DirectoryServerNet serverNet) throws Throwable {
+    checkUser(EmbeddedDirectoryServer.ADMIN_USERNAME, EmbeddedDirectoryServer.ADMIN_PASSWORD, serverNet);
   }
 
-  private void checkUser(@NotNull String login, @NotNull String password) throws Exception {
+  private void checkUser(@NotNull String login, @NotNull String password, @NotNull DirectoryServerNet serverNet) throws Exception {
     try (
-        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create(serverNet);
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
       server.openSvnRepository(login, password).getLatestRevision();
@@ -70,7 +83,7 @@ public final class AuthLdapTest {
   @Test
   public void validUserPooled() throws Throwable {
     try (
-        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create(RawDirectoryServerNet.instance);
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), false)
     ) {
       final ExecutorService pool = Executors.newFixedThreadPool(10);
@@ -79,7 +92,7 @@ public final class AuthLdapTest {
 
       final List<Callable<Void>> tasks = new ArrayList<>();
       for (int i = 0; i < 1000; ++i) {
-        tasks.add(new SuccessAuth(userDB, done, "ldapadmin", EmbeddedDirectoryServer.ADMIN_PASSWORD));
+        tasks.add(new SuccessAuth(userDB, done, EmbeddedDirectoryServer.ADMIN_USERNAME, EmbeddedDirectoryServer.ADMIN_PASSWORD));
         tasks.add(new SuccessAuth(userDB, done, "simple", "simple"));
         tasks.add(new InvalidAuth(userDB, done, "simple", "hacker"));
       }
@@ -95,33 +108,33 @@ public final class AuthLdapTest {
     }
   }
 
-  @Test
-  public void invalidPassword() {
-    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin", "wrongpassword"));
+  @Test(dataProvider = "sslModes")
+  public void invalidPassword(@NotNull DirectoryServerNet serverNet) {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser(EmbeddedDirectoryServer.ADMIN_USERNAME, "wrongpassword", serverNet));
   }
 
-  @Test
-  public void invalidUser() {
-    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin2", EmbeddedDirectoryServer.ADMIN_PASSWORD));
+  @Test(dataProvider = "sslModes")
+  public void invalidUser(@NotNull DirectoryServerNet serverNet) {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkUser("ldapadmin2", EmbeddedDirectoryServer.ADMIN_PASSWORD, serverNet));
   }
 
-  @Test
-  public void anonymousUserAllowed() throws Throwable {
-    checkAnonymous(true);
+  @Test(dataProvider = "sslModes")
+  public void anonymousUserAllowed(@NotNull DirectoryServerNet serverNet) throws Throwable {
+    checkAnonymous(true, serverNet);
   }
 
-  private void checkAnonymous(boolean anonymousRead) throws Exception {
+  private void checkAnonymous(boolean anonymousRead, @NotNull DirectoryServerNet serverNet) throws Exception {
     try (
-        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create();
+        EmbeddedDirectoryServer ldap = EmbeddedDirectoryServer.create(serverNet);
         SvnTestServer server = SvnTestServer.createEmpty(ldap.createUserConfig(), anonymousRead)
     ) {
       server.openSvnRepository().getLatestRevision();
     }
   }
 
-  @Test
-  public void anonymousUserDenies() {
-    Assert.expectThrows(SVNAuthenticationException.class, () -> checkAnonymous(false));
+  @Test(dataProvider = "sslModes")
+  public void anonymousUserDenies(@NotNull DirectoryServerNet serverNet) {
+    Assert.expectThrows(SVNAuthenticationException.class, () -> checkAnonymous(false, serverNet));
   }
 
   private static final class SuccessAuth implements Callable<Void> {
