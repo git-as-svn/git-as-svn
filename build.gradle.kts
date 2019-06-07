@@ -40,13 +40,13 @@ java {
 }
 
 repositories {
-    mavenCentral()
+    maven("https://repository.mulesoft.org/nexus/content/repositories/public/") {
+        content {
+            includeGroup("org.tmatesoft.svnkit")
+        }
+    }
 
-    // For asciidoctor, grgit
     jcenter()
-
-    // For svnkit
-    maven("https://repository.mulesoft.org/nexus/content/repositories/public/")
 }
 
 license {
