@@ -10,12 +10,12 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
+import svnserver.Loggers;
 import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.parser.MessageParser;
@@ -58,7 +58,7 @@ import java.util.*;
 public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
   private static final int MAX_PASS_COUNT = 10;
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
+  private static final Logger log = Loggers.svn;
 
   @NotNull
   @Override
@@ -258,7 +258,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final List<VcsConsumer<GitWriter.GitCommitBuilder>> changes = new ArrayList<>();
     private final boolean head;
 
-    private EntryUpdater(@NotNull GitEntry entry, @Nullable GitFile source, boolean head) throws IOException, SVNException {
+    private EntryUpdater(@NotNull GitEntry entry, @Nullable GitFile source, boolean head) throws IOException {
       this.entry = entry;
       this.source = source;
       this.head = head;

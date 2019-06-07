@@ -13,8 +13,8 @@ import org.eclipse.jgit.lib.FileMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.Loggers;
 import svnserver.repository.git.path.PathMatcher;
 import svnserver.repository.git.path.Wildcard;
 
@@ -31,7 +31,7 @@ final class GitIgnore implements GitProperty {
   @NotNull
   private static final String[] emptyStrings = new String[0];
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitIgnore.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private final List<PathMatcher> matchers;
   // svn:global-ignores

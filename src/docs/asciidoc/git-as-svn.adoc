@@ -28,6 +28,8 @@ include::lfs.adoc[leveloffset=+1]
 
 include::ldap.adoc[leveloffset=+1]
 
+include::logging.adoc[leveloffset=+1]
+
 include::props.adoc[leveloffset=+1]
 
 include::alternatives.adoc[leveloffset=+1]

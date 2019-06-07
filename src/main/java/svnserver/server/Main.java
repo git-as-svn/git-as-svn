@@ -11,7 +11,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import svnserver.Loggers;
 import svnserver.VersionInfo;
 import svnserver.config.Config;
 import svnserver.config.serializer.ConfigSerializer;
@@ -25,7 +25,7 @@ import java.io.File;
  */
 public class Main {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
+  private static final Logger log = Loggers.misc;
 
   public static void main(@NotNull String[] args) throws Exception {
     log.info("git-as-svn version: {}", VersionInfo.getVersionInfo());
@@ -54,7 +54,8 @@ public class Main {
     server.join();
   }
 
-  public static class CmdArgs {
+  private static class CmdArgs {
+    @SuppressWarnings("NullableProblems")
     @Parameter(names = {"-c", "--config"}, description = "Configuration file name", required = true)
     @NotNull
     private File configuration;

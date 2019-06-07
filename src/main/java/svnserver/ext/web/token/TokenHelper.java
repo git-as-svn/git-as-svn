@@ -18,8 +18,8 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import svnserver.HashHelper;
+import svnserver.Loggers;
 import svnserver.auth.User;
 
 import java.nio.charset.StandardCharsets;
@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public class TokenHelper {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(TokenHelper.class);
+  private static final Logger log = Loggers.web;
   @NotNull
   private static final Pattern hex = Pattern.compile("^[0-9a-fA-F]+$");
 

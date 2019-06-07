@@ -9,11 +9,11 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNCapability;
+import svnserver.Loggers;
 import svnserver.auth.AnonymousAuthenticator;
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
@@ -60,7 +60,7 @@ public final class SvnServer extends Thread {
   private static final String fileRevsReverseCapability = "file-revs-reverse";
 
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SvnServer.class);
+  private static final Logger log = Loggers.svn;
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
   @NotNull
   private static final Set<SVNErrorCode> WARNING_CODES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
@@ -171,7 +171,7 @@ public final class SvnServer extends Thread {
         client = this.serverSocket.accept();
       } catch (IOException e) {
         if (stopped.get()) {
-          log.info("Server Stopped");
+          log.info("Server stopped");
           break;
         }
         log.error("Error accepting client connection", e);
@@ -374,7 +374,7 @@ public final class SvnServer extends Thread {
     }
     join(millis);
     context.close();
-    log.info("Server shutdowned");
+    log.info("Server shutdown complete");
   }
 
   public void startShutdown() throws IOException {

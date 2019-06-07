@@ -16,7 +16,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -57,7 +56,7 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public static final String USER_NAME = "tester";
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SvnTestServer.class);
+  private static final Logger log = TestHelper.logger;
   @NotNull
   private static final String REAL_NAME = "Test User";
   @NotNull

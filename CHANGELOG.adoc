@@ -3,6 +3,7 @@
 == Unreleased
 
  * Changed LDAP bind configuration. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#ldap[LDAP documentation].
+ * Organize logs into categories and add https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#logging[logging documentation].
 
 == 1.12.0
 

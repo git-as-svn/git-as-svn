@@ -15,7 +15,7 @@
 		</RollingFile>
 		<RollingFile name="RollingFileError" fileName="${log-path}/git-as-svn.error.log"
 					 filePattern="${log-path}/git-as-svn.error.log.%i">
-			<ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+			<ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY" />
 			<PatternLayout pattern="%d{ISO8601} %5p [%t] (%F:%L) - %m%n" />
 			<Policies>
 				<OnStartupTriggeringPolicy />
@@ -28,7 +28,7 @@
 		</Console>
 	</Appenders>
 	<Loggers>
-		<Root level="info" additivity="false">
+		<Root level="info">
 			<AppenderRef ref="RollingFileInfo" />
 			<AppenderRef ref="RollingFileError" />
 			<AppenderRef ref="STDOUT" />

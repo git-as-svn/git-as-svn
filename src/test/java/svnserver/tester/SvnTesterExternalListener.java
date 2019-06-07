@@ -10,7 +10,6 @@ package svnserver.tester;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SvnTesterExternalListener implements ITestListener {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SvnTesterExternalListener.class);
+  private static final Logger log = TestHelper.logger;
   @NotNull
   private static final String USER_NAME = "tester";
   @NotNull
@@ -60,6 +59,11 @@ public class SvnTesterExternalListener implements ITestListener {
   private static final long SERVER_STARTUP_DELAY = TimeUnit.MILLISECONDS.toMillis(20);
   @Nullable
   private static NativeDaemon daemon;
+
+  @Nullable
+  public static SvnTesterFactory get() {
+    return daemon;
+  }
 
   @Override
   public void onTestStart(ITestResult result) {
@@ -110,11 +114,6 @@ public class SvnTesterExternalListener implements ITestListener {
     }
   }
 
-  @Nullable
-  public static SvnTesterFactory get() {
-    return daemon;
-  }
-
   private static class NativeDaemon implements SvnTesterFactory, AutoCloseable {
     @NotNull
     private final Process daemon;
@@ -123,7 +122,7 @@ public class SvnTesterExternalListener implements ITestListener {
     @NotNull
     private final SVNURL url;
 
-    public NativeDaemon(@NotNull String svnserve, @NotNull String svnadmin) throws IOException, InterruptedException, SVNException {
+    NativeDaemon(@NotNull String svnserve, @NotNull String svnadmin) throws IOException, InterruptedException, SVNException {
       int port = detectPort();
       url = SVNURL.create("svn", null, HOST, port, null, true);
       repo = TestHelper.createTempDir("git-as-svn-repo");
@@ -159,6 +158,12 @@ public class SvnTesterExternalListener implements ITestListener {
       }
     }
 
+    private int detectPort() throws IOException {
+      try (ServerSocket socket = new ServerSocket(0, 0, InetAddress.getByName(HOST))) {
+        return socket.getLocalPort();
+      }
+    }
+
     @NotNull
     private static File createConfigs(@NotNull File repo) throws IOException {
       final File config = new File(repo, "conf/server.conf");
@@ -170,12 +175,6 @@ public class SvnTesterExternalListener implements ITestListener {
         writer.write(MessageFormat.format(CONFIG_PASSWD, USER_NAME, PASSWORD));
       }
       return config;
-    }
-
-    private int detectPort() throws IOException {
-      try (ServerSocket socket = new ServerSocket(0, 0, InetAddress.getByName(HOST))) {
-        return socket.getLocalPort();
-      }
     }
 
     @NotNull

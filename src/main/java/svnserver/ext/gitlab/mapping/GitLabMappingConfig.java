@@ -15,8 +15,8 @@ import org.gitlab.api.models.GitlabSystemHook;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.Loggers;
 import svnserver.config.GitRepositoryConfig;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.config.serializer.ConfigType;
@@ -49,7 +49,7 @@ import java.util.function.Consumer;
 @ConfigType("gitlabMapping")
 public final class GitLabMappingConfig implements RepositoryMappingConfig {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitLabHookServlet.class);
+  private static final Logger log = Loggers.gitlab;
   @NotNull
   private GitRepositoryConfig template;
   @NotNull

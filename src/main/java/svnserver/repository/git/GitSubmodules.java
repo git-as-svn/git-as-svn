@@ -15,7 +15,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import svnserver.Loggers;
 import svnserver.config.ConfigHelper;
 import svnserver.context.Shared;
 
@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public final class GitSubmodules implements Shared {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitSubmodules.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private final Set<Repository> repositories = new CopyOnWriteArraySet<>();
 

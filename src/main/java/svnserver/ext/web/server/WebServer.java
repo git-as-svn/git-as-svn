@@ -7,9 +7,6 @@
  */
 package svnserver.ext.web.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.http.HttpHeaders;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ErrorHandler;
@@ -24,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jose4j.jwe.JsonWebEncryption;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.server.ServerError;
+import svnserver.Loggers;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.Shared;
@@ -57,11 +54,11 @@ public final class WebServer implements Shared {
   @NotNull
   public static final String DEFAULT_REALM = "git-as-svn server";
   @NotNull
-  private static final String AUTH_BASIC = "Basic ";
-  @NotNull
   public static final String AUTH_TOKEN = "Bearer ";
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(WebServer.class);
+  private static final String AUTH_BASIC = "Basic ";
+  @NotNull
+  private static final Logger log = Loggers.web;
   @NotNull
   private final SharedContext context;
   @Nullable
@@ -104,15 +101,6 @@ public final class WebServer implements Shared {
   @NotNull
   public static WebServer get(@NotNull SharedContext context) {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
-  }
-
-  @NotNull
-  public static ObjectMapper createJsonMapper() {
-    final ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    return mapper;
   }
 
   @NotNull

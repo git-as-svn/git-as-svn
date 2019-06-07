@@ -9,7 +9,6 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.*;
@@ -36,7 +35,7 @@ import static svnserver.SvnTestHelper.sendDeltaAndClose;
  */
 public final class SvnCheckoutTest {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SvnCheckoutTest.class);
+  private static final Logger log = TestHelper.logger;
 
   @Test
   public void checkoutRootRevision() throws Exception {
@@ -52,8 +51,6 @@ public final class SvnCheckoutTest {
 
   /**
    * Workcopy mixed version update smoke test.
-   *
-   * @throws Exception
    */
   @Test
   public void randomUpdateRoot() throws Exception {
@@ -63,8 +60,6 @@ public final class SvnCheckoutTest {
 
   /**
    * Workcopy mixed version update smoke test.
-   *
-   * @throws Exception
    */
   @Test
   public void randomUpdateChild() throws Exception {
@@ -89,12 +84,12 @@ public final class SvnCheckoutTest {
 
       factory.setEventHandler(new ISVNEventHandler() {
         @Override
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        public void handleEvent(SVNEvent event, double progress) {
           Assert.assertEquals(event.getExpectedAction(), event.getAction());
         }
 
         @Override
-        public void checkCancelled() throws SVNCancelException {
+        public void checkCancelled() {
         }
       });
       final Random rand = new Random(0);
@@ -156,8 +151,6 @@ public final class SvnCheckoutTest {
    * svn commit -m "modify test.txt"
    * svn up rev N
    * </pre>
-   *
-   * @throws Exception
    */
   @Test
   public void checkoutAndUpdate() throws Exception {

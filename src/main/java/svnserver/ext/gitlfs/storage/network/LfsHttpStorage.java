@@ -11,13 +11,13 @@ import org.bouncycastle.util.Arrays;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.client.exceptions.RequestException;
 import ru.bozaro.gitlfs.client.io.StreamProvider;
 import ru.bozaro.gitlfs.common.LockConflictException;
 import ru.bozaro.gitlfs.common.VerifyLocksResult;
 import ru.bozaro.gitlfs.common.data.*;
+import svnserver.Loggers;
 import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 public abstract class LfsHttpStorage implements LfsStorage {
 
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(LfsHttpStorage.class);
+  private static final Logger log = Loggers.lfs;
 
   @Nullable
   final ObjectRes getMeta(@NotNull String hash) throws IOException {

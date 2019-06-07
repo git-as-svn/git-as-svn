@@ -17,10 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.HTreeMap;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.Loggers;
 import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.repository.VcsCopyFrom;
@@ -38,7 +38,7 @@ public final class GitBranch {
   private static final int REPORT_DELAY = 2500;
   private static final int MARK_NO_FILE = -1;
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitBranch.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private final String uuid;
   @NotNull
@@ -382,8 +382,8 @@ public final class GitBranch {
     }
     final TreeWalk tw = new TreeWalk(repository.getGit());
     tw.setRecursive(true);
-    tw.addTree(oldTree.getObjectId().getObject());
-    tw.addTree(newTree.getObjectId().getObject());
+    tw.addTree(oldTreeId.getObject());
+    tw.addTree(newTreeId.getObject());
 
     final RenameDetector rd = new RenameDetector(repository.getGit());
     rd.addAll(DiffEntry.scan(tw));

@@ -10,7 +10,7 @@ package svnserver.ext.gitlfs.storage.local;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import svnserver.Loggers;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
@@ -41,7 +41,7 @@ public final class LfsLocalStorage extends LocalLockManager implements LfsStorag
   static final String META_REAL_NAME = "author-name";
 
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(LfsLocalStorage.class);
+  private static final Logger log = Loggers.lfs;
   @NotNull
   private final LocalLfsConfig.LfsLayout layout;
   @NotNull

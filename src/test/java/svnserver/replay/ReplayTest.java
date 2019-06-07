@@ -13,7 +13,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
@@ -25,6 +24,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import svnserver.StringHelper;
 import svnserver.SvnConstants;
 import svnserver.SvnTestServer;
+import svnserver.TestHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,7 @@ import java.util.TreeMap;
  */
 public final class ReplayTest {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(ReplayTest.class);
+  private static final Logger log = TestHelper.logger;
 
   @Test
   public void testReplayFileModification() throws Exception {

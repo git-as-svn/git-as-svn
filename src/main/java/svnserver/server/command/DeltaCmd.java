@@ -10,11 +10,11 @@ package svnserver.server.command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import svnserver.Loggers;
 import svnserver.StringHelper;
 import svnserver.parser.MessageParser;
 import svnserver.parser.SvnServerParser;
@@ -62,7 +62,7 @@ import java.util.*;
 public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(DeltaCmd.class);
+  private static final Logger log = Loggers.svn;
   @NotNull
   private final Class<? extends DeltaParams> arguments;
 
@@ -71,7 +71,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
   }
 
   @NotNull
-  static Map<String, String> getPropertiesDiff(@Nullable GitFile oldFile, @Nullable GitFile newFile) throws IOException, SVNException {
+  static Map<String, String> getPropertiesDiff(@Nullable GitFile oldFile, @Nullable GitFile newFile) throws IOException {
     final Map<String, String> result = new TreeMap<>();
     final Map<String, String> oldProps = oldFile != null ? oldFile.getProperties() : Collections.emptyMap();
     final Map<String, String> newProps = newFile != null ? newFile.getProperties() : Collections.emptyMap();
@@ -226,32 +226,10 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       internalSetPathReport(new SetPathParams(path, rev, startEmpty, new String[0], depth.getName()), path);
     }
 
-    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
-      context.push(this::reportCommand);
-      internalSetPathReport(args, args.path);
-    }
-
     private void internalSetPathReport(@NotNull DeltaCmd.SetPathParams args, String path) {
       final String wcPath = wcPath(path);
       paths.put(wcPath, args);
       forcePath(wcPath);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
-      final SvnServerParser parser = context.getParser();
-      parser.readToken(ListBeginToken.class);
-      final String cmd = parser.readText();
-      log.debug("Report command: {}", cmd);
-      final BaseCmd command = commands.get(cmd);
-      if (command == null) {
-        context.skipUnsupportedCommand(cmd);
-        return;
-      }
-
-      Object param = MessageParser.parse(command.getArguments(), parser);
-      parser.readToken(ListEndToken.class);
-      command.process(context, param);
     }
 
     @NotNull
@@ -275,6 +253,28 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     private String joinPath(@NotNull String prefix, @NotNull String name) {
       if (name.isEmpty()) return prefix;
       return prefix.isEmpty() ? name : (prefix + "/" + name);
+    }
+
+    private void setPathReport(@NotNull SessionContext context, @NotNull SetPathParams args) {
+      context.push(this::reportCommand);
+      internalSetPathReport(args, args.path);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void reportCommand(@NotNull SessionContext context) throws IOException, SVNException {
+      final SvnServerParser parser = context.getParser();
+      parser.readToken(ListBeginToken.class);
+      final String cmd = parser.readText();
+      log.debug("Report command: {}", cmd);
+      final BaseCmd command = commands.get(cmd);
+      if (command == null) {
+        context.skipUnsupportedCommand(cmd);
+        return;
+      }
+
+      Object param = MessageParser.parse(command.getArguments(), parser);
+      parser.readToken(ListEndToken.class);
+      command.process(context, param);
     }
 
     private void deletePath(@NotNull SessionContext context, @NotNull DeleteParams args) {
@@ -596,7 +596,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     }
 
     @NotNull
-    private InputStream openStream(@Nullable GitFile file) throws IOException, SVNException {
+    private InputStream openStream(@Nullable GitFile file) throws IOException {
       return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
     }
 

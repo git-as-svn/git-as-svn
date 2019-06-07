@@ -81,7 +81,7 @@ This directory is used to record log files.
 +
 It must be writable by user `git`.
 +
-Log rotation can be changed in `/etc/git-as-svn/log4j2.xml` configuration file.
+See <<logging.adoc#logging, logging documentation>> on log configuration.
 +
 /var/cache/git-as-svn::
 This directory is used to store the git-as-svn cache.

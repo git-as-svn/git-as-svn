@@ -15,7 +15,6 @@ import io.gitea.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
@@ -33,6 +32,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.StreamHelper;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
+import svnserver.TestHelper;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitea.auth.GiteaUserDBConfig;
 import svnserver.ext.gitea.config.GiteaConfig;
@@ -55,7 +55,7 @@ import java.util.function.Function;
  */
 public final class GiteaIntegrationTest {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GiteaIntegrationTest.class);
+  private static final Logger log = TestHelper.logger;
   @NotNull
   private static final String administrator = "administrator";
   @NotNull
@@ -104,7 +104,7 @@ public final class GiteaIntegrationTest {
     giteaApiUrl = giteaUrl + "api/v1";
 
     ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
-    boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
+    boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
     String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     {
       ExecResult result = gitea.execInContainer("gitea", "admin", "create-user", "--name", administrator,
@@ -163,7 +163,7 @@ public final class GiteaIntegrationTest {
   private User createUser(@NotNull String username, @NotNull String email, @NotNull String password) throws Exception {
     // Need to create user using command line because users now default to requiring to change password
     ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
-    boolean mustChangePassword = createUserHelpResult.getStdout().indexOf("--must-change-password") > -1;
+    boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
     String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
     gitea.execInContainer("gitea", "admin", "create-user", "--name", username,
         "--password", password, "--email", email,

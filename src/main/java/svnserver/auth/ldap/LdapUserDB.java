@@ -12,10 +12,10 @@ import com.unboundid.util.ssl.SSLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.Loggers;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
@@ -46,7 +46,7 @@ import java.util.Locale;
  */
 public final class LdapUserDB implements UserDB {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(LdapUserDB.class);
+  private static final Logger log = Loggers.ldap;
 
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
@@ -118,13 +118,12 @@ public final class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  private static KeyStore assembleKeyStore(@NotNull X509Certificate certificate) throws Exception {
-    final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-
-    keyStore.load(null);
-    keyStore.setCertificateEntry("alias", certificate);
-
-    return keyStore;
+  private static TrustManager[] createTrustManagers(@NotNull File certFile) throws Exception {
+    final X509Certificate certificate = loadCertificate(certFile);
+    final KeyStore keyStore = assembleKeyStore(certificate);
+    final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    factory.init(keyStore);
+    return factory.getTrustManagers();
   }
 
   @NotNull
@@ -143,12 +142,13 @@ public final class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  private static TrustManager[] createTrustManagers(@NotNull File certFile) throws Exception {
-    final X509Certificate certificate = loadCertificate(certFile);
-    final KeyStore keyStore = assembleKeyStore(certificate);
-    final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    factory.init(keyStore);
-    return factory.getTrustManagers();
+  private static KeyStore assembleKeyStore(@NotNull X509Certificate certificate) throws Exception {
+    final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+    keyStore.load(null);
+    keyStore.setCertificateEntry("alias", certificate);
+
+    return keyStore;
   }
 
   @Override
@@ -181,6 +181,8 @@ public final class LdapUserDB implements UserDB {
 
   @Nullable
   private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
+    log.info("LDAP lookup for user: {}", userName);
+
     final SearchResultEntry entry;
     try {
       final Filter filter = config.createSearchFilter(userName);
@@ -190,7 +192,7 @@ public final class LdapUserDB implements UserDB {
       log.debug("LDAP search result: {}", search);
 
       if (search.getEntryCount() < 1) {
-        log.debug("User not found in LDAP: {}. Rejecting authentication", userName);
+        log.info("User not found in LDAP: {}. Rejecting authentication", userName);
         return null;
       }
 
@@ -211,12 +213,12 @@ public final class LdapUserDB implements UserDB {
 
     try {
       if (!ldapCheck.check(entry.getDN())) {
-        log.debug("LDAP check failed for user: {}. Rejecting authentication", userName);
+        log.info("LDAP check failed for user: {}. Rejecting authentication", userName);
         return null;
       }
     } catch (LDAPException e) {
       if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
-        log.debug("Invalid LDAP credentials for user: {}. Rejecting authentication", userName);
+        log.info("Invalid LDAP credentials for user: {}. Rejecting authentication", userName);
         return null;
       }
 
@@ -228,7 +230,7 @@ public final class LdapUserDB implements UserDB {
     if (email == null && fakeMailSuffix != null)
       email = login + fakeMailSuffix;
 
-    log.debug("LDAP authentication successfull for user: {}", userName);
+    log.info("LDAP authentication successfull for user: {}", userName);
     return User.create(login, realName != null ? realName : login, email, null);
   }
 

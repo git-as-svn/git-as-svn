@@ -11,9 +11,9 @@ import org.eclipse.jgit.errors.InvalidPatternException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import svnserver.Loggers;
 import svnserver.repository.git.path.Wildcard;
 import svnserver.repository.git.path.matcher.path.AlwaysMatcher;
 
@@ -28,7 +28,7 @@ import java.util.regex.PatternSyntaxException;
  */
 public final class GitAttributesFactory implements GitPropertyFactory {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitAttributesFactory.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private static final String EOL_PREFIX = "eol=";
   @NotNull

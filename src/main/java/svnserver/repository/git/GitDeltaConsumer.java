@@ -16,7 +16,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -24,6 +23,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import svnserver.Loggers;
 import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
 import svnserver.repository.git.filter.GitFilter;
@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitDeltaConsumer.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private final Map<String, String> props;
   @NotNull

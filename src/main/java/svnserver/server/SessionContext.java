@@ -10,11 +10,11 @@ package svnserver.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import svnserver.Loggers;
 import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.parser.SvnServerParser;
@@ -38,7 +38,7 @@ import java.util.*;
 public final class SessionContext {
 
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(SessionContext.class);
+  private static final Logger log = Loggers.svn;
 
   @NotNull
   private final SvnServerParser parser;
@@ -56,6 +56,7 @@ public final class SessionContext {
   private final VcsAccess acl;
   @NotNull
   private User user;
+  @SuppressWarnings("NullableProblems")
   @NotNull
   private String parent;
 

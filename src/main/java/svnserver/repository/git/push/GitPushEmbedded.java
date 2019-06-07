@@ -14,10 +14,10 @@ import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.Loggers;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.config.ConfigHelper;
@@ -35,7 +35,7 @@ import java.util.Arrays;
  */
 public final class GitPushEmbedded implements GitPusher {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitPushEmbedded.class);
+  private static final Logger log = Loggers.git;
 
   @NotNull
   private final LocalContext context;

@@ -13,7 +13,7 @@ import org.gitlab.api.models.GitlabUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import svnserver.Loggers;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public final class GitLabUserDB implements UserDB {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitLabUserDB.class);
+  private static final Logger log = Loggers.gitlab;
   @NotNull
   private static final String PREFIX_USER = "user-";
   @NotNull

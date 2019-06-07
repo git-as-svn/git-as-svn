@@ -11,10 +11,10 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.Loggers;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.LocalContext;
@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
  */
 final class GitPushNative implements GitPusher {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitPushNativeConfig.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private static final String HOOK_MESSAGE_PREFIX = "remote:";
   @NotNull

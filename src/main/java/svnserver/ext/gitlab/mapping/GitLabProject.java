@@ -9,8 +9,8 @@ package svnserver.ext.gitlab.mapping;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.Loggers;
 import svnserver.context.LocalContext;
 import svnserver.repository.git.BranchProvider;
 import svnserver.repository.git.GitBranch;
@@ -27,7 +27,7 @@ import java.util.NavigableMap;
  */
 public final class GitLabProject implements AutoCloseable, BranchProvider {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitLabProject.class);
+  private static final Logger log = Loggers.gitlab;
   @NotNull
   private final GitRepository repository;
   @NotNull

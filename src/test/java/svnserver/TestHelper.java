@@ -11,6 +11,8 @@ import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,13 +23,28 @@ import java.nio.charset.StandardCharsets;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class TestHelper {
+
+  @NotNull
+  public static final Logger logger = LoggerFactory.getLogger("test");
+
   public static void saveFile(@NotNull File file, @NotNull String content) throws IOException {
     try (OutputStream stream = new FileOutputStream(file)) {
       stream.write(content.getBytes(StandardCharsets.UTF_8));
     }
   }
 
-  public static File findGitPath() {
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public static File createTempDir(@NotNull String prefix) throws IOException {
+    final File tmp = new File(findGitPath().getParentFile(), "build/tmp/");
+    tmp.mkdirs();
+    final File dir = File.createTempFile(prefix + "-", "", tmp);
+    dir.delete();
+    dir.mkdir();
+    return dir;
+  }
+
+  @NotNull
+  static File findGitPath() {
     final File root = new File(".").getAbsoluteFile();
     File path = root;
     while (true) {
@@ -40,16 +57,6 @@ public class TestHelper {
         throw new IllegalStateException("Repository not found from directiry: " + root.getAbsolutePath());
       }
     }
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  public static File createTempDir(@NotNull String prefix) throws IOException {
-    final File tmp = new File(findGitPath().getParentFile(), "build/tmp/");
-    tmp.mkdirs();
-    final File dir = File.createTempFile(prefix + "-", "", tmp);
-    dir.delete();
-    dir.mkdir();
-    return dir;
   }
 
   public static void deleteDirectory(@NotNull File file) throws IOException {
@@ -66,7 +73,8 @@ public class TestHelper {
     }
   }
 
-  public static Repository emptyRepository() throws IOException {
+  @NotNull
+  static Repository emptyRepository() throws IOException {
     final Repository repository = new InMemoryRepository(new DfsRepositoryDescription(null));
     repository.create();
     return repository;

@@ -14,11 +14,11 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import svnserver.Loggers;
 import svnserver.ReferenceLink;
 import svnserver.StringHelper;
 import svnserver.auth.User;
@@ -41,7 +41,7 @@ public final class GitWriter {
   private static final int MAX_PROPERTY_ERRROS = 50;
 
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitWriter.class);
+  private static final Logger log = Loggers.git;
 
   @NotNull
   private final GitBranch branch;

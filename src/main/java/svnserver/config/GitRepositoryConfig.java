@@ -13,7 +13,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import svnserver.Loggers;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.filter.LfsFilter;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -42,7 +42,7 @@ import java.util.*;
 @SuppressWarnings("FieldCanBeLocal")
 public final class GitRepositoryConfig {
   @NotNull
-  private static final Logger log = LoggerFactory.getLogger(GitRepositoryConfig.class);
+  private static final Logger log = Loggers.git;
   @NotNull
   private Set<String> branches = new TreeSet<>();
   @NotNull
@@ -61,7 +61,7 @@ public final class GitRepositoryConfig {
     this(createMode, Collections.singletonList(Constants.MASTER));
   }
 
-  public GitRepositoryConfig(@NotNull GitCreateMode createMode, @NotNull List<String> branches) {
+  private GitRepositoryConfig(@NotNull GitCreateMode createMode, @NotNull List<String> branches) {
     this.createMode = createMode;
     this.branches.addAll(branches);
   }
