@@ -7,6 +7,8 @@
  */
 package svnserver.auth.ldap.config;
 
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.auth.UserDB;
@@ -158,5 +160,13 @@ public final class LdapUserDBConfig implements UserDBConfig {
   @Override
   public UserDB create(@NotNull SharedContext context) throws Exception {
     return new LdapUserDB(context, this);
+  }
+
+  @NotNull
+  public Filter createSearchFilter(@NotNull String userName) throws LDAPException {
+    final Filter filter = Filter.createEqualityFilter(loginAttribute, userName);
+    return searchFilter.isEmpty()
+        ? filter
+        : Filter.createANDFilter(Filter.create(searchFilter), filter);
   }
 }

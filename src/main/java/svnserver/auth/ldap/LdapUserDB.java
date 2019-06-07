@@ -179,40 +179,57 @@ public final class LdapUserDB implements UserDB {
     return null;
   }
 
+  @Nullable
   private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
+    final SearchResultEntry entry;
     try {
-      final Filter filter;
-      if (!config.getSearchFilter().isEmpty()) {
-        filter = Filter.createANDFilter(
-            Filter.create(config.getSearchFilter()),
-            Filter.createEqualityFilter(config.getLoginAttribute(), userName)
-        );
-      } else {
-        filter = Filter.createEqualityFilter(config.getLoginAttribute(), userName);
-      }
+      final Filter filter = config.createSearchFilter(userName);
+      log.debug("LDAP search filter: {}", filter);
+
       final SearchResult search = pool.search(baseDn, SearchScope.SUB, filter, config.getLoginAttribute(), config.getNameAttribute(), config.getEmailAttribute());
-      if (search.getEntryCount() == 1) {
-        final SearchResultEntry entry = search.getSearchEntries().get(0);
-        final String login = getAttribute(entry, config.getLoginAttribute());
-        if (login == null) {
-          throw new IllegalStateException("Can't get login for user: " + userName);
-        }
-        if (ldapCheck.check(entry.getDN())) {
-          final String realName = getAttribute(entry, config.getNameAttribute());
-          String email = getAttribute(entry, config.getEmailAttribute());
-          if (email == null && fakeMailSuffix != null) {
-            email = login + fakeMailSuffix;
-          }
-          return User.create(login, realName != null ? realName : login, email, null);
-        }
-      }
-      return null;
-    } catch (LDAPException e) {
-      if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
+      log.debug("LDAP search result: {}", search);
+
+      if (search.getEntryCount() < 1) {
+        log.debug("User not found in LDAP: {}. Rejecting authentication", userName);
         return null;
       }
+
+      if (search.getEntryCount() > 1) {
+        log.warn("Non-unique LDAP result for user: {}. Rejecting authentication", userName);
+        return null;
+      }
+
+      entry = search.getSearchEntries().get(0);
+
+    } catch (LDAPException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage()), e);
     }
+
+    final String login = getAttribute(entry, config.getLoginAttribute());
+    if (login == null)
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, String.format("LDAP entry doesn't contain username for user: %s. Please, recheck 'loginAttribute' in git-as-svn LDAP configuration", userName)));
+
+    try {
+      if (!ldapCheck.check(entry.getDN())) {
+        log.debug("LDAP check failed for user: {}. Rejecting authentication", userName);
+        return null;
+      }
+    } catch (LDAPException e) {
+      if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
+        log.debug("Invalid LDAP credentials for user: {}. Rejecting authentication", userName);
+        return null;
+      }
+
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER, e.getMessage(), e));
+    }
+
+    final String realName = getAttribute(entry, config.getNameAttribute());
+    String email = getAttribute(entry, config.getEmailAttribute());
+    if (email == null && fakeMailSuffix != null)
+      email = login + fakeMailSuffix;
+
+    log.debug("LDAP authentication successfull for user: {}", userName);
+    return User.create(login, realName != null ? realName : login, email, null);
   }
 
   @Nullable
