@@ -8,34 +8,42 @@
 package svnserver.auth.ldap.config;
 
 import com.unboundid.ldap.sdk.BindRequest;
-import com.unboundid.ldap.sdk.SimpleBindRequest;
+import com.unboundid.ldap.sdk.PLAINBindRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.config.serializer.ConfigType;
 
 /**
- * LDAP bind by Dn with password.
- *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
+ * @see PLAINBindRequest
  */
-@ConfigType("ldapBindDn")
-public final class LdapBindDn implements LdapBind {
+@ConfigType("PLAIN")
+public final class LdapBindPLAIN implements LdapBind {
   @NotNull
-  private String bindDn;
+  private String authenticationID;
+  @Nullable
+  private String authorizationID;
   @NotNull
   private String password;
 
-  public LdapBindDn() {
+  public LdapBindPLAIN() {
     this("", "");
   }
 
-  private LdapBindDn(@NotNull String bindDn, @NotNull String password) {
-    this.bindDn = bindDn;
+  public LdapBindPLAIN(@NotNull String authenticationID, @NotNull String password) {
+    this(authenticationID, null, password);
+  }
+
+  private LdapBindPLAIN(@NotNull String authenticationID, @Nullable String authorizationID, @NotNull String password) {
+    this.authenticationID = authenticationID;
+    this.authorizationID = authorizationID;
     this.password = password;
   }
 
   @Override
   @NotNull
   public BindRequest createBindRequest() {
-    return new SimpleBindRequest(bindDn, password);
+    return new PLAINBindRequest(authenticationID, authorizationID, password);
   }
 }

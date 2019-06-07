@@ -79,7 +79,7 @@ public final class LdapUserDBConfig implements UserDBConfig {
   public LdapUserDBConfig() {
     this(
         "ldap://localhost:389/ou=groups,dc=mycompany,dc=com",
-        LdapBindAnonymous.instance,
+        LdapBindANONYMOUS.instance,
         "",
         "sAMAccountName",
         "name",

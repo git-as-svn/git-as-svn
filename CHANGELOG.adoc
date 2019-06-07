@@ -1,5 +1,9 @@
 = Changes
 
+== Unreleased
+
+ * Changed LDAP bind configuration. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#ldap[LDAP documentation].
+
 == 1.12.0
 
  * Experimental support for https://github.com/git-lfs/git-lfs/blob/master/docs/api/locking.md[LFS locking API]
@@ -233,7 +237,7 @@
  * Fix URL in authentication result on default port (Jenkins error: `E21005: Impossibly long
    repository root from server`).
  * Fix bind on already used port with flag SO_REUSEADDR (thanks for @fcharlie, #70).
- * Add support for custom CA certificate for ldaps authentication.
+ * Add support for custom certificate for ldaps authentication.
 
 == 1.0.10-alpha: Some improvements
 

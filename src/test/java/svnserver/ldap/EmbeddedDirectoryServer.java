@@ -13,7 +13,7 @@ import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldif.LDIFReader;
 import org.jetbrains.annotations.NotNull;
 import svnserver.auth.ldap.config.LdapBind;
-import svnserver.auth.ldap.config.LdapBindSimple;
+import svnserver.auth.ldap.config.LdapBindPLAIN;
 import svnserver.auth.ldap.config.LdapUserDBConfig;
 import svnserver.config.UserDBConfig;
 
@@ -67,7 +67,7 @@ public final class EmbeddedDirectoryServer implements AutoCloseable {
 
   @NotNull UserDBConfig createUserConfig() {
     final String connectionUrl = String.format("%s://localhost:%s/%s", serverNet.getUrlSchema(), server.getListenPort(), baseDn);
-    final LdapBind ldapBind = new LdapBindSimple(LdapBindSimple.BindType.Plain, "u:" + ADMIN_USERNAME, ADMIN_PASSWORD);
+    final LdapBind ldapBind = new LdapBindPLAIN("u:" + ADMIN_USERNAME, ADMIN_PASSWORD);
 
     return new LdapUserDBConfig(
         connectionUrl,

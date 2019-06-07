@@ -1,7 +1,9 @@
 [[ldap]]
 = LDAP (Lightweight Directory Access Protocol)
 
-git-as-svn supports LDAP for user authentication using either of two modes: `!ldapBindSimple` or `!ldapBindDn`
+git-as-svn supports LDAP for user authentication. Refer to your LDAP server documentation to find out what configuration is appropriate in your case.
+
+NOTE: Internally, git-as-svn uses https://ldap.com/unboundid-ldap-sdk-for-java/[UnboundID LDAP SDK for Java] for all LDAP communication.
 
 ./etc/git-as-svn/git-as-svn.conf
 [source,yaml]
@@ -13,28 +15,22 @@ userDB: !ldapUsers
   # LDAP server URL
   # It usually specifies the domain name of the directory server to connect to,
   # and optionally the port number and distinguished name (DN) of the required root naming context.
+  # For secure connections, use ldaps://
   #
   connectionUrl: ldap://localhost:389/ou=groups,dc=mycompany,dc=com
   
-  # Optional LDAP SSL CA certificate for secure LDAP connections
+  # Optional LDAP SSL certificate for secure LDAP connections
   #
   # ldapCertPem: /path/to/ldap.pem
   
   # Pattern specifying the LDAP search filter to use after substitution of the username.
   #
   searchFilter: (&(objectClass=person)(objectClass=user))
-  
-  # LDAP bind: either simple or DN (default - anonymous bind):
+
+  # LDAP bind configuration
   #
-  # bind: !ldapBindSimple
-  #   username: somebody
-  #   password: secret
-  #
-  # bind: !ldapBindDn
-  #   bindDn: cn=somebody,ou=groups,dc=mycompany,dc=com
-  #   password: secret
-  #
-  
+  # [see next documentation section]
+
   # LDAP attribute, containing user login.
   # Default: sAMAccountName
   #
@@ -49,4 +45,81 @@ userDB: !ldapUsers
   # Default: mail
   #
   # emailAttribute: mail
+----
+
+== Supported LDAP bind methods
+
+=== ANONYMOUS
+
+Performs SASL ANONYMOUS bind as described in http://www.ietf.org/rfc/rfc4505.txt[RFC 4505].
+
+NOTE: This is default bind type.
+
+[source,yaml]
+----
+userDB: !ldapUsers
+  bind: !ANONYMOUS {}
+----
+
+=== CRAM-MD5
+
+Performs SASL CRAM-MD5 bind as described in https://tools.ietf.org/html/draft-ietf-sasl-crammd5-10[draft-ietf-sasl-crammd5].
+
+[source,yaml]
+----
+userDB: !ldapUsers
+  bind: !CRAMMD5
+    authenticationID: <required>
+    password: <required>
+----
+
+=== DIGEST-MD5
+
+Performs SASL DIGEST-MD5 bind as described in http://www.ietf.org/rfc/rfc2831.txt[RFC 2831].
+
+
+[source,yaml]
+----
+userDB: !ldapUsers
+  bind: !DIGESTMD5
+    authenticationID: <required>
+    authorizationID: <optional>
+    password: <required>
+    realm: <optional>
+----
+
+=== EXTERNAL
+
+Performs SASL EXTERNAL bind as described in http://www.ietf.org/rfc/rfc4422.txt[RFC 4422].
+
+[source,yaml]
+----
+userDB: !ldapUsers
+  bind: !EXTERNAL
+    authenticationID: <optional>
+----
+
+=== PLAIN
+
+Performs SASL PLAIN bind as described in http://www.ietf.org/rfc/rfc4616.txt[RFC 4616].
+
+[source,yaml]
+----
+userDB: !ldapUsers
+  bind: !PLAIN
+    authenticationID: <required>
+    authorizationID: <optional>
+    password: <required>
+----
+
+=== Simple
+
+Performs LDAPv3 simple bind operation.
+
+[source,yaml]
+----
+userDB: !ldapUsers
+  bind: !Simple
+    bindDn: <optional>
+    password: <optional>
 ----

@@ -8,34 +8,33 @@
 package svnserver.auth.ldap.config;
 
 import com.unboundid.ldap.sdk.BindRequest;
-import com.unboundid.ldap.sdk.SimpleBindRequest;
+import com.unboundid.ldap.sdk.CRAMMD5BindRequest;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.config.serializer.ConfigType;
 
 /**
- * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
- * @see SimpleBindRequest
+ * @see CRAMMD5BindRequest
  */
-@ConfigType("Simple")
-public final class LdapBindSimple implements LdapBind {
-  @Nullable
-  private String bindDn;
-  @Nullable
+@ConfigType("CRAMMD5")
+public final class LdapBindCRAMMD5 implements LdapBind {
+  @NotNull
+  private String authenticationID;
+  @NotNull
   private String password;
 
-  public LdapBindSimple() {
+  public LdapBindCRAMMD5() {
+    this("", "");
   }
 
-  public LdapBindSimple(@Nullable String bindDn, @Nullable String password) {
-    this.bindDn = bindDn;
+  private LdapBindCRAMMD5(@NotNull String authenticationID, @NotNull String password) {
+    this.authenticationID = authenticationID;
     this.password = password;
   }
 
   @Override
   @NotNull
   public BindRequest createBindRequest() {
-    return new SimpleBindRequest(bindDn, password);
+    return new CRAMMD5BindRequest(authenticationID, password);
   }
 }

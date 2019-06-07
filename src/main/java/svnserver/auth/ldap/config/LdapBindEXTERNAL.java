@@ -7,19 +7,32 @@
  */
 package svnserver.auth.ldap.config;
 
-import com.unboundid.ldap.sdk.ANONYMOUSBindRequest;
 import com.unboundid.ldap.sdk.BindRequest;
+import com.unboundid.ldap.sdk.EXTERNALBindRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.config.serializer.ConfigType;
 
-@ConfigType("ldapBindAnonymous")
-public final class LdapBindAnonymous implements LdapBind {
+/**
+ * @author Marat Radchenko <marat@slonopotamus.org>
+ * @see EXTERNALBindRequest
+ */
+@ConfigType("EXTERNAL")
+public final class LdapBindEXTERNAL implements LdapBind {
+  @Nullable
+  private String authzID;
 
-  @NotNull
-  public static final LdapBind instance = new LdapBindAnonymous();
+  public LdapBindEXTERNAL() {
+    this(null);
+  }
+
+  private LdapBindEXTERNAL(@Nullable String authzID) {
+    this.authzID = authzID;
+  }
 
   @Override
-  public @NotNull BindRequest createBindRequest() {
-    return new ANONYMOUSBindRequest();
+  @NotNull
+  public BindRequest createBindRequest() {
+    return new EXTERNALBindRequest(authzID);
   }
 }

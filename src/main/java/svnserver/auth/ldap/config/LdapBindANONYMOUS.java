@@ -7,35 +7,23 @@
  */
 package svnserver.auth.ldap.config;
 
+import com.unboundid.ldap.sdk.ANONYMOUSBindRequest;
 import com.unboundid.ldap.sdk.BindRequest;
-import com.unboundid.ldap.sdk.SimpleBindRequest;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.config.serializer.ConfigType;
 
 /**
- * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
- * @see SimpleBindRequest
+ * @see ANONYMOUSBindRequest
  */
-@ConfigType("Simple")
-public final class LdapBindSimple implements LdapBind {
-  @Nullable
-  private String bindDn;
-  @Nullable
-  private String password;
+@ConfigType("ANONYMOUS")
+public final class LdapBindANONYMOUS implements LdapBind {
 
-  public LdapBindSimple() {
-  }
-
-  public LdapBindSimple(@Nullable String bindDn, @Nullable String password) {
-    this.bindDn = bindDn;
-    this.password = password;
-  }
+  @NotNull
+  public static final LdapBind instance = new LdapBindANONYMOUS();
 
   @Override
-  @NotNull
-  public BindRequest createBindRequest() {
-    return new SimpleBindRequest(bindDn, password);
+  public @NotNull BindRequest createBindRequest() {
+    return new ANONYMOUSBindRequest();
   }
 }

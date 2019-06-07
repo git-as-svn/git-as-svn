@@ -8,34 +8,40 @@
 package svnserver.auth.ldap.config;
 
 import com.unboundid.ldap.sdk.BindRequest;
-import com.unboundid.ldap.sdk.SimpleBindRequest;
+import com.unboundid.ldap.sdk.DIGESTMD5BindRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.config.serializer.ConfigType;
 
 /**
- * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
- * @see SimpleBindRequest
+ * @see DIGESTMD5BindRequest
  */
-@ConfigType("Simple")
-public final class LdapBindSimple implements LdapBind {
+@ConfigType("DIGESTMD5")
+public final class LdapBindDIGESTMD5 implements LdapBind {
+  @NotNull
+  private String authenticationID;
   @Nullable
-  private String bindDn;
+  private String authorizationID;
   @Nullable
+  private String realm;
+  @NotNull
   private String password;
 
-  public LdapBindSimple() {
+  public LdapBindDIGESTMD5() {
+    this("", null, "", null);
   }
 
-  public LdapBindSimple(@Nullable String bindDn, @Nullable String password) {
-    this.bindDn = bindDn;
+  private LdapBindDIGESTMD5(@NotNull String authenticationID, @Nullable String authorizationID, @NotNull String password, @Nullable String realm) {
+    this.authenticationID = authenticationID;
+    this.authorizationID = authorizationID;
+    this.realm = realm;
     this.password = password;
   }
 
   @Override
   @NotNull
   public BindRequest createBindRequest() {
-    return new SimpleBindRequest(bindDn, password);
+    return new DIGESTMD5BindRequest(authenticationID, authorizationID, password, realm);
   }
 }
