@@ -91,7 +91,7 @@ a replacement for `svnserve -t` or `nc localhost 3690` in the
 
 Of course we need to keep the `authorized_keys` file up-to-date
 
-== Gitlab & git-as-svn-svnserve
+== GitLab & git-as-svn-svnserve
 
 There are two ways that Gitlab manages ssh access.
 
@@ -134,133 +134,13 @@ include::examples/config-gitlab-ssh.yml[]
 ./opt/git-as-svn/bin/git-as-svn-svnserve
 [source,bash]
 ----
-#!/bin/bash
-
-############################################################
-# git-as-svn-svnserve
-#
-# Shadow the default gitlab/gitea shell and allow svnserve
-############################################################
-
-SHADOW_SHELL_PATH="/opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell"
-TUNNEL_PATH="/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel"
-KEY="\$1"
-REAL_SHELL_PATH="\$SHADOW_SHELL_PATH"
-SECRET="CHANGE_THIS_TO_SOMETHING_SECRET"
-
-SSH_ORIGINAL_COMMANDS=(\$SSH_ORIGINAL_COMMAND)
-
-if [ -n "\$SSH_ORIGINAL_COMMAND" ] && [ "\${SSH_ORIGINAL_COMMANDS[0]}" = "svnserve" ] ; then
-    ## TUNNEL TO OUR SVNSERVER WITH MAGIC AUTHENTICATION ##
-    exec "\$TUNNEL_PATH" "\$SECRET" "\$KEY"
-else
-    exec -a "\$REAL_SHELL_PATH" "\$SHADOW_SHELL_PATH" "\$@"
-fi
-
+include::../../../tools/git-as-svn-svnserve[]
 ----
 
 ./opt/git-as-svn/bin/git-as-svn-svnserve-tunnel
 [source,bash]
 ----
-#!/bin/bash
-
-############################################################
-# git-as-svn-svnserve-tunnel
-#
-# Use a bit of bash hackery to implement svnserve -t by
-# pushing stdin to the svn port (3690) but hijack the
-# authentication phase to pass in the ssh key id
-############################################################
-
-SECRET="\$1"
-KEY="\$2"
-FAKE_AUTH="( success ( ( EXTERNAL ) 16:Git-as-svn Realm ) )"
-
-function failed {
-    echo "\$0: Unable to connect to svn service! Is it running?" 1>&2
-    exit
-}
-trap failed err
-
-OUR_PID=\$\$
-function finish {
-    pkill -P \$OUR_PID
-    exec 3>&- 3<&-
-}
-trap finish EXIT
-
-exec 3<>/dev/tcp/localhost/3690
-
-trap finish err
-
-function read_bracket {
-    BEEN_IN=false
-    NBRACK=0
-
-    while ! \$BEEN_IN || [ \$NBRACK != 0 ]; do
-        IFS= read -n1 -r -d '' FROM
-        case \$FROM in
-            '(')
-            NBRACK=\$((\$NBRACK + 1))
-            BEEN_IN=true
-            ;;
-            ')')
-            NBRACK=\$((\$NBRACK - 1))
-            ;;
-            '')
-            break
-        esac
-        echo -ne "\$FROM"
-    done
-    IFS= read -n1 -r -d '' FROM
-    echo -ne "\$FROM"
-    if [ "X\$FROM" = "X" ]; then
-        exec 0<&-
-        exit
-    fi
-}
-
-# Send server capabilities to client
-read_bracket <&3 >&1
-
-# Send client capabilities to server
-read_bracket <&0 >&3
-
-# Get the server authentication
-AUTH_LIST_FROM_SERV=\$(read_bracket <&3)
-
-# Send the server our information
-AUTHBODY=\$(echo -ne "\\0\$SECRET\\0\$KEY" | base64)
-AUTHBODY_LENGTH=\${#AUTHBODY}
-echo "( KEY-AUTHENTICATOR ( \$AUTHBODY_LENGTH:\$AUTHBODY ) )" >&3
-if ! { command >&3; } 2>/dev/null; then
-    exit
-fi
-
-# send the fake auth list to the client
-echo "\$FAKE_AUTH" >&1
-if ! { command >&1; } 2>/dev/null; then
-    exit
-fi
-
-# throwaway the client's response
-read_bracket <&0 > /dev/null
-
-# THEN PRETEND THAT THE REST OF IT WENT THAT WAY
-(
-    cat <&3 >&1 &
-    CAT_PID=\$!
-    function on_exit {
-        kill \$CAT_PID
-    }
-    trap on_exit EXIT
-    wait
-    kill \$OUR_PID
-) &
-
-cat <&0 >&3
-pkill -P \$OUR_PID
-
+include::../../../tools/git-as-svn-svnserve-tunnel[]
 ----
 
 In the second case, if we proxy the `AuthorizedKeysCommand`, and just
@@ -290,24 +170,7 @@ AuthorizedKeysCommandUser git
 ./opt/git-as-svn/bin/git-as-svn-authorized-keys-command
 [source,bash]
 ----
-#!/bin/bash
-
-############################################################
-# git-as-svn-authorized-keys_command
-#
-# Shadow the default ssh AuthorizedKeysCommand and adjust its
-# output to replace the original command with our svnserve
-############################################################
-
-############################################################
-# For Gitlab Docker:
-############################################################
-ORIGINAL_AUTHORIZED_COMMAND="/opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell-authorized-keys-check"
-ORIGINAL_APP_PATH="/opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell"
-SVN_SERVE_PATH="/opt/git-as-svn/bin/git-as-svn-svnserve"
-
-exec -a "\$ORIGINAL_AUTHORIZED_COMMAND"  "\$ORIGINAL_AUTHORIZED_COMMAND" "\$@" | sed -e 's|command="'"\$ORIGINAL_APP_PATH"'|command="'"\$SVN_SERVE_PATH"'|'
-
+include::../../../tools/git-as-svn-authorized-keys-command[]
 ----
 
 ./etc/git-as-svn/git-as-svn.conf
@@ -360,36 +223,9 @@ include::examples/config-gitea-ssh.yml[]
 ./app/git-as-svn/bin/git-as-svn-svnserve
 [source,bash]
 ----
-#!/bin/bash
-
-############################################################
-# git-as-svn-svnserve
-#
-# Shadow the default gitlab/gitea shell and allow svnserve
-############################################################
-
-SHADOW_SHELL_PATH="/app/gitea/gitea"
-TUNNEL_PATH="/app/git-as-svn/bin/git-as-svn-svnserve-tunnel"
-KEY="\$2"
-SUBCOMMAND="\$1"
-REAL_SHELL_PATH="\$SHADOW_SHELL_PATH"
-
-if [ "\$SUBCOMMAND" != "serv" ]; then
-    exec -a "\$REAL_SHELL_PATH" "\$SHADOW_SHELL_PATH" "\$@"
-fi
-
-SECRET="CHANGE_THIS_TO_SOMETHING_SECRET"
-
-SSH_ORIGINAL_COMMANDS=(\$SSH_ORIGINAL_COMMAND)
-
-if [ -n "\$SSH_ORIGINAL_COMMAND" ] && [ "\${SSH_ORIGINAL_COMMANDS[0]}" = "svnserve" ] ; then
-    ## TUNNEL TO OUR SVNSERVER WITH MAGIC AUTHENTICATION ##
-    exec "\$TUNNEL_PATH" "\$SECRET" "\$KEY"
-else
-    exec -a "\$REAL_SHELL_PATH" "\$SHADOW_SHELL_PATH" "\$@"
-fi
-
+include::../../../tools/git-as-svn-svnserve[]
 ----
+
 * `/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as
 in the gitlab case.
 
@@ -404,35 +240,7 @@ below `/app/git-as-svn/bin/git-as-svn-svnserve` as it.
 ./app/git-as-svn/bin/git-as-svn-svnserve
 [source,bash]
 ----
-#!/bin/bash
-
-############################################################
-# git-as-svn-svnserve
-#
-# Shadow the default gitlab/gitea shell and allow svnserve
-############################################################
-
-SHADOW_SHELL_PATH="/app/gitea/gitea.shadow"
-TUNNEL_PATH="/app/git-as-svn/bin/git-as-svn-svnserve-tunnel"
-KEY="\$2"
-SUBCOMMAND="\$1"
-REAL_SHELL_PATH="/app/gitea/gitea"
-
-if [ "\$SUBCOMMAND" != "serv" ]; then
-    exec -a "\$REAL_SHELL_PATH" "\$SHADOW_SHELL_PATH" "\$@"
-fi
-
-SECRET="CHANGE_THIS_TO_SOMETHING_SECRET"
-
-SSH_ORIGINAL_COMMANDS=(\$SSH_ORIGINAL_COMMAND)
-
-if [ -n "\$SSH_ORIGINAL_COMMAND" ] && [ "\${SSH_ORIGINAL_COMMANDS[0]}" = "svnserve" ] ; then
-    ## TUNNEL TO OUR SVNSERVER WITH MAGIC AUTHENTICATION ##
-    exec "\$TUNNEL_PATH" "\$SECRET" "\$KEY"
-else
-    exec -a "\$REAL_SHELL_PATH" "\$SHADOW_SHELL_PATH" "\$@"
-fi
-
+include::../../../tools/git-as-svn-svnserve[]
 ----
 
 `/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as
