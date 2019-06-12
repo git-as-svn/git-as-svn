@@ -26,7 +26,7 @@ public final class Config {
   @NotNull
   private String host = "0.0.0.0";
   @NotNull
-  private String realm = "";
+  private String realm = "git-as-svn realm";
 
   @NotNull
   private RepositoryMappingConfig repositoryMapping = new RepositoryListMappingConfig();

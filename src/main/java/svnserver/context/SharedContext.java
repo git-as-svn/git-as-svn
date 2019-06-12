@@ -35,17 +35,20 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
   private final DB cacheDB;
   @NotNull
   private final ThreadPoolExecutor threadPoolExecutor;
+  @NotNull
+  private final String realm;
 
-  private SharedContext(@NotNull File basePath, @NotNull DB cacheDb, @NotNull ThreadPoolExecutor threadPoolExecutor) {
+  private SharedContext(@NotNull File basePath, @NotNull DB cacheDb, @NotNull ThreadPoolExecutor threadPoolExecutor, @NotNull String realm) {
     this.basePath = basePath;
     this.cacheDB = cacheDb;
     this.threadPoolExecutor = threadPoolExecutor;
+    this.realm = realm;
   }
 
   @NotNull
-  public static SharedContext create(@NotNull File basePath, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws IOException, SVNException {
+  public static SharedContext create(@NotNull File basePath, @NotNull String realm, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws IOException, SVNException {
     final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), threadFactory);
-    final SharedContext context = new SharedContext(basePath, cacheDb, threadPoolExecutor);
+    final SharedContext context = new SharedContext(basePath, cacheDb, threadPoolExecutor, realm);
     for (SharedConfig config : shared) {
       config.create(context);
     }
@@ -53,6 +56,11 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
       item.init(context);
     }
     return context;
+  }
+
+  @NotNull
+  public String getRealm() {
+    return realm;
   }
 
   @NotNull

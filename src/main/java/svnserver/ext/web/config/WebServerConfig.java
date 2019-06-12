@@ -34,8 +34,6 @@ public final class WebServerConfig implements SharedConfig {
   @NotNull
   private List<ListenConfig> listen = new ArrayList<>();
   @NotNull
-  private String realm = WebServer.DEFAULT_REALM;
-  @NotNull
   private String secret = defaultSecret;
   @Nullable
   private String baseUrl = null;
@@ -45,11 +43,6 @@ public final class WebServerConfig implements SharedConfig {
     final byte[] bytes = new byte[EncryptionFactoryAes.KEY_SIZE];
     random.nextBytes(bytes);
     return new String(Hex.encodeHex(bytes));
-  }
-
-  @NotNull
-  public String getRealm() {
-    return realm;
   }
 
   @Nullable

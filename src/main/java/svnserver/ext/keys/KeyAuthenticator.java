@@ -7,52 +7,50 @@
  */
 package svnserver.ext.keys;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-
 import svnserver.auth.Authenticator;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
-import svnserver.parser.SvnServerParser;
-import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 public final class KeyAuthenticator implements Authenticator {
-    @NotNull
-    private final UserDB userDB;
-    @NotNull
-    private final String secretToken;
+  @NotNull
+  private final UserDB userDB;
+  @NotNull
+  private final String secretToken;
 
-    public KeyAuthenticator(@NotNull UserDB userDB,
-                            @NotNull String secretToken) {
-        this.userDB = userDB;
-        this.secretToken = secretToken;
+  KeyAuthenticator(@NotNull UserDB userDB,
+                   @NotNull String secretToken) {
+    this.userDB = userDB;
+    this.secretToken = secretToken;
+  }
+
+  @NotNull
+  @Override
+  public String getMethodName() {
+    return "KEY-AUTHENTICATOR";
+  }
+
+  @Nullable
+  @Override
+  public User authenticate(@NotNull SessionContext context, @NotNull String token) throws SVNException {
+    final String decodedToken = new String(Base64.getDecoder().decode(token.trim()), StandardCharsets.US_ASCII);
+    final String[] credentials = decodedToken.split("\u0000");
+
+    if (credentials.length < 3)
+      return null;
+
+    final String clientSecretToken = credentials[1];
+
+    if (clientSecretToken.trim().equals(this.secretToken)) {
+      final String username = credentials[2];
+      return userDB.lookupByExternal(username);
     }
-
-    @NotNull
-    @Override
-    public String getMethodName() {
-        return "KEY-AUTHENTICATOR";
-    }
-
-    @Nullable
-    @Override
-    public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws SVNException {
-        final String decodedToken = new String(Base64.getDecoder().decode(token.trim()), StandardCharsets.US_ASCII);
-        final String[] credentials = decodedToken.split("\u0000");
-
-        if (credentials.length < 3)
-            return null;
-
-        final String clientSecretToken = credentials[1];
-
-        if (clientSecretToken.trim().equals(this.secretToken)) {
-            final String username = credentials[2];
-            return userDB.lookupByExternal(username);
-        }
-        return null;
-    }
+    return null;
+  }
 }

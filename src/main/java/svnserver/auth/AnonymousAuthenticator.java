@@ -9,8 +9,7 @@ package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.parser.SvnServerParser;
-import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
 
 /**
  * Anonymous authentication.
@@ -37,7 +36,7 @@ public final class AnonymousAuthenticator implements Authenticator {
 
   @Nullable
   @Override
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) {
+  public User authenticate(@NotNull SessionContext context, @NotNull String token) {
     return User.getAnonymous();
   }
 }

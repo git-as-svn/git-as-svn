@@ -106,10 +106,10 @@ public final class SessionContext {
   }
 
   public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
-    if (!user.isAnonymous()) {
+    if (!user.isAnonymous())
       throw new IllegalStateException();
-    }
-    this.user = server.authenticate(parser, writer, repositoryInfo, allowAnonymous);
+
+    this.user = server.authenticate(this, allowAnonymous);
   }
 
   @NotNull

@@ -10,8 +10,7 @@ package svnserver.auth;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.parser.SvnServerParser;
-import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
 
 import java.io.IOException;
 
@@ -26,5 +25,5 @@ public interface Authenticator {
   String getMethodName();
 
   @Nullable
-  User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException, SVNException;
+  User authenticate(@NotNull SessionContext context, @NotNull String token) throws IOException, SVNException;
 }

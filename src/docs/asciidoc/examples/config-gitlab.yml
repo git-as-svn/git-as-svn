@@ -11,7 +11,7 @@
 # port: 3690
 
 # Subversion realm name. Subversion uses this for credentials caching
-# Default: repository UUID
+# Default: git-as-svn realm
 #
 # realm: git-as-svn realm
 

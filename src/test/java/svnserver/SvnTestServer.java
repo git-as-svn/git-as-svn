@@ -269,7 +269,7 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public SharedContext getContext() {
-    return server.getContext();
+    return server.getSharedContext();
   }
 
   private static final class TestRepositoryConfig implements RepositoryMappingConfig {

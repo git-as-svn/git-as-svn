@@ -10,8 +10,7 @@ package svnserver.auth;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import svnserver.parser.SvnServerParser;
-import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -36,7 +35,7 @@ public final class PlainAuthenticator implements Authenticator {
 
   @Nullable
   @Override
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws SVNException {
+  public User authenticate(@NotNull SessionContext context, @NotNull String token) throws SVNException {
     final byte[] decoded = Base64.getMimeDecoder().decode(token);
     final String decodedToken = new String(decoded, StandardCharsets.US_ASCII);
     final String[] credentials = decodedToken.split("\u0000");

@@ -122,7 +122,7 @@ public final class LfsContentManager implements ContentManager {
     } catch (SVNException ignored) {
       if (user.isAnonymous()) {
         final WebServer server1 = context.getShared().sure(WebServer.class);
-        throw new UnauthorizedError("Basic realm=\"" + server1.getRealm() + "\"");
+        throw new UnauthorizedError("Basic realm=\"" + context.getShared().getRealm() + "\"");
       } else {
         throw new ForbiddenError();
       }

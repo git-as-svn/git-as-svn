@@ -91,7 +91,7 @@ public final class SvnServer extends Thread {
   @NotNull
   private final AtomicLong lastSessionId = new AtomicLong();
   @NotNull
-  private final SharedContext context;
+  private final SharedContext sharedContext;
 
   public SvnServer(@NotNull File basePath, @NotNull Config config) throws Exception {
     super("SvnServer");
@@ -104,8 +104,8 @@ public final class SvnServer extends Thread {
       return thread;
     };
 
-    context = SharedContext.create(basePath, config.getCacheConfig().createCache(basePath), threadFactory, config.getShared());
-    context.add(UserDB.class, config.getUserDB().create(context));
+    sharedContext = SharedContext.create(basePath, config.getRealm(), config.getCacheConfig().createCache(basePath), threadFactory, config.getShared());
+    sharedContext.add(UserDB.class, config.getUserDB().create(sharedContext));
 
     // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
 
@@ -142,15 +142,15 @@ public final class SvnServer extends Thread {
     commands.put("get-iprops", new GetIPropsCmd());
     // TODO: list (#162)
 
-    repositoryMapping = config.getRepositoryMapping().create(context, config.canUseParallelIndexing());
+    repositoryMapping = config.getRepositoryMapping().create(sharedContext, config.canUseParallelIndexing());
 
-    context.add(RepositoryMapping.class, repositoryMapping);
+    sharedContext.add(RepositoryMapping.class, repositoryMapping);
 
     serverSocket = new ServerSocket();
     serverSocket.setReuseAddress(config.getReuseAddress());
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
 
-    context.ready();
+    sharedContext.ready();
   }
 
   public int getPort() {
@@ -158,8 +158,8 @@ public final class SvnServer extends Thread {
   }
 
   @NotNull
-  public SharedContext getContext() {
-    return context;
+  public SharedContext getSharedContext() {
+    return sharedContext;
   }
 
   @Override
@@ -178,7 +178,7 @@ public final class SvnServer extends Thread {
         continue;
       }
       long sessionId = lastSessionId.incrementAndGet();
-      context.getThreadPoolExecutor().execute(() -> {
+      sharedContext.getThreadPoolExecutor().execute(() -> {
         log.info("New connection from: {}", client.getRemoteSocketAddress());
         try (Socket clientSocket = client;
              SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(clientSocket.getOutputStream()))) {
@@ -313,39 +313,39 @@ public final class SvnServer extends Thread {
   }
 
   @NotNull
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo, boolean allowAnonymous) throws IOException, SVNException {
+  public User authenticate(@NotNull SessionContext context, boolean allowAnonymous) throws IOException, SVNException {
     // Отправляем запрос на авторизацию.
-    final List<Authenticator> authenticators = new ArrayList<>(context.sure(UserDB.class).authenticators());
-    if (allowAnonymous) {
+    final List<Authenticator> authenticators = new ArrayList<>(sharedContext.sure(UserDB.class).authenticators());
+    if (allowAnonymous)
       authenticators.add(0, AnonymousAuthenticator.get());
-    }
-    writer
+
+    context.getWriter()
         .listBegin()
         .word("success")
         .listBegin()
         .listBegin()
         .word(String.join(" ", authenticators.stream().map(Authenticator::getMethodName).toArray(String[]::new)))
         .listEnd()
-        .string(config.getRealm().isEmpty() ? repositoryInfo.getBranch().getUuid() : config.getRealm())
+        .string(sharedContext.getRealm())
         .listEnd()
         .listEnd();
 
     while (true) {
       // Читаем выбранный вариант авторизации.
-      final AuthReq authReq = MessageParser.parse(AuthReq.class, parser);
+      final AuthReq authReq = MessageParser.parse(AuthReq.class, context.getParser());
       final Optional<Authenticator> authenticator = authenticators.stream().filter(o -> o.getMethodName().equals(authReq.getMech())).findAny();
       if (!authenticator.isPresent()) {
-        sendError(writer, "unknown auth type: " + authReq.getMech());
+        sendError(context.getWriter(), "unknown auth type: " + authReq.getMech());
         continue;
       }
 
-      final User user = authenticator.get().authenticate(parser, writer, authReq.getToken());
+      final User user = authenticator.get().authenticate(context, authReq.getToken());
       if (user == null) {
-        sendError(writer, "incorrect credentials");
+        sendError(context.getWriter(), "incorrect credentials");
         continue;
       }
 
-      writer
+      context.getWriter()
           .listBegin()
           .word("success")
           .listBegin()
@@ -369,11 +369,11 @@ public final class SvnServer extends Thread {
 
   public void shutdown(long millis) throws Exception {
     startShutdown();
-    if (!context.getThreadPoolExecutor().awaitTermination(millis, TimeUnit.MILLISECONDS)) {
+    if (!sharedContext.getThreadPoolExecutor().awaitTermination(millis, TimeUnit.MILLISECONDS)) {
       forceShutdown();
     }
     join(millis);
-    context.close();
+    sharedContext.close();
     log.info("Server shutdown complete");
   }
 
@@ -381,7 +381,7 @@ public final class SvnServer extends Thread {
     if (stopped.compareAndSet(false, true)) {
       log.info("Shutdown server");
       serverSocket.close();
-      context.getThreadPoolExecutor().shutdown();
+      sharedContext.getThreadPoolExecutor().shutdown();
     }
   }
 
@@ -389,7 +389,7 @@ public final class SvnServer extends Thread {
     for (Socket socket : connections.values()) {
       socket.close();
     }
-    context.getThreadPoolExecutor().awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
+    sharedContext.getThreadPoolExecutor().awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
   }
 
   boolean isCompressionEnabled() {

@@ -84,7 +84,7 @@ public final class LfsHttpStorageTest {
     final User user = users.add(SvnTestServer.USER_NAME, "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), DBMaker.memoryDB().make(), Thread::new, Collections.emptyList());
+    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.emptyList());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
     sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
     sharedContext.add(UserDB.class, users);
@@ -160,7 +160,7 @@ public final class LfsHttpStorageTest {
     final User user = users.add("test", "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), DBMaker.memoryDB().make(), Thread::new, Collections.emptyList());
+    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.emptyList());
     sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
     sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
     sharedContext.add(UserDB.class, users);

@@ -52,8 +52,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class WebServer implements Shared {
   @NotNull
-  public static final String DEFAULT_REALM = "git-as-svn server";
-  @NotNull
   public static final String AUTH_TOKEN = "Bearer ";
   @NotNull
   private static final String AUTH_BASIC = "Basic ";
@@ -101,11 +99,6 @@ public final class WebServer implements Shared {
   @NotNull
   public static WebServer get(@NotNull SharedContext context) {
     return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
-  }
-
-  @NotNull
-  public String getRealm() {
-    return config.getRealm();
   }
 
   @Override

@@ -10,8 +10,7 @@ package svnserver.auth;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.StringHelper;
-import svnserver.parser.SvnServerParser;
-import svnserver.parser.SvnServerWriter;
+import svnserver.server.SessionContext;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -28,12 +27,12 @@ import java.util.function.Function;
  */
 final class CramMD5Authenticator implements Authenticator {
 
+  @NotNull
+  private final Function<String, UserWithPassword> lookup;
+
   CramMD5Authenticator(@NotNull Function<String, UserWithPassword> lookup) {
     this.lookup = lookup;
   }
-
-  @NotNull
-  private final Function<String, UserWithPassword> lookup;
 
   @NotNull
   @Override
@@ -43,10 +42,10 @@ final class CramMD5Authenticator implements Authenticator {
 
   @Nullable
   @Override
-  public User authenticate(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer, @NotNull String token) throws IOException {
+  public User authenticate(@NotNull SessionContext context, @NotNull String token) throws IOException {
     // Выполняем авторизацию.
     String msgId = UUID.randomUUID().toString();
-    writer
+    context.getWriter()
         .listBegin()
         .word("step")
         .listBegin()
@@ -55,7 +54,7 @@ final class CramMD5Authenticator implements Authenticator {
         .listEnd();
 
     // Читаем логин и пароль.
-    final String[] authData = parser.readText().split(" ", 2);
+    final String[] authData = context.getParser().readText().split(" ", 2);
     final String username = authData[0];
 
     final UserWithPassword userWithPassword = lookup.apply(username);
