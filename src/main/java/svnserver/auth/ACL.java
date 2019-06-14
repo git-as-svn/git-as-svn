@@ -7,150 +7,196 @@
  */
 package svnserver.auth;
 
+import org.eclipse.collections.api.block.function.primitive.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import svnserver.config.AclAccessConfig;
-import svnserver.config.AclConfig;
-import svnserver.config.GroupConfig;
+import svnserver.StringHelper;
+import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 
 import java.util.*;
 
 /**
+ * This ACL reuses SVN's authz syntax as much as possible: http://svnbook.red-bean.com/nightly/en/svn.serverconfig.pathbasedauthz.html
+ *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class ACL implements VcsAccess {
   @NotNull
-  public static final String EveryoneMarker = "*";
-
+  static final String EveryoneMarker = "*";
   @NotNull
-  private final Set<String> groups = new HashSet<>();
+  static final String AnonymousMarker = "$anonymous";
+  @NotNull
+  static final String AuthenticatedMarker = "$authenticated";
+  @NotNull
+  private static final String GroupPrefix = "@";
+
   @NotNull
   private final Map<String, Set<String>> user2groups = new HashMap<>();
+  @NotNull
+  private final Set<String> anonymousGroups = new HashSet<>();
+  @NotNull
+  private final Set<String> authenticatedGroups = new HashSet<>();
 
   @NotNull
-  private final Map<String, Set<AclEntry>> path2acl = new HashMap<>();
-  private final boolean anonymousRead;
+  private final NavigableMap<String, Map<ACLEntry, AccessMode>> path2acl = new TreeMap<>();
 
-  public ACL(@NotNull AclConfig config) {
-    anonymousRead = config.isAnonymousRead();
-    for (final GroupConfig group : config.getGroups()) {
-      final String name = group.getName();
+  public ACL(@NotNull Map<String, String[]> groups, @NotNull Map<String, Map<String, String>> access) {
+    for (final Map.Entry<String, String[]> group : groups.entrySet()) {
+      final String name = group.getKey();
 
       if (name.isEmpty())
         throw new IllegalArgumentException("Group with empty name is not a good idea");
 
-      if (group.getUsers().length == 0)
+      if (group.getValue().length == 0)
         throw new IllegalArgumentException("Group is empty: " + name);
 
-      if (!groups.add(name))
-        throw new IllegalArgumentException("Duplicate group found: " + name);
-
-      for (String user : group.getUsers())
-        user2groups.computeIfAbsent(user, s -> new HashSet<>()).add(name);
+      for (String member : group.getValue())
+        if (member.equals(AnonymousMarker))
+          anonymousGroups.add(name);
+        else if (member.equals(AuthenticatedMarker))
+          authenticatedGroups.add(name);
+        else if (member.startsWith(GroupPrefix))
+          throw new IllegalArgumentException("Groups of groups are not supported yet: " + name);
+        else
+          user2groups.computeIfAbsent(member, s -> new HashSet<>()).add(name);
     }
 
-    if (config.getAccess().length == 0)
-      throw new IllegalArgumentException("Empty ACL");
-
-    for (AclAccessConfig access : config.getAccess()) {
-      final String path = access.getPath();
+    for (Map.Entry<String, Map<String, String>> pathEntry : access.entrySet()) {
+      final String path = pathEntry.getKey();
 
       if (!path.startsWith("/"))
-        throw new IllegalArgumentException("ACL must start with slash (/): " + path);
+        throw new IllegalArgumentException("ACL entry must start with slash (/): " + path);
 
       if (path.endsWith("/") && path.length() > 1)
-        throw new IllegalArgumentException("ACL must not end with slash (/): " + path);
+        throw new IllegalArgumentException("ACL entry must not end with slash (/): " + path);
 
-      if (access.getAllowed().length == 0)
-        throw new IllegalArgumentException("ACL is empty: " + path);
+      if (pathEntry.getValue().isEmpty())
+        throw new IllegalArgumentException("ACL entry is empty: " + path);
 
-      if (path2acl.get(path) != null)
-        throw new IllegalArgumentException("Duplicate ACL: " + path);
-
-      for (String allowed : access.getAllowed())
-        addAccess(path, allowed);
+      for (Map.Entry<String, String> aclEntry : pathEntry.getValue().entrySet()) {
+        final AccessMode accessMode = AccessMode.fromString(aclEntry.getValue());
+        addAclEntry(path, aclEntry.getKey(), accessMode, groups.keySet());
+      }
     }
   }
 
-  private void addAccess(@NotNull String path, @NotNull String allowed) {
-    final AclEntry entry;
-    if (allowed.equals(EveryoneMarker))
-      entry = new EveryoneAclEntry();
-    else if (allowed.startsWith("@")) {
-      final String group = allowed.substring(1);
+  private void addAclEntry(@NotNull String path, @NotNull String entryString, @NotNull AccessMode accessMode, @NotNull Set<String> allGroups) {
+    final ACLEntry entry;
+    if (entryString.equals(EveryoneMarker))
+      entry = EveryoneACLEntry.instance;
+    else if (entryString.equals(AnonymousMarker))
+      entry = AnonymousACLEntry.instance;
+    else if (entryString.equals(AuthenticatedMarker))
+      entry = AuthenticatedACLEntry.instance;
+    else if (entryString.startsWith(GroupPrefix)) {
+      final String group = entryString.substring(1);
 
-      if (!groups.contains(group))
+      if (!allGroups.contains(group))
         throw new IllegalArgumentException("ACL entry " + path + " uses unknown group: " + group);
 
-      entry = new GroupAclEntry(group);
-    } else {
-      entry = new UserAclEntry(allowed);
+      entry = new GroupACLEntry(group);
+    } else
+      entry = new UserACLEntry(entryString);
+
+    if (path2acl.computeIfAbsent(StringHelper.normalizeDir(path), s -> new HashMap<>()).put(entry, accessMode) != null)
+      throw new IllegalArgumentException("Duplicate ACL entry " + path + ": " + entryString);
+  }
+
+  @Override
+  public boolean canRead(@NotNull User user, @NotNull String path) {
+    return doCheck(user, path, AccessMode::allowsRead);
+  }
+
+  @Override
+  public boolean canWrite(@NotNull User user, @NotNull String path) {
+    return doCheck(user, path, AccessMode::allowsWrite);
+  }
+
+  private boolean doCheck(@NotNull User user, @NotNull String path, @NotNull BooleanFunction<AccessMode> checker) {
+    String pathToCheck = path;
+
+    while (true) {
+      final Map.Entry<String, Map<ACLEntry, AccessMode>> pathEntry = RepositoryMapping.getMapped(path2acl, pathToCheck);
+
+      if (pathEntry == null)
+        break;
+
+      final CheckResult checkResult = check(user, checker, pathEntry.getValue());
+      if (checkResult == CheckResult.Deny)
+        return false;
+      else if (checkResult == CheckResult.Allow)
+        return true;
+
+      // We didn't find a matching entry, so need to go up in hierarchy
+      final int prevSlash = pathEntry.getKey().lastIndexOf('/', pathEntry.getKey().length() - 2);
+      if (prevSlash < 0)
+        break;
+      pathToCheck = pathEntry.getKey().substring(0, prevSlash);
     }
 
-    if (!path2acl.computeIfAbsent(path, s -> new HashSet<>()).add(entry))
-      throw new IllegalArgumentException("Duplicate ACL entry " + path + ": " + allowed);
+    return false;
   }
 
-  private interface AclEntry {
-    boolean allows(@NotNull String user);
+  @NotNull
+  private ACL.CheckResult check(@NotNull User user, @NotNull BooleanFunction<AccessMode> checker, @NotNull Map<ACLEntry, AccessMode> entries) {
+    CheckResult result = CheckResult.Unspecified;
+
+    for (Map.Entry<ACLEntry, AccessMode> aclEntry : entries.entrySet()) {
+      if (!aclEntry.getKey().matches(user))
+        continue;
+
+      if (checker.booleanValueOf(aclEntry.getValue()))
+        // Explicit allow is stronger than explicit deny
+        return CheckResult.Allow;
+
+      result = CheckResult.Deny;
+    }
+
+    return result;
   }
 
-  private class GroupAclEntry implements AclEntry {
+  private enum CheckResult {
+    Unspecified,
+    Allow,
+    Deny
+  }
+
+  private enum AccessMode {
+    none,
+    r,
+    rw;
+
     @NotNull
-    private final String group;
+    static AccessMode fromString(@Nullable String value) {
+      if (value == null || value.isEmpty())
+        return none;
 
-    private GroupAclEntry(@NotNull String group) {
-      this.group = group;
+      return valueOf(value);
     }
 
-    @Override
-    public boolean allows(@NotNull String user) {
-      return user2groups.getOrDefault(user, Collections.emptySet()).contains(group);
+    boolean allowsRead() {
+      return this != none;
     }
 
-    @Override
-    public int hashCode() {
-      return group.hashCode();
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof GroupAclEntry && group.equals(((GroupAclEntry) o).group);
+    boolean allowsWrite() {
+      return this == rw;
     }
   }
 
-  private class UserAclEntry implements AclEntry {
+  private interface ACLEntry {
+    boolean matches(@NotNull User user);
+  }
+
+  private static final class EveryoneACLEntry implements ACLEntry {
     @NotNull
-    private final String user;
+    private static final ACLEntry instance = new EveryoneACLEntry();
 
-    private UserAclEntry(@NotNull String user) {
-      this.user = user;
+    private EveryoneACLEntry() {
     }
 
     @Override
-    public boolean allows(@NotNull String user) {
-      return user.equals(this.user);
-    }
-
-    @Override
-    public int hashCode() {
-      return user.hashCode();
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof UserAclEntry && user.equals(((UserAclEntry) o).user);
-    }
-  }
-
-  private class EveryoneAclEntry implements AclEntry {
-
-    private EveryoneAclEntry() {
-    }
-
-    @Override
-    public boolean allows(@NotNull String user) {
+    public boolean matches(@NotNull User user) {
       return true;
     }
 
@@ -161,40 +207,107 @@ public final class ACL implements VcsAccess {
 
     @Override
     public boolean equals(@Nullable Object o) {
-      return o instanceof EveryoneAclEntry;
+      return o instanceof EveryoneACLEntry;
     }
   }
 
-  private boolean doCheck(@NotNull User user, @NotNull String path) {
-    for (AclEntry entry : path2acl.getOrDefault(path, Collections.emptySet()))
-      if (entry.allows(user.getUserName()))
-        return true;
+  private static final class UserACLEntry implements ACLEntry {
+    @NotNull
+    private final String user;
 
-    return false;
-  }
-
-  @Override
-  public boolean canWrite(@NotNull User user, @Nullable String path) {
-    return !user.isAnonymous() && canRead(user, path);
-  }
-
-  @Override
-  public boolean canRead(@NotNull User user, @Nullable String path) {
-    if (user.isAnonymous() && !anonymousRead)
-      return false;
-
-    if (path == null)
-      return true;
-
-    String toCheck = path;
-
-    while (!toCheck.isEmpty()) {
-      if (doCheck(user, toCheck))
-        return true;
-
-      toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
+    private UserACLEntry(@NotNull String user) {
+      this.user = user;
     }
 
-    return doCheck(user, "/");
+    @Override
+    public boolean matches(@NotNull User user) {
+      return !user.isAnonymous() && user.getUserName().equals(this.user);
+    }
+
+    @Override
+    public int hashCode() {
+      return user.hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof UserACLEntry && user.equals(((UserACLEntry) o).user);
+    }
+  }
+
+  private static final class AnonymousACLEntry implements ACLEntry {
+    @NotNull
+    private static final ACLEntry instance = new AnonymousACLEntry();
+
+    private AnonymousACLEntry() {
+    }
+
+    @Override
+    public boolean matches(@NotNull User user) {
+      return user.isAnonymous();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof AnonymousACLEntry;
+    }
+  }
+
+  private static final class AuthenticatedACLEntry implements ACLEntry {
+    @NotNull
+    private static final ACLEntry instance = new AuthenticatedACLEntry();
+
+    private AuthenticatedACLEntry() {
+    }
+
+    @Override
+    public boolean matches(@NotNull User user) {
+      return !user.isAnonymous();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof AuthenticatedACLEntry;
+    }
+  }
+
+  private final class GroupACLEntry implements ACLEntry {
+    @NotNull
+    private final String group;
+
+    private GroupACLEntry(@NotNull String group) {
+      this.group = group;
+    }
+
+    @Override
+    public boolean matches(@NotNull User user) {
+      if (user.isAnonymous())
+        return anonymousGroups.contains(group);
+
+      if (authenticatedGroups.contains(group))
+        return true;
+
+      return user2groups.getOrDefault(user.getUserName(), Collections.emptySet()).contains(group);
+    }
+
+    @Override
+    public int hashCode() {
+      return group.hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      return o instanceof GroupACLEntry && group.equals(((GroupACLEntry) o).group);
+    }
   }
 }

@@ -84,7 +84,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
         throw new IllegalStateException();
 
       final List<GitFile> history = new ArrayList<>();
-      walkFileHistory(branch, head, startRev, history::add);
+      walkFileHistory(context, head, startRev, history::add);
       if (reverse)
         Collections.reverse(history);
 
@@ -154,7 +154,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
   /**
    * TODO: This method is very similar to LogCmd#getLog. Maybe they can be combined?
    */
-  private void walkFileHistory(@NotNull GitBranch branch, @NotNull GitFile start, int stopRev, @NotNull FileHistoryWalker walker) throws SVNException, IOException {
+  private void walkFileHistory(@NotNull SessionContext context, @NotNull GitFile start, int stopRev, @NotNull FileHistoryWalker walker) throws SVNException, IOException {
     @Nullable
     GitFile head = start;
 
@@ -163,7 +163,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
 
       VcsCopyFrom copyFrom = head.getCopyFrom();
       if (copyFrom == null) {
-        final int prevRev = branch.getLastChange(head.getFullPath(), head.getRevision() - 1);
+        final int prevRev = context.getBranch().getLastChange(head.getFullPath(), head.getRevision() - 1);
         if (prevRev >= 0) {
           // Same path, earlier commit
           copyFrom = new VcsCopyFrom(prevRev, head.getFullPath());
@@ -174,15 +174,21 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
       if (copyFrom == null)
         break;
 
-      if (copyFrom.getRevision() < stopRev)
+      if (copyFrom.getRevision() < stopRev || !context.canRead(copyFrom.getPath()))
         break;
 
-      final GitRevision prevRevision = branch.getRevisionInfo(copyFrom.getRevision());
+      final GitRevision prevRevision = context.getBranch().getRevisionInfo(copyFrom.getRevision());
       final GitFile file = prevRevision.getFile(copyFrom.getPath());
+
       if (file == null)
         throw new IllegalStateException();
       head = file;
     }
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkRead(context.getRepositoryPath(args.path));
   }
 
   interface FileHistoryWalker {

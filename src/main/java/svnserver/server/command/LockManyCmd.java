@@ -82,9 +82,8 @@ public final class LockManyCmd extends BaseCmd<LockManyCmd.Params> {
 
   @Override
   protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
-    for (PathRev pathRev : args.paths) {
+    for (PathRev pathRev : args.paths)
       context.checkWrite(context.getRepositoryPath(pathRev.path));
-    }
   }
 
   public static final class PathRev {

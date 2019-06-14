@@ -49,6 +49,11 @@ public final class ReplayCmd extends BaseCmd<ReplayCmd.Params> {
         .listEnd();
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    defaultPermissionCheck(context, args);
+  }
+
   static void replayRevision(@NotNull SessionContext context, int revision, int lowRevision, boolean sendDeltas) throws IOException, SVNException {
     final DeltaCmd.ReportPipeline pipeline = new DeltaCmd.ReportPipeline(
         new DeltaParams(

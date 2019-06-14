@@ -438,6 +438,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final int rev = args.rev.length > 0 ? args.rev[0] : -1;
       log.debug("Modify dir: {} (rev: {})", args.name, rev);
       final GitFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
+      context.checkRead(sourceDir.getFullPath());
       final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
       if ((rev >= 0) && (parent.head)) {
         checkUpToDate(sourceDir, rev, false);

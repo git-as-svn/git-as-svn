@@ -8,7 +8,6 @@
 package svnserver;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.auth.User;
 import svnserver.repository.VcsAccess;
 
@@ -16,13 +15,16 @@ import svnserver.repository.VcsAccess;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class VcsAccessEveryone implements VcsAccess {
+  @NotNull
+  static final VcsAccess instance = new VcsAccessEveryone();
+
   @Override
-  public boolean canRead(@NotNull User user, @Nullable String path) {
+  public boolean canRead(@NotNull User user, @NotNull String path) {
     return true;
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @Nullable String path) {
+  public boolean canWrite(@NotNull User user, @NotNull String path) {
     return canRead(user, path);
   }
 }

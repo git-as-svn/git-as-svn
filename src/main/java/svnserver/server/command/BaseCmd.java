@@ -64,7 +64,9 @@ public abstract class BaseCmd<T> {
    * @param context Session context.
    * @param args    Command arguments.
    */
-  protected void permissionCheck(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
+  protected abstract void permissionCheck(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException;
+
+  final void defaultPermissionCheck(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
     context.checkRead(context.getRepositoryPath(""));
   }
 

@@ -4,18 +4,15 @@ cacheConfig: !persistentCache
   path: ../build/git-as-svn.mapdb
 
 repositoryMapping: !listMapping
+  groups:
+    developers:
+      - test
   repositories:
     example:
-      acl:
-        groups:
-          - name: developers
-            users:
-              - test
-
-        access:
-          - path: /
-            allowed:
-              - '@developers'
+      access:
+        /:
+          '*': r
+          '@developers': rw
       repository:
         pusher: !pushEmbedded
           update: update

@@ -47,6 +47,11 @@ public final class RevPropListCmd extends BaseCmd<RevPropListCmd.Params> {
         .listEnd();
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    defaultPermissionCheck(context, args);
+  }
+
   public static class Params {
     private final int revision;
 

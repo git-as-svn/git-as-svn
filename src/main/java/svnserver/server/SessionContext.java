@@ -105,11 +105,17 @@ public final class SessionContext {
     return server.isCompressionEnabled() && capabilities.contains("svndiff1");
   }
 
-  public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
+  public void authenticate() throws IOException, SVNException {
     if (!user.isAnonymous())
       throw new IllegalStateException();
 
+    final boolean allowAnonymous = acl.canRead(user, getRepositoryPath(""));
     this.user = server.authenticate(this, allowAnonymous);
+  }
+
+  @NotNull
+  public String getRepositoryPath(@NotNull String localPath) {
+    return StringHelper.joinPath(parent, localPath);
   }
 
   @NotNull
@@ -147,11 +153,6 @@ public final class SessionContext {
     return getBranch().getRevisionInfo(rev).getFile(getRepositoryPath(path));
   }
 
-  @NotNull
-  public String getRepositoryPath(@NotNull String localPath) {
-    return StringHelper.joinPath(parent, localPath);
-  }
-
   @Nullable
   public GitFile getFile(int rev, @NotNull SVNURL url) throws SVNException, IOException {
     final String path = getRepositoryPath(url);
@@ -159,12 +160,16 @@ public final class SessionContext {
     return getBranch().getRevisionInfo(rev).getFile(path);
   }
 
-  public void checkRead(@Nullable String path) throws SVNException, IOException {
+  public void checkRead(@NotNull String path) throws SVNException, IOException {
     acl.checkRead(user, path);
   }
 
-  public void checkWrite(@Nullable String path) throws SVNException, IOException {
+  public void checkWrite(@NotNull String path) throws SVNException, IOException {
     acl.checkWrite(user, path);
+  }
+
+  public boolean canRead(@NotNull String path) throws IOException {
+    return acl.canRead(user, path);
   }
 
   public void skipUnsupportedCommand(@NotNull String cmd) throws IOException {
