@@ -7,6 +7,8 @@
  */
 package svnserver;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -15,8 +17,9 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class HashHelper {
+public final class HashHelper {
 
+  @NotNull
   public static MessageDigest md5() {
     try {
       return MessageDigest.getInstance("MD5");
@@ -25,6 +28,7 @@ public class HashHelper {
     }
   }
 
+  @NotNull
   public static MessageDigest sha256() {
     try {
       return MessageDigest.getInstance("SHA-256");
