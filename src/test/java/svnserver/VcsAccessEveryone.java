@@ -17,10 +17,12 @@ import svnserver.repository.VcsAccess;
  */
 public final class VcsAccessEveryone implements VcsAccess {
   @Override
-  public void checkRead(@NotNull User user, @Nullable String path) {
+  public boolean canRead(@NotNull User user, @Nullable String path) {
+    return true;
   }
 
   @Override
-  public void checkWrite(@NotNull User user, @Nullable String path) {
+  public boolean canWrite(@NotNull User user, @Nullable String path) {
+    return canRead(user, path);
   }
 }

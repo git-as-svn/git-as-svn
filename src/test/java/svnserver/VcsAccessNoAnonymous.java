@@ -9,9 +9,6 @@ package svnserver;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.repository.VcsAccess;
 
@@ -19,19 +16,16 @@ import svnserver.repository.VcsAccess;
  * Non-anonymous user.
  *
  * @author Artem V. Navrotskiy
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class VcsAccessNoAnonymous implements VcsAccess {
+public final class VcsAccessNoAnonymous implements VcsAccess {
   @Override
-  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException {
-    if (user.isAnonymous()) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous access not allowed"));
-    }
+  public boolean canRead(@NotNull User user, @Nullable String path) {
+    return !user.isAnonymous();
   }
 
   @Override
-  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
-    if (user.isAnonymous()) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous access not allowed"));
-    }
+  public boolean canWrite(@NotNull User user, @Nullable String path) {
+    return canRead(user, path);
   }
 }

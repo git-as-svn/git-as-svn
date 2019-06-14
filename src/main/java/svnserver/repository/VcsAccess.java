@@ -9,6 +9,8 @@ package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.Local;
@@ -20,15 +22,27 @@ import java.util.Map;
  * Repository access checker.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public interface VcsAccess extends Local {
+
+  default void checkRead(@NotNull User user, @Nullable String path) throws IOException, SVNException {
+    if (!canRead(user, path))
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
+  }
+
   /**
    * Check read access for user.
    *
    * @param user User.
    * @param path Checked path. If path is null - checks for at least some part of the repository.
    */
-  void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException;
+  boolean canRead(@NotNull User user, @Nullable String path) throws IOException;
+
+  default void checkWrite(@NotNull User user, @Nullable String path) throws IOException, SVNException {
+    if (!canWrite(user, path))
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
+  }
 
   /**
    * Check write access for user.
@@ -36,7 +50,7 @@ public interface VcsAccess extends Local {
    * @param user User.
    * @param path Checked path. If path is null - checks for at least some part of the repository.
    */
-  void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException;
+  boolean canWrite(@NotNull User user, @Nullable String path) throws IOException;
 
   default void updateEnvironment(@NotNull Map<String, String> environment) {
   }

@@ -14,9 +14,6 @@ import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlab.config.GitLabContext;
@@ -33,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  * Access control by GitLab server.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 final class GitLabAccess implements VcsAccess {
   @NotNull
@@ -64,41 +62,39 @@ final class GitLabAccess implements VcsAccess {
   }
 
   @Override
-  public void updateEnvironment(@NotNull Map<String, String> environment) {
-    environment.putAll(this.environment);
-  }
-
-  @Override
-  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException {
+  public boolean canRead(@NotNull User user, @Nullable String path) throws IOException {
     try {
       getProjectViaSudo(user);
+      return true;
     } catch (FileNotFoundException ignored) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this project"));
+      return false;
     }
   }
 
   @Override
-  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException {
-    if (user.isAnonymous()) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user has no project write access"));
-    }
+  public boolean canWrite(@NotNull User user, @Nullable String path) throws IOException {
+    if (user.isAnonymous())
+      return false;
+
     try {
       final GitlabProject project = getProjectViaSudo(user);
-      if (isProjectOwner(project, user)) {
-        return;
-      }
+      if (isProjectOwner(project, user))
+        return true;
 
       final GitlabPermission permissions = project.getPermissions();
-      if (permissions != null) {
-        if (hasAccess(permissions.getProjectAccess(), GitlabAccessLevel.Developer) ||
-            hasAccess(permissions.getProjectGroupAccess(), GitlabAccessLevel.Developer)) {
-          return;
-        }
-      }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to write this project"));
+      if (permissions == null)
+        return false;
+
+      return hasAccess(permissions.getProjectAccess(), GitlabAccessLevel.Developer)
+          || hasAccess(permissions.getProjectGroupAccess(), GitlabAccessLevel.Developer);
     } catch (FileNotFoundException ignored) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this project"));
+      return false;
     }
+  }
+
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> environment) {
+    environment.putAll(this.environment);
   }
 
   private boolean isProjectOwner(@NotNull GitlabProject project, @NotNull User user) {

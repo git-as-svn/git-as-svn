@@ -284,12 +284,7 @@ public final class SvnServer extends Thread {
   }
 
   private boolean hasAnonymousAuthenticator(RepositoryInfo repositoryInfo) throws IOException {
-    try {
-      repositoryInfo.getBranch().getRepository().getContext().sure(VcsAccess.class).checkRead(User.getAnonymous(), null);
-      return true;
-    } catch (SVNException e) {
-      return false;
-    }
+    return repositoryInfo.getBranch().getRepository().getContext().sure(VcsAccess.class).canRead(User.getAnonymous(), null);
   }
 
   private void sendAnnounce(@NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException {

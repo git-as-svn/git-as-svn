@@ -17,9 +17,6 @@ import io.gitea.model.Permission;
 import io.gitea.model.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitea.config.GiteaContext;
@@ -37,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 final class GiteaAccess implements VcsAccess {
   @NotNull
@@ -96,39 +94,30 @@ final class GiteaAccess implements VcsAccess {
   }
 
   @Override
-  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException, IOException {
+  public boolean canRead(@NotNull User user, @Nullable String path) throws IOException {
     try {
       Repository repository = getCachedProject(user);
-      if (repository.isPrivate()) {
-        Permission permission = repository.getPermissions();
-        if (!(permission.isAdmin() || permission.isPull())) {
-          throw new SVNException(
-              SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this repository"));
-        }
-      }
+      if (!repository.isPrivate())
+        return true;
+
+      final Permission permission = repository.getPermissions();
+      return permission.isAdmin() || permission.isPull();
     } catch (FileNotFoundException ignored) {
-      throw new SVNException(
-          SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this repository"));
+      return false;
     }
   }
 
   @Override
-  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException, IOException {
-    if (user.isAnonymous()) {
-      throw new SVNException(
-          SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user has no repository write access"));
-    }
+  public boolean canWrite(@NotNull User user, @Nullable String path) throws IOException {
+    if (user.isAnonymous())
+      return false;
+
     try {
       final Repository repository = getCachedProject(user);
       final Permission permission = repository.getPermissions();
-      if (permission.isAdmin() || permission.isPush()) {
-        return;
-      }
-      throw new SVNException(
-          SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to write this repository"));
+      return permission.isAdmin() || permission.isPush();
     } catch (FileNotFoundException ignored) {
-      throw new SVNException(
-          SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to read this repository"));
+      return false;
     }
   }
 
@@ -145,7 +134,7 @@ final class GiteaAccess implements VcsAccess {
 
       final String key = user.getUserName();
       if (key.isEmpty()) {
-        throw new IllegalStateException("Found user without identificator: " + user);
+        throw new IllegalStateException("Found user without identifier: " + user);
       }
       return cache.get(key);
     } catch (ExecutionException e) {

@@ -9,9 +9,6 @@ package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.AclAccessConfig;
 import svnserver.config.AclConfig;
 import svnserver.config.GroupConfig;
@@ -168,36 +165,6 @@ public final class ACL implements VcsAccess {
     }
   }
 
-  @Override
-  public void checkRead(@NotNull User user, @Nullable String path) throws SVNException {
-    if (user.isAnonymous() && !anonymousRead) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous access not allowed"));
-    }
-    if (path != null) {
-      String toCheck = path;
-
-      while (!toCheck.isEmpty()) {
-        if (doCheck(user, toCheck))
-          return;
-
-        toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
-      }
-
-      if (doCheck(user, "/"))
-        return;
-
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "You're not authorized to access " + path));
-    }
-  }
-
-  @Override
-  public void checkWrite(@NotNull User user, @Nullable String path) throws SVNException {
-    if (user.isAnonymous()) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Anonymous user have not write access"));
-    }
-    checkRead(user, path);
-  }
-
   private boolean doCheck(@NotNull User user, @NotNull String path) {
     for (AclEntry entry : path2acl.getOrDefault(path, Collections.emptySet()))
       if (entry.allows(user.getUserName()))
@@ -206,4 +173,28 @@ public final class ACL implements VcsAccess {
     return false;
   }
 
+  @Override
+  public boolean canWrite(@NotNull User user, @Nullable String path) {
+    return !user.isAnonymous() && canRead(user, path);
+  }
+
+  @Override
+  public boolean canRead(@NotNull User user, @Nullable String path) {
+    if (user.isAnonymous() && !anonymousRead)
+      return false;
+
+    if (path == null)
+      return true;
+
+    String toCheck = path;
+
+    while (!toCheck.isEmpty()) {
+      if (doCheck(user, toCheck))
+        return true;
+
+      toCheck = toCheck.substring(0, toCheck.lastIndexOf('/'));
+    }
+
+    return doCheck(user, "/");
+  }
 }
