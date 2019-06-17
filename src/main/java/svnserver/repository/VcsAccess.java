@@ -39,8 +39,11 @@ public interface VcsAccess extends Local {
   boolean canRead(@NotNull User user, @NotNull String path) throws IOException;
 
   default void checkWrite(@NotNull User user, @NotNull String path) throws IOException, SVNException {
+    if (user.isAnonymous())
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
+
     if (!canWrite(user, path))
-      throw new SVNException(SVNErrorMessage.create(user.isAnonymous() ? SVNErrorCode.RA_NOT_AUTHORIZED : SVNErrorCode.AUTHZ_UNWRITABLE));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHZ_UNWRITABLE));
   }
 
   /**

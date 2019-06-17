@@ -49,7 +49,7 @@ public final class CheckPermissionStep implements Step {
         if (!context.getUser().isAnonymous()) {
           throw e;
         }
-        context.authenticate();
+        context.authenticate(false);
         checker.check(context);
         nextStep.process(context);
         return;

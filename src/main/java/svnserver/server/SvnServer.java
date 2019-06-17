@@ -208,7 +208,7 @@ public final class SvnServer extends Thread {
       return;
 
     final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
-    context.authenticate();
+    context.authenticate(true);
     final GitBranch branch = context.getBranch();
     branch.updateRevisions();
     sendAnnounce(writer, repositoryInfo);

@@ -105,11 +105,11 @@ public final class SessionContext {
     return server.isCompressionEnabled() && capabilities.contains("svndiff1");
   }
 
-  public void authenticate() throws IOException, SVNException {
+  public void authenticate(boolean allowAnonymous) throws IOException, SVNException {
     if (!user.isAnonymous())
       throw new IllegalStateException();
 
-    final boolean allowAnonymous = acl.canRead(user, getRepositoryPath(""));
+    allowAnonymous &= acl.canRead(user, getRepositoryPath(""));
     this.user = server.authenticate(this, allowAnonymous);
   }
 

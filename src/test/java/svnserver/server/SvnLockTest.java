@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.StringHelper;
+import svnserver.SvnTestServer;
 import svnserver.tester.SvnTester;
 import svnserver.tester.SvnTesterDataProvider;
 import svnserver.tester.SvnTesterExternalListener;
@@ -323,6 +324,16 @@ public class SvnLockTest {
         editor.closeEdit();
       }
       Assert.assertNull(repo.getLock("/example.txt"));
+    }
+  }
+
+  @Test
+  public void lockWithDelayedAuth() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty(null, true)) {
+      final SVNRepository repo = server.openSvnRepository();
+      createFile(repo, "/example.txt", "", propsEolNative);
+      final SVNLock lock = lock(repo, "/example.txt", repo.getLatestRevision(), false, null);
+      Assert.assertNotNull(lock);
     }
   }
 
