@@ -37,8 +37,7 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
   @Override
   protected void processCommand(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
     final int revision = getRevisionOrLatest(args.rev, context);
-    final String fullPath = context.getRepositoryPath(args.path);
-    final GitFile file = context.getFile(revision, fullPath);
+    final GitFile file = context.getFile(revision, args.path);
 
     context.getWriter()
         .listBegin()
@@ -62,6 +61,11 @@ public final class StatCmd extends BaseCmd<StatCmd.Params> {
         .listEnd()
         .listEnd()
         .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkRead(context.getRepositoryPath(args.path));
   }
 
   public static class Params {

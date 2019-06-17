@@ -56,6 +56,11 @@ public final class GetLocksCmd extends BaseCmd<GetLocksCmd.Params> {
         .listEnd();
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkRead(context.getRepositoryPath(args.path));
+  }
+
   public static final class Params {
     @NotNull
     private final String path;

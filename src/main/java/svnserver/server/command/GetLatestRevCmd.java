@@ -8,6 +8,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
 
@@ -41,5 +42,10 @@ public final class GetLatestRevCmd extends BaseCmd<NoParams> {
         .number(context.getBranch().getLatestRevision().getId())
         .listEnd()
         .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull NoParams args) throws IOException, SVNException {
+    defaultPermissionCheck(context, args);
   }
 }

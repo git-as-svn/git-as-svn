@@ -16,7 +16,6 @@ import io.gitea.api.RepositoryApi;
 import io.gitea.model.Permission;
 import io.gitea.model.Repository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitea.config.GiteaContext;
@@ -94,7 +93,7 @@ final class GiteaAccess implements VcsAccess {
   }
 
   @Override
-  public boolean canRead(@NotNull User user, @Nullable String path) throws IOException {
+  public boolean canRead(@NotNull User user, @NotNull String path) throws IOException {
     try {
       Repository repository = getCachedProject(user);
       if (!repository.isPrivate())
@@ -108,7 +107,7 @@ final class GiteaAccess implements VcsAccess {
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @Nullable String path) throws IOException {
+  public boolean canWrite(@NotNull User user, @NotNull String path) throws IOException {
     if (user.isAnonymous())
       return false;
 

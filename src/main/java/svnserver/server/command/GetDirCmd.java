@@ -70,6 +70,9 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .separator();
     if (args.wantContents) {
       for (GitFile item : fileInfo.getEntries()) {
+        if (!context.canRead(item.getFullPath()))
+          continue;
+
         final GitRevision lastChange = item.getLastChange();
         writer
             .listBegin()
@@ -90,6 +93,11 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
         .listEnd();
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkRead(context.getRepositoryPath(args.path));
+  }
+
   public static class Params {
     @NotNull
     private final String path;
@@ -107,19 +115,19 @@ public final class GetDirCmd extends BaseCmd<GetDirCmd.Params> {
                   boolean wantProps,
                   boolean wantContents,
         /*
-                   * This is a broken-minded SVN feature we are unlikely to support ever.
-                   * <p>
-                   * Client can declare what fields it wants to be sent for child nodes (wantContents=true).
-                   * <p>
-                   * However,
-                   * <ul>
-                   * <li>fields are not optional, so we have to fill them with junk values</li>
-                   * <li>They're trivial to calculate.</li>
-                   * <li>For additional lulz, see the email thread on dev@svn, 2012-03-28, subject
-                   * "buildbot failure in ASF Buildbot on svn-slik-w2k3-x64-ra",
-                   * &lt;http://svn.haxx.se/dev/archive-2012-03/0655.shtml&gt;.</li>
-                   * </ul>
-                   */
+         * This is a broken-minded SVN feature we are unlikely to support ever.
+         * <p>
+         * Client can declare what fields it wants to be sent for child nodes (wantContents=true).
+         * <p>
+         * However,
+         * <ul>
+         * <li>fields are not optional, so we have to fill them with junk values</li>
+         * <li>They're trivial to calculate.</li>
+         * <li>For additional lulz, see the email thread on dev@svn, 2012-03-28, subject
+         * "buildbot failure in ASF Buildbot on svn-slik-w2k3-x64-ra",
+         * &lt;http://svn.haxx.se/dev/archive-2012-03/0655.shtml&gt;.</li>
+         * </ul>
+         */
                   @SuppressWarnings("UnusedParameters")
                   @NotNull String[] fields,
                   boolean wantIProps) {

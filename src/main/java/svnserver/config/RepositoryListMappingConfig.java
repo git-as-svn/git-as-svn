@@ -10,6 +10,7 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.StringHelper;
+import svnserver.auth.ACL;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
@@ -33,6 +34,8 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull
   private Map<String, Entry> repositories = new TreeMap<>();
+  @NotNull
+  private Map<String, String[]> groups = new HashMap<>();
 
   @NotNull
   @Override
@@ -47,7 +50,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
-      local.add(VcsAccess.class, entry.getValue().acl.create());
+      local.add(VcsAccess.class, new ACL(groups, entry.getValue().access));
       repos.put(StringHelper.normalizeDir(entry.getKey()), entry.getValue().repository.create(local));
     }
 
@@ -77,8 +80,11 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
   }
 
   public static class Entry {
+    /**
+     * This should be Map<String, Map<String, AccessMode>> but snakeyaml doesn't support that. See https://bitbucket.org/asomov/snakeyaml/issues/361/list-does-not-create-property-objects
+     */
     @NotNull
-    private AclConfig acl = new AclConfig();
+    private Map<String, Map<String, String>> access = new HashMap<>();
     @NotNull
     private GitRepositoryConfig repository;
   }

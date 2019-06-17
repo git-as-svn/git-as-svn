@@ -27,15 +27,6 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public final class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final SVNURL url;
-
-    public Params(@NotNull String url) throws SVNException {
-      this.url = SVNURL.parseURIEncoded(url);
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -52,5 +43,19 @@ public final class ReparentCmd extends BaseCmd<ReparentCmd.Params> {
         .listBegin()
         .listEnd()
         .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) {
+    // noop
+  }
+
+  public static class Params {
+    @NotNull
+    private final SVNURL url;
+
+    public Params(@NotNull String url) throws SVNException {
+      this.url = SVNURL.parseURIEncoded(url);
+    }
   }
 }

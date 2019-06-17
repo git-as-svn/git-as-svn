@@ -135,6 +135,12 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
         .listEnd();
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    for (String path : args.targetPath)
+      context.checkRead(context.getRepositoryPath(path));
+  }
+
   /**
    * TODO: This method is very similar to GetFileRevsCmd#walkFileHistory. Maybe they can be combined?
    */
@@ -212,8 +218,8 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
                   int limit,
                   boolean includeMergedRevisions,
         /*
-                   * Broken-minded SVN feature we're unlikely to support EVER.
-                   */
+         * Broken-minded SVN feature we're unlikely to support EVER.
+         */
                   @SuppressWarnings("UnusedParameters")
                   @NotNull String revpropsMode,
                   @SuppressWarnings("UnusedParameters")

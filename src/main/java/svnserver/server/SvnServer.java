@@ -27,7 +27,6 @@ import svnserver.parser.token.ListBeginToken;
 import svnserver.parser.token.ListEndToken;
 import svnserver.repository.RepositoryInfo;
 import svnserver.repository.RepositoryMapping;
-import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitBranch;
 import svnserver.server.command.*;
 import svnserver.server.msg.AuthReq;
@@ -72,7 +71,9 @@ public final class SvnServer extends Thread {
       SVNErrorCode.WC_NOT_UP_TO_DATE,
       SVNErrorCode.IO_WRITE_ERROR,
       SVNErrorCode.IO_PIPE_READ_ERROR,
-      SVNErrorCode.RA_SVN_REPOS_NOT_FOUND
+      SVNErrorCode.RA_SVN_REPOS_NOT_FOUND,
+      SVNErrorCode.AUTHZ_UNREADABLE,
+      SVNErrorCode.AUTHZ_UNWRITABLE
   )));
   @NotNull
   private static AtomicInteger threadNumber = new AtomicInteger(1);
@@ -207,7 +208,7 @@ public final class SvnServer extends Thread {
       return;
 
     final SessionContext context = new SessionContext(parser, writer, this, repositoryInfo, clientInfo);
-    context.authenticate(hasAnonymousAuthenticator(repositoryInfo));
+    context.authenticate();
     final GitBranch branch = context.getBranch();
     branch.updateRevisions();
     sendAnnounce(writer, repositoryInfo);
@@ -281,10 +282,6 @@ public final class SvnServer extends Thread {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.VERSION_MISMATCH, "Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)"));
     }
     return clientInfo;
-  }
-
-  private boolean hasAnonymousAuthenticator(RepositoryInfo repositoryInfo) throws IOException {
-    return repositoryInfo.getBranch().getRepository().getContext().sure(VcsAccess.class).canRead(User.getAnonymous(), null);
   }
 
   private void sendAnnounce(@NotNull SvnServerWriter writer, @NotNull RepositoryInfo repositoryInfo) throws IOException {

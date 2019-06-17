@@ -20,7 +20,7 @@ import java.util.Objects;
  */
 public final class User {
   @NotNull
-  private static final User anonymousUser = new User("anonymous", "anonymous", null, null, true);
+  private static final User anonymousUser = new User("$anonymous", "anonymous", null, null, true);
 
   private final boolean isAnonymous;
   @NotNull

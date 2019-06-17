@@ -292,8 +292,7 @@ public final class SvnTestServer implements SvnTester {
     @Override
     public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
       final LocalContext local = new LocalContext(context, "test");
-      final AclConfig aclConfig = new AclConfig(anonymousRead);
-      local.add(VcsAccess.class, aclConfig.create());
+      local.add(VcsAccess.class, anonymousRead ? VcsAccessEveryone.instance : VcsAccessNoAnonymous.instance);
 
       final GitRepository repository = GitRepositoryConfig.createRepository(
           local,

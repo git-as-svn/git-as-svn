@@ -104,6 +104,11 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
     pipeline.reportCommand(context);
   }
 
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull DeltaParams args) throws IOException, SVNException {
+    defaultPermissionCheck(context, args);
+  }
+
   public static class DeleteParams {
     @NotNull
     private final String path;
@@ -398,55 +403,34 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return "t" + ++lastTokenId;
     }
 
-    private void updateDir(@NotNull SessionContext context,
-                           @NotNull String wcPath,
-                           @Nullable GitFile prevFile,
-                           @NotNull GitFile newFile,
-                           @NotNull String parentTokenId,
-                           boolean rootDir,
-                           @NotNull Depth wcDepth,
-                           @NotNull Depth requestedDepth) throws IOException, SVNException {
-      final String tokenId;
-      final HeaderEntry header;
-      GitFile oldFile;
-      try {
-        newFile.getEntries();
-      } catch (SvnForbiddenException ignored) {
-        getWriter(context)
-            .listBegin()
-            .word("absent-dir")
-            .listBegin()
-            .string(newFile.getFileName())
-            .string(parentTokenId)
-            .listEnd()
-            .listEnd();
+    private void updateEntry(@NotNull SessionContext context,
+                             @NotNull String wcPath,
+                             @Nullable GitFile oldFile,
+                             @Nullable GitFile newFile,
+                             @NotNull String parentTokenId,
+                             boolean rootDir,
+                             @NotNull Depth wcDepth,
+                             @NotNull Depth requestedDepth) throws IOException, SVNException {
+      if (oldFile != null)
+        if (newFile == null || !oldFile.getKind().equals(newFile.getKind()))
+          removeEntry(context, wcPath, oldFile.getLastChange().getId(), parentTokenId);
+
+      if (newFile == null)
+        return;
+
+      if (!context.canRead(newFile.getFullPath())) {
+        sendAbsent(context, newFile, parentTokenId);
         return;
       }
-      if (rootDir && wcPath.isEmpty()) {
-        tokenId = parentTokenId;
-        oldFile = prevFile;
-        header = null;
-      } else {
-        tokenId = createTokenId();
-        header = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId, writer -> writer
-            .listBegin()
-            .word("close-dir")
-            .listBegin().string(tokenId).listEnd()
-            .listEnd());
-        oldFile = header.file;
-      }
-      if (getStartEmpty(wcPath)) {
-        oldFile = null;
-      }
 
-      if (rootDir) {
-        sendRevProps(getWriter(context), newFile, "dir", tokenId);
-      }
-      updateProps(context, "dir", tokenId, oldFile, newFile);
-      updateDirEntries(context, wcPath, oldFile, newFile, tokenId, wcDepth, requestedDepth);
-
-      if (header != null) {
-        header.close();
+      if (newFile.isDirectory())
+        updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir, wcDepth, requestedDepth);
+      else {
+        try {
+          updateFile(context, wcPath, oldFile, newFile, parentTokenId);
+        } catch (SvnForbiddenException ignored) {
+          sendAbsent(context, newFile, parentTokenId);
+        }
       }
     }
 
@@ -629,36 +613,59 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
       return context.getFile(pathParams.rev, wcPath);
     }
 
-    private void updateEntry(@NotNull SessionContext context,
-                             @NotNull String wcPath,
-                             @Nullable GitFile oldFile,
-                             @Nullable GitFile newFile,
-                             @NotNull String parentTokenId,
-                             boolean rootDir,
-                             @NotNull Depth wcDepth,
-                             @NotNull Depth requestedDepth) throws IOException, SVNException {
-      if (oldFile != null)
-        if (newFile == null || !oldFile.getKind().equals(newFile.getKind()))
-          removeEntry(context, wcPath, oldFile.getLastChange().getId(), parentTokenId);
+    private void sendAbsent(@NotNull SessionContext context, @NotNull GitFile newFile, @NotNull String parentTokenId) throws IOException, SVNException {
+      getWriter(context)
+          .listBegin()
+          .word(newFile.isDirectory() ? "absent-dir" : "absent-file")
+          .listBegin()
+          .string(newFile.getFileName())
+          .string(parentTokenId)
+          .listEnd()
+          .listEnd();
+    }
 
-      if (newFile == null)
+    private void updateDir(@NotNull SessionContext context,
+                           @NotNull String wcPath,
+                           @Nullable GitFile prevFile,
+                           @NotNull GitFile newFile,
+                           @NotNull String parentTokenId,
+                           boolean rootDir,
+                           @NotNull Depth wcDepth,
+                           @NotNull Depth requestedDepth) throws IOException, SVNException {
+      final String tokenId;
+      final HeaderEntry header;
+      GitFile oldFile;
+      try {
+        newFile.getEntries();
+      } catch (SvnForbiddenException ignored) {
+        sendAbsent(context, newFile, parentTokenId);
         return;
+      }
+      if (rootDir && wcPath.isEmpty()) {
+        tokenId = parentTokenId;
+        oldFile = prevFile;
+        header = null;
+      } else {
+        tokenId = createTokenId();
+        header = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId, writer -> writer
+            .listBegin()
+            .word("close-dir")
+            .listBegin().string(tokenId).listEnd()
+            .listEnd());
+        oldFile = header.file;
+      }
+      if (getStartEmpty(wcPath)) {
+        oldFile = null;
+      }
 
-      if (newFile.isDirectory())
-        updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir, wcDepth, requestedDepth);
-      else {
-        try {
-          updateFile(context, wcPath, oldFile, newFile, parentTokenId);
-        } catch (SvnForbiddenException ignored) {
-          getWriter(context)
-              .listBegin()
-              .word("absent-file")
-              .listBegin()
-              .string(newFile.getFileName())
-              .string(parentTokenId)
-              .listEnd()
-              .listEnd();
-        }
+      if (rootDir) {
+        sendRevProps(getWriter(context), newFile, "dir", tokenId);
+      }
+      updateProps(context, "dir", tokenId, oldFile, newFile);
+      updateDirEntries(context, wcPath, oldFile, newFile, tokenId, wcDepth, requestedDepth);
+
+      if (header != null) {
+        header.close();
       }
     }
 

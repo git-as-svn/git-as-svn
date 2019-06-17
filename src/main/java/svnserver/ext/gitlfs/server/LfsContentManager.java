@@ -118,10 +118,9 @@ public final class LfsContentManager implements ContentManager {
   private User checkAccess(@NotNull HttpServletRequest request, @NotNull Checker checker) throws IOException, UnauthorizedError, ForbiddenError {
     final User user = getAuthInfo(request);
     try {
-      checker.check(user, null);
+      checker.check(user, "/");
     } catch (SVNException ignored) {
       if (user.isAnonymous()) {
-        final WebServer server1 = context.getShared().sure(WebServer.class);
         throw new UnauthorizedError("Basic realm=\"" + context.getShared().getRealm() + "\"");
       } else {
         throw new ForbiddenError();
@@ -178,7 +177,6 @@ public final class LfsContentManager implements ContentManager {
 
   @FunctionalInterface
   public interface Checker {
-    void check(@NotNull User user, @Nullable String path) throws SVNException, IOException;
+    void check(@NotNull User user, @NotNull String path) throws SVNException, IOException;
   }
-
 }

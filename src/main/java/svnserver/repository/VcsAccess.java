@@ -8,7 +8,6 @@
 package svnserver.repository;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -26,9 +25,9 @@ import java.util.Map;
  */
 public interface VcsAccess extends Local {
 
-  default void checkRead(@NotNull User user, @Nullable String path) throws IOException, SVNException {
+  default void checkRead(@NotNull User user, @NotNull String path) throws IOException, SVNException {
     if (!canRead(user, path))
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
+      throw new SVNException(SVNErrorMessage.create(user.isAnonymous() ? SVNErrorCode.RA_NOT_AUTHORIZED : SVNErrorCode.AUTHZ_UNREADABLE));
   }
 
   /**
@@ -37,11 +36,11 @@ public interface VcsAccess extends Local {
    * @param user User.
    * @param path Checked path. If path is null - checks for at least some part of the repository.
    */
-  boolean canRead(@NotNull User user, @Nullable String path) throws IOException;
+  boolean canRead(@NotNull User user, @NotNull String path) throws IOException;
 
-  default void checkWrite(@NotNull User user, @Nullable String path) throws IOException, SVNException {
+  default void checkWrite(@NotNull User user, @NotNull String path) throws IOException, SVNException {
     if (!canWrite(user, path))
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
+      throw new SVNException(SVNErrorMessage.create(user.isAnonymous() ? SVNErrorCode.RA_NOT_AUTHORIZED : SVNErrorCode.AUTHZ_UNWRITABLE));
   }
 
   /**
@@ -50,7 +49,7 @@ public interface VcsAccess extends Local {
    * @param user User.
    * @param path Checked path. If path is null - checks for at least some part of the repository.
    */
-  boolean canWrite(@NotNull User user, @Nullable String path) throws IOException;
+  boolean canWrite(@NotNull User user, @NotNull String path) throws IOException;
 
   default void updateEnvironment(@NotNull Map<String, String> environment) {
   }

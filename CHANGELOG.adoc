@@ -1,5 +1,9 @@
 = Changelog
 
+Unreleased::
+
+ * https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#authz[Experimental path-based authorization]
+
 1.13.0::
 
  * Changed LDAP bind configuration. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#ldap[LDAP documentation].

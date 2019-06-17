@@ -19,18 +19,12 @@ import java.io.IOException;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class LambdaCmd<T> extends BaseCmd<T> {
-  @FunctionalInterface
-  public interface Callback<T> {
-    void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException;
-  }
-
   @NotNull
   private final Class<T> type;
-
   @NotNull
   private final Callback<T> callback;
 
-  public LambdaCmd(@NotNull Class<T> type, @NotNull Callback<T> callback) {
+  LambdaCmd(@NotNull Class<T> type, @NotNull Callback<T> callback) {
     this.type = type;
     this.callback = callback;
   }
@@ -47,6 +41,16 @@ public final class LambdaCmd<T> extends BaseCmd<T> {
   }
 
   @Override
-  protected void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
+  protected void processCommand(@NotNull SessionContext context, @NotNull T args) {
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException {
+    defaultPermissionCheck(context, args);
+  }
+
+  @FunctionalInterface
+  public interface Callback<T> {
+    void processCommand(@NotNull SessionContext context, @NotNull T args) throws IOException, SVNException;
   }
 }

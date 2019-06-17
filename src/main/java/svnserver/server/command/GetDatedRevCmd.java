@@ -8,6 +8,7 @@
 package svnserver.server.command;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNException;
 import ru.bozaro.gitlfs.common.JsonHelper;
 import svnserver.parser.SvnServerWriter;
 import svnserver.server.SessionContext;
@@ -50,6 +51,11 @@ public final class GetDatedRevCmd extends BaseCmd<GetDatedRevCmd.Params> {
         .number(context.getBranch().getRevisionByDate(dateTime.getTime()).getId())
         .listEnd()
         .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    defaultPermissionCheck(context, args);
   }
 
   public final static class Params {

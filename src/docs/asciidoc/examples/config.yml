@@ -31,20 +31,20 @@ cacheConfig: !persistentCache
   path: /var/cache/git-as-svn/git-as-svn.mapdb
 
 repositoryMapping: !listMapping
+  groups:
+    developers:
+      - test
   repositories:
     example:
-      acl:
-        groups:
-          - name: developers
-            users:
-              - test
-
-        access:
-          - path: /
-            # Use 'asterisk' (*) to allow access for all users
-            # use 'at' (@) for groups
-            allowed:
-              - '@developers'
+      access:
+        /:
+          # Asterisk (*) means all users
+          # $authenticated means authenticated users
+          # $anonymous means anonymous users
+          #
+          # Supported modes: r/rw/none. Empty string also means none
+          '*': r
+          '@developers': rw
       repository:
         # Allowed pushers:
         # !pushEmbedded - use embedded push (fast, no dependencies)

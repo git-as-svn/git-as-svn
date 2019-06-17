@@ -29,21 +29,6 @@ import java.io.IOException;
  * @author a.navrotskiy
  */
 public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd.Params> {
-  public static class Params {
-    @NotNull
-    private final String path;
-    private final int[] pegRev;
-    private final int[] startRev;
-    private final int[] endRev;
-
-    public Params(@NotNull String path, int[] pegRev, int[] startRev, int[] endRev) {
-      this.path = path;
-      this.pegRev = pegRev;
-      this.startRev = startRev;
-      this.endRev = endRev;
-    }
-  }
-
   @NotNull
   @Override
   public Class<Params> getArguments() {
@@ -86,12 +71,11 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
             .listEnd();
       }
       final VcsCopyFrom copyFrom = context.getBranch().getRevisionInfo(minRev).getCopyFrom(fullPath);
-      if (copyFrom != null) {
-        maxRev = copyFrom.getRevision();
-        fullPath = copyFrom.getPath();
-      } else {
+      if (copyFrom == null || !context.canRead(copyFrom.getPath()))
         break;
-      }
+
+      maxRev = copyFrom.getRevision();
+      fullPath = copyFrom.getPath();
     }
     writer
         .word("done");
@@ -101,5 +85,25 @@ public final class GetLocationSegmentsCmd extends BaseCmd<GetLocationSegmentsCmd
         .listBegin()
         .listEnd()
         .listEnd();
+  }
+
+  @Override
+  protected void permissionCheck(@NotNull SessionContext context, @NotNull Params args) throws IOException, SVNException {
+    context.checkRead(context.getRepositoryPath(args.path));
+  }
+
+  public static class Params {
+    @NotNull
+    private final String path;
+    private final int[] pegRev;
+    private final int[] startRev;
+    private final int[] endRev;
+
+    public Params(@NotNull String path, int[] pegRev, int[] startRev, int[] endRev) {
+      this.path = path;
+      this.pegRev = pegRev;
+      this.startRev = startRev;
+      this.endRev = endRev;
+    }
   }
 }
