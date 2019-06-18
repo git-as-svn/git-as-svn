@@ -141,7 +141,25 @@ Rather, the _combination_ of all matching permissions is granted. In the prior e
 Combined with the `jane = r` rule, this still gives Jane read/write access. Permissions for group members can only be extended beyond the permissions the group already has.
 Restricting users who are part of a group to less than their group's permissions is impossible.
 
-NOTE: Unlike Subversion, git-as-svn does NOT support groups containing other groups yet.
+Groups can also be defined to contain other groups:
+
+.git-as-svn.conf
+[source,yaml]
+----
+repositoryMapping: !listMapping
+  groups:
+    calc-developers:
+      - harry
+      - sally
+      - joe
+    paint-developers:
+      - frank
+      - sally
+      - jane
+    everyone:
+      - '@calc-developers'
+      - '@paint-developers'
+----
 
 == Advanced Access Control Features
 

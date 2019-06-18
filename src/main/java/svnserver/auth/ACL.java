@@ -8,6 +8,7 @@
 package svnserver.auth;
 
 import org.eclipse.collections.api.block.function.primitive.BooleanFunction;
+import org.eclipse.jetty.util.TopologicalSort;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.StringHelper;
@@ -42,24 +43,18 @@ public final class ACL implements VcsAccess {
   private final NavigableMap<String, Map<ACLEntry, AccessMode>> path2acl = new TreeMap<>();
 
   public ACL(@NotNull Map<String, String[]> groups, @NotNull Map<String, Map<String, String>> access) {
-    for (final Map.Entry<String, String[]> group : groups.entrySet()) {
-      final String name = group.getKey();
+    final Map<String, Set<String>> group2Users = expandGroups(groups);
 
-      if (name.isEmpty())
-        throw new IllegalArgumentException("Group with empty name is not a good idea");
-
-      if (group.getValue().length == 0)
-        throw new IllegalArgumentException("Group is empty: " + name);
-
-      for (String member : group.getValue())
+    for (Map.Entry<String, Set<String>> group : group2Users.entrySet()) {
+      for (String member : group.getValue()) {
+        final String groupName = group.getKey();
         if (member.equals(AnonymousMarker))
-          anonymousGroups.add(name);
+          anonymousGroups.add(groupName);
         else if (member.equals(AuthenticatedMarker))
-          authenticatedGroups.add(name);
-        else if (member.startsWith(GroupPrefix))
-          throw new IllegalArgumentException("Groups of groups are not supported yet: " + name);
+          authenticatedGroups.add(groupName);
         else
-          user2groups.computeIfAbsent(member, s -> new HashSet<>()).add(name);
+          user2groups.computeIfAbsent(member, s -> new HashSet<>()).add(groupName);
+      }
     }
 
     for (Map.Entry<String, Map<String, String>> pathEntry : access.entrySet()) {
@@ -81,6 +76,39 @@ public final class ACL implements VcsAccess {
     }
   }
 
+  @NotNull
+  private static Map<String, Set<String>> expandGroups(@NotNull Map<String, String[]> groups) {
+    final String[] sorted = groups.keySet().toArray(new String[0]);
+
+    final TopologicalSort<String> topoSort = new TopologicalSort<>();
+
+    for (Map.Entry<String, String[]> group : groups.entrySet())
+      for (String member : group.getValue())
+        if (member.startsWith(GroupPrefix))
+          topoSort.addDependency(group.getKey(), member.substring(GroupPrefix.length()));
+
+    // This will throw exception in case of cycles, this is what we want
+    topoSort.sort(sorted);
+
+    final Map<String, Set<String>> group2Users = new HashMap<>();
+    for (String group : sorted) {
+      for (String member : groups.get(group)) {
+        final Set<String> expandedMembers = group2Users.computeIfAbsent(group, s -> new HashSet<>());
+        if (member.startsWith(GroupPrefix)) {
+          final String subgroup = member.substring(GroupPrefix.length());
+          final Set<String> subgroupMembers = group2Users.get(subgroup);
+          if (subgroupMembers == null)
+            throw new IllegalStateException(String.format("Group %s references nonexistent group %s", group, subgroup));
+
+          expandedMembers.addAll(subgroupMembers);
+        } else
+          expandedMembers.add(member);
+      }
+    }
+
+    return group2Users;
+  }
+
   private void addAclEntry(@NotNull String path, @NotNull String entryString, @NotNull AccessMode accessMode, @NotNull Set<String> allGroups) {
     final ACLEntry entry;
     if (entryString.equals(EveryoneMarker))
@@ -90,7 +118,7 @@ public final class ACL implements VcsAccess {
     else if (entryString.equals(AuthenticatedMarker))
       entry = AuthenticatedACLEntry.instance;
     else if (entryString.startsWith(GroupPrefix)) {
-      final String group = entryString.substring(1);
+      final String group = entryString.substring(GroupPrefix.length());
 
       if (!allGroups.contains(group))
         throw new IllegalArgumentException("ACL entry " + path + " uses unknown group: " + group);
