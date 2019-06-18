@@ -9,7 +9,7 @@ git-as-svn supports the following command-line parameters:
 
 `-t`:: test the configuration file: git-as-svn checks the configuration for correct syntax.
 
-NOTE: This mode doesn't perform full git-as-svn initialization, so it is still possible that git-as-svn will fail to startup due to invalid configuration
+NOTE: `-t` doesn't perform full git-as-svn initialization, so it is still possible that git-as-svn will fail to startup due to invalid configuration
 even though `-t` passed successfully.
 
 `-T`:: same as `-t`, but additionally dump configuration files to standard output.
