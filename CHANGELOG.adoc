@@ -1,6 +1,6 @@
 = Changelog
 
-Unreleased::
+1.14.0::
 
  * https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#authz[Experimental path-based authorization]
  * `-t` and `-T` command-line switches. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#commandline[Command-line parameters documentation]
