@@ -20,6 +20,8 @@ include::about.adoc[leveloffset=+1]
 
 include::install.adoc[leveloffset=+1]
 
+include::commandline.adoc[leveloffset=+1]
+
 include::gitlab.adoc[leveloffset=+1]
 
 include::gitea.adoc[leveloffset=+1]

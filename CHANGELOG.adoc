@@ -3,6 +3,8 @@
 Unreleased::
 
  * https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#authz[Experimental path-based authorization]
+ * `-t` and `-T` command-line switches. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#commandline[Command-line parameters documentation]
+ * `-s`/`--show-config` command-line switches removed. Use `-T` instead.
 
 1.13.0::
 

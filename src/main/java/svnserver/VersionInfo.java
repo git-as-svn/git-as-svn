@@ -20,10 +20,9 @@ import java.util.Properties;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class VersionInfo {
+public final class VersionInfo {
   private static VersionInfo s_instance = new VersionInfo();
-  @NotNull
-  private final String version;
+
   @Nullable
   private final String revision;
   @Nullable
@@ -36,7 +35,6 @@ public class VersionInfo {
       }
       final Properties props = new Properties();
       props.load(stream);
-      version = getProperty(props, "version", "unknown");
       revision = getProperty(props, "revision", null);
       tag = getProperty(props, "tag", null);
     } catch (IOException e) {
@@ -45,37 +43,19 @@ public class VersionInfo {
   }
 
   @NotNull
-  public static String getVersion() {
-    return s_instance.version;
-  }
-
-  @Nullable
-  public static String getRevision() {
-    return s_instance.revision;
-  }
-
-  @Nullable
-  public static String getTag() {
-    return s_instance.tag;
-  }
-
-  @NotNull
   public static String getVersionInfo() {
-    final String revision = getRevision();
-    if (revision == null) {
+    if (s_instance.revision == null)
       return "none version info";
-    }
-    final String tag = getTag();
-    if (tag == null) {
-      return revision;
-    } else {
-      return tag + ", " + revision;
-    }
+
+    if (s_instance.tag == null)
+      return s_instance.revision;
+
+    return s_instance.tag + ", " + s_instance.revision;
   }
 
   @Contract("_, _, null -> _; _, _, !null -> !null")
   private static String getProperty(@NotNull Properties props, @NotNull String name, @Nullable String defaultValue) {
     final String value = props.getProperty(name);
-    return (value != null && !value.startsWith("${")) ? value : defaultValue;
+    return value != null && !value.startsWith("${") ? value : defaultValue;
   }
 }
