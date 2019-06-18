@@ -64,7 +64,7 @@ repositoryMapping: !listMapping
           harry: none
 ----
 
-In this example, Harry has read/write access to the entire directory, but s absolutely no access at all to the `secret` subdirectory within it.
+In this example, Harry has read/write access to the entire directory, but has absolutely no access at all to the `secret` subdirectory within it.
 
 NOTE: The thing to remember is that the most specific path always matches first. The server tries to match the path itself, and then the parent of the path,
 then the parent of that, and so on. The net effect is that mentioning a specific path in the access file will always override any permissions inherited
