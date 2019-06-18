@@ -5,7 +5,7 @@ NOTE: This feature is currently only supported for `repositoryMapping: !listMapp
 
 git-as-svn supports path-based authorization that allows granting (or denying) permissions to users, very similar to
 Subversion http://svnbook.red-bean.com/nightly/en/svn.serverconfig.pathbasedauthz.html[path-based authorization]
-feature. Typically this is done over the entire repository: a user can read the repository (or not), and she can write to the repository (or not).
+feature. Typically this is done over the entire repository: a user can read the repository (or not), and they can write to the repository (or not).
 
 It's also possible, however, to define finer-grained access rules. One set of users may have permission to write to a certain directory
 in the repository, but not others; another directory might not even be readable by all but a few special people.
@@ -61,12 +61,10 @@ repositoryMapping: !listMapping
           harry: rw
           sally: r
         /path/to/directory/secret:
-          harry: # <1>
-          sally: none
+          harry: none
 ----
-<1> Empty string is valid and treated as `none` and means "no access"
 
-In this example, Harry and Sally have read/write access to the entire directory, but have absolutely no access at all to the `secret` subdirectory within it.
+In this example, Harry has read/write access to the entire directory, but s absolutely no access at all to the `secret` subdirectory within it.
 
 NOTE: The thing to remember is that the most specific path always matches first. The server tries to match the path itself, and then the parent of the path,
 then the parent of that, and so on. The net effect is that mentioning a specific path in the access file will always override any permissions inherited
@@ -131,7 +129,6 @@ repositoryMapping: !listMapping
       access:
         /:
           '@calc-developers': rw
-  repositories:
     paint:
       access:
         /:
