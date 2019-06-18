@@ -20,6 +20,8 @@ without thinking about what they actually use Git-repository.
 ** svn cat, ls
 ** svn lock, unlock
 ** svnsync
+* <<authz.adoc#authz,Path-based authorization>>
+* <<props.adoc#props,Transparent mapping of .gitattributes/.gitignore to Subversion properties>>
 * <<lfs.adoc#lfs,Git LFS>>, including locks
 * Git submodules footnote:[Git submodule data available in readonly mode.]
 * <<ldap.adoc#ldap,LDAP user authentication>>
