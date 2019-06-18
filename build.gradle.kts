@@ -186,7 +186,6 @@ tasks.processResources {
         include("**/VersionInfo.properties")
 
         expand(mapOf(
-                "version" to project.version,
                 "revision" to Grgit.open(mapOf("dir" to projectDir)).head().id,
                 "tag" to (System.getenv("TRAVIS_TAG") ?: "")
         ))

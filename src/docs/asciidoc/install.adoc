@@ -107,7 +107,7 @@ https://github.com/bozaro/git-as-svn/releases/latest;
 directory and run the command:
 +
 ----
-bin/git-as-svn --config doc/examples/config.yml --show-config
+bin/git-as-svn -c doc/examples/config.yml
 ----
 
 This will start git-as-svn server with following configuration:
