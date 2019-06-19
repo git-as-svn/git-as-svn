@@ -1,5 +1,9 @@
 = Changelog
 
+Unreleased::
+
+ * Now groups can be defined to contain other groups for path-based authorization
+
 1.14.0::
 
  * https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#authz[Experimental path-based authorization]

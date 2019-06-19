@@ -35,6 +35,45 @@ public final class ACLTest {
   }
 
   @Test
+  public void groupOfGroup() {
+    final Map<String, String[]> groups = ImmutableMap.<String, String[]>builder()
+        .put("groupOfGroup", new String[]{"@group"})
+        .put("group", new String[]{Bob.getUserName()})
+        .build();
+    final ACL acl = new ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroup", "r")));
+
+    Assert.assertTrue(acl.canRead(Bob, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+  }
+
+  @Test
+  public void groupOfGroupOfGroup() {
+    final Map<String, String[]> groups = ImmutableMap.<String, String[]>builder()
+        .put("groupOfGroupOfGroup", new String[]{"@groupOfGroup"})
+        .put("groupOfGroup", new String[]{"@group"})
+        .put("group", new String[]{Bob.getUserName()})
+        .build();
+    final ACL acl = new ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroupOfGroup", "r")));
+
+    Assert.assertTrue(acl.canRead(Bob, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "cyclic at groupA")
+  public void groupOfGroupCycle() {
+    final Map<String, String[]> groups = ImmutableMap.<String, String[]>builder()
+        .put("groupA", new String[]{"@groupB"})
+        .put("groupB", new String[]{"@groupA"})
+        .build();
+    new ACL(groups, Collections.singletonMap("/", Collections.emptyMap()));
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Group groupA references nonexistent group groupB")
+  public void groupOfGroupNonexistent() {
+    new ACL(Collections.singletonMap("groupA", new String[]{"@groupB"}), Collections.singletonMap("/", Collections.emptyMap()));
+  }
+
+  @Test
   public void anonymousMarker() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(ACL.AnonymousMarker, "r")));
 
