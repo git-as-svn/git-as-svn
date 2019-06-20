@@ -137,6 +137,12 @@ val compileDocs by tasks.registering(Copy::class) {
     into(file("$buildDir/doc"))
 }
 
+asciidoctorj {
+    modules {
+        diagram.use()
+    }
+}
+
 tasks.asciidoctor {
     configure()
 

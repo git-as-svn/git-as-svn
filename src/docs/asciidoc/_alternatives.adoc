@@ -4,13 +4,56 @@
 :filename: _alternatives.adoc
 include::_feedback.adoc[]
 
-image:images/git-as-svn.png[image]
+[ditaa]
+----
++--------------=-------------+
+|                      Server|
+|   +-----+        +-----+   |
+|   |{s}  |        |{s}  |   |
+|   | Git |        | LFS |   |
+|   |     |        |     |   |
+|   +-----+        +-----+   |
+|                            |
+|      ^              ^      |
+|      |              |      |
+|      \--+---------+-/      |
+|         |         |        |
+|         |         |        |
+| +-------+-------+ |        |
+| | git - as - svn| |        |
+| +-------+-------+ |        |
++---------|----=----|--------+
+          |         |
+          v         v
+        +---+     +---+
+        |svn|     |Git|
+        +---+     +---+
+----
 
 The problem of combining Git and Subversion work style with a version control system can be solved in different ways.
 
 == GitHub Subversion support
 
-image:images/github.png[image]
+[ditaa]
+----
++-------------=-----------+
+|                   GitHub|
+|   +-------+   +-----+   |
+|   |{s}    |   |{s}  |   |
+:   |  Git  |   | LFS |   :
+|   |       |   |     |   |
+|   +-------+   +-----+   |
+|                         |
+|    ^  ^  ^       ^      |
+|    |  |  |       |      |
++----|-=|-=|---=---|------+
+  /--/  |  \---+---/
+  |     |      |
+  v     v      v
++---+ +---+  +---+
+|svn| |svn|  |Git|
++---+ +---+  +---+
+----
 
 Website: https://help.github.com/en/articles/support-for-subversion-clients
 
@@ -24,16 +67,49 @@ This can be a problem when restoring repositories after emergency situations.
 
 == SubGit
 
-image:images/subgit.png[image]
+[ditaa]
+----
+   +-----+        +-----+    +-------+
+   |{s}  |<-------|{s}  |    |{s}    |
+   | svn | SubGit | Git |    | LFS???|
+   |     |------->|     |    |       |
+   +-----+        +-----+    +-------+
+
+     ^ ^            ^ ^
+     | |            | |
+   /-/ \-\        /-/ \-\
+   |     |        |     |
+   v     v        v     v
+ +---+  +---+   +---+  +---+
+ |svn|  |svn|   |Git|  |Git|
+ +---+  +---+   +---+  +---+
+----
 
 Website: https://subgit.com
 
 Quite an interesting implementation which supports master-master replication with Git and Subversion repositories.
 Thereby providing synchronization of repositories is not clear.
 
-== Subversion repository and git svn
+== Subversion repository and git-svn
 
-image:images/git-svn.png[image]
+[ditaa]
+----
+         +---------+
+         |{s}      |
+         |   svn   |
+         |         |
+         +---------+
+
+          ^   ^   ^
+          |   |   |
+  /-------/   :   :
+  |           |   |
+  v           v | v
++---+ +--------+|+--------+
+|svn| |git- svn|||git- svn|
++---+ +--------+|+--------+
+                |
+----
 
 This method allows you to use Git with Subversion repository, but using a shared Git repository between multiple developers very difficult.
 
