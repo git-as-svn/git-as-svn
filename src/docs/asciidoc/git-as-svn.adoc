@@ -9,37 +9,35 @@ ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,
 :sectlinks:
 :sectanchors:
 :icons: font
+// refs
+:url-issues: http://github.com/bozaro/git-as-svn/issues
 
-[NOTE]
-====
-If you find errors or omissions in this document, please don't hesitate to
-http://github.com/bozaro/git-as-svn/issues[submit an issue or open a pull request] with a fix.
-====
+NOTE:: If you find errors or omissions in this document, please don't hesitate to {url-issues}[submit an issue or open a pull request] with a fix.
 
-include::about.adoc[leveloffset=+1]
+include::_about.adoc[leveloffset=+1]
 
-include::install.adoc[leveloffset=+1]
+include::_install.adoc[leveloffset=+1]
 
-include::commandline.adoc[leveloffset=+1]
+include::_commandline.adoc[leveloffset=+1]
 
-include::gitlab.adoc[leveloffset=+1]
+include::_gitlab.adoc[leveloffset=+1]
 
-include::gitea.adoc[leveloffset=+1]
+include::_gitea.adoc[leveloffset=+1]
 
-include::lfs.adoc[leveloffset=+1]
+include::_lfs.adoc[leveloffset=+1]
 
-include::ldap.adoc[leveloffset=+1]
+include::_ldap.adoc[leveloffset=+1]
 
-include::logging.adoc[leveloffset=+1]
+include::_logging.adoc[leveloffset=+1]
 
-include::authz.adoc[leveloffset=+1]
+include::_authz.adoc[leveloffset=+1]
 
-include::props.adoc[leveloffset=+1]
+include::_props.adoc[leveloffset=+1]
 
-include::alternatives.adoc[leveloffset=+1]
+include::_alternatives.adoc[leveloffset=+1]
 
-include::ssh.adoc[leveloffset=+1]
+include::_ssh.adoc[leveloffset=+1]
 
-include::internals.adoc[leveloffset=+1]
+include::_internals.adoc[leveloffset=+1]
 
 include::../../../CHANGELOG.adoc[leveloffset=+1]

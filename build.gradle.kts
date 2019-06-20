@@ -157,9 +157,7 @@ tasks.asciidoctorPdf {
 
 fun AbstractAsciidoctorTask.configure() {
     baseDirFollowsSourceDir()
-    sources(delegateClosureOf<PatternSet> {
-        include("git-as-svn.adoc")
-    })
+
     val commitDateTime = getCommitDateTime()
     attributes(mapOf(
             "source-highlighter" to "coderay",
