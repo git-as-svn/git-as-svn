@@ -1,5 +1,8 @@
 = Internal implementation details
 
+:filename: _internals.adoc
+include::_feedback.adoc[]
+
 == Where Subversion data is stored?
 
 To represent Subversion repository need to store information about how

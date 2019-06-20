@@ -1,6 +1,9 @@
 [[authz]]
 = Path-based authorization
 
+:filename: _authz.adoc
+include::_feedback.adoc[]
+
 NOTE: This feature is currently only supported for `repositoryMapping: !listMapping`
 
 git-as-svn supports path-based authorization that allows granting (or denying) permissions to users, very similar to

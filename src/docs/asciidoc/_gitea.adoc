@@ -1,6 +1,9 @@
 [[gitea]]
 = Gitea integration
 
+:filename: _gitea.adoc
+include::_feedback.adoc[]
+
 git-as-svn supports integration with https://gitea.io[Gitea] >= v1.7.2.
 
 This includes:

@@ -1,6 +1,9 @@
 [[comparison]]
 = Alternatives
 
+:filename: _alternatives.adoc
+include::_feedback.adoc[]
+
 image:images/git-as-svn.png[image]
 
 The problem of combining Git and Subversion work style with a version

@@ -1,6 +1,9 @@
 [[props]]
 = SVN Properties
 
+:filename: _props.adoc
+include::_feedback.adoc[]
+
 The main `svn properties` trouble that they should be maintained in the
 synchronous state between Git and Subversion.
 

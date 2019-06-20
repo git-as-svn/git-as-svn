@@ -1,6 +1,9 @@
 [[commandline]]
 = Command-line parameters
 
+:filename: _commandline.adoc
+include::_feedback.adoc[]
+
 git-as-svn supports the following command-line parameters:
 
 `-?` | `-h` | `--help`:: print help for command-line parameters.

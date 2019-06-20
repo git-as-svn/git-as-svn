@@ -1,6 +1,9 @@
 [[lfs]]
 = LFS server
 
+:filename: _lfs.adoc
+include::_feedback.adoc[]
+
 git-as-svn has built-in https://git-lfs.github.com/[Git Large File Storage] server
 
 == Configuration file example

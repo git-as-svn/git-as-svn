@@ -1,6 +1,9 @@
 [[ssh]]
 = SVN+SSH
 
+:filename: _ssh.adoc
+include::_feedback.adoc[]
+
 == Rationale
 
 The SVN protocol is totally unencrypted, and due to the way git-as-svn

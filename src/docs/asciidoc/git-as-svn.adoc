@@ -12,8 +12,6 @@ ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,
 // refs
 :url-issues: http://github.com/bozaro/git-as-svn/issues
 
-NOTE:: If you find errors or omissions in this document, please don't hesitate to {url-issues}[submit an issue or open a pull request] with a fix.
-
 include::_about.adoc[leveloffset=+1]
 
 include::_install.adoc[leveloffset=+1]

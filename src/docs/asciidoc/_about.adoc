@@ -1,6 +1,9 @@
 [[about]]
 = About project
 
+:filename: _about.adoc
+include::_feedback.adoc[]
+
 == What is it?
 
 git-as-svn (https://github.com/bozaro/git-as-svn) emulates Subversion repository on top of Git repository.

@@ -1,6 +1,9 @@
 [[install]]
 = Installation
 
+:filename: _install.adoc
+include::_feedback.adoc[]
+
 IMPORTANT: Subversion versions prior to 1.8 are *not* supported because git-as-svn relies on https://subversion.apache.org/docs/release-notes/1.8.html#iprops[inherited properties] Subversion feature.
 
 == .gitattributes
