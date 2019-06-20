@@ -50,7 +50,7 @@ repositories {
 }
 
 license {
-    header = rootProject.file("license_header.txt")
+    header = file("src/license/license_header.txt")
     exclude("**/*.json")
     exclude("**/*.yml")
 }
