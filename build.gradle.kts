@@ -78,13 +78,13 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    compile("org.eclipse.jgit:org.eclipse.jgit:5.3.1.201904271842-r")
+    compile("org.eclipse.jgit:org.eclipse.jgit:5.4.0.201906121030-r")
     compile("org.tmatesoft.svnkit:svnkit:1.10.0")
     compile("org.yaml:snakeyaml:1.24")
     compile("com.beust:jcommander:1.72")
     compile("org.ini4j:ini4j:0.5.4")
     compile("org.mapdb:mapdb:3.0.7")
-    compile("com.unboundid:unboundid-ldapsdk:4.0.10")
+    compile("com.unboundid:unboundid-ldapsdk:4.0.11")
     compile("org.eclipse.jetty:jetty-servlet:9.4.18.v20190429")
     compile("org.gitlab:java-gitlab-api:4.1.0")
     compile("org.bitbucket.b_c:jose4j:0.6.5")
@@ -95,8 +95,8 @@ dependencies {
     compile("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    compile("com.google.oauth-client:google-oauth-client:1.29.0")
-    compile("com.google.http-client:google-http-client-jackson2:1.29.1")
+    compile("com.google.oauth-client:google-oauth-client:1.30.1")
+    compile("com.google.http-client:google-http-client-jackson2:1.30.1")
     compile("org.jetbrains:annotations:17.0.0")
     compile("org.slf4j:slf4j-api:1.7.26")
 
