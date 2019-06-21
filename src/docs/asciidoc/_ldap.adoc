@@ -1,4 +1,4 @@
-[[ldap]]
+[[_ldap]]
 = LDAP (Lightweight Directory Access Protocol)
 
 :filename: _ldap.adoc

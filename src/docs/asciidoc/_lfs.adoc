@@ -1,4 +1,4 @@
-[[lfs]]
+[[_lfs]]
 = LFS server
 
 :filename: _lfs.adoc
@@ -29,7 +29,7 @@ shared:
 
 == git-lfs-authenticate
 
-Script `git-lfs-authenticate` (provided by <<install.adoc#git-as-svn-lfs,git-as-svn-lfs package>>)
+Script `git-lfs-authenticate` (provided by <<_install.adoc#git-as-svn-lfs,git-as-svn-lfs package>>)
 is used by git-lfs to obtain credentials for HTTP access to Git LFS server for Git-users working with Git
 repository by SSH
 (https://github.com/github/git-lfs/blob/master/docs/api/README.md).

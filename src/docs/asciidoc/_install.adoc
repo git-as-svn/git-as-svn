@@ -1,4 +1,4 @@
-[[install]]
+[[_install]]
 = Installation
 
 :filename: _install.adoc
@@ -84,7 +84,7 @@ This directory is used to record log files.
 +
 It must be writable by user `git`.
 +
-See <<logging.adoc#logging, logging documentation>> on log configuration.
+See <<_logging.adoc#_logging, logging documentation>> on log configuration.
 +
 /var/cache/git-as-svn::
 This directory is used to store the git-as-svn cache.
@@ -97,7 +97,7 @@ operation and does not entail the loss of user data.
 [[git-as-svn-lfs]]
 === git-as-svn-lfs package
 
-This package contains the `git-lfs-authenticate` script required for <<lfs.adoc#lfs, git-as-svn builtin LFS server>>
+This package contains the `git-lfs-authenticate` script required for <<_lfs.adoc#_lfs, git-as-svn builtin LFS server>>
 
 == Manual download
 

@@ -1,4 +1,4 @@
-[[about]]
+[[_about]]
 = About project
 
 :filename: _about.adoc
@@ -23,13 +23,13 @@ without thinking about what they actually use Git-repository.
 ** svn cat, ls
 ** svn lock, unlock
 ** svnsync
-* <<authz.adoc#authz,Path-based authorization>>
-* <<props.adoc#props,Transparent mapping of .gitattributes/.gitignore to Subversion properties>>
-* <<lfs.adoc#lfs,Git LFS>>, including locks
+* <<_authz.adoc#_authz,Path-based authorization>>
+* <<_props.adoc#_props,Transparent mapping of .gitattributes/.gitignore to Subversion properties>>
+* <<_lfs.adoc#_lfs,Git LFS>>, including locks
 * Git submodules footnote:[Git submodule data available in readonly mode.]
-* <<ldap.adoc#ldap,LDAP user authentication>>
-* <<gitlab.adoc#gitlab,GitLab integration>>
-* <<gitea.adoc#gitea,Gitea integration>>
+* <<_ldap.adoc#_ldap,LDAP user authentication>>
+* <<_gitlab.adoc#_gitlab,GitLab integration>>
+* <<_gitea.adoc#_gitea,Gitea integration>>
 
 NOTE: Empty directories are not supported
 

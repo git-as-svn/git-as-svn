@@ -1,4 +1,4 @@
-[[gitlab]]
+[[_gitlab]]
 = GitLab integration
 
 :filename: _gitlab.adoc

@@ -1,4 +1,4 @@
-[[commandline]]
+[[_commandline]]
 = Command-line parameters
 
 :filename: _commandline.adoc

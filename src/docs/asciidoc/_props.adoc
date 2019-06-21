@@ -1,4 +1,4 @@
-[[props]]
+[[_props]]
 = SVN Properties
 
 :filename: _props.adoc

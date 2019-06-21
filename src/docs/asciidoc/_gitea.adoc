@@ -1,4 +1,4 @@
-[[gitea]]
+[[_gitea]]
 = Gitea integration
 
 :filename: _gitea.adoc

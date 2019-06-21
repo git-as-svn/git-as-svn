@@ -1,3 +1,4 @@
+[[_internals]]
 = Internal implementation details
 
 :filename: _internals.adoc

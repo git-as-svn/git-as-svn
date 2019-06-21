@@ -1,4 +1,4 @@
-[[authz]]
+[[_authz]]
 = Path-based authorization
 
 :filename: _authz.adoc

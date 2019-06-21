@@ -1,4 +1,4 @@
-[[ssh]]
+[[_ssh]]
 = SVN+SSH
 
 :filename: _ssh.adoc

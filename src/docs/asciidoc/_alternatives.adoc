@@ -1,4 +1,4 @@
-[[comparison]]
+[[_comparison]]
 = Alternatives
 
 :filename: _alternatives.adoc

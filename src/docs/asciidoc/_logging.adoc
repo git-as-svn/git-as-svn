@@ -1,4 +1,4 @@
-[[logging]]
+[[_logging]]
 = Logging
 
 :filename: _logging.adoc
