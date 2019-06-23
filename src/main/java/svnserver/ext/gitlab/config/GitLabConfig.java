@@ -78,6 +78,6 @@ public final class GitLabConfig implements SharedConfig {
 
   @NotNull
   public static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull String username, @NotNull String password) {
-    return new BasicAuthHttpLfsStorage(gitLabUrl + repositoryName, username, password);
+    return new BasicAuthHttpLfsStorage(gitLabUrl, repositoryName, username, password);
   }
 }

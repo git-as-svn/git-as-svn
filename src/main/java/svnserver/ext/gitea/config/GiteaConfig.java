@@ -34,23 +34,18 @@ public final class GiteaConfig implements SharedConfig {
     this("http://localhost/", "");
   }
 
-  public GiteaConfig(@NotNull String url, @NotNull GiteaToken token) {
-    this(url, token.getValue());
-  }
-
   private GiteaConfig(@NotNull String url, @NotNull String token) {
     this.url = url;
     this.token = token;
   }
 
-  @NotNull
-  public String getUrl() {
-    return url;
+  public GiteaConfig(@NotNull String url, @NotNull GiteaToken token) {
+    this(url, token.getValue());
   }
 
   @NotNull
-  public GiteaToken getToken() {
-    return new GiteaToken(token);
+  public String getUrl() {
+    return url;
   }
 
   @Override
@@ -65,6 +60,11 @@ public final class GiteaConfig implements SharedConfig {
 
   @NotNull
   public static LfsStorage createLfsStorage(@NotNull String giteaUrl, @NotNull String repositoryName, GiteaToken token) {
-    return new BasicAuthHttpLfsStorage(giteaUrl + repositoryName, token.getValue(), "x-oauth-basic");
+    return new BasicAuthHttpLfsStorage(giteaUrl, repositoryName, token.getValue(), "x-oauth-basic");
+  }
+
+  @NotNull
+  public GiteaToken getToken() {
+    return new GiteaToken(token);
   }
 }

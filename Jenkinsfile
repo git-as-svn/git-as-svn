@@ -25,7 +25,7 @@ git clean -fdx
             steps {
                 realtimeJUnit ("build/test-results/test/*.xml") {
                     sh """
-./gradlew check -PtestIgnoreFailures=true
+./gradlew check
 """
                 }
             }
