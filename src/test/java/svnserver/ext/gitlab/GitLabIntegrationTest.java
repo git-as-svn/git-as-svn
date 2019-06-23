@@ -12,6 +12,7 @@ import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -82,25 +83,27 @@ public final class GitLabIntegrationTest {
       gitlabVersion = "latest";
     }
 
-    final int hostGitLabPort = 9999;
-    // This is supposed to be 80, but GitLab binds to port from external_url
+    final int hostPort = 9999;
+    // containerPort is supposed to be 80, but GitLab binds to port from external_url
     // See https://stackoverflow.com/questions/39351563/gitlab-docker-not-working-if-external-url-is-set
-    final int containerGitLabPort = 9999;
+    final int containerPort = 9999;
+    final String hostname = DockerClientFactory.instance().dockerHostIpAddress();
+
+    gitlabUrl = String.format("http://%s:%s", hostname, hostPort);
 
     gitlab = new FixedHostPortGenericContainer<>("gitlab/gitlab-ce:" + gitlabVersion)
         // We have a chicken-and-egg problem here. In order to set external_url, we need to know container address,
         // but we do not know container address until container is started.
         // So, for now use fixed port :(
-        .withFixedExposedPort(hostGitLabPort, containerGitLabPort)
+        .withFixedExposedPort(hostPort, containerPort)
         // This is kinda stupid that we need to do withExposedPorts even when we have withFixedExposedPort
-        .withExposedPorts(containerGitLabPort)
-        .withEnv("GITLAB_OMNIBUS_CONFIG", String.format("external_url 'http://localhost:%s/'", hostGitLabPort))
+        .withExposedPorts(containerPort)
+        .withEnv("GITLAB_OMNIBUS_CONFIG", String.format("external_url '%s'", gitlabUrl))
         .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
         .waitingFor(Wait.forHttp("/users/sign_in")
             .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
 
     gitlab.start();
-    gitlabUrl = "http://" + gitlab.getContainerIpAddress() + ":" + gitlab.getMappedPort(containerGitLabPort);
 
     rootToken = createToken(root, rootPassword, true);
 
@@ -185,7 +188,7 @@ public final class GitLabIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
-    final @NotNull LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl + "/", gitlabProject.getPathWithNamespace(), root, rootPassword);
+    final @NotNull LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword);
     final String expected = "hello 12345";
 
     final String oid;

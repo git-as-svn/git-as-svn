@@ -15,12 +15,14 @@ import io.gitea.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.dockerclient.DockerClientConfigUtils;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -46,8 +48,6 @@ import svnserver.repository.git.GitCreateMode;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.function.Function;
 
 /**
@@ -69,6 +69,11 @@ public final class GiteaIntegrationTest {
   @NotNull
   private static final String collaboratorPassword = "collaboratorPassword";
 
+  /**
+   * TODO: remove this when https://github.com/go-gitea/gitea/pull/7281 is fixed.
+   */
+  private static final boolean testLfs = !DockerClientConfigUtils.IN_A_CONTAINER;
+
   private GenericContainer<?> gitea;
   private String giteaUrl;
   private String giteaApiUrl;
@@ -88,20 +93,28 @@ public final class GiteaIntegrationTest {
       giteaVersion = "latest";
     }
 
-    final int giteaPort = 3000;
-    final String path = "/user/login";
+    final int hostPort = 9999;
+    final int containerPort = 3000;
+    final String hostname = DockerClientFactory.instance().dockerHostIpAddress();
+
+    giteaUrl = String.format("http://%s:%s", hostname, hostPort);
+    giteaApiUrl = giteaUrl + "/api/v1";
 
     gitea = new FixedHostPortGenericContainer<>("gitea/gitea:" + giteaVersion)
-        .withFixedExposedPort(giteaPort, giteaPort)
-        .withExposedPorts(giteaPort)
-        .waitingFor(Wait.forHttp(path).forPort(giteaPort)
-            .withStartupTimeout(Duration.of(120, ChronoUnit.SECONDS)))
-        .withClasspathResourceMapping("/svnserver/ext/gitea/app.ini", "/data/gitea/conf/app.ini", BindMode.READ_WRITE)
+        .withFixedExposedPort(hostPort, containerPort)
+        .withExposedPorts(containerPort)
+        .withEnv("ROOT_URL", giteaUrl)
+        .withEnv("INSTALL_LOCK", "true")
+        .withEnv("SECRET_KEY", "CmjF5WBUNZytE2C80JuogljLs5enS0zSTlikbP2HyG8IUy15UjkLNvTNsyYW7wN")
+        .withEnv("RUN_MODE", "prod")
+        .waitingFor(Wait.forHttp("/user/login"))
         .withLogConsumer(new Slf4jLogConsumer(log));
-    gitea.start();
 
-    giteaUrl = "http://" + gitea.getContainerIpAddress() + ":" + gitea.getMappedPort(giteaPort) + "/";
-    giteaApiUrl = giteaUrl + "api/v1";
+    if (testLfs)
+      // Temporary hack for https://github.com/go-gitea/gitea/pull/7281
+      gitea.withClasspathResourceMapping("/svnserver/ext/gitea/app.ini", "/etc/templates/app.ini", BindMode.READ_ONLY);
+
+    gitea.start();
 
     ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
     boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
@@ -184,6 +197,9 @@ public final class GiteaIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
+    if (!testLfs)
+      throw new SkipException("LFS testing is disabled");
+
     final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
     final String expected = "hello 12345";
 
