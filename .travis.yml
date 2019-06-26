@@ -1,5 +1,4 @@
 language: java
-sudo: required
 services: docker
 
 env:
@@ -26,37 +25,37 @@ cache:
 addons:
   apt:
     packages:
-    - build-essential
-    - fakeroot
-    - debhelper
-    - gnome-doc-utils
+      - build-essential
+      - fakeroot
+      - debhelper
+      - gnome-doc-utils
 
 jobs:
   include:
     # Gitlab
     - stage: test
       env: GITLAB_VERSION=latest
-      jdk: openjdk8
+      jdk: &oldest_jdk openjdk8
     - stage: test
       env: GITLAB_VERSION=11.0.3-ce.0 # Gitlab >= 11.0 no longer has API v3 (issue #176)
-      jdk: openjdk8
+      jdk: *oldest_jdk
     - stage: test
       env: GITLAB_VERSION=10.2.5-ce.0 # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
-      jdk: openjdk8
+      jdk: *oldest_jdk
     - stage: test
       env: GITLAB_VERSION=9.5.10-ce.0 # Last 9.x build, actually nothing special about it
-      jdk: openjdk8
+      jdk: *oldest_jdk
     - stage: test
       env: GITLAB_VERSION=9.3.3-ce.0 # We use this in production
-      jdk: openjdk8
+      jdk: *oldest_jdk
 
     # Gitea
     - stage: test
       env: GITEA_VERSION=latest
-      jdk: openjdk8
+      jdk: *oldest_jdk
     - stage: test
       env: GITEA_VERSION=1.7.2 # The earliest supported Gitea version
-      jdk: openjdk8
+      jdk: *oldest_jdk
 
     # Different JDKs
     - stage: test
@@ -65,18 +64,17 @@ jobs:
       jdk: openjdk12
 
     - stage: deploy
-      jdk: openjdk8 # Deploy releases using oldest supported jdk
+      jdk: *oldest_jdk
       script: ./gradlew assembleDist
       before_deploy:
         # Set the packages name and details in the descriptor file
         - sed -i "s/__SUBJECT__/$BINTRAY_USER/g" bintray-descriptor.json
-        - sed -i "s/__BINTRAY_REPO__/git-as-svn/g" bintray-descriptor.json
         - sed -i "s/__REPO_SLUG__/${TRAVIS_REPO_SLUG//\//\\/}/g" bintray-descriptor.json
         - sed -i "s/__VERSION__/$TRAVIS_TAG/g" bintray-descriptor.json
       deploy:
         - provider: releases
           api-key:
-            secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
+            secure: &github_token DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
           file_glob: true
           file:
             - build/distributions/git-as-svn*
@@ -86,7 +84,7 @@ jobs:
             repo: bozaro/git-as-svn
         - provider: pages
           github_token:
-            secure: DOfUgYJSdDiRIjgULtOxR0jdvkxuXPn+4Q+UGYtnQNiov7hAJ6VbdQpGSczi0ik/RLzf51NuBJm4PuFGVy5sexeJuw4iUEa+gnJlDglJI/UHiHcr+E4HJnTUweAHTiHGADm2qyhyg3+n0D4pZ8m2j86UvNImZWYcPUwup0lul4U=
+            secure: *github_token
           skip_cleanup: true
           local_dir: build/doc
           on:
@@ -102,7 +100,7 @@ jobs:
           file: bintray-descriptor.json
           user: $BINTRAY_USER
           key:
-            secure: "yBfslep4aYXDT3dyfzhR3ePNDJkbXLHnkLxwjZoKsqqC0UWQ+J5Il8Pk67S4m8oyelK7U0BUe9O7slM4iTdvMdTzN278o7YNtxtInkx4MRvIokBVPq2Hh8mdVr/zJ/DDdf23blvwq/YePSqr6FD3x1bzoxQJQkXvqKTh4K3sKZc="
+            secure: yBfslep4aYXDT3dyfzhR3ePNDJkbXLHnkLxwjZoKsqqC0UWQ+J5Il8Pk67S4m8oyelK7U0BUe9O7slM4iTdvMdTzN278o7YNtxtInkx4MRvIokBVPq2Hh8mdVr/zJ/DDdf23blvwq/YePSqr6FD3x1bzoxQJQkXvqKTh4K3sKZc=
           skip_cleanup: true
           on:
             tags: true
