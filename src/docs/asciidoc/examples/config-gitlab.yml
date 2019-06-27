@@ -49,28 +49,60 @@ repositoryMapping: !gitlabMapping
   #     - master
   #   renameDetection: true
 
-# Use GitLab user database
+# Tells git-as-svn to authenticate users against GitLab
 userDB: !gitlabUsers {}
 
 shared:
-  # Web server settings
-  # Used for:
-  #  * detecticting add/remove repositories via GitLab System Hook
-  #  * git-lfs-authenticate script (optionaly)
+
+  # git-as-svn builtin web server
+  # It is used for GitLab system hook for repository creation/deletion notifications
+  # Also, git-as-svn builtin LFS server is served through it
   - !web
-    # baseUrl: http://git-as-svn.local/
+
+    # git-as-svn base url. Leave empty for autodetection.
+    # Default: empty
+    #
+    # baseUrl: http://localhost:8123/
+
     listen:
-      - !http
-        host: localhost
-        port: 8123
-        # Use X-Forwarded-* headers
-        forwarded: true
+      - !http {
 
-  # Configures GitLab API for git-as-svn
-  - !gitlab
-    url: http://localhost:3000/
-    hookUrl: http://localhost:8123/
-    token: qytzQc6uYiQfsoqJxGuG
+        # The network interface where git-as-svn web server binds to as an IP address or a hostname.  If 0.0.0.0, then bind to all interfaces.
+        # Default: localhost
+        #
+        # host: localhost
 
-    # Tells git-as-svn to store Git-LFS objects through Gitea LFS API
+        # Port where git-as-svn web server listens on.
+        # Default: 8123
+        #
+        # port: 8123
+
+        # Tells git-as-svn to handle X-Forwarded-* headers.
+        # Enable this if git-as-svn web server is running behind reverse HTTP proxy (like nginx)
+        # Default: false
+        #
+        # forwarded: false
+      }
+
+  # Configures GitLab access for git-as-svn
+  - !gitlab {
+
+    # GitLab base URL
+    # Default: http://localhost:3000/
+    #
+    # url: http://localhost:3000/
+
+    # Tells git-as-svn to use GitLab for LFS objects and file locking
+    # Default: true
+    #
     # lfs: true
+
+    # git-as-svn URL where it will handle GitLab hook events
+    # You do not need to set this if you specified baseUrl in !web section
+    # Default: http://localhost:8123/hooks/gitlab
+    #
+    # hookUrl: http://localhost:8123/hooks/gitlab
+
+    # GitLab access token. Note that git-as-svn requires sudo access.
+    token: <GitLab Access Token>
+  }

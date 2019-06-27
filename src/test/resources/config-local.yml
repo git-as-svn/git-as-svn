@@ -32,7 +32,6 @@ shared:
       - !http
         host: localhost
         port: 8123
-        forwarded: true
   - !localLfs
     secretToken: ChangeMe
     path: ../build/lfs

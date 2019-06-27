@@ -34,7 +34,7 @@ public final class GitLabConfig implements SharedConfig {
   private boolean lfs = true;
 
   public GitLabConfig() {
-    this("http://localhost/", TokenType.PRIVATE_TOKEN, "");
+    this("http://localhost:3000/", TokenType.PRIVATE_TOKEN, "");
   }
 
   private GitLabConfig(@NotNull String url, @NotNull TokenType tokenType, @NotNull String token) {
@@ -67,7 +67,7 @@ public final class GitLabConfig implements SharedConfig {
   }
 
   @NotNull
-  public static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull GitLabToken token) {
+  private static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull GitLabToken token) {
     return createLfsStorage(gitLabUrl, repositoryName, "UNUSED", token.getValue());
   }
 

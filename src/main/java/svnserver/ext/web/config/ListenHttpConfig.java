@@ -20,7 +20,7 @@ import svnserver.config.serializer.ConfigType;
 public final class ListenHttpConfig implements ListenConfig {
   @NotNull
   private String host = "localhost";
-  private int port = 80;
+  private int port = 8123;
   private boolean forwarded = false;
 
   @NotNull
