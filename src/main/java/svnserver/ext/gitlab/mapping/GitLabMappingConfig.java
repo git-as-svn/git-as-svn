@@ -113,7 +113,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
     }
     // Web hook for repository list update.
     final WebServer webServer = WebServer.get(context);
-    final URL hookUrl = new URL(gitlab.getHookUrl());
+    final URL hookUrl = webServer.getUrl(new URL(gitlab.getHookUrl()));
     final String path = hookUrl.getPath();
     webServer.addServlet(StringUtils.isEmptyOrNull(path) ? "/" : path, new GitLabHookServlet(mapping));
 

@@ -37,7 +37,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -221,21 +223,21 @@ public final class WebServer implements Shared {
 
   @NotNull
   public URI getUrl(@NotNull HttpServletRequest req) {
-    if (config.getBaseUrl() != null) {
+    if (config.getBaseUrl() != null)
       return URI.create(config.getBaseUrl()).resolve(req.getRequestURI());
-    }
+
     String host = req.getHeader(HttpHeaders.HOST);
-    if (host == null) {
+    if (host == null)
       host = req.getServerName() + ":" + req.getServerPort();
-    }
+
     return URI.create(req.getScheme() + "://" + host + req.getRequestURI());
   }
 
   @NotNull
-  public URI getUrl(@NotNull URI baseUri) {
-    if (config.getBaseUrl() != null) {
-      return URI.create(config.getBaseUrl()).resolve(baseUri.getPath());
-    }
+  public URL getUrl(@NotNull URL baseUri) throws MalformedURLException {
+    if (config.getBaseUrl() != null)
+      return URI.create(config.getBaseUrl()).resolve(baseUri.getPath()).toURL();
+
     return baseUri;
   }
 
