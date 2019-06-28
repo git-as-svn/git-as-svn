@@ -23,7 +23,7 @@ This includes:
 userDB: !gitlabUsers {}
 ----
 
-. Builtin git-as-svn webserver needs to be configured via `!web` (builtin ) shared`.
+. Configure builtin git-as-svn webserver:
 +
 [source,yaml]
 ----
