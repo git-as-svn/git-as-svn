@@ -9,7 +9,6 @@ package svnserver.context;
 
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
-import org.tmatesoft.svn.core.SVNException;
 import svnserver.config.SharedConfig;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -46,7 +45,7 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
   }
 
   @NotNull
-  public static SharedContext create(@NotNull File basePath, @NotNull String realm, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws IOException, SVNException {
+  public static SharedContext create(@NotNull File basePath, @NotNull String realm, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws Exception {
     final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), threadFactory);
     final SharedContext context = new SharedContext(basePath, cacheDb, threadPoolExecutor, realm);
     for (SharedConfig config : shared) {

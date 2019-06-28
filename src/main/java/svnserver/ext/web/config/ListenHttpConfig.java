@@ -20,9 +20,17 @@ import svnserver.config.serializer.ConfigType;
 public final class ListenHttpConfig implements ListenConfig {
   @NotNull
   private String host = "localhost";
-  private int port = 8123;
+  private int port;
   private boolean forwarded = false;
   private long idleTimeout = -1;
+
+  public ListenHttpConfig() {
+    this(8123);
+  }
+
+  public ListenHttpConfig(int port) {
+    this.port = port;
+  }
 
   @NotNull
   @Override

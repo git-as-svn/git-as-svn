@@ -151,7 +151,14 @@ public final class SvnServer extends Thread {
     serverSocket.setReuseAddress(config.getReuseAddress());
     serverSocket.bind(new InetSocketAddress(InetAddress.getByName(config.getHost()), config.getPort()));
 
-    sharedContext.ready();
+    boolean success = false;
+    try {
+      sharedContext.ready();
+      success = true;
+    } finally {
+      if (!success)
+        sharedContext.close();
+    }
   }
 
   public int getPort() {

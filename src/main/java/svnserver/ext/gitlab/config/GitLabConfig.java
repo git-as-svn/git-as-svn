@@ -30,7 +30,7 @@ public final class GitLabConfig implements SharedConfig {
   @NotNull
   private TokenType tokenType;
   @NotNull
-  private String hookUrl = "http://localhost:8123/hooks/gitlab";
+  private String hookPath = "_hooks/gitlab";
   private boolean lfs = true;
 
   public GitLabConfig() {
@@ -52,8 +52,9 @@ public final class GitLabConfig implements SharedConfig {
     return url;
   }
 
-  @NotNull String getHookUrl() {
-    return hookUrl;
+  @NotNull
+  String getHookPath() {
+    return hookPath;
   }
 
   @Override

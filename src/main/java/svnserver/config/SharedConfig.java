@@ -10,8 +10,6 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import svnserver.context.SharedContext;
 
-import java.io.IOException;
-
 /**
  * Shared between repositories configuration
  *
@@ -23,5 +21,5 @@ public interface SharedConfig {
    *
    * @param context Shared context.
    */
-  void create(@NotNull SharedContext context) throws IOException;
+  void create(@NotNull SharedContext context) throws Exception;
 }

@@ -70,6 +70,11 @@ public final class GitLabContext implements Shared {
   }
 
   @NotNull
+  public String getGitLabUrl() {
+    return config.getUrl();
+  }
+
+  @NotNull
   public static GitlabAPI connect(@NotNull String gitlabUrl, @NotNull GitLabToken token) {
     return GitlabAPI.connect(gitlabUrl, token.getValue(), token.getType());
   }
@@ -81,16 +86,11 @@ public final class GitLabContext implements Shared {
 
   @NotNull
   public GitLabToken getToken() {
-    return  config.getToken();
+    return config.getToken();
   }
 
   @NotNull
-  public String getGitLabUrl() {
-    return config.getUrl();
-  }
-
-  @NotNull
-  public String getHookUrl() {
-    return config.getHookUrl();
+  public String getHookPath() {
+    return config.getHookPath();
   }
 }

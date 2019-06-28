@@ -30,13 +30,13 @@ import java.util.Collection;
  */
 public final class LfsServer implements Shared {
   @NotNull
-  public static final String SERVLET_BASE = "info/lfs";
+  public static final String SERVLET_BASE = "info/lfs/";
   @NotNull
   public static final String SERVLET_AUTH = "lfs_authenticate";
   @NotNull
-  private static final String SERVLET_CONTENT = SERVLET_BASE + "/storage";
+  private static final String SERVLET_CONTENT = SERVLET_BASE + "storage";
   @NotNull
-  private static final String SERVLET_POINTER = SERVLET_BASE + "/objects";
+  private static final String SERVLET_POINTER = SERVLET_BASE + "objects";
   @NotNull
   private final String secretToken;
   private int tokenExpireSec;
@@ -49,10 +49,10 @@ public final class LfsServer implements Shared {
   }
 
   public void register(@NotNull LocalContext localContext, @NotNull LfsStorage storage) {
-    final WebServer webServer = WebServer.get(localContext.getShared());
+    final WebServer webServer = localContext.getShared().sure(WebServer.class);
     final String name = localContext.getName();
 
-    final String pathSpec =  String.format("/%s.git/", name).replaceAll("/+", "/");
+    final String pathSpec = String.format("/%s.git/", name).replaceAll("/+", "/");
     final ContentManager pointerManager = new LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureTime);
     final LfsContentManager contentManager = new LfsContentManager(localContext, storage, tokenExpireSec, 0.0f);
     final Collection<WebServer.Holder> servletsInfo = webServer.addServlets(
@@ -60,7 +60,7 @@ public final class LfsServer implements Shared {
             .put(pathSpec + SERVLET_AUTH, new LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, secretToken, tokenExpireSec, tokenEnsureTime))
             .put(pathSpec + SERVLET_POINTER + "/*", new PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT))
             .put(pathSpec + SERVLET_CONTENT + "/*", new ContentServlet(contentManager))
-            .put(pathSpec + SERVLET_BASE + "/locks/*", new LocksServlet(new LfsLockManager(contentManager)))
+            .put(pathSpec + SERVLET_BASE + "locks/*", new LocksServlet(new LfsLockManager(contentManager)))
             .build()
     );
     localContext.add(LfsServerHolder.class, new LfsServerHolder(webServer, servletsInfo));
