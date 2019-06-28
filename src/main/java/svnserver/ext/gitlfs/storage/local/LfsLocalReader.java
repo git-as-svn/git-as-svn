@@ -28,76 +28,76 @@ import java.util.zip.GZIPInputStream;
  * Local storage writer.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class LfsLocalReader implements LfsReader {
-  @Nullable
-  private final File dataPath;
-  @Nullable
-  private final File gzipPath;
+public final class LfsLocalReader implements LfsReader {
+  @NotNull
+  private final File file;
+  private final boolean compressed;
   @NotNull
   private final Map<String, String> meta;
 
-  private LfsLocalReader(@NotNull Map<String, String> meta, @Nullable File dataPath, @Nullable File gzipPath) {
+  private LfsLocalReader(@NotNull Map<String, String> meta, @NotNull File file, boolean compressed) {
     this.meta = meta;
-    this.dataPath = dataPath;
-    this.gzipPath = gzipPath;
+    this.file = file;
+    this.compressed = compressed;
   }
 
   @Nullable
   public static LfsLocalReader create(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
     final Map<String, String> meta;
-    File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
-    File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
+
+    final File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
+
     if (metaRoot != null) {
       final File metaPath = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta");
-      if (metaPath == null || !metaPath.isFile()) {
+      if (metaPath == null || !metaPath.isFile())
         return null;
-      }
+
       try (InputStream stream = new FileInputStream(metaPath)) {
         meta = Pointer.parsePointer(IOUtils.toByteArray(stream));
       }
-      if (meta == null) {
-        throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath());
-      }
+
+      if (meta == null)
+        throw new IOException("Corrupt meta file: " + metaPath.getAbsolutePath());
+
       if (!meta.get(Constants.OID).equals(oid)) {
-        throw new IOException("Corrupted meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
+        throw new IOException("Corrupt meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
       }
+      final File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
+
+      if (gzipPath != null && gzipPath.isFile())
+        return new LfsLocalReader(meta, gzipPath, true);
+
     } else {
-      if (dataPath == null || !dataPath.isFile()) {
+      if (dataPath == null || !dataPath.isFile())
         return null;
-      }
-      gzipPath = null;
+
       meta = new HashMap<>();
       meta.put(Constants.OID, oid);
       meta.put(Constants.SIZE, Long.toString(dataPath.length()));
     }
 
-    if (dataPath != null && !dataPath.isFile()) {
-      dataPath = null;
-    }
-    if (gzipPath != null && !gzipPath.isFile()) {
-      gzipPath = null;
-    }
-    if (dataPath == null && gzipPath == null) return null;
-    return new LfsLocalReader(meta, dataPath, gzipPath);
+    if (dataPath != null && dataPath.isFile())
+      return new LfsLocalReader(meta, dataPath, false);
+
+    return null;
   }
 
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    if (dataPath != null) {
-      return new FileInputStream(dataPath);
-    }
-    if (gzipPath != null) {
-      return new GZIPInputStream(new FileInputStream(gzipPath));
-    }
-    throw new IllegalStateException();
+    final InputStream result = new FileInputStream(file);
+    return compressed ? new GZIPInputStream(result) : result;
   }
 
   @Nullable
   @Override
   public InputStream openGzipStream() throws IOException {
-    return gzipPath != null ? new FileInputStream(gzipPath) : null;
+    if (!compressed)
+      return null;
+
+    return new FileInputStream(file);
   }
 
   @Override
