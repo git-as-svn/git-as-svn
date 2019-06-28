@@ -7,6 +7,7 @@
  */
 package svnserver.ext.web.config;
 
+import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Hex;
 import org.eclipse.jetty.server.Server;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +18,9 @@ import svnserver.context.SharedContext;
 import svnserver.ext.web.server.WebServer;
 import svnserver.ext.web.token.EncryptionFactoryAes;
 
+import java.net.URL;
 import java.security.SecureRandom;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,11 +34,19 @@ public final class WebServerConfig implements SharedConfig {
   private final static String defaultSecret = generateDefaultSecret();
 
   @NotNull
-  private List<ListenConfig> listen = new ArrayList<>();
+  private List<ListenConfig> listen;
   @NotNull
   private String secret = defaultSecret;
   @Nullable
   private String baseUrl = null;
+
+  public WebServerConfig() {
+    listen = Collections.singletonList(new ListenHttpConfig());
+  }
+
+  public WebServerConfig(int port) {
+    listen = Collections.singletonList(new ListenHttpConfig(port));
+  }
 
   private static String generateDefaultSecret() {
     final SecureRandom random = new SecureRandom();
@@ -45,22 +55,25 @@ public final class WebServerConfig implements SharedConfig {
     return new String(Hex.encodeHex(bytes));
   }
 
-  @Nullable
-  public String getBaseUrl() {
-    return baseUrl;
-  }
-
   @Override
-  public void create(@NotNull SharedContext context) {
-    context.add(WebServer.class, new WebServer(context, createJettyServer(), this, new EncryptionFactoryAes(secret)));
+  public void create(@NotNull SharedContext context) throws Exception {
+    final URL url;
+    if (Strings.isNullOrEmpty(baseUrl)) {
+      url = null;
+    } else {
+      url = new URL(baseUrl.endsWith("/") ? baseUrl : baseUrl + "/");
+    }
+
+    context.add(WebServer.class, new WebServer(context, createJettyServer(), baseUrl == null ? null : url, new EncryptionFactoryAes(secret)));
   }
 
   @NotNull
   private Server createJettyServer() {
     final Server server = new Server();
-    for (ListenConfig listenConfig : listen) {
+
+    for (ListenConfig listenConfig : listen)
       server.addConnector(listenConfig.createConnector(server));
-    }
+
     return server;
   }
 }

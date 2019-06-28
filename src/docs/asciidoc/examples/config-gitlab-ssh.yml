@@ -62,7 +62,7 @@ shared:
   # Also, git-as-svn builtin LFS server is served through it
   - !web
 
-    # git-as-svn base url. Leave empty for autodetection.
+    # git-as-svn base url. Leave empty for autodetect.
     # Default: empty
     #
     # baseUrl: http://localhost:8123/
@@ -99,12 +99,6 @@ shared:
     # Default: true
     #
     # lfs: true
-
-    # git-as-svn URL where it will handle GitLab hook events
-    # You do not need to set this if you specified baseUrl in !web section
-    # Default: http://localhost:8123/hooks/gitlab
-    #
-    # hookUrl: http://localhost:8123/hooks/gitlab
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>

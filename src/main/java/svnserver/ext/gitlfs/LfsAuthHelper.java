@@ -91,7 +91,7 @@ public final class LfsAuthHelper {
   public static Map<String, String> createTokenHeader(@NotNull SharedContext context,
                                                       @NotNull User user,
                                                       @NotNull NumericDate expireAt) {
-    WebServer webServer = WebServer.get(context);
+    WebServer webServer = context.sure(WebServer.class);
     final String accessToken = TokenHelper.createToken(webServer.createEncryption(), user, expireAt);
     return ImmutableMap.<String, String>builder()
         .put(Constants.HEADER_AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)

@@ -7,8 +7,9 @@
  */
 package svnserver.ext.web.server;
 
-import org.apache.http.HttpHeaders;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
@@ -28,7 +29,6 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.Shared;
 import svnserver.context.SharedContext;
-import svnserver.ext.web.config.WebServerConfig;
 import svnserver.ext.web.token.EncryptionFactory;
 import svnserver.ext.web.token.TokenHelper;
 
@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -61,54 +62,57 @@ public final class WebServer implements Shared {
   private static final Logger log = Loggers.web;
   @NotNull
   private final SharedContext context;
-  @Nullable
+  @NotNull
   private final Server server;
   @Nullable
   private final ServletHandler handler;
   @NotNull
-  private final WebServerConfig config;
-  @NotNull
   private final EncryptionFactory tokenFactory;
   @NotNull
   private final List<Holder> servlets = new CopyOnWriteArrayList<>();
+  @Nullable
+  private URI baseUrl;
 
-  public WebServer(@NotNull SharedContext context, @Nullable Server server, @NotNull WebServerConfig config, @NotNull EncryptionFactory tokenFactory) {
+  public WebServer(@NotNull SharedContext context, @NotNull Server server, @Nullable URL baseUrl, @NotNull EncryptionFactory tokenFactory) throws URISyntaxException {
     this.context = context;
     this.server = server;
-    this.config = config;
+    this.baseUrl = baseUrl == null ? null : baseUrl.toURI();
     this.tokenFactory = tokenFactory;
-    if (server != null) {
-      final ServletContextHandler contextHandler = new ServletContextHandler();
-      contextHandler.setContextPath("/");
-      handler = contextHandler.getServletHandler();
+    final ServletContextHandler contextHandler = new ServletContextHandler();
+    contextHandler.setContextPath("/");
+    handler = contextHandler.getServletHandler();
 
-      final RequestLogHandler logHandler = new RequestLogHandler();
-      logHandler.setRequestLog((request, response) -> {
-        final User user = (User) request.getAttribute(User.class.getName());
-        final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
-        log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
-      });
+    final RequestLogHandler logHandler = new RequestLogHandler();
+    logHandler.setRequestLog((request, response) -> {
+      final User user = (User) request.getAttribute(User.class.getName());
+      final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
+      log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
+    });
 
-      final HandlerCollection handlers = new HandlerCollection();
-      handlers.addHandler(contextHandler);
-      handlers.addHandler(logHandler);
-      server.setHandler(handlers);
-    } else {
-      handler = null;
-    }
-  }
-
-  @NotNull
-  public static WebServer get(@NotNull SharedContext context) {
-    return context.getOrCreate(WebServer.class, () -> new WebServer(context, null, new WebServerConfig(), JsonWebEncryption::new));
+    final HandlerCollection handlers = new HandlerCollection();
+    handlers.addHandler(contextHandler);
+    handlers.addHandler(logHandler);
+    server.setHandler(handlers);
   }
 
   @Override
-  public void ready(@NotNull SharedContext context) throws IOException {
+  public void init(@NotNull SharedContext context) throws IOException {
     try {
-      if (server != null) {
-        server.start();
+      server.start();
+
+      if (baseUrl == null) {
+        for (Connector connector : server.getConnectors()) {
+          if (connector instanceof ServerConnector) {
+            final ServerConnector serverConnector = (ServerConnector) connector;
+            baseUrl = URI.create(String.format("http://%s:%s/", serverConnector.getHost(), serverConnector.getLocalPort()));
+            break;
+          }
+        }
       }
+
+      if (baseUrl == null)
+        throw new IllegalArgumentException("Failed to determine baseUrl (no web connectors?)");
+
     } catch (Exception e) {
       throw new IOException("Can't start http server", e);
     }
@@ -116,10 +120,8 @@ public final class WebServer implements Shared {
 
   @Override
   public void close() throws Exception {
-    if (server != null) {
-      server.stop();
-      server.join();
-    }
+    server.stop();
+    server.join();
   }
 
   @NotNull
@@ -223,22 +225,19 @@ public final class WebServer implements Shared {
 
   @NotNull
   public URI getUrl(@NotNull HttpServletRequest req) {
-    if (config.getBaseUrl() != null)
-      return URI.create(config.getBaseUrl()).resolve(req.getRequestURI());
-
-    String host = req.getHeader(HttpHeaders.HOST);
-    if (host == null)
-      host = req.getServerName() + ":" + req.getServerPort();
-
-    return URI.create(req.getScheme() + "://" + host + req.getRequestURI());
+    return getBaseUrl().resolve(req.getRequestURI());
   }
 
   @NotNull
-  public URL getUrl(@NotNull URL baseUri) throws MalformedURLException {
-    if (config.getBaseUrl() != null)
-      return URI.create(config.getBaseUrl()).resolve(baseUri.getPath()).toURL();
+  public URI getBaseUrl() {
+    if (baseUrl == null)
+      throw new IllegalStateException();
+    return baseUrl;
+  }
 
-    return baseUri;
+  @NotNull
+  public URL toUrl(@NotNull String path) throws MalformedURLException {
+    return getBaseUrl().resolve(path).toURL();
   }
 
   public void sendError(@NotNull HttpServletRequest req, @NotNull HttpServletResponse resp, @NotNull ServerError error) throws IOException {

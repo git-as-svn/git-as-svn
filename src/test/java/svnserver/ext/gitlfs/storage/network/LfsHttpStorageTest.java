@@ -16,9 +16,6 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jgit.util.Holder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +50,6 @@ import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
 import svnserver.ext.web.config.WebServerConfig;
 import svnserver.ext.web.server.WebServer;
-import svnserver.ext.web.token.EncryptionFactoryAes;
 import svnserver.repository.VcsAccess;
 
 import java.io.File;
@@ -76,31 +72,27 @@ public final class LfsHttpStorageTest {
 
   @Test
   public void commitToRemoteLfs() throws Exception {
-    // Create web server
-    final ServerConnector http = createJettyServer();
-    final Server jetty = http.getServer();
     // Create users
     final LocalUserDB users = new LocalUserDB();
     final User user = users.add(SvnTestServer.USER_NAME, "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.emptyList());
-    sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
-    sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
-    sharedContext.add(UserDB.class, users);
-    sharedContext.ready();
-    // Create local context
-    LocalContext localContext = new LocalContext(sharedContext, "example");
+    try (SharedContext sharedContext = SharedContext.create(new File("/tmp"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
+      final WebServer webServer = sharedContext.sure(WebServer.class);
+      sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
+      sharedContext.add(UserDB.class, users);
+      sharedContext.ready();
+      // Create local context
+      LocalContext localContext = new LocalContext(sharedContext, "example");
 
-    localContext.add(VcsAccess.class, new VcsAccessEveryone());
+      localContext.add(VcsAccess.class, new VcsAccessEveryone());
 
-    final LfsMemoryStorage backendStorage = new LfsMemoryStorage();
-    localContext.add(LfsStorage.class, backendStorage);
-    // Register storage
-    sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
+      final LfsMemoryStorage backendStorage = new LfsMemoryStorage();
+      localContext.add(LfsStorage.class, backendStorage);
+      // Register storage
+      sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
 
-    try {
-      final URI url = URI.create(String.format("http://%s:%s/example.git/%s", http.getHost(), http.getLocalPort(), LfsServer.SERVLET_AUTH));
+      final URI url = webServer.getBaseUrl().resolve("example.git/").resolve(LfsServer.SERVLET_AUTH);
 
       try (SvnTestServer server = SvnTestServer.createEmpty(null, false, false, new GitAsSvnLfsHttpStorage(url))) {
         final SVNRepository svnRepository = server.openSvnRepository();
@@ -132,47 +124,30 @@ public final class LfsHttpStorageTest {
         Assert.assertEquals(lock.getPath(), "/1.txt");
         Assert.assertNotNull(lock.getID());
         Assert.assertEquals(lock.getOwner(), SvnTestServer.USER_NAME);
-
       }
-    } finally {
-      jetty.stop();
     }
-  }
-
-  @NotNull
-  private ServerConnector createJettyServer() {
-    final Server server = new Server();
-    ServerConnector http = new ServerConnector(server, new HttpConnectionFactory());
-    http.setPort(0);
-    http.setHost("127.0.1.1");
-    server.addConnector(http);
-    return http;
   }
 
   @Test
   public void server() throws Exception {
-    // Create web server
-    final ServerConnector http = createJettyServer();
-    final Server jetty = http.getServer();
     // Create users
     final LocalUserDB users = new LocalUserDB();
     final User user = users.add("test", "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    final SharedContext sharedContext = SharedContext.create(new File("/tmp"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.emptyList());
-    sharedContext.add(WebServer.class, new WebServer(sharedContext, jetty, new WebServerConfig(), new EncryptionFactoryAes("secret")));
-    sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
-    sharedContext.add(UserDB.class, users);
-    sharedContext.ready();
-    // Create local context
-    LocalContext localContext = new LocalContext(sharedContext, "example");
-    localContext.add(VcsAccess.class, new VcsAccessNoAnonymous());
-    localContext.add(LfsStorage.class, new LfsMemoryStorage());
-    // Register storage
-    sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
+    try (SharedContext sharedContext = SharedContext.create(new File("/nonexistent"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
+      final WebServer webServer = sharedContext.sure(WebServer.class);
+      sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
+      sharedContext.add(UserDB.class, users);
+      sharedContext.ready();
+      // Create local context
+      LocalContext localContext = new LocalContext(sharedContext, "example");
+      localContext.add(VcsAccess.class, new VcsAccessNoAnonymous());
+      localContext.add(LfsStorage.class, new LfsMemoryStorage());
+      // Register storage
+      sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
 
-    try {
-      final URI url = URI.create(String.format("http://%s:%s/example.git/%s", http.getHost(), http.getLocalPort(), LfsServer.SERVLET_AUTH));
+      final URI url = webServer.getBaseUrl().resolve("example.git/").resolve(LfsServer.SERVLET_AUTH);
       final LfsHttpStorage storage = new GitAsSvnLfsHttpStorage(url);
 
       // Check file is not exists
@@ -193,8 +168,6 @@ public final class LfsHttpStorageTest {
       try (final InputStream stream = reader.openStream()) {
         Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
       }
-    } finally {
-      jetty.stop();
     }
   }
 

@@ -14,22 +14,79 @@ This includes:
  * Automatic discovery of new repositories created in GitLab
  * Running GitLab repository hooks if any installed
 
+== Configuration
+
+. Change `userDB` to `!gitlabUsers`. This will tell git-as-svn to authenticate users against GitLab server:
++
+[source,yaml]
+----
+userDB: !gitlabUsers {}
+----
+
+. Builtin git-as-svn webserver needs to be configured via `!web` (builtin ) shared`.
++
+[source,yaml]
+----
+shared:
+  - !web
+
+    # git-as-svn base url. Leave empty for autodetect.
+    # Default: empty
+    #
+    # baseUrl: http://localhost:8123/
+
+    listen:
+      - !http {
+
+        # The network interface where git-as-svn web server binds to as an IP address or a hostname.  If 0.0.0.0, then bind to all interfaces.
+        # Default: localhost
+        #
+        # host: localhost
+
+        # Port where git-as-svn web server listens on.
+        # Default: 8123
+        #
+        # port: 8123
+
+        # Tells git-as-svn to handle X-Forwarded-* headers.
+        # Enable this if git-as-svn web server is running behind reverse HTTP proxy (like nginx)
+        # Default: false
+        #
+        # forwarded: false
+      }
+----
+
+. Configure GitLab address and token:
++
+[source,yaml]
+----
+shared:
+  - !gitlab {
+
+    # GitLab base URL
+    # Default: http://localhost:3000/
+    #
+    # url: http://localhost:3000/
+
+    # Tells git-as-svn to use GitLab for LFS objects and file locking
+    # Default: true
+    #
+    # lfs: true
+
+    # GitLab access token. Note that git-as-svn requires sudo access.
+    token: <GitLab Access Token>
+  }
+----
+
 IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[access token]
 
 IMPORTANT: git-as-svn uses direct file access to Git repositories, so it needs to run
 from the same user as GitLab
 
-== Configuration file example
+== Full configuration file example
 
 ./etc/git-as-svn/git-as-svn.conf
 [source,yaml]
 ----
 include::examples/config-gitlab.yml[]
 ----
-
-== Adding a SVN-link to GitLab interface
-
-To add a SVN-link to GitLab interface need to take latest commit of
-branch https://github.com/bozaro/gitlabhq/commits/svn_url.
-
-image:images/gitlab_svn_url.png[image]

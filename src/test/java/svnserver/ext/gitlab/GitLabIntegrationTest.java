@@ -38,6 +38,7 @@ import svnserver.ext.gitlab.config.GitLabToken;
 import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.ext.web.config.WebServerConfig;
 import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
@@ -161,7 +162,7 @@ public final class GitLabIntegrationTest {
   @NotNull
   private SvnTestServer createServer(@NotNull GitLabToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GitLabConfig gitLabConfig = new GitLabConfig(gitlabUrl, token);
-    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, false, gitLabConfig);
+    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, false, gitLabConfig, new WebServerConfig());
   }
 
   @Test
