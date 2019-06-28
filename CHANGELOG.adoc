@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.15.0
 
  * Now groups can be defined to contain other groups for path-based authorization
  * JGit updated to 5.4.0
