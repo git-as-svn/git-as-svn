@@ -85,7 +85,7 @@ dependencies {
     compile("org.ini4j:ini4j:0.5.4")
     compile("org.mapdb:mapdb:3.0.7")
     compile("com.unboundid:unboundid-ldapsdk:4.0.11")
-    compile("org.eclipse.jetty:jetty-servlet:9.4.18.v20190429")
+    compile("org.eclipse.jetty:jetty-servlet:9.4.19.v20190610")
     compile("org.gitlab:java-gitlab-api:4.1.0")
     compile("org.bitbucket.b_c:jose4j:0.6.5")
     compile("com.github.zeripath:java-gitea-api:1.7.4")

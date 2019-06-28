@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+ * Update Jetty to 9.4.19
+
 == 1.15.0
 
  * Now groups can be defined to contain other groups for path-based authorization
