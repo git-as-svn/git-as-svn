@@ -22,6 +22,7 @@ public final class ListenHttpConfig implements ListenConfig {
   private String host = "localhost";
   private int port = 8123;
   private boolean forwarded = false;
+  private long idleTimeout = -1;
 
   @NotNull
   @Override
@@ -33,7 +34,10 @@ public final class ListenHttpConfig implements ListenConfig {
     final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(config));
     http.setPort(port);
     http.setHost(host);
-    http.setIdleTimeout(30000);
+
+    if (idleTimeout >= 0)
+      http.setIdleTimeout(idleTimeout);
+
     return http;
   }
 }
