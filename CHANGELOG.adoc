@@ -12,7 +12,7 @@ endif::[]
  * JGit updated to 5.4.0
  * UnboundID LDAP SDK updated to 4.0.11
  * google-oauth-client updated to 1.30.1
- * Remove `hookUrl` from `!gitlab` section. Instead, if you're using GitLab, you're required to set`baseUrl` in `!web` section
+ * Remove `hookUrl` from `!gitlab` section, it is now automatically determined from `baseUrl` in `!web` section.
 
 == 1.14.0
 
