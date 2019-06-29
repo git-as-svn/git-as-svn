@@ -112,11 +112,11 @@ public final class ACL implements VcsAccess {
   private void addAclEntry(@NotNull String path, @NotNull String entryString, @NotNull AccessMode accessMode, @NotNull Set<String> allGroups) {
     final ACLEntry entry;
     if (entryString.equals(EveryoneMarker))
-      entry = EveryoneACLEntry.instance;
+      entry = EveryoneACLEntry.Instance;
     else if (entryString.equals(AnonymousMarker))
-      entry = AnonymousACLEntry.instance;
+      entry = AnonymousACLEntry.Instance;
     else if (entryString.equals(AuthenticatedMarker))
-      entry = AuthenticatedACLEntry.instance;
+      entry = AuthenticatedACLEntry.Instance;
     else if (entryString.startsWith(GroupPrefix)) {
       final String group = entryString.substring(GroupPrefix.length());
 
@@ -212,31 +212,35 @@ public final class ACL implements VcsAccess {
     }
   }
 
-  private interface ACLEntry {
-    boolean matches(@NotNull User user);
-  }
-
-  private static final class EveryoneACLEntry implements ACLEntry {
-    @NotNull
-    private static final ACLEntry instance = new EveryoneACLEntry();
-
-    private EveryoneACLEntry() {
-    }
+  private enum EveryoneACLEntry implements ACLEntry {
+    Instance;
 
     @Override
     public boolean matches(@NotNull User user) {
       return true;
     }
+  }
+
+  private enum AnonymousACLEntry implements ACLEntry {
+    Instance;
 
     @Override
-    public int hashCode() {
-      return getClass().hashCode();
+    public boolean matches(@NotNull User user) {
+      return user.isAnonymous();
     }
+  }
+
+  private enum AuthenticatedACLEntry implements ACLEntry {
+    Instance;
 
     @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof EveryoneACLEntry;
+    public boolean matches(@NotNull User user) {
+      return !user.isAnonymous();
     }
+  }
+
+  private interface ACLEntry {
+    boolean matches(@NotNull User user);
   }
 
   private static final class UserACLEntry implements ACLEntry {
@@ -260,52 +264,6 @@ public final class ACL implements VcsAccess {
     @Override
     public boolean equals(@Nullable Object o) {
       return o instanceof UserACLEntry && user.equals(((UserACLEntry) o).user);
-    }
-  }
-
-  private static final class AnonymousACLEntry implements ACLEntry {
-    @NotNull
-    private static final ACLEntry instance = new AnonymousACLEntry();
-
-    private AnonymousACLEntry() {
-    }
-
-    @Override
-    public boolean matches(@NotNull User user) {
-      return user.isAnonymous();
-    }
-
-    @Override
-    public int hashCode() {
-      return getClass().hashCode();
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof AnonymousACLEntry;
-    }
-  }
-
-  private static final class AuthenticatedACLEntry implements ACLEntry {
-    @NotNull
-    private static final ACLEntry instance = new AuthenticatedACLEntry();
-
-    private AuthenticatedACLEntry() {
-    }
-
-    @Override
-    public boolean matches(@NotNull User user) {
-      return !user.isAnonymous();
-    }
-
-    @Override
-    public int hashCode() {
-      return getClass().hashCode();
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      return o instanceof AuthenticatedACLEntry;
     }
   }
 
