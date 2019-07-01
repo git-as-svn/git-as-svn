@@ -90,7 +90,7 @@ dependencies {
     compile("org.bitbucket.b_c:jose4j:0.6.5")
     compile("com.github.zeripath:java-gitea-api:1.7.4")
 
-    val gitLfsJava = "0.13.2"
+    val gitLfsJava = "0.13.3"
     compile("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
@@ -104,7 +104,7 @@ dependencies {
     compile(classindex)
     annotationProcessor(classindex)
 
-    runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.11.2")
+    runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.0")
 
     testCompile("org.testcontainers:testcontainers:1.11.3")
     testCompile("org.testng:testng:6.14.3")
