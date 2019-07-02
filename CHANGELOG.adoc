@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.16.0
 
  * Update Jetty to 9.4.19
  * Update Log4j to 2.12.0
