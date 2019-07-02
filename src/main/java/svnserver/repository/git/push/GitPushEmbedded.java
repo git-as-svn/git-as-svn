@@ -28,6 +28,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static org.eclipse.jgit.lib.ConfigConstants.CONFIG_CORE_SECTION;
+
 /**
  * Git push mode.
  *
@@ -75,7 +77,7 @@ public final class GitPushEmbedded implements GitPusher {
     }
   }
 
-  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull SVNErrorCode svnErrorCode, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
+  private void runReceiveHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @NotNull SVNErrorCode svnErrorCode, @Nullable String hook, @NotNull User userInfo) throws SVNException {
     runHook(repository, svnErrorCode, hook, userInfo, processBuilder -> {
       final Process process = processBuilder.start();
       try (Writer stdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {
@@ -90,22 +92,16 @@ public final class GitPushEmbedded implements GitPusher {
     });
   }
 
-  private void runUpdateHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @Nullable String hook, @NotNull User userInfo) throws IOException, SVNException {
-    runHook(repository, SVNErrorCode.REPOS_HOOK_FAILURE, hook, userInfo, processBuilder -> {
-      processBuilder.command().addAll(Arrays.asList(
-          refUpdate.getName(),
-          getObjectId(refUpdate.getOldObjectId()),
-          getObjectId(refUpdate.getNewObjectId())
-      ));
-      return processBuilder.start();
-    });
-  }
-
-  private void runHook(@NotNull Repository repository, @NotNull SVNErrorCode hookErrorCode, @Nullable String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws IOException, SVNException {
-    if (hook == null || hook.isEmpty()) {
+  private void runHook(@NotNull Repository repository, @NotNull SVNErrorCode hookErrorCode, @Nullable String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws SVNException {
+    if (hook == null || hook.isEmpty())
       return;
-    }
-    final File script = ConfigHelper.joinPath(ConfigHelper.joinPath(repository.getDirectory(), "hooks"), hook);
+
+    String hooksPath = repository.getConfig().getString(CONFIG_CORE_SECTION, null, "hooksPath");
+    if (hooksPath == null)
+      hooksPath = "hooks";
+
+    final File hooksDir = ConfigHelper.joinPath(repository.getDirectory(), hooksPath);
+    final File script = ConfigHelper.joinPath(hooksDir, hook);
 
     final long startTime = System.currentTimeMillis();
     if (script.isFile()) {
@@ -118,12 +114,13 @@ public final class GitPushEmbedded implements GitPusher {
       context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
       context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
 
-      final Process process = runner.exec(processBuilder);
-
-      // Prevent hanging if hook tries to read from stdin
-      process.getOutputStream().close();
-
+      Process process = null;
       try {
+        process = runner.exec(processBuilder);
+
+        // Prevent hanging if hook tries to read from stdin
+        process.getOutputStream().close();
+
         final String hookMessage;
         try (Reader stdout = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
           hookMessage = CharStreams.toString(stdout);
@@ -133,16 +130,28 @@ public final class GitPushEmbedded implements GitPusher {
         if (exitCode != 0) {
           throw new SVNException(SVNErrorMessage.create(hookErrorCode, String.format("Hook %s failed with output:\n%s", script.getAbsolutePath(), hookMessage)));
         }
-      } catch (InterruptedException e) {
-        log.error("Hook interrupted: " + script.getAbsolutePath(), e);
+      } catch (InterruptedException | IOException e) {
+        log.error("Hook failed: " + script.getAbsolutePath(), e);
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
       } finally {
         final long endTime = System.currentTimeMillis();
         log.info("{} hook for repository {} took {}ms", hook, repository.toString(), (endTime - startTime));
 
-        process.destroyForcibly();
+        if (process != null)
+          process.destroyForcibly();
       }
     }
+  }
+
+  private void runUpdateHook(@NotNull Repository repository, @NotNull RefUpdate refUpdate, @Nullable String hook, @NotNull User userInfo) throws SVNException {
+    runHook(repository, SVNErrorCode.REPOS_HOOK_FAILURE, hook, userInfo, processBuilder -> {
+      processBuilder.command().addAll(Arrays.asList(
+          refUpdate.getName(),
+          getObjectId(refUpdate.getOldObjectId()),
+          getObjectId(refUpdate.getNewObjectId())
+      ));
+      return processBuilder.start();
+    });
   }
 
   @NotNull
