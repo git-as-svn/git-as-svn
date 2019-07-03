@@ -8,7 +8,6 @@
 package svnserver.repository.git.push;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import svnserver.config.GitPusherConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.LocalContext;
@@ -22,16 +21,10 @@ import svnserver.context.LocalContext;
 public class GitPushEmbeddedConfig implements GitPusherConfig {
   @NotNull
   public static final GitPushEmbeddedConfig instance = new GitPushEmbeddedConfig();
-  @Nullable
-  private String preReceive = "pre-receive";
-  @Nullable
-  private String postReceive = "post-receive";
-  @Nullable
-  private String update = "update";
 
   @NotNull
   @Override
   public GitPusher create(@NotNull LocalContext context) {
-    return new GitPushEmbedded(context, preReceive, postReceive, update);
+    return new GitPushEmbedded(context);
   }
 }
