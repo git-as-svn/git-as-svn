@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.push;
 
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -41,9 +42,17 @@ public final class GitPushEmbedded implements GitPusher {
 
   @NotNull
   private final LocalContext context;
+  @Nullable
+  private final String hooksPathOverride;
 
-  public GitPushEmbedded(@NotNull LocalContext context) {
+  public GitPushEmbedded(@NotNull LocalContext context, @Nullable String hooksPathOverride) {
     this.context = context;
+    this.hooksPathOverride = hooksPathOverride;
+  }
+
+  @NotNull
+  private static String getObjectId(@Nullable ObjectId objectId) {
+    return objectId == null ? ObjectId.zeroId().getName() : objectId.getName();
   }
 
   @Override
@@ -95,14 +104,12 @@ public final class GitPushEmbedded implements GitPusher {
   }
 
   private void runHook(@NotNull Repository repository, @NotNull SVNErrorCode hookErrorCode, @NotNull String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws SVNException {
-    String hooksPath = repository.getConfig().getString(CONFIG_CORE_SECTION, null, "hooksPath");
-    if (hooksPath == null)
-      hooksPath = "hooks";
-
     final File repositoryDir = repository.getDirectory();
     if (repositoryDir == null)
+      // We don't have a dir where to run the hook :(
       return;
 
+    final String hooksPath = getHooksPath(repository);
     final File hooksDir = ConfigHelper.joinPath(repositoryDir, hooksPath);
     final File script = ConfigHelper.joinPath(hooksDir, hook);
 
@@ -148,8 +155,15 @@ public final class GitPushEmbedded implements GitPusher {
   }
 
   @NotNull
-  private static String getObjectId(@Nullable ObjectId objectId) {
-    return objectId == null ? ObjectId.zeroId().getName() : objectId.getName();
+  private String getHooksPath(@NotNull Repository repository) {
+    if (!Strings.isNullOrEmpty(hooksPathOverride))
+      return hooksPathOverride;
+
+    final String hooksPathFromConfig = repository.getConfig().getString(CONFIG_CORE_SECTION, null, "hooksPath");
+    if (!Strings.isNullOrEmpty(hooksPathFromConfig))
+      return hooksPathFromConfig;
+
+    return "hooks";
   }
 
   @FunctionalInterface
