@@ -159,6 +159,12 @@ public final class LfsHttpStorageTest {
         Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       }
 
+      // Write new file AGAIN
+      try (final LfsWriter writer = storage.getWriter(user)) {
+        writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
+        Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+      }
+
       // Read old file.
       final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", user);
       Assert.assertNotNull(reader);

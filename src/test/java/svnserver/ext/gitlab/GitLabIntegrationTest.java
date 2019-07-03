@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab;
 
+import org.apache.commons.io.IOUtils;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
@@ -26,7 +27,6 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import svnserver.StreamHelper;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.auth.User;
@@ -189,22 +189,29 @@ public final class GitLabIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
-    final @NotNull LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword);
-    final String expected = "hello 12345";
+    final LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword);
+    final User user = User.create(root, root, root, root);
+
+    checkUpload(storage, user);
+    checkUpload(storage, user);
+  }
+
+  public static void checkUpload(@NotNull LfsStorage storage, @NotNull User user) throws IOException {
+    final byte[] expected = "hello 12345".getBytes(StandardCharsets.UTF_8);
 
     final String oid;
-    try (LfsWriter writer = storage.getWriter(User.create(root, root, root, root))) {
-      writer.write(expected.getBytes(StandardCharsets.UTF_8));
+    try (LfsWriter writer = storage.getWriter(user)) {
+      writer.write(expected);
       oid = writer.finish(null);
     }
 
-    final byte[] buff = new byte[10240];
-    final int length;
+    Assert.assertEquals(oid, "sha256:5d54606feae97935feeb6dfb8194cf7961d504609689e4a44d86dbeafb91cb18");
+
+    final byte[] actual;
     try (@NotNull InputStream reader = storage.getReader(oid).openStream()) {
-      length = StreamHelper.readFully(reader, buff, 0, buff.length);
+      actual = IOUtils.toByteArray(reader);
     }
 
-    final String actual = new String(buff, 0, length, StandardCharsets.UTF_8);
     Assert.assertEquals(actual, expected);
   }
 

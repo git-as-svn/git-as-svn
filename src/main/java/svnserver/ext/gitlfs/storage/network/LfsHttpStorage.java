@@ -70,8 +70,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
       if (batchItem.getError() != null)
         throw new IOException(String.format("LFS error[%s]: %s", batchItem.getError().getCode(), batchItem.getError().getMessage()));
 
-      if (!lfsClient.putObject(streamProvider, batchItem, batchItem))
-        throw new IOException("Failed to upload LFS object");
+      lfsClient.putObject(streamProvider, batchItem, batchItem);
     }
   }
 
