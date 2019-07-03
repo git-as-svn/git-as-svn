@@ -14,15 +14,10 @@ repositoryMapping: !listMapping
           '*': r
           '@developers': rw
       repository:
-        pusher: !pushEmbedded
-          update: update
-          preReceive: pre-receive
-          postReceive: post-receive
         createMode: EXAMPLE
         branches:
           - master
         path: ../../../build/example.git
-        renameDetection: true
 
 shared:
   - !submodules [

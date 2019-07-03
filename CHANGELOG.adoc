@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+ * Drop ability to configure custom hook names in `!pushEmbedded` because Git doesn't have such feature.
+
 == 1.16.0
 
  * Update Jetty to 9.4.19
