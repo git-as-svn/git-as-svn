@@ -31,7 +31,6 @@ import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import svnserver.StreamHelper;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.TestHelper;
@@ -41,13 +40,11 @@ import svnserver.ext.gitea.config.GiteaConfig;
 import svnserver.ext.gitea.config.GiteaContext;
 import svnserver.ext.gitea.config.GiteaToken;
 import svnserver.ext.gitea.mapping.GiteaMappingConfig;
+import svnserver.ext.gitlab.GitLabIntegrationTest;
 import svnserver.ext.gitlfs.storage.LfsStorage;
-import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
 /**
@@ -201,22 +198,10 @@ public final class GiteaIntegrationTest {
       throw new SkipException("LFS testing is disabled");
 
     final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
-    final String expected = "hello 12345";
+    final svnserver.auth.User user = svnserver.auth.User.create(administrator, administrator, administrator, administrator);
 
-    final String oid;
-    try (LfsWriter writer = storage.getWriter(svnserver.auth.User.create(administrator, administrator, administrator, administrator))) {
-      writer.write(expected.getBytes(StandardCharsets.UTF_8));
-      oid = writer.finish(null);
-    }
-
-    final byte[] buff = new byte[10240];
-    final int length;
-    try (@NotNull InputStream reader = storage.getReader(oid).openStream()) {
-      length = StreamHelper.readFully(reader, buff, 0, buff.length);
-    }
-
-    final String actual = new String(buff, 0, length, StandardCharsets.UTF_8);
-    Assert.assertEquals(actual, expected);
+    GitLabIntegrationTest.checkUpload(storage, user);
+    GitLabIntegrationTest.checkUpload(storage, user);
   }
 
   // Tests

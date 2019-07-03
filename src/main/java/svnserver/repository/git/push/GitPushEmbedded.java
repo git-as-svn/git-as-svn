@@ -99,7 +99,11 @@ public final class GitPushEmbedded implements GitPusher {
     if (hooksPath == null)
       hooksPath = "hooks";
 
-    final File hooksDir = ConfigHelper.joinPath(repository.getDirectory(), hooksPath);
+    final File repositoryDir = repository.getDirectory();
+    if (repositoryDir == null)
+      return;
+
+    final File hooksDir = ConfigHelper.joinPath(repositoryDir, hooksPath);
     final File script = ConfigHelper.joinPath(hooksDir, hook);
 
     final long startTime = System.currentTimeMillis();
@@ -107,7 +111,7 @@ public final class GitPushEmbedded implements GitPusher {
       return;
 
     final ProcessBuilder processBuilder = new ProcessBuilder(script.getAbsolutePath())
-        .directory(repository.getDirectory())
+        .directory(repositoryDir)
         .redirectErrorStream(true);
 
     processBuilder.environment().put("LANG", "en_US.utf8");
