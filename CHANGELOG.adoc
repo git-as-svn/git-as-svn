@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.18.0
 
  * Add option to expose user-defined branches for GitLab. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#_configuration[GitLab configuration] documentation. #188
  * `repositoryTags` is no longer supported for `!gitlabMapping`
