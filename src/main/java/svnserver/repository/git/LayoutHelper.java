@@ -52,7 +52,7 @@ public final class LayoutHelper {
   private static final String PREFIX_ANONIMOUS = "unnamed/";
 
   @NotNull
-  static Ref initRepository(@NotNull Repository repository, String branch) throws IOException {
+  static Ref initRepository(@NotNull Repository repository, @NotNull String branch) throws IOException {
     Ref ref = repository.exactRef(PREFIX_REF + branch);
     if (ref == null) {
       Ref old = repository.exactRef(OLD_CACHE_REF);

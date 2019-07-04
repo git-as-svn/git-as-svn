@@ -78,16 +78,21 @@ public final class GitRepositoryConfig {
 
   @NotNull
   public GitRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
+    return create(context, fullPath, branches);
+  }
+
+  @NotNull
+  public GitRepository create(@NotNull LocalContext context, @NotNull File fullPath, @NotNull Set<String> branches) throws IOException {
     context.add(GitLocation.class, new GitLocation(fullPath));
 
     final LfsStorage lfsStorage = LfsStorageFactory.tryCreateStorage(context);
-    final Repository git = createRepository(context, fullPath);
+    final Repository git = createGit(context, fullPath);
 
     return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection);
   }
 
   @NotNull
-  private Repository createRepository(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
+  private Repository createGit(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
     if (!fullPath.exists()) {
       log.info("[{}]: storage {} not found, create mode: {}", context.getName(), fullPath, createMode);
       return createMode.createRepository(fullPath, branches);

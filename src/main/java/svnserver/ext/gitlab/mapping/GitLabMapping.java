@@ -42,6 +42,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -51,11 +53,11 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 final class GitLabMapping implements RepositoryMapping<GitLabProject> {
   @NotNull
+  private static final String tagPrefix = "git-as-svn:";
+  @NotNull
   private static final Logger log = Loggers.gitlab;
-
   @NotNull
   private static final String HASHED_PATH = "@hashed";
-
   @NotNull
   private final NavigableMap<String, GitLabProject> mapping = new ConcurrentSkipListMap<>();
   @NotNull
@@ -77,45 +79,55 @@ final class GitLabMapping implements RepositoryMapping<GitLabProject> {
 
   @Nullable
   GitLabProject updateRepository(@NotNull GitlabProject project) throws IOException {
-    if (!tagsMatch(project)) {
+    final Set<String> branches = getBranchesToExpose(project);
+    if (branches.isEmpty()) {
       removeRepository(project.getId(), project.getPathWithNamespace());
       return null;
     }
 
-    final String projectName = project.getPathWithNamespace();
-    final String projectKey = StringHelper.normalizeDir(projectName);
+    final String projectKey = StringHelper.normalizeDir(project.getPathWithNamespace());
     final GitLabProject oldProject = mapping.get(projectKey);
-    if (oldProject == null || oldProject.getProjectId() != project.getId()) {
-      final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
-      final String sha256 = Hashing.sha256().hashString(project.getId().toString(), Charset.defaultCharset()).toString();
-      File repoPath = Paths.get(basePath.toString(), HASHED_PATH, sha256.substring(0, 2), sha256.substring(2, 4), sha256 + ".git").toFile();
-      if (!repoPath.exists())
-        repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
-      final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
-      local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));
-      final GitRepository repository = config.getTemplate().create(local, repoPath);
-      final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
-      if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {
-        return newProject;
-      }
+
+    if (oldProject != null && oldProject.getRepository().getBranches().keySet().equals(branches) && oldProject.getProjectId() == project.getId())
+      // Old project is good enough already
+      return oldProject;
+
+    // TODO: do not drop entire repo here, instead only apply diff - add missing branches and remove unneeded
+    removeRepository(project.getId(), project.getPathWithNamespace());
+
+    final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
+    final String sha256 = Hashing.sha256().hashString(project.getId().toString(), Charset.defaultCharset()).toString();
+    File repoPath = Paths.get(basePath.toString(), HASHED_PATH, sha256.substring(0, 2), sha256.substring(2, 4), sha256 + ".git").toFile();
+    if (!repoPath.exists())
+      repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
+    final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
+    local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));
+    final GitRepository repository = config.getTemplate().create(local, repoPath, branches);
+    final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
+    if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {
+      return newProject;
     }
     return null;
   }
 
-  private boolean tagsMatch(@NotNull GitlabProject project) {
-    if (config.getRepositoryTags().isEmpty()) {
-      return true;
+  @NotNull
+  private static Set<String> getBranchesToExpose(@NotNull GitlabProject project) {
+    final Set<String> result = new TreeSet<>();
+    for (String tag : project.getTagList()) {
+      if (!tag.startsWith(tagPrefix))
+        continue;
+
+      final String branch = tag.substring(tagPrefix.length());
+      if (branch.isEmpty())
+        continue;
+
+      result.add(StringHelper.normalizeDir(branch));
     }
 
-    for (String tag : project.getTagList()) {
-      if (config.getRepositoryTags().contains(tag)) {
-        return true;
-      }
-    }
-    return false;
+    return result;
   }
 
-  void removeRepository(int projectId, @NotNull String projectName) {
+  private void removeRepository(int projectId, @NotNull String projectName) {
     final String projectKey = StringHelper.normalizeDir(projectName);
     final GitLabProject project = mapping.get(projectKey);
     if (project != null && project.getProjectId() == projectId) {
