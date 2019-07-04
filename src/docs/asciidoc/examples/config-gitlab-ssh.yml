@@ -45,8 +45,8 @@ repositoryMapping: !gitlabMapping
   # Common settings for all repositories exposed to svn://
   #
   # template:
-  #   branches:
-  #     - master
+  #   pusher: !pushEmbedded
+  #     hooksPath: <empty>
   #   renameDetection: true
 
 # Use GitLab user database

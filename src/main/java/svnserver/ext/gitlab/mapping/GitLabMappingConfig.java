@@ -21,8 +21,6 @@ import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -38,30 +36,18 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
   private String path;
   private int cacheTimeSec = 15;
   private int cacheMaximumSize = 1000;
-  @NotNull
-  private Set<String> repositoryTags;
 
   public GitLabMappingConfig() {
-    this("/var/git/repositories/", GitCreateMode.ERROR, Collections.emptySet());
+    this("/var/git/repositories/", GitCreateMode.ERROR);
   }
 
-  private GitLabMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode, @NotNull Set<String> repositoryTags) {
+  private GitLabMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode) {
     this.path = path;
     this.template = new GitRepositoryConfig(createMode);
-    this.repositoryTags = repositoryTags;
   }
 
   public GitLabMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
-    this(path.getAbsolutePath(), createMode, Collections.emptySet());
-  }
-
-  public GitLabMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode, @NotNull Set<String> repositoryTags) {
-    this(path.getAbsolutePath(), createMode, repositoryTags);
-  }
-
-  @NotNull
-  Set<String> getRepositoryTags() {
-    return repositoryTags;
+    this(path.getAbsolutePath(), createMode);
   }
 
   @NotNull

@@ -24,7 +24,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestHelper;
@@ -118,8 +117,8 @@ public final class GitLabIntegrationTest {
 
     Assert.assertNotNull(rootAPI.addGroupMember(group.getId(), gitlabUser.getId(), GitlabAccessLevel.Developer));
 
-    gitlabProject = createGitlabProject(rootAPI, group, "test", GitlabVisibility.INTERNAL, Collections.singleton("git-as-svn"));
-    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC, Collections.emptySet());
+    gitlabProject = createGitlabProject(rootAPI, group, "test", GitlabVisibility.INTERNAL, Collections.singleton("git-as-svn:master"));
+    gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC, Collections.singleton("git-as-svn:master"));
   }
 
   @NotNull
@@ -213,27 +212,6 @@ public final class GitLabIntegrationTest {
     }
 
     Assert.assertEquals(actual, expected);
-  }
-
-  @Test
-  void gitlabTagMappingPositive() throws Exception {
-    testTagMapping(gitlabProject);
-  }
-
-  private void testTagMapping(@NotNull GitlabProject project) throws Exception {
-    try (SvnTestServer server = createServer(rootToken, dir -> new GitLabMappingConfig(dir, GitCreateMode.EMPTY, Collections.singleton("git-as-svn")))) {
-      openSvnRepository(server, project, user, userPassword).getLatestRevision();
-    }
-  }
-
-  @Test
-  void gitlabTagMappingNegative() throws Exception {
-    try {
-      testTagMapping(gitlabPublicProject);
-    } catch (SVNException e) {
-      if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_SVN_REPOS_NOT_FOUND)
-        throw e;
-    }
   }
 
   @Test
