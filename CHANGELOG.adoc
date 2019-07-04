@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.17.0
 
  * Drop ability to configure custom hook names in `!pushEmbedded` because Git doesn't have such feature.
    Instead, add `hooksPath` option that works as an override to `core.hooksPath` Git configuration option.
