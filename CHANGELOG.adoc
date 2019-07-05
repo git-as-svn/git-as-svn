@@ -6,10 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.19.0
 
  * Add support for https://subversion.apache.org/docs/release-notes/1.10#lz4-over-the-wire[LZ4 compression].
    `compressionEnabled=true/false` option replaced with `compressionLevel=LZ4/Zlib/None`. #163
+ * Fix severe performance loss on commit. Broken in 1.8.0
 
 == 1.18.0
 
