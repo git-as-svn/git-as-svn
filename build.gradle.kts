@@ -40,12 +40,6 @@ java {
 }
 
 repositories {
-    maven("https://repository.mulesoft.org/nexus/content/repositories/public/") {
-        content {
-            includeGroup("org.tmatesoft.svnkit")
-        }
-    }
-
     jcenter()
 }
 
@@ -79,7 +73,7 @@ tasks.getByName<JavaExec>("run") {
 
 dependencies {
     compile("org.eclipse.jgit:org.eclipse.jgit:5.4.0.201906121030-r")
-    compile("org.tmatesoft.svnkit:svnkit:1.10.0")
+    compile("org.tmatesoft.svnkit:svnkit:1.10.1")
     compile("org.yaml:snakeyaml:1.24")
     compile("com.beust:jcommander:1.72")
     compile("org.ini4j:ini4j:0.5.4")

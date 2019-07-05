@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -88,6 +89,8 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
       if (reverse)
         Collections.reverse(history);
 
+      final SVNDeltaCompression compression = context.getCompression();
+
       for (int index = history.size() - 1; index >= 0; --index) {
         final GitFile oldFile = index <= history.size() - 2 ? history.get(index + 1) : null;
         final GitFile newFile = history.get(index);
@@ -115,7 +118,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
             @Override
             public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
               try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-                diffWindow.writeTo(stream, writeHeader, context.isCompressionEnabled());
+                diffWindow.writeTo(stream, writeHeader, compression);
                 writeHeader = false;
                 writer.binary(stream.toByteArray());
               } catch (IOException e) {

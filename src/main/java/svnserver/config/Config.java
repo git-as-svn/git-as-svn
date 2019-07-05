@@ -8,6 +8,7 @@
 package svnserver.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
 import svnserver.config.serializer.ConfigType;
 
 import java.util.ArrayList;
@@ -43,7 +44,8 @@ public final class Config {
   private int port = 3690;
 
   private boolean reuseAddress = false;
-  private boolean compressionEnabled = true;
+  @NotNull
+  private SVNDeltaCompression compressionLevel = SVNDeltaCompression.LZ4;
   private long shutdownTimeout = TimeUnit.SECONDS.toMillis(5);
   private boolean parallelIndexing = true;
 
@@ -114,11 +116,12 @@ public final class Config {
     return parallelIndexing;
   }
 
-  public boolean isCompressionEnabled() {
-    return compressionEnabled;
+  @NotNull
+  public SVNDeltaCompression getCompressionLevel() {
+    return compressionLevel;
   }
 
-  public void setCompressionEnabled(boolean compressionEnabled) {
-    this.compressionEnabled = compressionEnabled;
+  public void setCompressionLevel(@NotNull SVNDeltaCompression compressionLevel) {
+    this.compressionLevel = compressionLevel;
   }
 }

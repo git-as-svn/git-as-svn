@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -531,7 +532,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
             final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             try (InputStream source = openStream(oldFile);
                  InputStream target = newFile.openStream()) {
-              final boolean compress = context.isCompressionEnabled();
+              final SVNDeltaCompression compression = context.getCompression();
               final String validateMd5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
                 private boolean header = true;
 
@@ -542,7 +543,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
                 @Override
                 public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
                   try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-                    diffWindow.writeTo(stream, header, compress);
+                    diffWindow.writeTo(stream, header, compression);
                     header = false;
                     writer
                         .listBegin()
