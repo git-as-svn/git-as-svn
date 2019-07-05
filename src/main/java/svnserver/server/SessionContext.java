@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
 import svnserver.Loggers;
 import svnserver.StringHelper;
 import svnserver.auth.User;
@@ -101,8 +102,22 @@ public final class SessionContext {
     return StringHelper.normalize(path.substring(root.length()));
   }
 
-  public boolean isCompressionEnabled() {
-    return server.isCompressionEnabled() && capabilities.contains("svndiff1");
+  @NotNull
+  public SVNDeltaCompression getCompression() {
+    final SVNDeltaCompression serverCompression = server.getCompressionLevel();
+
+    switch (serverCompression) {
+      case LZ4:
+        if (capabilities.contains(SvnServer.svndiff2Capability))
+          return SVNDeltaCompression.LZ4;
+
+        // intentional fallthrough
+      case Zlib:
+        if (capabilities.contains(SvnServer.svndiff1Capability))
+          return SVNDeltaCompression.Zlib;
+    }
+
+    return SVNDeltaCompression.None;
   }
 
   public void authenticate(boolean allowAnonymous) throws IOException, SVNException {

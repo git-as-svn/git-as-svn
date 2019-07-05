@@ -15,10 +15,10 @@
 #
 # realm: git-as-svn realm
 
-# If enabled, git-as-svn compresses wire traffic
-# Default: true
+# Traffic compression level. Supported values: LZ4, Zlib, None
+# Default: LZ4
 #
-# compressionEnabled: true
+# compressionLevel: LZ4
 
 # If enabled, git-as-svn indexed repositories in parallel during startup
 # This results in higher memory usage so may require adjustments to JVM memory options

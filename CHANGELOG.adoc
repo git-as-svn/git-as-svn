@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+ * Add support for https://subversion.apache.org/docs/release-notes/1.10#lz4-over-the-wire[LZ4 compression].
+   `compressionEnabled=true/false` option replaced with `compressionLevel=LZ4/Zlib/None`. #163
+
 == 1.18.0
 
  * Add option to expose user-defined branches for GitLab. See https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html#_configuration[GitLab configuration] documentation. #188

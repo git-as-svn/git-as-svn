@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import svnserver.Loggers;
 import svnserver.auth.AnonymousAuthenticator;
@@ -52,12 +53,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnServer extends Thread {
+  @NotNull
+  static final String svndiff1Capability = "svndiff1";
+  @NotNull
+  static final String svndiff2Capability = "accepts-svndiff2";
   /**
    * {@link SVNCapability#GET_FILE_REVS_REVERSED is wrong.
    */
   @NotNull
   private static final String fileRevsReverseCapability = "file-revs-reverse";
-
   @NotNull
   private static final Logger log = Loggers.svn;
   private static final long FORCE_SHUTDOWN = TimeUnit.SECONDS.toMillis(5);
@@ -260,14 +264,21 @@ public final class SvnServer extends Thread {
         .listEnd()
         .listBegin();
 
-    if (config.isCompressionEnabled())
-      writer.word("svndiff1");         // We support svndiff1 (compression)
+    switch (config.getCompressionLevel()) {
+      case LZ4:
+        writer
+            .word(svndiff2Capability);
+        // fallthrough
+      case Zlib:
+        writer
+            .word(svndiff1Capability);
+        break;
+    }
 
     writer
         //.word(SVNCapability.COMMIT_REVPROPS.toString())
         .word(SVNCapability.DEPTH.toString())
         //.word(SVNCapability.PARTIAL_REPLAY.toString()) TODO: issue #237
-        //.word("accepts-svndiff2") TODO: issue #163
         .word("edit-pipeline")
         .word(SVNCapability.LOG_REVPROPS.toString())
         //.word(SVNCapability.EPHEMERAL_PROPS.toString())
@@ -391,7 +402,8 @@ public final class SvnServer extends Thread {
     sharedContext.getThreadPoolExecutor().awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
   }
 
-  boolean isCompressionEnabled() {
-    return config.isCompressionEnabled();
+  @NotNull
+  SVNDeltaCompression getCompressionLevel() {
+    return config.getCompressionLevel();
   }
 }

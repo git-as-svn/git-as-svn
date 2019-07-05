@@ -20,6 +20,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -110,7 +111,7 @@ public final class SvnTestServer implements SvnTester {
     this.prefix = prefix + "/" + testBranch;
 
     final Config config = new Config(BIND_HOST, 0);
-    config.setCompressionEnabled(false);
+    config.setCompressionLevel(SVNDeltaCompression.None);
     config.setCacheConfig(new MemoryCacheConfig());
 
     if (withLfs) {
