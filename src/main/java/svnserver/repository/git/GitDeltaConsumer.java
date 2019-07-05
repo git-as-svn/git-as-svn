@@ -211,6 +211,11 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
     }
 
     @Override
+    public void write(@NotNull byte[] b, int off, int len) throws IOException {
+      out.write(b, off, len);
+    }
+
+    @Override
     public void close() {
       try {
         super.close();
