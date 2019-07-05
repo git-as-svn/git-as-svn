@@ -16,6 +16,11 @@ This includes:
 
 == Configuration
 
+git-as-svn uses direct file access to Git repositories, so it needs to run from the same user as GitLab (normally, `git`).
+If you're installing both git-as-svn and Gitlab from Debian packages, no additional actions are required.
+
+IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[access token permission].
+
 . Change `userDB` to `!gitlabUsers`. This will tell git-as-svn to authenticate users against GitLab server:
 +
 [source,yaml]
@@ -36,7 +41,7 @@ shared:
     # baseUrl: http://localhost:8123/
 
     listen:
-      - !http {
+      - !http
 
         # The network interface where git-as-svn web server binds to as an IP address or a hostname.  If 0.0.0.0, then bind to all interfaces.
         # Default: localhost
@@ -53,7 +58,6 @@ shared:
         # Default: false
         #
         # forwarded: false
-      }
 ----
 
 . Configure GitLab address and token:
@@ -61,7 +65,7 @@ shared:
 [source,yaml]
 ----
 shared:
-  - !gitlab {
+  - !gitlab
 
     # GitLab base URL
     # Default: http://localhost:3000/
@@ -75,16 +79,13 @@ shared:
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>
-  }
 ----
 
-. Add `git-as-svn:<branch>` topics to whatever repositories you want to expose via git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
-For example, add `git-as-svn:master` will expose `master` branch. If you want to expose multiple branches, add multiple topics separated by commas.
+. Add `git-as-svn:<branch>` topics to whatever repositories you want to add to git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
+For example, add `git-as-svn:master` to expose `master` branch. If you want to expose more than one branch,, add multiple `git-a-svn:<branch>` topics separated by commas.
 
-IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[access token]
-
-IMPORTANT: git-as-svn uses direct file access to Git repositories, so it needs to run
-from the same user as GitLab
+IMPORTANT: With modern GitLab versions (11+), git-as-svn doesn't automatically call GitLab hooks.
+See how to workaround it https://github.com/bozaro/git-as-svn/issues/271[git-as-svn issue #271].
 
 == Full configuration file example
 
