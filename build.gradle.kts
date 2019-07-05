@@ -120,7 +120,7 @@ tasks.jar {
     }
 }
 
-val compileDocs by tasks.creating(Copy::class) {
+val compileDocs by tasks.registering(Copy::class) {
     group = "documentation"
     dependsOn(tasks.asciidoctor, tasks.asciidoctorEpub, tasks.asciidoctorPdf)
 
@@ -190,7 +190,7 @@ tasks.processResources {
     }
 }
 
-val debianControl by tasks.creating(Copy::class) {
+val debianControl by tasks.registering(Copy::class) {
     from("$projectDir/src/main/deb") {
         exclude("**/changelog")
     }
@@ -205,7 +205,7 @@ val debianControl by tasks.creating(Copy::class) {
     into(file("$buildDir/debPackage/package"))
 }
 
-val compileDeb by tasks.creating(Exec::class) {
+val compileDeb by tasks.registering(Exec::class) {
     dependsOn(tasks.installDist, debianControl)
 
     workingDir = file("$buildDir/debPackage/package")
@@ -213,7 +213,7 @@ val compileDeb by tasks.creating(Exec::class) {
     args("-uc", "-us")
 }
 
-val distDeb by tasks.creating(Copy::class) {
+val distDeb by tasks.registering(Copy::class) {
     group = "distribution"
     dependsOn(compileDeb)
 
