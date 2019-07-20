@@ -38,4 +38,4 @@ include::_ssh.adoc[leveloffset=+1]
 
 include::_internals.adoc[leveloffset=+1]
 
-include::../../../CHANGELOG.adoc[leveloffset=+1]
+include::_changelog.adoc[leveloffset=+1]

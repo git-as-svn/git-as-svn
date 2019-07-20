@@ -1,5 +1,5 @@
 git-as-svn (${version}) debian; urgency=low
 
-  * See CHANGELOG.md for more details.
+  * See _changelog.adoc for more details.
 
  -- Artem V. Navrotskiy <bozaro@yandex.ru>  ${date}
