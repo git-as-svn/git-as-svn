@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.19.1
 
  * Fix path-based ACL entry search. #276
 
