@@ -1,7 +1,7 @@
 !config:
 
 cacheConfig: !persistentCache
-  path: ../build/git-as-svn.mapdb
+  path: ../../../build/git-as-svn.mapdb
 
 repositoryMapping: !listMapping
   groups:
@@ -29,7 +29,7 @@ shared:
         port: 8123
   - !localLfs
     secretToken: ChangeMe
-    path: ../build/lfs
+    path: ../../../build/lfs
 
 userDB: !localUsers
   users:
