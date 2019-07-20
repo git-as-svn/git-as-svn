@@ -135,7 +135,7 @@ public final class SvnCheckoutTest {
 
   @NotNull
   private List<Long> loadUpdateRevisions(@NotNull SVNRepository repo, @NotNull String path) throws SVNException {
-    final long maxRevision = repo.getLatestRevision();
+    final long maxRevision = Math.min(100, repo.getLatestRevision());
     final LinkedList<Long> revisions = new LinkedList<>();
     repo.log(new String[]{path}, maxRevision, 0, false, false, logEntry -> revisions.addFirst(logEntry.getRevision()));
     return new ArrayList<>(revisions);
