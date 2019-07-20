@@ -33,8 +33,8 @@ public interface RepositoryMapping<T extends BranchProvider> extends Shared {
   @Nullable
   static <T extends BranchProvider> RepositoryInfo findRepositoryInfo(@NotNull RepositoryMapping<T> mapping, @NotNull SVNURL url, @NotNull SvnServerWriter writer) throws SVNException, IOException {
     final String path = StringHelper.normalizeDir(url.getPath());
-    final Map.Entry<String, T> repo = mapping.getMapping().floorEntry(path);
-    if (repo == null || !StringHelper.isParentPath(repo.getKey(), path)) {
+    final Map.Entry<String, T> repo = getMapped(mapping.getMapping(), path);
+    if (repo == null) {
       BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + url));
       return null;
     }
@@ -51,10 +51,10 @@ public interface RepositoryMapping<T extends BranchProvider> extends Shared {
       return null;
     }
 
-    final Map.Entry<String, GitBranch> branch = branches.floorEntry(branchPath);
+    final Map.Entry<String, GitBranch> branch = getMapped(branches, branchPath);
 
-    if (branch == null || !StringHelper.isParentPath(branch.getKey(), branchPath)) {
-      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository not found: " + url));
+    if (branch == null) {
+      BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository branch not found: " + url));
       return null;
     }
 
@@ -71,17 +71,23 @@ public interface RepositoryMapping<T extends BranchProvider> extends Shared {
     );
   }
 
-  @NotNull
-  NavigableMap<String, T> getMapping();
-
   @Nullable
   static <T> Map.Entry<String, T> getMapped(@NotNull NavigableMap<String, T> mapping, @NotNull String prefix) {
     final String path = StringHelper.normalizeDir(prefix);
-    final Map.Entry<String, T> entry = mapping.floorEntry(path);
-    if (entry != null && StringHelper.isParentPath(entry.getKey(), path)) {
-      return entry;
+
+    // TODO: this could be must faster if we find an appropriate trie implementation.
+    Map.Entry<String, T> result = null;
+    for (Map.Entry<String, T> entry : mapping.headMap(path, true).entrySet()) {
+      if (!StringHelper.isParentPath(entry.getKey(), path))
+        continue;
+
+      if (result == null || entry.getKey().length() > result.getKey().length())
+        result = entry;
     }
-    return null;
+
+    return result;
   }
 
+  @NotNull
+  NavigableMap<String, T> getMapping();
 }
