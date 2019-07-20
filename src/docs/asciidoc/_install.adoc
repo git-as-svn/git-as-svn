@@ -94,7 +94,7 @@ It must be writable by user `git`.
 The loss of the contents of this directory is not critical for
 operation and does not entail the loss of user data.
 
-[[git-as-svn-lfs]]
+[[_git-as-svn-lfs]]
 === git-as-svn-lfs package
 
 This package contains the `git-lfs-authenticate` script required for <<_lfs.adoc#_lfs, git-as-svn builtin LFS server>>
