@@ -160,4 +160,19 @@ public final class ACLTest {
     Assert.assertFalse(acl.canRead(Bob, "/qwe"));
     Assert.assertFalse(acl.canRead(Bob, "/qwe/qwe"));
   }
+
+  /**
+   * Test for #276.
+   */
+  @Test
+  public void floorEntry() {
+    final Map<String, Map<String, String>> entries = ImmutableMap.<String, Map<String, String>>builder()
+        .put("/", Collections.singletonMap(Bob.getUserName(), "rw"))
+        .put("/a", Collections.singletonMap(Bob.getUserName(), null))
+        .build();
+
+    final ACL acl = new ACL(Collections.emptyMap(), entries);
+
+    Assert.assertTrue(acl.canRead(Bob, "/b"));
+  }
 }
