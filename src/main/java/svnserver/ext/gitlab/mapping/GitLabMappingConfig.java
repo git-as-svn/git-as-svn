@@ -38,7 +38,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
   private int cacheMaximumSize = 1000;
 
   public GitLabMappingConfig() {
-    this("/var/git/repositories/", GitCreateMode.ERROR);
+    this("/var/opt/gitlab/git-data/repositories/", GitCreateMode.ERROR);
   }
 
   private GitLabMappingConfig(@NotNull String path, @NotNull GitCreateMode createMode) {

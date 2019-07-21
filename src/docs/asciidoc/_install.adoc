@@ -30,11 +30,15 @@ commands:
 ----
 # Add bintray GPG key
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 379CE192D401AB61
-# Add package source
+
+# Add repository and fetch its contents
 echo "deb https://dl.bintray.com/bozaro/git-as-svn debian main" | sudo tee /etc/apt/sources.list.d/git-as-svn.list
-# Install package
 sudo apt-get update
+
+# Install git-as-svn
 sudo apt-get install git-as-svn
+
+# You only need this if you plan to use git-as-svn builtin Git-LFS server
 sudo apt-get install git-as-svn-lfs
 ----
 

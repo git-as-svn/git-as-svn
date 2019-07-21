@@ -68,10 +68,10 @@ shared:
 shared:
   - !gitlab
 
-    # GitLab base URL
-    # Default: http://localhost:3000/
+    # GitLab base URL. This must match GitLab EXTERNAL_URL.
+    # Default: http://localhost/
     #
-    # url: http://localhost:3000/
+    # url: http://localhost/
 
     # Tells git-as-svn to use GitLab for LFS objects and file locking
     # Default: true

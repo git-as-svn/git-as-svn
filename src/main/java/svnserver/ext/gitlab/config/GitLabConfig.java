@@ -34,7 +34,7 @@ public final class GitLabConfig implements SharedConfig {
   private boolean lfs = true;
 
   public GitLabConfig() {
-    this("http://localhost:3000/", TokenType.PRIVATE_TOKEN, "");
+    this("http://localhost/", TokenType.PRIVATE_TOKEN, "");
   }
 
   private GitLabConfig(@NotNull String url, @NotNull TokenType tokenType, @NotNull String token) {
