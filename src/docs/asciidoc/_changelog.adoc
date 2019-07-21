@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 1.19.2
+
+ * Improve GitLab configuration defaults
+
 == 1.19.1
 
  * Fix path-based ACL entry search. #276
