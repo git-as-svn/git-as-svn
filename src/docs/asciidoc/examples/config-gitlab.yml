@@ -74,6 +74,12 @@ shared:
         #
         # port: 8123
 
+        # HTTP idle timeout milliseconds. If not a single byte is sent or received over HTTP connection, git-as-svn closes it.
+        # -1 = Use Jetty default
+        # 0 = Disable timeout
+        # Default: -1
+        # idleTimeout: -1
+
         # Tells git-as-svn to handle X-Forwarded-* headers.
         # Enable this if git-as-svn web server is running behind reverse HTTP proxy (like nginx)
         # Default: false
