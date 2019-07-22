@@ -12,6 +12,7 @@ import org.eclipse.jetty.util.TopologicalSort;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.StringHelper;
+import svnserver.UserType;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 
@@ -30,6 +31,8 @@ public final class ACL implements VcsAccess {
   @NotNull
   static final String AuthenticatedMarker = "$authenticated";
   @NotNull
+  private static final String AuthenticatedPrefix = AuthenticatedMarker + ":";
+  @NotNull
   private static final String GroupPrefix = "@";
 
   @NotNull
@@ -37,7 +40,7 @@ public final class ACL implements VcsAccess {
   @NotNull
   private final Set<String> anonymousGroups = new HashSet<>();
   @NotNull
-  private final Set<String> authenticatedGroups = new HashSet<>();
+  private final Map<UserType, Set<String>> authenticatedGroups = new EnumMap<>(UserType.class);
 
   @NotNull
   private final NavigableMap<String, Map<ACLEntry, AccessMode>> path2acl = new TreeMap<>();
@@ -50,9 +53,13 @@ public final class ACL implements VcsAccess {
         final String groupName = group.getKey();
         if (member.equals(AnonymousMarker))
           anonymousGroups.add(groupName);
-        else if (member.equals(AuthenticatedMarker))
-          authenticatedGroups.add(groupName);
-        else
+        else if (member.equals(AuthenticatedMarker)) {
+          for (UserType userType : UserType.values())
+            authenticatedGroups.computeIfAbsent(userType, type -> new HashSet<>()).add(groupName);
+        } else if (member.startsWith(AuthenticatedPrefix)) {
+          final UserType userType = UserType.valueOf(member.substring(AuthenticatedPrefix.length()));
+          authenticatedGroups.computeIfAbsent(userType, type -> new HashSet<>()).add(groupName);
+        } else
           user2groups.computeIfAbsent(member, s -> new HashSet<>()).add(groupName);
       }
     }
@@ -117,7 +124,10 @@ public final class ACL implements VcsAccess {
       entry = AnonymousACLEntry.Instance;
     else if (entryString.equals(AuthenticatedMarker))
       entry = AuthenticatedACLEntry.Instance;
-    else if (entryString.startsWith(GroupPrefix)) {
+    else if (entryString.startsWith(AuthenticatedPrefix)) {
+      final UserType userType = UserType.valueOf(entryString.substring(AuthenticatedPrefix.length()));
+      entry = new UserTypeEntry(userType);
+    } else if (entryString.startsWith(GroupPrefix)) {
       final String group = entryString.substring(GroupPrefix.length());
 
       if (!allGroups.contains(group))
@@ -243,6 +253,20 @@ public final class ACL implements VcsAccess {
     boolean matches(@NotNull User user);
   }
 
+  private static final class UserTypeEntry implements ACLEntry {
+    @NotNull
+    private final UserType userType;
+
+    private UserTypeEntry(@NotNull UserType userType) {
+      this.userType = userType;
+    }
+
+    @Override
+    public boolean matches(@NotNull User user) {
+      return !user.isAnonymous() && user.getType().equals(userType);
+    }
+  }
+
   private static final class UserACLEntry implements ACLEntry {
     @NotNull
     private final String user;
@@ -280,7 +304,7 @@ public final class ACL implements VcsAccess {
       if (user.isAnonymous())
         return anonymousGroups.contains(group);
 
-      if (authenticatedGroups.contains(group))
+      if (authenticatedGroups.getOrDefault(user.getType(), Collections.emptySet()).contains(group))
         return true;
 
       return user2groups.getOrDefault(user.getUserName(), Collections.emptySet()).contains(group);

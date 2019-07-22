@@ -9,6 +9,7 @@ package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.UserType;
 
 import java.util.Map;
 import java.util.Objects;
@@ -20,7 +21,7 @@ import java.util.Objects;
  */
 public final class User {
   @NotNull
-  private static final User anonymousUser = new User("$anonymous", "anonymous", null, null, true);
+  private static final User anonymousUser = new User("$anonymous", "anonymous", null, null, true, UserType.Local);
 
   private final boolean isAnonymous;
   @NotNull
@@ -31,18 +32,21 @@ public final class User {
   private final String email;
   @Nullable
   private final String externalId;
+  @NotNull
+  private final UserType type;
 
-  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous) {
+  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous, @NotNull UserType type) {
     this.userName = userName;
     this.realName = realName;
     this.email = email;
     this.externalId = externalId;
     this.isAnonymous = isAnonymous;
+    this.type = type;
   }
 
   @NotNull
-  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId) {
-    return new User(userName, realName, email, externalId, false);
+  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, @NotNull UserType type) {
+    return new User(userName, realName, email, externalId, false, type);
   }
 
   public static User getAnonymous() {
@@ -56,6 +60,11 @@ public final class User {
 
   public boolean isAnonymous() {
     return isAnonymous;
+  }
+
+  @NotNull
+  public UserType getType() {
+    return type;
   }
 
   /**
@@ -90,6 +99,7 @@ public final class User {
   public int hashCode() {
     int result = userName.hashCode();
     result = 31 * result + realName.hashCode();
+    result = 31 * result + type.hashCode();
     result = 31 * result + (email != null ? email.hashCode() : 0);
     return result;
   }
@@ -105,6 +115,7 @@ public final class User {
         && Objects.equals(email, user.email)
         && userName.equals(user.userName)
         && realName.equals(user.realName)
+        && type.equals(user.type)
         && (isAnonymous == user.isAnonymous);
   }
 

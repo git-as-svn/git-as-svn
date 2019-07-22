@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import svnserver.UserType;
 
 import java.util.Collections;
 import java.util.Map;
@@ -21,10 +22,10 @@ import java.util.Map;
 public final class ACLTest {
 
   @NotNull
-  private static final User Bob = User.create("bob", "Bob", "bob@acme.com", null);
+  private static final User Bob = User.create("bob", "Bob", "bob@acme.com", null, UserType.Local);
 
   @NotNull
-  private static final User Alice = User.create("alice", "Alice", "alice@acme.com", null);
+  private static final User Alice = User.create("alice", "Alice", "alice@acme.com", null, UserType.Local);
 
   @Test
   public void emptyDeny() {
@@ -103,6 +104,15 @@ public final class ACLTest {
 
     Assert.assertTrue(acl.canRead(Bob, "/"));
     Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+  }
+
+  @Test
+  public void authenticatedType() {
+    final ACL acl = new ACL(Collections.singletonMap("group", new String[]{"$authenticated:GitLab"}), Collections.singletonMap("/", Collections.singletonMap("@group", "r")));
+
+    Assert.assertFalse(acl.canRead(Bob, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab), "/"));
   }
 
   @Test

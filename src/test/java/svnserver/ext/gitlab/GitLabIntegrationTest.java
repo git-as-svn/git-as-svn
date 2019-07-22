@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
+import svnserver.UserType;
 import svnserver.auth.User;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitlab.auth.GitLabUserDBConfig;
@@ -35,6 +36,7 @@ import svnserver.ext.gitlab.config.GitLabConfig;
 import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.ext.gitlab.config.GitLabToken;
 import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
+import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.web.config.WebServerConfig;
@@ -189,7 +191,7 @@ public final class GitLabIntegrationTest {
   @Test
   void uploadToLfs() throws Exception {
     final LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword);
-    final User user = User.create(root, root, root, root);
+    final User user = User.create(root, root, root, root, UserType.GitLab);
 
     checkUpload(storage, user);
     checkUpload(storage, user);
@@ -206,9 +208,12 @@ public final class GitLabIntegrationTest {
 
     Assert.assertEquals(oid, "sha256:5d54606feae97935feeb6dfb8194cf7961d504609689e4a44d86dbeafb91cb18");
 
+    final LfsReader reader = storage.getReader(oid);
+    Assert.assertNotNull(reader);
+
     final byte[] actual;
-    try (@NotNull InputStream reader = storage.getReader(oid).openStream()) {
-      actual = IOUtils.toByteArray(reader);
+    try (@NotNull InputStream stream = reader.openStream()) {
+      actual = IOUtils.toByteArray(stream);
     }
 
     Assert.assertEquals(actual, expected);

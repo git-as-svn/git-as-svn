@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.HashHelper;
+import svnserver.UserType;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
@@ -32,7 +33,7 @@ import java.util.concurrent.ExecutionException;
  */
 public final class CacheUserDB implements UserDB {
   @NotNull
-  private final static User invalidUser = User.create("invalid", "invalid", null, null);
+  private final static User invalidUser = User.create("invalid", "invalid", null, null, UserType.Local);
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull

@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.TestHelper;
+import svnserver.UserType;
 import svnserver.config.RepositoryMappingConfig;
 import svnserver.ext.gitea.auth.GiteaUserDBConfig;
 import svnserver.ext.gitea.config.GiteaConfig;
@@ -157,10 +158,9 @@ public final class GiteaIntegrationTest {
 
   @NotNull
   private Repository createRepository(@NotNull String username, @NotNull String name, @NotNull String description, @Nullable Boolean _private, @Nullable Boolean autoInit) throws Exception {
-    ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
-    apiClient = sudo(apiClient, username);
-    RepositoryApi repositoryApi = new RepositoryApi(apiClient);
-    CreateRepoOption repoOption = new CreateRepoOption();
+    final ApiClient apiClient = sudo(GiteaContext.connect(giteaApiUrl, administratorToken), username);
+    final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
+    final CreateRepoOption repoOption = new CreateRepoOption();
     repoOption.setName(name);
     repoOption.setDescription(description);
     repoOption.setPrivate(_private);
@@ -198,7 +198,7 @@ public final class GiteaIntegrationTest {
       throw new SkipException("LFS testing is disabled");
 
     final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
-    final svnserver.auth.User user = svnserver.auth.User.create(administrator, administrator, administrator, administrator);
+    final svnserver.auth.User user = svnserver.auth.User.create(administrator, administrator, administrator, administrator, UserType.Gitea);
 
     GitLabIntegrationTest.checkUpload(storage, user);
     GitLabIntegrationTest.checkUpload(storage, user);

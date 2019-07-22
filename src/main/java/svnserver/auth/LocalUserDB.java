@@ -9,6 +9,7 @@ package svnserver.auth;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import svnserver.UserType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +37,7 @@ public final class LocalUserDB implements UserDB {
       return null;
     }
 
-    final UserWithPassword userWithPassword = new UserWithPassword(User.create(userName, realName, email, userName), password);
+    final UserWithPassword userWithPassword = new UserWithPassword(User.create(userName, realName, email, userName, UserType.Local), password);
     users.put(userWithPassword.getUser().getUserName(), userWithPassword);
     return userWithPassword.getUser();
   }

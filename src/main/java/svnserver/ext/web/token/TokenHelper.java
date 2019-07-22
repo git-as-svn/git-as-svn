@@ -20,6 +20,7 @@ import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import svnserver.HashHelper;
 import svnserver.Loggers;
+import svnserver.UserType;
 import svnserver.auth.User;
 
 import java.nio.charset.StandardCharsets;
@@ -50,11 +51,18 @@ public class TokenHelper {
         setClaim(claims, "email", user.getEmail());
         setClaim(claims, "name", user.getRealName());
         setClaim(claims, "external", user.getExternalId());
+        setClaim(claims, "type", user.getType().name());
       }
       jwe.setPayload(claims.toJson());
       return jwe.getCompactSerialization();
     } catch (JoseException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  private static void setClaim(JwtClaims claims, @NotNull String name, @Nullable Object value) {
+    if (value != null) {
+      claims.setClaim(name, value);
     }
   }
 
@@ -81,7 +89,8 @@ public class TokenHelper {
           claims.getSubject(),
           claims.getClaimValue("name", String.class),
           claims.getClaimValue("email", String.class),
-          claims.getClaimValue("external", String.class)
+          claims.getClaimValue("external", String.class),
+          UserType.valueOf(claims.getClaimValue("type", String.class))
       );
     } catch (JoseException | MalformedClaimException | InvalidJwtException e) {
       log.warn("Token parsing error: " + e.getMessage());
@@ -99,12 +108,6 @@ public class TokenHelper {
       return Arrays.copyOf(hash, length);
     } catch (DecoderException e) {
       throw new IllegalStateException(e);
-    }
-  }
-
-  private static void setClaim(JwtClaims claims, @NotNull String name, @Nullable Object value) {
-    if (value != null) {
-      claims.setClaim(name, value);
     }
   }
 }
