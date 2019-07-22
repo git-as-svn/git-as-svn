@@ -78,6 +78,7 @@ shared:
         # -1 = Use Jetty default
         # 0 = Disable timeout
         # Default: -1
+        #
         # idleTimeout: -1
 
         # Tells git-as-svn to handle X-Forwarded-* headers.
