@@ -169,6 +169,7 @@ repositoryMapping: !listMapping
 git-as-svn also supports some "magic" tokens for helping you to make rule assignments based on the user's authentication class.
 One such token is the `$authenticated` token. Use this token where you would otherwise specify a username or group name in your authorization rules
 to declare the permissions granted to any user who has authenticated with any username at all.
+You may also use `$authenticated:Local`/`$authenticated:GitLab`/`$authenticated:Gitea`/`$authenticated:LDAP` to refer to users authenticated against specific user database.
 Similarly employed is the `$anonymous` token, except that it matches everyone who has not authenticated with a username.
 
 .git-as-svn.conf

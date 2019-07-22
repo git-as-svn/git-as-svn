@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import svnserver.Loggers;
+import svnserver.UserType;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
@@ -73,7 +74,7 @@ public final class GiteaUserDB implements UserDB {
 
   @NotNull
   private User createUser(@NotNull io.gitea.model.User user) {
-    return User.create(user.getLogin(), user.getFullName(), user.getEmail(), "" + user.getId());
+    return User.create(user.getLogin(), user.getFullName(), user.getEmail(), String.valueOf(user.getId()), UserType.Gitea);
   }
 
   @Nullable

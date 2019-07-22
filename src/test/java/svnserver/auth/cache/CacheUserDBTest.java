@@ -11,9 +11,8 @@ import com.google.common.cache.CacheBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNException;
+import svnserver.UserType;
 import svnserver.auth.User;
-
-import java.io.IOException;
 
 /**
  * Test for ReferenceHelper.
@@ -22,8 +21,8 @@ import java.io.IOException;
  */
 public class CacheUserDBTest {
   @Test
-  public void testSimple() throws IOException, SVNException {
-    User user = User.create("foo", "Foo", "foo@bar", "f01");
+  public void testSimple() throws SVNException {
+    User user = User.create("foo", "Foo", "foo@bar", "f01", UserType.Local);
     TestUserDB db = new TestUserDB(user);
     CacheUserDB cache = new CacheUserDB(db, CacheBuilder.newBuilder().build());
 

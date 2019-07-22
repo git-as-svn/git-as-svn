@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import svnserver.Loggers;
+import svnserver.UserType;
 import svnserver.auth.Authenticator;
 import svnserver.auth.PlainAuthenticator;
 import svnserver.auth.User;
@@ -231,7 +232,7 @@ public final class LdapUserDB implements UserDB {
       email = login + fakeMailSuffix;
 
     log.info("LDAP authentication successfull for user: {}", userName);
-    return User.create(login, realName != null ? realName : login, email, null);
+    return User.create(login, realName != null ? realName : login, email, null, UserType.LDAP);
   }
 
   @Nullable
