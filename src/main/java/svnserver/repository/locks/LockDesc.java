@@ -42,7 +42,7 @@ public final class LockDesc {
   }
 
   public LockDesc(@NotNull String path, @Nullable String branch, @Nullable String hash, @NotNull String token, @Nullable String owner, @Nullable String comment, long created) {
-    this.path = path;
+    this.path = path.startsWith("/") ? path : "/" + path;
     this.branch = branch;
     this.hash = hash;
     this.token = token;
@@ -53,22 +53,24 @@ public final class LockDesc {
 
   @NotNull
   public static LockDesc toLockDesc(@NotNull Lock lock) {
-    return new LockDesc(lock.getPath(), (String) null, null, lock.getId(), lock.getOwner() == null ? null : lock.getOwner().getName(), null, lock.getLockedAt().getTime());
+    final String path = "/" + lock.getPath();
+    return new LockDesc(path, (String) null, null, lock.getId(), lock.getOwner() == null ? null : lock.getOwner().getName(), null, lock.getLockedAt().getTime());
   }
 
   @NotNull
   public static Lock toLock(@NotNull LockDesc lockDesc) {
-    return new Lock(lockDesc.getToken(), lockDesc.getPath(), new Date(lockDesc.getCreated()), lockDesc.getOwner() == null ? null : new User(lockDesc.getOwner()));
-  }
-
-  @NotNull
-  public String getToken() {
-    return token;
+    final String path = lockDesc.getPath().startsWith("/") ? lockDesc.getPath().substring(1) : lockDesc.getPath();
+    return new Lock(lockDesc.getToken(), path, new Date(lockDesc.getCreated()), lockDesc.getOwner() == null ? null : new User(lockDesc.getOwner()));
   }
 
   @NotNull
   public String getPath() {
     return path;
+  }
+
+  @NotNull
+  public String getToken() {
+    return token;
   }
 
   public long getCreated() {

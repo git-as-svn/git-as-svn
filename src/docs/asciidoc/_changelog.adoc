@@ -9,6 +9,7 @@ endif::[]
 == Unreleased
 
  * Fix inability to unlock files through Git-LFS
+ * Fix lock paths having leading slash when listing locks via Git-LFS
 
 == 1.19.3
 
