@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.20.0
 
  * Fix inability to unlock files through Git-LFS
  * Fix lock paths having leading slash when listing locks via Git-LFS
