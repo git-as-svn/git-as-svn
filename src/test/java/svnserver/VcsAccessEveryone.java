@@ -19,12 +19,12 @@ public final class VcsAccessEveryone implements VcsAccess {
   static final VcsAccess instance = new VcsAccessEveryone();
 
   @Override
-  public boolean canRead(@NotNull User user, @NotNull String path) {
+  public boolean canRead(@NotNull User user, @NotNull String branch, @NotNull String path) {
     return true;
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @NotNull String path) {
-    return canRead(user, path);
+  public boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) {
+    return canRead(user, branch, path);
   }
 }
