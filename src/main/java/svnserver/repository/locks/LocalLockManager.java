@@ -63,14 +63,18 @@ public class LocalLockManager implements LockStorage {
   @Override
   public LockDesc unlock(@NotNull User user, @Nullable GitBranch branch, boolean breakLock, @NotNull String lockId) throws LockConflictException {
     LockDesc result = null;
-    for (Map.Entry<String, LockDesc> lock : locks.entrySet()) {
+
+    for (Iterator<Map.Entry<String, LockDesc>> it = locks.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, LockDesc> lock = it.next();
+
       if (!lockId.equals(lock.getValue().getToken()))
         continue;
 
       if (!breakLock && !user.getUserName().equals(lock.getValue().getOwner()))
         throw new LockConflictException(LockDesc.toLock(lock.getValue()));
 
-      result = locks.remove(lockId);
+      result = lock.getValue();
+      it.remove();
       break;
     }
 

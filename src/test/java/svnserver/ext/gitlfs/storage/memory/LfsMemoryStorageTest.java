@@ -10,9 +10,12 @@ package svnserver.ext.gitlfs.storage.memory;
 import com.google.common.io.CharStreams;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNException;
+import ru.bozaro.gitlfs.common.LockConflictException;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.locks.LockDesc;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +49,16 @@ public class LfsMemoryStorageTest {
     try (final InputStream stream = reader.openStream()) {
       Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
     }
+  }
+
+  @Test
+  public void lockUnlock() throws SVNException, LockConflictException, IOException {
+    LfsMemoryStorage storage = new LfsMemoryStorage();
+    final LockDesc lock = storage.lock(User.getAnonymous(), null, "/path");
+    Assert.assertNotNull(lock);
+
+    final LockDesc unlock = storage.unlock(User.getAnonymous(), null, false, lock.getToken());
+    Assert.assertEquals(lock, unlock);
   }
 
   @Test
