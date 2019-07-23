@@ -181,7 +181,7 @@ repositoryMapping: !listMapping
       - '@paint-developers'
 ----
 
-NOTE:: User needs read/write access to `/` path of `master` branch in order to be able to download/upload files from git-as-svn <<_lfs.adoc#_lfs,internal LFS server>>.
+NOTE: User needs read/write access to `/` path of `master` branch in order to be able to download/upload files from git-as-svn <<_lfs.adoc#_lfs,internal LFS server>>.
 
 == Advanced Access Control Features
 
