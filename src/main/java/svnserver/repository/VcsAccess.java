@@ -25,34 +25,22 @@ import java.util.Map;
  */
 public interface VcsAccess extends Local {
 
-  default void checkRead(@NotNull User user, @NotNull String path) throws IOException, SVNException {
-    if (!canRead(user, path))
+  default void checkRead(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException, SVNException {
+    if (!canRead(user, branch, path))
       throw new SVNException(SVNErrorMessage.create(user.isAnonymous() ? SVNErrorCode.RA_NOT_AUTHORIZED : SVNErrorCode.AUTHZ_UNREADABLE));
   }
 
-  /**
-   * Check read access for user.
-   *
-   * @param user User.
-   * @param path Checked path. If path is null - checks for at least some part of the repository.
-   */
-  boolean canRead(@NotNull User user, @NotNull String path) throws IOException;
+  boolean canRead(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException;
 
-  default void checkWrite(@NotNull User user, @NotNull String path) throws IOException, SVNException {
+  default void checkWrite(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException, SVNException {
     if (user.isAnonymous())
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED));
 
-    if (!canWrite(user, path))
+    if (!canWrite(user, branch, path))
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHZ_UNWRITABLE));
   }
 
-  /**
-   * Check write access for user.
-   *
-   * @param user User.
-   * @param path Checked path. If path is null - checks for at least some part of the repository.
-   */
-  boolean canWrite(@NotNull User user, @NotNull String path) throws IOException;
+  boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException;
 
   default void updateEnvironment(@NotNull Map<String, String> environment) {
   }

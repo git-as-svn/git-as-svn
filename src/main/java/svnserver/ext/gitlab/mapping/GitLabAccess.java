@@ -62,7 +62,7 @@ final class GitLabAccess implements VcsAccess {
   }
 
   @Override
-  public boolean canRead(@NotNull User user, @NotNull String path) throws IOException {
+  public boolean canRead(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException {
     try {
       getProjectViaSudo(user);
       return true;
@@ -72,7 +72,7 @@ final class GitLabAccess implements VcsAccess {
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @NotNull String path) throws IOException {
+  public boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException {
     if (user.isAnonymous())
       return false;
 

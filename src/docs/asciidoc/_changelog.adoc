@@ -10,6 +10,7 @@ endif::[]
 
  * Fix inability to unlock files through Git-LFS
  * Fix lock paths having leading slash when listing locks via Git-LFS
+ * Now path-based authorization supports branch-specific access
 
 == 1.19.3
 

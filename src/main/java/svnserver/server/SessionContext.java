@@ -124,8 +124,12 @@ public final class SessionContext {
     if (!user.isAnonymous())
       throw new IllegalStateException();
 
-    allowAnonymous &= acl.canRead(user, getRepositoryPath(""));
+    allowAnonymous &= canRead(getRepositoryPath(""));
     this.user = server.authenticate(this, allowAnonymous);
+  }
+
+  public boolean canRead(@NotNull String path) throws IOException {
+    return acl.canRead(user, getBranch().getShortBranchName(), path);
   }
 
   @NotNull
@@ -176,15 +180,11 @@ public final class SessionContext {
   }
 
   public void checkRead(@NotNull String path) throws SVNException, IOException {
-    acl.checkRead(user, path);
+    acl.checkRead(user, getBranch().getShortBranchName(), path);
   }
 
   public void checkWrite(@NotNull String path) throws SVNException, IOException {
-    acl.checkWrite(user, path);
-  }
-
-  public boolean canRead(@NotNull String path) throws IOException {
-    return acl.canRead(user, path);
+    acl.checkWrite(user, getBranch().getShortBranchName(), path);
   }
 
   public void skipUnsupportedCommand(@NotNull String cmd) throws IOException {

@@ -102,6 +102,23 @@ repositoryMapping: !listMapping
           sally: r
 ----
 
+You may also specify grant or restrict access only to specific branches.
+
+.git-as-svn.conf
+[source,yaml]
+----
+repositoryMapping: !listMapping
+  repositories:
+    calc:
+      access:
+        /README.md:
+          harry: r
+        master:/README.md:
+          harry: rw
+----
+
+In this example, Harry has read access to file on all branches but has read/write access on master branch.
+
 == Access Control Groups
 
 git-as-svn also allows you to define whole groups of users. To do this, describe your groups within `groups` section of `git-as-svn.conf` :
@@ -163,6 +180,8 @@ repositoryMapping: !listMapping
       - '@calc-developers'
       - '@paint-developers'
 ----
+
+NOTE:: User needs read/write access to `/` path of `master` branch in order to be able to download/upload files from git-as-svn <<_lfs.adoc#_lfs,internal LFS server>>.
 
 == Advanced Access Control Features
 

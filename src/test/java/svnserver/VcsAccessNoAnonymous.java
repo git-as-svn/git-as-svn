@@ -22,12 +22,12 @@ public final class VcsAccessNoAnonymous implements VcsAccess {
   static final VcsAccess instance = new VcsAccessNoAnonymous();
 
   @Override
-  public boolean canRead(@NotNull User user, @NotNull String path) {
+  public boolean canRead(@NotNull User user, @NotNull String branch, @NotNull String path) {
     return !user.isAnonymous();
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @NotNull String path) {
-    return canRead(user, path);
+  public boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) {
+    return canRead(user, branch, path);
   }
 }

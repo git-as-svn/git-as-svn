@@ -8,6 +8,7 @@
 package svnserver.auth;
 
 import com.google.common.collect.ImmutableMap;
+import org.eclipse.jgit.lib.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -31,8 +32,8 @@ public final class ACLTest {
   public void emptyDeny() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.emptyMap());
 
-    Assert.assertFalse(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
@@ -43,8 +44,8 @@ public final class ACLTest {
         .build();
     final ACL acl = new ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroup", "r")));
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
@@ -56,8 +57,8 @@ public final class ACLTest {
         .build();
     final ACL acl = new ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroupOfGroup", "r")));
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "cyclic at groupA")
@@ -69,92 +70,125 @@ public final class ACLTest {
     new ACL(groups, Collections.singletonMap("/", Collections.emptyMap()));
   }
 
-  @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Group groupA references nonexistent group groupB")
+  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Group groupA references nonexistent group groupB")
   public void groupOfGroupNonexistent() {
     new ACL(Collections.singletonMap("groupA", new String[]{"@groupB"}), Collections.singletonMap("/", Collections.emptyMap()));
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Branch name.*empty.*")
+  public void emptyBranchName() {
+    new ACL(Collections.emptyMap(), Collections.singletonMap(":/", Collections.emptyMap()));
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Path in ACL entry must start with slash.*")
+  public void branchEmptyPath() {
+    new ACL(Collections.emptyMap(), Collections.singletonMap("branch:", Collections.emptyMap()));
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Path in ACL entry must not end with slash.*")
+  public void pathSlashEnd() {
+    new ACL(Collections.emptyMap(), Collections.singletonMap("/bla/", Collections.emptyMap()));
+  }
+
+  @Test
+  public void branchAllow() {
+    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("master:/", Collections.singletonMap(Bob.getUserName(), "rw")));
+    Assert.assertTrue(acl.canRead(Bob, "master", "/"));
+    Assert.assertFalse(acl.canRead(Bob, "release", "/"));
+  }
+
+  @Test
+  public void branchDeny() {
+    final Map<String, Map<String, String>> entries = ImmutableMap.<String, Map<String, String>>builder()
+        .put("master:/", Collections.singletonMap(Bob.getUserName(), null))
+        .put("/", Collections.singletonMap(Bob.getUserName(), "rw"))
+        .build();
+    final ACL acl = new ACL(Collections.emptyMap(), entries);
+    Assert.assertFalse(acl.canRead(Bob, "master", "/"));
+    Assert.assertTrue(acl.canRead(Bob, "release", "/"));
   }
 
   @Test
   public void anonymousMarker() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(ACL.AnonymousMarker, "r")));
 
-    Assert.assertFalse(acl.canRead(Bob, "/"));
-    Assert.assertTrue(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertTrue(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
   public void anonymousInGroup() {
     final ACL acl = new ACL(Collections.singletonMap("group", new String[]{"$anonymous"}), Collections.singletonMap("/", Collections.singletonMap("@group", "r")));
 
-    Assert.assertFalse(acl.canRead(Bob, "/"));
-    Assert.assertTrue(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertTrue(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
   public void authenticatedMarker() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(ACL.AuthenticatedMarker, "r")));
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
   public void authenticatedInGroup() {
     final ACL acl = new ACL(Collections.singletonMap("group", new String[]{"$authenticated"}), Collections.singletonMap("/", Collections.singletonMap("@group", "r")));
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
   public void authenticatedType() {
     final ACL acl = new ACL(Collections.singletonMap("group", new String[]{"$authenticated:GitLab"}), Collections.singletonMap("/", Collections.singletonMap("@group", "r")));
 
-    Assert.assertFalse(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
-    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab), "/"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
+    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab), Constants.MASTER, "/"));
   }
 
   @Test
   public void everyoneMarker() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(ACL.EveryoneMarker, "r")));
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertTrue(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertTrue(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
   }
 
   @Test
   public void rootAllow() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(Bob.getUserName(), "rw")));
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(Alice, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
 
-    Assert.assertTrue(acl.canRead(Bob, "/qwe"));
-    Assert.assertFalse(acl.canRead(Alice, "/qwe"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/qwe"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/qwe"));
+    Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/qwe"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/qwe"));
 
-    Assert.assertTrue(acl.canRead(Bob, "/qwe/qwe"));
-    Assert.assertFalse(acl.canRead(Alice, "/qwe/qwe"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/qwe/qwe"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/qwe/qwe"));
+    Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/qwe/qwe"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/qwe/qwe"));
   }
 
   @Test
   public void deepAllow() {
     final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/qwe", Collections.singletonMap(Bob.getUserName(), "rw")));
 
-    Assert.assertFalse(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(Alice, "/"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
 
-    Assert.assertTrue(acl.canRead(Bob, "/qwe"));
-    Assert.assertFalse(acl.canRead(Alice, "/qwe"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/qwe"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/qwe"));
+    Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/qwe"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/qwe"));
 
-    Assert.assertTrue(acl.canRead(Bob, "/qwe/qwe"));
-    Assert.assertFalse(acl.canRead(Alice, "/qwe/qwe"));
-    Assert.assertFalse(acl.canRead(User.getAnonymous(), "/qwe/qwe"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/qwe/qwe"));
+    Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/qwe/qwe"));
+    Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/qwe/qwe"));
   }
 
   @Test
@@ -166,9 +200,9 @@ public final class ACLTest {
 
     final ACL acl = new ACL(Collections.emptyMap(), entries);
 
-    Assert.assertTrue(acl.canRead(Bob, "/"));
-    Assert.assertFalse(acl.canRead(Bob, "/qwe"));
-    Assert.assertFalse(acl.canRead(Bob, "/qwe/qwe"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/qwe"));
+    Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/qwe/qwe"));
   }
 
   /**
@@ -183,6 +217,6 @@ public final class ACLTest {
 
     final ACL acl = new ACL(Collections.emptyMap(), entries);
 
-    Assert.assertTrue(acl.canRead(Bob, "/b"));
+    Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/b"));
   }
 }

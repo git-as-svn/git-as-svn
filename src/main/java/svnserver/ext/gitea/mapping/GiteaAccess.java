@@ -93,7 +93,7 @@ final class GiteaAccess implements VcsAccess {
   }
 
   @Override
-  public boolean canRead(@NotNull User user, @NotNull String path) throws IOException {
+  public boolean canRead(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException {
     try {
       Repository repository = getCachedProject(user);
       if (!repository.isPrivate())
@@ -107,7 +107,7 @@ final class GiteaAccess implements VcsAccess {
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @NotNull String path) throws IOException {
+  public boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException {
     if (user.isAnonymous())
       return false;
 

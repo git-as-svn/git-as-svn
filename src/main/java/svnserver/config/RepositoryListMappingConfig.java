@@ -50,7 +50,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
     for (Map.Entry<String, Entry> entry : repositories.entrySet()) {
       final LocalContext local = new LocalContext(context, entry.getKey());
-      local.add(VcsAccess.class, new ACL(groups, entry.getValue().access));
+      local.add(VcsAccess.class, new ACL(local.getName(), groups, entry.getValue().access));
       repos.put(StringHelper.normalizeDir(entry.getKey()), entry.getValue().repository.create(local));
     }
 

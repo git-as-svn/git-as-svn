@@ -34,6 +34,12 @@ public final class ACL implements VcsAccess {
   private static final String AuthenticatedPrefix = AuthenticatedMarker + ":";
   @NotNull
   private static final String GroupPrefix = "@";
+  /**
+   * Special marker that means "ACL entry is not bound to specific branch".
+   */
+  @NotNull
+  private static final String NoBranch = "";
+  private static final char BranchPathSeparator = ':';
 
   @NotNull
   private final Map<String, Set<String>> user2groups = new HashMap<>();
@@ -43,10 +49,14 @@ public final class ACL implements VcsAccess {
   private final Map<UserType, Set<String>> authenticatedGroups = new EnumMap<>(UserType.class);
 
   @NotNull
-  private final NavigableMap<String, Map<ACLEntry, AccessMode>> path2acl = new TreeMap<>();
+  private final NavigableMap<String, Map<String, Map<ACLEntry, AccessMode>>> path2branch2acl = new TreeMap<>();
 
-  public ACL(@NotNull Map<String, String[]> groups, @NotNull Map<String, Map<String, String>> access) {
-    final Map<String, Set<String>> group2Users = expandGroups(groups);
+  public ACL(@NotNull Map<String, String[]> group2users, @NotNull Map<String, Map<String, String>> branchPath2Member2AccessMode) {
+    this("", group2users, branchPath2Member2AccessMode);
+  }
+
+  public ACL(@NotNull String contextName, @NotNull Map<String, String[]> group2users, @NotNull Map<String, Map<String, String>> branchPath2Member2AccessMode) {
+    final Map<String, Set<String>> group2Users = expandGroups(contextName, group2users);
 
     for (Map.Entry<String, Set<String>> group : group2Users.entrySet()) {
       for (String member : group.getValue()) {
@@ -64,27 +74,45 @@ public final class ACL implements VcsAccess {
       }
     }
 
-    for (Map.Entry<String, Map<String, String>> pathEntry : access.entrySet()) {
-      final String path = pathEntry.getKey();
+    for (Map.Entry<String, Map<String, String>> branchPathEntry : branchPath2Member2AccessMode.entrySet()) {
+      final String branchPath = branchPathEntry.getKey();
+
+      final int branchSep = branchPath.indexOf(BranchPathSeparator);
+
+      final String branch;
+      final String path;
+
+      if (branchSep < 0) {
+        branch = NoBranch;
+        path = branchPath;
+      } else if (branchSep == 0) {
+        throw new IllegalArgumentException(String.format("[%s] Branch name in ACL entry must not be empty: %s", contextName, branchPath));
+      } else {
+        branch = branchPath.substring(0, branchSep);
+        path = branchSep < branchPath.length() - 1
+            ? branchPath.substring(branchSep + 1)
+            // Empty path is invalid and will be properly error-reported by code below
+            : "";
+      }
 
       if (!path.startsWith("/"))
-        throw new IllegalArgumentException("ACL entry must start with slash (/): " + path);
+        throw new IllegalArgumentException(String.format("[%s] Path in ACL entry must start with slash (/): %s", contextName, branchPath));
 
       if (path.endsWith("/") && path.length() > 1)
-        throw new IllegalArgumentException("ACL entry must not end with slash (/): " + path);
+        throw new IllegalArgumentException(String.format("[%s] Path in ACL entry must not end with slash (/): %s", contextName, branchPath));
 
-      if (pathEntry.getValue().isEmpty())
-        throw new IllegalArgumentException("ACL entry is empty: " + path);
+      if (branchPathEntry.getValue().isEmpty())
+        throw new IllegalArgumentException(String.format("[%s] ACL entry is empty: %s", contextName, branchPath));
 
-      for (Map.Entry<String, String> aclEntry : pathEntry.getValue().entrySet()) {
+      for (Map.Entry<String, String> aclEntry : branchPathEntry.getValue().entrySet()) {
         final AccessMode accessMode = AccessMode.fromString(aclEntry.getValue());
-        addAclEntry(path, aclEntry.getKey(), accessMode, groups.keySet());
+        addAclEntry(contextName, branch, path, aclEntry.getKey(), accessMode, group2users.keySet());
       }
     }
   }
 
   @NotNull
-  private static Map<String, Set<String>> expandGroups(@NotNull Map<String, String[]> groups) {
+  private static Map<String, Set<String>> expandGroups(@NotNull String contextName, @NotNull Map<String, String[]> groups) {
     final String[] sorted = groups.keySet().toArray(new String[0]);
 
     final TopologicalSort<String> topoSort = new TopologicalSort<>();
@@ -105,7 +133,7 @@ public final class ACL implements VcsAccess {
           final String subgroup = member.substring(GroupPrefix.length());
           final Set<String> subgroupMembers = group2Users.get(subgroup);
           if (subgroupMembers == null)
-            throw new IllegalStateException(String.format("Group %s references nonexistent group %s", group, subgroup));
+            throw new IllegalArgumentException(String.format("[%s] Group %s references nonexistent group %s", contextName, group, subgroup));
 
           expandedMembers.addAll(subgroupMembers);
         } else
@@ -116,7 +144,7 @@ public final class ACL implements VcsAccess {
     return group2Users;
   }
 
-  private void addAclEntry(@NotNull String path, @NotNull String entryString, @NotNull AccessMode accessMode, @NotNull Set<String> allGroups) {
+  private void addAclEntry(@NotNull String contextName, @NotNull String branch, @NotNull String path, @NotNull String entryString, @NotNull AccessMode accessMode, @NotNull Set<String> allGroups) {
     final ACLEntry entry;
     if (entryString.equals(EveryoneMarker))
       entry = EveryoneACLEntry.Instance;
@@ -131,40 +159,46 @@ public final class ACL implements VcsAccess {
       final String group = entryString.substring(GroupPrefix.length());
 
       if (!allGroups.contains(group))
-        throw new IllegalArgumentException("ACL entry " + path + " uses unknown group: " + group);
+        throw new IllegalArgumentException(String.format("[%s] ACL entry %s uses unknown group %s: ", contextName, path, group));
 
       entry = new GroupACLEntry(group);
     } else
       entry = new UserACLEntry(entryString);
 
-    if (path2acl.computeIfAbsent(StringHelper.normalizeDir(path), s -> new HashMap<>()).put(entry, accessMode) != null)
-      throw new IllegalArgumentException("Duplicate ACL entry " + path + ": " + entryString);
+    if (path2branch2acl.computeIfAbsent(StringHelper.normalizeDir(path), s -> new HashMap<>()).computeIfAbsent(branch, s -> new HashMap<>()).put(entry, accessMode) != null)
+      throw new IllegalArgumentException(String.format("[%s] Duplicate ACL entry %s: %s", contextName, path, entryString));
   }
 
   @Override
-  public boolean canRead(@NotNull User user, @NotNull String path) {
-    return doCheck(user, path, AccessMode::allowsRead);
+  public boolean canRead(@NotNull User user, @NotNull String branch, @NotNull String path) {
+    return doCheck(user, branch, path, AccessMode::allowsRead);
   }
 
   @Override
-  public boolean canWrite(@NotNull User user, @NotNull String path) {
-    return doCheck(user, path, AccessMode::allowsWrite);
+  public boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) {
+    return doCheck(user, branch, path, AccessMode::allowsWrite);
   }
 
-  private boolean doCheck(@NotNull User user, @NotNull String path, @NotNull BooleanFunction<AccessMode> checker) {
+  private boolean doCheck(@NotNull User user, @NotNull String branch, @NotNull String path, @NotNull BooleanFunction<AccessMode> checker) {
     String pathToCheck = path;
 
     while (true) {
-      final Map.Entry<String, Map<ACLEntry, AccessMode>> pathEntry = RepositoryMapping.getMapped(path2acl, pathToCheck);
+      final Map.Entry<String, Map<String, Map<ACLEntry, AccessMode>>> pathEntry = RepositoryMapping.getMapped(path2branch2acl, pathToCheck);
 
       if (pathEntry == null)
         break;
 
-      final CheckResult checkResult = check(user, checker, pathEntry.getValue());
-      if (checkResult == CheckResult.Deny)
-        return false;
-      else if (checkResult == CheckResult.Allow)
-        return true;
+      for (String b : new String[]{branch, NoBranch}) {
+        final Map<ACLEntry, AccessMode> branchPathEntry = pathEntry.getValue().get(b);
+        if (branchPathEntry == null)
+          continue;
+
+        final CheckResult checkResult = check(user, checker, branchPathEntry);
+        if (checkResult == CheckResult.Deny)
+          return false;
+        else if (checkResult == CheckResult.Allow)
+          return true;
+      }
 
       // We didn't find a matching entry, so need to go up in hierarchy
       final int prevSlash = pathEntry.getKey().lastIndexOf('/', pathEntry.getKey().length() - 2);

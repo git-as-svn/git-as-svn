@@ -118,7 +118,11 @@ public final class LfsContentManager implements ContentManager {
   private User checkAccess(@NotNull HttpServletRequest request, @NotNull Checker checker) throws IOException, UnauthorizedError, ForbiddenError {
     final User user = getAuthInfo(request);
     try {
-      checker.check(user, "/");
+      // This is a *bit* of a hack.
+      // If user accesses LFS, it means she is using git. If she uses git, she has whole repository contents.
+      // If she has full repository contents, it doesn't make sense to apply path-based authorization.
+      // Setups where where user has Git access but is not allowed to write via path-based authorization are declared bogus.
+      checker.check(user, org.eclipse.jgit.lib.Constants.MASTER, "/");
     } catch (SVNException ignored) {
       if (user.isAnonymous()) {
         throw new UnauthorizedError("Basic realm=\"" + context.getShared().getRealm() + "\"");
@@ -177,6 +181,6 @@ public final class LfsContentManager implements ContentManager {
 
   @FunctionalInterface
   public interface Checker {
-    void check(@NotNull User user, @NotNull String path) throws SVNException, IOException;
+    void check(@NotNull User user, @NotNull String branch, @NotNull String path) throws SVNException, IOException;
   }
 }
