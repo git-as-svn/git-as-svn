@@ -14,3 +14,8 @@ JAVA_OPTS="-Xmx256m -Dlog4j.configurationFile=/etc/git-as-svn/log4j2.xml"
 
 # additional arguments to pass to git-as-svn
 GAS_ARGS=""
+
+# These are required for GitLab hooks
+# See https://github.com/bozaro/git-as-svn/issues/271
+PATH="/bin:/usr/bin:/opt/gitlab/embedded/bin"
+GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell

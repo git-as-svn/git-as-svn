@@ -45,11 +45,10 @@ repositoryMapping: !gitlabMapping
   #   - git-as-svn
 
   # Common settings for all repositories exposed to svn://
-  #
-  # template:
-  #   pusher: !pushEmbedded
-  #     hooksPath: <empty>
-  #   renameDetection: true
+  template:
+    pusher: !pushEmbedded
+      # This tells git-as-svn where GitLab commit hooks are located
+      hooksPath: /opt/gitlab/embedded/service/gitaly-ruby/git-hooks
 
 # Use GitLab user database
 userDB:

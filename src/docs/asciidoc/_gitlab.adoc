@@ -17,10 +17,20 @@ This includes:
 [[_configuration]]
 == Configuration
 
+NOTE: This chapter assumes that GitLab is installed using standard Omnibus installation to `/opt/gitlab`.
+
 git-as-svn uses direct file access to Git repositories, so it needs to run from the same user as GitLab (normally, `git`).
 If you're installing both git-as-svn and Gitlab from Debian packages, no additional actions are required.
 
 IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[access token permission].
+
+. Add variables required for GitLab hooks to `/etc/default/git-as-svn`:
++
+[source,bash]
+----
+PATH="/bin:/usr/bin:/opt/gitlab/embedded/bin"
+GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
+----
 
 . Change `userDB` to `!gitlabUsers`. This will tell git-as-svn to authenticate users against GitLab server:
 +
@@ -87,6 +97,26 @@ shared:
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>
+----
+
+. Configure git-as-svn to use GitLab as repository list source:
++
+[source,yaml]
+----
+repositoryMapping: !gitlabMapping
+
+  # Filesystem location where GitLab stores repositories
+  # Note that git-as-svn requires write access
+  # Default: /var/opt/gitlab/git-data/repositories/
+  #
+  path: /var/opt/gitlab/git-data/repositories/
+
+  # Common settings for all repositories exposed to svn://
+  #
+  template:
+    pusher: !pushEmbedded
+      # This tells git-as-svn where GitLab commit hooks are located
+      hooksPath: /opt/gitlab/embedded/service/gitaly-ruby/git-hooks
 ----
 
 . Add `git-as-svn:<branch>` topics to whatever repositories you want to add to git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
