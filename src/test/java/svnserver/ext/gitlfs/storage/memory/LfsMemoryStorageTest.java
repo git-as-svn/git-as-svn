@@ -32,7 +32,7 @@ public class LfsMemoryStorageTest {
   public void simple() throws IOException {
     LfsMemoryStorage storage = new LfsMemoryStorage();
     // Check file is not exists
-    Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
+    Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1));
 
     // Write new file
     try (final LfsWriter writer = storage.getWriter(User.getAnonymous())) {
@@ -41,7 +41,7 @@ public class LfsMemoryStorageTest {
     }
 
     // Read old file.
-    final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+    final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1);
     Assert.assertNotNull(reader);
     Assert.assertEquals("9fe77772b085e3533101d59d33a51f19", reader.getMd5());
     Assert.assertEquals(15, reader.getSize());
@@ -69,7 +69,7 @@ public class LfsMemoryStorageTest {
   public void alreadyAdded() throws IOException {
     LfsMemoryStorage storage = new LfsMemoryStorage();
     // Check file is not exists
-    Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308"));
+    Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1));
 
     // Write new file
     try (final LfsWriter writer = storage.getWriter(User.getAnonymous())) {

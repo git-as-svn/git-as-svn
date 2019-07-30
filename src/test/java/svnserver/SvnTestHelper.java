@@ -159,13 +159,14 @@ public final class SvnTestHelper {
   }
 
   public static void checkFileContent(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content) throws IOException, SVNException {
-    try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-      repo.getFile(filePath, repo.getLatestRevision(), null, stream);
-      Assert.assertEquals(new String(stream.toByteArray(), StandardCharsets.UTF_8), content);
-    }
+    checkFileContent(repo, filePath, content.getBytes(StandardCharsets.UTF_8));
   }
 
   public static void checkFileContent(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] content) throws IOException, SVNException {
+    final SVNDirEntry info = repo.info(filePath, repo.getLatestRevision());
+    Assert.assertEquals(info.getKind(), SVNNodeKind.FILE);
+    Assert.assertEquals(info.getSize(), content.length);
+
     try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
       repo.getFile(filePath, repo.getLatestRevision(), null, stream);
       Assert.assertEquals(stream.toByteArray(), content);

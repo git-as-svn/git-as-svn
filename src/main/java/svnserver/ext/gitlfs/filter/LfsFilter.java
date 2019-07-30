@@ -13,6 +13,7 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.common.data.Meta;
 import ru.bozaro.gitlfs.pointer.Constants;
 import ru.bozaro.gitlfs.pointer.Pointer;
 import svnserver.auth.User;
@@ -65,28 +66,30 @@ public final class LfsFilter implements GitFilter {
   @Override
   public String getMd5(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
     final ObjectLoader loader = objectId.openObject();
-    final ObjectStream stream = loader.openStream();
-    final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
-    int length = IOUtils.read(stream, header, 0, header.length);
-    if (length < header.length) {
-      final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
-      if (pointer != null) {
-        String md5 = getReader(pointer).getMd5();
-        if (md5 != null) {
+
+    try (ObjectStream stream = loader.openStream()) {
+      final Meta meta = parseMeta(stream);
+      if (meta != null) {
+        final String md5 = getReader(meta).getMd5();
+        if (md5 != null)
           return md5;
-        }
       }
     }
+
     return GitFilterHelper.getMd5(this, cacheMd5, null, objectId);
   }
 
-  @NotNull
-  private LfsReader getReader(@NotNull Map<String, String> pointer) throws IOException {
-    final LfsReader reader = getStorage().getReader(pointer.get(Constants.OID));
-    if (reader == null) {
-      throw new SvnForbiddenException();
+  @Override
+  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
+    final ObjectLoader loader = objectId.openObject();
+
+    try (ObjectStream stream = loader.openStream()) {
+      final Meta meta = parseMeta(stream);
+      if (meta != null)
+        return meta.getSize();
     }
-    return reader;
+
+    return loader.getSize();
   }
 
   @NotNull
@@ -97,21 +100,6 @@ public final class LfsFilter implements GitFilter {
     return storage;
   }
 
-  @Override
-  public long getSize(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
-    final ObjectLoader loader = objectId.openObject();
-    final ObjectStream stream = loader.openStream();
-    final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
-    int length = IOUtils.read(stream, header, 0, header.length);
-    if (length < header.length) {
-      final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
-      if (pointer != null) {
-        return getReader(pointer).getSize();
-      }
-    }
-    return loader.getSize();
-  }
-
   @NotNull
   @Override
   public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
@@ -120,12 +108,41 @@ public final class LfsFilter implements GitFilter {
     final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
     int length = IOUtils.read(stream, header, 0, header.length);
     if (length < header.length) {
-      final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
-      if (pointer != null) {
-        return getReader(pointer).openStream();
-      }
+      final Meta meta = parseMeta(header, length);
+      if (meta != null)
+        return getReader(meta).openStream();
     }
     return new TemporaryInputStream(header, length, stream);
+  }
+
+  @Nullable
+  private static Meta parseMeta(@NotNull InputStream stream) throws IOException {
+    final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
+    int length = IOUtils.read(stream, header, 0, header.length);
+    if (length >= header.length)
+      return null;
+
+    return parseMeta(header, length);
+  }
+
+  @NotNull
+  private LfsReader getReader(@NotNull Meta meta) throws IOException {
+    final LfsReader reader = getStorage().getReader(meta.getOid(), meta.getSize());
+    if (reader == null)
+      throw new SvnForbiddenException();
+
+    return reader;
+  }
+
+  @Nullable
+  private static Meta parseMeta(@NotNull byte[] header, int length) {
+    final Map<String, String> pointer = Pointer.parsePointer(header, 0, length);
+    if (pointer == null)
+      return null;
+
+    final String oid = pointer.get(Constants.OID);
+    final long size = Long.parseLong(pointer.get(Constants.SIZE));
+    return new Meta(oid, size);
   }
 
   @NotNull

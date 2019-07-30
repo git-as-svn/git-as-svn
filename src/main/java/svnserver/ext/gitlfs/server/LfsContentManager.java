@@ -68,7 +68,7 @@ public final class LfsContentManager implements ContentManager {
       @NotNull
       @Override
       public InputStream openObject(@NotNull String hash) throws IOException {
-        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash, -1);
         if (reader == null) {
           throw new FileNotFoundException(hash);
         }
@@ -78,7 +78,7 @@ public final class LfsContentManager implements ContentManager {
       @Nullable
       @Override
       public InputStream openObjectGzipped(@NotNull String hash) throws IOException {
-        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+        final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash, -1);
         if (reader == null) {
           throw new FileNotFoundException(hash);
         }
@@ -172,7 +172,7 @@ public final class LfsContentManager implements ContentManager {
   @Nullable
   @Override
   public Meta getMetadata(@NotNull String hash) throws IOException {
-    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash);
+    final LfsReader reader = storage.getReader(LfsStorage.OID_PREFIX + hash, -1);
     if (reader == null) {
       return null;
     }

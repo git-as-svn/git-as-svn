@@ -80,20 +80,21 @@ public abstract class LfsHttpStorage implements LfsStorage {
     return lfsClient.getObject(null, links, TemporaryOutputStream::new).toInputStream();
   }
 
+  @Override
   @Nullable
-  public final LfsReader getReader(@NotNull String oid) throws IOException {
-    return getReader(oid, User.getAnonymous());
+  public final LfsReader getReader(@NotNull String oid, long size) throws IOException {
+    return getReader(oid, size, User.getAnonymous());
   }
 
   @Nullable
-  public final LfsReader getReader(@NotNull String oid, @NotNull User user) throws IOException {
+  public final LfsReader getReader(@NotNull String oid, long size, @NotNull User user) throws IOException {
     try {
       if (!oid.startsWith(OID_PREFIX))
         return null;
 
       final String hash = oid.substring(OID_PREFIX.length());
       final Client lfsClient = lfsClient(user);
-      BatchRes res = lfsClient.postBatch(new BatchReq(Operation.Download, Collections.singletonList(new Meta(hash, -1))));
+      BatchRes res = lfsClient.postBatch(new BatchReq(Operation.Download, Collections.singletonList(new Meta(hash, size))));
       if (res.getObjects().isEmpty())
         return null;
       BatchItem item = res.getObjects().get(0);

@@ -39,7 +39,7 @@ public final class LfsMemoryStorage extends LocalLockManager implements LfsStora
 
   @Nullable
   @Override
-  public LfsReader getReader(@NotNull String oid) {
+  public LfsReader getReader(@NotNull String oid, long size) {
     final byte[] content = files.get(oid);
     if (content == null)
       return null;
