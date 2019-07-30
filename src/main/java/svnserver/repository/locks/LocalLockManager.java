@@ -84,6 +84,9 @@ public class LocalLockManager implements LockStorage {
   @NotNull
   @Override
   public final LockDesc[] getLocks(@NotNull User user, @Nullable GitBranch branch, @Nullable String path, @Nullable String lockId) {
+    if (path != null)
+      path = StringHelper.normalize(path);
+
     final List<LockDesc> result = new ArrayList<>();
     for (Map.Entry<String, LockDesc> entry : locks.entrySet()) {
       final LockDesc lockDesc = entry.getValue();

@@ -54,11 +54,15 @@ public class LfsMemoryStorageTest {
   @Test
   public void lockUnlock() throws SVNException, LockConflictException, IOException {
     LfsMemoryStorage storage = new LfsMemoryStorage();
-    final LockDesc lock = storage.lock(User.getAnonymous(), null, "/path");
+    final LockDesc lock = storage.lock(User.getAnonymous(), null, "README.md");
     Assert.assertNotNull(lock);
 
+    final LockDesc[] locks = storage.getLocks(User.getAnonymous(), null, "README.md", (String) null);
+    Assert.assertEquals(locks.length, 1);
+    Assert.assertEquals(locks[0], lock);
+
     final LockDesc unlock = storage.unlock(User.getAnonymous(), null, false, lock.getToken());
-    Assert.assertEquals(lock, unlock);
+    Assert.assertEquals(unlock, lock);
   }
 
   @Test
