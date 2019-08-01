@@ -208,7 +208,7 @@ public final class GitLabIntegrationTest {
 
     Assert.assertEquals(oid, "sha256:5d54606feae97935feeb6dfb8194cf7961d504609689e4a44d86dbeafb91cb18");
 
-    final LfsReader reader = storage.getReader(oid);
+    final LfsReader reader = storage.getReader(oid, expected.length);
     Assert.assertNotNull(reader);
 
     final byte[] actual;
@@ -217,6 +217,7 @@ public final class GitLabIntegrationTest {
     }
 
     Assert.assertEquals(actual, expected);
+    Assert.assertEquals(reader.getSize(), expected.length);
   }
 
   @Test

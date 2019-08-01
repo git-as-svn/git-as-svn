@@ -70,7 +70,7 @@ public final class LfsLocalStorage extends LocalLockManager implements LfsStorag
 
   @Nullable
   @Override
-  public LfsReader getReader(@NotNull String oid) throws IOException {
+  public LfsReader getReader(@NotNull String oid, long size) throws IOException {
     return LfsLocalReader.create(layout, dataRoot, metaRoot, oid);
   }
 

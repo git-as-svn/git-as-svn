@@ -151,7 +151,7 @@ public final class LfsHttpStorageTest {
       final LfsHttpStorage storage = new GitAsSvnLfsHttpStorage(url);
 
       // Check file is not exists
-      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", user));
+      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1, user));
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter(user)) {
@@ -166,7 +166,7 @@ public final class LfsHttpStorageTest {
       }
 
       // Read old file.
-      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", user);
+      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1, user);
       Assert.assertNotNull(reader);
       Assert.assertNull(reader.getMd5());
       Assert.assertEquals(reader.getSize(), 15);

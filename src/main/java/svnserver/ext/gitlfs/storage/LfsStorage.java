@@ -32,7 +32,7 @@ public interface LfsStorage extends Local, LockStorage {
    * @throws IOException .
    */
   @Nullable
-  LfsReader getReader(@NotNull String oid) throws IOException;
+  LfsReader getReader(@NotNull String oid, long size) throws IOException;
 
   /**
    * Create writer for object.
