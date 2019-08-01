@@ -115,12 +115,25 @@ public final class SvnServerWriter implements AutoCloseable {
 
   @NotNull
   public SvnServerWriter writeMap(@Nullable Map<String, String> properties) throws IOException {
+    return writeMap(properties, false);
+  }
+
+  @NotNull
+  public SvnServerWriter writeMap(@Nullable Map<String, String> properties, boolean nullableValues) throws IOException {
     listBegin();
     if (properties != null) {
       for (Map.Entry<String, String> entry : properties.entrySet()) {
         listBegin();
         string(entry.getKey());
-        string(entry.getValue());
+
+        if (nullableValues) {
+          listBegin();
+          stringNullable(entry.getValue());
+          listEnd();
+        } else {
+          string(entry.getValue());
+        }
+
         listEnd();
       }
     }

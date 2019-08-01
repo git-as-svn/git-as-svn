@@ -21,6 +21,7 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
+import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
@@ -101,7 +102,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
             .string(newFile.getFullPath())
             .number(newFile.getRevision())
             .writeMap(newFile.getLastChange().getProperties(true))
-            .writeMap(propsDiff)
+            .writeMap(propsDiff, true)
             .bool(false) // TODO: issue #26. merged-revision
             .listEnd();
 
@@ -130,7 +131,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
             @Override
             public void textDeltaEnd(String path) throws SVNException {
               try {
-                writer.string("");
+                writer.binary(GitRepository.emptyBytes);
               } catch (IOException e) {
                 throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR));
               }

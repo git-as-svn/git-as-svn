@@ -771,12 +771,8 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
           .listBegin()
           .string(tokenId)
           .string(key)
-          .listBegin();
-      if (value != null) {
-        writer
-            .string(value);
-      }
-      writer
+          .listBegin()
+          .stringNullable(value)
           .listEnd()
           .listEnd()
           .listEnd();
