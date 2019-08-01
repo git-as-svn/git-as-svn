@@ -21,7 +21,6 @@ import svnserver.parser.SvnServerWriter;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitFile;
-import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.GitRevision;
 import svnserver.server.SessionContext;
 
@@ -131,7 +130,7 @@ public final class GetFileRevsCmd extends BaseCmd<GetFileRevsCmd.Params> {
             @Override
             public void textDeltaEnd(String path) throws SVNException {
               try {
-                writer.binary(GitRepository.emptyBytes);
+                writer.string("");
               } catch (IOException e) {
                 throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR));
               }
