@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.20.2
 
  * Fix LFS files returning -1 size for remote LFS. #282
  * Fix `svn blame` failing with "Malformed network data" error
