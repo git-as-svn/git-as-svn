@@ -16,13 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.dockerclient.DockerClientConfigUtils;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -67,11 +65,6 @@ public final class GiteaIntegrationTest {
   @NotNull
   private static final String collaboratorPassword = "collaboratorPassword";
 
-  /**
-   * TODO: remove this when https://github.com/go-gitea/gitea/pull/7281 is fixed.
-   */
-  private static final boolean testLfs = !DockerClientConfigUtils.IN_A_CONTAINER;
-
   private GenericContainer<?> gitea;
   private String giteaUrl;
   private String giteaApiUrl;
@@ -105,12 +98,9 @@ public final class GiteaIntegrationTest {
         .withEnv("INSTALL_LOCK", "true")
         .withEnv("SECRET_KEY", "CmjF5WBUNZytE2C80JuogljLs5enS0zSTlikbP2HyG8IUy15UjkLNvTNsyYW7wN")
         .withEnv("RUN_MODE", "prod")
+        .withEnv("LFS_START_SERVER", "true")
         .waitingFor(Wait.forHttp("/user/login"))
         .withLogConsumer(new Slf4jLogConsumer(log));
-
-    if (testLfs)
-      // Temporary hack for https://github.com/go-gitea/gitea/pull/7281
-      gitea.withClasspathResourceMapping("/svnserver/ext/gitea/app.ini", "/etc/templates/app.ini", BindMode.READ_ONLY);
 
     gitea.start();
 
@@ -194,9 +184,6 @@ public final class GiteaIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
-    if (!testLfs)
-      throw new SkipException("LFS testing is disabled");
-
     final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
     final svnserver.auth.User user = svnserver.auth.User.create(administrator, administrator, administrator, administrator, UserType.Gitea);
 
