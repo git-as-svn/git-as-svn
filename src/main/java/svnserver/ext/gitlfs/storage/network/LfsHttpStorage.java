@@ -18,7 +18,6 @@ import ru.bozaro.gitlfs.common.LockConflictException;
 import ru.bozaro.gitlfs.common.VerifyLocksResult;
 import ru.bozaro.gitlfs.common.data.*;
 import svnserver.Loggers;
-import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -77,7 +76,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
   @NotNull
   final InputStream getObject(@NotNull Links links) throws IOException {
     final Client lfsClient = lfsClient(User.getAnonymous());
-    return lfsClient.getObject(null, links, TemporaryOutputStream::new).toInputStream();
+    return lfsClient.getObject(null, links, inputStream -> inputStream);
   }
 
   @Override

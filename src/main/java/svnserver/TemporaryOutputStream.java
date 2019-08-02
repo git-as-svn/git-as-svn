@@ -7,7 +7,6 @@
  */
 package svnserver;
 
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -34,9 +33,11 @@ public final class TemporaryOutputStream extends OutputStream {
   @Nullable
   private FileOutputStream fileOutputStream;
   private long totalSize = 0;
+
   public TemporaryOutputStream() {
     this(MAX_MEMORY_SIZE);
   }
+
   public TemporaryOutputStream(int maxMemorySize) {
     this.maxMemorySize = maxMemorySize;
     this.holder = new FileHolder(this::cleanup);
@@ -46,11 +47,6 @@ public final class TemporaryOutputStream extends OutputStream {
     if (file != null && !file.delete()) {
       throw new IOException("Can't delete temporary file: " + file.getAbsolutePath());
     }
-  }
-
-  public TemporaryOutputStream(@NotNull InputStream stream) throws IOException {
-    this(MAX_MEMORY_SIZE);
-    IOUtils.copy(stream, this);
   }
 
   @Override

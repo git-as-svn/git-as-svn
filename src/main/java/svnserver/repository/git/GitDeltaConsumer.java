@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -28,7 +29,10 @@ import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
 import svnserver.repository.git.filter.GitFilter;
 
-import java.io.*;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -159,7 +163,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
       newFilter = writer.getBranch().getRepository().getFilter(props.containsKey(SVNProperty.SPECIAL) ? FileMode.SYMLINK : FileMode.REGULAR_FILE, entry.getRawProperties());
       window = new SVNDeltaProcessor();
 
-      final InputStream base = (oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : new ByteArrayInputStream(GitRepository.emptyBytes);
+      final InputStream base = (oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : SVNFileUtil.DUMMY_IN;
       final OutputStream target = newFilter.outputStream(temporaryStream, user);
 
       window.applyTextDelta(base, new UncheckedCloseOutputStream(target), true);
