@@ -37,6 +37,7 @@ import java.util.Map;
  * Filter for Git LFS.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class LfsFilter implements GitFilter {
   @NotNull
@@ -195,39 +196,46 @@ public final class LfsFilter implements GitFilter {
   }
 
   private static class TemporaryOutputStream extends OutputStream {
-    private final LfsWriter writer;
-    private final OutputStream stream;
+    @NotNull
+    private final LfsWriter dataStream;
+    @NotNull
+    private final OutputStream pointerStream;
     private long size;
 
-    private TemporaryOutputStream(LfsWriter writer, OutputStream stream) {
-      this.writer = writer;
-      this.stream = stream;
+    private TemporaryOutputStream(@NotNull LfsWriter dataStream, @NotNull OutputStream pointerStream) {
+      this.dataStream = dataStream;
+      this.pointerStream = pointerStream;
       size = 0;
     }
 
     @Override
     public void write(int b) throws IOException {
-      writer.write(b);
+      dataStream.write(b);
       size++;
     }
 
     @Override
     public void write(@NotNull byte[] b, int off, int len) throws IOException {
-      writer.write(b, off, len);
+      dataStream.write(b, off, len);
       size += len;
     }
 
     @Override
     public void flush() throws IOException {
-      writer.flush();
+      dataStream.flush();
     }
 
     @Override
     public void close() throws IOException {
-      final Map<String, String> pointer = Pointer.createPointer(writer.finish(null), size);
-      writer.close();
-      stream.write(Pointer.serializePointer(pointer));
-      stream.close();
+      try (OutputStream pointerOut = pointerStream) {
+        final Map<String, String> pointer;
+
+        try (LfsWriter dataOut = dataStream) {
+          pointer = Pointer.createPointer(dataOut.finish(null), size);
+        }
+
+        pointerOut.write(Pointer.serializePointer(pointer));
+      }
     }
   }
 }

@@ -7,19 +7,17 @@
  */
 package svnserver;
 
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Stream for write-then-read functionality.
  *
  * @author Artem V. Navrotskiy
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class TemporaryOutputStream extends OutputStream {
   @SuppressWarnings("MagicNumber")
@@ -27,34 +25,26 @@ public final class TemporaryOutputStream extends OutputStream {
   private final int maxMemorySize;
   @NotNull
   private final ByteArrayOutputStream memoryStream = new ByteArrayOutputStream();
-  @NotNull
-  private final Holder holder;
   @Nullable
   private File file;
   @Nullable
   private FileOutputStream fileOutputStream;
   private long totalSize = 0;
+  private boolean closed;
+
   public TemporaryOutputStream() {
     this(MAX_MEMORY_SIZE);
   }
+
   public TemporaryOutputStream(int maxMemorySize) {
     this.maxMemorySize = maxMemorySize;
-    this.holder = new FileHolder(this::cleanup);
-  }
-
-  private void cleanup() throws IOException {
-    if (file != null && !file.delete()) {
-      throw new IOException("Can't delete temporary file: " + file.getAbsolutePath());
-    }
-  }
-
-  public TemporaryOutputStream(@NotNull InputStream stream) throws IOException {
-    this(MAX_MEMORY_SIZE);
-    IOUtils.copy(stream, this);
   }
 
   @Override
   public void write(int b) throws IOException {
+    if (closed)
+      throw new IOException();
+
     if (memoryStream.size() < maxMemorySize) {
       memoryStream.write(b);
       totalSize++;
@@ -67,8 +57,7 @@ public final class TemporaryOutputStream extends OutputStream {
   @NotNull
   private FileOutputStream ensureFile() throws IOException {
     if (fileOutputStream == null) {
-      file = File.createTempFile("tmp", "");
-      file.deleteOnExit();
+      file = File.createTempFile("tmp", "git-as-svn");
       fileOutputStream = new FileOutputStream(file);
     }
     return fileOutputStream;
@@ -76,6 +65,9 @@ public final class TemporaryOutputStream extends OutputStream {
 
   @Override
   public void write(@NotNull byte[] b, int off, int len) throws IOException {
+    if (closed)
+      throw new IOException();
+
     if (memoryStream.size() < maxMemorySize) {
       final int size = Math.min(maxMemorySize - memoryStream.size(), len);
       memoryStream.write(b, off, size);
@@ -90,25 +82,32 @@ public final class TemporaryOutputStream extends OutputStream {
 
   @Override
   public void flush() throws IOException {
-    if (fileOutputStream != null) {
+    if (closed)
+      throw new IOException();
+
+    if (fileOutputStream != null)
       fileOutputStream.flush();
-    }
   }
 
   @Override
   public void close() throws IOException {
-    if (fileOutputStream != null) {
-      fileOutputStream.close();
+    if (closed)
+      return;
+
+    closed = true;
+
+    try {
+      if (fileOutputStream != null)
+        fileOutputStream.close();
+    } finally {
+      if (file != null)
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
     }
-    holder.close();
   }
 
   public long size() {
     return totalSize;
-  }
-
-  public Holder holder() {
-    return holder.copy();
   }
 
   @TestOnly
@@ -119,27 +118,17 @@ public final class TemporaryOutputStream extends OutputStream {
 
   @NotNull
   public InputStream toInputStream() throws IOException {
-    if (fileOutputStream != null) {
+    if (fileOutputStream != null)
       flush();
-    }
-    if (file != null) {
-      return new TemporaryInputStream(memoryStream.toByteArray(), file, holder);
-    } else {
-      return new ByteArrayInputStream(memoryStream.toByteArray());
-    }
-  }
 
-  public interface Holder extends AutoCloseable {
-    @NotNull
-    Holder copy();
+    final InputStream result = file == null
+        ? new ByteArrayInputStream(memoryStream.toByteArray())
+        : new TemporaryInputStream(memoryStream.toByteArray(), file);
 
-    @Override
-    void close() throws IOException;
-  }
+    file = null;
+    close();
 
-  private interface CloseAction extends AutoCloseable {
-    @Override
-    void close() throws IOException;
+    return result;
   }
 
   private static class TemporaryInputStream extends InputStream {
@@ -148,13 +137,13 @@ public final class TemporaryOutputStream extends OutputStream {
     @NotNull
     private final FileInputStream fileStream;
     @NotNull
-    private final Holder holder;
+    private final File file;
     private int offset = 0;
 
-    private TemporaryInputStream(@NotNull byte[] memoryBytes, @NotNull File file, @NotNull Holder holder) throws FileNotFoundException {
+    private TemporaryInputStream(@NotNull byte[] memoryBytes, @NotNull File file) throws FileNotFoundException {
       this.memoryBytes = memoryBytes;
-      this.holder = holder.copy();
       this.fileStream = new FileInputStream(file);
+      this.file = file;
     }
 
     @Override
@@ -182,40 +171,11 @@ public final class TemporaryOutputStream extends OutputStream {
 
     @Override
     public void close() throws IOException {
-      fileStream.close();
-      holder.close();
-    }
-  }
-
-  private static class FileHolder implements Holder {
-    @NotNull
-    private final CloseAction action;
-    @NotNull
-    private final AtomicInteger usages;
-    @NotNull
-    private final AtomicBoolean closed = new AtomicBoolean(false);
-
-    FileHolder(@NotNull CloseAction action) {
-      this(action, new AtomicInteger(1));
-    }
-
-    private FileHolder(@NotNull CloseAction action, @NotNull AtomicInteger usages) {
-      this.action = action;
-      this.usages = usages;
-    }
-
-    @NotNull
-    public FileHolder copy() {
-      usages.incrementAndGet();
-      return new FileHolder(action, usages);
-    }
-
-    @Override
-    public void close() throws IOException {
-      if (closed.compareAndSet(false, true)) {
-        if (usages.decrementAndGet() == 0) {
-          action.close();
-        }
+      try {
+        fileStream.close();
+      } finally {
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
       }
     }
   }

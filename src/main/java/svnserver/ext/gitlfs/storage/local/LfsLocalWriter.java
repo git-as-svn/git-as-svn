@@ -33,8 +33,9 @@ import java.util.zip.GZIPOutputStream;
  * Local storage writer.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class LfsLocalWriter extends LfsWriter {
+public final class LfsLocalWriter extends LfsWriter {
   private final LocalLfsConfig.LfsLayout layout;
   @NotNull
   private final File dataRoot;
@@ -55,7 +56,7 @@ public class LfsLocalWriter extends LfsWriter {
   private OutputStream dataStream;
   private long size;
 
-  public LfsLocalWriter(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress, @Nullable User user) throws IOException {
+  LfsLocalWriter(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress, @Nullable User user) throws IOException {
     this.layout = layout;
     this.dataRoot = dataRoot;
     this.metaRoot = metaRoot;
@@ -104,9 +105,12 @@ public class LfsLocalWriter extends LfsWriter {
 
   @Override
   public void close() throws IOException {
-    if (dataStream != null) {
-      dataStream.close();
-      dataStream = null;
+    try {
+      if (dataStream != null) {
+        dataStream.close();
+        dataStream = null;
+      }
+    } finally {
       //noinspection ResultOfMethodCallIgnored
       dataTemp.delete();
     }
