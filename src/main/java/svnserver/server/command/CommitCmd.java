@@ -7,6 +7,7 @@
  */
 package svnserver.server.command;
 
+import org.eclipse.jetty.util.MultiException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -28,9 +29,9 @@ import svnserver.repository.git.*;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockStorage;
 import svnserver.server.SessionContext;
-import svnserver.server.msg.PropertyEntry;
 import svnserver.server.step.CheckPermissionStep;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
@@ -76,8 +77,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         .listEnd()
         .listEnd();
     log.debug("Enter editor mode");
-    EditorPipeline pipeline = new EditorPipeline(context, args);
-    pipeline.editorCommand(context);
+
+    try (EditorPipeline pipeline = new EditorPipeline(context, args)) {
+      pipeline.editorCommand(context);
+    }
   }
 
   @Override
@@ -105,7 +108,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     @NotNull
     private final LockInfo[] locks;
 
-    public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks, @NotNull PropertyEntry[] revProps) {
+    public CommitParams(@NotNull String message, @NotNull LockInfo[] locks, boolean keepLocks) {
       this.message = message;
       this.locks = locks;
       this.keepLocks = keepLocks;
@@ -234,7 +237,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
-  private static class FileUpdater {
+  private static class FileUpdater implements Closeable {
     @NotNull
     private final GitDeltaConsumer deltaConsumer;
     @NotNull
@@ -242,6 +245,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
 
     FileUpdater(@NotNull GitDeltaConsumer deltaConsumer) {
       this.deltaConsumer = deltaConsumer;
+    }
+
+    @Override
+    public void close() throws IOException {
+      deltaConsumer.close();
     }
   }
 
@@ -277,7 +285,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     }
   }
 
-  private static class EditorPipeline {
+  private static final class EditorPipeline implements Closeable {
     @NotNull
     private final EntryUpdater rootEntry;
     @NotNull
@@ -636,6 +644,25 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         log.warn("Exception during in cmd " + cmd, e);
         aborted = true;
         throw e;
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      final MultiException multiException = new MultiException();
+
+      for (FileUpdater updater : files.values()) {
+        try {
+          updater.close();
+        } catch (IOException e) {
+          multiException.add(e);
+        }
+      }
+
+      try {
+        multiException.ifExceptionThrow();
+      } catch (Exception e) {
+        throw new IOException(e);
       }
     }
   }

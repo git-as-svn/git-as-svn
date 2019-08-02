@@ -29,10 +29,7 @@ import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
 import svnserver.repository.git.filter.GitFilter;
 
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +39,7 @@ import java.util.Map;
  * @author a.navrotskiy
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public final class GitDeltaConsumer implements ISVNDeltaConsumer {
+public final class GitDeltaConsumer implements ISVNDeltaConsumer, Closeable {
   @NotNull
   private static final Logger log = Loggers.git;
   @NotNull
@@ -202,6 +199,11 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
     if (oldFilter != null)
       return oldFilter.getName();
     throw new IllegalStateException();
+  }
+
+  @Override
+  public void close() throws IOException {
+    temporaryStream.close();
   }
 
   /**
