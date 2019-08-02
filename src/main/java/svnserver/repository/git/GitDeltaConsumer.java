@@ -40,6 +40,7 @@ import java.util.Map;
  * Delta consumer for applying svn diff on git blob.
  *
  * @author a.navrotskiy
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   @NotNull
@@ -132,10 +133,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
     if (!newFilter.equals(filter)) {
       final Repository repo = writer.getBranch().getRepository().getGit();
 
-      try (
-          final TemporaryOutputStream content = new TemporaryOutputStream();
-          final TemporaryOutputStream.Holder holder = content.holder()
-      ) {
+      try (TemporaryOutputStream content = new TemporaryOutputStream()) {
         try (InputStream inputStream = newFilter.inputStream(objectId);
              OutputStream outputStream = filter.outputStream(content, user)) {
           IOUtils.copy(inputStream, outputStream);
@@ -180,14 +178,14 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer {
   }
 
   public void textDeltaEnd(String path) throws SVNException {
-    try (TemporaryOutputStream.Holder holder = temporaryStream.holder()) {
+    try (TemporaryOutputStream holder = temporaryStream) {
       if (window == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR));
 
       final Repository repo = writer.getBranch().getRepository().getGit();
       md5 = window.textDeltaEnd();
-      try (InputStream stream = temporaryStream.toInputStream()) {
-        objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, temporaryStream.size(), stream));
+      try (InputStream stream = holder.toInputStream()) {
+        objectId = new GitObject<>(repo, writer.getInserter().insert(Constants.OBJ_BLOB, holder.size(), stream));
       }
       log.info("Created blob {} for file: {}", objectId.getObject().getName(), entry.getFullPath());
     } catch (IOException e) {
