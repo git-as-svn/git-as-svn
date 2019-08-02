@@ -53,7 +53,7 @@ jobs:
       env: GITEA_VERSION=latest
       jdk: *oldest_jdk
     - stage: test
-      env: GITEA_VERSION=1.7.2 # The earliest supported Gitea version
+      env: GITEA_VERSION=1.9.0 # The earliest supported Gitea version
       jdk: *oldest_jdk
 
     # Different JDKs
