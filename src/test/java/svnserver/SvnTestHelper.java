@@ -14,14 +14,12 @@ import org.testcontainers.DockerClientFactory;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,12 +43,6 @@ public final class SvnTestHelper {
     checkProp(props, expected);
   }
 
-  public static void checkDirProp(@NotNull SVNRepository repo, @NotNull String filePath, @Nullable Map<String, String> expected) throws SVNException {
-    SVNProperties props = new SVNProperties();
-    repo.getDir(filePath, repo.getLatestRevision(), props, new ArrayList<>());
-    checkProp(props, expected);
-  }
-
   private static void checkProp(@NotNull SVNProperties props, @Nullable Map<String, String> expected) {
     final Map<String, String> check = new HashMap<>();
     if (expected != null) {
@@ -61,6 +53,12 @@ public final class SvnTestHelper {
       Assert.assertEquals(entry.getValue().getString(), check.remove(entry.getKey()));
     }
     Assert.assertTrue(check.isEmpty());
+  }
+
+  public static void checkDirProp(@NotNull SVNRepository repo, @NotNull String filePath, @Nullable Map<String, String> expected) throws SVNException {
+    SVNProperties props = new SVNProperties();
+    repo.getDir(filePath, repo.getLatestRevision(), props, new ArrayList<>());
+    checkProp(props, expected);
   }
 
   public static void createFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content, @Nullable Map<String, String> props) throws SVNException, IOException {
@@ -91,6 +89,18 @@ public final class SvnTestHelper {
       editor.closeDir();
     }
     Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL);
+  }
+
+  public static void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable byte[] oldData, @Nullable byte[] newData) throws SVNException, IOException {
+    try (
+        InputStream oldStream = oldData == null ? SVNFileUtil.DUMMY_IN : new ByteArrayInputStream(oldData);
+        InputStream newStream = newData == null ? SVNFileUtil.DUMMY_IN : new ByteArrayInputStream(newData)
+    ) {
+      editor.applyTextDelta(filePath, null);
+      SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+      String checksum = deltaGenerator.sendDelta(filePath, oldStream, 0, newStream, editor, true);
+      editor.closeFile(filePath, checksum);
+    }
   }
 
   public static void deleteFile(@NotNull SVNRepository repo, @NotNull String filePath) throws SVNException {
@@ -144,18 +154,6 @@ public final class SvnTestHelper {
 
   public static void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable String oldData, @Nullable String newData) throws SVNException, IOException {
     sendDeltaAndClose(editor, filePath, oldData == null ? null : oldData.getBytes(StandardCharsets.UTF_8), newData == null ? null : newData.getBytes(StandardCharsets.UTF_8));
-  }
-
-  public static void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable byte[] oldData, @Nullable byte[] newData) throws SVNException, IOException {
-    try (
-        ByteArrayInputStream oldStream = new ByteArrayInputStream(oldData == null ? emptyBytes : oldData);
-        ByteArrayInputStream newStream = new ByteArrayInputStream(newData == null ? emptyBytes : newData)
-    ) {
-      editor.applyTextDelta(filePath, null);
-      SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-      String checksum = deltaGenerator.sendDelta(filePath, oldStream, 0, newStream, editor, true);
-      editor.closeFile(filePath, checksum);
-    }
   }
 
   public static void checkFileContent(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String content) throws IOException, SVNException {

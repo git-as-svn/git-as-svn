@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -582,7 +583,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
     @NotNull
     private InputStream openStream(@Nullable GitFile file) throws IOException {
-      return file == null ? new ByteArrayInputStream(new byte[0]) : file.openStream();
+      return file == null ? SVNFileUtil.DUMMY_IN : file.openStream();
     }
 
     @NotNull
