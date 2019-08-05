@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.parser.token.*;
 
 import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +23,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class SvnServerWriter implements AutoCloseable {
+public final class SvnServerWriter implements Closeable {
   @NotNull
   private final OutputStream stream;
   private int depth = 0;
@@ -142,8 +143,10 @@ public final class SvnServerWriter implements AutoCloseable {
   }
 
   @Override
-  public void close() {
-    if (depth != 0)
-      throw new IllegalStateException("Unmatched parentheses");
+  public void close() throws IOException {
+    try (OutputStream ignored = stream) {
+      if (depth != 0)
+        throw new IllegalStateException("Unmatched parentheses");
+    }
   }
 }

@@ -34,7 +34,6 @@ import svnserver.server.msg.AuthReq;
 import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
-import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -193,7 +192,7 @@ public final class SvnServer extends Thread {
       sharedContext.getThreadPoolExecutor().execute(() -> {
         log.info("New connection from: {}", client.getRemoteSocketAddress());
         try (Socket clientSocket = client;
-             SvnServerWriter writer = new SvnServerWriter(new BufferedOutputStream(clientSocket.getOutputStream()))) {
+             SvnServerWriter writer = new SvnServerWriter(clientSocket.getOutputStream())) {
           connections.put(sessionId, client);
           serveClient(clientSocket, writer);
         } catch (EOFException | SocketException ignore) {
