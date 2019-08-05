@@ -95,7 +95,7 @@ public final class LfsHttpStorageTest {
 
       final URI url = webServer.getBaseUrl().resolve("example.git/").resolve(LfsServer.SERVLET_AUTH);
 
-      try (SvnTestServer server = SvnTestServer.createEmpty(null, false, false, new GitAsSvnLfsHttpStorage(url))) {
+      try (SvnTestServer server = SvnTestServer.createEmpty(null, false, false, new GitAsSvnLfsHttpStorage(url, user))) {
         final SVNRepository svnRepository = server.openSvnRepository();
         SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
 
@@ -163,10 +163,10 @@ public final class LfsHttpStorageTest {
       final String oid = "sha256:" + Hashing.sha256().hashBytes(data).toString();
 
       final URI url = webServer.getBaseUrl().resolve("example.git/").resolve(LfsServer.SERVLET_AUTH);
-      final LfsHttpStorage storage = new GitAsSvnLfsHttpStorage(url);
+      final LfsHttpStorage storage = new GitAsSvnLfsHttpStorage(url, user);
 
       // Check file is not exists
-      Assert.assertNull(storage.getReader(oid, -1, user));
+      Assert.assertNull(storage.getReader(oid, -1));
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter(user)) {
@@ -181,7 +181,7 @@ public final class LfsHttpStorageTest {
       }
 
       // Read old file.
-      final LfsReader reader = storage.getReader(oid, -1, user);
+      final LfsReader reader = storage.getReader(oid, -1);
       Assert.assertNotNull(reader);
       Assert.assertNull(reader.getMd5());
       Assert.assertEquals(reader.getSize(), data.length);
@@ -196,9 +196,12 @@ public final class LfsHttpStorageTest {
   private static final class GitAsSvnLfsHttpStorage extends LfsHttpStorage implements LfsStorageFactory, SharedConfig {
     @NotNull
     private final URI authUrl;
+    @NotNull
+    private final User user;
 
-    private GitAsSvnLfsHttpStorage(@NotNull URI authUrl) {
+    private GitAsSvnLfsHttpStorage(@NotNull URI authUrl, @NotNull User user) {
       this.authUrl = authUrl;
+      this.user = user;
     }
 
     @Override
@@ -207,7 +210,7 @@ public final class LfsHttpStorageTest {
     }
 
     @Override
-    protected @NotNull Client lfsClient(@NotNull User user) {
+    protected @NotNull Client lfsClient(@NotNull User unused) {
       final HttpClient httpClient = HttpClients.createDefault();
 
       return new Client(new CachedAuthProvider() {
