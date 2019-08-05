@@ -12,10 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import svnserver.Loggers;
 import svnserver.auth.User;
+import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.git.GitLocation;
 import svnserver.repository.locks.LocalLockManager;
 import svnserver.repository.locks.LockDesc;
 
@@ -66,6 +68,11 @@ public final class LfsLocalStorage extends LocalLockManager implements LfsStorag
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
     return new File(root, layout.getPath(oid.substring(offset)) + suffix);
+  }
+
+  @NotNull
+  public static File getMetaRoot(@NotNull LocalContext context) {
+    return new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta");
   }
 
   @Nullable

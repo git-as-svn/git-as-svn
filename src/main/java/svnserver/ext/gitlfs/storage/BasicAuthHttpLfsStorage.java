@@ -22,7 +22,7 @@ import java.net.URI;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class BasicAuthHttpLfsStorage extends LfsHttpStorage {
+public class BasicAuthHttpLfsStorage extends LfsHttpStorage {
   @NotNull
   private final Client client;
 
@@ -34,10 +34,10 @@ public final class BasicAuthHttpLfsStorage extends LfsHttpStorage {
   }
 
   @NotNull
-  protected Client lfsClient(@NotNull User user) {
+  protected final Client lfsClient(@NotNull User user) {
     return client;
   }
 
-  public void invalidate(@NotNull User user) {
+  public final void invalidate(@NotNull User user) {
   }
 }

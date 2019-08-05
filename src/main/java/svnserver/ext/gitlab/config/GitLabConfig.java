@@ -9,12 +9,16 @@ package svnserver.ext.gitlab.config;
 
 import org.gitlab.api.TokenType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.BasicAuthHttpLfsStorage;
+import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
+
+import java.io.IOException;
 
 /**
  * Gitlab access settings.
@@ -31,7 +35,8 @@ public final class GitLabConfig implements SharedConfig {
   private TokenType tokenType;
   @NotNull
   private String hookPath = "_hooks/gitlab";
-  private boolean lfs = true;
+  @Nullable
+  private LfsMode lfsMode = HttpLfsMode.instance;
 
   public GitLabConfig() {
     this("http://localhost/", TokenType.PRIVATE_TOKEN, "");
@@ -62,14 +67,15 @@ public final class GitLabConfig implements SharedConfig {
     final GitLabContext gitLabContext = new GitLabContext(this);
     context.add(GitLabContext.class, gitLabContext);
 
-    if (lfs) {
-      context.add(LfsStorageFactory.class, localContext -> createLfsStorage(url, localContext.getName(), getToken()));
+    if (lfsMode != null) {
+      context.add(LfsStorageFactory.class, localContext -> createLfsStorage(
+          url,
+          localContext.getName(),
+          "UNUSED",
+          getToken().getValue(),
+          lfsMode.readerFactory(localContext)
+      ));
     }
-  }
-
-  @NotNull
-  private static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull GitLabToken token) {
-    return createLfsStorage(gitLabUrl, repositoryName, "UNUSED", token.getValue());
   }
 
   @NotNull
@@ -78,7 +84,20 @@ public final class GitLabConfig implements SharedConfig {
   }
 
   @NotNull
-  public static LfsStorage createLfsStorage(@NotNull String gitLabUrl, @NotNull String repositoryName, @NotNull String username, @NotNull String password) {
-    return new BasicAuthHttpLfsStorage(gitLabUrl, repositoryName, username, password);
+  public static LfsStorage createLfsStorage(
+      @NotNull String gitLabUrl,
+      @NotNull String repositoryName,
+      @NotNull String username,
+      @NotNull String password,
+      @Nullable LfsReaderFactory readerFactory) {
+    return new BasicAuthHttpLfsStorage(gitLabUrl, repositoryName, username, password) {
+      @Override
+      public @Nullable LfsReader getReader(@NotNull String oid, long size) throws IOException {
+        if (readerFactory != null)
+          return readerFactory.createReader(oid);
+        else
+          return super.getReader(oid, size);
+      }
+    };
   }
 }

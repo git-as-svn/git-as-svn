@@ -17,7 +17,6 @@ import svnserver.ext.gitlfs.server.LfsServer;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
-import svnserver.repository.git.GitLocation;
 import svnserver.repository.locks.LocalLockManager;
 
 import java.io.File;
@@ -54,9 +53,14 @@ public final class LocalLfsConfig implements SharedConfig, LfsStorageFactory {
   @NotNull
   public LfsStorage createStorage(@NotNull LocalContext context) {
     final File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
-    final File metaRoot = saveMeta ? new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta") : null;
 
-    return new LfsLocalStorage(LocalLockManager.getPersistentStorage(context), layout, dataRoot, metaRoot, compress);
+    return new LfsLocalStorage(
+        LocalLockManager.getPersistentStorage(context),
+        layout,
+        dataRoot,
+        saveMeta ? LfsLocalStorage.getMetaRoot(context) : null,
+        compress
+    );
   }
 
   /**
@@ -68,26 +72,26 @@ public final class LocalLfsConfig implements SharedConfig, LfsStorageFactory {
     OneLevel {
       @NotNull
       @Override
-      public String getPath(@NotNull String oid) {
-        return oid.substring(0, 2) + "/" + oid;
+      public String getPath(@NotNull String hash) {
+        return hash.substring(0, 2) + "/" + hash;
       }
     },
     TwoLevels {
       @NotNull
       @Override
-      public String getPath(@NotNull String oid) {
-        return oid.substring(0, 2) + "/" + oid.substring(2, 4) + "/" + oid;
+      public String getPath(@NotNull String hash) {
+        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash;
       }
     },
     GitLab {
       @NotNull
       @Override
-      public String getPath(@NotNull String oid) {
-        return oid.substring(0, 2) + "/" + oid.substring(2, 4) + "/" + oid.substring(4);
+      public String getPath(@NotNull String hash) {
+        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4);
       }
     };
 
     @NotNull
-    public abstract String getPath(@NotNull String oid);
+    public abstract String getPath(@NotNull String hash);
   }
 }
