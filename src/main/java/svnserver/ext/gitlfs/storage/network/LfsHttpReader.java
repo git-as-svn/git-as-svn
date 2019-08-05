@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage.network;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.client.exceptions.UnauthorizedException;
 import ru.bozaro.gitlfs.common.data.Links;
 import ru.bozaro.gitlfs.common.data.Meta;
@@ -25,7 +26,7 @@ import java.io.InputStream;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class LfsHttpReader implements LfsReader {
+final class LfsHttpReader implements LfsReader {
   @NotNull
   private final LfsHttpStorage owner;
   @NotNull
@@ -33,7 +34,7 @@ public final class LfsHttpReader implements LfsReader {
   @NotNull
   private Links links;
 
-  public LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta, @NotNull Links links) {
+  LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta, @NotNull Links links) {
     this.owner = owner;
     this.links = links;
     this.meta = meta;
@@ -44,16 +45,23 @@ public final class LfsHttpReader implements LfsReader {
   public InputStream openStream() throws IOException {
     for (int pass = 0; ; ++pass) {
       try {
-        return owner.getObject(links);
+        final Client lfsClient = owner.lfsClient(User.getAnonymous());
+        return lfsClient.openObject(null, links);
       } catch (UnauthorizedException e) {
         if (pass != 0) throw e;
         owner.invalidate(User.getAnonymous());
-        final ObjectRes newMeta = owner.getMeta(meta.getOid());
+        final ObjectRes newMeta = getMeta(meta.getOid());
         if (newMeta != null) {
           this.links = newMeta;
         }
       }
     }
+  }
+
+  @Nullable
+  private ObjectRes getMeta(@NotNull String hash) throws IOException {
+    final Client lfsClient = owner.lfsClient(User.getAnonymous());
+    return lfsClient.getMeta(hash);
   }
 
   @Nullable

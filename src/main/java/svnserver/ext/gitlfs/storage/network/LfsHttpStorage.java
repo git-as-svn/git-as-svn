@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.client.exceptions.RequestException;
-import ru.bozaro.gitlfs.client.io.StreamProvider;
 import ru.bozaro.gitlfs.common.LockConflictException;
 import ru.bozaro.gitlfs.common.VerifyLocksResult;
 import ru.bozaro.gitlfs.common.data.*;
@@ -29,7 +28,6 @@ import svnserver.repository.locks.LockTarget;
 import svnserver.repository.locks.UnlockTarget;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -46,60 +44,29 @@ public abstract class LfsHttpStorage implements LfsStorage {
   @NotNull
   private static final Logger log = Loggers.lfs;
 
-  @Nullable
-  final ObjectRes getMeta(@NotNull String hash) throws IOException {
-    final Client lfsClient = lfsClient(User.getAnonymous());
-    return lfsClient.getMeta(hash);
-  }
-
   @NotNull
   protected abstract Client lfsClient(@NotNull User user);
 
   public abstract void invalidate(@NotNull User user);
 
-  // Theoretically, we could submit async batch requests here while user is uploading deltas to us and wait for them before finishing commit instead of doing synchronous requests
-  final void putObject(@NotNull User user, @NotNull StreamProvider streamProvider, @NotNull String sha, long size) throws IOException {
-    final Client lfsClient = lfsClient(user);
-
-    final BatchRes batchRes = lfsClient.postBatch(new BatchReq(Operation.Upload, Collections.singletonList(new Meta(sha, size))));
-    if (batchRes.getObjects().isEmpty())
-      throw new IOException(String.format("Empty batch response while uploading %s", sha));
-
-    for (BatchItem batchItem : batchRes.getObjects()) {
-      if (batchItem.getError() != null)
-        throw new IOException(String.format("LFS error[%s]: %s", batchItem.getError().getCode(), batchItem.getError().getMessage()));
-
-      lfsClient.putObject(streamProvider, batchItem, batchItem);
-    }
-  }
-
-  @NotNull
-  final InputStream getObject(@NotNull Links links) throws IOException {
-    final Client lfsClient = lfsClient(User.getAnonymous());
-    return lfsClient.openObject(null, links);
-  }
-
   @Override
   @Nullable
   public final LfsReader getReader(@NotNull String oid, long size) throws IOException {
-    return getReader(oid, size, User.getAnonymous());
-  }
-
-  @Nullable
-  public final LfsReader getReader(@NotNull String oid, long size, @NotNull User user) throws IOException {
     try {
       if (!oid.startsWith(OID_PREFIX))
         return null;
 
       final String hash = oid.substring(OID_PREFIX.length());
-      final Client lfsClient = lfsClient(user);
-      BatchRes res = lfsClient.postBatch(new BatchReq(Operation.Download, Collections.singletonList(new Meta(hash, size))));
+      final Client lfsClient = lfsClient(User.getAnonymous());
+      final BatchRes res = lfsClient.postBatch(new BatchReq(Operation.Download, Collections.singletonList(new Meta(hash, size))));
       if (res.getObjects().isEmpty())
         return null;
-      BatchItem item = res.getObjects().get(0);
-      if (item.getError() != null) return null;
-      final ObjectRes meta = new ObjectRes(item.getOid(), item.getSize(), item.getLinks());
-      return new LfsHttpReader(this, meta.getMeta(), meta);
+
+      final BatchItem item = res.getObjects().get(0);
+      if (item.getError() != null)
+        return null;
+
+      return new LfsHttpReader(this, item, item);
     } catch (RequestException e) {
       log.error("HTTP request error:" + e.getMessage(), e);
       throw e;

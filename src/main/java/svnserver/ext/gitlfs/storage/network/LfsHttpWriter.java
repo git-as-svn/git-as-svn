@@ -10,6 +10,8 @@ package svnserver.ext.gitlfs.storage.network;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.client.Client;
+import ru.bozaro.gitlfs.common.data.*;
 import svnserver.HashHelper;
 import svnserver.TemporaryOutputStream;
 import svnserver.auth.User;
@@ -18,6 +20,7 @@ import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.util.Collections;
 
 /**
  * Network storage writer.
@@ -61,7 +64,20 @@ public final class LfsHttpWriter extends LfsWriter {
     if (expectedOid != null && !expectedOid.equals(oid)) {
       throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + LfsLocalStorage.OID_PREFIX + sha);
     }
-    owner.putObject(user, content::toInputStream, sha, content.size());
+
+    final Client lfsClient = owner.lfsClient(user);
+
+    final BatchRes batchRes = lfsClient.postBatch(new BatchReq(Operation.Upload, Collections.singletonList(new Meta(sha, content.size()))));
+    if (batchRes.getObjects().isEmpty())
+      throw new IOException(String.format("Empty batch response while uploading %s", sha));
+
+    for (BatchItem batchItem : batchRes.getObjects()) {
+      if (batchItem.getError() != null)
+        throw new IOException(String.format("LFS error[%s]: %s", batchItem.getError().getCode(), batchItem.getError().getMessage()));
+
+      lfsClient.putObject(content::toInputStream, batchItem, batchItem);
+    }
+
     return oid;
   }
 }
