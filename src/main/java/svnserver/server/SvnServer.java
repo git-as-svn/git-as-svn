@@ -195,10 +195,10 @@ public final class SvnServer extends Thread {
              SvnServerWriter writer = new SvnServerWriter(clientSocket.getOutputStream())) {
           connections.put(sessionId, client);
           serveClient(clientSocket, writer);
-        } catch (EOFException | SocketException ignore) {
-          // client disconnect is not a error
+        } catch (EOFException | SocketException e) {
+          log.debug("Exception:", e);
         } catch (SVNException | IOException e) {
-          log.info("Client error:", e);
+          log.warn("Exception:", e);
         } finally {
           connections.remove(sessionId);
           log.info("Connection from {} closed", client.getRemoteSocketAddress());
