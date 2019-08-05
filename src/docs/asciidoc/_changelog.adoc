@@ -10,6 +10,7 @@ endif::[]
 
  * Log all exceptions when talking to SVN clients
  * Fixed double buffering of client I/O
+ * Fix downloading of large files from remote LFS server. Broken in 1.20.4
 
 == 1.20.4
 

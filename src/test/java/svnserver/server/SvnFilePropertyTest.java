@@ -32,6 +32,10 @@ import static svnserver.SvnTestHelper.*;
  */
 public class SvnFilePropertyTest {
   @NotNull
+  public final static Map<String, String> propsBinary = ImmutableMap.<String, String>builder()
+      .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
+      .build();
+  @NotNull
   private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
       .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
       .build();
@@ -53,18 +57,12 @@ public class SvnFilePropertyTest {
       .put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=LF\n")
       .build();
   @NotNull
-  private final static Map<String, String> propsBinary = ImmutableMap.<String, String>builder()
-      .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
-      .build();
-  @NotNull
   private final static Map<String, String> propsNeedsLock = ImmutableMap.<String, String>builder()
       .put(SVNProperty.NEEDS_LOCK, "*")
       .build();
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void executable() throws Exception {
@@ -99,8 +97,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void binary() throws Exception {
@@ -137,8 +133,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void symlink() throws Exception {
@@ -210,8 +204,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void symlinkBinary() throws Exception {
@@ -245,8 +237,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitUpdatePropertiesRoot() throws Exception {
@@ -275,8 +265,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitUpdatePropertiesSubdir() throws Exception {
@@ -321,8 +309,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitDirWithProperties() throws Exception {
@@ -348,8 +334,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitDirWithoutProperties() throws Exception {
@@ -377,8 +361,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitDirUpdateWithProperties() throws Exception {
@@ -418,8 +400,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitDirUpdateWithoutProperties() throws Exception {
@@ -461,8 +441,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitRootWithProperties() throws Exception {
@@ -488,8 +466,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitRootWithoutProperties() throws Exception {
@@ -517,8 +493,6 @@ public class SvnFilePropertyTest {
 
   /**
    * Check commit .gitattributes.
-   *
-   * @throws Exception
    */
   @Test
   public void commitFileWithProperties() throws Exception {

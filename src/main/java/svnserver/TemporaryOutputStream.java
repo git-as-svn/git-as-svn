@@ -7,6 +7,7 @@
  */
 package svnserver;
 
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,6 +39,11 @@ public final class TemporaryOutputStream extends OutputStream {
 
   public TemporaryOutputStream(int maxMemorySize) {
     this.maxMemorySize = maxMemorySize;
+  }
+
+  public TemporaryOutputStream(@NotNull InputStream stream) throws IOException {
+    this(MAX_MEMORY_SIZE);
+    IOUtils.copy(stream, this);
   }
 
   @Override

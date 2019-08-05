@@ -7,7 +7,8 @@
  */
 package svnserver.ext.gitlfs.storage.network;
 
-import com.google.common.io.CharStreams;
+import com.google.common.hash.Hashing;
+import com.google.common.io.ByteStreams;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -55,12 +56,12 @@ import svnserver.repository.VcsAccess;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static svnserver.server.SvnFilePropertyTest.propsBinary;
 
 /**
  * Simple test for LfsLocalStorage.
@@ -98,13 +99,19 @@ public final class LfsHttpStorageTest {
         final SVNRepository svnRepository = server.openSvnRepository();
         SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
 
-        SvnTestHelper.createFile(svnRepository, "1.txt", "some text", null);
-        SvnTestHelper.checkFileContent(svnRepository, "1.txt", "some text");
+        // 10 MB
+        final byte[] data = new byte[10 * 1024 * 1024];
+        for (int i = 0; i < data.length; ++i) {
+          data[i] = (byte) (i % 256);
+        }
+
+        SvnTestHelper.createFile(svnRepository, "1.txt", data, propsBinary);
+        SvnTestHelper.checkFileContent(svnRepository, "1.txt", data);
 
         Assert.assertEquals(backendStorage.getFiles().size(), 1);
         final byte[] lfsBytes = backendStorage.getFiles().values().iterator().next();
         Assert.assertNotNull(lfsBytes);
-        Assert.assertEquals(new String(lfsBytes, StandardCharsets.UTF_8), "some text");
+        Assert.assertEquals(lfsBytes, data);
 
         final Holder<SVNLock> lockHolder = new Holder<>(null);
         svnRepository.lock(Collections.singletonMap("1.txt", svnRepository.getLatestRevision()), null, false, new ISVNLockHandler() {
@@ -147,32 +154,41 @@ public final class LfsHttpStorageTest {
       // Register storage
       sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
 
+      // 10 MB
+      final byte[] data = new byte[10 * 1024 * 1024];
+      for (int i = 0; i < data.length; ++i) {
+        data[i] = (byte) (i % 256);
+      }
+
+      final String oid = "sha256:" + Hashing.sha256().hashBytes(data).toString();
+
       final URI url = webServer.getBaseUrl().resolve("example.git/").resolve(LfsServer.SERVLET_AUTH);
       final LfsHttpStorage storage = new GitAsSvnLfsHttpStorage(url);
 
       // Check file is not exists
-      Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1, user));
+      Assert.assertNull(storage.getReader(oid, -1, user));
 
       // Write new file
       try (final LfsWriter writer = storage.getWriter(user)) {
-        writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+        writer.write(data);
+        Assert.assertEquals(writer.finish(null), oid);
       }
 
       // Write new file AGAIN
       try (final LfsWriter writer = storage.getWriter(user)) {
-        writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
+        writer.write(data);
+        Assert.assertEquals(writer.finish(null), oid);
       }
 
       // Read old file.
-      final LfsReader reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1, user);
+      final LfsReader reader = storage.getReader(oid, -1, user);
       Assert.assertNotNull(reader);
       Assert.assertNull(reader.getMd5());
-      Assert.assertEquals(reader.getSize(), 15);
+      Assert.assertEquals(reader.getSize(), data.length);
 
       try (final InputStream stream = reader.openStream()) {
-        Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
+        final byte[] actual = ByteStreams.toByteArray(stream);
+        Assert.assertEquals(actual, data);
       }
     }
   }
