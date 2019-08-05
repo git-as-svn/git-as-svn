@@ -84,7 +84,7 @@ dependencies {
     compile("org.bitbucket.b_c:jose4j:0.6.5")
     compile("com.github.zeripath:java-gitea-api:1.7.4")
 
-    val gitLfsJava = "0.14.1"
+    val gitLfsJava = "0.15.0"
     compile("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")

@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+ * Do not write to /tmp when streaming files from remote LFS server to SVN clients. #288
+
 == 1.20.5
 
  * Log all exceptions when talking to SVN clients
@@ -15,7 +19,6 @@ endif::[]
 == 1.20.4
 
  * Fix multiple file descriptor leaks
- * Do not write to /tmp when streaming files from remote LFS server to SVN clients
 
 == 1.20.3
 
