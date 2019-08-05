@@ -51,7 +51,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
 
   @Override
   @Nullable
-  public final LfsReader getReader(@NotNull String oid, long size) throws IOException {
+  public LfsReader getReader(@NotNull String oid, long size) throws IOException {
     try {
       if (!oid.startsWith(OID_PREFIX))
         return null;

@@ -8,7 +8,10 @@ endif::[]
 
 == Unreleased
 
- * Do not write to /tmp when streaming files from remote LFS server to SVN clients. #288
+* Do not write to `/tmp` when streaming files from remote LFS server to SVN clients.
+#288
+* Experimental `lfs: !fileHttp` LFS mode for GitLab
+* `lfs: false` replaced with `lfsMode: null` in `!gitlab` section
 
 == 1.20.5
 

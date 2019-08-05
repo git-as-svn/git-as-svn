@@ -190,7 +190,7 @@ public final class GitLabIntegrationTest {
 
   @Test
   void uploadToLfs() throws Exception {
-    final LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword);
+    final LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword, null);
     final User user = User.create(root, root, root, root, UserType.GitLab);
 
     checkUpload(storage, user);

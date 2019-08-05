@@ -97,10 +97,9 @@ shared:
     # url: http://localhost/
 
     # Tells git-as-svn to use GitLab for LFS objects and file locking
-    # Default: true
+    # Default: !httpLfs {}
     #
-    # lfs: true
+    # lfs: !httpLfs {}
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>
-
