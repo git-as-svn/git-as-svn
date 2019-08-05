@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "5.5"
+    gradleVersion = "5.5.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -90,17 +90,17 @@ dependencies {
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
     compile("com.google.oauth-client:google-oauth-client:1.30.1")
-    compile("com.google.http-client:google-http-client-jackson2:1.30.1")
+    compile("com.google.http-client:google-http-client-jackson2:1.31.0")
     compile("org.jetbrains:annotations:17.0.0")
     compile("org.slf4j:slf4j-api:1.7.26")
 
-    val classindex = "org.atteo.classindex:classindex:3.6"
+    val classindex = "org.atteo.classindex:classindex:3.8"
     compile(classindex)
     annotationProcessor(classindex)
 
     runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.0")
 
-    testCompile("org.testcontainers:testcontainers:1.11.3")
+    testCompile("org.testcontainers:testcontainers:1.12.0")
     testCompile("org.testng:testng:6.14.3")
 }
 
