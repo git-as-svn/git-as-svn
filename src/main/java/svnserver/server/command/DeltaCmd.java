@@ -531,7 +531,7 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
 
           if (params.sendDeltas()) {
             final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-            try (InputStream source = openStream(oldFile);
+            try (InputStream source = oldFile == null ? SVNFileUtil.DUMMY_IN : oldFile.openStream();
                  InputStream target = newFile.openStream()) {
               final SVNDeltaCompression compression = context.getCompression();
               final String validateMd5 = deltaGenerator.sendDelta(newFile.getFileName(), source, 0, target, new ISVNDeltaConsumer() {
@@ -579,11 +579,6 @@ public final class DeltaCmd extends BaseCmd<DeltaParams> {
         }
         updateProps(context, "file", tokenId, oldFile, newFile);
       }
-    }
-
-    @NotNull
-    private InputStream openStream(@Nullable GitFile file) throws IOException {
-      return file == null ? SVNFileUtil.DUMMY_IN : file.openStream();
     }
 
     @NotNull

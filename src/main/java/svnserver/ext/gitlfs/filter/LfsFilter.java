@@ -94,26 +94,27 @@ public final class LfsFilter implements GitFilter {
   }
 
   @NotNull
-  private LfsStorage getStorage() {
-    if (storage == null)
-      throw new IllegalStateException("LFS is not configured");
+  @Override
+  public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
+    final ObjectLoader loader = objectId.openObject();
+    try (ObjectStream stream = loader.openStream()) {
+      final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
+      int length = IOUtils.read(stream, header, 0, header.length);
+      if (length < header.length) {
+        final Meta meta = parseMeta(header, length);
+        if (meta != null)
+          return getReader(meta).openStream();
+      }
 
-    return storage;
+      // We need to re-open stream
+      return loader.openStream();
+    }
   }
 
   @NotNull
   @Override
-  public InputStream inputStream(@NotNull GitObject<? extends ObjectId> objectId) throws IOException {
-    final ObjectLoader loader = objectId.openObject();
-    final ObjectStream stream = loader.openStream();
-    final byte[] header = new byte[Constants.POINTER_MAX_SIZE];
-    int length = IOUtils.read(stream, header, 0, header.length);
-    if (length < header.length) {
-      final Meta meta = parseMeta(header, length);
-      if (meta != null)
-        return getReader(meta).openStream();
-    }
-    return new TemporaryInputStream(header, length, stream);
+  public OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException {
+    return new TemporaryOutputStream(getStorage().getWriter(user), stream);
   }
 
   @Nullable
@@ -147,52 +148,11 @@ public final class LfsFilter implements GitFilter {
   }
 
   @NotNull
-  @Override
-  public OutputStream outputStream(@NotNull OutputStream stream, @NotNull User user) throws IOException {
-    return new TemporaryOutputStream(getStorage().getWriter(user), stream);
-  }
+  private LfsStorage getStorage() {
+    if (storage == null)
+      throw new IllegalStateException("LFS is not configured");
 
-  private static class TemporaryInputStream extends InputStream {
-    @NotNull
-    private final byte[] header;
-    @NotNull
-    private final InputStream stream;
-    private final int length;
-    private int offset = 0;
-
-    private TemporaryInputStream(@NotNull byte[] header, int length, @NotNull InputStream stream) {
-      this.header = header;
-      this.length = length;
-      this.stream = stream;
-    }
-
-    @Override
-    public int read() throws IOException {
-      if (offset < length) {
-        //noinspection MagicNumber
-        return header[offset++] & 0xff;
-      }
-      return stream.read();
-    }
-
-    @Override
-    public int read(@NotNull byte[] buf, int off, int len) throws IOException {
-      if (len == 0) {
-        return 0;
-      }
-      if (this.offset < length) {
-        final int count = Math.min(len, length - this.offset);
-        System.arraycopy(header, offset, buf, off, count);
-        offset += count;
-        return count;
-      }
-      return stream.read(buf, off, len);
-    }
-
-    @Override
-    public void close() throws IOException {
-      stream.close();
-    }
+    return storage;
   }
 
   private static class TemporaryOutputStream extends OutputStream {
