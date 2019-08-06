@@ -1,3 +1,5 @@
+#!/usr/bin/env groovy
+
 pipeline {
     agent {
         dockerfile {
@@ -9,28 +11,23 @@ pipeline {
     stages {
         stage('Cleanup') {
             steps {
-                sh """
-git clean -fdx
-"""
+                sh "git clean -fdx"
             }
         }
         stage('Build') {
             steps {
-                sh """
-./gradlew assembleDist
-"""
+                sh "./gradlew assembleDist"
             }
         }
         stage('Test') {
             steps {
                 realtimeJUnit ("build/test-results/test/*.xml") {
-                    sh """
-./gradlew check
-"""
+                    sh "./gradlew check"
                 }
             }
         }
     }
+
     post {
         always {
             archiveArtifacts artifacts: "build/distributions/*", fingerprint: true
