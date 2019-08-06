@@ -219,7 +219,7 @@ public final class LdapUserDB implements UserDB {
       }
     } catch (LDAPException e) {
       if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
-        log.info(String.format("Invalid LDAP credentials for user:%s. Rejecting authentication", userName), e);
+        log.info("Invalid LDAP credentials for user: {}. Rejecting authentication", userName);
         return null;
       }
 
