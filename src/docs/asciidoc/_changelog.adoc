@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 1.21.1
+
+ * Reduce log spam (LDAP and client disconnects)
+ * Log client version on connect
+
 == 1.21.0
 
  * Do not write to `/tmp` when streaming files from remote LFS server to SVN clients. #288
