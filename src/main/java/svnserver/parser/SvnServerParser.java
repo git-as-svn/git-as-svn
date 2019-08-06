@@ -124,7 +124,7 @@ public final class SvnServerParser {
     if (isAlpha(read)) {
       return readWord();
     }
-    throw new IOException("Unexpected character in stream: " + read + " (need 'a'..'z', 'A'..'Z', '0'..'9', ' ' or '\n')");
+    throw new IOException("Unexpected character in stream: " + read + " (need 'a'..'z', 'A'..'Z', '0'..'9', ' ' or '\\n')");
   }
 
   private SvnServerToken readNumberToken(byte first) throws IOException {
