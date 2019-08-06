@@ -9,7 +9,6 @@ package svnserver.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -37,9 +36,6 @@ public final class GetFileRevsTest {
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void simple(@NotNull SvnTesterFactory factory) throws Exception {
-    if (System.getenv("TRAVIS") != null && factory.toString().equals("Native"))
-      throw new SkipException("Travis has very old svn that doesn't pass half of these tests");
-
     try (SvnTester tester = factory.create()) {
       final SVNRepository repository = tester.openSvnRepository();
 
