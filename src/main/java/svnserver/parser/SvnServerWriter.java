@@ -54,10 +54,13 @@ public final class SvnServerWriter implements Closeable {
     return this;
   }
 
-  @SuppressWarnings("QuestionableName")
   @NotNull
   public SvnServerWriter stringNullable(@Nullable String text) throws IOException {
-    return text != null ? string(text) : this;
+    listBegin();
+    if (text != null)
+      string(text);
+    listEnd();
+    return this;
   }
 
   @SuppressWarnings("QuestionableName")

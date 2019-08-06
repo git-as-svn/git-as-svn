@@ -76,7 +76,7 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
           .string(lockDesc.getPath())
           .string(lockDesc.getToken())
           .string(lockDesc.getOwner() == null ? "" : lockDesc.getOwner())
-          .listBegin().stringNullable(lockDesc.getComment()).listEnd()
+          .stringNullable(lockDesc.getComment())
           .string(lockDesc.getCreatedString())
           .listBegin()
           .listEnd()
