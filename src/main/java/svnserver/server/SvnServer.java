@@ -37,7 +37,10 @@ import svnserver.server.step.Step;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
@@ -195,8 +198,8 @@ public final class SvnServer extends Thread {
              SvnServerWriter writer = new SvnServerWriter(clientSocket.getOutputStream())) {
           connections.put(sessionId, client);
           serveClient(clientSocket, writer);
-        } catch (EOFException | SocketException e) {
-          log.debug("Exception:", e);
+        } catch (EOFException ignore) {
+          // client disconnect is not a error
         } catch (SVNException | IOException e) {
           log.warn("Exception:", e);
         } finally {
