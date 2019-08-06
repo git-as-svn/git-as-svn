@@ -255,7 +255,8 @@ public final class SvnServer extends Thread {
     }
   }
 
-  private ClientInfo exchangeCapabilities(SvnServerParser parser, SvnServerWriter writer) throws IOException, SVNException {
+  @NotNull
+  private ClientInfo exchangeCapabilities(@NotNull SvnServerParser parser, @NotNull SvnServerWriter writer) throws IOException, SVNException {
     writer
         .listBegin()
         .word("success")
@@ -298,9 +299,11 @@ public final class SvnServer extends Thread {
 
     // Читаем информацию о клиенте.
     final ClientInfo clientInfo = MessageParser.parse(ClientInfo.class, parser);
-    if (clientInfo.getProtocolVersion() != 2) {
+    log.info("Client: {}", clientInfo.getRaClient());
+
+    if (clientInfo.getProtocolVersion() != 2)
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.VERSION_MISMATCH, "Unsupported protocol version: " + clientInfo.getProtocolVersion() + " (expected: 2)"));
-    }
+
     return clientInfo;
   }
 

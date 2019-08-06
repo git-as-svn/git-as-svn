@@ -28,15 +28,12 @@ public class ClientInfo {
   private final SVNURL url;
   @NotNull
   private final String raClient;
-  @NotNull
-  private final String[] client;
 
-  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String raClient, @NotNull String[] client) throws SVNException {
+  public ClientInfo(int protocolVersion, @NotNull String[] capabilities, @NotNull String url, @NotNull String raClient) throws SVNException {
     this.protocolVersion = protocolVersion;
     this.capabilities = capabilities;
     this.url = SVNURL.parseURIEncoded(url);
     this.raClient = raClient;
-    this.client = client;
   }
 
   public int getProtocolVersion() {
