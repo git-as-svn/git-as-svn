@@ -182,7 +182,7 @@ public final class LdapUserDB implements UserDB {
 
   @Nullable
   private User findUser(@NotNull String userName, @NotNull LdapCheck ldapCheck) throws SVNException {
-    log.info("LDAP lookup for user: {}", userName);
+    log.debug("LDAP lookup for user: {}", userName);
 
     final SearchResultEntry entry;
     try {
@@ -219,7 +219,7 @@ public final class LdapUserDB implements UserDB {
       }
     } catch (LDAPException e) {
       if (e.getResultCode() == ResultCode.INVALID_CREDENTIALS) {
-        log.info("Invalid LDAP credentials for user: {}. Rejecting authentication", userName);
+        log.info(String.format("Invalid LDAP credentials for user:%s. Rejecting authentication", userName), e);
         return null;
       }
 
@@ -231,7 +231,7 @@ public final class LdapUserDB implements UserDB {
     if (email == null && fakeMailSuffix != null)
       email = login + fakeMailSuffix;
 
-    log.info("LDAP authentication successfull for user: {}", userName);
+    log.debug("LDAP authentication successful for user: {}", userName);
     return User.create(login, realName != null ? realName : login, email, null, UserType.LDAP);
   }
 
