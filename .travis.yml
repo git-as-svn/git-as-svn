@@ -1,4 +1,5 @@
 language: java
+dist: xenial
 services: docker
 
 # Taken from https://github.com/Codearte/gradle-nexus-staging-plugin/blob/master/.travis.yml
