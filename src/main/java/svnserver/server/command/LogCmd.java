@@ -115,9 +115,9 @@ public final class LogCmd extends BaseCmd<LogCmd.Params> {
 
       writer.listEnd()
           .number(revisionInfo.getId())
-          .listBegin().stringNullable(revisionInfo.getAuthor()).listEnd()
-          .listBegin().stringNullable(revisionInfo.getDateString()).listEnd()
-          .listBegin().stringNullable(revisionInfo.getLog()).listEnd()
+          .stringNullable(revisionInfo.getAuthor())
+          .stringNullable(revisionInfo.getDateString())
+          .stringNullable(revisionInfo.getLog())
           .bool(false)
           .bool(false)
           .number(revProps.size())

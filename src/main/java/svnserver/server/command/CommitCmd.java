@@ -604,8 +604,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       writer
           .listBegin()
           .number(revision.getId()) // rev number
-          .listBegin().stringNullable(revision.getDateString()).listEnd() // date
-          .listBegin().stringNullable(revision.getAuthor()).listEnd()
+          .stringNullable(revision.getDateString()) // date
+          .stringNullable(revision.getAuthor())
           .listBegin().listEnd()
           .listEnd();
     }
