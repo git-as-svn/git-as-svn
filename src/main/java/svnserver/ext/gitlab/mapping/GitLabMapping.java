@@ -26,6 +26,7 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.ext.web.server.WebServer;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
+import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitRepository;
 
 import javax.servlet.ServletException;
@@ -45,6 +46,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
 
 /**
  * Simple repository mapping by predefined list.
@@ -88,9 +90,12 @@ final class GitLabMapping implements RepositoryMapping<GitLabProject> {
     final String projectKey = StringHelper.normalizeDir(project.getPathWithNamespace());
     final GitLabProject oldProject = mapping.get(projectKey);
 
-    if (oldProject != null && oldProject.getRepository().getBranches().keySet().equals(branches) && oldProject.getProjectId() == project.getId())
-      // Old project is good enough already
-      return oldProject;
+    if (oldProject != null && oldProject.getProjectId() == project.getId()) {
+      final Set<String> oldBranches = oldProject.getBranches().values().stream().map(GitBranch::getShortBranchName).collect(Collectors.toSet());
+      if (oldBranches.equals(branches))
+        // Old project is good enough already
+        return oldProject;
+    }
 
     // TODO: do not drop entire repo here, instead only apply diff - add missing branches and remove unneeded
     removeRepository(project.getId(), project.getPathWithNamespace());
@@ -121,7 +126,7 @@ final class GitLabMapping implements RepositoryMapping<GitLabProject> {
       if (branch.isEmpty())
         continue;
 
-      result.add(StringHelper.normalizeDir(branch));
+      result.add(branch);
     }
 
     return result;
