@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 1.21.2
+
+ * Fix bogus slashes in branch names for GitLab mapping
+
 == 1.21.1
 
  * Reduce log spam (LDAP and client disconnects)
