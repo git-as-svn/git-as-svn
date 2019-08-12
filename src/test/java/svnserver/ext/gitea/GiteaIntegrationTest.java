@@ -228,7 +228,7 @@ public final class GiteaIntegrationTest {
   @NotNull
   private SvnTestServer createServer(@NotNull GiteaToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GiteaConfig giteaConfig = new GiteaConfig(giteaApiUrl, token);
-    return SvnTestServer.createEmpty(new GiteaUserDBConfig(), mappingConfigCreator, false, false, giteaConfig);
+    return SvnTestServer.createEmpty(new GiteaUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, giteaConfig);
   }
 
   @Test

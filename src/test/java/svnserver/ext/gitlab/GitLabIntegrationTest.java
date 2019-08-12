@@ -163,7 +163,7 @@ public final class GitLabIntegrationTest {
   @NotNull
   private SvnTestServer createServer(@NotNull GitLabToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GitLabConfig gitLabConfig = new GitLabConfig(gitlabUrl, token);
-    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, false, gitLabConfig, new WebServerConfig());
+    return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, gitLabConfig, new WebServerConfig());
   }
 
   @Test

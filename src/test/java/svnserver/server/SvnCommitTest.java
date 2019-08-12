@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
+import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ import static svnserver.SvnTestHelper.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnCommitTest {
+public final class SvnCommitTest {
   @NotNull
   private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
       .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
@@ -65,6 +66,20 @@ public class SvnCommitTest {
     }
   }
 
+  @Test
+  public void bigFile() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final byte[] data = LfsLocalStorageTest.bigFile();
+
+      createFile(repo, "bla.bin", data, SvnFilePropertyTest.propsBinary);
+
+      // compare content
+      checkFileContent(repo, "bla.bin", data);
+    }
+  }
+
   /**
    * Check file copy.
    * <pre>
@@ -83,12 +98,12 @@ public class SvnCommitTest {
         editor.addDir("/src", null, -1);
         editor.addDir("/src/main", null, -1);
         editor.addFile("/src/main/source.txt", null, -1);
-        editor.changeFileProperty("/src/main/source.txt", SVNProperty.EOL_STYLE,SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+        editor.changeFileProperty("/src/main/source.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/src/main/source.txt", null, "Source content");
         editor.closeDir();
         editor.addDir("/src/test", null, -1);
         editor.addFile("/src/test/test.txt", null, -1);
-        editor.changeFileProperty("/src/test/test.txt", SVNProperty.EOL_STYLE,SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+        editor.changeFileProperty("/src/test/test.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
         sendDeltaAndClose(editor, "/src/test/test.txt", null, "Test content");
         editor.closeDir();
         editor.closeDir();

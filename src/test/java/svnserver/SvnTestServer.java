@@ -30,8 +30,10 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import svnserver.config.*;
 import svnserver.context.LocalContext;
 import svnserver.context.SharedContext;
+import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
+import svnserver.ext.web.config.WebServerConfig;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitRepository;
@@ -89,7 +91,7 @@ public final class SvnTestServer implements SvnTester {
                         @Nullable UserDBConfig userDBConfig,
                         @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator,
                         boolean anonymousRead,
-                        boolean withLfs,
+                        @NotNull LfsMode lfsMode,
                         @NotNull SharedConfig... shared) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
@@ -114,8 +116,16 @@ public final class SvnTestServer implements SvnTester {
     config.setCompressionLevel(SVNDeltaCompression.None);
     config.setCacheConfig(new MemoryCacheConfig());
 
-    if (withLfs) {
-      config.getShared().add(context -> context.add(LfsStorageFactory.class, localContext -> new LfsMemoryStorage()));
+    switch (lfsMode) {
+      case Local: {
+        config.getShared().add(new WebServerConfig(0));
+        config.getShared().add(new LocalLfsConfig(new File(tempDirectory, "lfs").getPath(), false));
+        break;
+      }
+      case Memory: {
+        config.getShared().add(context -> context.add(LfsStorageFactory.class, localContext -> new LfsMemoryStorage()));
+        break;
+      }
     }
 
     if (mappingConfigCreator != null) {
@@ -192,27 +202,27 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
-    return createEmpty(null, false, true);
+    return createEmpty(null, false, LfsMode.Memory);
   }
 
   @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, boolean withLfs, @NotNull SharedConfig... shared) throws Exception {
-    return createEmpty(userDBConfig, null, anonymousRead, withLfs, shared);
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
+    return createEmpty(userDBConfig, null, anonymousRead, lfsMode, shared);
   }
 
   @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, boolean withLfs, @NotNull SharedConfig... shared) throws Exception {
-    return new SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, withLfs, shared);
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
+    return new SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, shared);
   }
 
   @NotNull
   public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
-    return createEmpty(userDBConfig, null, anonymousRead, true, shared);
+    return createEmpty(userDBConfig, null, anonymousRead, LfsMode.Memory, shared);
   }
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "", true, null, null, true, true);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "", true, null, null, true, LfsMode.Memory);
   }
 
   @NotNull
@@ -271,6 +281,12 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   public SharedContext getContext() {
     return server.getSharedContext();
+  }
+
+  public enum LfsMode {
+    None,
+    Memory,
+    Local
   }
 
   private static final class TestRepositoryConfig implements RepositoryMappingConfig {

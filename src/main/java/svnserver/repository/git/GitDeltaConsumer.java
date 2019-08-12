@@ -132,7 +132,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer, Closeable {
 
       try (TemporaryOutputStream content = new TemporaryOutputStream()) {
         try (InputStream inputStream = newFilter.inputStream(objectId);
-             OutputStream outputStream = filter.outputStream(content, user)) {
+             OutputStream outputStream = filter.outputStream(new UncloseableOutputStream(content), user)) {
           IOUtils.copy(inputStream, outputStream);
         }
         try (InputStream inputStream = content.toInputStream()) {
@@ -159,7 +159,7 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer, Closeable {
       window = new SVNDeltaProcessor();
 
       final InputStream base = (oldFilter != null && objectId != null) ? oldFilter.inputStream(objectId) : SVNFileUtil.DUMMY_IN;
-      final OutputStream target = newFilter.outputStream(temporaryStream, user);
+      final OutputStream target = newFilter.outputStream(new UncloseableOutputStream(temporaryStream), user);
 
       window.applyTextDelta(base, new UncheckedCloseOutputStream(target), true);
     } catch (IOException e) {
@@ -206,9 +206,6 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer, Closeable {
     temporaryStream.close();
   }
 
-  /**
-   * Dirty hack to workaround silent ignoring of IOException in {@link SVNDeltaProcessor#textDeltaEnd()}
-   */
   private static final class UncheckedCloseOutputStream extends FilterOutputStream {
     private UncheckedCloseOutputStream(@NotNull OutputStream out) {
       super(out);
@@ -226,6 +223,22 @@ public final class GitDeltaConsumer implements ISVNDeltaConsumer, Closeable {
       } catch (IOException e) {
         throw new RuntimeIOException(e);
       }
+    }
+  }
+
+  private static final class UncloseableOutputStream extends FilterOutputStream {
+    private UncloseableOutputStream(@NotNull OutputStream out) {
+      super(out);
+    }
+
+    @Override
+    public void write(@NotNull byte[] b, int off, int len) throws IOException {
+      out.write(b, off, len);
+    }
+
+    @Override
+    public void close() {
+      // noop
     }
   }
 }
