@@ -8,9 +8,18 @@
 package svnserver.ext.gitlfs.storage.local;
 
 import com.google.common.io.CharStreams;
+import org.eclipse.jgit.util.Holder;
+import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import svnserver.SvnTestHelper;
+import svnserver.SvnTestServer;
+import svnserver.TemporaryOutputStream;
 import svnserver.TestHelper;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.config.LocalLfsConfig;
@@ -22,7 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentSkipListMap;
+
+import static svnserver.server.SvnFilePropertyTest.propsBinary;
 
 /**
  * Simple test for LfsLocalStorage.
@@ -36,6 +48,47 @@ public class LfsLocalStorageTest {
         {true},
         {false},
     };
+  }
+
+  @Test
+  public void commitToLocalLFS() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty(null, false, SvnTestServer.LfsMode.Local)) {
+      final SVNRepository svnRepository = server.openSvnRepository();
+      SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
+
+      final byte[] data = bigFile();
+
+      SvnTestHelper.createFile(svnRepository, "1.txt", data, propsBinary);
+      SvnTestHelper.checkFileContent(svnRepository, "1.txt", data);
+
+      final Holder<SVNLock> lockHolder = new Holder<>(null);
+      svnRepository.lock(Collections.singletonMap("1.txt", svnRepository.getLatestRevision()), null, false, new ISVNLockHandler() {
+        @Override
+        public void handleLock(String path, SVNLock lock, SVNErrorMessage error) {
+          Assert.assertEquals(path, "/1.txt");
+          lockHolder.set(lock);
+        }
+
+        @Override
+        public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) {
+          Assert.fail();
+        }
+      });
+      final SVNLock lock = lockHolder.get();
+      Assert.assertNotNull(lock);
+      Assert.assertEquals(lock.getPath(), "/1.txt");
+      Assert.assertNotNull(lock.getID());
+      Assert.assertEquals(lock.getOwner(), SvnTestServer.USER_NAME);
+    }
+  }
+
+  @NotNull
+  public static byte[] bigFile() {
+    final byte[] data = new byte[TemporaryOutputStream.MAX_MEMORY_SIZE * 2];
+    for (int i = 0; i < data.length; ++i) {
+      data[i] = (byte) (i % 256);
+    }
+    return data;
   }
 
   @Test(dataProvider = "compressProvider")

@@ -7,7 +7,6 @@
  */
 package svnserver;
 
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -22,7 +21,8 @@ import java.io.*;
  */
 public final class TemporaryOutputStream extends OutputStream {
   @SuppressWarnings("MagicNumber")
-  private static final int MAX_MEMORY_SIZE = 8 * 1024 * 1024;
+  public static final int MAX_MEMORY_SIZE = 8 * 1024 * 1024;
+
   private final int maxMemorySize;
   @NotNull
   private final ByteArrayOutputStream memoryStream = new ByteArrayOutputStream();
@@ -39,11 +39,6 @@ public final class TemporaryOutputStream extends OutputStream {
 
   public TemporaryOutputStream(int maxMemorySize) {
     this.maxMemorySize = maxMemorySize;
-  }
-
-  public TemporaryOutputStream(@NotNull InputStream stream) throws IOException {
-    this(MAX_MEMORY_SIZE);
-    IOUtils.copy(stream, this);
   }
 
   @Override
@@ -124,6 +119,9 @@ public final class TemporaryOutputStream extends OutputStream {
 
   @NotNull
   public InputStream toInputStream() throws IOException {
+    if (closed)
+      throw new IOException();
+
     if (fileOutputStream != null)
       flush();
 

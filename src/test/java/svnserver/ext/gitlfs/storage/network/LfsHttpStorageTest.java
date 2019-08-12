@@ -48,6 +48,7 @@ import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
 import svnserver.ext.web.config.WebServerConfig;
 import svnserver.ext.web.server.WebServer;
@@ -95,15 +96,11 @@ public final class LfsHttpStorageTest {
 
       final URI url = webServer.getBaseUrl().resolve("example.git/").resolve(LfsServer.SERVLET_AUTH);
 
-      try (SvnTestServer server = SvnTestServer.createEmpty(null, false, false, new GitAsSvnLfsHttpStorage(url, user))) {
+      try (SvnTestServer server = SvnTestServer.createEmpty(null, false, SvnTestServer.LfsMode.None, new GitAsSvnLfsHttpStorage(url, user))) {
         final SVNRepository svnRepository = server.openSvnRepository();
         SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
 
-        // 10 MB
-        final byte[] data = new byte[10 * 1024 * 1024];
-        for (int i = 0; i < data.length; ++i) {
-          data[i] = (byte) (i % 256);
-        }
+        final byte[] data = LfsLocalStorageTest.bigFile();
 
         SvnTestHelper.createFile(svnRepository, "1.txt", data, propsBinary);
         SvnTestHelper.checkFileContent(svnRepository, "1.txt", data);
@@ -154,11 +151,7 @@ public final class LfsHttpStorageTest {
       // Register storage
       sharedContext.sure(LfsServer.class).register(localContext, localContext.sure(LfsStorage.class));
 
-      // 10 MB
-      final byte[] data = new byte[10 * 1024 * 1024];
-      for (int i = 0; i < data.length; ++i) {
-        data[i] = (byte) (i % 256);
-      }
+      final byte[] data = LfsLocalStorageTest.bigFile();
 
       final String oid = "sha256:" + Hashing.sha256().hashBytes(data).toString();
 

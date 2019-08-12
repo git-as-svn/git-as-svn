@@ -34,15 +34,24 @@ public final class LocalLfsConfig implements SharedConfig, LfsStorageFactory {
   private static final float DEFAULT_TOKEN_ENSURE_TIME = 0.5f;
 
   @NotNull
-  private String path = "lfs";
+  private String path;
   private int tokenExpireSec = DEFAULT_TOKEN_EXPIRE_SEC;
   private float tokenEnsureTime = DEFAULT_TOKEN_ENSURE_TIME;
   private boolean compress = true;
-  private boolean saveMeta = true;
+  private boolean saveMeta;
   @NotNull
   private String secretToken = "";
   @NotNull
   private LfsLayout layout = LfsLayout.OneLevel;
+
+  public LocalLfsConfig() {
+    this("lfs", true);
+  }
+
+  public LocalLfsConfig(@NotNull String path, boolean saveMeta) {
+    this.path = path;
+    this.saveMeta = saveMeta;
+  }
 
   @Override
   public void create(@NotNull SharedContext context) {
