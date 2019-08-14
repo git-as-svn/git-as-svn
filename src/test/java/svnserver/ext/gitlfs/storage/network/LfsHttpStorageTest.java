@@ -12,10 +12,9 @@ import com.google.common.io.ByteStreams;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.jgit.util.Holder;
 import org.jetbrains.annotations.NotNull;
@@ -203,11 +202,15 @@ public final class LfsHttpStorageTest {
     }
 
     @Override
+    public void invalidate(@NotNull User user) {
+
+    }
+
+    @Override
     protected @NotNull Client lfsClient(@NotNull User unused) {
-      final HttpClient httpClient = HttpClients.createDefault();
+      final CloseableHttpClient httpClient = LfsHttpStorage.createHttpClient();
 
-      return new Client(new CachedAuthProvider() {
-
+      final CachedAuthProvider authProvider = new CachedAuthProvider() {
         @Override
         protected @NotNull Link getAuthUncached(@NotNull Operation operation) throws IOException {
           final HttpPost post = new HttpPost(authUrl);
@@ -238,12 +241,8 @@ public final class LfsHttpStorageTest {
             params.add(new BasicNameValuePair(key, value));
           }
         }
-      });
-    }
-
-    @Override
-    public void invalidate(@NotNull User user) {
-
+      };
+      return new Client(authProvider, httpClient);
     }
 
     @Override

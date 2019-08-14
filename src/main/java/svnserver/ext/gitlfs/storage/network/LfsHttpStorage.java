@@ -7,6 +7,10 @@
  */
 package svnserver.ext.gitlfs.storage.network;
 
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.bouncycastle.util.Arrays;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +49,16 @@ public abstract class LfsHttpStorage implements LfsStorage {
   private static final Logger log = Loggers.lfs;
 
   @NotNull
-  protected abstract Client lfsClient(@NotNull User user);
+  public static CloseableHttpClient createHttpClient() {
+    // HttpClient has strange default cookie spec that produces warnings when talking to Gitea
+    // See https://issues.apache.org/jira/browse/HTTPCLIENT-1763
+    return HttpClientBuilder.create()
+        .setDefaultRequestConfig(
+            RequestConfig.custom()
+                .setCookieSpec(CookieSpecs.STANDARD)
+                .build())
+        .build();
+  }
 
   public abstract void invalidate(@NotNull User user);
 
@@ -72,6 +85,9 @@ public abstract class LfsHttpStorage implements LfsStorage {
       throw e;
     }
   }
+
+  @NotNull
+  protected abstract Client lfsClient(@NotNull User user);
 
   @NotNull
   @Override

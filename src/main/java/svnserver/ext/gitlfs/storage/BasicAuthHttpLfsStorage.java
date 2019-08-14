@@ -30,14 +30,16 @@ public class BasicAuthHttpLfsStorage extends LfsHttpStorage {
     if (!baseUrl.endsWith("/"))
       baseUrl += "/";
 
-    client = new Client(new BasicAuthProvider(URI.create(baseUrl + repositoryName + Constants.DOT_GIT_EXT + "/" + LfsServer.SERVLET_BASE), username, password));
+    final URI href = URI.create(baseUrl + repositoryName + Constants.DOT_GIT_EXT + "/" + LfsServer.SERVLET_BASE);
+    final BasicAuthProvider authProvider = new BasicAuthProvider(href, username, password);
+    client = new Client(authProvider, createHttpClient());
+  }
+
+  public final void invalidate(@NotNull User user) {
   }
 
   @NotNull
   protected final Client lfsClient(@NotNull User user) {
     return client;
-  }
-
-  public final void invalidate(@NotNull User user) {
   }
 }
