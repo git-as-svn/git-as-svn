@@ -7,7 +7,9 @@
  */
 package svnserver.ext.gitlfs.storage.local;
 
+import com.google.common.hash.Hashing;
 import com.google.common.io.CharStreams;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.util.Holder;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
@@ -17,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import ru.bozaro.gitlfs.client.exceptions.RequestException;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.TemporaryOutputStream;
@@ -24,8 +27,13 @@ import svnserver.TestHelper;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
+import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.locks.LockDesc;
+import svnserver.repository.locks.LockTarget;
+import svnserver.repository.locks.UnlockTarget;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,7 +100,7 @@ public class LfsLocalStorageTest {
   }
 
   @Test(dataProvider = "compressProvider")
-  public void simple(boolean compress) throws IOException {
+  public void simple(boolean compress) throws Exception {
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
       LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
@@ -114,9 +122,55 @@ public class LfsLocalStorageTest {
       try (final InputStream stream = reader.openStream()) {
         Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
       }
+
+      checkLfs(storage, User.getAnonymous());
     } finally {
       TestHelper.deleteDirectory(tempDir);
     }
+  }
+
+  public static void checkLfs(@NotNull LfsStorage storage, @NotNull User user) throws Exception {
+    final byte[] expected = bigFile();
+
+    final String expectedOid = "sha256:" + Hashing.sha256().hashBytes(expected).toString();
+
+    final String oid;
+    try (LfsWriter writer = storage.getWriter(user)) {
+      writer.write(expected);
+      oid = writer.finish(null);
+    }
+
+    Assert.assertEquals(oid, expectedOid);
+
+    final LfsReader reader = storage.getReader(oid, expected.length);
+    Assert.assertNotNull(reader);
+
+    final byte[] actual;
+    try (InputStream stream = reader.openStream()) {
+      actual = IOUtils.toByteArray(stream);
+    }
+
+    Assert.assertEquals(actual, expected);
+    Assert.assertEquals(reader.getSize(), expected.length);
+
+    final LockDesc[] locks1;
+    try {
+      locks1 = storage.lock(user, null, null, false, new LockTarget[]{new LockTarget("/1.txt", 1)});
+    } catch (RequestException e) {
+      if (e.getStatusCode() == HttpServletResponse.SC_NOT_FOUND)
+        // LFS locks are not supported
+        return;
+
+      throw e;
+    }
+    Assert.assertEquals(locks1.length, 1);
+    Assert.assertEquals(locks1[0].getPath(), "/1.txt");
+
+    final LockDesc[] locks2 = storage.getLocks(user, null, "/1.txt", (String) null);
+    Assert.assertEquals(locks2, locks1);
+
+    final LockDesc[] locks3 = storage.unlock(user, null, false, new UnlockTarget[]{new UnlockTarget("/1.txt", locks1[0].getToken())});
+    Assert.assertEquals(locks3, locks1);
   }
 
   @Test(dataProvider = "compressProvider")

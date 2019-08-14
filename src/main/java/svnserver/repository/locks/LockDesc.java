@@ -15,6 +15,7 @@ import svnserver.StringHelper;
 import svnserver.repository.git.GitBranch;
 
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -59,8 +60,19 @@ public final class LockDesc {
 
   @NotNull
   public static Lock toLock(@NotNull LockDesc lockDesc) {
-    final String path = lockDesc.getPath().startsWith("/") ? lockDesc.getPath().substring(1) : lockDesc.getPath();
+    final String path = toLfsPath(lockDesc.getPath());
     return new Lock(lockDesc.getToken(), path, new Date(lockDesc.getCreated()), lockDesc.getOwner() == null ? null : new User(lockDesc.getOwner()));
+  }
+
+  @NotNull
+  public static String toLfsPath(@Nullable String path) {
+    if (path == null)
+      return "";
+
+    if (path.startsWith("/"))
+      return path.substring(1);
+
+    return path;
   }
 
   @NotNull
@@ -100,5 +112,42 @@ public final class LockDesc {
   @NotNull
   public String getCreatedString() {
     return StringHelper.formatDate(created);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(path, branch, token, owner, comment, hash, created);
+  }
+
+  @Override
+  public boolean equals(@Nullable Object o) {
+    if (this == o)
+      return true;
+
+    if (!(o instanceof LockDesc))
+      return false;
+
+    final LockDesc lockDesc = (LockDesc) o;
+    // TODO: https://github.com/go-gitea/gitea/issues/7871
+    return // created == lockDesc.created &&
+        path.equals(lockDesc.path) &&
+        Objects.equals(branch, lockDesc.branch) &&
+        token.equals(lockDesc.token) &&
+        Objects.equals(owner, lockDesc.owner) &&
+        Objects.equals(comment, lockDesc.comment) &&
+        Objects.equals(hash, lockDesc.hash);
+  }
+
+  @Override
+  public String toString() {
+    return "LockDesc{" +
+        "path='" + path + '\'' +
+        ", branch='" + branch + '\'' +
+        ", token='" + token + '\'' +
+        ", owner='" + owner + '\'' +
+        ", comment='" + comment + '\'' +
+        ", hash='" + hash + '\'' +
+        ", created=" + created +
+        '}';
   }
 }

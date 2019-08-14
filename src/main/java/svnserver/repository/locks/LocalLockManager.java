@@ -7,6 +7,7 @@
  */
 package svnserver.repository.locks;
 
+import com.google.common.base.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.Serializer;
@@ -84,8 +85,7 @@ public class LocalLockManager implements LockStorage {
   @NotNull
   @Override
   public final LockDesc[] getLocks(@NotNull User user, @Nullable GitBranch branch, @Nullable String path, @Nullable String lockId) {
-    if (path != null)
-      path = StringHelper.normalize(path);
+    path = StringHelper.normalize(path == null ? "/" : path);
 
     final List<LockDesc> result = new ArrayList<>();
     for (Map.Entry<String, LockDesc> entry : locks.entrySet()) {
@@ -93,10 +93,10 @@ public class LocalLockManager implements LockStorage {
       if (branch != null && lockDesc.getBranch() != null && !branch.getShortBranchName().equals(lockDesc.getBranch()))
         continue;
 
-      if (path != null && !StringHelper.isParentPath(path, lockDesc.getPath()))
+      if (!StringHelper.isParentPath(path, lockDesc.getPath()))
         continue;
 
-      if (lockId != null && !lockDesc.getToken().equals(lockId))
+      if (!Strings.isNullOrEmpty(lockId) && !lockDesc.getToken().equals(lockId))
         continue;
 
       result.add(lockDesc);
@@ -199,7 +199,7 @@ public class LocalLockManager implements LockStorage {
   @NotNull
   @Override
   public final Iterator<LockDesc> getLocks(@NotNull User user, @NotNull GitBranch branch, @NotNull String path, @NotNull Depth depth) throws SVNException {
-    return depth.visit(new TreeMapLockDepthVisitor(locks, path));
+    return depth.visit(new TreeMapLockDepthVisitor(locks, StringHelper.normalize(path)));
   }
 
   @NotNull
@@ -209,6 +209,7 @@ public class LocalLockManager implements LockStorage {
                                  @Nullable GitBranch branch,
                                  @NotNull String path,
                                  int targetRev) throws IOException, SVNException, LockConflictException {
+    path = StringHelper.normalize(path);
 
     final String hash;
     if (branch != null) {

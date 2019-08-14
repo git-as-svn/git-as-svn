@@ -38,6 +38,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static svnserver.repository.locks.LockDesc.toLfsPath;
+
 /**
  * HTTP remote storage for LFS files.
  *
@@ -100,7 +102,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
   public LockDesc lock(@NotNull User user, @Nullable GitBranch branch, @NotNull String path) throws LockConflictException, IOException {
     final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
     final Client client = lfsClient(user);
-    return LockDesc.toLockDesc(client.lock(path, ref));
+    return LockDesc.toLockDesc(client.lock(toLfsPath(path), ref));
   }
 
   @Nullable
@@ -117,7 +119,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
   @Override
   public final LockDesc[] getLocks(@NotNull User user, @Nullable GitBranch branch, @Nullable String path, @Nullable String lockId) throws IOException {
     final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
-    final List<Lock> locks = lfsClient(user).listLocks(path, lockId, ref);
+    final List<Lock> locks = lfsClient(user).listLocks(toLfsPath(path), lockId, ref);
     final List<LockDesc> result = locks.stream().map(LockDesc::toLockDesc).collect(Collectors.toList());
     return result.toArray(LockDesc.emptyArray);
   }
@@ -170,12 +172,13 @@ public abstract class LfsHttpStorage implements LfsStorage {
     final List<LockDesc> result = new ArrayList<>();
     for (LockTarget target : targets) {
       Lock lock;
+      final String path = toLfsPath(target.getPath());
       try {
-        lock = client.lock(target.getPath(), ref);
+        lock = client.lock(path, ref);
       } catch (LockConflictException e) {
         if (stealLock) {
           client.unlock(e.getLock(), true, ref);
-          lock = client.lock(target.getPath(), ref);
+          lock = client.lock(path, ref);
         } else {
           throw e;
         }
@@ -196,8 +199,9 @@ public abstract class LfsHttpStorage implements LfsStorage {
   public final void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) {
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterator<LockDesc> getLocks(@NotNull User user, @NotNull GitBranch branch, @NotNull String path, @NotNull Depth depth) throws IOException {
+  public Iterator<LockDesc> getLocks(@NotNull User user, @NotNull GitBranch branch, @NotNull String path, @NotNull Depth depth) throws IOException {
     return new Arrays.Iterator<>(getLocks(user, branch, path, (String) null));
   }
 }
