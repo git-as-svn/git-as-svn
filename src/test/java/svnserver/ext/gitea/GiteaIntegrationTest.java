@@ -39,8 +39,8 @@ import svnserver.ext.gitea.config.GiteaConfig;
 import svnserver.ext.gitea.config.GiteaContext;
 import svnserver.ext.gitea.config.GiteaToken;
 import svnserver.ext.gitea.mapping.GiteaMappingConfig;
-import svnserver.ext.gitlab.GitLabIntegrationTest;
 import svnserver.ext.gitlfs.storage.LfsStorage;
+import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
@@ -187,8 +187,8 @@ public final class GiteaIntegrationTest {
     final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
     final svnserver.auth.User user = svnserver.auth.User.create(administrator, administrator, administrator, administrator, UserType.Gitea);
 
-    GitLabIntegrationTest.checkUpload(storage, user);
-    GitLabIntegrationTest.checkUpload(storage, user);
+    LfsLocalStorageTest.checkLfs(storage, user);
+    LfsLocalStorageTest.checkLfs(storage, user);
   }
 
   // Tests

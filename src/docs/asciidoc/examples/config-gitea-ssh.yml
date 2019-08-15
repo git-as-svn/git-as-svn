@@ -59,7 +59,8 @@ shared:
     url: http://localhost:3000/api/v1
 
     # Tells git-as-svn to store Git-LFS objects through Gitea LFS API
-    # lfs: true
+    # Note that this needs to be in sync with Gitea LFS_START_SERVER config option
+    lfs: false
 
     # Gitea access token
     # Note that git-as-svn requires Gitea Sudo permission in order to authenticate users

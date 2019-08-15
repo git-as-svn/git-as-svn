@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlab;
 
-import org.apache.commons.io.IOUtils;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.http.Query;
 import org.gitlab.api.models.*;
@@ -36,16 +35,13 @@ import svnserver.ext.gitlab.config.GitLabConfig;
 import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.ext.gitlab.config.GitLabToken;
 import svnserver.ext.gitlab.mapping.GitLabMappingConfig;
-import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
-import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 import svnserver.ext.web.config.WebServerConfig;
 import svnserver.repository.git.GitCreateMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -82,7 +78,7 @@ public final class GitLabIntegrationTest {
       if (System.getenv("TRAVIS") != null)
         throw new SkipException("Only run gitlab tests on Travis when explicitly asked");
 
-      gitlabVersion = "latest";
+      gitlabVersion = "9.3.3-ce.0";
     }
 
     final int hostPort = 9999;
@@ -193,31 +189,8 @@ public final class GitLabIntegrationTest {
     final LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword, null);
     final User user = User.create(root, root, root, root, UserType.GitLab);
 
-    checkUpload(storage, user);
-    checkUpload(storage, user);
-  }
-
-  public static void checkUpload(@NotNull LfsStorage storage, @NotNull User user) throws IOException {
-    final byte[] expected = "hello 12345".getBytes(StandardCharsets.UTF_8);
-
-    final String oid;
-    try (LfsWriter writer = storage.getWriter(user)) {
-      writer.write(expected);
-      oid = writer.finish(null);
-    }
-
-    Assert.assertEquals(oid, "sha256:5d54606feae97935feeb6dfb8194cf7961d504609689e4a44d86dbeafb91cb18");
-
-    final LfsReader reader = storage.getReader(oid, expected.length);
-    Assert.assertNotNull(reader);
-
-    final byte[] actual;
-    try (@NotNull InputStream stream = reader.openStream()) {
-      actual = IOUtils.toByteArray(stream);
-    }
-
-    Assert.assertEquals(actual, expected);
-    Assert.assertEquals(reader.getSize(), expected.length);
+    LfsLocalStorageTest.checkLfs(storage, user);
+    LfsLocalStorageTest.checkLfs(storage, user);
   }
 
   @Test

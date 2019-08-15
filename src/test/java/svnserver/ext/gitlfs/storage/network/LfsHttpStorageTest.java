@@ -182,6 +182,8 @@ public final class LfsHttpStorageTest {
         final byte[] actual = ByteStreams.toByteArray(stream);
         Assert.assertEquals(actual, data);
       }
+
+      LfsLocalStorageTest.checkLfs(storage, user);
     }
   }
 

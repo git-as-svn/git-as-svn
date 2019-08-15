@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+ * Multiple fixes to remote LFS locking
+
 == 1.21.4
 
  * Fix commit of files larger than 8MB
