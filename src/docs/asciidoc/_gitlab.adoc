@@ -30,6 +30,7 @@ IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/pers
 ----
 PATH="/bin:/usr/bin:/opt/gitlab/embedded/bin"
 GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
+GITALY_GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
 ----
 
 . Change `userDB` to `!gitlabUsers`. This will tell git-as-svn to authenticate users against GitLab server:
