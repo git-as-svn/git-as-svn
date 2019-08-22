@@ -59,13 +59,9 @@ shared:
 
 == git-lfs-authenticate
 
-Script `git-lfs-authenticate` (provided by <<_install.adoc#_git-as-svn-lfs,git-as-svn-lfs package>>)
-is used by git-lfs to obtain credentials for HTTP access to Git LFS server for Git-users working with Git
-repository by SSH
-(https://github.com/github/git-lfs/blob/master/docs/api/README.md).
+Script `git-lfs-authenticate` (provided by <<_install.adoc#_git-as-svn-lfs,git-as-svn-lfs package>>) is used by git-lfs to obtain credentials for HTTP access to Git LFS server for Git-users working with Git repository by SSH (https://github.com/github/git-lfs/blob/master/docs/api/README.md).
 
-To check the settings of the script can be run locally on the server the
-following command:
+To check the settings of the script can be run locally on the server the following command:
 
 [source,bash]
 ----
@@ -97,9 +93,10 @@ The output should look something like this:
 
 == Running git-a-svn behind Nginx reverse proxy
 
- * Add git-as-svn upstream server:
+* Add git-as-svn upstream server:
 +
 ./etc/nginx/nginx.conf
+
 ----
  upstream gitsvn {
    server      localhost:8123  fail_timeout=5s;
@@ -107,9 +104,10 @@ The output should look something like this:
  }
 ----
 
- * Add resource redirection:
+* Add resource redirection:
 +
 ./etc/nginx/nginx.conf
+
 ----
    location ~ ^.*\.git/info/lfs/ {
      proxy_read_timeout      300;
@@ -129,4 +127,4 @@ The output should look something like this:
    }
 ----
 
-Also you need to set `baseUrl` parameter in `!web` section of git-as-svn configuration file.
+Also you need to set `baseUrl` parameter in `!web` section of git-as-svn configuration file to external URL accessible to LFS users.
