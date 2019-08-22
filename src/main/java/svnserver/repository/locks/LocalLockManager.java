@@ -42,6 +42,9 @@ public class LocalLockManager implements LockStorage {
 
   public LocalLockManager(@NotNull SortedMap<String, LockDesc> locks) {
     this.locks = locks;
+
+    // Cleanup locks that were stored with bogus versions of git-as-svn that stored paths without leading slash
+    locks.keySet().removeIf(s -> !s.startsWith("/"));
   }
 
   @NotNull

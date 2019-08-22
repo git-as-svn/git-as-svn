@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+ * Add cleanup of bogus locks created with git-as-svn versions prior to 1.21.5
+
 == 1.21.5
 
  * Multiple fixes to remote LFS locking
