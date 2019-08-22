@@ -21,7 +21,7 @@ plugins {
     application
 }
 
-version = "1.21.5"
+version = "1.21.6"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
