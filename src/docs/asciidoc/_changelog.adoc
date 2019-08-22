@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 1.21.7
+
+ * Fix Git LFS lock paths not handled properly, making it possible to lock same file multiple times
+
 == 1.21.6
 
  * Add cleanup of bogus locks created with git-as-svn versions prior to 1.21.5

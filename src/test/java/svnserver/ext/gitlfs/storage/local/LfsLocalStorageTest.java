@@ -16,10 +16,12 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import ru.bozaro.gitlfs.client.exceptions.RequestException;
+import ru.bozaro.gitlfs.common.LockConflictException;
 import svnserver.SvnTestHelper;
 import svnserver.SvnTestServer;
 import svnserver.TemporaryOutputStream;
@@ -101,6 +103,8 @@ public class LfsLocalStorageTest {
 
   @Test(dataProvider = "compressProvider")
   public void simple(boolean compress) throws Exception {
+    final User user = User.getAnonymous();
+
     final File tempDir = TestHelper.createTempDir("git-as-svn");
     try {
       LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
@@ -108,7 +112,7 @@ public class LfsLocalStorageTest {
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1));
 
       // Write new file
-      try (final LfsWriter writer = storage.getWriter(User.getAnonymous())) {
+      try (final LfsWriter writer = storage.getWriter(user)) {
         writer.write("Hello, world!!!".getBytes(StandardCharsets.UTF_8));
         Assert.assertEquals(writer.finish(null), "sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308");
       }
@@ -123,7 +127,10 @@ public class LfsLocalStorageTest {
         Assert.assertEquals(CharStreams.toString(new InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!");
       }
 
-      checkLfs(storage, User.getAnonymous());
+      checkLfs(storage, user);
+      checkLfs(storage, user);
+
+      LfsLocalStorageTest.checkLocks(storage, user);
     } finally {
       TestHelper.deleteDirectory(tempDir);
     }
@@ -152,7 +159,9 @@ public class LfsLocalStorageTest {
 
     Assert.assertEquals(actual, expected);
     Assert.assertEquals(reader.getSize(), expected.length);
+  }
 
+  public static void checkLocks(@NotNull LfsStorage storage, @NotNull User user) throws LockConflictException, IOException, SVNException {
     final LockDesc[] locks1;
     try {
       locks1 = storage.lock(user, null, null, false, new LockTarget[]{new LockTarget("/1.txt", 1)});
@@ -163,6 +172,7 @@ public class LfsLocalStorageTest {
 
       throw e;
     }
+
     Assert.assertEquals(locks1.length, 1);
     Assert.assertEquals(locks1[0].getPath(), "/1.txt");
 
@@ -171,6 +181,14 @@ public class LfsLocalStorageTest {
 
     final LockDesc[] locks3 = storage.unlock(user, null, false, new UnlockTarget[]{new UnlockTarget("/1.txt", locks1[0].getToken())});
     Assert.assertEquals(locks3, locks1);
+
+    storage.lock(User.getAnonymous(), null, "2.txt");
+    try {
+      storage.lock(User.getAnonymous(), null, "2.txt");
+      Assert.fail();
+    } catch (LockConflictException e) {
+      // expected
+    }
   }
 
   @Test(dataProvider = "compressProvider")
