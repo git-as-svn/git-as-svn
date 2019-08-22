@@ -8,11 +8,11 @@ git-as-svn supports integration with https://gitlab.com/[GitLab] >= 9.3.3.
 
 This includes:
 
- * User authentication against GitLab
- * Access control depending on user permissions in GitLab
- * Usage of GitLab LFS server for transparent handling of LFS files for svn users
- * Automatic discovery of new repositories created in GitLab
- * Running GitLab repository hooks if any installed
+* User authentication against GitLab
+* Access control depending on user permissions in GitLab
+* Usage of GitLab LFS server for transparent handling of LFS files for svn users
+* Automatic discovery of new repositories created in GitLab
+* Running GitLab repository hooks if any installed
 
 [[_configuration]]
 == Configuration
@@ -33,7 +33,8 @@ GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
 GITALY_GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
 ----
 
-. Change `userDB` to `!gitlabUsers`. This will tell git-as-svn to authenticate users against GitLab server:
+. Change `userDB` to `!gitlabUsers`.
+This will tell git-as-svn to authenticate users against GitLab server:
 +
 [source,yaml]
 ----
@@ -121,7 +122,33 @@ repositoryMapping: !gitlabMapping
 ----
 
 . Add `git-as-svn:<branch>` topics to whatever repositories you want to add to git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
-For example, add `git-as-svn:master` to expose `master` branch. If you want to expose more than one branch,, add multiple `git-a-svn:<branch>` topics separated by commas.
+For example, add `git-as-svn:master` to expose `master` branch.
+If you want to expose more than one branch, add multiple `git-a-svn:<branch>` topics separated by commas.
+
+== Supported Git LFS modes
+
+. git-as-svn uses GitLab LFS API for all LFS operations
++
+[source,yaml]
+----
+lfsMode: !httpLfs {}
+----
+
+. git-as-svn doesn't use LFS at all
++
+[source,yaml]
+----
+lfsMode: null
+----
+
+. git-as-svn uses GitLab LFS API for write operations and direct disk access for read operations
++
+[source,yaml]
+----
+lfsMode: !fileLfs
+  # Directory where GitLab stores LFS ojects
+  path: /var/opt/gitlab/gitlab-rails/shared/lfs-objects
+----
 
 == Full configuration file example
 
