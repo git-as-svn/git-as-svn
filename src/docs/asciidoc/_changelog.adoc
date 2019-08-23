@@ -9,6 +9,7 @@ endif::[]
 == 1.21.7
 
  * Fix Git LFS lock paths not handled properly, making it possible to lock same file multiple times
+ * Send human-readable error message when locking fails due to already existing lock
 
 == 1.21.6
 

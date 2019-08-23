@@ -48,7 +48,7 @@ public final class LockCmd extends BaseCmd<LockCmd.Params> {
       try {
         return lockStorage.lock(context.getUser(), context.getBranch(), comment, args.stealLock, new LockTarget[]{lockTarget});
       } catch (LockConflictException e) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path is already locked: {0}", e.getLock().getPath()));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, String.format("Path is already locked: %s", e.getLock().getPath())));
       }
     });
     if (lockDescs.length != 1) {
