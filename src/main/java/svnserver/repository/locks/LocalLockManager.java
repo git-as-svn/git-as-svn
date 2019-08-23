@@ -59,7 +59,7 @@ public class LocalLockManager implements LockStorage {
   @Override
   public LockDesc lock(@NotNull User user, @Nullable GitBranch branch, @NotNull String path) throws LockConflictException, IOException, SVNException {
     final LockDesc lock = tryCreateLock(user, null, false, null, path, -1);
-    locks.put(path, lock);
+    locks.put(lock.getPath(), lock);
     return lock;
   }
 

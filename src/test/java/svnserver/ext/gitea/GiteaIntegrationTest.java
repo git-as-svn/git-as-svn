@@ -183,12 +183,14 @@ public final class GiteaIntegrationTest {
   }
 
   @Test
-  void uploadToLfs() throws Exception {
+  void testLfs() throws Exception {
     final LfsStorage storage = GiteaConfig.createLfsStorage(giteaUrl, testPublicRepository.getFullName(), administratorToken);
     final svnserver.auth.User user = svnserver.auth.User.create(administrator, administrator, administrator, administrator, UserType.Gitea);
 
     LfsLocalStorageTest.checkLfs(storage, user);
     LfsLocalStorageTest.checkLfs(storage, user);
+
+    LfsLocalStorageTest.checkLocks(storage, user);
   }
 
   // Tests

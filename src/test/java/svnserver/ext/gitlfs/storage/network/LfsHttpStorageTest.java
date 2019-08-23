@@ -184,6 +184,9 @@ public final class LfsHttpStorageTest {
       }
 
       LfsLocalStorageTest.checkLfs(storage, user);
+      LfsLocalStorageTest.checkLfs(storage, user);
+
+      LfsLocalStorageTest.checkLocks(storage, user);
     }
   }
 
