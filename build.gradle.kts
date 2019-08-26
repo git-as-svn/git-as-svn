@@ -6,12 +6,12 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "5.5.1"
+    gradleVersion = "5.6"
     distributionType = Wrapper.DistributionType.ALL
 }
 
 plugins {
-    id("com.github.ben-manes.versions") version "0.21.0"
+    id("com.github.ben-manes.versions") version "0.22.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "3.1.1"
     id("org.asciidoctor.jvm.convert") version "2.2.0"
@@ -72,14 +72,14 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    compile("org.eclipse.jgit:org.eclipse.jgit:5.4.0.201906121030-r")
+    compile("org.eclipse.jgit:org.eclipse.jgit:5.4.2.201908231537-r")
     compile("org.tmatesoft.svnkit:svnkit:1.10.1")
-    compile("org.yaml:snakeyaml:1.24")
-    compile("com.beust:jcommander:1.72")
+    compile("org.yaml:snakeyaml:1.25")
+    compile("com.beust:jcommander:1.78")
     compile("org.ini4j:ini4j:0.5.4")
     compile("org.mapdb:mapdb:3.0.7")
     compile("com.unboundid:unboundid-ldapsdk:4.0.11")
-    compile("org.eclipse.jetty:jetty-servlet:9.4.19.v20190610")
+    compile("org.eclipse.jetty:jetty-servlet:9.4.20.v20190813")
     compile("org.gitlab:java-gitlab-api:4.1.0")
     compile("org.bitbucket.b_c:jose4j:0.6.5")
     compile("com.github.zeripath:java-gitea-api:1.7.4")
@@ -92,16 +92,16 @@ dependencies {
     compile("com.google.oauth-client:google-oauth-client:1.30.1")
     compile("com.google.http-client:google-http-client-jackson2:1.31.0")
     compile("org.jetbrains:annotations:17.0.0")
-    compile("org.slf4j:slf4j-api:1.7.26")
+    compile("org.slf4j:slf4j-api:1.7.28")
 
     val classindex = "org.atteo.classindex:classindex:3.8"
     compile(classindex)
     annotationProcessor(classindex)
 
-    runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.0")
+    runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.1")
 
     testCompile("org.testcontainers:testcontainers:1.12.0")
-    testCompile("org.testng:testng:6.14.3")
+    testCompile("org.testng:testng:7.0.0")
 }
 
 tasks.jar {
