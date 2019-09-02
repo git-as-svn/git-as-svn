@@ -11,9 +11,8 @@ Package: git-as-svn
 Architecture: all
 Depends: adduser, java8-runtime-headless
 Suggests: ufw
-Description: This project is an implementation of the Subversion server (svn
- protocol) for git repository.
- It allows you to work with a git repository using the console svn, TortoiseSVN,
+Description: git-as-svn emulates Subversion repository on top of Git repository
+ It allows you to work with a git repository using console svn, TortoiseSVN,
  SvnKit and similar tools.
 
 Package: git-as-svn-lfs
