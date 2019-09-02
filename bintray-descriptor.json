@@ -17,6 +17,7 @@
   "version": {
     "name": "__VERSION__",
     "desc": "git-as-svn __VERSION__ by __SUBJECT__",
+    "vcs_tag": "__VERSION__",
     "gpgSign": true
   },
   "files": [
