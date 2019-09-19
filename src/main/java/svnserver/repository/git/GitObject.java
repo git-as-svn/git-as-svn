@@ -47,7 +47,7 @@ public final class GitObject<T extends ObjectId> {
     if (o == null || getClass() != o.getClass()) return false;
 
     GitObject gitObject = (GitObject) o;
-    return AnyObjectId.equals(object, gitObject.object);
+    return AnyObjectId.isEqual(object, gitObject.object);
   }
 
   @NotNull

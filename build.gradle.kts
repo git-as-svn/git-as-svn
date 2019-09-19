@@ -6,12 +6,12 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "5.6"
+    gradleVersion = "5.6.2"
     distributionType = Wrapper.DistributionType.ALL
 }
 
 plugins {
-    id("com.github.ben-manes.versions") version "0.22.0"
+    id("com.github.ben-manes.versions") version "0.25.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "3.1.1"
     id("org.asciidoctor.jvm.convert") version "2.2.0"
@@ -72,7 +72,7 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    compile("org.eclipse.jgit:org.eclipse.jgit:5.4.2.201908231537-r")
+    compile("org.eclipse.jgit:org.eclipse.jgit:5.5.0.201909110433-r")
     compile("org.tmatesoft.svnkit:svnkit:1.10.1")
     compile("org.yaml:snakeyaml:1.25")
     compile("com.beust:jcommander:1.78")
@@ -89,8 +89,8 @@ dependencies {
     compile("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    compile("com.google.oauth-client:google-oauth-client:1.30.1")
-    compile("com.google.http-client:google-http-client-jackson2:1.31.0")
+    compile("com.google.oauth-client:google-oauth-client:1.30.2")
+    compile("com.google.http-client:google-http-client-jackson2:1.32.0")
     compile("org.jetbrains:annotations:17.0.0")
     compile("org.slf4j:slf4j-api:1.7.28")
 
@@ -100,7 +100,7 @@ dependencies {
 
     runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.1")
 
-    testCompile("org.testcontainers:testcontainers:1.12.0")
+    testCompile("org.testcontainers:testcontainers:1.12.1")
     testCompile("org.testng:testng:7.0.0")
 }
 
