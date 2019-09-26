@@ -46,7 +46,7 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
 
   @NotNull
   public static SharedContext create(@NotNull File basePath, @NotNull String realm, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws Exception {
-    final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), threadFactory);
+    final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
     final SharedContext context = new SharedContext(basePath, cacheDb, threadPoolExecutor, realm);
     for (SharedConfig config : shared) {
       config.create(context);
