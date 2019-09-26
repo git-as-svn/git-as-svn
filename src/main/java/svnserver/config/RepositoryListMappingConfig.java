@@ -86,6 +86,6 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
     @NotNull
     private Map<String, Map<String, String>> access = new HashMap<>();
     @NotNull
-    private GitRepositoryConfig repository;
+    private GitRepositoryConfig repository = new GitRepositoryConfig();
   }
 }
