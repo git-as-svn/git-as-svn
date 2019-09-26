@@ -14,9 +14,9 @@ plugins {
     id("com.github.ben-manes.versions") version "0.25.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "3.1.1"
-    id("org.asciidoctor.jvm.convert") version "2.2.0"
-    id("org.asciidoctor.jvm.pdf") version "2.2.0"
-    id("org.asciidoctor.jvm.epub") version "2.2.0"
+    id("org.asciidoctor.jvm.convert") version "2.3.0"
+    id("org.asciidoctor.jvm.pdf") version "2.3.0"
+    id("org.asciidoctor.jvm.epub") version "2.3.0"
     idea
     application
 }
@@ -89,8 +89,8 @@ dependencies {
     compile("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    compile("com.google.oauth-client:google-oauth-client:1.30.2")
-    compile("com.google.http-client:google-http-client-jackson2:1.32.0")
+    compile("com.google.oauth-client:google-oauth-client:1.30.3")
+    compile("com.google.http-client:google-http-client-jackson2:1.32.1")
     compile("org.jetbrains:annotations:17.0.0")
     compile("org.slf4j:slf4j-api:1.7.28")
 
