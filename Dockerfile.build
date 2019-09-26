@@ -1,5 +1,0 @@
-FROM ubuntu:18.04
-
-RUN apt-get update && apt-get install -y default-jdk gnome-doc-utils gettext build-essential fakeroot debhelper git subversion
-
-ENV HOME /var/jenkins_home
