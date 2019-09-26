@@ -62,8 +62,6 @@ jobs:
       jdk: openjdk11
     - stage: test
       jdk: openjdk12
-    - stage: test
-      jdk: openjdk13
 
     - stage: deploy
       jdk: *oldest_jdk
