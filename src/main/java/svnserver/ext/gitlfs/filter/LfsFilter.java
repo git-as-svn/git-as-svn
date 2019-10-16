@@ -191,10 +191,11 @@ public final class LfsFilter implements GitFilter {
         final Map<String, String> pointer;
 
         try (LfsWriter dataOut = dataStream) {
-          pointer = Pointer.createPointer(dataOut.finish(null), size);
+          pointer = size <= 0 ? null : Pointer.createPointer(dataOut.finish(null), size);
         }
 
-        pointerOut.write(Pointer.serializePointer(pointer));
+        if (pointer != null)
+          pointerOut.write(Pointer.serializePointer(pointer));
       }
     }
   }

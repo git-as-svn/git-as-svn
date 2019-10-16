@@ -31,6 +31,7 @@ import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsWriter;
+import svnserver.repository.git.GitRepository;
 import svnserver.repository.locks.LockDesc;
 import svnserver.repository.locks.LockTarget;
 import svnserver.repository.locks.UnlockTarget;
@@ -50,8 +51,9 @@ import static svnserver.server.SvnFilePropertyTest.propsBinary;
  * Simple test for LfsLocalStorage.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class LfsLocalStorageTest {
+public final class LfsLocalStorageTest {
   @DataProvider(name = "compressProvider")
   public static Object[][] compressProvider() {
     return new Object[][]{
@@ -89,6 +91,9 @@ public class LfsLocalStorageTest {
       Assert.assertEquals(lock.getPath(), "/1.txt");
       Assert.assertNotNull(lock.getID());
       Assert.assertEquals(lock.getOwner(), SvnTestServer.USER_NAME);
+
+      SvnTestHelper.createFile(svnRepository, "empty.txt", GitRepository.emptyBytes, null);
+      SvnTestHelper.checkFileContent(svnRepository, "empty.txt", GitRepository.emptyBytes);
     }
   }
 
@@ -137,28 +142,8 @@ public class LfsLocalStorageTest {
   }
 
   public static void checkLfs(@NotNull LfsStorage storage, @NotNull User user) throws Exception {
-    final byte[] expected = bigFile();
-
-    final String expectedOid = "sha256:" + Hashing.sha256().hashBytes(expected).toString();
-
-    final String oid;
-    try (LfsWriter writer = storage.getWriter(user)) {
-      writer.write(expected);
-      oid = writer.finish(null);
-    }
-
-    Assert.assertEquals(oid, expectedOid);
-
-    final LfsReader reader = storage.getReader(oid, expected.length);
-    Assert.assertNotNull(reader);
-
-    final byte[] actual;
-    try (InputStream stream = reader.openStream()) {
-      actual = IOUtils.toByteArray(stream);
-    }
-
-    Assert.assertEquals(actual, expected);
-    Assert.assertEquals(reader.getSize(), expected.length);
+    checkLfs(storage, user, bigFile());
+    checkLfs(storage, user, GitRepository.emptyBytes);
   }
 
   public static void checkLocks(@NotNull LfsStorage storage, @NotNull User user) throws LockConflictException, IOException, SVNException {
@@ -189,6 +174,29 @@ public class LfsLocalStorageTest {
     } catch (LockConflictException e) {
       // expected
     }
+  }
+
+  private static void checkLfs(@NotNull LfsStorage storage, @NotNull User user, @NotNull byte[] expected) throws IOException {
+    final String expectedOid = "sha256:" + Hashing.sha256().hashBytes(expected).toString();
+
+    final String oid;
+    try (LfsWriter writer = storage.getWriter(user)) {
+      writer.write(expected);
+      oid = writer.finish(null);
+    }
+
+    Assert.assertEquals(oid, expectedOid);
+
+    final LfsReader reader = storage.getReader(oid, expected.length);
+    Assert.assertNotNull(reader);
+
+    final byte[] actual;
+    try (InputStream stream = reader.openStream()) {
+      actual = IOUtils.toByteArray(stream);
+    }
+
+    Assert.assertEquals(actual, expected);
+    Assert.assertEquals(reader.getSize(), expected.length);
   }
 
   @Test(dataProvider = "compressProvider")
