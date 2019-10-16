@@ -11,7 +11,7 @@ tasks.wrapper {
 }
 
 plugins {
-    id("com.github.ben-manes.versions") version "0.25.0"
+    id("com.github.ben-manes.versions") version "0.26.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "3.1.1"
     id("org.asciidoctor.jvm.convert") version "2.3.0"
@@ -72,7 +72,7 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    compile("org.eclipse.jgit:org.eclipse.jgit:5.5.0.201909110433-r")
+    compile("org.eclipse.jgit:org.eclipse.jgit:5.5.1.201910021850-r")
     compile("org.tmatesoft.svnkit:svnkit:1.10.1")
     compile("org.yaml:snakeyaml:1.25")
     compile("com.beust:jcommander:1.78")
@@ -100,7 +100,7 @@ dependencies {
 
     runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.1")
 
-    testCompile("org.testcontainers:testcontainers:1.12.1")
+    testCompile("org.testcontainers:testcontainers:1.12.2")
     testCompile("org.testng:testng:7.0.0")
 }
 
