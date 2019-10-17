@@ -193,4 +193,9 @@ public final class SvnTestHelper {
       throw new SkipException("Docker is not available", e);
     }
   }
+
+  public static void skipTestIfRunningOnCI() {
+    if (System.getenv("TRAVIS") != null)
+      throw new SkipException("Test is skipped because running on CI");
+  }
 }
