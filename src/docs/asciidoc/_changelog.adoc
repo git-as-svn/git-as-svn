@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 1.21.8
+
+ * Write empty LFS files in a compatible with Git-LFS way
+ * Update dependencies
+
 == 1.21.7
 
  * Fix Git LFS lock paths not handled properly, making it possible to lock same file multiple times
