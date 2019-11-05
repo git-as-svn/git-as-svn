@@ -13,6 +13,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mapdb.HTreeMap;
@@ -382,6 +383,7 @@ public final class GitBranch {
     }
     final TreeWalk tw = new TreeWalk(repository.getGit());
     tw.setRecursive(true);
+    tw.setFilter(TreeFilter.ANY_DIFF);
     tw.addTree(oldTreeId.getObject());
     tw.addTree(newTreeId.getObject());
 
