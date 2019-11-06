@@ -10,6 +10,7 @@ package svnserver;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.util.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +20,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.stream.Stream;
 
 /**
  * Common test functions.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class TestHelper {
+public final class TestHelper {
 
   @NotNull
   public static final Logger logger = LoggerFactory.getLogger("test");
@@ -43,7 +42,7 @@ public class TestHelper {
 
   @NotNull
   static Path findGitPath() {
-    final Path root = Paths.get(".").toAbsolutePath();
+    final Path root = Paths.get("").toAbsolutePath();
     Path path = root;
     while (true) {
       final Path repo = path.resolve(".git");
@@ -57,15 +56,7 @@ public class TestHelper {
   }
 
   public static void deleteDirectory(@NotNull Path file) throws IOException {
-    try (Stream<Path> walk = Files.walk(file)) {
-      walk.sorted(Comparator.reverseOrder()).forEach(path -> {
-        try {
-          Files.delete(path);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
-    }
+    FileUtils.delete(file.toFile(), FileUtils.RECURSIVE | FileUtils.RETRY | FileUtils.SKIP_MISSING);
   }
 
   @NotNull
