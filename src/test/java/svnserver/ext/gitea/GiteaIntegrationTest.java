@@ -22,7 +22,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -78,8 +77,7 @@ public final class GiteaIntegrationTest {
 
     String giteaVersion = System.getenv("GITEA_VERSION");
     if (giteaVersion == null) {
-      if (System.getenv("TRAVIS") != null)
-        throw new SkipException("Only run gitea tests on Travis when explicitly asked");
+      SvnTestHelper.skipTestIfRunningOnCI();
 
       giteaVersion = "latest";
     }

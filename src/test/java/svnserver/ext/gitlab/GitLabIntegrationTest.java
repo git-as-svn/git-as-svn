@@ -17,7 +17,6 @@ import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Ignore;
@@ -75,8 +74,7 @@ public final class GitLabIntegrationTest {
 
     String gitlabVersion = System.getenv("GITLAB_VERSION");
     if (gitlabVersion == null) {
-      if (System.getenv("TRAVIS") != null)
-        throw new SkipException("Only run gitlab tests on Travis when explicitly asked");
+      SvnTestHelper.skipTestIfRunningOnCI();
 
       gitlabVersion = "9.3.3-ce.0";
     }
