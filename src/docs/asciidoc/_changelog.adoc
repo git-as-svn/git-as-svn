@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Systemd unit now correctly waits for git-as-svn to shut down.
+#275
+
 == 1.21.9
 
  * Catastrophically speedup rename detection (~50x). #306

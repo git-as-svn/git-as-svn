@@ -7,10 +7,6 @@ ConditionFileNotEmpty=/etc/git-as-svn/git-as-svn.conf
 User=git
 EnvironmentFile=/etc/default/git-as-svn
 ExecStart=/usr/bin/git-as-svn --config /etc/git-as-svn/git-as-svn.conf $GAS_ARGS
-KillMode=process
-Restart=on-failure
-RuntimeDirectory=git-as-svn
-RuntimeDirectoryMode=700
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
