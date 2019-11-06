@@ -11,6 +11,8 @@ import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
@@ -33,7 +35,7 @@ final class RawDirectoryServerNet implements DirectoryServerNet {
 
   @Nullable
   @Override
-  public String getCertificatePath() {
+  public Path getCertificatePath() {
     return null;
   }
 

@@ -33,17 +33,13 @@ final class DirectoryWatcher extends Thread {
 
   DirectoryWatcher(@NotNull String path, @NotNull DirectoryMapping mapping) {
     try {
-      this.basePath = getPath(path).toAbsolutePath();
+      this.basePath = Paths.get(path).toAbsolutePath();
       watchService = FileSystems.getDefault().newWatchService();
       this.mapping = mapping;
       this.start();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static Path getPath(String path) {
-    return FileSystems.getDefault().getPath(path);
   }
 
   private static boolean isGitDirectory(Path path) {

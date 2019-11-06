@@ -10,7 +10,8 @@ package svnserver.config;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.DB;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Cache configuration.
@@ -19,5 +20,5 @@ import java.io.File;
  */
 public interface CacheConfig {
   @NotNull
-  DB createCache(@NotNull File basePath);
+  DB createCache(@NotNull Path basePath) throws IOException;
 }

@@ -41,8 +41,8 @@ import svnserver.repository.git.push.GitPushEmbedded;
 import svnserver.server.SvnServer;
 import svnserver.tester.SvnTester;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -70,7 +70,7 @@ public final class SvnTestServer implements SvnTester {
   @NotNull
   private final String BIND_HOST = "127.0.0.2";
   @NotNull
-  private final File tempDirectory;
+  private final Path tempDirectory;
   @NotNull
   private final Repository repository;
   @NotNull
@@ -89,7 +89,7 @@ public final class SvnTestServer implements SvnTester {
                         @NotNull String prefix,
                         boolean safeBranch,
                         @Nullable UserDBConfig userDBConfig,
-                        @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator,
+                        @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator,
                         boolean anonymousRead,
                         @NotNull LfsMode lfsMode,
                         @NotNull SharedConfig... shared) throws Exception {
@@ -119,7 +119,7 @@ public final class SvnTestServer implements SvnTester {
     switch (lfsMode) {
       case Local: {
         config.getShared().add(new WebServerConfig(0));
-        config.getShared().add(new LocalLfsConfig(new File(tempDirectory, "lfs").getPath(), false));
+        config.getShared().add(new LocalLfsConfig(tempDirectory.resolve("lfs").toString(), false));
         break;
       }
       case Memory: {
@@ -211,7 +211,7 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
     return new SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, shared);
   }
 
@@ -222,7 +222,7 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath()), null, "", true, null, null, true, LfsMode.Memory);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath().toFile()), null, "", true, null, null, true, LfsMode.Memory);
   }
 
   @NotNull
@@ -259,7 +259,7 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   private SvnOperationFactory createOperationFactory(@NotNull String userName, @NotNull String password) {
-    final SVNWCContext wcContext = new SVNWCContext(new DefaultSVNOptions(getTempDirectory(), true), null);
+    final SVNWCContext wcContext = new SVNWCContext(new DefaultSVNOptions(getTempDirectory().toFile(), true), null);
     wcContext.setSqliteTemporaryDbInMemory(true);
     wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
 
@@ -270,7 +270,7 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public File getTempDirectory() {
+  public Path getTempDirectory() {
     return tempDirectory;
   }
 

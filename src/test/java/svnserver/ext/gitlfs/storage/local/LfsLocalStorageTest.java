@@ -37,11 +37,11 @@ import svnserver.repository.locks.LockTarget;
 import svnserver.repository.locks.UnlockTarget;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -110,9 +110,9 @@ public final class LfsLocalStorageTest {
   public void simple(boolean compress) throws Exception {
     final User user = User.getAnonymous();
 
-    final File tempDir = TestHelper.createTempDir("git-as-svn");
+    final Path tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, tempDir.resolve("data"), tempDir.resolve("meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1));
 
@@ -201,9 +201,9 @@ public final class LfsLocalStorageTest {
 
   @Test(dataProvider = "compressProvider")
   public void nometa(boolean compress) throws IOException {
-    final File tempDir = TestHelper.createTempDir("git-as-svn");
+    final Path tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.GitLab, new File(tempDir, "data"), null, compress);
+      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.GitLab, tempDir.resolve("data"), null, compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1));
 
@@ -229,9 +229,9 @@ public final class LfsLocalStorageTest {
 
   @Test(dataProvider = "compressProvider")
   public void alreadyAdded(boolean compress) throws IOException {
-    final File tempDir = TestHelper.createTempDir("git-as-svn");
+    final Path tempDir = TestHelper.createTempDir("git-as-svn");
     try {
-      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, new File(tempDir, "data"), new File(tempDir, "meta"), compress);
+      LfsLocalStorage storage = new LfsLocalStorage(new ConcurrentSkipListMap<>(), LocalLfsConfig.LfsLayout.TwoLevels, tempDir.resolve("data"), tempDir.resolve("meta"), compress);
       // Check file is not exists
       Assert.assertNull(storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1));
 

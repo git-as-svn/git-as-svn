@@ -19,7 +19,8 @@ import svnserver.SvnTestServer;
 import svnserver.auth.User;
 import svnserver.auth.UserDB;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -34,8 +35,8 @@ public final class AuthLdapTest {
 
   @DataProvider
   public static Object[][] sslModes() throws Exception {
-    final File cert = new File(AuthLdapTest.class.getResource("cert.pem").toURI());
-    final File key = new File(AuthLdapTest.class.getResource("key.pem").toURI());
+    final Path cert = Paths.get(AuthLdapTest.class.getResource("cert.pem").toURI());
+    final Path key = Paths.get(AuthLdapTest.class.getResource("key.pem").toURI());
 
     return new Object[][]{
         {RawDirectoryServerNet.instance},

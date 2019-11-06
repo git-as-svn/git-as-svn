@@ -19,9 +19,10 @@ import svnserver.Loggers;
 import svnserver.config.ConfigHelper;
 import svnserver.context.Shared;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -40,14 +41,14 @@ public final class GitSubmodules implements Shared {
   GitSubmodules() {
   }
 
-  public GitSubmodules(@NotNull File basePath, @NotNull Collection<String> paths) throws IOException {
+  public GitSubmodules(@NotNull Path basePath, @NotNull Collection<String> paths) throws IOException {
     for (String path : paths) {
-      final File file = ConfigHelper.joinPath(basePath, path).getAbsoluteFile();
-      if (!file.exists()) {
-        throw new FileNotFoundException(file.getPath());
-      }
+      final Path file = ConfigHelper.joinPath(basePath, path);
+      if (!Files.exists(file))
+        throw new FileNotFoundException(file.toString());
+
       log.info("Linked repository path: {}", file);
-      repositories.add(new FileRepository(file));
+      repositories.add(new FileRepository(file.toFile()));
     }
   }
 

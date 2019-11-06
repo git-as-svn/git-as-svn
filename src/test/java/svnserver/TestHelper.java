@@ -14,8 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
  * Common test functions.
@@ -27,49 +32,39 @@ public class TestHelper {
   @NotNull
   public static final Logger logger = LoggerFactory.getLogger("test");
 
-  public static void saveFile(@NotNull File file, @NotNull String content) throws IOException {
-    try (OutputStream stream = new FileOutputStream(file)) {
-      stream.write(content.getBytes(StandardCharsets.UTF_8));
-    }
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  public static File createTempDir(@NotNull String prefix) throws IOException {
-    final File tmp = new File(findGitPath().getParentFile(), "build/tmp/");
-    tmp.mkdirs();
-    final File dir = File.createTempFile(prefix + "-", "", tmp);
-    dir.delete();
-    dir.mkdir();
-    return dir;
+  public static void saveFile(@NotNull Path file, @NotNull String content) throws IOException {
+    Files.write(file, content.getBytes(StandardCharsets.UTF_8));
   }
 
   @NotNull
-  static File findGitPath() {
-    final File root = new File(".").getAbsoluteFile();
-    File path = root;
+  public static Path createTempDir(@NotNull String prefix) throws IOException {
+    return Files.createTempDirectory(findGitPath().getParent().resolve("build/tmp"), prefix + "-").toAbsolutePath();
+  }
+
+  @NotNull
+  static Path findGitPath() {
+    final Path root = Paths.get(".").toAbsolutePath();
+    Path path = root;
     while (true) {
-      final File repo = new File(path, ".git");
-      if (repo.exists()) {
+      final Path repo = path.resolve(".git");
+      if (Files.isDirectory(repo))
         return repo;
-      }
-      path = path.getParentFile();
-      if (path == null) {
-        throw new IllegalStateException("Repository not found from directiry: " + root.getAbsolutePath());
-      }
+
+      path = path.getParent();
+      if (path == null)
+        throw new IllegalStateException("Repository not found from directiry: " + root);
     }
   }
 
-  public static void deleteDirectory(@NotNull File file) throws IOException {
-    if (file.isDirectory()) {
-      final File[] files = file.listFiles();
-      if (files != null) {
-        for (File entry : files) {
-          deleteDirectory(entry);
+  public static void deleteDirectory(@NotNull Path file) throws IOException {
+    try (Stream<Path> walk = Files.walk(file)) {
+      walk.sorted(Comparator.reverseOrder()).forEach(path -> {
+        try {
+          Files.delete(path);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
         }
-      }
-    }
-    if (!file.delete()) {
-      throw new FileNotFoundException("Failed to delete file: " + file);
+      });
     }
   }
 

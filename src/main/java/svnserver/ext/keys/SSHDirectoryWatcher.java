@@ -52,18 +52,13 @@ final class SSHDirectoryWatcher extends Thread implements Shared {
     this.svnServePath = config.getSvnservePath();
     this.mapper = mapper;
     try {
-      this.basePath = getPath(config.getShadowSSHDirectory()).toAbsolutePath();
-      this.realSSHPath = getPath(config.getRealSSHDirectory()).toAbsolutePath();
+      this.basePath = Paths.get(config.getShadowSSHDirectory()).toAbsolutePath();
+      this.realSSHPath = Paths.get(config.getRealSSHDirectory()).toAbsolutePath();
       this.watchService = FileSystems.getDefault().newWatchService();
       this.start();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @NotNull
-  private static Path getPath(@NotNull String path) {
-    return FileSystems.getDefault().getPath(path);
   }
 
   public void run() {

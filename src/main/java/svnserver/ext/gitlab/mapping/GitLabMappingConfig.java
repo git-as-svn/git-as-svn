@@ -19,8 +19,8 @@ import svnserver.ext.gitlab.config.GitLabContext;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.git.GitCreateMode;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 
 /**
@@ -46,8 +46,8 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
     this.template = new GitRepositoryConfig(createMode);
   }
 
-  public GitLabMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
-    this(path.getAbsolutePath(), createMode);
+  public GitLabMappingConfig(@NotNull Path path, @NotNull GitCreateMode createMode) {
+    this(path.toAbsolutePath().toString(), createMode);
   }
 
   @NotNull

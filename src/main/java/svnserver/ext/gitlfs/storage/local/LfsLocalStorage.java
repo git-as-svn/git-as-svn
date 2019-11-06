@@ -21,8 +21,8 @@ import svnserver.repository.git.GitLocation;
 import svnserver.repository.locks.LocalLockManager;
 import svnserver.repository.locks.LockDesc;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.SortedMap;
 
 /**
@@ -47,12 +47,12 @@ public final class LfsLocalStorage extends LocalLockManager implements LfsStorag
   @NotNull
   private final LocalLfsConfig.LfsLayout layout;
   @NotNull
-  private final File dataRoot;
+  private final Path dataRoot;
   @Nullable
-  private final File metaRoot;
+  private final Path metaRoot;
   private final boolean compress;
 
-  public LfsLocalStorage(@NotNull SortedMap<String, LockDesc> locks, @NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, boolean compress) {
+  public LfsLocalStorage(@NotNull SortedMap<String, LockDesc> locks, @NotNull LocalLfsConfig.LfsLayout layout, @NotNull Path dataRoot, @Nullable Path metaRoot, boolean compress) {
     super(locks);
     this.layout = layout;
     this.dataRoot = dataRoot;
@@ -64,15 +64,15 @@ public final class LfsLocalStorage extends LocalLockManager implements LfsStorag
   }
 
   @Nullable
-  static File getPath(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File root, @NotNull String oid, @NotNull String suffix) {
+  static Path getPath(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull Path root, @NotNull String oid, @NotNull String suffix) {
     if (!oid.startsWith(OID_PREFIX)) return null;
     final int offset = OID_PREFIX.length();
-    return new File(root, layout.getPath(oid.substring(offset)) + suffix);
+    return root.resolve(layout.getPath(oid.substring(offset)) + suffix);
   }
 
   @NotNull
-  public static File getMetaRoot(@NotNull LocalContext context) {
-    return new File(context.sure(GitLocation.class).getFullPath(), "lfs/meta");
+  public static Path getMetaRoot(@NotNull LocalContext context) {
+    return context.sure(GitLocation.class).getFullPath().resolve("lfs/meta");
   }
 
   @Nullable

@@ -18,8 +18,8 @@ import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitRepository;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -59,9 +59,9 @@ final class GiteaMapping implements RepositoryMapping<GiteaProject> {
     final String projectKey = StringHelper.normalizeDir(projectName);
     final GiteaProject oldProject = mapping.get(projectKey);
     if (oldProject == null || oldProject.getProjectId() != repository.getId()) {
-      final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
+      final Path basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
       // the repository name is lowercased as per gitea cmd/serv.go:141
-      final File repoPath = ConfigHelper.joinPath(basePath, repository.getFullName().toLowerCase(Locale.ENGLISH) + ".git");
+      final Path repoPath = ConfigHelper.joinPath(basePath, repository.getFullName().toLowerCase(Locale.ENGLISH) + ".git");
       final LocalContext local = new LocalContext(context, repository.getFullName());
       local.add(VcsAccess.class, new GiteaAccess(local, config, repository));
       final GitRepository vcsRepository = config.getTemplate().create(local, repoPath);

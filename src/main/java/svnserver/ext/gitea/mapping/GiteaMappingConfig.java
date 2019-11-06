@@ -23,8 +23,8 @@ import svnserver.ext.gitea.config.GiteaContext;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.git.GitCreateMode;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -53,8 +53,8 @@ public final class GiteaMappingConfig implements RepositoryMappingConfig {
     template = new GitRepositoryConfig(createMode);
   }
 
-  public GiteaMappingConfig(@NotNull File path, @NotNull GitCreateMode createMode) {
-    this(path.getAbsolutePath(), createMode);
+  public GiteaMappingConfig(@NotNull Path path, @NotNull GitCreateMode createMode) {
+    this(path.toAbsolutePath().toString(), createMode);
   }
 
   @NotNull

@@ -19,7 +19,7 @@ import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 import svnserver.repository.locks.LocalLockManager;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Git LFS configuration file.
@@ -61,7 +61,7 @@ public final class LocalLfsConfig implements SharedConfig, LfsStorageFactory {
 
   @NotNull
   public LfsStorage createStorage(@NotNull LocalContext context) {
-    final File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
+    final Path dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
 
     return new LfsLocalStorage(
         LocalLockManager.getPersistentStorage(context),

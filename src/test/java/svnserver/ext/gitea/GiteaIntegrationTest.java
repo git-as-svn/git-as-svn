@@ -42,7 +42,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 import svnserver.repository.git.GitCreateMode;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.function.Function;
 
 /**
@@ -226,7 +226,7 @@ public final class GiteaIntegrationTest {
 
   // SvnTest Methods
   @NotNull
-  private SvnTestServer createServer(@NotNull GiteaToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
+  private SvnTestServer createServer(@NotNull GiteaToken token, @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GiteaConfig giteaConfig = new GiteaConfig(giteaApiUrl, token);
     return SvnTestServer.createEmpty(new GiteaUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, giteaConfig);
   }

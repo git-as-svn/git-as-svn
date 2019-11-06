@@ -12,7 +12,7 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import svnserver.config.serializer.ConfigType;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * In-memory cache config.
@@ -23,7 +23,7 @@ import java.io.File;
 public class MemoryCacheConfig implements CacheConfig {
   @NotNull
   @Override
-  public DB createCache(@NotNull File basePath) {
+  public DB createCache(@NotNull Path basePath) {
     return DBMaker.memoryDB().make();
   }
 }

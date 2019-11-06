@@ -29,9 +29,10 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -109,7 +110,7 @@ public final class LdapUserDB implements UserDB {
       return SSLContext.getDefault().getSocketFactory();
     }
 
-    final File certFile = ConfigHelper.joinPath(context.getBasePath(), certPem);
+    final Path certFile = ConfigHelper.joinPath(context.getBasePath(), certPem);
 
     log.info("Loading LDAP certificate from: {}", certFile);
 
@@ -119,7 +120,7 @@ public final class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  private static TrustManager[] createTrustManagers(@NotNull File certFile) throws Exception {
+  private static TrustManager[] createTrustManagers(@NotNull Path certFile) throws Exception {
     final X509Certificate certificate = loadCertificate(certFile);
     final KeyStore keyStore = assembleKeyStore(certificate);
     final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -128,11 +129,11 @@ public final class LdapUserDB implements UserDB {
   }
 
   @NotNull
-  public static X509Certificate loadCertificate(@NotNull File certFile) throws Exception {
+  public static X509Certificate loadCertificate(@NotNull Path certFile) throws Exception {
     final X509Certificate certificate;
 
     final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-    try (FileInputStream is = new FileInputStream(certFile)) {
+    try (InputStream is = Files.newInputStream(certFile)) {
       certificate = (X509Certificate) certificateFactory.generateCertificate(is);
     }
 
