@@ -64,7 +64,6 @@ tasks.withType<Test> {
 
 application {
     mainClassName = "svnserver.server.Main"
-    applicationDefaultJvmArgs = listOf("-Xmx512m")
 }
 
 tasks.getByName<JavaExec>("run") {
