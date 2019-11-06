@@ -16,10 +16,11 @@ import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -32,53 +33,55 @@ import java.util.zip.GZIPInputStream;
  */
 public final class LfsLocalReader implements LfsReader {
   @NotNull
-  private final File file;
+  private final Path file;
   private final boolean compressed;
   @NotNull
   private final Map<String, String> meta;
 
-  private LfsLocalReader(@NotNull Map<String, String> meta, @NotNull File file, boolean compressed) {
+  private LfsLocalReader(@NotNull Map<String, String> meta, @NotNull Path file, boolean compressed) {
     this.meta = meta;
     this.file = file;
     this.compressed = compressed;
   }
 
   @Nullable
-  public static LfsLocalReader create(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull File dataRoot, @Nullable File metaRoot, @NotNull String oid) throws IOException {
+  public static LfsLocalReader create(@NotNull LocalLfsConfig.LfsLayout layout, @NotNull Path dataRoot, @Nullable Path metaRoot, @NotNull String oid) throws IOException {
     final Map<String, String> meta;
 
-    final File dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
+    final Path dataPath = LfsLocalStorage.getPath(layout, dataRoot, oid, "");
 
     if (metaRoot != null) {
-      final File metaPath = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta");
-      if (metaPath == null || !metaPath.isFile())
+      final Path metaPath = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta");
+      if (metaPath == null)
         return null;
 
-      try (InputStream stream = new FileInputStream(metaPath)) {
+      try (InputStream stream = Files.newInputStream(metaPath)) {
         meta = Pointer.parsePointer(IOUtils.toByteArray(stream));
+      } catch (NoSuchFileException ignored) {
+        return null;
       }
 
       if (meta == null)
-        throw new IOException("Corrupt meta file: " + metaPath.getAbsolutePath());
+        throw new IOException("Corrupt meta file: " + metaPath);
 
       if (!meta.get(Constants.OID).equals(oid)) {
-        throw new IOException("Corrupt meta file: " + metaPath.getAbsolutePath() + " - unexpected oid:" + meta.get(Constants.OID));
+        throw new IOException("Corrupt meta file: " + metaPath + " - unexpected oid:" + meta.get(Constants.OID));
       }
-      final File gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
+      final Path gzipPath = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz");
 
-      if (gzipPath != null && gzipPath.isFile())
+      if (gzipPath != null && Files.exists(gzipPath))
         return new LfsLocalReader(meta, gzipPath, true);
 
     } else {
-      if (dataPath == null || !dataPath.isFile())
+      if (dataPath == null || !Files.isRegularFile(dataPath))
         return null;
 
       meta = new HashMap<>();
       meta.put(Constants.OID, oid);
-      meta.put(Constants.SIZE, Long.toString(dataPath.length()));
+      meta.put(Constants.SIZE, Long.toString(Files.size(dataPath)));
     }
 
-    if (dataPath != null && dataPath.isFile())
+    if (dataPath != null && Files.isRegularFile(dataPath))
       return new LfsLocalReader(meta, dataPath, false);
 
     return null;
@@ -87,7 +90,7 @@ public final class LfsLocalReader implements LfsReader {
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    final InputStream result = new FileInputStream(file);
+    final InputStream result = Files.newInputStream(file);
     return compressed ? new GZIPInputStream(result) : result;
   }
 
@@ -97,7 +100,7 @@ public final class LfsLocalReader implements LfsReader {
     if (!compressed)
       return null;
 
-    return new FileInputStream(file);
+    return Files.newInputStream(file);
   }
 
   @Override

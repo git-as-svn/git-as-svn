@@ -21,6 +21,8 @@ import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Simple update tests.
@@ -54,22 +56,22 @@ public final class SvnUpdateTest {
       // checkout
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));
-      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory().toFile()));
       checkout.setRevision(SVNRevision.HEAD);
       final long revision = checkout.run();
       // create file
-      File newFile = new File(server.getTempDirectory(), "somefile.txt");
+      Path newFile = server.getTempDirectory().resolve("somefile.txt");
       TestHelper.saveFile(newFile, "Bla Bla Bla");
       // add file
-      client.getWCClient().doAdd(newFile, false, false, false, SVNDepth.INFINITY, false, true);
+      client.getWCClient().doAdd(newFile.toFile(), false, false, false, SVNDepth.INFINITY, false, true);
       // set eof property
-      client.getWCClient().doSetProperty(newFile, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE), false, SVNDepth.INFINITY, null, null);
+      client.getWCClient().doSetProperty(newFile.toFile(), SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE), false, SVNDepth.INFINITY, null, null);
       // commit new file
-      client.getCommitClient().doCommit(new File[]{newFile}, false, "Add file commit", null, null, false, false, SVNDepth.INFINITY);
+      client.getCommitClient().doCommit(new File[]{newFile.toFile()}, false, "Add file commit", null, null, false, false, SVNDepth.INFINITY);
       // update for checkout revision
-      client.getUpdateClient().doUpdate(server.getTempDirectory(), SVNRevision.create(revision), SVNDepth.INFINITY, false, false);
+      client.getUpdateClient().doUpdate(server.getTempDirectory().toFile(), SVNRevision.create(revision), SVNDepth.INFINITY, false, false);
       // file must be remove
-      Assert.assertFalse(newFile.exists());
+      Assert.assertFalse(Files.exists(newFile));
     }
   }
 }

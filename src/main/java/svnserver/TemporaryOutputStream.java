@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Stream for write-then-read functionality.
@@ -27,9 +29,9 @@ public final class TemporaryOutputStream extends OutputStream {
   @NotNull
   private final ByteArrayOutputStream memoryStream = new ByteArrayOutputStream();
   @Nullable
-  private File file;
+  private Path file;
   @Nullable
-  private FileOutputStream fileOutputStream;
+  private OutputStream fileOutputStream;
   private long totalSize = 0;
   private boolean closed;
 
@@ -56,10 +58,10 @@ public final class TemporaryOutputStream extends OutputStream {
   }
 
   @NotNull
-  private FileOutputStream ensureFile() throws IOException {
+  private OutputStream ensureFile() throws IOException {
     if (fileOutputStream == null) {
-      file = File.createTempFile("tmp", "git-as-svn");
-      fileOutputStream = new FileOutputStream(file);
+      file = Files.createTempFile("tmp", "git-as-svn");
+      fileOutputStream = Files.newOutputStream(file);
     }
     return fileOutputStream;
   }
@@ -102,8 +104,7 @@ public final class TemporaryOutputStream extends OutputStream {
         fileOutputStream.close();
     } finally {
       if (file != null)
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
+        Files.deleteIfExists(file);
     }
   }
 
@@ -113,7 +114,7 @@ public final class TemporaryOutputStream extends OutputStream {
 
   @TestOnly
   @Nullable
-  File tempFile() {
+  Path tempFile() {
     return file;
   }
 
@@ -139,14 +140,14 @@ public final class TemporaryOutputStream extends OutputStream {
     @NotNull
     private final byte[] memoryBytes;
     @NotNull
-    private final FileInputStream fileStream;
+    private final InputStream fileStream;
     @NotNull
-    private final File file;
+    private final Path file;
     private int offset = 0;
 
-    private TemporaryInputStream(@NotNull byte[] memoryBytes, @NotNull File file) throws FileNotFoundException {
+    private TemporaryInputStream(@NotNull byte[] memoryBytes, @NotNull Path file) throws IOException {
       this.memoryBytes = memoryBytes;
-      this.fileStream = new FileInputStream(file);
+      this.fileStream = Files.newInputStream(file);
       this.file = file;
     }
 
@@ -178,8 +179,7 @@ public final class TemporaryOutputStream extends OutputStream {
       try {
         fileStream.close();
       } finally {
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
+        Files.deleteIfExists(file);
       }
     }
   }

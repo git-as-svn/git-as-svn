@@ -19,8 +19,9 @@ import svnserver.repository.VcsAccess;
 import svnserver.repository.git.GitBranch;
 import svnserver.repository.git.GitRepository;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -42,9 +43,9 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
   public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
     final NavigableMap<String, GitRepository> repos = new TreeMap<>();
 
-    final Set<String> uniquePaths = new HashSet<>();
+    final Set<Path> uniquePaths = new HashSet<>();
     repositories.values().stream().map(entry -> entry.repository.getPath()).forEach(s -> {
-      if (!uniquePaths.add(new File(s).getAbsolutePath()))
+      if (!uniquePaths.add(Paths.get(s).toAbsolutePath()))
         throw new IllegalStateException("Duplicate repositories in config: " + s);
     });
 

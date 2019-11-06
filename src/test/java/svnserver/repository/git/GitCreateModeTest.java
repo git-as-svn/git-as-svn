@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 import svnserver.TestHelper;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 
 /**
@@ -28,7 +28,7 @@ public class GitCreateModeTest {
   }
 
   private void smoke(@NotNull GitCreateMode mode) throws IOException {
-    final File tempDir = TestHelper.createTempDir("git-as-svn");
+    final Path tempDir = TestHelper.createTempDir("git-as-svn");
     try {
       mode.createRepository(tempDir, Collections.singleton(Constants.MASTER));
     } finally {

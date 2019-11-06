@@ -12,8 +12,8 @@ import org.mapdb.DB;
 import svnserver.config.SharedConfig;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @ThreadSafe
 public final class SharedContext extends Context<Shared> implements AutoCloseable {
   @NotNull
-  private final File basePath;
+  private final Path basePath;
   @NotNull
   private final DB cacheDB;
   @NotNull
@@ -37,7 +37,7 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
   @NotNull
   private final String realm;
 
-  private SharedContext(@NotNull File basePath, @NotNull DB cacheDb, @NotNull ThreadPoolExecutor threadPoolExecutor, @NotNull String realm) {
+  private SharedContext(@NotNull Path basePath, @NotNull DB cacheDb, @NotNull ThreadPoolExecutor threadPoolExecutor, @NotNull String realm) {
     this.basePath = basePath;
     this.cacheDB = cacheDb;
     this.threadPoolExecutor = threadPoolExecutor;
@@ -45,7 +45,7 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
   }
 
   @NotNull
-  public static SharedContext create(@NotNull File basePath, @NotNull String realm, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws Exception {
+  public static SharedContext create(@NotNull Path basePath, @NotNull String realm, @NotNull DB cacheDb, @NotNull ThreadFactory threadFactory, @NotNull List<SharedConfig> shared) throws Exception {
     final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
     final SharedContext context = new SharedContext(basePath, cacheDb, threadPoolExecutor, realm);
     for (SharedConfig config : shared) {
@@ -84,7 +84,7 @@ public final class SharedContext extends Context<Shared> implements AutoCloseabl
   }
 
   @NotNull
-  public File getBasePath() {
+  public Path getBasePath() {
     return basePath;
   }
 

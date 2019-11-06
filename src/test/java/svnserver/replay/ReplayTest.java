@@ -26,9 +26,9 @@ import svnserver.SvnConstants;
 import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -45,7 +45,7 @@ public final class ReplayTest {
   public void testReplayFileModification() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final URL repoMark = ReplayTest.class.getResource("repo/format");
-      final SVNURL url = SVNURL.fromFile(new File(repoMark.getPath()).getParentFile());
+      final SVNURL url = SVNURL.fromFile(Paths.get(repoMark.getPath()).getParent().toFile());
       final SVNRepository srcRepo = SVNRepositoryFactory.create(url);
       final SVNRepository dstRepo = server.openSvnRepository();
 

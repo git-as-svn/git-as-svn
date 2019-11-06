@@ -14,7 +14,7 @@ import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.config.LocalLfsConfig;
 import svnserver.ext.gitlfs.storage.local.LfsLocalReader;
 
-import java.io.File;
+import java.nio.file.Path;
 
 @ConfigType("fileLfs")
 public final class FileLfsMode implements LfsMode {
@@ -24,7 +24,7 @@ public final class FileLfsMode implements LfsMode {
   @NotNull
   @Override
   public LfsReaderFactory readerFactory(@NotNull LocalContext context) {
-    final File dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
+    final Path dataRoot = ConfigHelper.joinPath(context.getShared().getBasePath(), path);
     return oid -> LfsLocalReader.create(LocalLfsConfig.LfsLayout.GitLab, dataRoot, null, oid);
   }
 }

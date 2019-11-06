@@ -17,8 +17,8 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * SvnKit subversion implementation.
@@ -27,19 +27,19 @@ import java.io.IOException;
  */
 public final class SvnTesterSvnKit implements SvnTester {
   @NotNull
-  public static final String USER_NAME = "tester";
+  private static final String USER_NAME = "tester";
   @NotNull
-  public static final String PASSWORD = "passw0rd";
+  private static final String PASSWORD = "passw0rd";
 
   @NotNull
-  private final File repoDir;
+  private final Path repoDir;
   @NotNull
   private final SVNURL url;
 
-  public SvnTesterSvnKit() throws SVNException {
+  SvnTesterSvnKit() throws SVNException {
     try {
       repoDir = TestHelper.createTempDir("git-as-svn");
-      url = SVNRepositoryFactory.createLocalRepository(repoDir, true, true);
+      url = SVNRepositoryFactory.createLocalRepository(repoDir.toFile(), true, true);
     } catch (IOException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
     }
@@ -47,7 +47,7 @@ public final class SvnTesterSvnKit implements SvnTester {
 
   @NotNull
   @Override
-  public SVNURL getUrl() throws SVNException {
+  public SVNURL getUrl() {
     return url;
   }
 

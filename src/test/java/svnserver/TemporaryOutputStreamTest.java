@@ -15,9 +15,10 @@ import org.testng.annotations.Test;
 import org.testng.internal.junit.ArrayAsserts;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Random;
 
 /**
@@ -114,24 +115,24 @@ public final class TemporaryOutputStreamTest {
     Assert.assertNull(outputStream.tempFile());
     outputStream.write(expectedData);
 
-    final File tempFile = outputStream.tempFile();
+    final Path tempFile = outputStream.tempFile();
     Assert.assertNotNull(tempFile);
-    Assert.assertTrue(tempFile.exists());
+    Assert.assertTrue(Files.exists(tempFile));
 
     final InputStream inputStream = outputStream.toInputStream();
-    Assert.assertTrue(tempFile.exists());
+    Assert.assertTrue(Files.exists(tempFile));
 
     final byte[] actualData = IOUtils.toByteArray(inputStream);
-    Assert.assertTrue(tempFile.exists());
+    Assert.assertTrue(Files.exists(tempFile));
     inputStream.close();
-    Assert.assertFalse(tempFile.exists());
+    Assert.assertFalse(Files.exists(tempFile));
     inputStream.close();
-    Assert.assertFalse(tempFile.exists());
+    Assert.assertFalse(Files.exists(tempFile));
 
     outputStream.close();
-    Assert.assertFalse(tempFile.exists());
+    Assert.assertFalse(Files.exists(tempFile));
     outputStream.close();
-    Assert.assertFalse(tempFile.exists());
+    Assert.assertFalse(Files.exists(tempFile));
 
     ArrayAsserts.assertArrayEquals(actualData, expectedData);
   }

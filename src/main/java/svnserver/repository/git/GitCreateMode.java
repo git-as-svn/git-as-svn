@@ -12,10 +12,11 @@ import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 /**
@@ -27,22 +28,22 @@ public enum GitCreateMode {
   ERROR {
     @NotNull
     @Override
-    public Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException {
-      throw new FileNotFoundException(file.getPath());
+    public Repository createRepository(@NotNull Path path, @NotNull Set<String> branches) throws IOException {
+      throw new FileNotFoundException(path.toString());
     }
   },
   EMPTY {
     @NotNull
     @Override
-    public Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException {
-      return createRepository(file);
+    public Repository createRepository(@NotNull Path path, @NotNull Set<String> branches) throws IOException {
+      return createRepository(path);
     }
   },
   EXAMPLE {
     @NotNull
     @Override
-    public Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException {
-      final Repository repository = createRepository(file);
+    public Repository createRepository(@NotNull Path path, @NotNull Set<String> branches) throws IOException {
+      final Repository repository = createRepository(path);
       final ObjectId revision = createFirstRevision(repository);
       for (String branch : branches) {
         final RefUpdate refUpdate = repository.updateRef(Constants.R_HEADS + branch);
@@ -54,13 +55,10 @@ public enum GitCreateMode {
   };
 
   @NotNull
-  protected static Repository createRepository(@NotNull File file) throws IOException {
-    if (file.exists() || file.mkdirs()) {
-      final FileRepository repository = new FileRepository(file);
-      repository.create(true);
-      return repository;
-    }
-    throw new FileNotFoundException(file.getPath());
+  protected static Repository createRepository(@NotNull Path path) throws IOException {
+    final FileRepository repository = new FileRepository(Files.createDirectories(path).toFile());
+    repository.create(true);
+    return repository;
   }
 
   @NotNull
@@ -92,5 +90,5 @@ public enum GitCreateMode {
   }
 
   @NotNull
-  public abstract Repository createRepository(@NotNull File file, @NotNull Set<String> branches) throws IOException;
+  public abstract Repository createRepository(@NotNull Path path, @NotNull Set<String> branches) throws IOException;
 }

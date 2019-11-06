@@ -27,6 +27,8 @@ import svnserver.repository.VcsAccess;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.eclipse.jgit.lib.ConfigConstants.CONFIG_CORE_SECTION;
@@ -104,21 +106,21 @@ public final class GitPushEmbedded implements GitPusher {
   }
 
   private void runHook(@NotNull Repository repository, @NotNull SVNErrorCode hookErrorCode, @NotNull String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws SVNException {
-    final File repositoryDir = repository.getDirectory();
+    final Path repositoryDir = repository.getDirectory() == null ? null : repository.getDirectory().toPath();
     if (repositoryDir == null)
       // We don't have a dir where to run the hook :(
       return;
 
     final String hooksPath = getHooksPath(repository);
-    final File hooksDir = ConfigHelper.joinPath(repositoryDir, hooksPath);
-    final File script = ConfigHelper.joinPath(hooksDir, hook);
+    final Path hooksDir = ConfigHelper.joinPath(repositoryDir, hooksPath);
+    final Path script = ConfigHelper.joinPath(hooksDir, hook);
 
     final long startTime = System.currentTimeMillis();
-    if (!script.exists())
+    if (!Files.exists(script))
       return;
 
-    final ProcessBuilder processBuilder = new ProcessBuilder(script.getAbsolutePath())
-        .directory(repositoryDir)
+    final ProcessBuilder processBuilder = new ProcessBuilder(script.toString())
+        .directory(repositoryDir.toFile())
         .redirectErrorStream(true);
 
     processBuilder.environment().put("LANG", "en_US.utf8");
@@ -140,10 +142,10 @@ public final class GitPushEmbedded implements GitPusher {
 
       final int exitCode = process.waitFor();
       if (exitCode != 0) {
-        throw new SVNException(SVNErrorMessage.create(hookErrorCode, String.format("Hook %s failed with output:\n%s", script.getAbsolutePath(), hookMessage)));
+        throw new SVNException(SVNErrorMessage.create(hookErrorCode, String.format("Hook %s failed with output:\n%s", script, hookMessage)));
       }
     } catch (InterruptedException | IOException e) {
-      log.error("Hook failed: " + script.getAbsolutePath(), e);
+      log.error("Hook failed: " + script, e);
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
     } finally {
       final long endTime = System.currentTimeMillis();

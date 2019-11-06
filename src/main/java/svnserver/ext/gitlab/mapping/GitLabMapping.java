@@ -33,14 +33,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -100,10 +100,10 @@ final class GitLabMapping implements RepositoryMapping<GitLabProject> {
     // TODO: do not drop entire repo here, instead only apply diff - add missing branches and remove unneeded
     removeRepository(project.getId(), project.getPathWithNamespace());
 
-    final File basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
+    final Path basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
     final String sha256 = Hashing.sha256().hashString(project.getId().toString(), Charset.defaultCharset()).toString();
-    File repoPath = Paths.get(basePath.toString(), HASHED_PATH, sha256.substring(0, 2), sha256.substring(2, 4), sha256 + ".git").toFile();
-    if (!repoPath.exists())
+    Path repoPath = basePath.resolve(HASHED_PATH).resolve(sha256.substring(0, 2)).resolve(sha256.substring(2, 4)).resolve(sha256 + ".git");
+    if (!Files.exists(repoPath))
       repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
     final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
     local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));

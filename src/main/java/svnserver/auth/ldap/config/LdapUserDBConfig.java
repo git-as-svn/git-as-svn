@@ -17,6 +17,8 @@ import svnserver.config.UserDBConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
+import java.nio.file.Path;
+
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
@@ -98,7 +100,7 @@ public final class LdapUserDBConfig implements UserDBConfig {
                           @NotNull String loginAttribute,
                           @NotNull String nameAttribute,
                           @NotNull String emailAttribute,
-                          @Nullable String ldapCertPem,
+                          @Nullable Path ldapCertPem,
                           int maxConnections,
                           @NotNull String fakeMailSuffix) {
     this.connectionUrl = connectionUrl;
@@ -107,7 +109,7 @@ public final class LdapUserDBConfig implements UserDBConfig {
     this.loginAttribute = loginAttribute;
     this.nameAttribute = nameAttribute;
     this.emailAttribute = emailAttribute;
-    this.ldapCertPem = ldapCertPem;
+    this.ldapCertPem = ldapCertPem == null ? null : ldapCertPem.toString();
     this.maxConnections = maxConnections;
     this.fakeMailSuffix = fakeMailSuffix;
   }
@@ -125,11 +127,6 @@ public final class LdapUserDBConfig implements UserDBConfig {
   @NotNull
   public String getNameAttribute() {
     return nameAttribute;
-  }
-
-  @NotNull
-  public String getSearchFilter() {
-    return searchFilter;
   }
 
   @NotNull

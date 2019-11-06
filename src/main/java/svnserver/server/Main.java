@@ -16,7 +16,8 @@ import svnserver.VersionInfo;
 import svnserver.config.Config;
 import svnserver.config.serializer.ConfigSerializer;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Entry point.
@@ -46,7 +47,7 @@ public class Main {
 
     // Load config
     ConfigSerializer serializer = new ConfigSerializer();
-    final File configFile = cmd.configuration.getAbsoluteFile();
+    final Path configFile = cmd.configuration.toAbsolutePath();
 
     Config config = serializer.load(configFile);
 
@@ -62,7 +63,7 @@ public class Main {
       return;
     }
 
-    final SvnServer server = new SvnServer(configFile.getParentFile(), config);
+    final SvnServer server = new SvnServer(configFile.getParent(), config);
     server.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -81,7 +82,7 @@ public class Main {
 
     @Parameter(names = {"-c", "--config"}, description = "set configuration file")
     @NotNull
-    private File configuration = new File("/etc/git-as-svn/git-as-svn.conf");
+    private Path configuration = Paths.get("/etc/git-as-svn/git-as-svn.conf");
 
     @Parameter(names = {"-t"}, description = "test configuration and exit")
     private boolean testConfig = false;

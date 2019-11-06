@@ -30,8 +30,9 @@ import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LocalLockManager;
 import svnserver.repository.locks.LockStorage;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -77,12 +78,12 @@ public final class GitRepositoryConfig {
   }
 
   @NotNull
-  public GitRepository create(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
+  public GitRepository create(@NotNull LocalContext context, @NotNull Path fullPath) throws IOException {
     return create(context, fullPath, branches);
   }
 
   @NotNull
-  public GitRepository create(@NotNull LocalContext context, @NotNull File fullPath, @NotNull Set<String> branches) throws IOException {
+  public GitRepository create(@NotNull LocalContext context, @NotNull Path fullPath, @NotNull Set<String> branches) throws IOException {
     context.add(GitLocation.class, new GitLocation(fullPath));
 
     final LfsStorage lfsStorage = LfsStorageFactory.tryCreateStorage(context);
@@ -92,13 +93,13 @@ public final class GitRepositoryConfig {
   }
 
   @NotNull
-  private Repository createGit(@NotNull LocalContext context, @NotNull File fullPath) throws IOException {
-    if (!fullPath.exists()) {
+  private Repository createGit(@NotNull LocalContext context, @NotNull Path fullPath) throws IOException {
+    if (!Files.exists(fullPath)) {
       log.info("[{}]: storage {} not found, create mode: {}", context.getName(), fullPath, createMode);
       return createMode.createRepository(fullPath, branches);
     }
     log.info("[{}]: using existing storage {}", context.getName(), fullPath);
-    return new FileRepository(fullPath);
+    return new FileRepository(fullPath.toFile());
   }
 
   @NotNull

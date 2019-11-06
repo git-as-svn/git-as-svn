@@ -18,10 +18,10 @@ import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 import svnserver.config.Config;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -46,23 +46,6 @@ public final class ConfigSerializer {
   }
 
   @NotNull
-  public String dump(Config config) {
-    return yaml.dump(config);
-  }
-
-  @NotNull
-  private Config load(@NotNull InputStream stream) {
-    return yaml.loadAs(stream, Config.class);
-  }
-
-  @NotNull
-  public Config load(@NotNull File file) throws IOException {
-    try (InputStream stream = new FileInputStream(file)) {
-      return load(stream);
-    }
-  }
-
-  @NotNull
   private static Map<String, Class<?>> configTypes() {
     final Map<String, Class<?>> result = new TreeMap<>();
     for (Class<?> type : ClassIndex.getAnnotated(ConfigType.class)) {
@@ -73,6 +56,23 @@ public final class ConfigSerializer {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public String dump(@NotNull Config config) {
+    return yaml.dump(config);
+  }
+
+  @NotNull
+  public Config load(@NotNull Path file) throws IOException {
+    try (InputStream stream = Files.newInputStream(file)) {
+      return load(stream);
+    }
+  }
+
+  @NotNull
+  private Config load(@NotNull InputStream stream) {
+    return yaml.loadAs(stream, Config.class);
   }
 
   private static class ConfigConstructor extends Constructor {

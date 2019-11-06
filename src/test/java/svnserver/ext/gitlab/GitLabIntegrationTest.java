@@ -39,8 +39,8 @@ import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 import svnserver.ext.web.config.WebServerConfig;
 import svnserver.repository.git.GitCreateMode;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -155,7 +155,7 @@ public final class GitLabIntegrationTest {
   }
 
   @NotNull
-  private SvnTestServer createServer(@NotNull GitLabToken token, @Nullable Function<File, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
+  private SvnTestServer createServer(@NotNull GitLabToken token, @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator) throws Exception {
     final GitLabConfig gitLabConfig = new GitLabConfig(gitlabUrl, token);
     return SvnTestServer.createEmpty(new GitLabUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, gitLabConfig, new WebServerConfig());
   }

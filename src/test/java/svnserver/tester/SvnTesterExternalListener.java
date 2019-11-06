@@ -22,12 +22,12 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import svnserver.SvnTestHelper;
 import svnserver.TestHelper;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
@@ -118,7 +118,7 @@ public class SvnTesterExternalListener implements ITestListener {
     @NotNull
     private final Process daemon;
     @NotNull
-    private final File repo;
+    private final Path repo;
     @NotNull
     private final SVNURL url;
 
@@ -130,14 +130,14 @@ public class SvnTesterExternalListener implements ITestListener {
       Runtime.getRuntime().exec(new String[]{
           svnadmin,
           "create",
-          repo.getAbsolutePath()
+          repo.toString()
       }).waitFor();
-      File config = createConfigs(repo);
+      Path config = createConfigs(repo);
       daemon = Runtime.getRuntime().exec(new String[]{
           svnserve,
           "--daemon",
-          "--root", repo.getAbsolutePath(),
-          "--config-file", config.getAbsolutePath(),
+          "--root", repo.toString(),
+          "--config-file", config.toString(),
           "--listen-host", HOST,
           "--listen-port", Integer.toString(port)
       });
@@ -165,13 +165,13 @@ public class SvnTesterExternalListener implements ITestListener {
     }
 
     @NotNull
-    private static File createConfigs(@NotNull File repo) throws IOException {
-      final File config = new File(repo, "conf/server.conf");
-      final File passwd = new File(repo, "conf/server.passwd");
-      try (Writer writer = new FileWriter(config)) {
-        writer.write(MessageFormat.format(CONFIG_SERVER, passwd.getAbsolutePath()));
+    private static Path createConfigs(@NotNull Path repo) throws IOException {
+      final Path config = repo.resolve("conf/server.conf");
+      final Path passwd = repo.resolve("conf/server.passwd");
+      try (Writer writer = new FileWriter(config.toFile())) {
+        writer.write(MessageFormat.format(CONFIG_SERVER, passwd.toString()));
       }
-      try (Writer writer = new FileWriter(passwd)) {
+      try (Writer writer = new FileWriter(passwd.toFile())) {
         writer.write(MessageFormat.format(CONFIG_PASSWD, USER_NAME, PASSWORD));
       }
       return config;

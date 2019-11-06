@@ -13,7 +13,9 @@ import org.mapdb.DBException;
 import org.mapdb.DBMaker;
 import svnserver.config.serializer.ConfigType;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Persistent cache config.
@@ -29,13 +31,12 @@ public class PersistentCacheConfig implements CacheConfig {
 
   @NotNull
   @Override
-  public DB createCache(@NotNull File basePath) {
-    final File cacheBase = ConfigHelper.joinPath(basePath, path);
-    //noinspection ResultOfMethodCallIgnored
-    cacheBase.getParentFile().mkdirs();
+  public DB createCache(@NotNull Path basePath) throws IOException {
+    final Path cacheBase = ConfigHelper.joinPath(basePath, path);
+    Files.createDirectories(cacheBase.getParent());
 
     try {
-      final DBMaker.Maker maker = DBMaker.fileDB(cacheBase)
+      final DBMaker.Maker maker = DBMaker.fileDB(cacheBase.toFile())
           .closeOnJvmShutdown()
           .fileMmapEnableIfSupported();
 

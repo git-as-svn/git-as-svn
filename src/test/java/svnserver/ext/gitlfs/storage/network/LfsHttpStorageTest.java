@@ -53,10 +53,10 @@ import svnserver.ext.web.config.WebServerConfig;
 import svnserver.ext.web.server.WebServer;
 import svnserver.repository.VcsAccess;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,7 +78,7 @@ public final class LfsHttpStorageTest {
     final User user = users.add(SvnTestServer.USER_NAME, "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    try (SharedContext sharedContext = SharedContext.create(new File("/tmp"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
+    try (SharedContext sharedContext = SharedContext.create(Paths.get("/nonexistent"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
       final WebServer webServer = sharedContext.sure(WebServer.class);
       sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
       sharedContext.add(UserDB.class, users);
@@ -138,7 +138,7 @@ public final class LfsHttpStorageTest {
     final User user = users.add("test", "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    try (SharedContext sharedContext = SharedContext.create(new File("/nonexistent"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
+    try (SharedContext sharedContext = SharedContext.create(Paths.get("/nonexistent"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
       final WebServer webServer = sharedContext.sure(WebServer.class);
       sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
       sharedContext.add(UserDB.class, users);

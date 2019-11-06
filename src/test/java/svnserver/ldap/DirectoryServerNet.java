@@ -11,6 +11,8 @@ import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
@@ -23,5 +25,5 @@ interface DirectoryServerNet {
   String getUrlSchema();
 
   @Nullable
-  String getCertificatePath();
+  Path getCertificatePath();
 }

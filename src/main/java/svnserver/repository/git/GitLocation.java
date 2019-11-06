@@ -10,7 +10,7 @@ package svnserver.repository.git;
 import org.jetbrains.annotations.NotNull;
 import svnserver.context.Local;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Git repository location.
@@ -19,14 +19,14 @@ import java.io.File;
  */
 public final class GitLocation implements Local {
   @NotNull
-  private final File fullPath;
+  private final Path fullPath;
 
-  public GitLocation(@NotNull File fullPath) {
+  public GitLocation(@NotNull Path fullPath) {
     this.fullPath = fullPath;
   }
 
   @NotNull
-  public File getFullPath() {
+  public Path getFullPath() {
     return fullPath;
   }
 }

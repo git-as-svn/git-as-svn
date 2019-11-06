@@ -17,8 +17,13 @@ import svnserver.auth.ldap.LdapUserDB;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -33,9 +38,9 @@ final class SslDirectoryServerNet implements DirectoryServerNet {
   @NotNull
   private final InMemoryListenerConfig listenerConfig;
   @NotNull
-  private final File certFile;
+  private final Path certFile;
 
-  SslDirectoryServerNet(@NotNull File certFile, @NotNull File keyFile) throws Exception {
+  SslDirectoryServerNet(@NotNull Path certFile, @NotNull Path keyFile) throws Exception {
     this.certFile = certFile;
     final KeyManager[] keyManagers = createKeyManagers(certFile, keyFile);
     final SSLUtil sslUtil = new SSLUtil(keyManagers, null);
@@ -43,7 +48,7 @@ final class SslDirectoryServerNet implements DirectoryServerNet {
   }
 
   @NotNull
-  private static KeyManager[] createKeyManagers(@NotNull File certFile, @NotNull File keyFile) throws Exception {
+  private static KeyManager[] createKeyManagers(@NotNull Path certFile, @NotNull Path keyFile) throws Exception {
     final X509Certificate certificate = LdapUserDB.loadCertificate(certFile);
 
     final PrivateKey key = loadKey(keyFile);
@@ -58,10 +63,10 @@ final class SslDirectoryServerNet implements DirectoryServerNet {
   }
 
   @NotNull
-  private static PrivateKey loadKey(@NotNull File keyFile) throws Exception {
+  private static PrivateKey loadKey(@NotNull Path keyFile) throws Exception {
     final PEMKeyPair keyPair;
 
-    try (InputStream keyStream = new FileInputStream(keyFile);
+    try (InputStream keyStream = Files.newInputStream(keyFile);
          Reader keyReader = new InputStreamReader(keyStream, StandardCharsets.US_ASCII);
          PEMParser parser = new PEMParser(keyReader)) {
       keyPair = (PEMKeyPair) parser.readObject();
@@ -95,8 +100,8 @@ final class SslDirectoryServerNet implements DirectoryServerNet {
 
   @NotNull
   @Override
-  public String getCertificatePath() {
-    return certFile.getPath();
+  public Path getCertificatePath() {
+    return certFile;
   }
 
   @Override

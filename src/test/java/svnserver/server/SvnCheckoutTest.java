@@ -24,6 +24,8 @@ import svnserver.SvnTestServer;
 import svnserver.TestHelper;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static svnserver.SvnTestHelper.sendDeltaAndClose;
@@ -43,7 +45,7 @@ public final class SvnCheckoutTest {
       final SvnOperationFactory factory = server.createOperationFactory();
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));
-      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory().toFile()));
       checkout.setRevision(SVNRevision.create(0));
       checkout.run();
     }
@@ -78,7 +80,7 @@ public final class SvnCheckoutTest {
 
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl().appendPath(basePath, false)));
-      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory().toFile()));
       checkout.setRevision(SVNRevision.create(revisions.get(0)));
       checkout.run();
 
@@ -122,7 +124,7 @@ public final class SvnCheckoutTest {
         }
         if (!targets.isEmpty()) {
           for (String target : targets) {
-            update.addTarget(SvnTarget.fromFile(new File(server.getTempDirectory(), target)));
+            update.addTarget(SvnTarget.fromFile(server.getTempDirectory().resolve(target).toFile()));
           }
           update.setRevision(SVNRevision.create(revision));
           update.setSleepForTimestamp(false);
@@ -178,33 +180,33 @@ public final class SvnCheckoutTest {
 
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));
-      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory().toFile()));
       checkout.setRevision(SVNRevision.HEAD);
       checkout.run();
 
-      final File file = new File(server.getTempDirectory(), "src/main/someFile.txt");
+      final Path file = server.getTempDirectory().resolve("src/main/someFile.txt");
       final SVNClientManager client = SVNClientManager.newInstance(factory);
       // create file
       final SVNCommitInfo commit;
       {
-        Assert.assertFalse(file.exists());
+        Assert.assertFalse(Files.exists(file));
         TestHelper.saveFile(file, "New content");
-        client.getWCClient().doAdd(file, false, false, false, SVNDepth.INFINITY, false, true);
-        client.getWCClient().doSetProperty(file, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE), false, SVNDepth.INFINITY, null, null);
+        client.getWCClient().doAdd(file.toFile(), false, false, false, SVNDepth.INFINITY, false, true);
+        client.getWCClient().doSetProperty(file.toFile(), SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE), false, SVNDepth.INFINITY, null, null);
 
-        commit = client.getCommitClient().doCommit(new File[]{file}, false, "Commit new file", null, null, false, false, SVNDepth.INFINITY);
+        commit = client.getCommitClient().doCommit(new File[]{file.toFile()}, false, "Commit new file", null, null, false, false, SVNDepth.INFINITY);
       }
       // modify file
       {
-        Assert.assertTrue(file.exists());
+        Assert.assertTrue(Files.exists(file));
         TestHelper.saveFile(file, "Modified content");
-        client.getCommitClient().doCommit(new File[]{file}, false, "Modify up-to-date commit", null, null, false, false, SVNDepth.INFINITY);
+        client.getCommitClient().doCommit(new File[]{file.toFile()}, false, "Modify up-to-date commit", null, null, false, false, SVNDepth.INFINITY);
       }
       // update to previous commit
-      client.getUpdateClient().doUpdate(server.getTempDirectory(), SVNRevision.create(commit.getNewRevision()), SVNDepth.INFINITY, false, false);
+      client.getUpdateClient().doUpdate(server.getTempDirectory().toFile(), SVNRevision.create(commit.getNewRevision()), SVNDepth.INFINITY, false, false);
       // check no tree conflist
       ArrayList<String> changeLists = new ArrayList<>();
-      client.getStatusClient().doStatus(server.getTempDirectory(), SVNRevision.WORKING, SVNDepth.INFINITY, false, false, true, false, status -> {
+      client.getStatusClient().doStatus(server.getTempDirectory().toFile(), SVNRevision.WORKING, SVNDepth.INFINITY, false, false, true, false, status -> {
         Assert.assertNull(status.getTreeConflict(), status.getFile().toString());
         Assert.assertNull(status.getConflictNewFile(), status.getFile().toString());
       }, changeLists);

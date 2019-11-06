@@ -35,9 +35,9 @@ import svnserver.server.msg.ClientInfo;
 import svnserver.server.step.Step;
 
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
@@ -97,7 +97,7 @@ public final class SvnServer extends Thread {
   @NotNull
   private final SharedContext sharedContext;
 
-  public SvnServer(@NotNull File basePath, @NotNull Config config) throws Exception {
+  public SvnServer(@NotNull Path basePath, @NotNull Config config) throws Exception {
     super("SvnServer");
     setDaemon(true);
     this.config = config;

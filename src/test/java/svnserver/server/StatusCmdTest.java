@@ -27,12 +27,12 @@ public final class StatusCmdTest {
 
       final SvnCheckout checkout = factory.createCheckout();
       checkout.setSource(SvnTarget.fromURL(server.getUrl()));
-      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      checkout.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory().toFile()));
       checkout.setRevision(SVNRevision.create(1));
       checkout.run();
 
       final SvnGetStatus status = factory.createGetStatus();
-      status.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory()));
+      status.setSingleTarget(SvnTarget.fromFile(server.getTempDirectory().toFile()));
       status.setRevision(SVNRevision.create(2));
       status.run();
     }
