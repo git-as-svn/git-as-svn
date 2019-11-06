@@ -8,6 +8,7 @@
 package svnserver.repository.git;
 
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 import svnserver.TestHelper;
@@ -29,8 +30,8 @@ public class GitCreateModeTest {
 
   private void smoke(@NotNull GitCreateMode mode) throws IOException {
     final Path tempDir = TestHelper.createTempDir("git-as-svn");
-    try {
-      mode.createRepository(tempDir, Collections.singleton(Constants.MASTER));
+    try (Repository repo = mode.createRepository(tempDir, Collections.singleton(Constants.MASTER))) {
+      // noop
     } finally {
       TestHelper.deleteDirectory(tempDir);
     }
