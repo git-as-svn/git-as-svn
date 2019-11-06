@@ -6,12 +6,12 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "5.6.2"
+    gradleVersion = "5.6.4"
     distributionType = Wrapper.DistributionType.ALL
 }
 
 plugins {
-    id("com.github.ben-manes.versions") version "0.26.0"
+    id("com.github.ben-manes.versions") version "0.27.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "3.1.1"
     id("org.asciidoctor.jvm.convert") version "2.3.0"
@@ -78,10 +78,10 @@ dependencies {
     compile("com.beust:jcommander:1.78")
     compile("org.ini4j:ini4j:0.5.4")
     compile("org.mapdb:mapdb:3.0.7")
-    compile("com.unboundid:unboundid-ldapsdk:4.0.11")
+    compile("com.unboundid:unboundid-ldapsdk:4.0.12")
     compile("org.eclipse.jetty:jetty-servlet:9.4.20.v20190813")
-    compile("org.gitlab:java-gitlab-api:4.1.0")
-    compile("org.bitbucket.b_c:jose4j:0.6.5")
+    compile("org.gitlab:java-gitlab-api:4.1.1")
+    compile("org.bitbucket.b_c:jose4j:0.7.0")
     compile("com.github.zeripath:java-gitea-api:1.7.4")
 
     val gitLfsJava = "0.16.0"
@@ -89,8 +89,8 @@ dependencies {
     compile("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     compile("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    compile("com.google.oauth-client:google-oauth-client:1.30.3")
-    compile("com.google.http-client:google-http-client-jackson2:1.32.1")
+    compile("com.google.oauth-client:google-oauth-client:1.30.4")
+    compile("com.google.http-client:google-http-client-jackson2:1.33.0")
     compile("org.jetbrains:annotations:17.0.0")
     compile("org.slf4j:slf4j-api:1.7.28")
 
@@ -100,7 +100,7 @@ dependencies {
 
     runtime("org.apache.logging.log4j:log4j-slf4j18-impl:2.12.1")
 
-    testCompile("org.testcontainers:testcontainers:1.12.2")
+    testCompile("org.testcontainers:testcontainers:1.12.3")
     testCompile("org.testng:testng:7.0.0")
 }
 
