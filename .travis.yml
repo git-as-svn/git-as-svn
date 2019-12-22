@@ -63,6 +63,11 @@ jobs:
     - stage: test
       jdk: openjdk12
 
+    # Windows
+    - stage: test
+      jdk: *oldest_jdk
+      os: windows
+
     - stage: deploy
       jdk: *oldest_jdk
       script: ./gradlew assembleDist
