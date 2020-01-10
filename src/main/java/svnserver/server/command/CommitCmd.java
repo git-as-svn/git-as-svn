@@ -660,6 +660,12 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
 
       try {
+        writer.close();
+      } catch (Exception e) {
+        multiException.add(e);
+      }
+
+      try {
         multiException.ifExceptionThrow();
       } catch (Exception e) {
         throw new IOException(e);

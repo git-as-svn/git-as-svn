@@ -7,10 +7,10 @@
  */
 package svnserver;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.util.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public final class TestHelper {
   }
 
   public static void deleteDirectory(@NotNull Path file) throws IOException {
-    FileUtils.delete(file.toFile(), FileUtils.RECURSIVE | FileUtils.RETRY | FileUtils.SKIP_MISSING);
+    FileUtils.deleteDirectory(file.toFile());
   }
 
   @NotNull

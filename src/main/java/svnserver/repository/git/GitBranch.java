@@ -242,9 +242,8 @@ public final class GitBranch {
       lock.readLock().unlock();
     }
     // Real update.
-    final ObjectInserter inserter = repository.getGit().newObjectInserter();
     lock.writeLock().lock();
-    try {
+    try (ObjectInserter inserter = repository.getGit().newObjectInserter()) {
       final Ref master = repository.getGit().exactRef(gitBranch);
       final List<RevCommit> newRevs = new ArrayList<>();
       final RevWalk revWalk = new RevWalk(repository.getGit());

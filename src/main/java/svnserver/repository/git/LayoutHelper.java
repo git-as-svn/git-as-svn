@@ -84,25 +84,26 @@ public final class LayoutHelper {
   @NotNull
   private static ObjectId createFirstRevision(@NotNull Repository repository) throws IOException {
     // Generate UUID.
-    final ObjectInserter inserter = repository.newObjectInserter();
-    ObjectId uuidId = inserter.insert(Constants.OBJ_BLOB, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
-    // Create svn empty tree.
-    final ObjectId treeId = inserter.insert(new TreeFormatter());
-    // Create commit tree.
-    final TreeFormatter rootBuilder = new TreeFormatter();
-    rootBuilder.append(ENTRY_ROOT, FileMode.TREE, treeId);
-    rootBuilder.append(ENTRY_UUID, FileMode.REGULAR_FILE, uuidId);
-    new ObjectChecker().checkTree(rootBuilder.toByteArray());
-    final ObjectId rootId = inserter.insert(rootBuilder);
-    // Create first commit with message.
-    final CommitBuilder commitBuilder = new CommitBuilder();
-    commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
-    commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
-    commitBuilder.setMessage("#0: Initial revision");
-    commitBuilder.setTreeId(rootId);
-    final ObjectId commitId = inserter.insert(commitBuilder);
-    inserter.flush();
-    return commitId;
+    try (ObjectInserter inserter = repository.newObjectInserter()) {
+      ObjectId uuidId = inserter.insert(Constants.OBJ_BLOB, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
+      // Create svn empty tree.
+      final ObjectId treeId = inserter.insert(new TreeFormatter());
+      // Create commit tree.
+      final TreeFormatter rootBuilder = new TreeFormatter();
+      rootBuilder.append(ENTRY_ROOT, FileMode.TREE, treeId);
+      rootBuilder.append(ENTRY_UUID, FileMode.REGULAR_FILE, uuidId);
+      new ObjectChecker().checkTree(rootBuilder.toByteArray());
+      final ObjectId rootId = inserter.insert(rootBuilder);
+      // Create first commit with message.
+      final CommitBuilder commitBuilder = new CommitBuilder();
+      commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
+      commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
+      commitBuilder.setMessage("#0: Initial revision");
+      commitBuilder.setTreeId(rootId);
+      final ObjectId commitId = inserter.insert(commitBuilder);
+      inserter.flush();
+      return commitId;
+    }
   }
 
   /**
