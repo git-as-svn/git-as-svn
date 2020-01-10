@@ -15,6 +15,9 @@ endif::[]
 * git-as-svn no longer overrides `.gitattributes` settings with text/binary auto-detection
 * `svn:mime-type=application/octet-stream` property is now added to files that have `-text` in `.gitattributes`. https://github.com/bozaro/git-as-svn/issues/317[#317]
 
+IMPORTANT: Repository data exported to SVN has changed.
+Users will need to perform re-checkout of their working copies after git-as-svn upgrade.
+
 == 1.21.9
 
 * Catastrophically speedup rename detection (~50x). https://github.com/bozaro/git-as-svn/issues/306[#306]
