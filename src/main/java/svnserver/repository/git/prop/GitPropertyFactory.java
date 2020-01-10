@@ -34,14 +34,4 @@ public interface GitPropertyFactory {
    * @return Git property workers.
    */
   @NotNull GitProperty[] create(@NotNull String content) throws IOException;
-
-  /**
-   * Create git property for root directory.
-   *
-   * @return Git property workers.
-   */
-  @NotNull
-  default GitProperty[] rootDefaults() {
-    return GitProperty.emptyArray;
-  }
 }

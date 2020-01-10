@@ -59,6 +59,7 @@ public final class SvnFilePropertyTest {
   @NotNull
   private final static Map<String, String> propsNeedsLock = ImmutableMap.<String, String>builder()
       .put(SVNProperty.NEEDS_LOCK, "*")
+      .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
       .build();
 
   /**

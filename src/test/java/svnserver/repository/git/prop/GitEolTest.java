@@ -28,31 +28,31 @@ import java.util.TreeMap;
 public final class GitEolTest {
   @DataProvider(name = "parseAttributesData")
   public static Object[][] parseAttributesData() {
-    final GitProperty[] attr = GitProperty.joinProperties(
-        new GitAttributesFactory().rootDefaults(),
-        new GitAttributesFactory().create(
-            "# comment\n" +
-                "*.txt  eol=native\n" +
-                "*.md   eol=lf\n" +
-                "*.dat  -text\n" +
-                "3.md   -text\n" +
-                "*.bin  binary\n" +
-                "1.bin  -binary\n" +
-                "2.bin  text\n"
-        )
+    final GitProperty[] attr = new GitAttributesFactory().create(
+        "# comment\n" +
+            "* text eol=native\n" +
+            "*.txt text eol=native\n" +
+            "*.md  text eol=lf\n" +
+            "*.dat -text\n" +
+            "3.md -text\n" +
+            "*.bin binary\n" +
+            "1.bin text\n" +
+            "2.bin text\n"
     );
     final Params[] params = new Params[]{
         new Params(attr, "/").prop(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n" +
             "*.md = svn:eol-style=LF\n" +
+            "*.dat = svn:mime-type=application/octet-stream\n" +
+            "3.md = svn:mime-type=application/octet-stream\n" +
             "*.bin = svn:mime-type=application/octet-stream\n"),
         new Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF),
-        new Params(attr, "foo.dat"),
+        new Params(attr, "foo.dat").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
         new Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
         new Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
 
         new Params(attr, "1.bin"),
         new Params(attr, "2.bin"),
-        new Params(attr, "3.md"),
+        new Params(attr, "3.md").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
 
         new Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
     };

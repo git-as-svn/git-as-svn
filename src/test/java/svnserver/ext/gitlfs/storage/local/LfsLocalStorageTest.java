@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static svnserver.server.SvnFilePropertyTest.propsBinary;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * Simple test for LfsLocalStorage.
@@ -66,7 +67,7 @@ public final class LfsLocalStorageTest {
   public void commitToLocalLFS() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty(null, false, SvnTestServer.LfsMode.Local)) {
       final SVNRepository svnRepository = server.openSvnRepository();
-      SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
+      SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", propsBinary);
 
       final byte[] data = bigFile();
 
@@ -92,7 +93,7 @@ public final class LfsLocalStorageTest {
       Assert.assertNotNull(lock.getID());
       Assert.assertEquals(lock.getOwner(), SvnTestServer.USER_NAME);
 
-      SvnTestHelper.createFile(svnRepository, "empty.txt", GitRepository.emptyBytes, null);
+      SvnTestHelper.createFile(svnRepository, "empty.txt", GitRepository.emptyBytes, propsBinary);
       SvnTestHelper.checkFileContent(svnRepository, "empty.txt", GitRepository.emptyBytes);
     }
   }
