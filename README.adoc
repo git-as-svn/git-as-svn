@@ -8,8 +8,7 @@ image:https://badges.gitter.im/Join%20Chat.svg[Gitter chat,link="https://gitter.
 
 git-as-svn emulates Subversion repository on top of Git repository.
 
-It allows you to work with Git repositories using any tool compatible with Subversion 1.8+:
-console `svn`, TortoiseSVN, SvnKit, SmartSVN, etc.
+It allows you to work with Git repositories using any tool compatible with Subversion 1.8+: console `svn`, TortoiseSVN, SvnKit, SmartSVN, etc.
 
 == Documentation
 

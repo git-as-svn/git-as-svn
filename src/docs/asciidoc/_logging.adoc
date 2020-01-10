@@ -6,8 +6,7 @@ include::_feedback.adoc[]
 
 git-as-svn uses https://logging.apache.org/log4j/2.x/[Apache Log4j 2] for logging.
 Configuration file is located in `/etc/git-as-svn/log4j2.xml`.
-Please, refer to https://logging.apache.org/log4j/2.x/manual/configuration.html[Log4j 2 documentation] on this file format
-and available options.
+Please, refer to https://logging.apache.org/log4j/2.x/manual/configuration.html[Log4j 2 documentation] on this file format and available options.
 
 By default, all messages with INFO priority and higher are logged to `/var/log/git-as-svn/git-as-svn.log` and rotated at startup and per each 10 MB.
 Also, all messages with ERROR priority and higher are logged to `/var/log/git-as-svn/git-as-svn.error.log` with same rotation policy.
@@ -23,5 +22,5 @@ Also, all messages with ERROR priority and higher are logged to `/var/log/git-as
 * `svn` - messages related to incoming SVN connections
 * `web` - messages related to builtin HTTP server
 
-Additionally, git-as-svn uses some third-party libraries, most notable are JGit and Jetty, that can also
-log various stuff. Please, refer to their appropriate documentation on available loggers for these projects.
+Additionally, git-as-svn uses some third-party libraries, most notable are JGit and Jetty, that can also log various stuff.
+Please, refer to their appropriate documentation on available loggers for these projects.

@@ -96,7 +96,6 @@ The output should look something like this:
 * Add git-as-svn upstream server:
 +
 ./etc/nginx/nginx.conf
-
 ----
  upstream gitsvn {
    server      localhost:8123  fail_timeout=5s;
@@ -107,7 +106,6 @@ The output should look something like this:
 * Add resource redirection:
 +
 ./etc/nginx/nginx.conf
-
 ----
    location ~ ^.*\.git/info/lfs/ {
      proxy_read_timeout      300;

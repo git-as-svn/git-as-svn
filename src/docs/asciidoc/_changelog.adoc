@@ -8,434 +8,445 @@ endif::[]
 
 == Unreleased
 
- * Systemd unit now correctly waits for git-as-svn to shut down. https://github.com/bozaro/git-as-svn/issues/275[#275]
- * Update dependencies
- * `/usr/bin/git-as-svn` no longer implicitly adds `-Xmx512m` JVM argument
- * Several file descriptor leaks fixed
+* Systemd unit now correctly waits for git-as-svn to shut down. https://github.com/bozaro/git-as-svn/issues/275[#275]
+* Update dependencies
+* `/usr/bin/git-as-svn` no longer implicitly adds `-Xmx512m` JVM argument
+* Several file descriptor leaks fixed
 
 == 1.21.9
 
- * Catastrophically speedup rename detection (~50x). https://github.com/bozaro/git-as-svn/issues/306[#306]
+* Catastrophically speedup rename detection (~50x). https://github.com/bozaro/git-as-svn/issues/306[#306]
 
 == 1.21.8
 
- * Write empty LFS files in a compatible with Git-LFS way
- * Update dependencies
+* Write empty LFS files in a compatible with Git-LFS way
+* Update dependencies
 
 == 1.21.7
 
- * Fix Git LFS lock paths not handled properly, making it possible to lock same file multiple times
- * Send human-readable error message when locking fails due to already existing lock
+* Fix Git LFS lock paths not handled properly, making it possible to lock same file multiple times
+* Send human-readable error message when locking fails due to already existing lock
 
 == 1.21.6
 
- * Add cleanup of bogus locks created with git-as-svn versions prior to 1.21.5
+* Add cleanup of bogus locks created with git-as-svn versions prior to 1.21.5
 
 == 1.21.5
 
- * Multiple fixes to remote LFS locking
+* Multiple fixes to remote LFS locking
 
 == 1.21.4
 
- * Fix commit of files larger than 8MB
+* Fix commit of files larger than 8MB
 
 == 1.21.3
 
- * Fixes to `lfsMode: !fileLfs`.
+* Fixes to `lfsMode: !fileLfs`.
 
 == 1.21.2
 
- * Fix bogus slashes in branch names for GitLab mapping
+* Fix bogus slashes in branch names for GitLab mapping
 
 == 1.21.1
 
- * Reduce log spam (LDAP and client disconnects)
- * Log client version on connect
+* Reduce log spam (LDAP and client disconnects)
+* Log client version on connect
 
 == 1.21.0
 
- * Do not write to `/tmp` when streaming files from remote LFS server to SVN clients. https://github.com/bozaro/git-as-svn/issues/288[#288]
- * Experimental `lfsMode: !fileLfs` LFS mode for GitLab
- * `lfs: false` replaced with `lfsMode: null` in `!gitlab` section
+* Do not write to `/tmp` when streaming files from remote LFS server to SVN clients. https://github.com/bozaro/git-as-svn/issues/288[#288]
+* Experimental `lfsMode: !fileLfs` LFS mode for GitLab
+* `lfs: false` replaced with `lfsMode: null` in `!gitlab` section
 
 == 1.20.5
 
- * Log all exceptions when talking to SVN clients
- * Fixed double buffering of client I/O
- * Fix downloading of large files from remote LFS server. Broken in 1.20.4
+* Log all exceptions when talking to SVN clients
+* Fixed double buffering of client I/O
+* Fix downloading of large files from remote LFS server.
+Broken in 1.20.4
 
 == 1.20.4
 
- * Fix multiple file descriptor leaks
+* Fix multiple file descriptor leaks
 
 == 1.20.3
 
- * Fix `svn blame` failing with "Malformed network data" error
+* Fix `svn blame` failing with "Malformed network data" error
 
 == 1.20.2
 
- * Fix LFS files returning -1 size for remote LFS. https://github.com/bozaro/git-as-svn/issues/282[#282]
+* Fix LFS files returning -1 size for remote LFS. https://github.com/bozaro/git-as-svn/issues/282[#282]
 
 == 1.20.1
 
- * Fix `git lfs unlock <path>` not finding LFS lock
+* Fix `git lfs unlock <path>` not finding LFS lock
 
 == 1.20.0
 
- * Fix inability to unlock files through Git-LFS
- * Fix lock paths having leading slash when listing locks via Git-LFS
- * Now path-based authorization supports branch-specific access
+* Fix inability to unlock files through Git-LFS
+* Fix lock paths having leading slash when listing locks via Git-LFS
+* Now path-based authorization supports branch-specific access
 
 == 1.19.3
 
- * Add `$authenticated:Local`/`$authenticated:GitLab`/`$authenticated:Gitea`/`$authenticated:LDAP` to refer to users authenticated against specific user database in path-based ACL
- * Fix git-lfs failing with "Not Acceptable" error when uploading files
+* Add `$authenticated:Local`/`$authenticated:GitLab`/`$authenticated:Gitea`/`$authenticated:LDAP` to refer to users authenticated against specific user database in path-based ACL
+* Fix git-lfs failing with "Not Acceptable" error when uploading files
 
 == 1.19.2
 
- * Improve GitLab configuration defaults
+* Improve GitLab configuration defaults
 
 == 1.19.1
 
- * Fix path-based ACL entry search. https://github.com/bozaro/git-as-svn/issues/276[#276]
+* Fix path-based ACL entry search. https://github.com/bozaro/git-as-svn/issues/276[#276]
 
 == 1.19.0
 
- * Add support for https://subversion.apache.org/docs/release-notes/1.10#lz4-over-the-wire[LZ4 compression].
+* Add support for https://subversion.apache.org/docs/release-notes/1.10#lz4-over-the-wire[LZ4 compression].
    `compressionEnabled=true/false` option replaced with `compressionLevel=LZ4/Zlib/None`. https://github.com/bozaro/git-as-svn/issues/163[#163]
- * Fix severe performance loss on commit. Broken in 1.8.0
+* Fix severe performance loss on commit.
+Broken in 1.8.0
 
 == 1.18.0
 
- * Add option to expose user-defined branches for GitLab. See <<_gitlab.adoc#_configuration,GitLab configuration>> documentation. https://github.com/bozaro/git-as-svn/issues/188[#188]
- * `repositoryTags` is no longer supported for `!gitlabMapping`
+* Add option to expose user-defined branches for GitLab.
+See <<_gitlab.adoc#_configuration,GitLab configuration>> documentation. https://github.com/bozaro/git-as-svn/issues/188[#188]
+* `repositoryTags` is no longer supported for `!gitlabMapping`
 
 == 1.17.0
 
- * Drop ability to configure custom hook names in `!pushEmbedded` because Git doesn't have such feature.
-   Instead, add `hooksPath` option that works as an override to `core.hooksPath` Git configuration option.
- * Fix uploads of already existing files to remote LFS server
+* Drop ability to configure custom hook names in `!pushEmbedded` because Git doesn't have such feature.
+Instead, add `hooksPath` option that works as an override to `core.hooksPath` Git configuration option.
+* Fix uploads of already existing files to remote LFS server
 
 == 1.16.0
 
- * Update Jetty to 9.4.19
- * Update Log4j to 2.12.0
- * Update git-lfs-java to 0.13.3
- * Add support for `core.hooksPath` Git configuration variable. https://github.com/bozaro/git-as-svn/issues/267[#267]
+* Update Jetty to 9.4.19
+* Update Log4j to 2.12.0
+* Update git-lfs-java to 0.13.3
+* Add support for `core.hooksPath` Git configuration variable. https://github.com/bozaro/git-as-svn/issues/267[#267]
 
 == 1.15.0
 
- * Now groups can be defined to contain other groups for path-based authorization
- * JGit updated to 5.4.0
- * UnboundID LDAP SDK updated to 4.0.11
- * google-oauth-client updated to 1.30.1
- * Remove `hookUrl` from `!gitlab` section, it is now automatically determined from `baseUrl` in `!web` section.
+* Now groups can be defined to contain other groups for path-based authorization
+* JGit updated to 5.4.0
+* UnboundID LDAP SDK updated to 4.0.11
+* google-oauth-client updated to 1.30.1
+* Remove `hookUrl` from `!gitlab` section, it is now automatically determined from `baseUrl` in `!web` section.
 
 == 1.14.0
 
- * <<_authz.adoc#_authz,Experimental path-based authorization>>
- * `-t` and `-T` command-line switches. See <<_commandline.adoc#_commandline,Command-line parameters documentation>>
- * `-s`/`--show-config` command-line switches removed. Use `-T` instead.
+* <<_authz.adoc#_authz,Experimental path-based authorization>>
+* `-t` and `-T` command-line switches.
+See <<_commandline.adoc#_commandline,Command-line parameters documentation>>
+* `-s`/`--show-config` command-line switches removed.
+Use `-T` instead.
 
 == 1.13.0
 
- * Changed LDAP bind configuration. See <<_ldap.adoc#_ldap,LDAP documentation>>.
- * Organize logs into categories and add <<_logging.adoc#_logging,logging documentation>>.
+* Changed LDAP bind configuration.
+See <<_ldap.adoc#_ldap,LDAP documentation>>.
+* Organize logs into categories and add <<_logging.adoc#_logging,logging documentation>>.
 
 == 1.12.0
 
- * Experimental support for https://github.com/git-lfs/git-lfs/blob/master/docs/api/locking.md[LFS locking API]
-   Now git-as-svn forwards locking requests to LFS server. git-as-svn internal LFS server now supports LFS locks.
-   Locks are now scoped to whole repositories instead of being per-branch.
-   All existing svn locks will expire after upgrade.
- * URL scheme has changed, now it is `svn://<host>/<repo>/<branch>`. Use `svn relocate` to fix existing SVN working copies.
- * It is no longer valid to map a single repository under multiple paths.
-   Use `branches` tag to expose multiple branches of a single repository to SVN.
+* Experimental support for https://github.com/git-lfs/git-lfs/blob/master/docs/api/locking.md[LFS locking API]
+Now git-as-svn forwards locking requests to LFS server. git-as-svn internal LFS server now supports LFS locks.
+Locks are now scoped to whole repositories instead of being per-branch.
+All existing svn locks will expire after upgrade.
+* URL scheme has changed, now it is `svn://<host>/<repo>/<branch>`.
+Use `svn relocate` to fix existing SVN working copies.
+* It is no longer valid to map a single repository under multiple paths.
+Use `branches` tag to expose multiple branches of a single repository to SVN.
 
 == 1.11.1
 
- * `!giteaSSHKeys` is no longer supported
- * Fix date formatting to be compatible with git-lfs. Was broken in 1.11.0
+* `!giteaSSHKeys` is no longer supported
+* Fix date formatting to be compatible with git-lfs.
+Was broken in 1.11.0
 
 == 1.11.0
 
- * Add support for Gitea LFS server. Gitea >= 1.7.2 is required now.
- * `!gitlabLfs {}` was replaced with `lfs: true` parameter in `!gitlab` section
+* Add support for Gitea LFS server.
+Gitea >= 1.7.2 is required now.
+* `!gitlabLfs {}` was replaced with `lfs: true` parameter in `!gitlab` section
 
 == 1.10.1
 
- * Fix PLAIN auth not working with passwords longer than 51 character. https://github.com/bozaro/git-as-svn/issues/242[#242]
+* Fix PLAIN auth not working with passwords longer than 51 character. https://github.com/bozaro/git-as-svn/issues/242[#242]
 
 == 1.10.0
 
- * File locking code cleanup. All existing svn locks will expire after upgrade.
- * Implement `get-file-revs` command. This is expected to speed up `svn blame` severely. https://github.com/bozaro/git-as-svn/issues/231[#231]
- * https://subversion.apache.org/docs/release-notes/1.9#prospective-blame[Prospective blame] support added
+* File locking code cleanup.
+All existing svn locks will expire after upgrade.
+* Implement `get-file-revs` command.
+This is expected to speed up `svn blame` severely. https://github.com/bozaro/git-as-svn/issues/231[#231]
+* https://subversion.apache.org/docs/release-notes/1.9#prospective-blame[Prospective blame] support added
 
 == 1.9.0
 
- * Major code cleanup
- * `repository: !git` changed to just `repository:` in git-as-svn.conf
- * `access: !acl` changed to just `acl:` in git-as-svn.conf
- * `svn stat` is now compatible with native svn for nonexistent paths
+* Major code cleanup
+* `repository: !git` changed to just `repository:` in git-as-svn.conf
+* `access: !acl` changed to just `acl:` in git-as-svn.conf
+* `svn stat` is now compatible with native svn for nonexistent paths
 
 == 1.8.1
 
- * Update dependencies: jgit-5.3.0, svnkit-1.10.0, jetty-9.4.15, java-gitea-api-1.7.4, unboundid-ldapsdk-4.0.10 and others
+* Update dependencies: jgit-5.3.0, svnkit-1.10.0, jetty-9.4.15, java-gitea-api-1.7.4, unboundid-ldapsdk-4.0.10 and others
 
 == 1.8.0
 
- * `!lfs` renamed to `!localLfs` in git-as-svn.conf
- * Experimental support for GitLab LFS (`!gitlabLfs {}`). https://github.com/bozaro/git-as-svn/issues/175[#175], https://github.com/bozaro/git-as-svn/issues/212[#212], https://github.com/bozaro/git-as-svn/issues/213[#213].
+* `!lfs` renamed to `!localLfs` in git-as-svn.conf
+* Experimental support for GitLab LFS (`!gitlabLfs {}`). https://github.com/bozaro/git-as-svn/issues/175[#175], https://github.com/bozaro/git-as-svn/issues/212[#212], https://github.com/bozaro/git-as-svn/issues/213[#213].
 
 == 1.7.6.1
 
- * Fix broken URL construction in git-lfs-authenticate
+* Fix broken URL construction in git-lfs-authenticate
 
 == 1.7.6
 
- * git-lfs-authenticate no longer silently falls back to anonymous mode if it failed to obtain user token
- * git-lfs-authenticate now properly handles absolute repository paths
+* git-lfs-authenticate no longer silently falls back to anonymous mode if it failed to obtain user token
+* git-lfs-authenticate now properly handles absolute repository paths
 
 == 1.7.5
 
- * Ensure hook stdout is closed when using embedded pusher
+* Ensure hook stdout is closed when using embedded pusher
 
 == 1.7.4
 
- * Revert https://github.com/bozaro/git-as-svn/issues/215[#215], causes tens of thousands of CLOSE_WAIT connections in Jetty
- * Update Jetty to 9.4.14
+* Revert https://github.com/bozaro/git-as-svn/issues/215[#215], causes tens of thousands of CLOSE_WAIT connections in Jetty
+* Update Jetty to 9.4.14
 
 == 1.7.3
 
- * Reduce number of threads by using same thread pool for svn:// and http://. https://github.com/bozaro/git-as-svn/issues/215[#215]
- * Fix compatibility with latest Gitea. https://github.com/bozaro/git-as-svn/issues/218[#218]
+* Reduce number of threads by using same thread pool for svn:// and http://. https://github.com/bozaro/git-as-svn/issues/215[#215]
+* Fix compatibility with latest Gitea. https://github.com/bozaro/git-as-svn/issues/218[#218]
 
 == 1.7.2
 
- * Reduce lock contention during commit
- * Log how long commit hooks take
- * Do not log exception stacktraces on client-side issues during commit
+* Reduce lock contention during commit
+* Log how long commit hooks take
+* Do not log exception stacktraces on client-side issues during commit
 
 == 1.7.1
 
- * Revert offloading file -> changed revisions cache to MapDB (PRhttps://github.com/bozaro/git-as-svn/issues/207[#207]) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
+* Revert offloading file -> changed revisions cache to MapDB (PRhttps://github.com/bozaro/git-as-svn/issues/207[#207]) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
 
 == 1.7.0
 
- * Dramatically improve memory usage by offloading file -> changed revisions cache to MapDB
- * --unsafe option no longer exists, all "unsafe" functionality was removed
- * git-lfs-authenticate.cfg format has changed. Now, git-lfs-authenticate talks to git-as-svn via http and uses shared token.
- * !api no longer exists in git-as-svn.conf
- * !socket no longer exists in git-as-svn.conf
- * LFS storage is no longer silently created, instead LfsFilter will error out when encounters LFS pointer without configured LFS storage
- * JGit updated to 5.1.2
- * GitLab API updated to 4.1.0
+* Dramatically improve memory usage by offloading file -> changed revisions cache to MapDB
+* --unsafe option no longer exists, all "unsafe" functionality was removed
+* git-lfs-authenticate.cfg format has changed.
+Now, git-lfs-authenticate talks to git-as-svn via http and uses shared token.
+* !api no longer exists in git-as-svn.conf
+* !socket no longer exists in git-as-svn.conf
+* LFS storage is no longer silently created, instead LfsFilter will error out when encounters LFS pointer without configured LFS storage
+* JGit updated to 5.1.2
+* GitLab API updated to 4.1.0
 
 == 1.6.2
 
- * [Gitea] Support uppercase letters in usernames / repository names. https://github.com/bozaro/git-as-svn/issues/196[#196]
+* [Gitea] Support uppercase letters in usernames / repository names. https://github.com/bozaro/git-as-svn/issues/196[#196]
 
 == 1.6.1
 
- * Update dependencies. https://github.com/bozaro/git-as-svn/issues/190[#190]
- * [Gitea] Fixes to directory watcher. https://github.com/bozaro/git-as-svn/issues/192[#192]
- * Deploy Debian packages to Bintray. https://github.com/bozaro/git-as-svn/issues/194[#194]
+* Update dependencies. https://github.com/bozaro/git-as-svn/issues/190[#190]
+* [Gitea] Fixes to directory watcher. https://github.com/bozaro/git-as-svn/issues/192[#192]
+* Deploy Debian packages to Bintray. https://github.com/bozaro/git-as-svn/issues/194[#194]
 
 == 1.6.0
 
- * Java 9/10/11 compatibility
- * https://gitea.io[Gitea] integration added
+* Java 9/10/11 compatibility
+* https://gitea.io[Gitea] integration added
 
 == 1.5.0
 
- * Add tag-based repository filtering for GitLab integration
+* Add tag-based repository filtering for GitLab integration
 
 == 1.4.0
 
- * Update JGit to 5.0.1.201806211838-r
- * Update SVNKit to 1.9.3
- * Reduce memory usage
- * Improve indexing performance
+* Update JGit to 5.0.1.201806211838-r
+* Update SVNKit to 1.9.3
+* Reduce memory usage
+* Improve indexing performance
 
 == 1.3.0
 
- * Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. https://github.com/bozaro/git-as-svn/issues/176[#176]
+* Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. https://github.com/bozaro/git-as-svn/issues/176[#176]
 
 == 1.2.0
 
- * x10 speedup of LDAP authentication
- * Drop dependency on GSon in favor of Jackson2
- * Update unboundid-ldapsdk to 4.0.3
- * Fix post-receive hook failing on GitLab 10 https://github.com/bozaro/git-as-svn/issues/160[#160]
+* x10 speedup of LDAP authentication
+* Drop dependency on GSon in favor of Jackson2
+* Update unboundid-ldapsdk to 4.0.3
+* Fix post-receive hook failing on GitLab 10 https://github.com/bozaro/git-as-svn/issues/160[#160]
 
 == 1.1.9
 
- * Update MapDB to 3.0.5 https://github.com/bozaro/git-as-svn/issues/161[#161]
+* Update MapDB to 3.0.5 https://github.com/bozaro/git-as-svn/issues/161[#161]
 
 == 1.1.8
 
- * Fix git-as-svn unable to find prefix-mapped repositories (broken in 1.1.2)
- * Fix PLAIN authentication with native SVN client (broken in 1.1.4)
+* Fix git-as-svn unable to find prefix-mapped repositories (broken in 1.1.2)
+* Fix PLAIN authentication with native SVN client (broken in 1.1.4)
 
 == 1.1.7
 
- * Use OAuth2 to obtain user token. Fixes compatibility with GitLab >= 10.2 https://github.com/bozaro/git-as-svn/issues/154[#154]
+* Use OAuth2 to obtain user token.
+Fixes compatibility with GitLab >= 10.2 https://github.com/bozaro/git-as-svn/issues/154[#154]
 
 == 1.1.6
 
- * Update various third-party libraries
- * Upgrade to Gradle 4.4
- * Fix GitLab repositories not becoming ready on git-as-svn startup https://github.com/bozaro/git-as-svn/issues/151[#151]
- * Improve logging on git-as-svn startup
+* Update various third-party libraries
+* Upgrade to Gradle 4.4
+* Fix GitLab repositories not becoming ready on git-as-svn startup https://github.com/bozaro/git-as-svn/issues/151[#151]
+* Improve logging on git-as-svn startup
 
 == 1.1.5
 
- * Fix submodules support (was broken in 1.1.3)
- * Invalidate caches properly if renameDetection setting was changed
+* Fix submodules support (was broken in 1.1.3)
+* Invalidate caches properly if renameDetection setting was changed
 
 == 1.1.4
 
- * Upgrade Kryo to 4.0.1 https://github.com/bozaro/git-as-svn/issues/121[#121]
- * Add option to disable parallel repository indexing on startup https://github.com/bozaro/git-as-svn/issues/121[#121]
+* Upgrade Kryo to 4.0.1 https://github.com/bozaro/git-as-svn/issues/121[#121]
+* Add option to disable parallel repository indexing on startup https://github.com/bozaro/git-as-svn/issues/121[#121]
 
 == 1.1.3
 
- * Fix ISO 8601 date formatting.
- * Fix unexpected error message on locked file update https://github.com/bozaro/git-as-svn/issues/127[#127].
- * Increase default token expire time to one hour (3600 sec).
- * Add string-suffix parameter for git-lfs-authenticate script.
- * Index repositories using multiple threads on startup https://github.com/bozaro/git-as-svn/issues/132[#132]
+* Fix ISO 8601 date formatting.
+* Fix unexpected error message on locked file update https://github.com/bozaro/git-as-svn/issues/127[#127].
+* Increase default token expire time to one hour (3600 sec).
+* Add string-suffix parameter for git-lfs-authenticate script.
+* Index repositories using multiple threads on startup https://github.com/bozaro/git-as-svn/issues/132[#132]
 
 == 1.1.2
 
- * Add reference to original commit as parent for prevent commit removing by `git gc` https://github.com/bozaro/git-as-svn/issues/118[#118].
- * Fix repository mapping error https://github.com/bozaro/git-as-svn/issues/122[#122].
- * Fix non ThreadSafe Kryo usage https://github.com/bozaro/git-as-svn/issues/121[#121].
- * Add support for combine multiple authenticators.
- * Add support for authenticator cache.
- * Fix tree conflict on Windows after renaming file with same name in another case https://github.com/bozaro/git-as-svn/issues/123[#123].
- * Use commit author instead of commiter identity in svn log.
- * Don't allow almost expired tokens for LFS pointer requests.
+* Add reference to original commit as parent for prevent commit removing by `git gc` https://github.com/bozaro/git-as-svn/issues/118[#118].
+* Fix repository mapping error https://github.com/bozaro/git-as-svn/issues/122[#122].
+* Fix non ThreadSafe Kryo usage https://github.com/bozaro/git-as-svn/issues/121[#121].
+* Add support for combine multiple authenticators.
+* Add support for authenticator cache.
+* Fix tree conflict on Windows after renaming file with same name in another case https://github.com/bozaro/git-as-svn/issues/123[#123].
+* Use commit author instead of commiter identity in svn log.
+* Don't allow almost expired tokens for LFS pointer requests.
 
 == 1.1.1
 
- * Fix "E210002: Network connection closed unexpectedly" on client
-   update failure https://github.com/bozaro/git-as-svn/issues/114[#114].
+* Fix "E210002: Network connection closed unexpectedly" on client update failure https://github.com/bozaro/git-as-svn/issues/114[#114].
 
 == 1.1.0
 
- * Use by default svn:eol-style = native for text files (fix https://github.com/bozaro/git-as-svn/issues/106[#106]).
- * Upload .deb package to debian repository.
+* Use by default svn:eol-style = native for text files (fix https://github.com/bozaro/git-as-svn/issues/106[#106]).
+* Upload .deb package to debian repository.
 
 == 1.0.17-alpha
 
- * Add PDF, EPUB manual.
- * Add support for anonymous authentication for public repositories.
+* Add PDF, EPUB manual.
+* Add support for anonymous authentication for public repositories.
 
 == 1.0.16-alpha
 
- * Rewrite GitLab authentication https://github.com/bozaro/git-as-svn/issues/110[#110].
- * Fix some permission check issues https://github.com/bozaro/git-as-svn/issues/110[#110].
- * Generate token in LFS server instead pass original authentication data https://github.com/bozaro/git-as-svn/issues/105[#105].
- * Ignore unknown GitLab hook data.
+* Rewrite GitLab authentication https://github.com/bozaro/git-as-svn/issues/110[#110].
+* Fix some permission check issues https://github.com/bozaro/git-as-svn/issues/110[#110].
+* Generate token in LFS server instead pass original authentication data https://github.com/bozaro/git-as-svn/issues/105[#105].
+* Ignore unknown GitLab hook data.
 
 == 1.0.15-alpha
 
- * Add support for GitLab 8.2 LFS storage layout https://github.com/bozaro/git-as-svn/issues/109[#109].
+* Add support for GitLab 8.2 LFS storage layout https://github.com/bozaro/git-as-svn/issues/109[#109].
 
 == 1.0.14-alpha
 
- * Add debian packaging.
- * Add configurable file logging.
+* Add debian packaging.
+* Add configurable file logging.
 
 == 1.0.13-alpha
 
- * Embedded git-lfs server
- * Git-lfs batch API support.
- * Add support for LDAP users without email.
- * Add support for X-Forwarded-* headers.
- * Add HTTP-requests logging.
- * Change .gitignore mapping: ignored folder now mask all content as ignored.
- * Fix git-lfs file commit.
- * Fix quote parsing for .tgitconfig file.
+* Embedded git-lfs server
+* Git-lfs batch API support.
+* Add support for LDAP users without email.
+* Add support for X-Forwarded-* headers.
+* Add HTTP-requests logging.
+* Change .gitignore mapping: ignored folder now mask all content as ignored.
+* Fix git-lfs file commit.
+* Fix quote parsing for .tgitconfig file.
 
 == 1.0.12-alpha
 
- * Initial git-lfs support (embedded git-lfs server).
- * Initial GitLab integration.
- * Import project list on startup.
- * Authentication.
- * Add support for embedded git push with hooks;
- * Git-as-svn change information moved outside git repostitory https://github.com/bozaro/git-as-svn/issues/60[#60].
- * Configuration format changed.
- * Fixed some wildcard issues.
+* Initial git-lfs support (embedded git-lfs server).
+* Initial GitLab integration.
+* Import project list on startup.
+* Authentication.
+* Add support for embedded git push with hooks;
+* Git-as-svn change information moved outside git repostitory https://github.com/bozaro/git-as-svn/issues/60[#60].
+* Configuration format changed.
+* Fixed some wildcard issues.
 
 == 1.0.11-alpha
 
- * Fix URL in authentication result on default port (Jenkins error: `E21005: Impossibly long
+* Fix URL in authentication result on default port (Jenkins error: `E21005: Impossibly long
    repository root from server`).
- * Fix bind on already used port with flag SO_REUSEADDR (thanks for @fcharlie, https://github.com/bozaro/git-as-svn/issues/70[#70]).
- * Add support for custom certificate for ldaps authentication.
+* Fix bind on already used port with flag SO_REUSEADDR (thanks for @fcharlie, https://github.com/bozaro/git-as-svn/issues/70[#70]).
+* Add support for custom certificate for ldaps authentication.
 
 == 1.0.10-alpha
 
- * Fix get file size performance issue (`svn ls`).
- * Fix update IMMEDIATES to INFINITY bug.
- * Fix NPE on absent email in LDAP.
+* Fix get file size performance issue (`svn ls`).
+* Fix update IMMEDIATES to INFINITY bug.
+* Fix NPE on absent email in LDAP.
 
 == 1.0.9-alpha
 
- * Fix svn update after aborted update/checkout.
- * Fix out-of-memory when update/checkout big directory.
- * Show version number on startup.
+* Fix svn update after aborted update/checkout.
+* Fix out-of-memory when update/checkout big directory.
+* Show version number on startup.
 
 == 1.0.8-alpha
 
- * Support commands: `svn lock`/`svn unlock`.
- * Multiple repositories support.
+* Support commands: `svn lock`/`svn unlock`.
+* Multiple repositories support.
 
 == 1.0.7-alpha
 
- * More simple demonstration run
- * `svnsync` support
+* More simple demonstration run
+* `svnsync` support
 
 == 1.0.6-alpha
 
- * Add autodetection binary files (now file has `svn:mime-type = application/octet-stream` if
-   it set as binary in .gitattribues or detected as binary).
- * Expose committer email to svn.
- * Fix getSize() for submodules.
- * Fix temporary file lifetime.
+* Add autodetection binary files (now file has `svn:mime-type = application/octet-stream` if it set as binary in .gitattributes or detected as binary).
+* Expose committer email to svn.
+* Fix getSize() for submodules.
+* Fix temporary file lifetime.
 
 == 1.0.5-alpha
 
- * Add persistent cache support.
- * Dumb locks support.
- * Fix copy-from permission issue.
+* Add persistent cache support.
+* Dumb locks support.
+* Fix copy-from permission issue.
 
 == 1.0.4-alpha
 
- * Improve error message when commit is rejected due to wrong properties.
+* Improve error message when commit is rejected due to wrong properties.
 
 == 1.0.3-alpha
 
- * Fix spaces in url.
- * Add support get-locations.
- * Add mapping binary to `svn:mime-type = svn:mime-type`
+* Fix spaces in url.
+* Add support get-locations.
+* Add mapping binary to `svn:mime-type = svn:mime-type`
 
 == 1.0.2-alpha
 
- * Fix some critical bugs.
+* Fix some critical bugs.
 
 == 1.0.1-alpha
 
- * Add support for more subversion commands
- * Fix some bugs.
+* Add support for more subversion commands
+* Fix some bugs.
 
 == 1.0.0-alpha
 
- * First release.
+* First release.
 
 ifdef::restoresectnums[]
 :sectnums:

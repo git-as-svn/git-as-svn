@@ -4,36 +4,30 @@
 :filename: _props.adoc
 include::_feedback.adoc[]
 
-The main `svn properties` trouble that they should be maintained in the
-synchronous state between Git and Subversion.
+The main `svn properties` trouble that they should be maintained in the synchronous state between Git and Subversion.
 
-Because of this arbitrary `svn properties` is not supported. To value
-`svn properties` correspond Git-view, they are generated on the fly based on the repository content.`
+Because of this arbitrary `svn properties` is not supported.
+To value `svn properties` correspond Git-view, they are generated on the fly based on the repository content.`
 
 Wherein:
 
-* the commit verifies that `svn properties` file or directory exactly
-match what should be according to the data repository;
-* Subversion does not tool allows you to change most of the properties
-(exception: `svn:executable`, `svn:special`);
+* the commit verifies that `svn properties` file or directory exactly match what should be according to the data repository;
+* Subversion does not tool allows you to change most of the properties (exception: `svn:executable`, `svn:special`);
 * if a file affects the `svn properties` other files after changing it
 `svn properties` of the files in the same change.
 
 [IMPORTANT]
 ====
-For user convenience, git-as-svn is actively using the inherited
-properties.
+For user convenience, git-as-svn is actively using the inherited properties.
 
 This feature requires Subversion 1.8 or later.
 
-Otherwise there will be problems with the svn properties for new files
-and directories.
+Otherwise there will be problems with the svn properties for new files and directories.
 ====
 
 == File .gitignores
 
-This file affects the property `svn:ignore` and `svn:global-ignores` for
-the directory and its subdirectories.
+This file affects the property `svn:ignore` and `svn:global-ignores` for the directory and its subdirectories.
 
 For example, a file in the directory `/foo` with the contents:
 
@@ -50,11 +44,13 @@ Mapped to properties:
 ----
 svn:global-ignores: *.class
 ----
+
 * for directory `/foo/*`:
 +
 ----
 svn:ignore: build
 ----
+
 * for directory `/foo/.idea`:
 +
 ----
@@ -63,9 +59,7 @@ svn:ignore: libraries build
 
 [IMPORTANT]
 ====
-For Subversion has no way to make an exception for directories, as a
-result, for example, the rules of `/foo` (file or directory
-`foocode>) and /foo/ (directory foo) in Subversion will work the same way, though to Git they have different behavior.`
+For Subversion has no way to make an exception for directories, as a result, for example, the rules of `/foo` (file or directory `foo`) and /foo/ (directory foo) in Subversion will work the same way, though to Git they have different behavior.`
 
 Terms like "all but" not supported on mapping to the
 `svn:global-ignores` property.
@@ -73,9 +67,7 @@ Terms like "all but" not supported on mapping to the
 
 == File .gitattributes
 
-This file affects the properties of the `svn:eol-style` and
-`svn:mime-type` files from this directory and `svn:auto-props` from the
-directory itself.
+This file affects the properties of the `svn:eol-style` and `svn:mime-type` files from this directory and `svn:auto-props` from the directory itself.
 
 For example, a file with contents:
 
@@ -102,8 +94,7 @@ And files in this directory:
 
 == File .tgitconfig
 
-This file only changes the properties of the directory in which it is
-located.
+This file only changes the properties of the directory in which it is located.
 
 Properties are mapped one-to-one, for example, a file with the contents:
 
@@ -123,9 +114,7 @@ It will be converted to properties:
 
 [IMPORTANT]
 ====
-If you use bugtraq svn properties, it is highly recommended that you use
-TortoiseSVN 1.9 or later.
+If you use bugtraq svn properties, it is highly recommended that you use TortoiseSVN 1.9 or later.
 
-Otherwise TortoiseSVN will attempt to set these parameters for all newly
-created directories instead of use inherited properties.
+Otherwise TortoiseSVN will attempt to set these parameters for all newly created directories instead of use inherited properties.
 ====

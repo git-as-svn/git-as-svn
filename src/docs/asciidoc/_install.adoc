@@ -8,12 +8,12 @@ IMPORTANT: Subversion versions prior to 1.8 are *not* supported because git-as-s
 
 == .gitattributes
 
-By default, Git uses native line ending for text files and determines whether file is text or not using heuristics
-that do not match Subversion behavior.
+By default, Git uses native line ending for text files and determines whether file is text or not using heuristics that do not match Subversion behavior.
 
 In order to fix this discrepancy, add the following to your `.gitattributes` file:
 
 ..gitattributes
+
 ----
 *   -text
 ----
@@ -23,8 +23,7 @@ See https://git-scm.com/docs/gitattributes[gitattributes documentation] for addi
 
 == Installation on Debian/Ubuntu
 
-You can install git-as-svn repository on Debian/Ubuntu using the following
-commands:
+You can install git-as-svn repository on Debian/Ubuntu using the following commands:
 
 [source,bash]
 ----
@@ -46,9 +45,7 @@ sudo apt-get install git-as-svn-lfs
 
 This package contains the git-as-svn.
 
-After you install git-as-svn is run in daemon mode and is
-available on the svn-protocol on port 3690. The daemon runs as `git`
-user.
+After you install git-as-svn is run in daemon mode and is available on the svn-protocol on port 3690. The daemon runs as `git` user.
 
 To access the server, you can use the user:
 
@@ -95,8 +92,7 @@ This directory is used to store the git-as-svn cache.
 +
 It must be writable by user `git`.
 +
-The loss of the contents of this directory is not critical for
-operation and does not entail the loss of user data.
+The loss of the contents of this directory is not critical for operation and does not entail the loss of user data.
 
 [[_git-as-svn-lfs]]
 === git-as-svn-lfs package
@@ -107,11 +103,10 @@ This package contains the `git-lfs-authenticate` script required for <<_lfs.adoc
 
 To try git-as-svn you need:
 
-1.  Install Java 8 or later;
-2.  Download archive from site
+1. Install Java 8 or later;
+2. Download archive from site
 https://github.com/bozaro/git-as-svn/releases/latest;
-3.  After unpacking the archive change working path to the uncompressed
-directory and run the command:
+3. After unpacking the archive change working path to the uncompressed directory and run the command:
 +
 ----
 bin/git-as-svn -c doc/examples/config.yml
@@ -119,18 +114,19 @@ bin/git-as-svn -c doc/examples/config.yml
 
 This will start git-as-svn server with following configuration:
 
-1.  The server is accessible via svn-protocol on port 3690.
+1. The server is accessible via svn-protocol on port 3690.
 +
 You can check server with command like:
 +
 ----
 svn ls svn://localhost/example
 ----
-2.  To access the server, you can use the user:
+
+2. To access the server, you can use the user:
 +
 Login: test
 +
 Password: test
-3.  Cache and repository will be created in `build` directory:
+3. Cache and repository will be created in `build` directory:
 * `example.git` — repository directory, accessible via svn-protocol;
 * `git-as-svn.mapdb*` — cache files for expensive computed data.

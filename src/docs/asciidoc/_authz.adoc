@@ -6,18 +6,16 @@ include::_feedback.adoc[]
 
 NOTE: This feature is currently only supported for `repositoryMapping: !listMapping`
 
-git-as-svn supports path-based authorization that allows granting (or denying) permissions to users, very similar to
-Subversion http://svnbook.red-bean.com/nightly/en/svn.serverconfig.pathbasedauthz.html[path-based authorization]
-feature. Typically this is done over the entire repository: a user can read the repository (or not), and they can write to the repository (or not).
+git-as-svn supports path-based authorization that allows granting (or denying) permissions to users, very similar to Subversion http://svnbook.red-bean.com/nightly/en/svn.serverconfig.pathbasedauthz.html[path-based authorization] feature.
+Typically this is done over the entire repository: a user can read the repository (or not), and they can write to the repository (or not).
 
-It's also possible, however, to define finer-grained access rules. One set of users may have permission to write to a certain directory
-in the repository, but not others; another directory might not even be readable by all but a few special people.
+It's also possible, however, to define finer-grained access rules.
+One set of users may have permission to write to a certain directory in the repository, but not others; another directory might not even be readable by all but a few special people.
 It's even possible to restrict access on a per file basis.
 
 == Getting Started with Path-Based Access Control
 
-Here's a simple example demonstrating a piece of the access configuration which grants read access Sally,
-and read/write access to Harry, for the path `/path/to/directory/` (and all its children) in the repository `calc`:
+Here's a simple example demonstrating a piece of the access configuration which grants read access Sally, and read/write access to Harry, for the path `/path/to/directory/` (and all its children) in the repository `calc`:
 
 .git-as-svn.conf
 [source,yaml]
@@ -31,7 +29,8 @@ repositoryMapping: !listMapping
           sally: r
 ----
 
-Permissions are inherited from a path's parent directory. That means we can specify a subdirectory with a different access policy for Sally.
+Permissions are inherited from a path's parent directory.
+That means we can specify a subdirectory with a different access policy for Sally.
 Let's continue our previous example, and grant Sally write access to a child of the directory that she's otherwise permitted only to read:
 
 .git-as-svn.conf
@@ -48,8 +47,8 @@ repositoryMapping: !listMapping
           sally: rw
 ----
 
-Now Sally can write to subdirectory, but can still only read other parts. Harry, meanwhile, continues to have complete read/write
-access to the whole directory.
+Now Sally can write to subdirectory, but can still only read other parts.
+Harry, meanwhile, continues to have complete read/write access to the whole directory.
 
 It's also possible to explicitly deny permission to someone via inheritance rules, by using empty string or `none`:
 
@@ -69,11 +68,12 @@ repositoryMapping: !listMapping
 
 In this example, Harry has read/write access to the entire directory, but has absolutely no access at all to the `secret` subdirectory within it.
 
-NOTE: The thing to remember is that the most specific path always matches first. The server tries to match the path itself, and then the parent of the path,
-then the parent of that, and so on. The net effect is that mentioning a specific path in the access file will always override any permissions inherited
-from parent directories.
+NOTE: The thing to remember is that the most specific path always matches first.
+The server tries to match the path itself, and then the parent of the path, then the parent of that, and so on.
+The net effect is that mentioning a specific path in the access file will always override any permissions inherited from parent directories.
 
-By default, nobody has any access to any repository at all. If you want to give at least read permission to all users at the roots of the repositories.
+By default, nobody has any access to any repository at all.
+If you want to give at least read permission to all users at the roots of the repositories.
 You can do this by using the asterisk variable (`*`), which means "all users":
 
 .git-as-svn.conf
@@ -121,7 +121,8 @@ In this example, Harry has read access to file on all branches but has read/writ
 
 == Access Control Groups
 
-git-as-svn also allows you to define whole groups of users. To do this, describe your groups within `groups` section of `git-as-svn.conf` :
+git-as-svn also allows you to define whole groups of users.
+To do this, describe your groups within `groups` section of `git-as-svn.conf` :
 
 .git-as-svn.conf
 [source,yaml]
@@ -138,7 +139,8 @@ repositoryMapping: !listMapping
       - jane
 ----
 
-Groups can be granted access control just like users. Distinguish them with an "at sign" (`@`) prefix:
+Groups can be granted access control just like users.
+Distinguish them with an "at sign" (`@`) prefix:
 
 .git-as-svn.conf
 [source,yaml]
@@ -157,8 +159,10 @@ repositoryMapping: !listMapping
 ----
 
 Another important fact is that group permissions are not overridden by individual user permissions.
-Rather, the _combination_ of all matching permissions is granted. In the prior example, Jane is a member of the `paint-developers` group, which has read/write access.
-Combined with the `jane = r` rule, this still gives Jane read/write access. Permissions for group members can only be extended beyond the permissions the group already has.
+Rather, the _combination_ of all matching permissions is granted.
+In the prior example, Jane is a member of the `paint-developers` group, which has read/write access.
+Combined with the `jane = r` rule, this still gives Jane read/write access.
+Permissions for group members can only be extended beyond the permissions the group already has.
 Restricting users who are part of a group to less than their group's permissions is impossible.
 
 Groups can also be defined to contain other groups:
@@ -186,8 +190,8 @@ NOTE: User needs read/write access to `/` path of `master` branch in order to be
 == Advanced Access Control Features
 
 git-as-svn also supports some "magic" tokens for helping you to make rule assignments based on the user's authentication class.
-One such token is the `$authenticated` token. Use this token where you would otherwise specify a username or group name in your authorization rules
-to declare the permissions granted to any user who has authenticated with any username at all.
+One such token is the `$authenticated` token.
+Use this token where you would otherwise specify a username or group name in your authorization rules to declare the permissions granted to any user who has authenticated with any username at all.
 You may also use `$authenticated:Local`/`$authenticated:GitLab`/`$authenticated:Gitea`/`$authenticated:LDAP` to refer to users authenticated against specific user database.
 Similarly employed is the `$anonymous` token, except that it matches everyone who has not authenticated with a username.
 

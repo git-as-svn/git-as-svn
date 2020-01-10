@@ -4,7 +4,8 @@
 :filename: _ldap.adoc
 include::_feedback.adoc[]
 
-git-as-svn supports LDAP for user authentication. Refer to your LDAP server documentation to find out what configuration is appropriate in your case.
+git-as-svn supports LDAP for user authentication.
+Refer to your LDAP server documentation to find out what configuration is appropriate in your case.
 
 NOTE: Internally, git-as-svn uses https://ldap.com/unboundid-ldap-sdk-for-java/[UnboundID LDAP SDK for Java] for all LDAP communication.
 
@@ -79,7 +80,6 @@ userDB: !ldapUsers
 === DIGEST-MD5
 
 Performs SASL DIGEST-MD5 bind as described in http://www.ietf.org/rfc/rfc2831.txt[RFC 2831].
-
 
 [source,yaml]
 ----

@@ -13,13 +13,12 @@ console `svn`, TortoiseSVN, SvnKit, SmartSVN, etc.
 
 == Features
 
-This implementation allows the majority of Subversion-users to work
-without thinking about what they actually use Git-repository.
+This implementation allows the majority of Subversion-users to work without thinking about what they actually use Git-repository.
 
 * Nearly all Subversion commands:
 ** svn checkout, update, switch, diff
 ** svn commit
-** svn copy, move footnote:[Operations are supported, but copy/move information is not explicitly saved to repository. Instead, it is auto-calculated from Git commits]
+** svn copy, move footnote:[Operations are supported,but copy/move information is not explicitly saved to repository. Instead,it is auto-calculated from Git commits]
 ** svn cat, ls
 ** svn lock, unlock
 ** svnsync
@@ -35,42 +34,31 @@ NOTE: Empty directories are not supported
 
 == What is project goal?
 
-The project is designed to allow you to work with the same repository as
-Git, Subversion and style.
+The project is designed to allow you to work with the same repository as Git, Subversion and style.
 
 Git style::
-  The basic idea is that the developer works in the local branch. His
-  changes do not affect the work of other developers, but nonetheless
-  they can be tested on CI farm, review by another developer and etc.
+The basic idea is that the developer works in the local branch.
+His changes do not affect the work of other developers, but nonetheless they can be tested on CI farm, review by another developer and etc.
 +
-This allows each developer to work independently, as best he can. He
-can change and saving intermediate versions of documents, taking full
-advantage of the version control system (including access to the
-change history) even without network connection to the server.
+This allows each developer to work independently, as best he can.
+He can change and saving intermediate versions of documents, taking full advantage of the version control system (including access to the change history) even without network connection to the server.
 +
-Unfortunately, this approach does not work with not mergeable
-documents (for example, binary files).
+Unfortunately, this approach does not work with not mergeable documents (for example, binary files).
 
 Subversion style::
-  The use of a centralized version control system is more convenient in
-  the case of documents do not support the merge (for example, with
-  binary files) due to the presence of the locking mechanism and a
-  simpler and shorter publication cycle changes.
+The use of a centralized version control system is more convenient in the case of documents do not support the merge (for example, with binary files) due to the presence of the locking mechanism and a simpler and shorter publication cycle changes.
 
-The need to combine Git and Subversion style work with one repository
-arises from the fact that different employees in the same project are
-working from fundamentally different data. If you overdo, you Git
-programmers, and artists like Subversion.
+The need to combine Git and Subversion style work with one repository arises from the fact that different employees in the same project are working from fundamentally different data.
+If you overdo, you Git programmers, and artists like Subversion.
 
 == Why do we need it?
 
 This project was born out of division teams working on another project into two camps:
 
- * People who have tasted the Git and do not want to use Subversion (eg programmers);
- * People who do not get from Git practical use and do not want to work with him, but love Subversion (eg designers).
+* People who have tasted the Git and do not want to use Subversion (eg programmers);
+* People who do not get from Git practical use and do not want to work with him, but love Subversion (eg designers).
 
 To divide the project into two repository desire was not for various reasons.
 
-At this point, saw the project http://git.q42.co.uk/git_svn_server.git with Proof-of-concept implementation svn server
-for git repository. After this realization svn server on top of git and didn't seem completely crazy idea (now it's
-just a crazy idea) and started this project.
+At this point, saw the project http://git.q42.co.uk/git_svn_server.git with Proof-of-concept implementation svn server for git repository.
+After this realization svn server on top of git and didn't seem completely crazy idea (now it's just a crazy idea) and started this project.

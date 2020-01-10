@@ -6,54 +6,37 @@ include::_feedback.adoc[]
 
 == Rationale
 
-The SVN protocol is totally unencrypted, and due to the way git-as-svn
-has to proxy authentication through to git servers, almost all
-authentication happens in plaintext.
+The SVN protocol is totally unencrypted, and due to the way git-as-svn has to proxy authentication through to git servers, almost all authentication happens in plaintext.
 
-Clearly this is undesirable, not only is potentially private code
-exposed over the svn protocol, but so are passwords and usernames.
+Clearly this is undesirable, not only is potentially private code exposed over the svn protocol, but so are passwords and usernames.
 
 Traditionally SVN has two ways of preventing this:
 
 * Use HTTPS
 * Use svn+ssh
 
-The HTTP protocol is substantially different from the SVN protocol and
-is currently unimplemented in git-as-svn
+The HTTP protocol is substantially different from the SVN protocol and is currently unimplemented in git-as-svn
 
 Thus leaving the svn+ssh mechanism.
 
 == How does SVN+SSH work?
 
-Normally when a client calls `svn <command> svn://host/path`, for an
-appropriate `<command>`, the subversion client will open a connection to
-the `host` server on port 3690. After an initial handshake as per the
-SVN protocol the server will ask the client to authenticate.
+Normally when a client calls `svn <command> svn://host/path`, for an appropriate `<command>`, the subversion client will open a connection to the `host` server on port 3690. After an initial handshake as per the SVN protocol the server will ask the client to authenticate.
 
-If possible the client will attempt to perform its actions anonymously,
-and if necessary the server will then ask for reauthentication.
+If possible the client will attempt to perform its actions anonymously, and if necessary the server will then ask for reauthentication.
 
-If a client calls `svn <command> svn+ssh//username@host/path`, the
-subversion client will internally ask ssh to open connection using
-something equivalent to: `ssh username@host "svnserve -t"`.
+If a client calls `svn <command> svn+ssh//username@host/path`, the subversion client will internally ask ssh to open connection using something equivalent to: `ssh username@host "svnserve -t"`.
 
-If ssh succesfully connects, the SSH will run `svnserve -t` on the host,
-which will then proceed with the SVN protocol handshake over its `stdin`
-and `stdout`, and the client will use the `stdin` and `stdout` of the
-ssh connection.
+If ssh succesfully connects, the SSH will run `svnserve -t` on the host, which will then proceed with the SVN protocol handshake over its `stdin`
+and `stdout`, and the client will use the `stdin` and `stdout` of the ssh connection.
 
-When the server asks the client to authenticate, the server will offer
-the `EXTERNAL` authentication mechanism. (Possibly with the `ANONYMOUS`
+When the server asks the client to authenticate, the server will offer the `EXTERNAL` authentication mechanism.
+(Possibly with the `ANONYMOUS`
 mechanism.)
 
-If the client uses `EXTERNAL` mechanism, the server sets the user to be
-either the currently logged in user from the ssh, (or an optional
-tunnel-user parameter.)
+If the client uses `EXTERNAL` mechanism, the server sets the user to be either the currently logged in user from the ssh, (or an optional tunnel-user parameter.)
 
-Securing the `svnserve -t` call and protecting against semi-malicious
-uses of the `--tunnel-user` option or even the calling of other commands
-in cases of multiple users for a single repository requires some
-thought.
+Securing the `svnserve -t` call and protecting against semi-malicious uses of the `--tunnel-user` option or even the calling of other commands in cases of multiple users for a single repository requires some thought.
 
 Often this is protected through the use of a suitable `command=""`
 parameter in the `authorized_keys` file, coupled with other options.
@@ -61,35 +44,25 @@ e.g.
 
 `command="/usr/bin/svnserve -t --tunnel-user username",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa ...`
 
-Of note, in this example the command provided by the client is ignored
-but it could be checked and managed as appropriately. In fact these
-techniques are used in the `authorized_keys` files of most `git`
+Of note, in this example the command provided by the client is ignored but it could be checked and managed as appropriately.
+In fact these techniques are used in the `authorized_keys` files of most `git`
 servers.
 
 This provides a simple first way to handle `svn+ssh`, if we set
-`command="nc localhost 3690"` then whenever we connect by ssh we will be
-passed directly to the git-as-svn server. The downside being that the
-client will be asked to authenticate.
+`command="nc localhost 3690"` then whenever we connect by ssh we will be passed directly to the git-as-svn server.
+The downside being that the client will be asked to authenticate.
 
 == A better `git-as-svn-svnserve`
 
-Handling the `EXTERNAL` authentication mechanism properly without
-creating a new port to listen on and a new adjusted SVN protocol is not
-possible.
+Handling the `EXTERNAL` authentication mechanism properly without creating a new port to listen on and a new adjusted SVN protocol is not possible.
 
 However there is another way:
 
-We can stand in the middle of the SVN protocol stream, catch the
-authentication handshake, proxy it before stepping back and letting the
-client and server talk to each other.
+We can stand in the middle of the SVN protocol stream, catch the authentication handshake, proxy it before stepping back and letting the client and server talk to each other.
 
-We can create a new authentication mechanism on the `git-as-svn` server
-that requires a secret token known only by us, to allow us to pass in
-the external username (or other identifier) as the user authentication
-using `sshKeyUsers` to proxy the `UserDB`
+We can create a new authentication mechanism on the `git-as-svn` server that requires a secret token known only by us, to allow us to pass in the external username (or other identifier) as the user authentication using `sshKeyUsers` to proxy the `UserDB`
 
-We can then use `git-as-svn-svnserve-tunnel SECRET EXTERNAL_USERNAME` as
-a replacement for `svnserve -t` or `nc localhost 3690` in the
+We can then use `git-as-svn-svnserve-tunnel SECRET EXTERNAL_USERNAME` as a replacement for `svnserve -t` or `nc localhost 3690` in the
 `command=""` option in authorized_keys.
 
 Of course we need to keep the `authorized_keys` file up-to-date
@@ -98,8 +71,7 @@ Of course we need to keep the `authorized_keys` file up-to-date
 
 There are two ways that Gitlab manages ssh access.
 
-* Updating the git user's `authorized_keys` every time a SSH key is
-changed.
+* Updating the git user's `authorized_keys` every time a SSH key is changed.
 * The use of an SSH `AuthorizedKeysCommand`
 
 First, let's look at the `authorized_keys` case.
@@ -107,25 +79,15 @@ First, let's look at the `authorized_keys` case.
 Gitlab will update the `authorized_keys` file over time.
 
 If you set the option: `gitlab_shell['auth_file']` in the `gitlab.rb`
-configuration file to a different location, you can catch changes to
-this file, and change the `command=""` option to something that will
-check whether we are trying to perform svn and handle it if so.
+configuration file to a different location, you can catch changes to this file, and change the `command=""` option to something that will check whether we are trying to perform svn and handle it if so.
 
-The suggested config, at least for Gitlab docker and assuming that
-git-as-svn has been installed in `/opt/git-as-svn` is:
+The suggested config, at least for Gitlab docker and assuming that git-as-svn has been installed in `/opt/git-as-svn` is:
 
 ./etc/gitlab/gitlab.rb
 [source,ruby]
 ----
-...
-################################################################################
-## gitlab-shell
-################################################################################
-...
 # gitlab_shell['auth_file'] = "/var/opt/gitlab/.ssh/authorized_keys"
 gitlab_shell['auth_file'] = "/var/opt/gitlab/ssh-shadow/authorized_keys"
-...
-
 ----
 
 ./etc/git-as-svn/git-as-svn.conf
@@ -146,16 +108,12 @@ include::../../../tools/git-as-svn-svnserve[]
 include::../../../tools/git-as-svn-svnserve-tunnel[]
 ----
 
-In the second case, if we proxy the `AuthorizedKeysCommand`, and just
-replace the `command=""` option as above then we have a working
-solution.
+In the second case, if we proxy the `AuthorizedKeysCommand`, and just replace the `command=""` option as above then we have a working solution.
 
-We have two main options, we can keep the same user, e.g. `git` for both
-subversion and git, or we could create another user.
+We have two main options, we can keep the same user, e.g. `git` for both subversion and git, or we could create another user.
 
-The first option requires that we proxy the original app and replace it
-with our own. The second is similar but we leave the original response
-alone for git, just replacing it for svn
+The first option requires that we proxy the original app and replace it with our own.
+The second is similar but we leave the original response alone for git, just replacing it for svn
 
 The first option is described below.
 
@@ -181,30 +139,24 @@ include::../../../tools/git-as-svn-authorized-keys-command[]
 ----
 include::examples/config-gitlab.yml[]
 ----
-* `/opt/git-as-svn/bin/git-as-svn-svnserve` and
-`/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel` same as above.
+
+* `/opt/git-as-svn/bin/git-as-svn-svnserve` and `/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel` same as above.
 
 == Gitea
 
 There are two ways that Gitea manages ssh access.
 
-* If Gitea is deferring to an external SSHD. It will update the git
-user's `authorized_keys` every time a SSH key is changed.
-* If Gitea is using its own internal SSHD. It will run the `gitea serv`
-command each time.
+* If Gitea is deferring to an external SSHD. It will update the git user's `authorized_keys` every time a SSH key is changed.
+* If Gitea is using its own internal SSHD. It will run the `gitea serv` command each time.
 * The use of an SSH `AuthorizedKeysCommand` in Gitea v1.7.0+
 
 First, let's look at the `authorized_keys` case.
 
 Gitea will update the `authorized_keys` file over time.
 
-If you set the option: `SSH_ROOT_PATH` in the `[server]` of the gitea
-`app.ini` to a shadow location you can catch changes to this file, and
-change the `command=""` option to something that will check whether we
-are trying to perform svn and handle it if so.
+If you set the option: `SSH_ROOT_PATH` in the `[server]` of the gitea `app.ini` to a shadow location you can catch changes to this file, and change the `command=""` option to something that will check whether we are trying to perform svn and handle it if so.
 
-The suggested config, at least for Gitea docker, and assuming that
-git-as-svn has been installed in `/app/git-as-svn` is:
+The suggested config, at least for Gitea docker, and assuming that git-as-svn has been installed in `/app/git-as-svn` is:
 
 ./data/gitea/conf/app.ini
 [source,ini]
@@ -229,16 +181,13 @@ include::examples/config-gitea-ssh.yml[]
 include::../../../tools/git-as-svn-svnserve[]
 ----
 
-* `/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as
-in the gitlab case.
+* `/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as in the gitlab case.
 
 For the second case, we need to shadow the gitea binary
 
-So we would need to move the original gitea from `/app/gitea/gitea` to
-`/app/gitea/gitea.shadow`
+So we would need to move the original gitea from `/app/gitea/gitea` to `/app/gitea/gitea.shadow`
 
-And either create `/app/gitea/gitea` as a symbolic link or just copy the
-below `/app/git-as-svn/bin/git-as-svn-svnserve` as it.
+And either create `/app/gitea/gitea` as a symbolic link or just copy the below `/app/git-as-svn/bin/git-as-svn-svnserve` as it.
 
 ./app/git-as-svn/bin/git-as-svn-svnserve
 [source,bash]
@@ -246,8 +195,6 @@ below `/app/git-as-svn/bin/git-as-svn-svnserve` as it.
 include::../../../tools/git-as-svn-svnserve[]
 ----
 
-`/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as
-in the gitlab case.
+`/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as in the gitlab case.
 
-Managing the `AuthorizedKeysCommand` is similar to that in the Gitlab
-case.
+Managing the `AuthorizedKeysCommand` is similar to that in the Gitlab case.
