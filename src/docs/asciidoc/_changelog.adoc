@@ -8,12 +8,14 @@ endif::[]
 
 == Unreleased
 
-* Systemd unit now correctly waits for git-as-svn to shut down.
-#275
+ * Systemd unit now correctly waits for git-as-svn to shut down. https://github.com/bozaro/git-as-svn/issues/275[#275]
+ * Update dependencies
+ * `/usr/bin/git-as-svn` no longer implicitly adds `-Xmx512m` JVM argument
+ * Several file descriptor leaks fixed
 
 == 1.21.9
 
- * Catastrophically speedup rename detection (~50x). #306
+ * Catastrophically speedup rename detection (~50x). https://github.com/bozaro/git-as-svn/issues/306[#306]
 
 == 1.21.8
 
@@ -52,7 +54,7 @@ endif::[]
 
 == 1.21.0
 
- * Do not write to `/tmp` when streaming files from remote LFS server to SVN clients. #288
+ * Do not write to `/tmp` when streaming files from remote LFS server to SVN clients. https://github.com/bozaro/git-as-svn/issues/288[#288]
  * Experimental `lfsMode: !fileLfs` LFS mode for GitLab
  * `lfs: false` replaced with `lfsMode: null` in `!gitlab` section
 
@@ -72,7 +74,7 @@ endif::[]
 
 == 1.20.2
 
- * Fix LFS files returning -1 size for remote LFS. #282
+ * Fix LFS files returning -1 size for remote LFS. https://github.com/bozaro/git-as-svn/issues/282[#282]
 
 == 1.20.1
 
@@ -95,17 +97,17 @@ endif::[]
 
 == 1.19.1
 
- * Fix path-based ACL entry search. #276
+ * Fix path-based ACL entry search. https://github.com/bozaro/git-as-svn/issues/276[#276]
 
 == 1.19.0
 
  * Add support for https://subversion.apache.org/docs/release-notes/1.10#lz4-over-the-wire[LZ4 compression].
-   `compressionEnabled=true/false` option replaced with `compressionLevel=LZ4/Zlib/None`. #163
+   `compressionEnabled=true/false` option replaced with `compressionLevel=LZ4/Zlib/None`. https://github.com/bozaro/git-as-svn/issues/163[#163]
  * Fix severe performance loss on commit. Broken in 1.8.0
 
 == 1.18.0
 
- * Add option to expose user-defined branches for GitLab. See <<_gitlab.adoc#_configuration,GitLab configuration>> documentation. #188
+ * Add option to expose user-defined branches for GitLab. See <<_gitlab.adoc#_configuration,GitLab configuration>> documentation. https://github.com/bozaro/git-as-svn/issues/188[#188]
  * `repositoryTags` is no longer supported for `!gitlabMapping`
 
 == 1.17.0
@@ -119,7 +121,7 @@ endif::[]
  * Update Jetty to 9.4.19
  * Update Log4j to 2.12.0
  * Update git-lfs-java to 0.13.3
- * Add support for `core.hooksPath` Git configuration variable. #267
+ * Add support for `core.hooksPath` Git configuration variable. https://github.com/bozaro/git-as-svn/issues/267[#267]
 
 == 1.15.0
 
@@ -162,12 +164,12 @@ endif::[]
 
 == 1.10.1
 
- * Fix PLAIN auth not working with passwords longer than 51 character. #242
+ * Fix PLAIN auth not working with passwords longer than 51 character. https://github.com/bozaro/git-as-svn/issues/242[#242]
 
 == 1.10.0
 
  * File locking code cleanup. All existing svn locks will expire after upgrade.
- * Implement `get-file-revs` command. This is expected to speed up `svn blame` severely. #231
+ * Implement `get-file-revs` command. This is expected to speed up `svn blame` severely. https://github.com/bozaro/git-as-svn/issues/231[#231]
  * https://subversion.apache.org/docs/release-notes/1.9#prospective-blame[Prospective blame] support added
 
 == 1.9.0
@@ -184,7 +186,7 @@ endif::[]
 == 1.8.0
 
  * `!lfs` renamed to `!localLfs` in git-as-svn.conf
- * Experimental support for GitLab LFS (`!gitlabLfs {}`). #175, #212, #213.
+ * Experimental support for GitLab LFS (`!gitlabLfs {}`). https://github.com/bozaro/git-as-svn/issues/175[#175], https://github.com/bozaro/git-as-svn/issues/212[#212], https://github.com/bozaro/git-as-svn/issues/213[#213].
 
 == 1.7.6.1
 
@@ -201,13 +203,13 @@ endif::[]
 
 == 1.7.4
 
- * Revert #215, causes tens of thousands of CLOSE_WAIT connections in Jetty
+ * Revert https://github.com/bozaro/git-as-svn/issues/215[#215], causes tens of thousands of CLOSE_WAIT connections in Jetty
  * Update Jetty to 9.4.14
 
 == 1.7.3
 
- * Reduce number of threads by using same thread pool for svn:// and http://. #215
- * Fix compatibility with latest Gitea. #218
+ * Reduce number of threads by using same thread pool for svn:// and http://. https://github.com/bozaro/git-as-svn/issues/215[#215]
+ * Fix compatibility with latest Gitea. https://github.com/bozaro/git-as-svn/issues/218[#218]
 
 == 1.7.2
 
@@ -217,7 +219,7 @@ endif::[]
 
 == 1.7.1
 
- * Revert offloading file -> changed revisions cache to MapDB (PR#207) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
+ * Revert offloading file -> changed revisions cache to MapDB (PRhttps://github.com/bozaro/git-as-svn/issues/207[#207]) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
 
 == 1.7.0
 
@@ -232,13 +234,13 @@ endif::[]
 
 == 1.6.2
 
- * [Gitea] Support uppercase letters in usernames / repository names. #196
+ * [Gitea] Support uppercase letters in usernames / repository names. https://github.com/bozaro/git-as-svn/issues/196[#196]
 
 == 1.6.1
 
- * Update dependencies. #190
- * [Gitea] Fixes to directory watcher. #192
- * Deploy Debian packages to Bintray. #194
+ * Update dependencies. https://github.com/bozaro/git-as-svn/issues/190[#190]
+ * [Gitea] Fixes to directory watcher. https://github.com/bozaro/git-as-svn/issues/192[#192]
+ * Deploy Debian packages to Bintray. https://github.com/bozaro/git-as-svn/issues/194[#194]
 
 == 1.6.0
 
@@ -258,18 +260,18 @@ endif::[]
 
 == 1.3.0
 
- * Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. #176
+ * Switch to GitLab API v4. Fixes compatibility with GitLab >= 11. https://github.com/bozaro/git-as-svn/issues/176[#176]
 
 == 1.2.0
 
  * x10 speedup of LDAP authentication
  * Drop dependency on GSon in favor of Jackson2
  * Update unboundid-ldapsdk to 4.0.3
- * Fix post-receive hook failing on GitLab 10 #160
+ * Fix post-receive hook failing on GitLab 10 https://github.com/bozaro/git-as-svn/issues/160[#160]
 
 == 1.1.9
 
- * Update MapDB to 3.0.5 #161
+ * Update MapDB to 3.0.5 https://github.com/bozaro/git-as-svn/issues/161[#161]
 
 == 1.1.8
 
@@ -278,13 +280,13 @@ endif::[]
 
 == 1.1.7
 
- * Use OAuth2 to obtain user token. Fixes compatibility with GitLab >= 10.2 #154
+ * Use OAuth2 to obtain user token. Fixes compatibility with GitLab >= 10.2 https://github.com/bozaro/git-as-svn/issues/154[#154]
 
 == 1.1.6
 
  * Update various third-party libraries
  * Upgrade to Gradle 4.4
- * Fix GitLab repositories not becoming ready on git-as-svn startup #151
+ * Fix GitLab repositories not becoming ready on git-as-svn startup https://github.com/bozaro/git-as-svn/issues/151[#151]
  * Improve logging on git-as-svn startup
 
 == 1.1.5
@@ -294,36 +296,36 @@ endif::[]
 
 == 1.1.4
 
- * Upgrade Kryo to 4.0.1 #121
- * Add option to disable parallel repository indexing on startup #121
+ * Upgrade Kryo to 4.0.1 https://github.com/bozaro/git-as-svn/issues/121[#121]
+ * Add option to disable parallel repository indexing on startup https://github.com/bozaro/git-as-svn/issues/121[#121]
 
 == 1.1.3
 
  * Fix ISO 8601 date formatting.
- * Fix unexpected error message on locked file update #127.
+ * Fix unexpected error message on locked file update https://github.com/bozaro/git-as-svn/issues/127[#127].
  * Increase default token expire time to one hour (3600 sec).
  * Add string-suffix parameter for git-lfs-authenticate script.
- * Index repositories using multiple threads on startup #132
+ * Index repositories using multiple threads on startup https://github.com/bozaro/git-as-svn/issues/132[#132]
 
 == 1.1.2
 
- * Add reference to original commit as parent for prevent commit removing by `git gc` #118.
- * Fix repository mapping error #122.
- * Fix non ThreadSafe Kryo usage #121.
+ * Add reference to original commit as parent for prevent commit removing by `git gc` https://github.com/bozaro/git-as-svn/issues/118[#118].
+ * Fix repository mapping error https://github.com/bozaro/git-as-svn/issues/122[#122].
+ * Fix non ThreadSafe Kryo usage https://github.com/bozaro/git-as-svn/issues/121[#121].
  * Add support for combine multiple authenticators.
  * Add support for authenticator cache.
- * Fix tree conflict on Windows after renaming file with same name in another case #123.
+ * Fix tree conflict on Windows after renaming file with same name in another case https://github.com/bozaro/git-as-svn/issues/123[#123].
  * Use commit author instead of commiter identity in svn log.
  * Don't allow almost expired tokens for LFS pointer requests.
 
 == 1.1.1
 
  * Fix "E210002: Network connection closed unexpectedly" on client
-   update failure #114.
+   update failure https://github.com/bozaro/git-as-svn/issues/114[#114].
 
 == 1.1.0
 
- * Use by default svn:eol-style = native for text files (fix #106).
+ * Use by default svn:eol-style = native for text files (fix https://github.com/bozaro/git-as-svn/issues/106[#106]).
  * Upload .deb package to debian repository.
 
 == 1.0.17-alpha
@@ -333,14 +335,14 @@ endif::[]
 
 == 1.0.16-alpha
 
- * Rewrite GitLab authentication #110.
- * Fix some permission check issues #110.
- * Generate token in LFS server instead pass original authentication data #105.
+ * Rewrite GitLab authentication https://github.com/bozaro/git-as-svn/issues/110[#110].
+ * Fix some permission check issues https://github.com/bozaro/git-as-svn/issues/110[#110].
+ * Generate token in LFS server instead pass original authentication data https://github.com/bozaro/git-as-svn/issues/105[#105].
  * Ignore unknown GitLab hook data.
 
 == 1.0.15-alpha
 
- * Add support for GitLab 8.2 LFS storage layout #109.
+ * Add support for GitLab 8.2 LFS storage layout https://github.com/bozaro/git-as-svn/issues/109[#109].
 
 == 1.0.14-alpha
 
@@ -365,7 +367,7 @@ endif::[]
  * Import project list on startup.
  * Authentication.
  * Add support for embedded git push with hooks;
- * Git-as-svn change information moved outside git repostitory #60.
+ * Git-as-svn change information moved outside git repostitory https://github.com/bozaro/git-as-svn/issues/60[#60].
  * Configuration format changed.
  * Fixed some wildcard issues.
 
@@ -373,7 +375,7 @@ endif::[]
 
  * Fix URL in authentication result on default port (Jenkins error: `E21005: Impossibly long
    repository root from server`).
- * Fix bind on already used port with flag SO_REUSEADDR (thanks for @fcharlie, #70).
+ * Fix bind on already used port with flag SO_REUSEADDR (thanks for @fcharlie, https://github.com/bozaro/git-as-svn/issues/70[#70]).
  * Add support for custom certificate for ldaps authentication.
 
 == 1.0.10-alpha
