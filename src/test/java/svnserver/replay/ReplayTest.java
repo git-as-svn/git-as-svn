@@ -45,7 +45,7 @@ public final class ReplayTest {
   public void testReplayFileModification() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final URL repoMark = ReplayTest.class.getResource("repo/format");
-      final SVNURL url = SVNURL.fromFile(Paths.get(repoMark.getPath()).getParent().toFile());
+      final SVNURL url = SVNURL.fromFile(Paths.get(repoMark.toURI()).getParent().toFile());
       final SVNRepository srcRepo = SVNRepositoryFactory.create(url);
       final SVNRepository dstRepo = server.openSvnRepository();
 

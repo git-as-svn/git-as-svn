@@ -133,23 +133,27 @@ public final class SvnTestHelper {
     repo.getFile(filePath, fileRev, null, oldData);
 
     final ISVNEditor editor = repo.getCommitEditor("Modify file: " + filePath, null, false, null);
-    editor.openRoot(-1);
-    int index = 0;
-    int depth = 1;
-    while (true) {
-      index = filePath.indexOf('/', index + 1);
-      if (index < 0) {
-        break;
+    try {
+      editor.openRoot(-1);
+      int index = 0;
+      int depth = 1;
+      while (true) {
+        index = filePath.indexOf('/', index + 1);
+        if (index < 0) {
+          break;
+        }
+        editor.openDir(filePath.substring(0, index), -1);
+        depth++;
       }
-      editor.openDir(filePath.substring(0, index), -1);
-      depth++;
+      editor.openFile(filePath, fileRev);
+      sendDeltaAndClose(editor, filePath, oldData.toByteArray(), newData);
+      for (int i = 0; i < depth; ++i) {
+        editor.closeDir();
+      }
+      Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL);
+    } finally {
+      editor.abortEdit();
     }
-    editor.openFile(filePath, fileRev);
-    sendDeltaAndClose(editor, filePath, oldData.toByteArray(), newData);
-    for (int i = 0; i < depth; ++i) {
-      editor.closeDir();
-    }
-    Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL);
   }
 
   public static void sendDeltaAndClose(@NotNull ISVNEditor editor, @NotNull String filePath, @Nullable String oldData, @Nullable String newData) throws SVNException, IOException {

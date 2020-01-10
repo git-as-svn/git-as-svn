@@ -37,7 +37,7 @@ import java.util.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public final class GitWriter {
+public final class GitWriter implements AutoCloseable {
   private static final int MAX_PROPERTY_ERRROS = 50;
 
   @NotNull
@@ -84,6 +84,13 @@ public final class GitWriter {
 
   @NotNull ObjectInserter getInserter() {
     return inserter;
+  }
+
+  @Override
+  public void close() {
+    try (ObjectInserter unused = inserter) {
+      // noop
+    }
   }
 
   public class GitCommitBuilder {

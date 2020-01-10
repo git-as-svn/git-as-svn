@@ -282,10 +282,11 @@ public class SvnLockTest {
       unlock(repo, oldLock, false, null);
 
       final SVNLock newLock = lock(repo, "example.txt", latestRevision, false, null);
+
+      final Map<String, String> locks = new HashMap<>();
+      locks.put(oldLock.getPath(), oldLock.getID());
+      final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, false, null);
       try {
-        final Map<String, String> locks = new HashMap<>();
-        locks.put(oldLock.getPath(), oldLock.getID());
-        final ISVNEditor editor = repo.getCommitEditor("Intital state", locks, false, null);
         editor.openRoot(-1);
         editor.openFile("/example.txt", latestRevision);
         sendDeltaAndClose(editor, "/example.txt", "", "Source content");
@@ -294,6 +295,8 @@ public class SvnLockTest {
         Assert.fail();
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
+      } finally {
+        editor.abortEdit();
       }
       compareLock(server.openSvnRepository().getLock("/example.txt"), newLock);
     }
@@ -380,8 +383,8 @@ public class SvnLockTest {
       final SVNLock lock = lock(repo, "example.txt", latestRevision, false, null);
       Assert.assertNotNull(lock);
 
+      final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
       try {
-        final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
         editor.openRoot(-1);
         editor.deleteEntry("/example.txt", latestRevision);
         editor.closeDir();
@@ -389,6 +392,8 @@ public class SvnLockTest {
         Assert.fail();
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
+      } finally {
+        editor.abortEdit();
       }
     }
   }
@@ -415,8 +420,8 @@ public class SvnLockTest {
       // Lock
       final SVNLock lock = lock(repo, "/example/example.txt", latestRevision, false, null);
       Assert.assertNotNull(lock);
+      final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
       try {
-        final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
         editor.openRoot(-1);
         editor.deleteEntry("/example", latestRevision);
         editor.closeDir();
@@ -424,6 +429,8 @@ public class SvnLockTest {
         Assert.fail();
       } catch (SVNException e) {
         Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
+      } finally {
+        editor.abortEdit();
       }
     }
   }

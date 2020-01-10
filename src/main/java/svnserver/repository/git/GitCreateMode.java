@@ -63,30 +63,32 @@ public enum GitCreateMode {
 
   @NotNull
   private static ObjectId createFirstRevision(@NotNull Repository repository) throws IOException {
-    final ObjectInserter inserter = repository.newObjectInserter();
-    // Create commit tree.
-    final TreeFormatter rootBuilder = new TreeFormatter();
-    rootBuilder.append(".gitattributes", FileMode.REGULAR_FILE, insertFile(inserter, "example/_gitattributes"));
-    new ObjectChecker().checkTree(rootBuilder.toByteArray());
-    final ObjectId rootId = inserter.insert(rootBuilder);
-    // Create first commit with message.
-    final CommitBuilder commitBuilder = new CommitBuilder();
-    commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
-    commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
-    commitBuilder.setMessage("Initial commit");
-    commitBuilder.setTreeId(rootId);
-    final ObjectId commitId = inserter.insert(commitBuilder);
-    inserter.flush();
-    return commitId;
+    try (ObjectInserter inserter = repository.newObjectInserter()) {
+      // Create commit tree.
+      final TreeFormatter rootBuilder = new TreeFormatter();
+      rootBuilder.append(".gitattributes", FileMode.REGULAR_FILE, insertFile(inserter, "example/_gitattributes"));
+      new ObjectChecker().checkTree(rootBuilder.toByteArray());
+      final ObjectId rootId = inserter.insert(rootBuilder);
+      // Create first commit with message.
+      final CommitBuilder commitBuilder = new CommitBuilder();
+      commitBuilder.setAuthor(new PersonIdent("", "", 0, 0));
+      commitBuilder.setCommitter(new PersonIdent("", "", 0, 0));
+      commitBuilder.setMessage("Initial commit");
+      commitBuilder.setTreeId(rootId);
+      final ObjectId commitId = inserter.insert(commitBuilder);
+      inserter.flush();
+      return commitId;
+    }
   }
 
   @NotNull
   private static AnyObjectId insertFile(@NotNull ObjectInserter inserter, @NotNull String resourceName) throws IOException {
-    final InputStream stream = GitCreateMode.class.getResourceAsStream(resourceName);
-    if (stream == null) {
-      throw new FileNotFoundException(resourceName);
+    try (InputStream stream = GitCreateMode.class.getResourceAsStream(resourceName)) {
+      if (stream == null) {
+        throw new FileNotFoundException(resourceName);
+      }
+      return inserter.insert(Constants.OBJ_BLOB, IOUtils.toByteArray(stream));
     }
-    return inserter.insert(Constants.OBJ_BLOB, IOUtils.toByteArray(stream));
   }
 
   @NotNull
