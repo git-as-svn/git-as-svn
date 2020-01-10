@@ -20,15 +20,11 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import svnserver.StringHelper;
-import svnserver.SvnConstants;
-import svnserver.SvnTestServer;
-import svnserver.TestHelper;
+import svnserver.*;
+import svnserver.repository.VcsConsumer;
+import svnserver.tester.SvnTesterSvnKit;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -43,15 +39,14 @@ public final class ReplayTest {
 
   @Test
   public void testReplayFileModification() throws Exception {
-    try (SvnTestServer server = SvnTestServer.createEmpty()) {
-      final URL repoMark = ReplayTest.class.getResource("repo/format");
-      final SVNURL url = SVNURL.fromFile(Paths.get(repoMark.toURI()).getParent().toFile());
-      final SVNRepository srcRepo = SVNRepositoryFactory.create(url);
+    try (SvnTesterSvnKit sourceRepo = new SvnTesterSvnKit();
+         SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository srcRepo = sourceRepo.openSvnRepository();
+      final SVNCommitInfo lastCommit = buildHistory(srcRepo);
       final SVNRepository dstRepo = server.openSvnRepository();
 
-      long lastRevision = srcRepo.getLatestRevision();
       log.info("Start replay");
-      for (long revision = 1; revision <= lastRevision; revision++) {
+      for (long revision = 1; revision <= lastCommit.getNewRevision(); revision++) {
         final SVNPropertyValue message = srcRepo.getRevisionPropertyValue(revision, "svn:log");
         log.info("  replay commit #{}: {}", revision, StringHelper.getFirstLine(message.getString()));
         replayRangeRevision(srcRepo, dstRepo, revision, false);
@@ -60,6 +55,92 @@ public final class ReplayTest {
       }
       log.info("End replay");
     }
+  }
+
+  @NotNull
+  private SVNCommitInfo buildHistory(@NotNull SVNRepository repo) throws Exception {
+    final SVNCommitInfo r1 = createCommit(repo, "Add README.md file", editor -> {
+      editor.openRoot(0);
+      {
+        editor.addFile("/README.md", null, -1);
+        editor.changeFileProperty("/README.md", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+        SvnTestHelper.sendDeltaAndClose(editor, "/README.md", null, "aaa");
+      }
+      editor.closeDir();
+    });
+
+    final SVNCommitInfo r2 = createCommit(repo, "Create directory", editor -> {
+      editor.openRoot(r1.getNewRevision());
+      {
+        editor.addDir("/foo", null, -1);
+        {
+          editor.addDir("/foo/bar", null, -1);
+          {
+            editor.addFile("/foo/bar/file.txt", null, -1);
+            editor.changeFileProperty("/foo/bar/file.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+            SvnTestHelper.sendDeltaAndClose(editor, "/foo/bar/file.txt", null, "bbb");
+          }
+          editor.closeDir();
+        }
+        editor.closeDir();
+      }
+      editor.closeDir();
+    });
+
+    final SVNCommitInfo r3 = createCommit(repo, "Simple files modification", editor -> {
+      editor.openRoot(r2.getNewRevision());
+      {
+        editor.openFile("/README.md", r2.getNewRevision());
+        SvnTestHelper.sendDeltaAndClose(editor, "/README.md", "aaa", "ccc");
+        editor.openFile("/foo/bar/file.txt", -1);
+        SvnTestHelper.sendDeltaAndClose(editor, "/foo/bar/file.txt", "bbb", "ddd");
+      }
+      editor.closeDir();
+    });
+
+    final SVNCommitInfo r4 = createCommit(repo, "Simple file copy", editor -> {
+      editor.openRoot(r3.getNewRevision());
+      {
+        editor.addFile("/foo/bar/file.copy", "/foo/bar/file.txt", r3.getNewRevision());
+      }
+    });
+
+    final SVNCommitInfo r5 = createCommit(repo, "Simple file move", editor -> {
+      editor.openRoot(r4.getNewRevision());
+      {
+        editor.addFile("/foo/bar/file.move", "/foo/bar/file.copy", r4.getNewRevision());
+        editor.deleteEntry("/foo/bar/file.copy", r4.getNewRevision());
+      }
+    });
+
+    final SVNCommitInfo r6 = createCommit(repo, "Simple directory move", editor -> {
+      editor.openRoot(r5.getNewRevision());
+      {
+        editor.addDir("/foo/wow", "/foo/bar", r5.getNewRevision());
+      }
+    });
+
+    final SVNCommitInfo r7 = createCommit(repo, "Directory rename and content change", editor -> {
+      editor.openRoot(r6.getNewRevision());
+      {
+        editor.addDir("/foo/omg", "/foo/wow", r6.getNewRevision());
+        editor.deleteEntry("/foo/omg/file.move", r6.getNewRevision());
+        editor.openFile("/foo/omg/file.txt", r6.getNewRevision());
+        SvnTestHelper.sendDeltaAndClose(editor, "/foo/omg/file.txt", "ddd", "omg7");
+      }
+    });
+
+    return createCommit(repo, "Copy and modify directory", editor -> {
+      editor.openRoot(r7.getNewRevision());
+      {
+        editor.addDir("/foo/omg7", "/foo/wow", r6.getNewRevision());
+        editor.addFile("/foo/omg7/README.md", "/README.md", r1.getNewRevision());
+        editor.openFile("/foo/omg7/file.move", r7.getNewRevision());
+        SvnTestHelper.sendDeltaAndClose(editor, "/foo/omg7/file.move", "ddd", "omg");
+        editor.openFile("/foo/omg7/file.txt", r7.getNewRevision());
+        SvnTestHelper.sendDeltaAndClose(editor, "/foo/omg7/file.txt", "ddd", "omg");
+      }
+    });
   }
 
   private void replayRangeRevision(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision, boolean checkDelete) throws SVNException {
@@ -96,6 +177,19 @@ public final class ReplayTest {
     }, new FilterSVNEditor(dstExport, true));
 
     Assert.assertEquals(srcExport.toString(), dstExport.toString());
+  }
+
+  @NotNull
+  private SVNCommitInfo createCommit(@NotNull SVNRepository repo, @NotNull String commitMessage, @NotNull VcsConsumer<ISVNEditor> func) throws SVNException, IOException {
+    final ISVNEditor editor = repo.getCommitEditor(commitMessage, null);
+    try {
+      func.accept(editor);
+      final SVNCommitInfo result = editor.closeEdit();
+      Assert.assertNotNull(result);
+      return result;
+    } finally {
+      editor.abortEdit();
+    }
   }
 
   private void checkCopyFrom(@NotNull SVNRepository repo, @NotNull CopyFromSVNEditor editor, long revision) throws SVNException {
@@ -214,5 +308,4 @@ public final class ReplayTest {
   private interface ReplayMethod {
     void replay(@NotNull SVNRepository srcRepo, @NotNull SVNRepository dstRepo, long revision) throws SVNException;
   }
-
 }

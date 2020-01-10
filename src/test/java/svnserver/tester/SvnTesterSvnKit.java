@@ -36,7 +36,7 @@ public final class SvnTesterSvnKit implements SvnTester {
   @NotNull
   private final SVNURL url;
 
-  SvnTesterSvnKit() throws SVNException {
+  public SvnTesterSvnKit() throws SVNException {
     try {
       repoDir = TestHelper.createTempDir("git-as-svn");
       url = SVNRepositoryFactory.createLocalRepository(repoDir.toFile(), true, true);
