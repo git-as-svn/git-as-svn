@@ -7,7 +7,6 @@
  */
 package svnserver.server;
 
-import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -30,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import static svnserver.SvnTestHelper.*;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * Check svn locking.
@@ -38,10 +38,6 @@ import static svnserver.SvnTestHelper.*;
  */
 @Listeners(SvnTesterExternalListener.class)
 public class SvnLockTest {
-  @NotNull
-  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
-      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-      .build();
 
   /**
    * Check to take lock on absent file.
@@ -147,6 +143,16 @@ public class SvnLockTest {
     }
   }
 
+  private void compareLock(@Nullable SVNLock actual, @Nullable SVNLock expected) {
+    if (expected == null) {
+      Assert.assertNull(actual);
+    } else {
+      Assert.assertNotNull(actual);
+      Assert.assertEquals(actual.getID(), expected.getID());
+      Assert.assertEquals(actual.getComment(), expected.getComment());
+    }
+  }
+
   /**
    * Check to break lock.
    */
@@ -168,16 +174,6 @@ public class SvnLockTest {
 
       unlock(repo, oldLock, true, null);
       Assert.assertNull(repo.getLock("example.txt"));
-    }
-  }
-
-  private void compareLock(@Nullable SVNLock actual, @Nullable SVNLock expected) {
-    if (expected == null) {
-      Assert.assertNull(actual);
-    } else {
-      Assert.assertNotNull(actual);
-      Assert.assertEquals(actual.getID(), expected.getID());
-      Assert.assertEquals(actual.getComment(), expected.getComment());
     }
   }
 

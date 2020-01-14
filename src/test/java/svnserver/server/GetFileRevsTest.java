@@ -26,7 +26,7 @@ import java.util.List;
 
 import static svnserver.SvnTestHelper.createFile;
 import static svnserver.SvnTestHelper.modifyFile;
-import static svnserver.server.CheckPathAndStatCmdTest.propsEolNative;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 @Listeners(SvnTesterExternalListener.class)
 public final class GetFileRevsTest {

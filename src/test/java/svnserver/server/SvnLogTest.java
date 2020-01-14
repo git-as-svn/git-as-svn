@@ -7,7 +7,6 @@
  */
 package svnserver.server;
 
-import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
@@ -20,6 +19,7 @@ import svnserver.SvnTestServer;
 import java.util.*;
 
 import static svnserver.SvnTestHelper.*;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * Check file properties.
@@ -27,10 +27,6 @@ import static svnserver.SvnTestHelper.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnLogTest {
-  @NotNull
-  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
-      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-      .build();
 
   /**
    * Check simple svn log behaviour.

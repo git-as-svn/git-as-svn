@@ -7,31 +7,28 @@
  */
 package svnserver.server;
 
-import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.tester.SvnTester;
 import svnserver.tester.SvnTesterDataProvider;
 import svnserver.tester.SvnTesterExternalListener;
 import svnserver.tester.SvnTesterFactory;
 
-import java.util.Map;
-
 import static svnserver.SvnTestHelper.createFile;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 @Listeners(SvnTesterExternalListener.class)
 public final class CheckPathAndStatCmdTest {
-  @NotNull
-  final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
-      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-      .build();
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void nonexistentRev(@NotNull SvnTesterFactory factory) throws Exception {

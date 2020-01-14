@@ -36,7 +36,7 @@ public class SvnFilePropertyTest {
       .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
       .build();
   @NotNull
-  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
+  public final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
       .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
       .build();
   @NotNull

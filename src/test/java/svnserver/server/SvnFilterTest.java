@@ -13,7 +13,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
@@ -22,13 +21,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 import static svnserver.SvnTestHelper.*;
+import static svnserver.server.SvnFilePropertyTest.propsBinary;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * Check file content filter.
@@ -40,14 +39,6 @@ public class SvnFilterTest {
   private final static byte[] CONTENT_FOO = (Strings.repeat("Some data\n", 100) + "Foo file\n").getBytes(StandardCharsets.UTF_8);
   @NotNull
   private final static byte[] CONTENT_BAR = (Strings.repeat("Some data\n", 100) + "Bar file\n").getBytes(StandardCharsets.UTF_8);
-  @NotNull
-  private final static Map<String, String> propsBinary = new HashMap<String, String>() {{
-    put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE);
-  }};
-  @NotNull
-  private final static Map<String, String> propsNative = new HashMap<String, String>() {{
-    put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE);
-  }};
 
   /**
    * Check file read content on filter change.
@@ -68,7 +59,7 @@ public class SvnFilterTest {
       checkFileContent(repo, "/data.z", compressed);
       checkFileContent(repo, "/data.x", compressed);
       // Add filter to file.
-      createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", propsNative);
+      createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", propsEolNative);
       // On file read now we must have uncompressed content.
       checkFileProp(repo, "/data.z", propsBinary);
       checkFileProp(repo, "/data.x", propsBinary);
@@ -111,7 +102,7 @@ public class SvnFilterTest {
       checkFileContent(repo, "/data.z", compressed);
       checkFileContent(repo, "/data.x", compressed);
       // Add filter to file.
-      createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", propsNative);
+      createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", propsEolNative);
       // After commit .gitattributes file data.z must change property svn:mime-type and content automagically.
       {
         final Set<String> changed = new HashSet<>();
@@ -121,7 +112,7 @@ public class SvnFilterTest {
         Assert.assertEquals(changed.size(), 2);
       }
       // On file read now we must have uncompressed content.
-      checkFileProp(repo, "/data.z", propsNative);
+      checkFileProp(repo, "/data.z", propsEolNative);
       checkFileProp(repo, "/data.x", propsBinary);
       checkFileContent(repo, "/data.z", uncompressed);
       checkFileContent(repo, "/data.x", compressed);
@@ -138,7 +129,7 @@ public class SvnFilterTest {
       }
       // Check result.
       checkFileProp(repo, "/data.z", propsBinary);
-      checkFileProp(repo, "/data.x", propsNative);
+      checkFileProp(repo, "/data.x", propsEolNative);
       checkFileContent(repo, "/data.z", compressed);
       checkFileContent(repo, "/data.x", uncompressed);
     }
@@ -153,9 +144,9 @@ public class SvnFilterTest {
       final SVNRepository repo = server.openSvnRepository();
 
       // Add filter to file.
-      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", propsNative);
+      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", propsEolNative);
       // On file read now we must have uncompressed content.
-      createFile(repo, "/data.z", CONTENT_FOO, propsNative);
+      createFile(repo, "/data.z", CONTENT_FOO, propsEolNative);
       checkFileContent(repo, "/data.z", CONTENT_FOO);
       // Modify file.
       modifyFile(repo, "/data.z", CONTENT_BAR, repo.getLatestRevision());
@@ -266,9 +257,9 @@ public class SvnFilterTest {
       final SVNRepository repo = server.openSvnRepository();
 
       // Add filter to file.
-      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", propsNative);
+      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", propsEolNative);
       // Create source file.
-      createFile(repo, "/data.txt", CONTENT_FOO, propsNative);
+      createFile(repo, "/data.txt", CONTENT_FOO, propsEolNative);
       // Copy source file with "raw" filter to destination with "gzip" filter.
       {
         final long rev = repo.getLatestRevision();
@@ -293,9 +284,9 @@ public class SvnFilterTest {
       final SVNRepository repo = server.openSvnRepository();
 
       // Add filter to file.
-      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", propsNative);
+      createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", propsEolNative);
       // Create source file.
-      createFile(repo, "/data.txt", CONTENT_FOO, propsNative);
+      createFile(repo, "/data.txt", CONTENT_FOO, propsEolNative);
       // Copy source file with "raw" filter to destination with "gzip" filter.
       {
         final long rev = repo.getLatestRevision();

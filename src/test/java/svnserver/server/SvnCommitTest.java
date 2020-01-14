@@ -7,7 +7,6 @@
  */
 package svnserver.server;
 
-import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -17,9 +16,13 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import static svnserver.SvnTestHelper.*;
+import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * Simple update tests.
@@ -27,10 +30,6 @@ import static svnserver.SvnTestHelper.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnCommitTest {
-  @NotNull
-  private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
-      .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-      .build();
 
   /**
    * Check file copy.
