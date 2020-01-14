@@ -24,8 +24,7 @@ import svnserver.context.SharedContext;
 import svnserver.repository.SvnForbiddenException;
 import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.filter.GitFilter;
-import svnserver.repository.git.filter.GitFilterLink;
-import svnserver.repository.git.filter.GitFilterRaw;
+import svnserver.repository.git.filter.GitFilters;
 import svnserver.repository.git.prop.GitProperty;
 import svnserver.repository.git.prop.GitPropertyFactory;
 import svnserver.repository.git.prop.PropertyMapping;
@@ -60,7 +59,7 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
   @NotNull
   private final HTreeMap<String, Boolean> binaryCache;
   @NotNull
-  private final Map<String, GitFilter> gitFilters;
+  private final GitFilters gitFilters;
   @NotNull
   private final Map<ObjectId, GitProperty[]> directoryPropertyCache = new ConcurrentHashMap<>();
   @NotNull
@@ -81,7 +80,7 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
                        @NotNull Set<String> branches,
                        boolean renameDetection,
                        @NotNull LockStorage lockStorage,
-                       @NotNull Map<String, GitFilter> filters) throws IOException {
+                       @NotNull GitFilters filters) throws IOException {
     this.context = context;
     final SharedContext shared = context.getShared();
     shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(git);
@@ -187,23 +186,24 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
 
   @NotNull
   GitFilter getFilter(@NotNull FileMode fileMode, @NotNull GitProperty[] props) {
-    if (fileMode.getObjectType() != Constants.OBJ_BLOB) {
-      return gitFilters.get(GitFilterRaw.NAME);
-    }
-    if (fileMode == FileMode.SYMLINK) {
-      return gitFilters.get(GitFilterLink.NAME);
-    }
+    if (fileMode.getObjectType() != Constants.OBJ_BLOB)
+      return gitFilters.raw;
+
+    if (fileMode == FileMode.SYMLINK)
+      return gitFilters.link;
+
     for (int i = props.length - 1; i >= 0; --i) {
       final String filterName = props[i].getFilterName();
-      if (filterName != null) {
-        final GitFilter filter = gitFilters.get(filterName);
-        if (filter == null) {
-          throw new InvalidStreamException("Unknown filter requested: " + filterName);
-        }
-        return filter;
-      }
+      if (filterName == null)
+        continue;
+
+      final GitFilter filter = gitFilters.get(filterName);
+      if (filter == null)
+        throw new InvalidStreamException("Unknown filter requested: " + filterName);
+
+      return filter;
     }
-    return gitFilters.get(GitFilterRaw.NAME);
+    return gitFilters.raw;
   }
 
   @NotNull

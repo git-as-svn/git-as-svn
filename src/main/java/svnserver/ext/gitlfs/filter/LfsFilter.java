@@ -40,8 +40,6 @@ import java.util.Map;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public final class LfsFilter implements GitFilter {
-  @NotNull
-  public static final String NAME = "lfs";
 
   @Nullable
   private final LfsStorage storage;
@@ -60,7 +58,7 @@ public final class LfsFilter implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return NAME;
+    return "lfs";
   }
 
   @NotNull

@@ -28,8 +28,6 @@ import java.util.Map;
  */
 public final class GitFilterRaw implements GitFilter {
   @NotNull
-  public static final String NAME = "raw";
-  @NotNull
   private final Map<String, String> cacheMd5;
 
   public GitFilterRaw(@NotNull LocalContext context) {
@@ -39,7 +37,7 @@ public final class GitFilterRaw implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return NAME;
+    return "raw";
   }
 
   @NotNull

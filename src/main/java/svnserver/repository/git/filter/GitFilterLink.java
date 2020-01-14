@@ -29,8 +29,6 @@ import java.util.Map;
  */
 public class GitFilterLink implements GitFilter {
   @NotNull
-  public static final String NAME = "link";
-  @NotNull
   private static final byte[] LINK_PREFIX = "link ".getBytes(StandardCharsets.ISO_8859_1);
   @NotNull
   private final Map<String, String> cacheMd5;
@@ -42,7 +40,7 @@ public class GitFilterLink implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return NAME;
+    return "link";
   }
 
   @NotNull

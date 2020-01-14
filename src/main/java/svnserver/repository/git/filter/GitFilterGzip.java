@@ -26,8 +26,6 @@ import java.util.zip.GZIPOutputStream;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public class GitFilterGzip implements GitFilter {
-  @NotNull
-  public static final String NAME = "gzip";
 
   @NotNull
   private final Map<String, String> cacheMd5;
@@ -42,7 +40,7 @@ public class GitFilterGzip implements GitFilter {
   @NotNull
   @Override
   public String getName() {
-    return NAME;
+    return "gzip";
   }
 
   @NotNull

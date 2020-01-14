@@ -15,16 +15,12 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import svnserver.Loggers;
 import svnserver.context.LocalContext;
-import svnserver.ext.gitlfs.filter.LfsFilter;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitLocation;
 import svnserver.repository.git.GitRepository;
-import svnserver.repository.git.filter.GitFilter;
-import svnserver.repository.git.filter.GitFilterGzip;
-import svnserver.repository.git.filter.GitFilterLink;
-import svnserver.repository.git.filter.GitFilterRaw;
+import svnserver.repository.git.filter.GitFilters;
 import svnserver.repository.git.push.GitPushEmbeddedConfig;
 import svnserver.repository.git.push.GitPusher;
 import svnserver.repository.locks.LocalLockManager;
@@ -33,7 +29,10 @@ import svnserver.repository.locks.LockStorage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Repository configuration.
@@ -112,13 +111,7 @@ public final class GitRepositoryConfig {
       lockStorage = new LocalLockManager(LocalLockManager.getPersistentStorage(context));
     }
 
-    final Map<String, GitFilter> filters = new HashMap<>();
-
-    filters.put(GitFilterLink.NAME, new GitFilterLink(context));
-    filters.put(GitFilterGzip.NAME, new GitFilterGzip(context));
-    filters.put(GitFilterRaw.NAME, new GitFilterRaw(context));
-    filters.put(LfsFilter.NAME, new LfsFilter(context, lfsStorage));
-
+    final GitFilters filters = new GitFilters(context, lfsStorage);
     return new GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters);
   }
 }
