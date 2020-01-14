@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnTesterExternalListener implements ITestListener {
+public final class SvnTesterExternalListener implements ITestListener {
   @NotNull
   private static final Logger log = TestHelper.logger;
   @NotNull

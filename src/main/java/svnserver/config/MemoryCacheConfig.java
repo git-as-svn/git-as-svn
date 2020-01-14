@@ -20,7 +20,7 @@ import java.nio.file.Path;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("memoryCache")
-public class MemoryCacheConfig implements CacheConfig {
+public final class MemoryCacheConfig implements CacheConfig {
   @NotNull
   @Override
   public DB createCache(@NotNull Path basePath) {

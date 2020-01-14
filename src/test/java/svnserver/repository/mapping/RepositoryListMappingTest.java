@@ -26,7 +26,7 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class RepositoryListMappingTest {
+public final class RepositoryListMappingTest {
 
   @Test
   public void repoRootRelocate() throws Exception {

@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsMemoryStorageTest {
+public final class LfsMemoryStorageTest {
   @Test
   public void simple() throws IOException {
     LfsMemoryStorage storage = new LfsMemoryStorage();

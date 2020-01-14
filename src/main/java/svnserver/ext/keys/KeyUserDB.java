@@ -7,38 +7,37 @@
  */
 package svnserver.ext.keys;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
+import svnserver.auth.Authenticator;
+import svnserver.auth.User;
+import svnserver.auth.UserDB;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
+public final class KeyUserDB implements UserDB {
 
-import svnserver.auth.Authenticator;
-import svnserver.auth.User;
-import svnserver.auth.UserDB;
+  private final UserDB internal;
+  private final KeyAuthenticator keyAuthenticator;
 
-public class KeyUserDB implements UserDB {
+  public KeyUserDB(UserDB internal, String secretToken) {
+    this.internal = internal;
+    this.keyAuthenticator = new KeyAuthenticator(internal, secretToken);
+  }
 
-    private final UserDB internal;
-    private final KeyAuthenticator keyAuthenticator;
+  @Override
+  public void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
+    internal.updateEnvironment(environment, userInfo);
+  }
 
-    public KeyUserDB(UserDB internal, String secretToken) {
-        this.internal = internal;
-        this.keyAuthenticator = new KeyAuthenticator(internal, secretToken);
-    }
-
-    @Override
-    public void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
-        internal.updateEnvironment(environment, userInfo);
-    }
-
-	@Override
-    public @NotNull Collection<Authenticator> authenticators() {
-        ArrayList<Authenticator> authenticators = new ArrayList<>(internal.authenticators());
-        authenticators.add(keyAuthenticator);
+  @Override
+  public @NotNull Collection<Authenticator> authenticators() {
+    ArrayList<Authenticator> authenticators = new ArrayList<>(internal.authenticators());
+    authenticators.add(keyAuthenticator);
 
         return Collections.unmodifiableList(authenticators);
     }

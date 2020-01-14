@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitLabHookEventTest {
+public final class GitLabHookEventTest {
   @Test
   void projectCreated() throws IOException {
     try (Reader reader = new InputStreamReader(getClass().getResourceAsStream("project-created.json"), StandardCharsets.UTF_8)) {

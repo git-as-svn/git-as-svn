@@ -20,7 +20,7 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class CopyFromSVNEditor extends SVNEditorWrapper {
+public final class CopyFromSVNEditor extends SVNEditorWrapper {
   @NotNull
   private final Map<String, String> copyFrom = new TreeMap<>();
   @NotNull

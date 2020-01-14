@@ -25,7 +25,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFilterGzip implements GitFilter {
+public final class GitFilterGzip implements GitFilter {
 
   @NotNull
   private final Map<String, String> cacheMd5;

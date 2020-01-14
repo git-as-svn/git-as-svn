@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitFilterLink implements GitFilter {
+public final class GitFilterLink implements GitFilter {
   @NotNull
   private static final byte[] LINK_PREFIX = "link ".getBytes(StandardCharsets.ISO_8859_1);
   @NotNull

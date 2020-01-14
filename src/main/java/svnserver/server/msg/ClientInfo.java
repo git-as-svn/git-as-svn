@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNURL;
  *
  * @author a.navrotskiy
  */
-public class ClientInfo {
+public final class ClientInfo {
   private final int protocolVersion;
   @NotNull
   private final String[] capabilities;

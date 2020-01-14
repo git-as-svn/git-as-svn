@@ -93,7 +93,7 @@ public final class GitWriter implements AutoCloseable {
     }
   }
 
-  public class GitCommitBuilder {
+  public final class GitCommitBuilder {
     @NotNull
     private final Deque<GitTreeUpdate> treeStack;
     @NotNull

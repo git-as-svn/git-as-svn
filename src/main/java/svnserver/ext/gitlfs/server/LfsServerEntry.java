@@ -17,7 +17,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class LfsServerEntry implements Local {
+public final class LfsServerEntry implements Local {
   @NotNull
   private final LfsServer server;
   @NotNull
@@ -30,7 +30,7 @@ public class LfsServerEntry implements Local {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     server.unregister(context);
   }
 }

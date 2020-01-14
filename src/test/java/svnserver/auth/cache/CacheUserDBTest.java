@@ -19,7 +19,7 @@ import svnserver.auth.User;
  *
  * @author Artem V. Navrotskiy
  */
-public class CacheUserDBTest {
+public final class CacheUserDBTest {
   @Test
   public void testSimple() throws SVNException {
     User user = User.create("foo", "Foo", "foo@bar", "f01", UserType.Local);

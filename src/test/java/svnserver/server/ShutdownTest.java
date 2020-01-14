@@ -23,7 +23,7 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class ShutdownTest {
+public final class ShutdownTest {
   private static final int SHOWDOWN_TIME = 5000;
   private static final int FORCE_TIME = 1;
   private static final int JOIN_TIME = 100;
@@ -33,8 +33,6 @@ public class ShutdownTest {
    * <p>
    * * All old connection have a small time to finish work.
    * * New connection is not accepted.
-   *
-   * @throws Exception
    */
   @Test
   public void simpleShutdown() throws Exception {
@@ -60,33 +58,6 @@ public class ShutdownTest {
     checkThreads(oldThreads);
   }
 
-  /**
-   * Check simple shutdown:
-   * <p>
-   * * All old connection have a small time to finish work.
-   * * New connection is not accepted.
-   *
-   * @throws Exception
-   */
-  @Test
-  public void timeoutShutdown() throws Exception {
-    final Map<String, Thread> oldThreads = getAllThreads();
-    final SvnTestServer server = SvnTestServer.createEmpty();
-    final SVNRepository repo = server.openSvnRepository();
-    repo.getLatestRevision();
-    final ISVNEditor editor = repo.getCommitEditor("Empty commit", null, false, null);
-    editor.openRoot(-1);
-    server.startShutdown();
-    server.shutdown(FORCE_TIME);
-    checkThreads(oldThreads);
-    try {
-      editor.closeDir();
-      editor.closeEdit();
-      repo.closeSession();
-    } catch (SVNException ignored) {
-    }
-  }
-
   private static void checkThreads(@NotNull Map<String, Thread> oldThreads) throws InterruptedException {
     final Map<String, Thread> newThreads = getAllThreads();
     for (Map.Entry<String, Thread> entry : newThreads.entrySet()) {
@@ -109,6 +80,31 @@ public class ShutdownTest {
         }
         return result;
       }
+    }
+  }
+
+  /**
+   * Check simple shutdown:
+   * <p>
+   * * All old connection have a small time to finish work.
+   * * New connection is not accepted.
+   */
+  @Test
+  public void timeoutShutdown() throws Exception {
+    final Map<String, Thread> oldThreads = getAllThreads();
+    final SvnTestServer server = SvnTestServer.createEmpty();
+    final SVNRepository repo = server.openSvnRepository();
+    repo.getLatestRevision();
+    final ISVNEditor editor = repo.getCommitEditor("Empty commit", null, false, null);
+    editor.openRoot(-1);
+    server.startShutdown();
+    server.shutdown(FORCE_TIME);
+    checkThreads(oldThreads);
+    try {
+      editor.closeDir();
+      editor.closeEdit();
+      repo.closeSession();
+    } catch (SVNException ignored) {
     }
   }
 }

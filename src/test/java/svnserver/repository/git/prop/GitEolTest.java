@@ -25,7 +25,7 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitEolTest {
+public final class GitEolTest {
   @DataProvider(name = "parseAttributesData")
   public static Object[][] parseAttributesData() {
     final GitProperty[] attr = GitProperty.joinProperties(

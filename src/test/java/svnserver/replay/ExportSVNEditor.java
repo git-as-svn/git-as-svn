@@ -9,7 +9,6 @@ package svnserver.replay;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 
 import java.util.*;
@@ -19,7 +18,7 @@ import java.util.*;
  *
  * @author a.navrotskiy
  */
-public class ExportSVNEditor extends SVNEditorWrapper {
+public final class ExportSVNEditor extends SVNEditorWrapper {
   @NotNull
   private final Deque<String> paths = new ArrayDeque<>();
   @NotNull
@@ -32,40 +31,40 @@ public class ExportSVNEditor extends SVNEditorWrapper {
   }
 
   @Override
-  public void openRoot(long revision) throws SVNException {
+  public void openRoot(long revision) {
     paths.push("/");
     files.put("/", "dir");
   }
 
   @Override
-  public void addDir(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) throws SVNException {
+  public void addDir(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) {
     paths.push(path);
     files.put(path, "directory");
   }
 
   @Override
-  public void openDir(String path, long revision) throws SVNException {
+  public void openDir(String path, long revision) {
     paths.push(path);
     files.put(path, "directory");
   }
 
   @Override
-  public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+  public void changeDirProperty(String name, SVNPropertyValue value) {
     properties.computeIfAbsent(paths.element(), (s) -> new TreeMap<>()).put(name, value.getString());
   }
 
   @Override
-  public void closeDir() throws SVNException {
+  public void closeDir() {
     paths.pop();
   }
 
   @Override
-  public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+  public void changeFileProperty(String path, String name, SVNPropertyValue value) {
     properties.computeIfAbsent(paths.element(), (s) -> new TreeMap<>()).put(name, value.getString());
   }
 
   @Override
-  public void closeFile(String path, String textChecksum) throws SVNException {
+  public void closeFile(String path, String textChecksum) {
     files.put(path, textChecksum);
   }
 

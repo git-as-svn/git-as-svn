@@ -12,10 +12,8 @@ import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 
-import java.io.IOException;
-
 @ConfigType("sshKeys")
-public class KeysConfig implements SharedConfig {
+public final class KeysConfig implements SharedConfig {
 
   @NotNull
   private String originalAppPath = "";
@@ -27,7 +25,7 @@ public class KeysConfig implements SharedConfig {
   private String realSSHDirectory = "";
 
   @Override
-  public void create(@NotNull SharedContext context) throws IOException {
+  public void create(@NotNull SharedContext context) {
     SSHDirectoryWatcher watcher = new SSHDirectoryWatcher(this, null);
     context.add(SSHDirectoryWatcher.class, watcher);
   }

@@ -18,7 +18,7 @@ import svnserver.context.LocalContext;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("pushNative")
-public class GitPushNativeConfig implements GitPusherConfig {
+public final class GitPushNativeConfig implements GitPusherConfig {
   @NotNull
   public static final GitPushNativeConfig instance = new GitPushNativeConfig();
 

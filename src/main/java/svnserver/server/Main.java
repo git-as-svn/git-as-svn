@@ -25,7 +25,7 @@ import java.nio.file.Paths;
  * @author a.navrotskiy
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class Main {
+public final class Main {
   @NotNull
   private static final Logger log = Loggers.misc;
 

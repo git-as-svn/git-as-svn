@@ -23,7 +23,7 @@ import java.nio.file.Path;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("persistentCache")
-public class PersistentCacheConfig implements CacheConfig {
+public final class PersistentCacheConfig implements CacheConfig {
   @SuppressWarnings("FieldCanBeLocal")
   @NotNull
   private String path = "git-as-svn.mapdb";

@@ -22,7 +22,7 @@ import java.util.Collections;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitCreateModeTest {
+public final class GitCreateModeTest {
   @Test
   public void testEmpty() throws IOException {
     smoke(GitCreateMode.EMPTY);

@@ -30,7 +30,7 @@ import static svnserver.SvnTestHelper.*;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnFilePropertyTest {
+public final class SvnFilePropertyTest {
   @NotNull
   public final static Map<String, String> propsBinary = ImmutableMap.<String, String>builder()
       .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)

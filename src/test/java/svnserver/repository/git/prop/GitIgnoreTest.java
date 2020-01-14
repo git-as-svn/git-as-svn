@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitIgnoreTest {
+public final class GitIgnoreTest {
   @Test
   public void testParseAttributes() {
     final GitProperty attr = new GitIgnore(

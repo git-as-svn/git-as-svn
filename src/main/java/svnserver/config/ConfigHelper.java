@@ -17,7 +17,7 @@ import java.nio.file.Path;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class ConfigHelper {
+public final class ConfigHelper {
   @NotNull
   public static Path joinPath(@NotNull Path basePath, @NotNull String localPath) {
     return basePath.resolve(localPath).normalize();

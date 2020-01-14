@@ -19,7 +19,7 @@ import svnserver.context.LocalContext;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("pushEmbedded")
-public class GitPushEmbeddedConfig implements GitPusherConfig {
+public final class GitPushEmbeddedConfig implements GitPusherConfig {
   @NotNull
   public static final GitPushEmbeddedConfig instance = new GitPushEmbeddedConfig();
 

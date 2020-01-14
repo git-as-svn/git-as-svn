@@ -27,7 +27,6 @@ import static svnserver.server.SvnFilePropertyTest.propsEolNative;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnLogTest {
-
   /**
    * Check simple svn log behaviour.
    */

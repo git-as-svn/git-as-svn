@@ -14,7 +14,7 @@ import java.io.IOException;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnForbiddenException extends IOException {
+public final class SvnForbiddenException extends IOException {
   public SvnForbiddenException() {
   }
 }

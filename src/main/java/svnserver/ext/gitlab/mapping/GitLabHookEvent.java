@@ -23,7 +23,7 @@ import java.io.Reader;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GitLabHookEvent {
+public final class GitLabHookEvent {
   @NotNull
   private static final ObjectMapper mapper = new ObjectMapper();
   @JsonProperty("event_name")

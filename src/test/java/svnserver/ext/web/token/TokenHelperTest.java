@@ -21,7 +21,7 @@ import svnserver.auth.User;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class TokenHelperTest {
+public final class TokenHelperTest {
   @Test
   public void simpleWithoutExternal() {
     final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local);

@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnTesterDataProvider {
+public final class SvnTesterDataProvider {
   public static final class NamedFactory implements SvnTesterFactory {
     @NotNull
     private final String name;

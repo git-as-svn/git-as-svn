@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnServerParserTest {
+public final class SvnServerParserTest {
   @SuppressWarnings("MagicNumber")
   @Test
   public void testSimpleParse() throws IOException {

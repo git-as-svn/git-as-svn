@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-public class PropertyMapping {
+public final class PropertyMapping {
   @NotNull
   private static final Map<String, GitPropertyFactory> parserByFile = new TreeMap<>();
   @NotNull

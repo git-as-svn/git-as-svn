@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ConfigType("submodules")
-public class SharedSubmodulesConfig extends ArrayList<String> implements SharedConfig {
+public final class SharedSubmodulesConfig extends ArrayList<String> implements SharedConfig {
 
   @Override
   public void create(@NotNull SharedContext context) throws IOException {

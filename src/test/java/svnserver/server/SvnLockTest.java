@@ -37,7 +37,7 @@ import static svnserver.server.SvnFilePropertyTest.propsEolNative;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @Listeners(SvnTesterExternalListener.class)
-public class SvnLockTest {
+public final class SvnLockTest {
 
   /**
    * Check to take lock on absent file.

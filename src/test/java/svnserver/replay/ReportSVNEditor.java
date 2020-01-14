@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -25,7 +24,7 @@ import java.util.*;
  *
  * @author a.navrotskiy
  */
-public class ReportSVNEditor implements ISVNEditor {
+public final class ReportSVNEditor implements ISVNEditor {
   @NotNull
   private final Deque<String> paths = new ArrayDeque<>();
   @NotNull
@@ -35,18 +34,33 @@ public class ReportSVNEditor implements ISVNEditor {
   private long targetRevision = 0;
 
   @Override
-  public void targetRevision(long revision) throws SVNException {
+  public void targetRevision(long revision) {
     this.targetRevision = revision;
   }
 
   @Override
-  public void openRoot(long revision) throws SVNException {
+  public void openRoot(long revision) {
     paths.push("/");
     add("", "open-root: " + rev(revision));
   }
 
   @Override
-  public void addDir(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) throws SVNException {
+  public void deleteEntry(String path, long revision) {
+    del(path, "delete-entry: " + rev(revision));
+  }
+
+  @Override
+  public void absentDir(String path) {
+    add(path, "absent-dir");
+  }
+
+  @Override
+  public void absentFile(String path) {
+    add(path, "absent-file");
+  }
+
+  @Override
+  public void addDir(@NotNull String path, @Nullable String copyFromPath, long copyFromRevision) {
     paths.push(path);
     if (copyFromPath != null) {
       add("add-dir: " + copyFromPath + ", " + rev(copyFromRevision));
@@ -56,28 +70,23 @@ public class ReportSVNEditor implements ISVNEditor {
   }
 
   @Override
-  public void openDir(String path, long revision) throws SVNException {
+  public void openDir(String path, long revision) {
     paths.push(path);
     add("open-dir: " + rev(revision));
   }
 
   @Override
-  public void deleteEntry(String path, long revision) throws SVNException {
-    del(path, "delete-entry: " + rev(revision));
+  public void changeDirProperty(String name, SVNPropertyValue value) {
+    add("change-dir-prop: " + name + (value == null ? " (removed)" : ""));
   }
 
   @Override
-  public void absentFile(String path) throws SVNException {
-    add(path, "absent-file");
+  public void closeDir() {
+    paths.pop();
   }
 
   @Override
-  public void absentDir(String path) throws SVNException {
-    add(path, "absent-dir");
-  }
-
-  @Override
-  public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+  public void addFile(String path, String copyFromPath, long copyFromRevision) {
     if (copyFromPath != null) {
       add(path, "add-file: " + copyFromPath + ", " + rev(copyFromRevision));
     } else {
@@ -86,63 +95,42 @@ public class ReportSVNEditor implements ISVNEditor {
   }
 
   @Override
-  public void openFile(String path, long revision) throws SVNException {
+  public void openFile(String path, long revision) {
     add(path, "open-file: " + rev(revision));
   }
 
   @Override
-  public void closeDir() throws SVNException {
-    paths.pop();
-  }
-
-  @Override
-  public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-    add("change-dir-prop: " + name + (value == null ? " (removed)" : ""));
-  }
-
-  @Override
-  public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+  public void changeFileProperty(String path, String name, SVNPropertyValue value) {
     add(path, "change-file-prop: " + name + (value == null ? " (removed)" : ""));
   }
 
   @Override
-  public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-    add(path, "apply-text-delta: " + baseChecksum);
-  }
-
-  @Override
-  public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-    add(path, "delta-chunk");
-    return null;
-  }
-
-  @Override
-  public void textDeltaEnd(String path) throws SVNException {
-    add(path, "delta-end");
-  }
-
-  @Override
-  public void closeFile(String path, String textChecksum) throws SVNException {
+  public void closeFile(String path, String textChecksum) {
     add(path, "close-file: " + textChecksum);
   }
 
   @Override
-  public void abortEdit() throws SVNException {
-    add("/", "abort-edit");
-  }
-
-  @Override
-  public SVNCommitInfo closeEdit() throws SVNException {
+  public SVNCommitInfo closeEdit() {
     return null;
   }
 
   @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    for (String line : report) {
-      sb.append(line).append("\n");
-    }
-    return sb.toString();
+  public void abortEdit() {
+    add("/", "abort-edit");
+  }
+
+  private void add(@NotNull String line) {
+    add(paths.getFirst(), line);
+  }
+
+  private void del(@NotNull String path, @NotNull String line) {
+    Assert.assertFalse(caseChecker.contains(StringHelper.parentDir(path)), "Remove after modification: " + path);
+    report.add(path + " - " + line);
+  }
+
+  private void add(@NotNull String path, @NotNull String line) {
+    caseChecker.add(StringHelper.parentDir(path));
+    report.add(path + " - " + line);
   }
 
   @NotNull
@@ -153,17 +141,28 @@ public class ReportSVNEditor implements ISVNEditor {
     return "r" + (targetRevision - revision);
   }
 
-  private void add(@NotNull String line) {
-    add(paths.getFirst(), line);
+  @Override
+  public void applyTextDelta(String path, String baseChecksum) {
+    add(path, "apply-text-delta: " + baseChecksum);
   }
 
-  private void add(@NotNull String path, @NotNull String line) {
-    caseChecker.add(StringHelper.parentDir(path));
-    report.add(path + " - " + line);
+  @Override
+  public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) {
+    add(path, "delta-chunk");
+    return null;
   }
 
-  private void del(@NotNull String path, @NotNull String line) {
-    Assert.assertFalse(caseChecker.contains(StringHelper.parentDir(path)), "Remove after modification: " + path);
-    report.add(path + " - " + line);
+  @Override
+  public void textDeltaEnd(String path) {
+    add(path, "delta-end");
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (String line : report) {
+      sb.append(line).append("\n");
+    }
+    return sb.toString();
   }
 }

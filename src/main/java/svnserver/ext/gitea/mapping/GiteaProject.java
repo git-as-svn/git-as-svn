@@ -26,7 +26,7 @@ import java.util.NavigableMap;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
-public class GiteaProject implements AutoCloseable, BranchProvider {
+public final class GiteaProject implements AutoCloseable, BranchProvider {
   @NotNull
   private static final Logger log = Loggers.gitea;
   @NotNull

@@ -19,7 +19,7 @@ import java.util.Map;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class GitTortoiseTest {
+public final class GitTortoiseTest {
   @Test
   public void testParseAttributes() throws IOException {
     final GitProperty attr = new GitTortoise(

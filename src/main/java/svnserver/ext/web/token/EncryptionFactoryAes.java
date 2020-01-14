@@ -20,7 +20,7 @@ import java.security.Key;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class EncryptionFactoryAes implements EncryptionFactory {
+public final class EncryptionFactoryAes implements EncryptionFactory {
   public static int KEY_SIZE = 0x10;
   @NotNull
   private final Key key;

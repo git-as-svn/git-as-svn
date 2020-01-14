@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class TokenHelper {
+public final class TokenHelper {
   @NotNull
   private static final Logger log = Loggers.web;
   @NotNull

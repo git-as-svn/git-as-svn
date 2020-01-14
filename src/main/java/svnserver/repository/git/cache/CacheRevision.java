@@ -21,7 +21,7 @@ import java.util.TreeMap;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class CacheRevision {
+public final class CacheRevision {
 
   @Nullable
   private final ObjectId gitCommitId;

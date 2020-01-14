@@ -21,7 +21,7 @@ import java.util.List;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class WildcardTest {
+public final class WildcardTest {
   @DataProvider
   public static Object[][] splitPatternData() {
     return new Object[][]{
@@ -35,7 +35,7 @@ public class WildcardTest {
   @Test(dataProvider = "splitPatternData")
   public static void splitPatternTest(@NotNull String pattern, @NotNull String[] expected) {
     final List<String> actual = WildcardHelper.splitPattern(pattern);
-    Assert.assertEquals(actual.toArray(new String[actual.size()]), expected, pattern);
+    Assert.assertEquals(actual.toArray(new String[0]), expected, pattern);
   }
 
   @DataProvider
@@ -82,7 +82,7 @@ public class WildcardTest {
     final List<String> actual = WildcardHelper.normalizePattern(WildcardHelper.splitPattern(pattern));
     Assert.assertTrue(actual.size() > 0);
     Assert.assertEquals(actual.remove(0), "/");
-    Assert.assertEquals(actual.toArray(new String[actual.size()]), expected, pattern);
+    Assert.assertEquals(actual.toArray(new String[0]), expected, pattern);
   }
 
   @DataProvider

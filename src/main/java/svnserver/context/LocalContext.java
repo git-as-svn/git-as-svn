@@ -17,7 +17,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-public class LocalContext extends Context<Local>  {
+public final class LocalContext extends Context<Local> {
   @NotNull
   private final SharedContext shared;
   @NotNull

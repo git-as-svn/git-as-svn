@@ -34,7 +34,7 @@ import static svnserver.server.SvnFilePropertyTest.propsEolNative;
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-public class SvnFilterTest {
+public final class SvnFilterTest {
   @NotNull
   private final static byte[] CONTENT_FOO = (Strings.repeat("Some data\n", 100) + "Foo file\n").getBytes(StandardCharsets.UTF_8);
   @NotNull
