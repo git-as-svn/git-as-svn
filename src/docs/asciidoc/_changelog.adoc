@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.22.0
 
 * Systemd unit now correctly waits for git-as-svn to shut down. https://github.com/bozaro/git-as-svn/issues/275[#275]
 * Update dependencies
