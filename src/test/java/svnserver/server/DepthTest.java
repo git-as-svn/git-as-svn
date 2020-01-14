@@ -31,42 +31,6 @@ import static svnserver.SvnTestHelper.sendDeltaAndClose;
  */
 @Listeners(SvnTesterExternalListener.class)
 public final class DepthTest {
-  @NotNull
-  private SvnTester create(@NotNull SvnTesterFactory factory) throws Exception {
-    final SvnTester tester = factory.create();
-
-    final SVNRepository repo = tester.openSvnRepository();
-    final ISVNEditor editor = repo.getCommitEditor("", null);
-    editor.openRoot(-1);
-
-    editor.changeDirProperty("svn:ignore", SVNPropertyValue.create("sample.txt"));
-
-    editor.addFile("/.gitattributes", null, -1);
-    sendDeltaAndClose(editor, "/.gitattributes", null, "* -text\n");
-
-    editor.addFile("/.gitignore", null, -1);
-    sendDeltaAndClose(editor, "/.gitignore", null, "/sample.txt\n");
-
-    editor.addDir("/a", null, -1);
-    editor.addDir("/a/b", null, -1);
-
-    editor.addFile("/a/b/e", null, -1);
-    sendDeltaAndClose(editor, "/a/b/e", null, "e body");
-
-    editor.addDir("/a/b/c", null, -1);
-
-    editor.addFile("/a/b/c/d", null, -1);
-    sendDeltaAndClose(editor, "/a/b/c/d", null, "d body");
-
-    editor.closeDir();
-    editor.closeDir();
-    editor.closeDir();
-    editor.closeDir();
-    editor.closeEdit();
-
-    return tester;
-  }
-
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
   public void interruptedUpdate(@NotNull SvnTesterFactory factory) throws Exception {
     try (SvnTester server = create(factory)) {
@@ -105,6 +69,49 @@ public final class DepthTest {
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
     }
+  }
+
+  @NotNull
+  private SvnTester create(@NotNull SvnTesterFactory factory) throws Exception {
+    final SvnTester tester = factory.create();
+
+    final SVNRepository repo = tester.openSvnRepository();
+    final ISVNEditor editor = repo.getCommitEditor("", null);
+    editor.openRoot(-1);
+
+    editor.changeDirProperty("svn:ignore", SVNPropertyValue.create("sample.txt"));
+
+    editor.addFile("/.gitattributes", null, -1);
+    sendDeltaAndClose(editor, "/.gitattributes", null, "* -text\n");
+
+    editor.addFile("/.gitignore", null, -1);
+    sendDeltaAndClose(editor, "/.gitignore", null, "/sample.txt\n");
+
+    editor.addDir("/a", null, -1);
+    editor.addDir("/a/b", null, -1);
+
+    editor.addFile("/a/b/e", null, -1);
+    sendDeltaAndClose(editor, "/a/b/e", null, "e body");
+
+    editor.addDir("/a/b/c", null, -1);
+
+    editor.addFile("/a/b/c/d", null, -1);
+    sendDeltaAndClose(editor, "/a/b/c/d", null, "d body");
+
+    editor.closeDir();
+    editor.closeDir();
+    editor.closeDir();
+    editor.closeDir();
+    editor.closeEdit();
+
+    return tester;
+  }
+
+  private void check(@NotNull SvnTester server, @NotNull String path, @Nullable SVNDepth depth, @NotNull ISVNReporterBaton reporterBaton, @NotNull String expected) throws SVNException {
+    final SVNRepository repo = server.openSvnRepository();
+    final ReportSVNEditor editor = new ReportSVNEditor();
+    repo.update(repo.getLatestRevision(), path, depth, false, reporterBaton, editor);
+    Assert.assertEquals(editor.toString(), expected);
   }
 
   @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider.class)
@@ -742,12 +749,5 @@ public final class DepthTest {
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
     }
-  }
-
-  private void check(@NotNull SvnTester server, @NotNull String path, @Nullable SVNDepth depth, @NotNull ISVNReporterBaton reporterBaton, @NotNull String expected) throws SVNException {
-    final SVNRepository repo = server.openSvnRepository();
-    final ReportSVNEditor editor = new ReportSVNEditor();
-    repo.update(repo.getLatestRevision(), path, depth, false, reporterBaton, editor);
-    Assert.assertEquals(editor.toString(), expected);
   }
 }

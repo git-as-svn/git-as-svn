@@ -31,8 +31,6 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnTestHelper {
-  @NotNull
-  private static final byte[] emptyBytes = {};
 
   private SvnTestHelper() {
   }

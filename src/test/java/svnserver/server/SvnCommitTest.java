@@ -37,8 +37,6 @@ public final class SvnCommitTest {
    * <pre>
    * svn copy README.md@45 README.copy
    * </pre>
-   *
-   * @throws Exception
    */
   @Test
   public void copyFileFromRevisionTest() throws Exception {
@@ -85,15 +83,13 @@ public final class SvnCommitTest {
    * <pre>
    * svn copy README.md@45 README.copy
    * </pre>
-   *
-   * @throws Exception
    */
   @Test
   public void copyDirFromRevisionTest() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
       {
-        final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
+        final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
         editor.openRoot(-1);
         editor.addDir("/src", null, -1);
         editor.addDir("/src/main", null, -1);
@@ -128,8 +124,8 @@ public final class SvnCommitTest {
       }
 
       // compare content
-      final Collection<SVNDirEntry> srcList = repo.getDir(srcDir, srcRev, null, 0, new ArrayList());
-      final Collection<SVNDirEntry> dstList = repo.getDir(dstDir, repo.getLatestRevision(), null, 0, new ArrayList());
+      final Collection<SVNDirEntry> srcList = repo.getDir(srcDir, srcRev, null, 0, new ArrayList<SVNDirEntry>());
+      final Collection<SVNDirEntry> dstList = repo.getDir(dstDir, repo.getLatestRevision(), null, 0, new ArrayList<SVNDirEntry>());
       checkEquals(srcList, dstList);
     }
   }
@@ -147,8 +143,6 @@ public final class SvnCommitTest {
 
   /**
    * Check commit out-of-date.
-   *
-   * @throws Exception
    */
   @Test
   public void commitFileOufOfDateTest() throws Exception {
@@ -171,8 +165,6 @@ public final class SvnCommitTest {
 
   /**
    * Check commit up-to-date.
-   *
-   * @throws Exception
    */
   @Test
   public void commitFileUpToDateTest() throws Exception {
@@ -190,8 +182,6 @@ public final class SvnCommitTest {
 
   /**
    * Check commit without e-mail.
-   *
-   * @throws Exception
    */
   @Test
   public void commitWithoutEmail() throws Exception {

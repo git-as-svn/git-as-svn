@@ -51,8 +51,6 @@ public class SvnFilterTest {
 
   /**
    * Check file read content on filter change.
-   *
-   * @throws Exception
    */
   @Test
   public void binaryRead() throws Exception {
@@ -86,10 +84,16 @@ public class SvnFilterTest {
     }
   }
 
+  private static byte[] gzip(@NotNull byte[] data) throws IOException {
+    final ByteArrayOutputStream result = new ByteArrayOutputStream();
+    try (OutputStream stream = new GZIPOutputStream(result)) {
+      stream.write(data);
+    }
+    return result.toByteArray();
+  }
+
   /**
    * Check file read content on filter change.
-   *
-   * @throws Exception
    */
   @Test
   public void textRead() throws Exception {
@@ -142,8 +146,6 @@ public class SvnFilterTest {
 
   /**
    * Write filtered file.
-   *
-   * @throws Exception
    */
   @Test()
   public void write() throws Exception {
@@ -163,8 +165,6 @@ public class SvnFilterTest {
 
   /**
    * Write file before .gitattributes in single commit.
-   *
-   * @throws Exception
    */
   @Test()
   public void writeBeforeAttributes() throws Exception {
@@ -212,8 +212,6 @@ public class SvnFilterTest {
 
   /**
    * Write file after .gitattributes in single commit.
-   *
-   * @throws Exception
    */
   @Test()
   public void writeAfterAttributes() throws Exception {
@@ -261,8 +259,6 @@ public class SvnFilterTest {
 
   /**
    * Copy file with filter change.
-   *
-   * @throws Exception
    */
   @Test()
   public void copy() throws Exception {
@@ -290,8 +286,6 @@ public class SvnFilterTest {
 
   /**
    * Copy file with filter change.
-   *
-   * @throws Exception
    */
   @Test()
   public void copyAndModify() throws Exception {
@@ -315,13 +309,5 @@ public class SvnFilterTest {
       // On file read now we must have uncompressed content.
       checkFileContent(repo, "/data.z", CONTENT_BAR);
     }
-  }
-
-  private static byte[] gzip(@NotNull byte[] data) throws IOException {
-    final ByteArrayOutputStream result = new ByteArrayOutputStream();
-    try (OutputStream stream = new GZIPOutputStream(result)) {
-      stream.write(data);
-    }
-    return result.toByteArray();
   }
 }

@@ -27,68 +27,11 @@ import static svnserver.SvnTestHelper.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnLogTest {
-  private static class LogEntry {
-    private final long revision;
-    @Nullable
-    private final String message;
-    @NotNull
-    private final Set<String> paths;
-
-    private LogEntry(@NotNull SVNLogEntry logEntry) {
-      this(logEntry.getRevision(), logEntry.getMessage(), convert(logEntry.getChangedPaths().values()));
-    }
-
-    private static Collection<String> convert(@NotNull Collection<SVNLogEntryPath> changedPaths) {
-      List<String> result = new ArrayList<>();
-      for (SVNLogEntryPath logPath : changedPaths) {
-        result.add(logPath.getType() + " " + logPath.getPath());
-      }
-      return result;
-    }
-
-    private LogEntry(long revision, @Nullable String message, @NotNull String... paths) {
-      this(revision, message, Arrays.asList(paths));
-    }
-
-    private LogEntry(long revision, @Nullable String message, @NotNull Collection<String> paths) {
-      this.revision = revision;
-      this.message = message;
-      this.paths = new TreeSet<>(paths);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final LogEntry logEntry = (LogEntry) o;
-      return revision == logEntry.revision
-          && Objects.equals(message, logEntry.message)
-          && paths.equals(logEntry.paths);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = (int) (revision ^ (revision >>> 32));
-      if (message != null)
-        result = 31 * result + message.hashCode();
-      result = 31 * result + paths.hashCode();
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "LogEntry{" +
-          "revision=" + revision +
-          ", message='" + message + '\'' +
-          ", paths=" + paths +
-          '}';
-    }
-  }
   @NotNull
   private final static Map<String, String> propsEolNative = ImmutableMap.<String, String>builder()
       .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
       .build();
+
   /**
    * Check simple svn log behaviour.
    */
@@ -144,6 +87,16 @@ public final class SvnLogTest {
           new LogEntry(0, null)
       );
     }
+  }
+
+  private void checkLog(@NotNull SVNRepository repo, long r1, long r2, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
+    checkLogLimit(repo, r1, r2, 0, path, expecteds);
+  }
+
+  private void checkLogLimit(@NotNull SVNRepository repo, long r1, long r2, int limit, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
+    final List<LogEntry> actual = new ArrayList<>();
+    repo.log(new String[]{path}, r1, r2, true, false, limit, logEntry -> actual.add(new LogEntry(logEntry)));
+    ArrayAsserts.assertArrayEquals(expecteds, actual.toArray(new LogEntry[0]));
   }
 
   /**
@@ -407,13 +360,62 @@ public final class SvnLogTest {
     }
   }
 
-  private void checkLog(@NotNull SVNRepository repo, long r1, long r2, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
-    checkLogLimit(repo, r1, r2, 0, path, expecteds);
-  }
+  private static class LogEntry {
+    private final long revision;
+    @Nullable
+    private final String message;
+    @NotNull
+    private final Set<String> paths;
 
-  private void checkLogLimit(@NotNull SVNRepository repo, long r1, long r2, int limit, @NotNull String path, @NotNull LogEntry... expecteds) throws SVNException {
-    final List<LogEntry> actual = new ArrayList<>();
-    repo.log(new String[]{path}, r1, r2, true, false, limit, logEntry -> actual.add(new LogEntry(logEntry)));
-    ArrayAsserts.assertArrayEquals(expecteds, actual.toArray(new LogEntry[0]));
+    private LogEntry(@NotNull SVNLogEntry logEntry) {
+      this(logEntry.getRevision(), logEntry.getMessage(), convert(logEntry.getChangedPaths().values()));
+    }
+
+    private LogEntry(long revision, @Nullable String message, @NotNull Collection<String> paths) {
+      this.revision = revision;
+      this.message = message;
+      this.paths = new TreeSet<>(paths);
+    }
+
+    private static Collection<String> convert(@NotNull Collection<SVNLogEntryPath> changedPaths) {
+      List<String> result = new ArrayList<>();
+      for (SVNLogEntryPath logPath : changedPaths) {
+        result.add(logPath.getType() + " " + logPath.getPath());
+      }
+      return result;
+    }
+
+    private LogEntry(long revision, @Nullable String message, @NotNull String... paths) {
+      this(revision, message, Arrays.asList(paths));
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int) (revision ^ (revision >>> 32));
+      if (message != null)
+        result = 31 * result + message.hashCode();
+      result = 31 * result + paths.hashCode();
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final LogEntry logEntry = (LogEntry) o;
+      return revision == logEntry.revision
+          && Objects.equals(message, logEntry.message)
+          && paths.equals(logEntry.paths);
+    }
+
+    @Override
+    public String toString() {
+      return "LogEntry{" +
+          "revision=" + revision +
+          ", message='" + message + '\'' +
+          ", paths=" + paths +
+          '}';
+    }
   }
 }

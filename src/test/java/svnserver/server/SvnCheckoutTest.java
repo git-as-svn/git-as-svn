@@ -158,7 +158,7 @@ public final class SvnCheckoutTest {
   public void checkoutAndUpdate() throws Exception {
     try (SvnTestServer server = SvnTestServer.createEmpty()) {
       final SVNRepository repo = server.openSvnRepository();
-      final ISVNEditor editor = repo.getCommitEditor("Intital state", null, false, null);
+      final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
       editor.openRoot(-1);
       editor.addDir("/src", null, -1);
       editor.addDir("/src/main", null, -1);
