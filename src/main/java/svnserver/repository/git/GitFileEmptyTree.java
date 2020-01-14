@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
-import svnserver.repository.git.prop.PropertyMapping;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -31,7 +30,7 @@ final class GitFileEmptyTree extends GitEntryImpl implements GitFile {
   private final int revision;
 
   GitFileEmptyTree(@NotNull GitBranch branch, @NotNull String parentPath, int revision) {
-    super(PropertyMapping.getRootProperties(), parentPath, GitProperty.emptyArray, "", FileMode.TREE);
+    super(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE);
     this.branch = branch;
     this.revision = revision;
   }

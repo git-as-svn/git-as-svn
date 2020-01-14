@@ -97,7 +97,7 @@ public final class LfsHttpStorageTest {
 
       try (SvnTestServer server = SvnTestServer.createEmpty(null, false, SvnTestServer.LfsMode.None, new GitAsSvnLfsHttpStorage(url, user))) {
         final SVNRepository svnRepository = server.openSvnRepository();
-        SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", null);
+        SvnTestHelper.createFile(svnRepository, ".gitattributes", "* -text\n*.txt filter=lfs diff=lfs merge=lfs -text", propsBinary);
 
         final byte[] data = LfsLocalStorageTest.bigFile();
 

@@ -18,7 +18,6 @@ import svnserver.repository.VcsCopyFrom;
 import svnserver.repository.VcsSupplier;
 import svnserver.repository.git.filter.GitFilter;
 import svnserver.repository.git.prop.GitProperty;
-import svnserver.repository.git.prop.PropertyMapping;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +57,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
 
   @NotNull
   public static GitFile create(@NotNull GitBranch branch, @NotNull RevTree tree, int revision) throws IOException {
-    return create(branch, PropertyMapping.getRootProperties(), "", new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, tree, ""), revision);
+    return create(branch, GitProperty.emptyArray, "", new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, tree, ""), revision);
   }
 
   @NotNull
@@ -120,12 +119,19 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
       props.remove(SVNProperty.MIME_TYPE);
       props.put(SVNProperty.SPECIAL, "*");
     } else {
-      if (fileMode.equals(FileMode.EXECUTABLE_FILE)) {
+      if (fileMode.equals(FileMode.EXECUTABLE_FILE))
         props.put(SVNProperty.EXECUTABLE, "*");
-      }
-      if (fileMode.getObjectType() == Constants.OBJ_BLOB && branch.getRepository().isObjectBinary(filter, getObjectId())) {
+
+      if (props.containsKey(SVNProperty.MIME_TYPE)) {
         props.remove(SVNProperty.EOL_STYLE);
-        props.put(SVNProperty.MIME_TYPE, MIME_BINARY);
+      } else if (props.containsKey(SVNProperty.EOL_STYLE)) {
+        props.remove(SVNProperty.MIME_TYPE);
+      } else if (fileMode.getObjectType() == Constants.OBJ_BLOB) {
+        if (branch.getRepository().isObjectBinary(filter, getObjectId())) {
+          props.put(SVNProperty.MIME_TYPE, MIME_BINARY);
+        } else {
+          props.put(SVNProperty.EOL_STYLE, SVNProperty.NATIVE);
+        }
       }
     }
     return props;

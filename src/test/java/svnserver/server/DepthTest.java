@@ -14,6 +14,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -65,6 +66,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
@@ -82,20 +84,24 @@ public final class DepthTest {
     editor.changeDirProperty("svn:ignore", SVNPropertyValue.create("sample.txt"));
 
     editor.addFile("/.gitattributes", null, -1);
-    sendDeltaAndClose(editor, "/.gitattributes", null, "* -text\n");
+    editor.changeFileProperty("/.gitattributes", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+    sendDeltaAndClose(editor, "/.gitattributes", null, "\n");
 
     editor.addFile("/.gitignore", null, -1);
+    editor.changeFileProperty("/.gitignore", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
     sendDeltaAndClose(editor, "/.gitignore", null, "/sample.txt\n");
 
     editor.addDir("/a", null, -1);
     editor.addDir("/a/b", null, -1);
 
     editor.addFile("/a/b/e", null, -1);
+    editor.changeFileProperty("/a/b/e", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
     sendDeltaAndClose(editor, "/a/b/e", null, "e body");
 
     editor.addDir("/a/b/c", null, -1);
 
     editor.addFile("/a/b/c/d", null, -1);
+    editor.changeFileProperty("/a/b/c/d", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
     sendDeltaAndClose(editor, "/a/b/c/d", null, "d body");
 
     editor.closeDir();
@@ -150,7 +156,8 @@ public final class DepthTest {
           ".gitattributes - change-file-prop: svn:entry:committed-rev\n" +
           ".gitattributes - change-file-prop: svn:entry:last-author\n" +
           ".gitattributes - change-file-prop: svn:entry:uuid\n" +
-          ".gitattributes - close-file: d3d04ac1b5897688b0d97abfd135aefa\n" +
+          ".gitattributes - change-file-prop: svn:eol-style\n" +
+          ".gitattributes - close-file: 68b329da9893e34099c7d8ad5cb9c940\n" +
           ".gitattributes - delta-chunk\n" +
           ".gitattributes - delta-end\n" +
           ".gitignore - add-file\n" +
@@ -159,6 +166,7 @@ public final class DepthTest {
           ".gitignore - change-file-prop: svn:entry:committed-rev\n" +
           ".gitignore - change-file-prop: svn:entry:last-author\n" +
           ".gitignore - change-file-prop: svn:entry:uuid\n" +
+          ".gitignore - change-file-prop: svn:eol-style\n" +
           ".gitignore - close-file: 57457451fdf67806102d334f30c062f3\n" +
           ".gitignore - delta-chunk\n" +
           ".gitignore - delta-end\n" +
@@ -187,6 +195,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n" +
@@ -196,6 +205,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -244,6 +254,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n" +
@@ -253,6 +264,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -296,6 +308,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
@@ -317,7 +330,8 @@ public final class DepthTest {
           ".gitattributes - change-file-prop: svn:entry:committed-rev\n" +
           ".gitattributes - change-file-prop: svn:entry:last-author\n" +
           ".gitattributes - change-file-prop: svn:entry:uuid\n" +
-          ".gitattributes - close-file: d3d04ac1b5897688b0d97abfd135aefa\n" +
+          ".gitattributes - change-file-prop: svn:eol-style\n" +
+          ".gitattributes - close-file: 68b329da9893e34099c7d8ad5cb9c940\n" +
           ".gitattributes - delta-chunk\n" +
           ".gitattributes - delta-end\n" +
           ".gitignore - add-file\n" +
@@ -326,6 +340,7 @@ public final class DepthTest {
           ".gitignore - change-file-prop: svn:entry:committed-rev\n" +
           ".gitignore - change-file-prop: svn:entry:last-author\n" +
           ".gitignore - change-file-prop: svn:entry:uuid\n" +
+          ".gitignore - change-file-prop: svn:eol-style\n" +
           ".gitignore - close-file: 57457451fdf67806102d334f30c062f3\n" +
           ".gitignore - delta-chunk\n" +
           ".gitignore - delta-end\n" +
@@ -355,6 +370,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n" +
@@ -364,6 +380,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -410,6 +427,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n" +
@@ -419,6 +437,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -451,6 +470,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -482,6 +502,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
@@ -513,6 +534,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -544,6 +566,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
@@ -565,7 +588,8 @@ public final class DepthTest {
           ".gitattributes - change-file-prop: svn:entry:committed-rev\n" +
           ".gitattributes - change-file-prop: svn:entry:last-author\n" +
           ".gitattributes - change-file-prop: svn:entry:uuid\n" +
-          ".gitattributes - close-file: d3d04ac1b5897688b0d97abfd135aefa\n" +
+          ".gitattributes - change-file-prop: svn:eol-style\n" +
+          ".gitattributes - close-file: 68b329da9893e34099c7d8ad5cb9c940\n" +
           ".gitattributes - delta-chunk\n" +
           ".gitattributes - delta-end\n" +
           ".gitignore - add-file\n" +
@@ -574,6 +598,7 @@ public final class DepthTest {
           ".gitignore - change-file-prop: svn:entry:committed-rev\n" +
           ".gitignore - change-file-prop: svn:entry:last-author\n" +
           ".gitignore - change-file-prop: svn:entry:uuid\n" +
+          ".gitignore - change-file-prop: svn:eol-style\n" +
           ".gitignore - close-file: 57457451fdf67806102d334f30c062f3\n" +
           ".gitignore - delta-chunk\n" +
           ".gitignore - delta-end\n" +
@@ -603,6 +628,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n" +
@@ -612,6 +638,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -653,6 +680,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");
@@ -694,6 +722,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n" +
@@ -703,6 +732,7 @@ public final class DepthTest {
           "a/b/e - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/e - change-file-prop: svn:entry:last-author\n" +
           "a/b/e - change-file-prop: svn:entry:uuid\n" +
+          "a/b/e - change-file-prop: svn:eol-style\n" +
           "a/b/e - close-file: babc2f91dac8ef35815e635d89196696\n" +
           "a/b/e - delta-chunk\n" +
           "a/b/e - delta-end\n");
@@ -745,6 +775,7 @@ public final class DepthTest {
           "a/b/c/d - change-file-prop: svn:entry:committed-rev\n" +
           "a/b/c/d - change-file-prop: svn:entry:last-author\n" +
           "a/b/c/d - change-file-prop: svn:entry:uuid\n" +
+          "a/b/c/d - change-file-prop: svn:eol-style\n" +
           "a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441\n" +
           "a/b/c/d - delta-chunk\n" +
           "a/b/c/d - delta-end\n");

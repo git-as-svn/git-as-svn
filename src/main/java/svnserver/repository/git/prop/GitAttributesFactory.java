@@ -15,7 +15,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.Loggers;
 import svnserver.repository.git.path.Wildcard;
-import svnserver.repository.git.path.matcher.path.AlwaysMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,14 +62,6 @@ public final class GitAttributesFactory implements GitPropertyFactory {
     return properties.toArray(GitProperty.emptyArray);
   }
 
-  @NotNull
-  @Override
-  public GitProperty[] rootDefaults() {
-    return new GitProperty[]{
-        new GitFileProperty(AlwaysMatcher.INSTANCE, SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-    };
-  }
-
   private static void processProperty(@NotNull List<GitProperty> properties, @NotNull Wildcard wildcard, @NotNull String property, @Nullable String value) {
     if (value == null) {
       return;
@@ -89,16 +80,13 @@ public final class GitAttributesFactory implements GitPropertyFactory {
   private String getMimeType(@NotNull String[] tokens) {
     for (int i = 1; i < tokens.length; ++i) {
       String token = tokens[i];
-      if (token.startsWith("binary")) {
+      if (token.equals("binary") || token.equals("-text"))
         return SVNFileUtil.BINARY_MIME_TYPE;
-      }
-      if (token.startsWith("-binary")) {
+
+      if (token.equals("text"))
         return "";
-      }
-      if (token.startsWith("text")) {
-        return "";
-      }
     }
+
     return null;
   }
 
@@ -118,12 +106,9 @@ public final class GitAttributesFactory implements GitPropertyFactory {
             return SVNProperty.EOL_STYLE_CRLF;
         }
       }
-      if (token.startsWith("binary")) {
+
+      if (token.equals("binary") || token.equals("-text"))
         return "";
-      }
-      if (token.startsWith("-text")) {
-        return "";
-      }
     }
     return null;
   }
