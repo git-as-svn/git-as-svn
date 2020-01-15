@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.23.0
 
 * Drop support for nonstandard `eol=cr` in `.gitattributes` with no replacement
 * Drop support for nonstandard `eol=native` in `.gitattributes`.
