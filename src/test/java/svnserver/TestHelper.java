@@ -8,6 +8,7 @@
 package svnserver;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.CharSequenceInputStream;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Repository;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,6 +59,11 @@ public final class TestHelper {
 
   public static void deleteDirectory(@NotNull Path file) throws IOException {
     FileUtils.deleteDirectory(file.toFile());
+  }
+
+  @NotNull
+  public static InputStream asStream(@NotNull String content) {
+    return new CharSequenceInputStream(content, StandardCharsets.UTF_8);
   }
 
   @NotNull

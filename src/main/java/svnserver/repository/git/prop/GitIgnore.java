@@ -18,6 +18,11 @@ import svnserver.Loggers;
 import svnserver.repository.git.path.PathMatcher;
 import svnserver.repository.git.path.Wildcard;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
 
@@ -48,14 +53,16 @@ final class GitIgnore implements GitProperty {
    * * An optional prefix "!" which negates the pattern is not supported.
    * * Mask trailing slash is not supported (/foo/bar/ works like /foo/bar).
    *
-   * @param content Original file content.
+   * @param reader Original file content.
    */
-  public GitIgnore(@NotNull String content) {
+  public GitIgnore(@NotNull BufferedReader reader) throws IOException {
     final List<String> localList = new ArrayList<>();
     final List<String> globalList = new ArrayList<>();
     matchers = new ArrayList<>();
-    for (String rawLine : content.split("\n")) {
-      final String line = trimLine(rawLine);
+
+    String txt;
+    while ((txt = reader.readLine()) != null) {
+      final String line = trimLine(txt);
       if (line.isEmpty()) continue;
       try {
         final Wildcard wildcard = new Wildcard(line);
@@ -70,6 +77,7 @@ final class GitIgnore implements GitProperty {
     global = globalList.toArray(emptyStrings);
   }
 
+  @NotNull
   private String trimLine(@NotNull String line) {
     if (line.isEmpty() || line.startsWith("#") || line.startsWith("!") || line.startsWith("\\!")) return "";
     // Remove trailing spaces end escapes.
@@ -109,6 +117,12 @@ final class GitIgnore implements GitProperty {
     this.matchers = matchers;
   }
 
+  @NotNull
+  static GitIgnore parseConfig(@NotNull InputStream stream) throws IOException {
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    return new GitIgnore(reader);
+  }
+
   @Override
   public void apply(@NotNull Map<String, String> props) {
     if (global.length > 0) {
@@ -119,6 +133,7 @@ final class GitIgnore implements GitProperty {
     }
   }
 
+  @NotNull
   private static String addIgnore(@Nullable String oldValue, @NotNull String[] ignores) {
     final Set<String> contains = new HashSet<>();
     final StringBuilder result = new StringBuilder();

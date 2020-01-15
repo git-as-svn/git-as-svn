@@ -325,7 +325,7 @@ public final class SvnFilePropertyTest {
       final String filePath = "/foo/.gitattributes";
       editor.addFile(filePath, null, -1);
       editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
-      sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n");
+      sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext\n");
       // Close dir
       editor.closeDir();
       editor.closeDir();
@@ -348,7 +348,7 @@ public final class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.addFile(filePath, null, -1);
-        sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext eol=native\n");
+        sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext\n");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -390,7 +390,7 @@ public final class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext\n");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -428,7 +428,7 @@ public final class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/foo/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext\n");
         // Close dir
         editor.closeDir();
         editor.closeDir();
@@ -457,7 +457,7 @@ public final class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext\n");
         // Close dir
         editor.closeDir();
         editor.closeEdit();
@@ -481,7 +481,7 @@ public final class SvnFilePropertyTest {
         // Empty file.
         final String filePath = "/.gitattributes";
         editor.openFile(filePath, latestRevision);
-        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext eol=native\n");
+        sendDeltaAndClose(editor, filePath, "", "*.txt\t\t\ttext\n");
         // Close dir
         editor.closeDir();
         editor.closeEdit();

@@ -20,6 +20,7 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public interface GitProperty {
+  @NotNull
   GitProperty[] emptyArray = {};
 
   /**
@@ -44,20 +45,6 @@ public interface GitProperty {
    * @return Filter name.
    */
   @Nullable String getFilterName();
-
-  @NotNull
-  static GitProperty[] joinProperties(@NotNull GitProperty[] before, @NotNull GitProperty[] after) {
-    if (before.length == 0) {
-      return after;
-    }
-    if (after.length == 0) {
-      return before;
-    }
-    final GitProperty[] joined = new GitProperty[before.length + after.length];
-    System.arraycopy(before, 0, joined, 0, before.length);
-    System.arraycopy(after, 0, joined, before.length, after.length);
-    return joined;
-  }
 
   @NotNull
   static GitProperty[] joinProperties(@NotNull GitProperty[] parentProps, @NotNull String entryName, @NotNull FileMode fileMode, @NotNull GitProperty[] entryProps) {

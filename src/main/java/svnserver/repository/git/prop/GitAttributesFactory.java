@@ -7,7 +7,12 @@
  */
 package svnserver.repository.git.prop;
 
+import org.eclipse.jgit.attributes.Attribute;
+import org.eclipse.jgit.attributes.Attributes;
+import org.eclipse.jgit.attributes.AttributesNode;
+import org.eclipse.jgit.attributes.AttributesRule;
 import org.eclipse.jgit.errors.InvalidPatternException;
+import org.eclipse.jgit.util.io.EolStreamTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -16,6 +21,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import svnserver.Loggers;
 import svnserver.repository.git.path.Wildcard;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
@@ -29,9 +36,7 @@ public final class GitAttributesFactory implements GitPropertyFactory {
   @NotNull
   private static final Logger log = Loggers.git;
   @NotNull
-  private static final String EOL_PREFIX = "eol=";
-  @NotNull
-  private static final String FILTER_PREFIX = "filter=";
+  private static final Attribute[] emptyAttributes = {};
 
   @NotNull
   @Override
@@ -41,24 +46,33 @@ public final class GitAttributesFactory implements GitPropertyFactory {
 
   @NotNull
   @Override
-  public GitProperty[] create(@NotNull String content) {
+  public GitProperty[] create(@NotNull InputStream stream) throws IOException {
+    AttributesNode r = new AttributesNode();
+    r.parse(stream);
     final List<GitProperty> properties = new ArrayList<>();
-    for (String line : content.split("(?:#[^\n]*)?\n")) {
-      final String[] tokens = line.trim().split("\\s+");
+    for (AttributesRule rule : r.getRules()) {
+      final Wildcard wildcard;
       try {
-        final Wildcard wildcard = new Wildcard(tokens[0]);
-        processProperty(properties, wildcard, SVNProperty.MIME_TYPE, getMimeType(tokens));
-        processProperty(properties, wildcard, SVNProperty.EOL_STYLE, getEol(tokens));
-        processProperty(properties, wildcard, SVNProperty.NEEDS_LOCK, getNeedsLock(tokens));
-
-        final String filter = getFilter(tokens);
-        if (filter != null) {
-          properties.add(new GitFilterProperty(wildcard.getMatcher(), filter));
-        }
+        wildcard = new Wildcard(rule.getPattern());
       } catch (InvalidPatternException | PatternSyntaxException e) {
-        log.warn("Found invalid git pattern: {}", line);
+        log.warn("Found invalid git pattern: {}", rule.getPattern());
+        continue;
       }
+
+      final Attributes attrs = new Attributes(rule.getAttributes().toArray(emptyAttributes));
+
+      final EolType eolType = getEolType(attrs);
+      if (eolType != null) {
+        processProperty(properties, wildcard, SVNProperty.MIME_TYPE, eolType.mimeType);
+        processProperty(properties, wildcard, SVNProperty.EOL_STYLE, eolType.eolStyle);
+      }
+      processProperty(properties, wildcard, SVNProperty.NEEDS_LOCK, getNeedsLock(attrs));
+
+      final String filter = getFilter(attrs);
+      if (filter != null)
+        properties.add(new GitFilterProperty(wildcard.getMatcher(), filter));
     }
+
     return properties.toArray(GitProperty.emptyArray);
   }
 
@@ -76,60 +90,57 @@ public final class GitAttributesFactory implements GitPropertyFactory {
     }
   }
 
+  /**
+   * @see EolStreamTypeUtil
+   */
   @Nullable
-  private String getMimeType(@NotNull String[] tokens) {
-    for (int i = 1; i < tokens.length; ++i) {
-      String token = tokens[i];
-      if (token.equals("binary") || token.equals("-text"))
-        return SVNFileUtil.BINARY_MIME_TYPE;
+  private GitAttributesFactory.EolType getEolType(@NotNull Attributes attrs) {
+    if (attrs.isSet("binary") || attrs.isUnset("text"))
+      return EolType.Binary;
 
-      if (token.equals("text"))
-        return "";
-    }
+    if (attrs.isUnspecified("text"))
+      return null;
 
-    return null;
-  }
-
-  @Nullable
-  private String getEol(@NotNull String[] tokens) {
-    for (int i = 1; i < tokens.length; ++i) {
-      final String token = tokens[i];
-      if (token.startsWith(EOL_PREFIX)) {
-        switch (token.substring(EOL_PREFIX.length())) {
-          case "lf":
-            return SVNProperty.EOL_STYLE_LF;
-          case "native":
-            return SVNProperty.EOL_STYLE_NATIVE;
-          case "cr":
-            return SVNProperty.EOL_STYLE_CR;
-          case "crlf":
-            return SVNProperty.EOL_STYLE_CRLF;
-        }
-      }
-
-      if (token.equals("binary") || token.equals("-text"))
-        return "";
-    }
-    return null;
-  }
-
-  @Nullable
-  private String getNeedsLock(@NotNull String[] tokens) {
-    for (int i = 1; i < tokens.length; ++i)
-      if (tokens[i].equals("lockable"))
-        return "*";
-
-    return null;
-  }
-
-  @Nullable
-  private String getFilter(@NotNull String[] tokens) {
-    for (int i = 1; i < tokens.length; ++i) {
-      final String token = tokens[i];
-      if (token.startsWith(FILTER_PREFIX)) {
-        return token.substring(FILTER_PREFIX.length());
+    final String eol = attrs.getValue("eol");
+    if (eol != null) {
+      switch (eol) {
+        case "lf":
+          return EolType.LF;
+        case "crlf":
+          return EolType.CRLF;
       }
     }
+
+    return EolType.Native;
+  }
+
+  private enum EolType {
+    Binary(SVNFileUtil.BINARY_MIME_TYPE, ""),
+    Native("", SVNProperty.EOL_STYLE_NATIVE),
+    LF("", SVNProperty.EOL_STYLE_LF),
+    CRLF("", SVNProperty.EOL_STYLE_CRLF);
+
+    @NotNull
+    private final String mimeType;
+    @NotNull
+    private final String eolStyle;
+
+    EolType(@NotNull String mimeType, @NotNull String eolStyle) {
+      this.mimeType = mimeType;
+      this.eolStyle = eolStyle;
+    }
+  }
+
+  @Nullable
+  private String getNeedsLock(@NotNull Attributes attrs) {
+    if (attrs.isSet("lockable"))
+      return "*";
+
     return null;
+  }
+
+  @Nullable
+  private static String getFilter(@NotNull Attributes attrs) {
+    return attrs.getValue("filter");
   }
 }

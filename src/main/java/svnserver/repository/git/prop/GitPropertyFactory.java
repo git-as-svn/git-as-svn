@@ -11,6 +11,7 @@ import org.atteo.classindex.IndexSubclasses;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Factory for creating GitProperty.
@@ -30,8 +31,8 @@ public interface GitPropertyFactory {
   /**
    * Create git property worker by file content.
    *
-   * @param content File content.
+   * @param stream File content.
    * @return Git property workers.
    */
-  @NotNull GitProperty[] create(@NotNull String content) throws IOException;
+  @NotNull GitProperty[] create(@NotNull InputStream stream) throws IOException;
 }

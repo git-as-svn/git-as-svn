@@ -14,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import java.util.Map;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 final class GitTortoise implements GitProperty {
+
   @SuppressWarnings("UnusedDeclaration")
   public static final class Factory implements GitPropertyFactory {
     @NotNull
@@ -34,9 +36,9 @@ final class GitTortoise implements GitProperty {
 
     @NotNull
     @Override
-    public GitProperty[] create(@NotNull String content) throws IOException {
+    public GitProperty[] create(@NotNull InputStream stream) throws IOException {
       return new GitProperty[]{
-          new GitTortoise(content)
+          parseConfig(stream)
       };
     }
   }
@@ -44,19 +46,13 @@ final class GitTortoise implements GitProperty {
   @NotNull
   private final Map<String, String> tortoiseProps;
 
-  /**
-   * Parse and store .tgitconfig data.
-   *
-   * @param content Original file content.
-   */
-  GitTortoise(@NotNull String content) throws IOException {
-    this.tortoiseProps = parseConfig(content);
+  private GitTortoise(@NotNull Map<String, String> tortoiseProps) {
+    this.tortoiseProps = tortoiseProps;
   }
 
   @NotNull
-  private Map<String, String> parseConfig(@NotNull String content) throws IOException {
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    final Ini ini = new Ini(new StringReader(content));
+  static GitTortoise parseConfig(@NotNull InputStream stream) throws IOException {
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") final Ini ini = new Ini(stream);
     final Map<String, String> result = new HashMap<>();
     for (Map.Entry<String, Profile.Section> sectionEntry : ini.entrySet()) {
       for (Map.Entry<String, String> configEntry : sectionEntry.getValue().entrySet()) {
@@ -67,7 +63,7 @@ final class GitTortoise implements GitProperty {
         result.put(sectionEntry.getKey() + ":" + configEntry.getKey(), value);
       }
     }
-    return result;
+    return new GitTortoise(result.isEmpty() ? Collections.emptyMap() : result);
   }
 
   @Override
