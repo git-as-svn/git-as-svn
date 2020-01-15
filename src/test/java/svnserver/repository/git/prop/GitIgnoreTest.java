@@ -12,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import svnserver.TestHelper;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,8 +26,9 @@ import java.util.Map;
  */
 public final class GitIgnoreTest {
   @Test
-  public void testParseAttributes() {
-    final GitProperty attr = new GitIgnore(
+  public void testParseAttributes() throws IOException {
+    final GitProperty attr;
+    try (InputStream in = TestHelper.asStream(
         "# comment\n" +
             "*.class\n" +
             "\\#*\n" +
@@ -36,8 +40,9 @@ public final class GitIgnoreTest {
             "**/temp\n" +
             "**/foo/bar\n" +
             "qqq/**/bar\n" +
-            "data/**/*.sample\n"
-    );
+            "data/**/*.sample\n")) {
+      attr = GitIgnore.parseConfig(in);
+    }
     checkProps(attr, ".idea\ndeploy\n", "*.class\n#*\nspace end \ntemp\n");
     // Rule: */.idea/vcs.xml
     checkProps(attr, "build\n", null, ".idea\ndeploy");

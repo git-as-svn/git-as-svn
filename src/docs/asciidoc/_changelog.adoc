@@ -6,6 +6,16 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Drop support for nonstandard `eol=cr` in `.gitattributes` with no replacement
+* Drop support for nonstandard `eol=native` in `.gitattributes`.
+Just add `text` attribute to indicate that file has native EOLs.
+* JGit is now used to parse `.gitattributes` files
+
+IMPORTANT: Repository data exported to SVN has changed.
+Users will need to perform re-checkout of their working copies after git-as-svn upgrade.
+
 == 1.22.0
 
 * Systemd unit now correctly waits for git-as-svn to shut down. https://github.com/bozaro/git-as-svn/issues/275[#275]

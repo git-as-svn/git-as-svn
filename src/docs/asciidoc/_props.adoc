@@ -72,8 +72,8 @@ This file affects the properties of the `svn:eol-style` and `svn:mime-type` file
 For example, a file with contents:
 
 ----
-*.txt           text eol=native
-*.xml           eol=lf
+*.txt           text
+*.xml           text eol=lf
 *.bin           binary
 ----
 
@@ -87,7 +87,7 @@ Add property to the directory `svn:auto-props` with the contents:
 
 And files in this directory:
 
-* for suffix `.txt` add property `svn:eol-style = navtive`
+* for suffix `.txt` add property `svn:eol-style = native`
 * for suffix `.xml` add property `svn:eol-style = LF`
 * for suffix `.bin` add property
 `svn:mime-type = application/octet-stream`
@@ -107,8 +107,7 @@ Properties are mapped one-to-one, for example, a file with the contents:
 
 It will be converted to properties:
 
-* `bugtraq:url =
-        https://github.com/bozaro/git-as-svn/issues/%BUGID%`
+* `bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%`
 * `bugtraq:logregex = #(\\d+)`
 * `bugtraq:warnifnoissue = false`
 

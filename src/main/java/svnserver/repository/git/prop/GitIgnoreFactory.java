@@ -9,6 +9,9 @@ package svnserver.repository.git.prop;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 /**
  * Factory for creating .gitignore properties.
  *
@@ -24,9 +27,9 @@ public final class GitIgnoreFactory implements GitPropertyFactory {
 
   @NotNull
   @Override
-  public GitProperty[] create(@NotNull String content) {
+  public GitProperty[] create(@NotNull InputStream stream) throws IOException {
     return new GitProperty[]{
-        new GitIgnore(content)
+        GitIgnore.parseConfig(stream)
     };
   }
 }

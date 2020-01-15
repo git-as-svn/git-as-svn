@@ -14,7 +14,10 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import svnserver.TestHelper;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,31 +30,37 @@ import java.util.TreeMap;
  */
 public final class GitEolTest {
   @DataProvider(name = "parseAttributesData")
-  public static Object[][] parseAttributesData() {
-    final GitProperty[] attr = new GitAttributesFactory().create(
+  public static Object[][] parseAttributesData() throws IOException {
+    final GitProperty[] attr;
+    try (InputStream in = TestHelper.asStream(
         "# comment\n" +
-            "* text eol=native\n" +
-            "*.txt text eol=native\n" +
+            "*     text\n" +
+            "*.txt text\n" +
             "*.md  text eol=lf\n" +
             "*.dat -text\n" +
             "3.md -text\n" +
             "*.bin binary\n" +
             "1.bin text\n" +
             "2.bin text\n"
-    );
+    )) {
+      attr = new GitAttributesFactory().create(in);
+    }
+
     final Params[] params = new Params[]{
         new Params(attr, "/").prop(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=native\n" +
             "*.md = svn:eol-style=LF\n" +
             "*.dat = svn:mime-type=application/octet-stream\n" +
             "3.md = svn:mime-type=application/octet-stream\n" +
-            "*.bin = svn:mime-type=application/octet-stream\n"),
+            "*.bin = svn:mime-type=application/octet-stream\n" +
+            "1.bin = svn:eol-style=native\n" +
+            "2.bin = svn:eol-style=native\n"),
         new Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF),
         new Params(attr, "foo.dat").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
         new Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
         new Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
 
-        new Params(attr, "1.bin"),
-        new Params(attr, "2.bin"),
+        new Params(attr, "1.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
+        new Params(attr, "2.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
         new Params(attr, "3.md").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
 
         new Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),

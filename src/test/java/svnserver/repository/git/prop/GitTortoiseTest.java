@@ -9,8 +9,10 @@ package svnserver.repository.git.prop;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import svnserver.TestHelper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +24,15 @@ import java.util.Map;
 public final class GitTortoiseTest {
   @Test
   public void testParseAttributes() throws IOException {
-    final GitProperty attr = new GitTortoise(
+    final GitProperty attr;
+    try (InputStream in = TestHelper.asStream(
         "[bugtraq]\n" +
             "\turl = http://bugtracking/browse/%BUGID%\n" +
             "\tlogregex = (BUG-\\\\d+)\n" +
             "\twarnifnoissue = false"
-    );
+    )) {
+      attr = GitTortoise.parseConfig(in);
+    }
     final Map<String, String> props = new HashMap<>();
     attr.apply(props);
     Assert.assertEquals(props.size(), 3);
@@ -38,7 +43,8 @@ public final class GitTortoiseTest {
 
   @Test
   public void testTortoiseAttributes() throws IOException {
-    final GitProperty attr = new GitTortoise(
+    final GitProperty attr;
+    try (InputStream in = TestHelper.asStream(
         "[bugtraq]\n" +
             "\turl = https://tortoisegit.org/issue/%BUGID%\n" +
             "\tlogregex = \"[Ii]ssues?:?(\\\\s*(,|and)?\\\\s*#?\\\\d+)+\\n(\\\\d+)\"\n" +
@@ -48,7 +54,9 @@ public final class GitTortoiseTest {
             "\twarnnosignedoffby = true\n" +
             "\tprojectlanguage = 1033\n" +
             "\ticon = src/Resources/Tortoise.ico"
-    );
+    )) {
+      attr = GitTortoise.parseConfig(in);
+    }
     final Map<String, String> props = new HashMap<>();
     attr.apply(props);
     Assert.assertEquals(props.size(), 6);

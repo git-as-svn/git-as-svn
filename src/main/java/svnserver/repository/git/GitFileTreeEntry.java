@@ -130,7 +130,7 @@ final class GitFileTreeEntry extends GitEntryImpl implements GitFile {
         if (branch.getRepository().isObjectBinary(filter, getObjectId())) {
           props.put(SVNProperty.MIME_TYPE, MIME_BINARY);
         } else {
-          props.put(SVNProperty.EOL_STYLE, SVNProperty.NATIVE);
+          props.put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE);
         }
       }
     }
