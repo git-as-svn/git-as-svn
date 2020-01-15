@@ -36,7 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class GitBranch {
   private static final int revisionCacheVersion = 2;
-  private static final int repositoryVersion = 3;
+  private static final int repositoryVersion = 4;
   private static final int REPORT_DELAY = 2500;
   private static final int MARK_NO_FILE = -1;
   @NotNull

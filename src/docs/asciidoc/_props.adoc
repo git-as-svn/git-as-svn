@@ -73,7 +73,7 @@ For example, a file with contents:
 
 ----
 *.txt           text
-*.xml           text eol=lf
+*.xml           eol=lf
 *.bin           binary
 ----
 

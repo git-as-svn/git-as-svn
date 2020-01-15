@@ -36,7 +36,8 @@ public final class GitEolTest {
         "# comment\n" +
             "*     text\n" +
             "*.txt text\n" +
-            "*.md  text eol=lf\n" +
+            // Tests that eol attribute works even without text attribute
+            "*.md  eol=lf\n" +
             "*.dat -text\n" +
             "3.md -text\n" +
             "*.bin binary\n" +

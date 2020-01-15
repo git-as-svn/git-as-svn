@@ -98,9 +98,6 @@ public final class GitAttributesFactory implements GitPropertyFactory {
     if (attrs.isSet("binary") || attrs.isUnset("text"))
       return EolType.Binary;
 
-    if (attrs.isUnspecified("text"))
-      return null;
-
     final String eol = attrs.getValue("eol");
     if (eol != null) {
       switch (eol) {
@@ -110,6 +107,9 @@ public final class GitAttributesFactory implements GitPropertyFactory {
           return EolType.CRLF;
       }
     }
+
+    if (attrs.isUnspecified("text"))
+      return null;
 
     return EolType.Native;
   }
