@@ -1,8 +1,9 @@
 = git-as-svn User Manual
 Artem Navrotskiy <https://github.com/bozaro[@bozaro]>; Marat Radchenko <https://github.com/slonopotamus[@slonopotamus]>; Andrew Thornton <https://github.com/zeripath[@zeripath]>
 v{revnumber}, {docdate}
-ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,1600]]
-// THIS LINE IS A WORKAROUND FOR https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/380
+ifdef::ebook-format[]
+:front-cover-image: image:images/cover.png[Front Cover,1050,1600]
+endif::[]
 :doctype: book
 :toc: left
 :toclevels: 4
@@ -10,7 +11,6 @@ ifdef::ebook-format[:front-cover-image: image:images/cover.png[Front Cover,1050,
 :sectlinks:
 :sectanchors:
 :icons: font
-:url-issues: http://github.com/bozaro/git-as-svn/issues
 
 include::_about.adoc[leveloffset=+1]
 
