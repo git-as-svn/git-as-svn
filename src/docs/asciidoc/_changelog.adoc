@@ -245,7 +245,7 @@ This is expected to speed up `svn blame` severely. https://github.com/bozaro/git
 
 == 1.7.1
 
-* Revert offloading file -> changed revisions cache to MapDB (PRhttps://github.com/bozaro/git-as-svn/issues/207[#207]) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
+* Revert offloading file -> changed revisions cache to MapDB (https://github.com/bozaro/git-as-svn/issues/207[#207]) as an attempt to fix (or, at least, reduce) issues with non-heap memory leaks
 
 == 1.7.0
 
