@@ -1,2 +1,9 @@
 * -text
+.gitattributes text
+.gitignore text
+*.adoc text
 *.bat text
+*.java text
+*.kts text
+*.yml text
+*.xml text
