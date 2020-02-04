@@ -6,9 +6,9 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.23.1
 
-* `svn blame` gives "Malformed network data" error
+* Fix "Malformed network data" error for `svn blame`
 
 == 1.23.0
 
