@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* `svn blame` gives "Malformed network data" error
+
 == 1.23.0
 
 * Drop support for nonstandard `eol=cr` in `.gitattributes` with no replacement

@@ -131,9 +131,7 @@ public final class SvnServerWriter implements Closeable {
         string(entry.getKey());
 
         if (nullableValues) {
-          listBegin();
           stringNullable(entry.getValue());
-          listEnd();
         } else {
           string(entry.getValue());
         }
