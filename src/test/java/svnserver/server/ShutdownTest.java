@@ -44,6 +44,24 @@ public final class ShutdownTest {
     final ISVNEditor editor = repo1.getCommitEditor("Empty commit", null, false, null);
     editor.openRoot(-1);
     server.startShutdown();
+
+    /*
+     Looks like there's a bug in OpenJDK 13 on Linux.
+     1. Thread A calls ServerSocket.accept
+     2. Thread B calls ServerSocket.close
+     3. Thread B tries to connect to this socket
+     4. Thread A always gets SocketException("socket closed")
+     5. But *sometimes* TCP connection gets established even though
+        there's nothing on server side that can talk to it
+     This can be reproduced by removing sleep(1) and running this test multiple times.
+
+     Reproduced on:
+     openjdk version "13.0.2" 2020-01-14
+     OpenJDK Runtime Environment (build 13.0.2+8)
+     OpenJDK 64-Bit Server VM (build 13.0.2+8, mixed mode, sharing)
+    */
+    Thread.sleep(1);
+
     try {
       // Can't create new connection is shutdown mode.
       repo2.getLatestRevision();
