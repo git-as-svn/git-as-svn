@@ -39,9 +39,7 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,6 +94,8 @@ public final class SvnServer extends Thread {
   private final AtomicLong lastSessionId = new AtomicLong();
   @NotNull
   private final SharedContext sharedContext;
+  @NotNull
+  private final ThreadPoolExecutor threadPoolExecutor;
 
   public SvnServer(@NotNull Path basePath, @NotNull Config config) throws Exception {
     super("SvnServer");
@@ -107,8 +107,17 @@ public final class SvnServer extends Thread {
       thread.setDaemon(true);
       return thread;
     };
+    threadPoolExecutor = new ThreadPoolExecutor(
+        0,
+        Integer.MAX_VALUE,
+        60,
+        TimeUnit.SECONDS,
+        new SynchronousQueue<>(),
+        threadFactory,
+        new ThreadPoolExecutor.AbortPolicy()
+    );
 
-    sharedContext = SharedContext.create(basePath, config.getRealm(), config.getCacheConfig().createCache(basePath), threadFactory, config.getShared());
+    sharedContext = SharedContext.create(basePath, config.getRealm(), config.getCacheConfig().createCache(basePath), config.getShared());
     sharedContext.add(UserDB.class, config.getUserDB().create(sharedContext));
 
     // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
@@ -188,22 +197,29 @@ public final class SvnServer extends Thread {
         log.error("Error accepting client connection", e);
         continue;
       }
-      long sessionId = lastSessionId.incrementAndGet();
-      sharedContext.getThreadPoolExecutor().execute(() -> {
-        log.info("New connection from: {}", client.getRemoteSocketAddress());
+
+      final long sessionId = lastSessionId.incrementAndGet();
+      connections.put(sessionId, client);
+
+      final Runnable task = () -> {
         try (Socket clientSocket = client;
              SvnServerWriter writer = new SvnServerWriter(clientSocket.getOutputStream())) {
-          connections.put(sessionId, client);
+          log.info("New connection from: {}", client.getRemoteSocketAddress());
           serveClient(clientSocket, writer);
         } catch (EOFException | SocketException ignore) {
           // client disconnect is not a error
         } catch (SVNException | IOException e) {
           log.warn("Exception:", e);
         } finally {
-          connections.remove(sessionId);
-          log.info("Connection from {} closed", client.getRemoteSocketAddress());
+          shutdownConnection(sessionId);
         }
-      });
+      };
+
+      try {
+        threadPoolExecutor.execute(task);
+      } catch (RejectedExecutionException e) {
+        shutdownConnection(sessionId);
+      }
     }
   }
 
@@ -249,6 +265,16 @@ public final class SvnServer extends Thread {
         }
         BaseCmd.sendError(writer, e.getErrorMessage());
       }
+    }
+  }
+
+  private void shutdownConnection(long sessionId) {
+    final Socket client = connections.remove(sessionId);
+    log.info("Connection from {} closed", client.getRemoteSocketAddress());
+    try {
+      client.close();
+    } catch (IOException e) {
+      // It's ok
     }
   }
 
@@ -381,7 +407,7 @@ public final class SvnServer extends Thread {
 
   public void shutdown(long millis) throws Exception {
     startShutdown();
-    if (!sharedContext.getThreadPoolExecutor().awaitTermination(millis, TimeUnit.MILLISECONDS)) {
+    if (!threadPoolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
       forceShutdown();
     }
     join(millis);
@@ -393,7 +419,7 @@ public final class SvnServer extends Thread {
     if (stopped.compareAndSet(false, true)) {
       log.info("Shutdown server");
       serverSocket.close();
-      sharedContext.getThreadPoolExecutor().shutdown();
+      threadPoolExecutor.shutdown();
     }
   }
 
@@ -401,7 +427,7 @@ public final class SvnServer extends Thread {
     for (Socket socket : connections.values()) {
       socket.close();
     }
-    sharedContext.getThreadPoolExecutor().awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
+    threadPoolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS);
   }
 
   @NotNull

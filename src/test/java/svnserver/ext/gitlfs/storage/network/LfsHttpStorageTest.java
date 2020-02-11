@@ -78,7 +78,7 @@ public final class LfsHttpStorageTest {
     final User user = users.add(SvnTestServer.USER_NAME, "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    try (SharedContext sharedContext = SharedContext.create(Paths.get("/nonexistent"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
+    try (SharedContext sharedContext = SharedContext.create(Paths.get("/nonexistent"), "realm", DBMaker.memoryDB().make(), Collections.singletonList(new WebServerConfig(0)))) {
       final WebServer webServer = sharedContext.sure(WebServer.class);
       sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
       sharedContext.add(UserDB.class, users);
@@ -138,7 +138,7 @@ public final class LfsHttpStorageTest {
     final User user = users.add("test", "test", "Test User", "test@example.com");
     Assert.assertNotNull(user);
     // Create shared context
-    try (SharedContext sharedContext = SharedContext.create(Paths.get("/nonexistent"), "realm", DBMaker.memoryDB().make(), Thread::new, Collections.singletonList(new WebServerConfig(0)))) {
+    try (SharedContext sharedContext = SharedContext.create(Paths.get("/nonexistent"), "realm", DBMaker.memoryDB().make(), Collections.singletonList(new WebServerConfig(0)))) {
       final WebServer webServer = sharedContext.sure(WebServer.class);
       sharedContext.add(LfsServer.class, new LfsServer("t0ken", 0, 0));
       sharedContext.add(UserDB.class, users);
