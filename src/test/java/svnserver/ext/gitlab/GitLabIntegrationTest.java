@@ -105,7 +105,11 @@ public final class GitLabIntegrationTest {
 
     final GitlabAPI rootAPI = GitLabContext.connect(gitlabUrl, rootToken);
 
-    final GitlabUser gitlabUser = rootAPI.createUser(new CreateUserRequest(user, user, "git-as-svn@localhost").setPassword(userPassword));
+    final CreateUserRequest createUserRequest = new CreateUserRequest(user, user, "git-as-svn@localhost")
+        .setPassword(userPassword)
+        .setSkipConfirmation(true);
+
+    final GitlabUser gitlabUser = rootAPI.createUser(createUserRequest);
     Assert.assertNotNull(gitlabUser);
 
     final GitlabGroup group = rootAPI.createGroup(new CreateGroupRequest("testGroup").setVisibility(GitlabVisibility.PUBLIC), null);
