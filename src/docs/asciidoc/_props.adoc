@@ -105,7 +105,7 @@ Properties on '<repo>':
     false
 ----
 
-[invalid-svn-props]
+[[invalid-svn-props]]
 == Commit failed: Invalid svn properties on file
 
 If you get "Commit failed: Invalid svn properties on file" error when trying to commit a new file via git-as-svn, you need:
