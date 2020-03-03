@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public enum ReferenceLink {
-  Properties("props");
+  InvalidSvnProps("invalid-svn-props");
 
   @NotNull
   public static final String BASE_URL = "https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html";

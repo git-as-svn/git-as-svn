@@ -4,116 +4,118 @@
 :filename: _props.adoc
 include::_feedback.adoc[]
 
-The main `svn properties` trouble that they should be maintained in the synchronous state between Git and Subversion.
+git-as-svn has limited support for http://svnbook.red-bean.com/en/1.7/svn.ref.properties.html::[Subversion Properties].
 
-Because of this arbitrary `svn properties` is not supported.
-To value `svn properties` correspond Git-view, they are generated on the fly based on the repository content.`
+IMPORTANT::Proper operation of this feature requires Subversion client version 1.8 or later.
 
-Wherein:
+== .gitignore file
 
-* the commit verifies that `svn properties` file or directory exactly match what should be according to the data repository;
-* Subversion does not tool allows you to change most of the properties (exception: `svn:executable`, `svn:special`);
-* if a file affects the `svn properties` other files after changing it
-`svn properties` of the files in the same change.
+git-as-svn transparently builds `svn:ignore` and `svn:global-ignores` Subversion Properties based on `.gitignore` files in Git repository.
 
-[IMPORTANT]
-====
-For user convenience, git-as-svn is actively using the inherited properties.
+For example:
 
-This feature requires Subversion 1.8 or later.
-
-Otherwise there will be problems with the svn properties for new files and directories.
-====
-
-== File .gitignores
-
-This file affects the property `svn:ignore` and `svn:global-ignores` for the directory and its subdirectories.
-
-For example, a file in the directory `/foo` with the contents:
-
+..gitignore
 ----
-.idea/libraries
 *.class
 */build
 ----
 
-Mapped to properties:
-
-* for directory `/foo`:
-+
-----
-svn:global-ignores: *.class
-----
-
-* for directory `/foo/*`:
-+
-----
-svn:ignore: build
-----
-
-* for directory `/foo/.idea`:
-+
-----
-svn:ignore: libraries build
-----
-
-[IMPORTANT]
-====
-For Subversion has no way to make an exception for directories, as a result, for example, the rules of `/foo` (file or directory `foo`) and /foo/ (directory foo) in Subversion will work the same way, though to Git they have different behavior.`
-
-Terms like "all but" not supported on mapping to the
-`svn:global-ignores` property.
-====
-
-== File .gitattributes
-
-This file affects the properties of the `svn:eol-style` and `svn:mime-type` files from this directory and `svn:auto-props` from the directory itself.
-
-For example, a file with contents:
+Results in:
 
 ----
-*.txt           text
-*.xml           eol=lf
-*.bin           binary
+$ svn pl -v <repo>
+Properties on '<repo>':
+    svn:global-ignores
+        *.class
+
+$ svn pl -v <repo>/foo/
+Properties on '<repo>/foo/':
+    svn:ignore
+        build
+----
+
+IMPORTANT:: Negated path masks (`!/path/`) are not supported
+
+== .gitattributes file
+
+git-as-svn transparently builds `svn:eol-style`, `svn:mime-type` and `svn:auto-props` Subversion Properties based on `.gitattributes` files in Git repository.
+
+For example:
+
+..gitattributes
+----
+*.txt text
+*.xml eol=lf
+*.bin binary
 ----
 
 Add property to the directory `svn:auto-props` with the contents:
 
 ----
-*.txt = svn:eol-style=native
-*.xml = svn:eol-style=LF
-*.bin = svn:mime-type=application/octet-stream
+$ svn pl -v <repo>
+Properties on '<repo>':
+  svn:auto-props
+    *.txt = svn:eol-style=native
+    *.xml = svn:eol-style=LF
+    *.bin = svn:mime-type=application/octet-stream
 ----
 
-And files in this directory:
+Additionally, individual files that match `.gitattributes` entries, will get corresponding Subversion Properties:
 
-* for suffix `.txt` add property `svn:eol-style = native`
-* for suffix `.xml` add property `svn:eol-style = LF`
-* for suffix `.bin` add property
-`svn:mime-type = application/octet-stream`
+----
+$ svn pl -v <repo>/native.txt
+Properties on '<repo>/native.txt':
+  svn:eol-style
+    native
 
-== File .tgitconfig
+$ svn pl -v '<repo>/unix.xml':
+Properties on '<repo>/unix.xml':
+  svn:eol-style
+    LF
 
-This file only changes the properties of the directory in which it is located.
+$ svn pl -v '<repo>/binary.bin':
+  svn:mime-type
+    application/octet-stream
+----
 
-Properties are mapped one-to-one, for example, a file with the contents:
+== .tgitconfig file
 
+Please, refer to https://tortoisegit.org/docs/tortoisegit/tgit-dug-settings.html#tgit-dug-settings-git[TortoiseGit documentation] on exact syntax of `.tgitconfig` file
+
+Example:
+
+..tgitconfig
 ----
 [bugtraq]
-    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%
     logregex = #(\\d+)
+    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%
     warnifnoissue = false
 ----
 
-It will be converted to properties:
+git-as-svn converts this to:
 
-* `bugtraq:url = https://github.com/bozaro/git-as-svn/issues/%BUGID%`
-* `bugtraq:logregex = #(\\d+)`
-* `bugtraq:warnifnoissue = false`
+----
+$ svn pl -v <repo>
+Properties on '<repo>':
+  bugtraq:logregex
+    #(\\d+)
+  bugtraq:url
+    https://github.com/bozaro/git-as-svn/issues/%BUGID%
+  bugtraq:warnifnoissue
+    false
+----
 
-[IMPORTANT]
-====
-If you use bugtraq svn properties, it is highly recommended that you use TortoiseSVN 1.9 or later.
+[invalid-svn-props]
+== Commit failed: Invalid svn properties on file
 
-Otherwise TortoiseSVN will attempt to set these parameters for all newly created directories instead of use inherited properties.
-====
+If you get "Commit failed: Invalid svn properties on file" error when trying to commit a new file via git-as-svn, you need:
+
+. Decide if this file is text or binary
+* If *text*, go to `.gitattributes` and add `text` entry for your file extension.
+You may optionally want to specify https://git-scm.com/docs/gitattributes#_code_eol_code[EOL behavior].
+* If *binary*, go to `.gitattributes` and add `-text` entry for your file extension
+. Commit `.gitattributes`
+. `svn up` in working copy root
+. `svn revert <new file>` (this will undo effect of `svn add`)
+* `svn add <new file>` again
+* Finally, `svn commit`

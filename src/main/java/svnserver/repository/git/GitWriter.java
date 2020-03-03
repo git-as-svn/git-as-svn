@@ -423,7 +423,7 @@ public final class GitWriter implements AutoCloseable {
           message.append("  ").append(configFile).append('\n');
         }
         message.append("\n" +
-            "For more detailed information, see:").append("\n").append(ReferenceLink.Properties.getLink());
+            "For more detailed information, see:").append("\n").append(ReferenceLink.InvalidSvnProps.getLink());
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
       }
     }
