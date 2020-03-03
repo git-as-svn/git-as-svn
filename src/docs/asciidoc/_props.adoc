@@ -117,5 +117,5 @@ You may optionally want to specify https://git-scm.com/docs/gitattributes#_code_
 . Commit `.gitattributes`
 . `svn up` in working copy root
 . `svn revert <new file>` (this will undo effect of `svn add`)
-* `svn add <new file>` again
-* Finally, `svn commit`
+. `svn add <new file>` again
+. Finally, `svn commit`
