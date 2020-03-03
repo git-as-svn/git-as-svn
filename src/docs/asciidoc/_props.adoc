@@ -6,7 +6,7 @@ include::_feedback.adoc[]
 
 git-as-svn has limited support for http://svnbook.red-bean.com/en/1.7/svn.ref.properties.html::[Subversion Properties].
 
-IMPORTANT::Proper operation of this feature requires Subversion client version 1.8 or later.
+IMPORTANT: Proper operation of this feature requires Subversion client version 1.8 or later.
 
 == .gitignore file
 
@@ -34,7 +34,7 @@ Properties on '<repo>/foo/':
         build
 ----
 
-IMPORTANT:: Negated path masks (`!/path/`) are not supported
+IMPORTANT: Negated path masks (`!/path/`) are not supported
 
 == .gitattributes file
 
