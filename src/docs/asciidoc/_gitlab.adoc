@@ -123,7 +123,7 @@ repositoryMapping: !gitlabMapping
 
 . Add `git-as-svn:<branch>` topics to whatever repositories you want to add to git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
 For example, add `git-as-svn:master` to expose `master` branch.
-If you want to expose more than one branch, add multiple `git-a-svn:<branch>` topics separated by commas.
+If you want to expose more than one branch, add multiple `git-as-svn:<branch>` topics separated by commas.
 
 == Supported Git LFS modes
 
