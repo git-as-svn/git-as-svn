@@ -207,11 +207,6 @@ public final class LfsHttpStorageTest {
     }
 
     @Override
-    public void invalidate(@NotNull User user) {
-
-    }
-
-    @Override
     protected @NotNull Client lfsClient(@NotNull User unused) {
       final CloseableHttpClient httpClient = LfsHttpStorage.createHttpClient();
 

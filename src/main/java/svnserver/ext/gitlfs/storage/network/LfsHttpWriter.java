@@ -14,7 +14,6 @@ import ru.bozaro.gitlfs.client.Client;
 import ru.bozaro.gitlfs.common.data.*;
 import svnserver.HashHelper;
 import svnserver.TemporaryOutputStream;
-import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsWriter;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorage;
 
@@ -29,17 +28,14 @@ import java.util.Collections;
  */
 public final class LfsHttpWriter extends LfsWriter {
   @NotNull
-  private final LfsHttpStorage owner;
-  @NotNull
-  private final User user;
+  private final Client lfsClient;
   @NotNull
   private final TemporaryOutputStream content;
   @NotNull
   private final MessageDigest digestSha;
 
-  LfsHttpWriter(@NotNull LfsHttpStorage owner, @NotNull User user) {
-    this.owner = owner;
-    this.user = user;
+  LfsHttpWriter(@NotNull Client lfsClient) {
+    this.lfsClient = lfsClient;
     this.digestSha = HashHelper.sha256();
     this.content = new TemporaryOutputStream();
   }
@@ -64,8 +60,6 @@ public final class LfsHttpWriter extends LfsWriter {
     if (expectedOid != null && !expectedOid.equals(oid)) {
       throw new IOException("Invalid stream checksum: expected " + expectedOid + ", but actual " + LfsLocalStorage.OID_PREFIX + sha);
     }
-
-    final Client lfsClient = owner.lfsClient(user);
 
     final BatchRes batchRes = lfsClient.postBatch(new BatchReq(Operation.Upload, Collections.singletonList(new Meta(sha, content.size()))));
     if (batchRes.getObjects().isEmpty())

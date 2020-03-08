@@ -35,9 +35,6 @@ public class BasicAuthHttpLfsStorage extends LfsHttpStorage {
     client = new Client(authProvider, createHttpClient());
   }
 
-  public final void invalidate(@NotNull User user) {
-  }
-
   @NotNull
   protected final Client lfsClient(@NotNull User user) {
     return client;
