@@ -189,7 +189,7 @@ public final class GitLabIntegrationTest {
   @Test
   void testLfs() throws Exception {
     final LfsStorage storage = GitLabConfig.createLfsStorage(gitlabUrl, gitlabProject.getPathWithNamespace(), root, rootPassword, null);
-    final User user = User.create(root, root, root, root, UserType.GitLab);
+    final User user = User.create(root, root, root, root, UserType.GitLab, new User.LfsCredentials(root, rootPassword));
 
     LfsLocalStorageTest.checkLfs(storage, user);
     LfsLocalStorageTest.checkLfs(storage, user);

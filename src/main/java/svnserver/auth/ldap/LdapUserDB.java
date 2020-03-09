@@ -233,7 +233,7 @@ public final class LdapUserDB implements UserDB {
       email = login + fakeMailSuffix;
 
     log.debug("LDAP authentication successful for user: {}", username);
-    return User.create(login, realName != null ? realName : login, email, null, UserType.LDAP);
+    return User.create(login, realName != null ? realName : login, email, null, UserType.LDAP, null);
   }
 
   @Nullable

@@ -8,12 +8,17 @@
 package svnserver.ext.gitea.config;
 
 import org.jetbrains.annotations.NotNull;
+import ru.bozaro.gitlfs.client.auth.AuthProvider;
+import ru.bozaro.gitlfs.client.auth.BasicAuthProvider;
+import svnserver.auth.User;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlfs.storage.BasicAuthHttpLfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
+
+import java.net.URI;
 
 /**
  * Gitea access settings.
@@ -59,8 +64,17 @@ public final class GiteaConfig implements SharedConfig {
   }
 
   @NotNull
-  public static LfsStorage createLfsStorage(@NotNull String giteaUrl, @NotNull String repositoryName, GiteaToken token) {
-    return new BasicAuthHttpLfsStorage(giteaUrl, repositoryName, token.getValue(), "x-oauth-basic");
+  public static LfsStorage createLfsStorage(@NotNull String giteaUrl, @NotNull String repositoryName, @NotNull GiteaToken token) {
+    return new BasicAuthHttpLfsStorage(giteaUrl, repositoryName, token.getValue(), "x-oauth-basic") {
+      @Override
+      protected @NotNull AuthProvider authProvider(@NotNull User user, @NotNull URI baseURI) {
+        final User.LfsCredentials lfsCredentials = user.getLfsCredentials();
+        if (lfsCredentials == null)
+          return super.authProvider(user, baseURI);
+
+        return new BasicAuthProvider(baseURI, lfsCredentials.username, lfsCredentials.password);
+      }
+    };
   }
 
   @NotNull

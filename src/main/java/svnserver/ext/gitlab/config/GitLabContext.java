@@ -24,6 +24,8 @@ import svnserver.context.SharedContext;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * GitLab context.
@@ -55,7 +57,7 @@ public final class GitLabContext implements Shared {
   @NotNull
   public static GitLabToken obtainAccessToken(@NotNull String gitlabUrl, @NotNull String username, @NotNull String password, boolean sudoScope) throws IOException {
     try {
-      final OAuthGetAccessToken tokenServerUrl = new OAuthGetAccessToken(gitlabUrl + "/oauth/token" + (sudoScope ? "?scope=api%20sudo" : ""));
+      final OAuthGetAccessToken tokenServerUrl = new OAuthGetAccessToken(gitlabUrl + "/oauth/token?scope=api" + (sudoScope ? "%20sudo" : ""));
       final TokenResponse oauthResponse = new PasswordTokenRequest(transport, JacksonFactory.getDefaultInstance(), tokenServerUrl, username, password).execute();
       return new GitLabToken(TokenType.ACCESS_TOKEN, oauthResponse.getAccessToken());
     } catch (TokenResponseException e) {

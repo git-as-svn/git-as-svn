@@ -37,7 +37,8 @@ public final class LocalUserDB implements UserDB {
       return null;
     }
 
-    final UserWithPassword userWithPassword = new UserWithPassword(User.create(username, realName, email, username, UserType.Local), password);
+    final User user = User.create(username, realName, email, username, UserType.Local, null);
+    final UserWithPassword userWithPassword = new UserWithPassword(user, password);
     users.put(userWithPassword.getUser().getUsername(), userWithPassword);
     return userWithPassword.getUser();
   }

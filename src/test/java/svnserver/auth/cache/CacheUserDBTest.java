@@ -22,7 +22,7 @@ import svnserver.auth.User;
 public final class CacheUserDBTest {
   @Test
   public void testSimple() throws SVNException {
-    User user = User.create("foo", "Foo", "foo@bar", "f01", UserType.Local);
+    User user = User.create("foo", "Foo", "foo@bar", "f01", UserType.Local, null);
     TestUserDB db = new TestUserDB(user);
     CacheUserDB cache = new CacheUserDB(db, CacheBuilder.newBuilder().build());
 

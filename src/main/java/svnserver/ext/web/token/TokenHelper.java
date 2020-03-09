@@ -90,7 +90,8 @@ public final class TokenHelper {
           claims.getClaimValue("name", String.class),
           claims.getClaimValue("email", String.class),
           claims.getClaimValue("external", String.class),
-          UserType.valueOf(claims.getClaimValue("type", String.class))
+          UserType.valueOf(claims.getClaimValue("type", String.class)),
+          null
       );
     } catch (JoseException | MalformedClaimException | InvalidJwtException e) {
       log.warn("Token parsing error: " + e.getMessage());

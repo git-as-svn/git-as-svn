@@ -23,10 +23,10 @@ import java.util.Map;
 public final class ACLTest {
 
   @NotNull
-  private static final User Bob = User.create("bob", "Bob", "bob@acme.com", null, UserType.Local);
+  private static final User Bob = User.create("bob", "Bob", "bob@acme.com", null, UserType.Local, null);
 
   @NotNull
-  private static final User Alice = User.create("alice", "Alice", "alice@acme.com", null, UserType.Local);
+  private static final User Alice = User.create("alice", "Alice", "alice@acme.com", null, UserType.Local, null);
 
   @Test
   public void emptyDeny() {
@@ -146,7 +146,7 @@ public final class ACLTest {
 
     Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
     Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
-    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab), Constants.MASTER, "/"));
+    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab, null), Constants.MASTER, "/"));
   }
 
   @Test

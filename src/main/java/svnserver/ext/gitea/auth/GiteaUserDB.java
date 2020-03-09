@@ -62,7 +62,7 @@ public final class GiteaUserDB implements UserDB {
     try {
       final ApiClient apiClient = context.connect(username, password);
       final UserApi userApi = new UserApi(apiClient);
-      return createUser(userApi.userGetCurrent());
+      return createUser(userApi.userGetCurrent(), password);
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED || e.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
         return null;
@@ -73,8 +73,8 @@ public final class GiteaUserDB implements UserDB {
   }
 
   @NotNull
-  private User createUser(@NotNull io.gitea.model.User user) {
-    return User.create(user.getLogin(), user.getFullName(), user.getEmail(), String.valueOf(user.getId()), UserType.Gitea);
+  private User createUser(@NotNull io.gitea.model.User user, @Nullable String password) {
+    return User.create(user.getLogin(), user.getFullName(), user.getEmail(), String.valueOf(user.getId()), UserType.Gitea, password == null ? null : new User.LfsCredentials(user.getLogin(), password));
   }
 
   @Nullable
@@ -84,7 +84,7 @@ public final class GiteaUserDB implements UserDB {
     try {
       UserApi userApi = new UserApi(apiClient);
       io.gitea.model.User user = userApi.userGet(username);
-      return createUser(user);
+      return createUser(user, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
         log.warn("User lookup by name error: " + username, e);
@@ -104,7 +104,7 @@ public final class GiteaUserDB implements UserDB {
         for (io.gitea.model.User u : users.getData()) {
           if (userId.equals(u.getId())) {
             log.info("Matched {} with {}", external, u.getLogin());
-            return createUser(u);
+            return createUser(u, null);
           }
         }
       } catch (ApiException e) {
@@ -121,7 +121,7 @@ public final class GiteaUserDB implements UserDB {
         PublicKey key = userApi.userCurrentGetKey(keyId);
         if (key.getUser() != null) {
           log.info("Matched {} with {}", external, key.getUser().getLogin());
-          return createUser(key.getUser());
+          return createUser(key.getUser(), null);
         } else {
           log.info("Matched {} with a key, but no User is associated.", external);
           return null;

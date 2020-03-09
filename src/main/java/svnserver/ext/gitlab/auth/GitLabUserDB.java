@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.auth;
 
+import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.models.GitlabSession;
 import org.gitlab.api.models.GitlabUser;
@@ -21,6 +22,7 @@ import svnserver.auth.User;
 import svnserver.auth.UserDB;
 import svnserver.context.SharedContext;
 import svnserver.ext.gitlab.config.GitLabContext;
+import svnserver.ext.gitlab.config.GitLabToken;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -60,8 +62,10 @@ public final class GitLabUserDB implements UserDB {
   @Override
   public User check(@NotNull String username, @NotNull String password) {
     try {
-      final GitlabSession session = context.connect(username, password);
-      return createUser(session);
+      final GitLabToken token = GitLabContext.obtainAccessToken(context.getGitLabUrl(), username, password, false);
+      final GitlabAPI api = GitLabContext.connect(context.getGitLabUrl(), token);
+      final GitlabSession session = api.getCurrentSession();
+      return createUser(session, password);
     } catch (GitlabAPIException e) {
       if (e.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
         return null;
@@ -75,15 +79,15 @@ public final class GitLabUserDB implements UserDB {
   }
 
   @NotNull
-  private User createUser(@NotNull GitlabUser user) {
-    return User.create(user.getUsername(), user.getName(), user.getEmail(), user.getId().toString(), UserType.GitLab);
+  private User createUser(@NotNull GitlabUser user, @Nullable String password) {
+    return User.create(user.getUsername(), user.getName(), user.getEmail(), user.getId().toString(), UserType.GitLab, password == null ? null : new User.LfsCredentials(user.getUsername(), password));
   }
 
   @Nullable
   @Override
   public User lookupByUserName(@NotNull String username) {
     try {
-      return createUser(context.connect().getUserViaSudo(username));
+      return createUser(context.connect().getUserViaSudo(username), null);
     } catch (FileNotFoundException e) {
       return null;
     } catch (IOException e) {
@@ -98,7 +102,7 @@ public final class GitLabUserDB implements UserDB {
     final Integer userId = removePrefix(external, PREFIX_USER);
     if (userId != null) {
       try {
-        return createUser(context.connect().getUser(userId));
+        return createUser(context.connect().getUser(userId), null);
       } catch (FileNotFoundException e) {
         return null;
       } catch (IOException e) {
@@ -109,7 +113,7 @@ public final class GitLabUserDB implements UserDB {
     final Integer keyId = removePrefix(external, PREFIX_KEY);
     if (keyId != null) {
       try {
-        return createUser(context.connect().getSSHKey(keyId).getUser());
+        return createUser(context.connect().getSSHKey(keyId).getUser(), null);
       } catch (FileNotFoundException e) {
         return null;
       } catch (IOException e) {

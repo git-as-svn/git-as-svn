@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
  */
 public final class CacheUserDB implements UserDB {
   @NotNull
-  private final static User invalidUser = User.create("invalid", "invalid", null, null, UserType.Local);
+  private final static User invalidUser = User.create("invalid", "invalid", null, null, UserType.Local, null);
   @NotNull
   private final Collection<Authenticator> authenticators = Collections.singleton(new PlainAuthenticator(this));
   @NotNull

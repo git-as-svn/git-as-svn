@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix a bug that caused Git-LFS locks in GitLab to be created on behalf of administator user instead of the user who locks file through git-as-svn
+
 == 1.23.1
 
 * Fix "Malformed network data" error for `svn blame`

@@ -21,7 +21,7 @@ import java.util.Objects;
  */
 public final class User {
   @NotNull
-  private static final User anonymousUser = new User("$anonymous", "anonymous", null, null, true, UserType.Local);
+  private static final User anonymousUser = new User("$anonymous", "anonymous", null, null, true, UserType.Local, null);
 
   private final boolean isAnonymous;
   @NotNull
@@ -34,23 +34,31 @@ public final class User {
   private final String externalId;
   @NotNull
   private final UserType type;
+  @Nullable
+  private final LfsCredentials lfsCredentials;
 
-  protected User(@NotNull String username, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous, @NotNull UserType type) {
+  protected User(@NotNull String username, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous, @NotNull UserType type, @Nullable LfsCredentials lfsCredentials) {
     this.username = username;
     this.realName = realName;
     this.email = email;
     this.externalId = externalId;
     this.isAnonymous = isAnonymous;
     this.type = type;
+    this.lfsCredentials = lfsCredentials;
   }
 
   @NotNull
-  public static User create(@NotNull String username, @NotNull String realName, @Nullable String email, @Nullable String externalId, @NotNull UserType type) {
-    return new User(username, realName, email, externalId, false, type);
+  public static User create(@NotNull String username, @NotNull String realName, @Nullable String email, @Nullable String externalId, @NotNull UserType type, @Nullable LfsCredentials lfsCredentials) {
+    return new User(username, realName, email, externalId, false, type, lfsCredentials);
   }
 
   public static User getAnonymous() {
     return anonymousUser;
+  }
+
+  @Nullable
+  public LfsCredentials getLfsCredentials() {
+    return lfsCredentials;
   }
 
   @Nullable
@@ -122,5 +130,17 @@ public final class User {
   @Override
   public String toString() {
     return username;
+  }
+
+  public static class LfsCredentials {
+    @NotNull
+    public final String username;
+    @NotNull
+    public final String password;
+
+    public LfsCredentials(@NotNull String username, @NotNull String password) {
+      this.username = username;
+      this.password = password;
+    }
   }
 }
