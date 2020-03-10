@@ -32,13 +32,14 @@ public final class LocalUserDB implements UserDB {
   }
 
   @Nullable
-  public User add(@NotNull String userName, @NotNull String password, @NotNull String realName, String email) {
-    if (users.containsKey(userName)) {
+  public User add(@NotNull String username, @NotNull String password, @NotNull String realName, String email) {
+    if (users.containsKey(username)) {
       return null;
     }
 
-    final UserWithPassword userWithPassword = new UserWithPassword(User.create(userName, realName, email, userName, UserType.Local), password);
-    users.put(userWithPassword.getUser().getUserName(), userWithPassword);
+    final User user = User.create(username, realName, email, username, UserType.Local, null);
+    final UserWithPassword userWithPassword = new UserWithPassword(user, password);
+    users.put(userWithPassword.getUser().getUsername(), userWithPassword);
     return userWithPassword.getUser();
   }
 
@@ -49,8 +50,8 @@ public final class LocalUserDB implements UserDB {
   }
 
   @Override
-  public User check(@NotNull String userName, @NotNull String password) {
-    final UserWithPassword userWithPassword = users.get(userName);
+  public User check(@NotNull String username, @NotNull String password) {
+    final UserWithPassword userWithPassword = users.get(username);
     if (userWithPassword == null)
       return null;
 
@@ -62,8 +63,8 @@ public final class LocalUserDB implements UserDB {
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) {
-    final UserWithPassword user = users.get(userName);
+  public User lookupByUserName(@NotNull String username) {
+    final UserWithPassword user = users.get(username);
     return user == null ? null : user.getUser();
   }
 

@@ -189,14 +189,14 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  public SVNRepository openSvnRepository(@NotNull String userName, @NotNull String password) throws SVNException {
-    return openSvnRepository(getUrl(), userName, password);
+  public SVNRepository openSvnRepository(@NotNull String username, @NotNull String password) throws SVNException {
+    return openSvnRepository(getUrl(), username, password);
   }
 
   @NotNull
-  public static SVNRepository openSvnRepository(@NotNull SVNURL url, @NotNull String userName, @NotNull String password) throws SVNException {
+  public static SVNRepository openSvnRepository(@NotNull SVNURL url, @NotNull String username, @NotNull String password) throws SVNException {
     final SVNRepository repo = SVNRepositoryFactory.create(url);
-    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
+    repo.setAuthenticationManager(BasicAuthenticationManager.newInstance(username, password.toCharArray()));
     return repo;
   }
 
@@ -258,13 +258,13 @@ public final class SvnTestServer implements SvnTester {
   }
 
   @NotNull
-  private SvnOperationFactory createOperationFactory(@NotNull String userName, @NotNull String password) {
+  private SvnOperationFactory createOperationFactory(@NotNull String username, @NotNull String password) {
     final SVNWCContext wcContext = new SVNWCContext(new DefaultSVNOptions(getTempDirectory().toFile(), true), null);
     wcContext.setSqliteTemporaryDbInMemory(true);
     wcContext.setSqliteJournalMode(SqlJetPagerJournalMode.MEMORY);
 
     final SvnOperationFactory factory = new SvnOperationFactory(wcContext);
-    factory.setAuthenticationManager(BasicAuthenticationManager.newInstance(userName, password.toCharArray()));
+    factory.setAuthenticationManager(BasicAuthenticationManager.newInstance(username, password.toCharArray()));
     svnFactories.add(factory);
     return factory;
   }

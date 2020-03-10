@@ -10,6 +10,9 @@ package svnserver.ext.gitlab.config;
 import org.gitlab.api.TokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.client.auth.AuthProvider;
+import ru.bozaro.gitlfs.client.auth.BasicAuthProvider;
+import svnserver.auth.User;
 import svnserver.config.SharedConfig;
 import svnserver.config.serializer.ConfigType;
 import svnserver.context.SharedContext;
@@ -19,6 +22,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
 
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * Gitlab access settings.
@@ -71,16 +75,10 @@ public final class GitLabConfig implements SharedConfig {
       context.add(LfsStorageFactory.class, localContext -> createLfsStorage(
           url,
           localContext.getName(),
-          "UNUSED",
-          getToken().getValue(),
+          "UNUSED", getToken().getValue(),
           lfsMode.readerFactory(localContext)
       ));
     }
-  }
-
-  @NotNull
-  public GitLabToken getToken() {
-    return new GitLabToken(tokenType, token);
   }
 
   @NotNull
@@ -98,6 +96,21 @@ public final class GitLabConfig implements SharedConfig {
         else
           return super.getReader(oid, size);
       }
+
+      @NotNull
+      @Override
+      protected AuthProvider authProvider(@NotNull User user, @NotNull URI baseURI) {
+        final User.LfsCredentials lfsCredentials = user.getLfsCredentials();
+        if (lfsCredentials == null)
+          return super.authProvider(user, baseURI);
+
+        return new BasicAuthProvider(baseURI, lfsCredentials.username, lfsCredentials.password);
+      }
     };
+  }
+
+  @NotNull
+  public GitLabToken getToken() {
+    return new GitLabToken(tokenType, token);
   }
 }

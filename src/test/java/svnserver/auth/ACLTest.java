@@ -23,10 +23,10 @@ import java.util.Map;
 public final class ACLTest {
 
   @NotNull
-  private static final User Bob = User.create("bob", "Bob", "bob@acme.com", null, UserType.Local);
+  private static final User Bob = User.create("bob", "Bob", "bob@acme.com", null, UserType.Local, null);
 
   @NotNull
-  private static final User Alice = User.create("alice", "Alice", "alice@acme.com", null, UserType.Local);
+  private static final User Alice = User.create("alice", "Alice", "alice@acme.com", null, UserType.Local, null);
 
   @Test
   public void emptyDeny() {
@@ -40,7 +40,7 @@ public final class ACLTest {
   public void groupOfGroup() {
     final Map<String, String[]> groups = ImmutableMap.<String, String[]>builder()
         .put("groupOfGroup", new String[]{"@group"})
-        .put("group", new String[]{Bob.getUserName()})
+        .put("group", new String[]{Bob.getUsername()})
         .build();
     final ACL acl = new ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroup", "r")));
 
@@ -53,7 +53,7 @@ public final class ACLTest {
     final Map<String, String[]> groups = ImmutableMap.<String, String[]>builder()
         .put("groupOfGroupOfGroup", new String[]{"@groupOfGroup"})
         .put("groupOfGroup", new String[]{"@group"})
-        .put("group", new String[]{Bob.getUserName()})
+        .put("group", new String[]{Bob.getUsername()})
         .build();
     final ACL acl = new ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroupOfGroup", "r")));
 
@@ -92,7 +92,7 @@ public final class ACLTest {
 
   @Test
   public void branchAllow() {
-    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("master:/", Collections.singletonMap(Bob.getUserName(), "rw")));
+    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("master:/", Collections.singletonMap(Bob.getUsername(), "rw")));
     Assert.assertTrue(acl.canRead(Bob, "master", "/"));
     Assert.assertFalse(acl.canRead(Bob, "release", "/"));
   }
@@ -100,8 +100,8 @@ public final class ACLTest {
   @Test
   public void branchDeny() {
     final Map<String, Map<String, String>> entries = ImmutableMap.<String, Map<String, String>>builder()
-        .put("master:/", Collections.singletonMap(Bob.getUserName(), null))
-        .put("/", Collections.singletonMap(Bob.getUserName(), "rw"))
+        .put("master:/", Collections.singletonMap(Bob.getUsername(), null))
+        .put("/", Collections.singletonMap(Bob.getUsername(), "rw"))
         .build();
     final ACL acl = new ACL(Collections.emptyMap(), entries);
     Assert.assertFalse(acl.canRead(Bob, "master", "/"));
@@ -146,7 +146,7 @@ public final class ACLTest {
 
     Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
     Assert.assertFalse(acl.canRead(User.getAnonymous(), Constants.MASTER, "/"));
-    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab), Constants.MASTER, "/"));
+    Assert.assertTrue(acl.canRead(User.create("bla", "bla", "bla", "bla", UserType.GitLab, null), Constants.MASTER, "/"));
   }
 
   @Test
@@ -159,7 +159,7 @@ public final class ACLTest {
 
   @Test
   public void rootAllow() {
-    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(Bob.getUserName(), "rw")));
+    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/", Collections.singletonMap(Bob.getUsername(), "rw")));
 
     Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"));
     Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/"));
@@ -176,7 +176,7 @@ public final class ACLTest {
 
   @Test
   public void deepAllow() {
-    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/qwe", Collections.singletonMap(Bob.getUserName(), "rw")));
+    final ACL acl = new ACL(Collections.emptyMap(), Collections.singletonMap("/qwe", Collections.singletonMap(Bob.getUsername(), "rw")));
 
     Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/"));
     Assert.assertFalse(acl.canRead(Alice, Constants.MASTER, "/"));
@@ -194,8 +194,8 @@ public final class ACLTest {
   @Test
   public void deepDeny() {
     final Map<String, Map<String, String>> entries = ImmutableMap.<String, Map<String, String>>builder()
-        .put("/qwe", Collections.singletonMap(Bob.getUserName(), null))
-        .put("/", Collections.singletonMap(Bob.getUserName(), "rw"))
+        .put("/qwe", Collections.singletonMap(Bob.getUsername(), null))
+        .put("/", Collections.singletonMap(Bob.getUsername(), "rw"))
         .build();
 
     final ACL acl = new ACL(Collections.emptyMap(), entries);
@@ -211,8 +211,8 @@ public final class ACLTest {
   @Test
   public void floorEntry() {
     final Map<String, Map<String, String>> entries = ImmutableMap.<String, Map<String, String>>builder()
-        .put("/", Collections.singletonMap(Bob.getUserName(), "rw"))
-        .put("/a", Collections.singletonMap(Bob.getUserName(), null))
+        .put("/", Collections.singletonMap(Bob.getUsername(), "rw"))
+        .put("/a", Collections.singletonMap(Bob.getUsername(), null))
         .build();
 
     final ACL acl = new ACL(Collections.emptyMap(), entries);

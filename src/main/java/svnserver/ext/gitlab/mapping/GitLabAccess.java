@@ -107,7 +107,7 @@ final class GitLabAccess implements VcsAccess {
       return false;
     }
     return owner.getId().toString().equals(user.getExternalId())
-        || owner.getName().equals(user.getUserName());
+        || owner.getName().equals(user.getUsername());
   }
 
   private boolean hasAccess(@Nullable GitlabProjectAccessLevel access, @NotNull GitlabAccessLevel level) {
@@ -122,7 +122,7 @@ final class GitLabAccess implements VcsAccess {
       if (user.isAnonymous())
         return cache.get("");
 
-      final String key = user.getExternalId() != null ? user.getExternalId() : user.getUserName();
+      final String key = user.getExternalId() != null ? user.getExternalId() : user.getUsername();
       if (key.isEmpty()) {
         throw new IllegalStateException("Found user without identificator: " + user);
       }

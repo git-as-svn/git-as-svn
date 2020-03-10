@@ -207,11 +207,6 @@ public final class LfsHttpStorageTest {
     }
 
     @Override
-    public void invalidate(@NotNull User user) {
-
-    }
-
-    @Override
     protected @NotNull Client lfsClient(@NotNull User unused) {
       final CloseableHttpClient httpClient = LfsHttpStorage.createHttpClient();
 
@@ -226,7 +221,7 @@ public final class LfsHttpStorageTest {
             addParameter(params, "mode", "anonymous");
           } else {
             addParameter(params, "mode", "username");
-            addParameter(params, "userId", user.getUserName());
+            addParameter(params, "userId", user.getUsername());
           }
 
           post.setEntity(new UrlEncodedFormEntity(params));

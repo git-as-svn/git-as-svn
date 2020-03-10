@@ -41,14 +41,14 @@ public final class CombineUserDB implements UserDB {
   }
 
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
-    return firstAvailable(userDB -> userDB.check(userName, password));
+  public User check(@NotNull String username, @NotNull String password) throws SVNException {
+    return firstAvailable(userDB -> userDB.check(username, password));
   }
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException {
-    return firstAvailable(userDB -> userDB.lookupByUserName(userName));
+  public User lookupByUserName(@NotNull String username) throws SVNException {
+    return firstAvailable(userDB -> userDB.lookupByUserName(username));
   }
 
   @Nullable

@@ -160,8 +160,8 @@ public final class LdapUserDBConfig implements UserDBConfig {
   }
 
   @NotNull
-  public Filter createSearchFilter(@NotNull String userName) throws LDAPException {
-    final Filter filter = Filter.createEqualityFilter(loginAttribute, userName);
+  public Filter createSearchFilter(@NotNull String username) throws LDAPException {
+    final Filter filter = Filter.createEqualityFilter(loginAttribute, username);
     return searchFilter.isEmpty()
         ? filter
         : Filter.createANDFilter(Filter.create(searchFilter), filter);

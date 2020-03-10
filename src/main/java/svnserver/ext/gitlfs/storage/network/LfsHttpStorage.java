@@ -44,6 +44,7 @@ import static svnserver.repository.locks.LockDesc.toLfsPath;
  * HTTP remote storage for LFS files.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 public abstract class LfsHttpStorage implements LfsStorage {
 
@@ -62,8 +63,6 @@ public abstract class LfsHttpStorage implements LfsStorage {
         .build();
   }
 
-  public abstract void invalidate(@NotNull User user);
-
   @Override
   @Nullable
   public LfsReader getReader(@NotNull String oid, long size) throws IOException {
@@ -81,7 +80,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
       if (item.getError() != null)
         return null;
 
-      return new LfsHttpReader(this, item, item);
+      return new LfsHttpReader(lfsClient, item);
     } catch (RequestException e) {
       log.error("HTTP request error:" + e.getMessage(), e);
       throw e;
@@ -94,7 +93,8 @@ public abstract class LfsHttpStorage implements LfsStorage {
   @NotNull
   @Override
   public final LfsWriter getWriter(@NotNull User user) {
-    return new LfsHttpWriter(this, user);
+    final Client lfsClient = lfsClient(user);
+    return new LfsHttpWriter(lfsClient);
   }
 
   @NotNull

@@ -43,13 +43,13 @@ public final class KeyUserDB implements UserDB {
     }
 
     @Override
-    public User check(@NotNull String userName, @NotNull String password) throws SVNException {
-        return internal.check(userName, password);
+    public User check(@NotNull String username, @NotNull String password) throws SVNException {
+        return internal.check(username, password);
     }
 
     @Override
-	public @Nullable User lookupByUserName(@NotNull String userName) throws SVNException {
-		return internal.lookupByUserName(userName);
+	public @Nullable User lookupByUserName(@NotNull String username) throws SVNException {
+		return internal.lookupByUserName(username);
 	}
 
 	@Override

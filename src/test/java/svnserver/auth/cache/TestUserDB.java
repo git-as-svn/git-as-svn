@@ -34,11 +34,11 @@ final class TestUserDB implements UserDB {
   }
 
   @Override
-  public User check(@NotNull String userName, @NotNull String password) {
-    log("check: " + userName + ", " + password);
-    if (password.equals(password(userName))) {
+  public User check(@NotNull String username, @NotNull String password) {
+    log("check: " + username + ", " + password);
+    if (password.equals(password(username))) {
       for (User user : users) {
-        if (Objects.equals(user.getUserName(), userName)) {
+        if (Objects.equals(user.getUsername(), username)) {
           return user;
         }
       }
@@ -52,16 +52,16 @@ final class TestUserDB implements UserDB {
   }
 
   @NotNull
-  public String password(@NotNull String userName) {
-    return "~~~" + userName + "~~~";
+  public String password(@NotNull String username) {
+    return "~~~" + username + "~~~";
   }
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) {
-    log("lookupByUserName: " + userName);
+  public User lookupByUserName(@NotNull String username) {
+    log("lookupByUserName: " + username);
     for (User user : users) {
-      if (Objects.equals(user.getUserName(), userName)) {
+      if (Objects.equals(user.getUsername(), username)) {
         return user;
       }
     }

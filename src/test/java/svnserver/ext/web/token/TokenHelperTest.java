@@ -24,15 +24,20 @@ import svnserver.auth.User;
 public final class TokenHelperTest {
   @Test
   public void simpleWithoutExternal() {
-    final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local);
+    final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local, null);
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertEquals(actual, expected);
   }
 
+  @NotNull
+  private JsonWebEncryption createToken(@NotNull String secret) {
+    return new EncryptionFactoryAes(secret).create();
+  }
+
   @Test
   public void simpleWithExternal() {
-    final User expected = User.create("foo", "bar", "foo@example.com", "user-1", UserType.Local);
+    final User expected = User.create("foo", "bar", "foo@example.com", "user-1", UserType.Local, null);
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertEquals(actual, expected);
@@ -48,7 +53,7 @@ public final class TokenHelperTest {
 
   @Test
   public void invalidToken() {
-    final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local);
+    final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local, null);
     final String token = TokenHelper.createToken(createToken("big secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() + 2000));
     final User actual = TokenHelper.parseToken(createToken("small secret"), token, 0);
     Assert.assertNull(actual);
@@ -56,7 +61,7 @@ public final class TokenHelperTest {
 
   @Test
   public void expiredToken() {
-    final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local);
+    final User expected = User.create("foo", "bar", "foo@example.com", null, UserType.Local, null);
     final String token = TokenHelper.createToken(createToken("secret"), expected, NumericDate.fromMilliseconds(System.currentTimeMillis() - 2000));
     final User actual = TokenHelper.parseToken(createToken("secret"), token, 0);
     Assert.assertNull(actual);
@@ -76,10 +81,5 @@ public final class TokenHelperTest {
 
     final byte[] bytesHash = TokenHelper.secretToBytes(Hex.encodeHexString(expected), 5);
     Assert.assertEquals(bytesHash.length, 5);
-  }
-
-  @NotNull
-  private JsonWebEncryption createToken(@NotNull String secret) {
-    return new EncryptionFactoryAes(secret).create();
   }
 }

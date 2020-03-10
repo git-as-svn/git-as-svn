@@ -10,11 +10,7 @@ package svnserver.ext.gitlfs.storage.network;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.bozaro.gitlfs.client.Client;
-import ru.bozaro.gitlfs.client.exceptions.UnauthorizedException;
-import ru.bozaro.gitlfs.common.data.Links;
-import ru.bozaro.gitlfs.common.data.Meta;
-import ru.bozaro.gitlfs.common.data.ObjectRes;
-import svnserver.auth.User;
+import ru.bozaro.gitlfs.common.data.BatchItem;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 
@@ -25,43 +21,23 @@ import java.io.InputStream;
  * Network storage reader.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 final class LfsHttpReader implements LfsReader {
   @NotNull
-  private final LfsHttpStorage owner;
+  private final Client lfsClient;
   @NotNull
-  private final Meta meta;
-  @NotNull
-  private Links links;
+  private final BatchItem item;
 
-  LfsHttpReader(@NotNull LfsHttpStorage owner, @NotNull Meta meta, @NotNull Links links) {
-    this.owner = owner;
-    this.links = links;
-    this.meta = meta;
+  LfsHttpReader(@NotNull Client lfsClient, @NotNull BatchItem item) {
+    this.lfsClient = lfsClient;
+    this.item = item;
   }
 
   @NotNull
   @Override
   public InputStream openStream() throws IOException {
-    for (int pass = 0; ; ++pass) {
-      try {
-        final Client lfsClient = owner.lfsClient(User.getAnonymous());
-        return lfsClient.openObject(null, links);
-      } catch (UnauthorizedException e) {
-        if (pass != 0) throw e;
-        owner.invalidate(User.getAnonymous());
-        final ObjectRes newMeta = getMeta(meta.getOid());
-        if (newMeta != null) {
-          this.links = newMeta;
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private ObjectRes getMeta(@NotNull String hash) throws IOException {
-    final Client lfsClient = owner.lfsClient(User.getAnonymous());
-    return lfsClient.getMeta(hash);
+    return lfsClient.openObject(item, item);
   }
 
   @Nullable
@@ -72,7 +48,7 @@ final class LfsHttpReader implements LfsReader {
 
   @Override
   public long getSize() {
-    return meta.getSize();
+    return item.getSize();
   }
 
   @Nullable
@@ -84,6 +60,6 @@ final class LfsHttpReader implements LfsReader {
   @NotNull
   @Override
   public String getOid(boolean hashOnly) {
-    return hashOnly ? meta.getOid().substring(LfsStorage.OID_PREFIX.length()) : meta.getOid();
+    return hashOnly ? item.getOid().substring(LfsStorage.OID_PREFIX.length()) : item.getOid();
   }
 }
