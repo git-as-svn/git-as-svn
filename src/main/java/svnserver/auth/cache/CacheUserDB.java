@@ -53,14 +53,14 @@ public final class CacheUserDB implements UserDB {
   }
 
   @Override
-  public User check(@NotNull String userName, @NotNull String password) throws SVNException {
-    return cached("c." + hash(userName, password), db -> db.check(userName, password));
+  public User check(@NotNull String username, @NotNull String password) throws SVNException {
+    return cached("c." + hash(username, password), db -> db.check(username, password));
   }
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) throws SVNException {
-    return cached("l." + userName, db -> db.lookupByUserName(userName));
+  public User lookupByUserName(@NotNull String username) throws SVNException {
+    return cached("l." + username, db -> db.lookupByUserName(username));
   }
 
   @Nullable
@@ -91,9 +91,9 @@ public final class CacheUserDB implements UserDB {
   }
 
   @NotNull
-  private String hash(@NotNull String userName, @NotNull String password) {
+  private String hash(@NotNull String username, @NotNull String password) {
     final MessageDigest digest = HashHelper.sha256();
-    hashPacket(digest, userName.getBytes(StandardCharsets.UTF_8));
+    hashPacket(digest, username.getBytes(StandardCharsets.UTF_8));
     hashPacket(digest, password.getBytes(StandardCharsets.UTF_8));
     return Hex.encodeHexString(digest.digest());
   }

@@ -311,7 +311,7 @@ public final class ACL implements VcsAccess {
 
     @Override
     public boolean matches(@NotNull User user) {
-      return !user.isAnonymous() && user.getUserName().equals(this.user);
+      return !user.isAnonymous() && user.getUsername().equals(this.user);
     }
 
     @Override
@@ -341,7 +341,7 @@ public final class ACL implements VcsAccess {
       if (authenticatedGroups.getOrDefault(user.getType(), Collections.emptySet()).contains(group))
         return true;
 
-      return user2groups.getOrDefault(user.getUserName(), Collections.emptySet()).contains(group);
+      return user2groups.getOrDefault(user.getUsername(), Collections.emptySet()).contains(group);
     }
 
     @Override

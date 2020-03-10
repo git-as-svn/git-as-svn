@@ -58,16 +58,16 @@ public final class GiteaUserDB implements UserDB {
   }
 
   @Override
-  public User check(@NotNull String userName, @NotNull String password) {
+  public User check(@NotNull String username, @NotNull String password) {
     try {
-      final ApiClient apiClient = context.connect(userName, password);
+      final ApiClient apiClient = context.connect(username, password);
       final UserApi userApi = new UserApi(apiClient);
       return createUser(userApi.userGetCurrent());
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED || e.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
         return null;
       }
-      log.warn("User password check error: " + userName, e);
+      log.warn("User password check error: " + username, e);
       return null;
     }
   }
@@ -79,15 +79,15 @@ public final class GiteaUserDB implements UserDB {
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) {
+  public User lookupByUserName(@NotNull String username) {
     ApiClient apiClient = context.connect();
     try {
       UserApi userApi = new UserApi(apiClient);
-      io.gitea.model.User user = userApi.userGet(userName);
+      io.gitea.model.User user = userApi.userGet(username);
       return createUser(user);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
-        log.warn("User lookup by name error: " + userName, e);
+        log.warn("User lookup by name error: " + username, e);
       }
       return null;
     }

@@ -161,7 +161,7 @@ public final class AuthLdapTest {
       try {
         final User user = userDB.check(username, password);
         Assert.assertNotNull(user);
-        Assert.assertEquals(user.getUserName(), username);
+        Assert.assertEquals(user.getUsername(), username);
       } catch (SVNException e) {
         done.set(false);
       }

@@ -47,7 +47,7 @@ public final class TokenHelper {
       claims.setIssuedAtToNow();  // when the token was issued/created (now)
       claims.setNotBeforeMinutesInThePast(0.5f); // time before which the token is not yet valid (30 seconds ago)
       if (!user.isAnonymous()) {
-        claims.setSubject(user.getUserName()); // the subject/principal is whom the token is about
+        claims.setSubject(user.getUsername()); // the subject/principal is whom the token is about
         setClaim(claims, "email", user.getEmail());
         setClaim(claims, "name", user.getRealName());
         setClaim(claims, "external", user.getExternalId());

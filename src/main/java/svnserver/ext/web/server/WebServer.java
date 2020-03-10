@@ -85,8 +85,8 @@ public final class WebServer implements Shared {
     final RequestLogHandler logHandler = new RequestLogHandler();
     logHandler.setRequestLog((request, response) -> {
       final User user = (User) request.getAttribute(User.class.getName());
-      final String userName = (user == null || user.isAnonymous()) ? "" : user.getUserName();
-      log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), userName, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
+      final String username = (user == null || user.isAnonymous()) ? "" : user.getUsername();
+      log.info("{}:{} - {} - \"{} {}\" {} {}", request.getRemoteHost(), request.getRemotePort(), username, request.getMethod(), request.getHttpURI(), response.getStatus(), response.getReason());
     });
 
     final HandlerCollection handlers = new HandlerCollection();

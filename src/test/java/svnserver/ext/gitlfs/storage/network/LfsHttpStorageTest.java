@@ -221,7 +221,7 @@ public final class LfsHttpStorageTest {
             addParameter(params, "mode", "anonymous");
           } else {
             addParameter(params, "mode", "username");
-            addParameter(params, "userId", user.getUserName());
+            addParameter(params, "userId", user.getUsername());
           }
 
           post.setEntity(new UrlEncodedFormEntity(params));

@@ -25,10 +25,10 @@ public interface UserDB extends Shared {
   @NotNull
   Collection<Authenticator> authenticators();
 
-  User check(@NotNull String userName, @NotNull String password) throws SVNException;
+  User check(@NotNull String username, @NotNull String password) throws SVNException;
 
   @Nullable
-  User lookupByUserName(@NotNull String userName) throws SVNException;
+  User lookupByUserName(@NotNull String username) throws SVNException;
 
   @Nullable
   User lookupByExternal(@NotNull String external) throws SVNException;

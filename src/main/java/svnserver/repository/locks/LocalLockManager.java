@@ -74,7 +74,7 @@ public class LocalLockManager implements LockStorage {
       if (!lockId.equals(lock.getValue().getToken()))
         continue;
 
-      if (!breakLock && !user.getUserName().equals(lock.getValue().getOwner()))
+      if (!breakLock && !user.getUsername().equals(lock.getValue().getOwner()))
         throw new LockConflictException(LockDesc.toLock(lock.getValue()));
 
       result = lock.getValue();
@@ -114,7 +114,7 @@ public class LocalLockManager implements LockStorage {
     final List<Lock> ourLocks = new ArrayList<>();
     final List<Lock> theirLocks = new ArrayList<>();
     for (LockDesc lock : getLocks(user, branch, null, (String) null))
-      (user.getUserName().equals(lock.getOwner()) ? ourLocks : theirLocks).add(LockDesc.toLock(lock));
+      (user.getUsername().equals(lock.getOwner()) ? ourLocks : theirLocks).add(LockDesc.toLock(lock));
 
     return new VerifyLocksResult(ourLocks, theirLocks);
   }
@@ -131,7 +131,7 @@ public class LocalLockManager implements LockStorage {
       if (lock == null)
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, path));
 
-      if (!breakLock && (!lock.getToken().equals(token) || !user.getUserName().equals(lock.getOwner())))
+      if (!breakLock && (!lock.getToken().equals(token) || !user.getUsername().equals(lock.getOwner())))
         throw new LockConflictException(LockDesc.toLock(lock));
     }
 
@@ -236,7 +236,7 @@ public class LocalLockManager implements LockStorage {
     if (!stealLock && currentLock != null)
       throw new LockConflictException(LockDesc.toLock(currentLock));
 
-    return new LockDesc(path, branch, hash, createLockId(), user.getUserName(), comment, System.currentTimeMillis());
+    return new LockDesc(path, branch, hash, createLockId(), user.getUsername(), comment, System.currentTimeMillis());
   }
 
   @NotNull

@@ -25,7 +25,7 @@ public final class User {
 
   private final boolean isAnonymous;
   @NotNull
-  private final String userName;
+  private final String username;
   @NotNull
   private final String realName;
   @Nullable
@@ -35,8 +35,8 @@ public final class User {
   @NotNull
   private final UserType type;
 
-  protected User(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous, @NotNull UserType type) {
-    this.userName = userName;
+  protected User(@NotNull String username, @NotNull String realName, @Nullable String email, @Nullable String externalId, boolean isAnonymous, @NotNull UserType type) {
+    this.username = username;
     this.realName = realName;
     this.email = email;
     this.externalId = externalId;
@@ -45,8 +45,8 @@ public final class User {
   }
 
   @NotNull
-  public static User create(@NotNull String userName, @NotNull String realName, @Nullable String email, @Nullable String externalId, @NotNull UserType type) {
-    return new User(userName, realName, email, externalId, false, type);
+  public static User create(@NotNull String username, @NotNull String realName, @Nullable String email, @Nullable String externalId, @NotNull UserType type) {
+    return new User(username, realName, email, externalId, false, type);
   }
 
   public static User getAnonymous() {
@@ -77,7 +77,7 @@ public final class User {
       env.put("GAS_EMAIL", getEmail());
     }
     env.put("GAS_NAME", getRealName());
-    env.put("GAS_LOGIN", getUserName());
+    env.put("GAS_LOGIN", getUsername());
   }
 
   @Nullable
@@ -91,13 +91,13 @@ public final class User {
   }
 
   @NotNull
-  public String getUserName() {
-    return userName;
+  public String getUsername() {
+    return username;
   }
 
   @Override
   public int hashCode() {
-    int result = userName.hashCode();
+    int result = username.hashCode();
     result = 31 * result + realName.hashCode();
     result = 31 * result + type.hashCode();
     result = 31 * result + (email != null ? email.hashCode() : 0);
@@ -113,7 +113,7 @@ public final class User {
 
     return Objects.equals(externalId, user.externalId)
         && Objects.equals(email, user.email)
-        && userName.equals(user.userName)
+        && username.equals(user.username)
         && realName.equals(user.realName)
         && type.equals(user.type)
         && (isAnonymous == user.isAnonymous);
@@ -121,6 +121,6 @@ public final class User {
 
   @Override
   public String toString() {
-    return userName;
+    return username;
   }
 }

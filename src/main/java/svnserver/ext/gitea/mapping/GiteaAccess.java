@@ -54,8 +54,8 @@ final class GiteaAccess implements VcsAccess {
     this.cache = CacheBuilder.newBuilder().maximumSize(config.getCacheMaximumSize())
         .expireAfterWrite(config.getCacheTimeSec(), TimeUnit.SECONDS).build(new CacheLoader<String, Repository>() {
           @Override
-          public Repository load(@NotNull String userName) throws Exception {
-            if (userName.isEmpty()) {
+          public Repository load(@NotNull String username) throws Exception {
+            if (username.isEmpty()) {
               try {
                 final ApiClient apiClient = context.connect();
                 final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
@@ -77,7 +77,7 @@ final class GiteaAccess implements VcsAccess {
             }
             // Sudo as the user
             try {
-              final ApiClient apiClient = context.connect(userName);
+              final ApiClient apiClient = context.connect(username);
               final RepositoryApi repositoryApi = new RepositoryApi(apiClient);
 
               return repositoryApi.repoGetByID(projectId);
@@ -131,7 +131,7 @@ final class GiteaAccess implements VcsAccess {
       if (user.isAnonymous())
         return cache.get("");
 
-      final String key = user.getUserName();
+      final String key = user.getUsername();
       if (key.isEmpty()) {
         throw new IllegalStateException("Found user without identifier: " + user);
       }

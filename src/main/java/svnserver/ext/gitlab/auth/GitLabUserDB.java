@@ -58,18 +58,18 @@ public final class GitLabUserDB implements UserDB {
   }
 
   @Override
-  public User check(@NotNull String userName, @NotNull String password) {
+  public User check(@NotNull String username, @NotNull String password) {
     try {
-      final GitlabSession session = context.connect(userName, password);
+      final GitlabSession session = context.connect(username, password);
       return createUser(session);
     } catch (GitlabAPIException e) {
       if (e.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
         return null;
       }
-      log.warn("User password check error: " + userName, e);
+      log.warn("User password check error: " + username, e);
       return null;
     } catch (IOException e) {
-      log.warn("User password check error: " + userName, e);
+      log.warn("User password check error: " + username, e);
       return null;
     }
   }
@@ -81,13 +81,13 @@ public final class GitLabUserDB implements UserDB {
 
   @Nullable
   @Override
-  public User lookupByUserName(@NotNull String userName) {
+  public User lookupByUserName(@NotNull String username) {
     try {
-      return createUser(context.connect().getUserViaSudo(userName));
+      return createUser(context.connect().getUserViaSudo(username));
     } catch (FileNotFoundException e) {
       return null;
     } catch (IOException e) {
-      log.warn("User lookup by name error: " + userName, e);
+      log.warn("User lookup by name error: " + username, e);
       return null;
     }
   }

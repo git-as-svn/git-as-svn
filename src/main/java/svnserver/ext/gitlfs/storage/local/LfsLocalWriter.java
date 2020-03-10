@@ -163,7 +163,7 @@ public final class LfsLocalWriter extends LfsWriter {
               if (user.getEmail() != null) {
                 map.put(LfsLocalStorage.META_EMAIL, user.getEmail());
               }
-              map.put(LfsLocalStorage.META_USER_NAME, user.getUserName());
+              map.put(LfsLocalStorage.META_USER_NAME, user.getUsername());
               map.put(LfsLocalStorage.META_REAL_NAME, user.getRealName());
             }
             stream.write(Pointer.serializePointer(map));
