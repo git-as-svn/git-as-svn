@@ -105,8 +105,8 @@ dependencies {
     constraints {
         implementation("org.apache.httpcomponents:httpclient") {
             version {
-                strictly("4.5.10")
-                because("https://github.com/bozaro/git-as-svn/issues/335: HTTPS regression bug in 4.5.11")
+                require("4.5.12")
+                because("https://issues.apache.org/jira/browse/HTTPCLIENT-2047")
             }
         }
     }

@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Upgrade httpclient to 4.5.12. https://github.com/bozaro/git-as-svn/issues/335[#335]
+
 == 1.24.1
 
 * Downgrade httpclient to 4.5.10. https://github.com/bozaro/git-as-svn/issues/335[#335]
