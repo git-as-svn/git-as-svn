@@ -21,6 +21,7 @@ import ru.bozaro.gitlfs.common.LockConflictException;
 import ru.bozaro.gitlfs.common.VerifyLocksResult;
 import ru.bozaro.gitlfs.common.data.*;
 import svnserver.Loggers;
+import svnserver.StringHelper;
 import svnserver.auth.User;
 import svnserver.ext.gitlfs.storage.LfsReader;
 import svnserver.ext.gitlfs.storage.LfsStorage;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static svnserver.repository.locks.LockDesc.toLfsPath;
 
@@ -118,9 +118,19 @@ public abstract class LfsHttpStorage implements LfsStorage {
   @NotNull
   @Override
   public final LockDesc[] getLocks(@NotNull User user, @Nullable GitBranch branch, @Nullable String path, @Nullable String lockId) throws IOException {
+    path = StringHelper.normalize(path == null ? "/" : path);
+
     final Ref ref = branch == null ? null : new Ref(branch.getShortBranchName());
-    final List<Lock> locks = lfsClient(user).listLocks(toLfsPath(path), lockId, ref);
-    final List<LockDesc> result = locks.stream().map(LockDesc::toLockDesc).collect(Collectors.toList());
+    final List<Lock> locks = lfsClient(user).listLocks(null, lockId, ref);
+
+    final List<LockDesc> result = new ArrayList<>();
+    for (Lock lock : locks) {
+      final LockDesc lockDesc = LockDesc.toLockDesc(lock);
+      if (!StringHelper.isParentPath(path, lockDesc.getPath()))
+        continue;
+
+      result.add(lockDesc);
+    }
     return result.toArray(LockDesc.emptyArray);
   }
 
