@@ -9,6 +9,7 @@ endif::[]
 == Unreleased
 
 * Upgrade httpclient to 4.5.12. https://github.com/bozaro/git-as-svn/issues/335[#335]
+* Fix `get-locks` cmd not properly filtering paths when using HTTP LFS server
 
 == 1.24.1
 

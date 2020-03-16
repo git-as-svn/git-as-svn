@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static svnserver.server.SvnFilePropertyTest.propsBinary;
-import static svnserver.server.SvnFilePropertyTest.propsEolNative;
 
 /**
  * Simple test for LfsLocalStorage.
@@ -150,7 +149,7 @@ public final class LfsLocalStorageTest {
   public static void checkLocks(@NotNull LfsStorage storage, @NotNull User user) throws LockConflictException, IOException, SVNException {
     final LockDesc[] locks1;
     try {
-      locks1 = storage.lock(user, null, null, false, new LockTarget[]{new LockTarget("/1.txt", 1)});
+      locks1 = storage.lock(user, null, null, false, new LockTarget[]{new LockTarget("/dir/1.txt", 1)});
     } catch (RequestException e) {
       if (e.getStatusCode() == HttpServletResponse.SC_NOT_FOUND)
         // LFS locks are not supported
@@ -160,12 +159,12 @@ public final class LfsLocalStorageTest {
     }
 
     Assert.assertEquals(locks1.length, 1);
-    Assert.assertEquals(locks1[0].getPath(), "/1.txt");
+    Assert.assertEquals(locks1[0].getPath(), "/dir/1.txt");
 
-    final LockDesc[] locks2 = storage.getLocks(user, null, "/1.txt", (String) null);
+    final LockDesc[] locks2 = storage.getLocks(user, null, "/dir/", (String) null);
     Assert.assertEquals(locks2, locks1);
 
-    final LockDesc[] locks3 = storage.unlock(user, null, false, new UnlockTarget[]{new UnlockTarget("/1.txt", locks1[0].getToken())});
+    final LockDesc[] locks3 = storage.unlock(user, null, false, new UnlockTarget[]{new UnlockTarget("/dir/1.txt", locks1[0].getToken())});
     Assert.assertEquals(locks3, locks1);
 
     storage.lock(User.getAnonymous(), null, "2.txt");
