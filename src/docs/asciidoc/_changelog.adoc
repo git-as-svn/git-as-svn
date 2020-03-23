@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.24.3
 
 * Fix `svn unlock` not actually unlocking anything if lock token was not provided
 
