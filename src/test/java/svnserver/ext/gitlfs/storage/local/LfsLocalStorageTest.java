@@ -167,13 +167,16 @@ public final class LfsLocalStorageTest {
     final LockDesc[] locks3 = storage.unlock(user, null, false, new UnlockTarget[]{new UnlockTarget("/dir/1.txt", locks1[0].getToken())});
     Assert.assertEquals(locks3, locks1);
 
-    storage.lock(User.getAnonymous(), null, "2.txt");
+    final LockDesc otherUserLock = storage.lock(User.getAnonymous(), null, "2.txt");
     try {
       storage.lock(User.getAnonymous(), null, "2.txt");
       Assert.fail();
     } catch (LockConflictException e) {
       // expected
     }
+
+    final LockDesc[] forceUnlockWithoutToken = storage.unlock(user, null, true, new UnlockTarget[]{new UnlockTarget("/2.txt", null)});
+    Assert.assertEquals(forceUnlockWithoutToken, new LockDesc[]{otherUserLock});
   }
 
   private static void checkLfs(@NotNull LfsStorage storage, @NotNull User user, @NotNull byte[] expected) throws IOException {

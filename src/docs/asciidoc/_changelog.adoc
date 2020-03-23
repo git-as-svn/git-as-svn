@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix `svn unlock` not actually unlocking anything if lock token was not provided
+
 == 1.24.2
 
 * Upgrade httpclient to 4.5.12. https://github.com/bozaro/git-as-svn/issues/335[#335]
