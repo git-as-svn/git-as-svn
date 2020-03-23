@@ -155,7 +155,7 @@ public abstract class LfsHttpStorage implements LfsStorage {
       if (target.getToken() == null) {
         final LockDesc[] locks = getLocks(user, branch, target.getPath(), (String) null);
 
-        if (locks.length > 1 && locks[0].getPath().equals(target.getPath()))
+        if (locks.length > 0 && locks[0].getPath().equals(target.getPath()))
           lockId = locks[0].getToken();
         else
           continue;
