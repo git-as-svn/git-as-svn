@@ -30,6 +30,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.eclipse.jgit.lib.ConfigConstants.CONFIG_CORE_SECTION;
 
@@ -46,10 +48,12 @@ public final class GitPushEmbedded implements GitPusher {
   private final LocalContext context;
   @Nullable
   private final String hooksPathOverride;
+  private final boolean useHooksDir;
 
-  public GitPushEmbedded(@NotNull LocalContext context, @Nullable String hooksPathOverride) {
+  public GitPushEmbedded(@NotNull LocalContext context, @Nullable String hooksPathOverride, boolean useHooksDir) {
     this.context = context;
     this.hooksPathOverride = hooksPathOverride;
+    this.useHooksDir = useHooksDir;
   }
 
   @NotNull
@@ -108,17 +112,41 @@ public final class GitPushEmbedded implements GitPusher {
   private void runHook(@NotNull Repository repository, @NotNull SVNErrorCode hookErrorCode, @NotNull String hook, @NotNull User userInfo, @NotNull HookRunner runner) throws SVNException {
     final Path repositoryDir = repository.getDirectory() == null ? null : repository.getDirectory().toPath();
     if (repositoryDir == null)
-      // We don't have a dir where to run the hook :(
+      // We don't have a dir where to run hooks :(
       return;
 
     final String hooksPath = getHooksPath(repository);
     final Path hooksDir = ConfigHelper.joinPath(repositoryDir, hooksPath);
-    final Path script = ConfigHelper.joinPath(hooksDir, hook);
 
     final long startTime = System.currentTimeMillis();
-    if (!Files.exists(script))
-      return;
+    try {
+      final Path mainHook = ConfigHelper.joinPath(hooksDir, hook);
+      if (Files.exists(mainHook))
+        runHook(hookErrorCode, userInfo, runner, repositoryDir, mainHook);
 
+      if (useHooksDir) {
+        final Path scriptDir = ConfigHelper.joinPath(hooksDir, hook + ".d");
+        if (Files.exists(scriptDir)) {
+          final TreeSet<Path> scripts;
+
+          try {
+            // See https://docs.gitlab.com/ee/administration/server_hooks.html#chained-hooks-support
+            scripts = Files.list(scriptDir).filter(Files::isExecutable).filter(path -> !path.getFileName().endsWith("~")).collect(Collectors.toCollection(TreeSet::new));
+          } catch (IOException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
+          }
+
+          for (Path script : scripts)
+            runHook(hookErrorCode, userInfo, runner, repositoryDir, script);
+        }
+      }
+    } finally {
+      final long endTime = System.currentTimeMillis();
+      log.info("{} hook for repository {} took {}ms", hook, repository.toString(), (endTime - startTime));
+    }
+  }
+
+  private void runHook(@NotNull SVNErrorCode hookErrorCode, @NotNull User userInfo, @NotNull HookRunner runner, @NotNull Path repositoryDir, @NotNull Path script) throws SVNException {
     final ProcessBuilder processBuilder = new ProcessBuilder(script.toString())
         .directory(repositoryDir.toFile())
         .redirectErrorStream(true);
@@ -148,9 +176,6 @@ public final class GitPushEmbedded implements GitPusher {
       log.error("Hook failed: " + script, e);
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
     } finally {
-      final long endTime = System.currentTimeMillis();
-      log.info("{} hook for repository {} took {}ms", hook, repository.toString(), (endTime - startTime));
-
       if (process != null)
         process.destroyForcibly();
     }

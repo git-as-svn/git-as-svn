@@ -315,7 +315,7 @@ public final class SvnTestServer implements SvnTester {
           local,
           LfsStorageFactory.tryCreateStorage(local),
           git,
-          new GitPushEmbedded(local, null),
+          new GitPushEmbedded(local, null, false),
           Collections.singleton(branch),
           true
       );

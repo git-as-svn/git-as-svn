@@ -24,11 +24,13 @@ public final class GitPushEmbeddedConfig implements GitPusherConfig {
   public static final GitPushEmbeddedConfig instance = new GitPushEmbeddedConfig();
 
   @Nullable
-  private String hooksPath;
+  private String hooksPath = null;
+  @SuppressWarnings("FieldCanBeLocal")
+  private boolean useHooksDir = false;
 
   @NotNull
   @Override
   public GitPusher create(@NotNull LocalContext context) {
-    return new GitPushEmbedded(context, hooksPath);
+    return new GitPushEmbedded(context, hooksPath, useHooksDir);
   }
 }

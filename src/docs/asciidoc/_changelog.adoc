@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Add `useHooksDir` option to `pusher: !pushEmbedded` that runs `hooks/<hook_name>.d/\*` executable files in addition to standard `hooks/<hook_name>`.
+Note that this feature is an extension to standard Git behavior and is subject to change in any later git-as-svn releases.
+
 == 1.24.3
 
 * Fix `svn unlock` not actually unlocking anything if lock token was not provided
