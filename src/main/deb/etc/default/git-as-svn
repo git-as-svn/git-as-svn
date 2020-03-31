@@ -19,3 +19,6 @@ GAS_ARGS=""
 # See https://github.com/bozaro/git-as-svn/issues/271
 PATH="/bin:/usr/bin:/opt/gitlab/embedded/bin"
 GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
+GITALY_GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
+GITALY_BIN_DIR=/opt/gitlab/embedded/bin
+GITALY_RUBY_DIR=/opt/gitlab/embedded/service/gitaly-ruby

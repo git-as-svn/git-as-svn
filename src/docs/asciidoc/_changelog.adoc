@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix compatibility with GitLab 12.9+ in `/etc/default/git-as-svn` that we provide. https://github.com/bozaro/git-as-svn/issues/337[#337]
+
 == 1.25.0
 
 * Add `useHooksDir` option to `pusher: !pushEmbedded` that runs `hooks/<hook_name>.d/\*` executable files in addition to standard `hooks/<hook_name>`.
