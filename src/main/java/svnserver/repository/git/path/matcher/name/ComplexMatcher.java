@@ -8,8 +8,7 @@
 package svnserver.repository.git.path.matcher.name;
 
 import org.eclipse.jgit.errors.InvalidPatternException;
-import org.eclipse.jgit.ignore.internal.IMatcher;
-import org.eclipse.jgit.ignore.internal.PathMatcher;
+import org.eclipse.jgit.ignore.IMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import svnserver.repository.git.path.NameMatcher;
@@ -33,7 +32,7 @@ public final class ComplexMatcher implements NameMatcher {
     this.pattern = pattern;
     this.dirOnly = dirOnly;
     this.svnMask = svnMask;
-    this.matcher = PathMatcher.createPathMatcher(dirOnly ? pattern.substring(0, pattern.length() - 1) : pattern, null, dirOnly);
+    this.matcher = IMatcher.createPathMatcher(dirOnly ? pattern.substring(0, pattern.length() - 1) : pattern, dirOnly);
   }
 
   @Override
@@ -53,6 +52,13 @@ public final class ComplexMatcher implements NameMatcher {
   }
 
   @Override
+  public int hashCode() {
+    int result = pattern.hashCode();
+    result = 31 * result + (dirOnly ? 1 : 0);
+    return result;
+  }
+
+  @Override
   public boolean equals(@Nullable Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -61,13 +67,6 @@ public final class ComplexMatcher implements NameMatcher {
 
     return (dirOnly == that.dirOnly)
         && Objects.equals(pattern, that.pattern);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = pattern.hashCode();
-    result = 31 * result + (dirOnly ? 1 : 0);
-    return result;
   }
 
   @Override
