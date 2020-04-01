@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "6.2.1"
+    gradleVersion = "6.3"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -71,13 +71,13 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
     implementation("org.tmatesoft.svnkit:svnkit:1.10.1")
-    implementation("org.yaml:snakeyaml:1.25")
+    implementation("org.yaml:snakeyaml:1.26")
     implementation("com.beust:jcommander:1.78")
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
-    implementation("com.unboundid:unboundid-ldapsdk:4.0.14")
+    implementation("com.unboundid:unboundid-ldapsdk:5.0.1")
     implementation("org.eclipse.jetty:jetty-servlet:9.4.26.v20200117")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
     implementation("org.bitbucket.b_c:jose4j:0.7.0")
@@ -88,7 +88,7 @@ dependencies {
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    implementation("com.google.oauth-client:google-oauth-client:1.30.5")
+    implementation("com.google.oauth-client:google-oauth-client:1.30.6")
     implementation("com.google.http-client:google-http-client-jackson2:1.34.2")
     implementation("org.jetbrains:annotations:19.0.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
@@ -97,10 +97,10 @@ dependencies {
     implementation(classindex)
     annotationProcessor(classindex)
 
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.13.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.13.1")
 
-    testImplementation("org.testcontainers:testcontainers:1.12.4")
-    testImplementation("org.testng:testng:7.1.1")
+    testImplementation("org.testcontainers:testcontainers:1.13.0")
+    testImplementation("org.testng:testng:7.2.0")
 
     constraints {
         implementation("org.apache.httpcomponents:httpclient") {
