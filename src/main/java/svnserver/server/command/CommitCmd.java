@@ -302,7 +302,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
     private final Map<String, String> locks;
     @NotNull
     private final GitWriter writer;
-    private boolean keepLocks;
+    @NotNull
+	private final List<String> dirTokenNonEmpty;
+	@NotNull
+	private final Map<String, String> tokenPaths;
+	private boolean keepLocks;
     private boolean aborted = false;
 
     EditorPipeline(@NotNull SessionContext context, @NotNull CommitParams params) throws IOException, SVNException {
@@ -318,6 +322,9 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       files = new HashMap<>();
       locks = getLocks(context, params.locks);
       commands = new HashMap<>();
+	  dirTokenNonEmpty = new ArrayList<String>();
+	  tokenPaths = new HashMap<String, String>();
+	  
       commands.put("add-dir", new LambdaCmd<>(AddParams.class, this::addDir));
       commands.put("add-file", new LambdaCmd<>(AddParams.class, this::addFile));
       commands.put("change-dir-prop", new LambdaCmd<>(ChangePropParams.class, this::changeDirProp));
@@ -368,6 +375,9 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         treeBuilder.checkDirProperties(updater.props);
         treeBuilder.closeDir();
       });
+	  
+	  addNewDir(args.token, args.name);
+	  markDirAsNonEmpty(args.parentToken);
     }
 
     private void addFile(@NotNull SessionContext context, @NotNull AddParams args) throws SVNException, IOException {
@@ -388,6 +398,8 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       }
       files.put(args.token, new FileUpdater(deltaConsumer));
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, false));
+	  
+	  markDirAsNonEmpty(args.parentToken);
     }
 
     private void changeDirProp(@NotNull SessionContext context, @NotNull ChangePropParams args) throws SVNException {
@@ -476,9 +488,50 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
-    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) {
+    private void closeDir(@NotNull SessionContext context, @NotNull TokenParams args) throws SVNException, IOException {
+	  maybeAddKeepFile(context, args.token);
       paths.remove(args.token);
     }
+	
+	private void addNewDir(@NotNull String token, @NotNull String path) {
+		tokenPaths.put(token, path);
+	}
+	
+	private void removeDir(@NotNull String token) {
+		dirTokenNonEmpty.remove(token);
+		tokenPaths.remove(token);
+	}
+	
+	private void markDirAsNonEmpty(@NotNull String parentToken) {
+	  if(!dirTokenNonEmpty.contains(parentToken)) {
+		dirTokenNonEmpty.add(parentToken);
+	  }
+	}
+	
+	private void maybeAddKeepFile(@NotNull SessionContext context, @NotNull String parentToken) throws SVNException, IOException {
+	  if(!dirTokenNonEmpty.contains(parentToken)) {
+	    log.debug("add keep file");
+	    addKeepFile(context, tokenPaths.get(parentToken), parentToken);  
+	  }
+	  removeDir(parentToken);
+	}
+	
+	private void addKeepFile(@NotNull SessionContext context, String dirName, String parentToken) throws SVNException, IOException {
+	  String token = "GitAsSvnInternalToken";
+	  // needs a .gitattribute entry '.keep	text'
+	  String fileName = dirName + "/.keep";
+	  AddParams dummyFile = new AddParams(fileName, parentToken, token , new CopyParams("",1));
+	  addFile(context, dummyFile);
+	  ChangePropParams changePropParams = new ChangePropParams(token, "svn:eol-style", new String[]{"native"});
+	  changeFileProp(context, changePropParams);
+	  ChecksumParams checkSumParam = new ChecksumParams(token, new String[]{"d41d8cd98f00b204e9800998ecf8427e"});
+	  deltaApply(context, checkSumParam);
+	  DeltaChunkParams deltaChunkParams = new DeltaChunkParams(token, new byte[]{83, 86, 78, 2});
+	  deltaChunk(context, deltaChunkParams);
+	  TokenParams deltaEndParams = new TokenParams(token);
+	  deltaEnd(context, deltaEndParams);
+	  closeFile(context, checkSumParam);
+	}
 
     private void closeFile(@NotNull SessionContext context, @NotNull ChecksumParams args) throws SVNException {
       final FileUpdater file = files.remove(args.token);
