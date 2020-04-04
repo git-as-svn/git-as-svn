@@ -15,11 +15,9 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import svnserver.SvnTestServer;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
+import svnserver.repository.git.GitWriter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static svnserver.SvnTestHelper.*;
 import static svnserver.server.SvnFilePropertyTest.propsEolNative;
@@ -30,6 +28,57 @@ import static svnserver.server.SvnFilePropertyTest.propsEolNative;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class SvnCommitTest {
+
+  @Test
+  public void createEmptyDir() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
+      editor.openRoot(-1);
+      editor.addDir("dir", null, -1);
+      editor.closeDir();
+      editor.closeDir();
+      Assert.assertNotNull(editor.closeEdit());
+
+      checkFileContent(repo, "dir/" + GitWriter.keepFileName, GitWriter.keepFileContents);
+    }
+  }
+
+  @Test
+  public void emptyCommit() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
+      editor.openRoot(-1);
+      editor.closeDir();
+      Assert.assertNotNull(editor.closeEdit());
+
+      Assert.assertEquals(Collections.emptyList(), repo.getDir("", repo.getLatestRevision(), null, 0, new ArrayList<SVNDirEntry>()));
+    }
+  }
+
+  @Test
+  public void removeAllFilesFromDir() throws Exception {
+    try (SvnTestServer server = SvnTestServer.createEmpty()) {
+      final SVNRepository repo = server.openSvnRepository();
+
+      final ISVNEditor editor = repo.getCommitEditor("Initial state", null, false, null);
+      editor.openRoot(-1);
+      editor.addDir("dir", null, -1);
+      editor.addFile("dir/file", null, 0);
+      editor.changeFileProperty("dir/file", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+      sendDeltaAndClose(editor, "dir/file", null, "text");
+      editor.closeDir();
+      editor.closeDir();
+      Assert.assertNotNull(editor.closeEdit());
+
+      deleteFile(repo, "dir/file");
+
+      checkFileContent(repo, "dir/" + GitWriter.keepFileName, GitWriter.keepFileContents);
+    }
+  }
 
   /**
    * Check file copy.

@@ -9,6 +9,7 @@ endif::[]
 == 1.25.1
 
 * Fix compatibility with GitLab 12.9+ in `/etc/default/git-as-svn` that we provide. https://github.com/bozaro/git-as-svn/issues/337[#337]
+* Automagically create a `.keep` file when user commits an empty directories. https://github.com/bozaro/git-as-svn/issues/126[#126]
 
 == 1.25.0
 

@@ -30,8 +30,6 @@ This implementation allows the majority of Subversion-users to work without thin
 * <<_gitlab.adoc#_gitlab,GitLab integration>>
 * <<_gitea.adoc#_gitea,Gitea integration>>
 
-NOTE: Empty directories are not supported
-
 == What is project goal?
 
 The project is designed to allow you to work with the same repository as Git, Subversion and style.
