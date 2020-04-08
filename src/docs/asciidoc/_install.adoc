@@ -57,7 +57,7 @@ You can check configuration with command like:
 
 [source,bash]
 ----
-svn ls --username test --password test svn://localhost/example/
+svn ls --username test --password test svn://localhost/example/master
 ----
 
 ==== Used directories
