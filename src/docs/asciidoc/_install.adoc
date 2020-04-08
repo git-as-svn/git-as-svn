@@ -119,7 +119,7 @@ This will start git-as-svn server with following configuration:
 You can check server with command like:
 +
 ----
-svn ls svn://localhost/example
+svn ls svn://localhost/example/master
 ----
 
 2. To access the server, you can use the user:
