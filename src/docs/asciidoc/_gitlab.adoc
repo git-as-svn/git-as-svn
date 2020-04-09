@@ -129,7 +129,17 @@ If you want to expose more than one branch, add multiple `git-as-svn:<branch>` t
 
 == Supported Git LFS modes
 
-. git-as-svn uses GitLab LFS API for all LFS operations
+. git-as-svn uses GitLab LFS API for write operations and direct disk access for read operations.
+This is recommended option.
++
+[source,yaml]
+----
+lfsMode: !fileLfs
+  # Directory where GitLab stores LFS ojects
+  path: /var/opt/gitlab/gitlab-rails/shared/lfs-objects
+----
+
+. git-as-svn uses GitLab LFS API for all LFS operations. This mode is slower than `!fileLfs`.
 +
 [source,yaml]
 ----
@@ -141,15 +151,6 @@ lfsMode: !httpLfs {}
 [source,yaml]
 ----
 lfsMode: null
-----
-
-. git-as-svn uses GitLab LFS API for write operations and direct disk access for read operations
-+
-[source,yaml]
-----
-lfsMode: !fileLfs
-  # Directory where GitLab stores LFS ojects
-  path: /var/opt/gitlab/gitlab-rails/shared/lfs-objects
 ----
 
 == Full configuration file example

@@ -99,7 +99,9 @@ shared:
     # Tells git-as-svn to use GitLab for LFS objects and file locking
     # Default: !httpLfs {}
     #
-    # lfsMode: !httpLfs {}
+    lfsMode: !fileLfs
+      # Directory where GitLab stores LFS ojects
+      path: /var/opt/gitlab/gitlab-rails/shared/lfs-objects
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>
