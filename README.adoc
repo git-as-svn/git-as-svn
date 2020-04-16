@@ -22,7 +22,7 @@ https://bozaro.github.io/git-as-svn/git-as-svn.epub[EPUB]
 From the root of the source tree, run:
 
 ----
-./gradlew assemblyDist
+./gradlew assembleDist
 ----
 
 Distribution files will be created in `build/distributions` directory.
