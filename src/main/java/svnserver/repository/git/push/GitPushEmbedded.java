@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.eclipse.jgit.lib.ConfigConstants.CONFIG_CORE_SECTION;
 
@@ -129,9 +130,9 @@ public final class GitPushEmbedded implements GitPusher {
         if (Files.exists(scriptDir)) {
           final TreeSet<Path> scripts;
 
-          try {
-            // See https://docs.gitlab.com/ee/administration/server_hooks.html#chained-hooks-support
-            scripts = Files.list(scriptDir).filter(Files::isExecutable).filter(path -> !path.getFileName().endsWith("~")).collect(Collectors.toCollection(TreeSet::new));
+          // See https://docs.gitlab.com/ee/administration/server_hooks.html#chained-hooks-support
+          try (Stream<Path> scriptStream = Files.list(scriptDir).filter(Files::isExecutable).filter(path -> !path.getFileName().endsWith("~"))) {
+            scripts = scriptStream.collect(Collectors.toCollection(TreeSet::new));
           } catch (IOException e) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
           }

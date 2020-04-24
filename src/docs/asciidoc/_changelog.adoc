@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix file descriptor leak when `useHooksDir` is enabled
+
 == 1.25.1
 
 * Fix compatibility with GitLab 12.9+ in `/etc/default/git-as-svn` that we provide. https://github.com/bozaro/git-as-svn/issues/337[#337]
