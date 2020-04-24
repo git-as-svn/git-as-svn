@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.25.2
 
 * Fix file descriptor leak when `useHooksDir` is enabled
 
