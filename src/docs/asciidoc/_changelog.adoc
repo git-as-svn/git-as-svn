@@ -6,9 +6,17 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Release remote LFS locks on commit unless keep-locks option is enabled
+* Block commit to locked file even if user claims he doesn't have any local version of that file
+* Improve error message when commit is aborted due to lock
+* Update dependencies
+
 == 1.25.2
 
 * Fix file descriptor leak when `useHooksDir` is enabled
+* Update dependencies
 
 == 1.25.1
 

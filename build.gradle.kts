@@ -13,7 +13,7 @@ tasks.wrapper {
 plugins {
     id("com.github.ben-manes.versions") version "0.28.0"
     id("com.github.hierynomus.license") version "0.15.0"
-    id("org.ajoberstar.grgit") version "4.0.1"
+    id("org.ajoberstar.grgit") version "4.0.2"
     id("org.asciidoctor.jvm.convert") version "2.3.0"
     id("org.asciidoctor.jvm.pdf") version "2.3.0"
     id("org.asciidoctor.jvm.epub") version "2.3.0"
@@ -78,7 +78,7 @@ dependencies {
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
     implementation("com.unboundid:unboundid-ldapsdk:5.0.1")
-    implementation("org.eclipse.jetty:jetty-servlet:9.4.26.v20200117")
+    implementation("org.eclipse.jetty:jetty-servlet:9.4.28.v20200408")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
     implementation("org.bitbucket.b_c:jose4j:0.7.0")
     implementation("com.github.zeripath:java-gitea-api:1.7.4")
@@ -99,7 +99,7 @@ dependencies {
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.13.1")
 
-    testImplementation("org.testcontainers:testcontainers:1.13.0")
+    testImplementation("org.testcontainers:testcontainers:1.14.1")
     testImplementation("org.testng:testng:7.2.0")
 
     constraints {
