@@ -186,7 +186,10 @@ public class LocalLockManager implements LockStorage {
   }
 
   @Override
-  public final void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) throws IOException {
+  public final void refreshLocks(@NotNull User user, @NotNull GitBranch branch, boolean keepLocks, @NotNull LockDesc[] lockDescs) throws IOException {
+    if (!keepLocks)
+      return;
+
     final GitRevision revision = branch.getLatestRevision();
     for (LockDesc lockDesc : lockDescs) {
       final String pathKey = lockDesc.getPath();
@@ -242,5 +245,10 @@ public class LocalLockManager implements LockStorage {
   @NotNull
   private static String createLockId() {
     return UUID.randomUUID().toString();
+  }
+
+  @NotNull
+  public SortedMap<String, LockDesc> getLocks() {
+    return locks;
   }
 }

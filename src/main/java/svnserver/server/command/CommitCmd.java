@@ -33,7 +33,10 @@ import svnserver.server.step.CheckPermissionStep;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Commit client changes.
@@ -408,9 +411,10 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       context.checkWrite(StringHelper.joinPath(parent.entry.getFullPath(), args.name));
       log.debug("Delete entry: {} (rev: {})", args.name, rev);
       final GitFile entry = parent.getEntry(StringHelper.baseName(args.name));
-      if (parent.head && (rev >= 0) && (parent.source != null)) {
-        checkUpToDate(entry, rev, true);
-      }
+      if (parent.head && (rev >= 0) && (parent.source != null))
+        checkUpToDate(entry, rev);
+
+      checkLock(entry);
       parent.changes.add(treeBuilder -> treeBuilder.delete(entry.getFileName()));
     }
 
@@ -434,7 +438,7 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         if (lastUpdater.source == null) {
           throw new IllegalStateException();
         }
-        checkUpToDate(lastUpdater.source, rev, false);
+        checkUpToDate(lastUpdater.source, rev);
         final Map<String, String> props = lastUpdater.props;
         lastUpdater.changes.add(treeBuilder -> treeBuilder.checkDirProperties(props));
       }
@@ -448,9 +452,9 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       final GitFile sourceDir = parent.getEntry(StringHelper.baseName(args.name));
       context.checkRead(sourceDir.getFullPath());
       final EntryUpdater dir = new EntryUpdater(sourceDir, sourceDir, parent.head);
-      if ((rev >= 0) && (parent.head)) {
-        checkUpToDate(sourceDir, rev, false);
-      }
+      if ((rev >= 0) && (parent.head))
+        checkUpToDate(sourceDir, rev);
+
       paths.put(args.token, dir);
       parent.changes.add(treeBuilder -> {
         treeBuilder.openDir(StringHelper.baseName(args.name));
@@ -470,9 +474,11 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       GitFile vcsFile = parent.getEntry(StringHelper.baseName(args.name));
       final GitDeltaConsumer deltaConsumer = writer.modifyFile(parent.entry, vcsFile.getFileName(), vcsFile);
       files.put(args.token, new FileUpdater(deltaConsumer));
-      if (parent.head && (rev >= 0)) {
-        checkUpToDate(vcsFile, rev, true);
-      }
+
+      if (parent.head && (rev >= 0))
+        checkUpToDate(vcsFile, rev);
+
+      checkLock(vcsFile);
       parent.changes.add(treeBuilder -> treeBuilder.saveFile(StringHelper.baseName(args.name), deltaConsumer, true));
     }
 
@@ -513,14 +519,14 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Found not closed file tokens: " + files.keySet()));
       }
       final GitRevision revision = context.getBranch().getRepository().wrapLockWrite(lockStorage -> {
-        final List<LockDesc> oldLocks = keepLocks ? getLocks(context.getUser(), lockStorage, locks) : Collections.emptyList();
+        final List<LockDesc> oldLocks = getLocks(context.getUser(), lockStorage, locks);
         for (int pass = 0; ; ++pass) {
           if (pass >= MAX_PASS_COUNT) {
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Can't commit changes to upstream repository."));
           }
           final GitRevision newRevision = updateDir(writer.createCommitBuilder(lockStorage, locks), rootEntry).commit(context.getUser(), message);
           if (newRevision != null) {
-            lockStorage.renewLocks(context.getBranch(), oldLocks.toArray(LockDesc.emptyArray));
+            lockStorage.refreshLocks(context.getUser(), context.getBranch(), keepLocks, oldLocks.toArray(LockDesc.emptyArray));
             return newRevision;
           }
         }
@@ -579,11 +585,15 @@ public final class CommitCmd extends BaseCmd<CommitCmd.CommitParams> {
       return file;
     }
 
-    private void checkUpToDate(@NotNull GitFile vcsFile, int rev, boolean checkLock) throws SVNException {
+    private void checkUpToDate(@NotNull GitFile vcsFile, int rev) throws SVNException {
       if (vcsFile.getLastChange().getId() > rev) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + vcsFile.getFullPath()));
       }
-      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev, checkLock));
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkUpToDate(vcsFile.getFullPath(), rev));
+    }
+
+    private void checkLock(@NotNull GitFile vcsFile) {
+      rootEntry.changes.add(treeBuilder -> treeBuilder.checkLock(vcsFile.getFullPath()));
     }
 
     @NotNull

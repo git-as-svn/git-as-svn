@@ -123,14 +123,22 @@ public final class SvnTestHelper {
   }
 
   public static void modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String newData, long fileRev) throws SVNException, IOException {
-    modifyFile(repo, filePath, newData.getBytes(StandardCharsets.UTF_8), fileRev);
+    modifyFile(repo, filePath, newData, fileRev, null);
+  }
+
+  public static void modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull String newData, long fileRev, @Nullable Map<String, String> locks) throws SVNException, IOException {
+    modifyFile(repo, filePath, newData.getBytes(StandardCharsets.UTF_8), fileRev, locks);
   }
 
   public static void modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] newData, long fileRev) throws SVNException, IOException {
+    modifyFile(repo, filePath, newData, fileRev, null);
+  }
+
+  public static void modifyFile(@NotNull SVNRepository repo, @NotNull String filePath, @NotNull byte[] newData, long fileRev, @Nullable Map<String, String> locks) throws SVNException, IOException {
     final ByteArrayOutputStream oldData = new ByteArrayOutputStream();
     repo.getFile(filePath, fileRev, null, oldData);
 
-    final ISVNEditor editor = repo.getCommitEditor("Modify file: " + filePath, null, false, null);
+    final ISVNEditor editor = repo.getCommitEditor("Modify file: " + filePath, locks, false, null);
     try {
       editor.openRoot(-1);
       int index = 0;

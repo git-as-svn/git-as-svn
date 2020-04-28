@@ -41,7 +41,7 @@ public interface LockStorage {
 
   boolean cleanupInvalidLocks(@NotNull GitBranch branch) throws IOException;
 
-  void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) throws IOException;
+  void refreshLocks(@NotNull User user, @NotNull GitBranch branch, boolean keepLocks, @NotNull LockDesc[] lockDescs) throws IOException;
 
   @NotNull
   Iterator<LockDesc> getLocks(@NotNull User user, @NotNull GitBranch branch, @NotNull String path, @NotNull Depth depth) throws IOException, SVNException;
