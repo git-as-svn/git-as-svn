@@ -206,7 +206,20 @@ public abstract class LfsHttpStorage implements LfsStorage {
   }
 
   @Override
-  public final void renewLocks(@NotNull GitBranch branch, @NotNull LockDesc[] lockDescs) {
+  public final void refreshLocks(@NotNull User user, @NotNull GitBranch branch, boolean keepLocks, @NotNull LockDesc[] lockDescs) {
+    if (keepLocks) {
+      // LFS locks are not auto-unlocked upon commit
+      return;
+    }
+
+    // TODO: this is not atomic :( Waiting for batch LFS locking API
+    for (LockDesc lockDesc : lockDescs) {
+      try {
+        unlock(user, branch, false, lockDesc.getToken());
+      } catch (IOException e) {
+        log.warn("[{}]: {} failed to release lock {}: {}", branch, user.getUsername(), lockDesc, e.getMessage(), e);
+      }
+    }
   }
 
   @NotNull

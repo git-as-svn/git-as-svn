@@ -268,21 +268,17 @@ public final class GitWriter implements AutoCloseable {
       validator.done();
     }
 
-    public void checkUpToDate(@NotNull String path, int rev, boolean checkLock) throws SVNException, IOException {
+    public void checkUpToDate(@NotNull String path, int rev) throws SVNException, IOException {
       final GitFile file = revision.getFile(path);
       if (file == null) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
       } else if (file.getLastChange().getId() > rev) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
       }
-      if (checkLock) {
-        checkLockFile(file);
-      }
     }
 
-    private void checkLockFile(@NotNull GitFile file) throws SVNException, IOException {
-      final String fullPath = file.getFullPath();
-      final Iterator<LockDesc> iter = lockManager.getLocks(user, branch, fullPath, Depth.Infinity);
+    public void checkLock(@NotNull String path) throws SVNException, IOException {
+      final Iterator<LockDesc> iter = lockManager.getLocks(user, branch, path, Depth.Infinity);
       while (iter.hasNext())
         checkLockDesc(iter.next());
     }
@@ -291,12 +287,12 @@ public final class GitWriter implements AutoCloseable {
       if (lockDesc != null) {
         final String token = locks.get(lockDesc.getPath());
         if (!lockDesc.getToken().equals(token))
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, lockDesc.getPath()));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, String.format("Cannot verify lock on path '%s'; no matching lock-token available", lockDesc.getPath())));
       }
     }
   }
 
-  private abstract class CommitAction {
+  private abstract static class CommitAction {
     @NotNull
     private final Deque<GitFile> treeStack;
 
@@ -325,7 +321,7 @@ public final class GitWriter implements AutoCloseable {
     }
   }
 
-  private class GitFilterMigration extends CommitAction {
+  private static class GitFilterMigration extends CommitAction {
     private int migrateCount = 0;
 
     GitFilterMigration(@NotNull GitFile root) {
@@ -353,7 +349,7 @@ public final class GitWriter implements AutoCloseable {
     }
   }
 
-  private class GitPropertyValidator extends CommitAction {
+  private static class GitPropertyValidator extends CommitAction {
     @NotNull
     private final Map<String, Set<String>> propertyMismatch = new TreeMap<>();
     private int errorCount = 0;

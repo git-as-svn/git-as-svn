@@ -22,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import org.mapdb.DBMaker;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -127,6 +129,17 @@ public final class LfsHttpStorageTest {
         Assert.assertEquals(lock.getPath(), "/1.txt");
         Assert.assertNotNull(lock.getID());
         Assert.assertEquals(lock.getOwner(), SvnTestServer.USER_NAME);
+        Assert.assertEquals(backendStorage.getLocks().size(), 1);
+
+        try {
+          SvnTestHelper.modifyFile(svnRepository, "1.txt", "blabla", -1, null);
+          Assert.fail();
+        } catch (SVNException e) {
+          Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.FS_BAD_LOCK_TOKEN);
+        }
+
+        SvnTestHelper.modifyFile(svnRepository, "1.txt", "blabla", -1, Collections.singletonMap(lock.getPath(), lock.getID()));
+        Assert.assertEquals(backendStorage.getLocks().size(), 0);
       }
     }
   }
