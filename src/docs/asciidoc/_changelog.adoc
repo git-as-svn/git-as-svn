@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 1.26.0
 
 * Release remote LFS locks on commit unless keep-locks option is enabled
 * Block commit to locked file even if user claims he doesn't have any local version of that file
