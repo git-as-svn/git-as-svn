@@ -28,11 +28,12 @@ IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/pers
 +
 [source,bash]
 ----
-PATH="/bin:/usr/bin:/opt/gitlab/embedded/bin"
+PATH=/bin:/usr/bin:/opt/gitlab/embedded/bin
 GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
 GITALY_GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
 GITALY_BIN_DIR=/opt/gitlab/embedded/bin
 GITALY_RUBY_DIR=/opt/gitlab/embedded/service/gitaly-ruby
+GITALY_LOG_DIR=/var/log/gitlab/gitaly
 ----
 
 . Change `userDB` to `!gitlabUsers`.
