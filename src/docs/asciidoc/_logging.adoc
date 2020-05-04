@@ -11,6 +11,8 @@ Please, refer to https://logging.apache.org/log4j/2.x/manual/configuration.html[
 By default, all messages with INFO priority and higher are logged to `/var/log/git-as-svn/git-as-svn.log` and rotated at startup and per each 10 MB.
 Also, all messages with ERROR priority and higher are logged to `/var/log/git-as-svn/git-as-svn.error.log` with same rotation policy.
 
+For example, if you want to increase logging verbosity by switching to DEBUG logging, you need to change `<Root level="info">` to `<Root level="debug">` in `/etc/git-as-svn/log4j2.xml`
+
 == Loggers available in git-as-svn
 
 * `git` - messages related to operations with Git repositories
