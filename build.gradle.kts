@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "6.3"
+    gradleVersion = "6.5"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -71,17 +71,19 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.65")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:5.8.0.202006091008-r")
     implementation("org.tmatesoft.svnkit:svnkit:1.10.1")
     implementation("org.yaml:snakeyaml:1.26")
     implementation("com.beust:jcommander:1.78")
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
-    implementation("com.unboundid:unboundid-ldapsdk:5.0.1")
-    implementation("org.eclipse.jetty:jetty-servlet:9.4.28.v20200408")
+    implementation("com.unboundid:unboundid-ldapsdk:5.1.0")
+    implementation("org.eclipse.jetty:jetty-servlet:9.4.30.v20200611")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
-    implementation("org.bitbucket.b_c:jose4j:0.7.0")
+    implementation("org.bitbucket.b_c:jose4j:0.7.1")
     implementation("com.github.zeripath:java-gitea-api:1.7.4")
+
 
     val gitLfsJava = "0.16.0"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
@@ -89,7 +91,7 @@ dependencies {
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
     implementation("com.google.oauth-client:google-oauth-client:1.30.6")
-    implementation("com.google.http-client:google-http-client-jackson2:1.34.2")
+    implementation("com.google.http-client:google-http-client-jackson2:1.35.0")
     implementation("org.jetbrains:annotations:19.0.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
@@ -97,9 +99,9 @@ dependencies {
     implementation(classindex)
     annotationProcessor(classindex)
 
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.13.1")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.13.3")
 
-    testImplementation("org.testcontainers:testcontainers:1.14.1")
+    testImplementation("org.testcontainers:testcontainers:1.14.3")
     testImplementation("org.testng:testng:7.2.0")
 
     constraints {
