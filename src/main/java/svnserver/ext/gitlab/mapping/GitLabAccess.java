@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.mapping;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -14,6 +15,7 @@ import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.bozaro.gitlfs.common.JsonHelper;
 import svnserver.auth.User;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlab.config.GitLabContext;
@@ -21,7 +23,8 @@ import svnserver.repository.VcsAccess;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +41,17 @@ final class GitLabAccess implements VcsAccess {
   @NotNull
   private final Map<String, String> environment;
 
-  GitLabAccess(@NotNull LocalContext local, @NotNull GitLabMappingConfig config, int projectId) {
-    this.environment = Collections.singletonMap("GL_REPOSITORY", String.format("project-%s", projectId));
+  GitLabAccess(@NotNull LocalContext local, @NotNull GitLabMappingConfig config, @NotNull GitlabProject gitlabProject, @NotNull Path relativeRepoPath) throws JsonProcessingException {
+    this.environment = new HashMap<>();
+    final String glRepository = String.format("project-%s", gitlabProject.getId());
+    this.environment.put("GL_REPOSITORY", glRepository);
+
+    final Map<String, String> gitalyRepo = new HashMap<>();
+    gitalyRepo.put("storageName", "default");
+    gitalyRepo.put("glRepository", glRepository);
+    gitalyRepo.put("relativePath", relativeRepoPath.toString());
+    gitalyRepo.put("glProjectPath", gitlabProject.getPathWithNamespace());
+    this.environment.put("GITALY_REPO", JsonHelper.mapper.writeValueAsString(gitalyRepo));
 
     final GitLabContext context = GitLabContext.sure(local.getShared());
 
@@ -51,10 +63,10 @@ final class GitLabAccess implements VcsAccess {
               @Override
               public GitlabProject load(@NotNull String userId) throws Exception {
                 if (userId.isEmpty())
-                  return GitlabAPI.connect(context.getGitLabUrl(), null).getProject(projectId);
+                  return GitlabAPI.connect(context.getGitLabUrl(), null).getProject(gitlabProject.getId());
 
                 final GitlabAPI api = context.connect();
-                final String tailUrl = GitlabProject.URL + "/" + projectId + "?sudo=" + userId;
+                final String tailUrl = GitlabProject.URL + "/" + gitlabProject.getId() + "?sudo=" + userId;
                 return api.retrieve().to(tailUrl, GitlabProject.class);
               }
             }

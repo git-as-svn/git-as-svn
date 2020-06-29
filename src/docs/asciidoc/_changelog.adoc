@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix compatibility with GitLab 13.1+. https://github.com/bozaro/git-as-svn/issues/355[#355]
+
 == 1.26.1
 
 * Fix compatibility with GitLab 12.10+. https://github.com/bozaro/git-as-svn/issues/347[#347]

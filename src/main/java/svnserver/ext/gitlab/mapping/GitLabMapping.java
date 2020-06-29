@@ -41,6 +41,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -102,11 +103,15 @@ final class GitLabMapping implements RepositoryMapping<GitLabProject> {
 
     final Path basePath = ConfigHelper.joinPath(context.getBasePath(), config.getPath());
     final String sha256 = Hashing.sha256().hashString(project.getId().toString(), Charset.defaultCharset()).toString();
-    Path repoPath = basePath.resolve(HASHED_PATH).resolve(sha256.substring(0, 2)).resolve(sha256.substring(2, 4)).resolve(sha256 + ".git");
-    if (!Files.exists(repoPath))
-      repoPath = ConfigHelper.joinPath(basePath, project.getPathWithNamespace() + ".git");
+
+    Path relativeRepoPath = Paths.get(HASHED_PATH, sha256.substring(0, 2), sha256.substring(2, 4), sha256 + ".git");
+    Path repoPath = basePath.resolve(relativeRepoPath);
+    if (!Files.exists(repoPath)) {
+      relativeRepoPath = Paths.get(project.getPathWithNamespace() + ".git");
+      repoPath = basePath.resolve(relativeRepoPath);
+    }
     final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
-    local.add(VcsAccess.class, new GitLabAccess(local, config, project.getId()));
+    local.add(VcsAccess.class, new GitLabAccess(local, config, project, relativeRepoPath));
     final GitRepository repository = config.getTemplate().create(local, repoPath, branches);
     final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
     if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {
