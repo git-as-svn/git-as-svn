@@ -33,10 +33,7 @@ import svnserver.repository.locks.LockTarget;
 import svnserver.repository.locks.UnlockTarget;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static svnserver.repository.locks.LockDesc.toLfsPath;
 
