@@ -9,6 +9,7 @@ before_cache:
   - rm -fr $HOME/.gradle/caches/*/scripts/
   - rm -fr $HOME/.gradle/caches/*/scripts-remapped/
   - rm -fr $HOME/.gradle/caches/*/fileHashes/
+  - rm -fr $HOME/.gradle/caches/*/gradle-kotlin-dsl/*/*.lock
   - rm -f $HOME/.gradle/caches/*/fileContent/*.lock
   - rm -f $HOME/.gradle/caches/*/javaCompile/*.lock
   - rm -f $HOME/.gradle/caches/*/executionHistory/*.lock
