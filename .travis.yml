@@ -5,6 +5,7 @@ services: docker
 # Taken from https://github.com/Codearte/gradle-nexus-staging-plugin/blob/master/.travis.yml
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -f  $HOME/.gradle/caches/jars-8/jars-8.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
   - rm -fr $HOME/.gradle/caches/*/scripts/
   - rm -fr $HOME/.gradle/caches/*/scripts-remapped/
