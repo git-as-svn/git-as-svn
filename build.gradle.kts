@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "6.5.1"
+    gradleVersion = "6.6"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -79,7 +79,7 @@ dependencies {
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
     implementation("com.unboundid:unboundid-ldapsdk:5.1.0")
-    implementation("org.eclipse.jetty:jetty-servlet:9.4.30.v20200611")
+    implementation("org.eclipse.jetty:jetty-servlet:9.4.31.v20200723")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
     implementation("org.bitbucket.b_c:jose4j:0.7.2")
     implementation("com.github.zeripath:java-gitea-api:1.7.4")
@@ -92,7 +92,7 @@ dependencies {
 
     implementation("com.google.oauth-client:google-oauth-client:1.31.0")
     implementation("com.google.http-client:google-http-client-jackson2:1.36.0")
-    implementation("org.jetbrains:annotations:19.0.0")
+    implementation("org.jetbrains:annotations:20.0.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
     val classindex = "org.atteo.classindex:classindex:3.9"
@@ -102,7 +102,7 @@ dependencies {
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.13.3")
 
     testImplementation("org.testcontainers:testcontainers:1.14.3")
-    testImplementation("org.testng:testng:7.2.0")
+    testImplementation("org.testng:testng:7.3.0")
 
     constraints {
         implementation("org.apache.httpcomponents:httpclient") {
