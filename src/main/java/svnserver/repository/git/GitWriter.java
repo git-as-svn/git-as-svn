@@ -38,6 +38,12 @@ import java.util.*;
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 public final class GitWriter implements AutoCloseable {
+  @NotNull
+  public static final String keepFileName = ".keep";
+
+  @NotNull
+  public static final byte[] keepFileContents = GitRepository.emptyBytes;
+
   private static final int MAX_PROPERTY_ERRROS = 50;
 
   @NotNull
@@ -90,205 +96,6 @@ public final class GitWriter implements AutoCloseable {
   public void close() {
     try (ObjectInserter unused = inserter) {
       // noop
-    }
-  }
-
-  public final class GitCommitBuilder {
-    @NotNull
-    private final Deque<GitTreeUpdate> treeStack;
-    @NotNull
-    private final GitRevision revision;
-    @NotNull
-    private final LockStorage lockManager;
-    @NotNull
-    private final Map<String, String> locks;
-    @NotNull
-    private final List<VcsConsumer<CommitAction>> commitActions = new ArrayList<>();
-
-    GitCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks) throws IOException {
-      this.lockManager = lockManager;
-      this.locks = locks;
-      this.revision = branch.getLatestRevision();
-      this.treeStack = new ArrayDeque<>();
-      this.treeStack.push(new GitTreeUpdate("", getOriginalTree()));
-    }
-
-    private Iterable<GitTreeEntry> getOriginalTree() throws IOException {
-      final RevCommit commit = revision.getGitNewCommit();
-      if (commit == null) {
-        return Collections.emptyList();
-      }
-      return branch.getRepository().loadTree(new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, commit.getTree(), ""));
-    }
-
-    public void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException {
-      final GitTreeUpdate current = treeStack.element();
-      if (current.getEntries().containsKey(name)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
-      }
-      commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, branch.getRepository().loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
-    }
-
-    @NotNull
-    private String getFullPath(String name) {
-      final StringBuilder fullPath = new StringBuilder();
-      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
-      while (iter.hasNext()) {
-        fullPath.append(iter.next().getName()).append('/');
-      }
-      fullPath.append(name);
-      return fullPath.toString();
-    }
-
-    public void openDir(@NotNull String name) throws SVNException, IOException {
-      final GitTreeUpdate current = treeStack.element();
-      final GitTreeEntry originalDir = current.getEntries().remove(name);
-      if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-      }
-      commitActions.add(action -> action.openDir(name));
-      treeStack.push(new GitTreeUpdate(name, branch.getRepository().loadTree(originalDir)));
-    }
-
-    public void checkDirProperties(@NotNull Map<String, String> props) {
-      commitActions.add(action -> action.checkProperties(null, props, null));
-    }
-
-    public void closeDir() throws SVNException, IOException {
-      final GitTreeUpdate last = treeStack.pop();
-      final GitTreeUpdate current = treeStack.element();
-      final String fullPath = getFullPath(last.getName());
-      if (last.getEntries().isEmpty()) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories is not supported: " + fullPath));
-      }
-      final ObjectId subtreeId = last.buildTree(inserter);
-      log.debug("Create tree {} for dir: {}", subtreeId.name(), fullPath);
-      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(branch.getRepository().getGit(), subtreeId), last.getName())) != null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
-      }
-      commitActions.add(CommitAction::closeDir);
-    }
-
-    public void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
-      final GitDeltaConsumer gitDeltaConsumer = deltaConsumer;
-      final GitTreeUpdate current = treeStack.element();
-      final GitTreeEntry entry = current.getEntries().get(name);
-      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
-      if (modify ^ (entry != null)) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
-      }
-      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
-      if (objectId == null) {
-        // Content not updated.
-        if (originalId == null) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
-        }
-        return;
-      }
-      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
-      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
-    }
-
-    private FileMode getFileMode(@NotNull Map<String, String> props) {
-      if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
-      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
-      return FileMode.REGULAR_FILE;
-    }
-
-    public void delete(@NotNull String name) throws SVNException {
-      final GitTreeUpdate current = treeStack.element();
-      final GitTreeEntry entry = current.getEntries().remove(name);
-      if (entry == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
-      }
-    }
-
-    @Nullable
-    public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
-      final GitTreeUpdate root = treeStack.element();
-      ObjectId treeId = root.buildTree(inserter);
-      log.debug("Create tree {} for commit.", treeId.name());
-
-      final CommitBuilder commitBuilder = new CommitBuilder();
-      final PersonIdent ident = createIdent(userInfo);
-      commitBuilder.setAuthor(ident);
-      commitBuilder.setCommitter(ident);
-      commitBuilder.setMessage(message);
-      final RevCommit parentCommit = revision.getGitNewCommit();
-      if (parentCommit != null) {
-        commitBuilder.setParentId(parentCommit.getId());
-      }
-      commitBuilder.setTreeId(treeId);
-      final ObjectId commitId = inserter.insert(commitBuilder);
-      inserter.flush();
-      log.info("Create commit {}: {}", commitId.name(), StringHelper.getFirstLine(message));
-
-      if (filterMigration(new RevWalk(branch.getRepository().getGit()).parseTree(treeId)) != 0) {
-        log.info("Need recreate tree after filter migration.");
-        return null;
-      }
-
-      synchronized (pushLock) {
-        log.info("Validate properties");
-        validateProperties(new RevWalk(branch.getRepository().getGit()).parseTree(treeId));
-
-        log.info("Try to push commit in branch: {}", branch);
-        if (!pusher.push(branch.getRepository().getGit(), commitId, branch.getGitBranch(), userInfo)) {
-          log.info("Non fast forward push rejected");
-          return null;
-        }
-        log.info("Commit is pushed");
-        branch.updateRevisions();
-        return branch.getRevision(commitId);
-      }
-    }
-
-    private PersonIdent createIdent(User userInfo) {
-      final String realName = userInfo.getRealName();
-      final String email = userInfo.getEmail();
-      return new PersonIdent(realName, email == null ? "" : email);
-    }
-
-    private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(branch, tree, 0);
-      final GitFilterMigration validator = new GitFilterMigration(root);
-      for (VcsConsumer<CommitAction> validateAction : commitActions) {
-        validateAction.accept(validator);
-      }
-      return validator.done();
-    }
-
-    private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
-      final GitFile root = GitFileTreeEntry.create(branch, tree, 0);
-      final GitPropertyValidator validator = new GitPropertyValidator(root);
-      for (VcsConsumer<CommitAction> validateAction : commitActions) {
-        validateAction.accept(validator);
-      }
-      validator.done();
-    }
-
-    public void checkUpToDate(@NotNull String path, int rev) throws SVNException, IOException {
-      final GitFile file = revision.getFile(path);
-      if (file == null) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
-      } else if (file.getLastChange().getId() > rev) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
-      }
-    }
-
-    public void checkLock(@NotNull String path) throws SVNException, IOException {
-      final Iterator<LockDesc> iter = lockManager.getLocks(user, branch, path, Depth.Infinity);
-      while (iter.hasNext())
-        checkLockDesc(iter.next());
-    }
-
-    private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
-      if (lockDesc != null) {
-        final String token = locks.get(lockDesc.getPath());
-        if (!lockDesc.getToken().equals(token))
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, String.format("Cannot verify lock on path '%s'; no matching lock-token available", lockDesc.getPath())));
-      }
     }
   }
 
@@ -421,6 +228,219 @@ public final class GitWriter implements AutoCloseable {
         message.append("\n" +
             "For more detailed information, see:").append("\n").append(ReferenceLink.InvalidSvnProps.getLink());
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()));
+      }
+    }
+  }
+
+  public final class GitCommitBuilder {
+    @NotNull
+    private final Deque<GitTreeUpdate> treeStack;
+    @NotNull
+    private final GitRevision revision;
+    @NotNull
+    private final LockStorage lockManager;
+    @NotNull
+    private final Map<String, String> locks;
+    @NotNull
+    private final List<VcsConsumer<CommitAction>> commitActions = new ArrayList<>();
+
+    GitCommitBuilder(@NotNull LockStorage lockManager, @NotNull Map<String, String> locks) throws IOException {
+      this.lockManager = lockManager;
+      this.locks = locks;
+      this.revision = branch.getLatestRevision();
+      this.treeStack = new ArrayDeque<>();
+      this.treeStack.push(new GitTreeUpdate("", getOriginalTree()));
+    }
+
+    private Iterable<GitTreeEntry> getOriginalTree() throws IOException {
+      final RevCommit commit = revision.getGitNewCommit();
+      if (commit == null) {
+        return Collections.emptyList();
+      }
+      return branch.getRepository().loadTree(new GitTreeEntry(branch.getRepository().getGit(), FileMode.TREE, commit.getTree(), ""));
+    }
+
+    public void addDir(@NotNull String name, @Nullable GitFile sourceDir) throws SVNException, IOException {
+      final GitTreeUpdate current = treeStack.element();
+      if (current.getEntries().containsKey(name)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, getFullPath(name)));
+      }
+      commitActions.add(action -> action.openDir(name));
+      treeStack.push(new GitTreeUpdate(name, branch.getRepository().loadTree(sourceDir == null ? null : sourceDir.getTreeEntry())));
+    }
+
+    @NotNull
+    private String getFullPath(String name) {
+      final StringBuilder fullPath = new StringBuilder();
+      final Iterator<GitTreeUpdate> iter = treeStack.descendingIterator();
+      while (iter.hasNext()) {
+        fullPath.append(iter.next().getName()).append('/');
+      }
+      fullPath.append(name);
+      return fullPath.toString();
+    }
+
+    public void openDir(@NotNull String name) throws SVNException, IOException {
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry originalDir = current.getEntries().remove(name);
+      if ((originalDir == null) || (!originalDir.getFileMode().equals(FileMode.TREE))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+      }
+      commitActions.add(action -> action.openDir(name));
+      treeStack.push(new GitTreeUpdate(name, branch.getRepository().loadTree(originalDir)));
+    }
+
+    public void checkDirProperties(@NotNull Map<String, String> props) {
+      commitActions.add(action -> action.checkProperties(null, props, null));
+    }
+
+    public void closeDir() throws SVNException, IOException {
+      final GitTreeUpdate last = treeStack.pop();
+      final GitTreeUpdate current = treeStack.element();
+      final String fullPath = getFullPath(last.getName());
+      if (last.getEntries().isEmpty()) {
+        if (branch.getRepository().getEmptyDirs().autoCreateKeepFile()) {
+          final GitTreeEntry keepFile = new GitTreeEntry(
+              branch.getRepository().getGit(),
+              FileMode.REGULAR_FILE,
+              inserter.insert(Constants.OBJ_BLOB, keepFileContents),
+              keepFileName
+          );
+          last.getEntries().put(keepFile.getFileName(), keepFile);
+        } else {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Empty directories are not supported: " + fullPath));
+        }
+      } else if (branch.getRepository().getEmptyDirs().autoDeleteKeepFile() && last.getEntries().containsKey(keepFileName) && last.getEntries().size() > 1) {
+        // remove keep file if it is not the only file in the directory
+        // would be good to also validate the content
+        last.getEntries().remove(keepFileName);
+      }
+      final ObjectId subtreeId = last.buildTree(inserter);
+      log.debug("Create tree {} for dir: {}", subtreeId.name(), fullPath);
+      if (current.getEntries().put(last.getName(), new GitTreeEntry(FileMode.TREE, new GitObject<>(branch.getRepository().getGit(), subtreeId), last.getName())) != null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, fullPath));
+      }
+      commitActions.add(CommitAction::closeDir);
+    }
+
+    public void saveFile(@NotNull String name, @NotNull GitDeltaConsumer deltaConsumer, boolean modify) throws SVNException, IOException {
+      final GitDeltaConsumer gitDeltaConsumer = deltaConsumer;
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry entry = current.getEntries().get(name);
+      final GitObject<ObjectId> originalId = gitDeltaConsumer.getOriginalId();
+      if (modify ^ (entry != null)) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + getFullPath(name)));
+      }
+      final GitObject<ObjectId> objectId = gitDeltaConsumer.getObjectId();
+      if (objectId == null) {
+        // Content not updated.
+        if (originalId == null) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Added file without content: " + getFullPath(name)));
+        }
+        return;
+      }
+      current.getEntries().put(name, new GitTreeEntry(getFileMode(gitDeltaConsumer.getProperties()), objectId, name));
+      commitActions.add(action -> action.checkProperties(name, gitDeltaConsumer.getProperties(), gitDeltaConsumer));
+    }
+
+    private FileMode getFileMode(@NotNull Map<String, String> props) {
+      if (props.containsKey(SVNProperty.SPECIAL)) return FileMode.SYMLINK;
+      if (props.containsKey(SVNProperty.EXECUTABLE)) return FileMode.EXECUTABLE_FILE;
+      return FileMode.REGULAR_FILE;
+    }
+
+    public void delete(@NotNull String name) throws SVNException {
+      final GitTreeUpdate current = treeStack.element();
+      final GitTreeEntry entry = current.getEntries().remove(name);
+      if (entry == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, getFullPath(name)));
+      }
+    }
+
+    @Nullable
+    public GitRevision commit(@NotNull User userInfo, @NotNull String message) throws SVNException, IOException {
+      final GitTreeUpdate root = treeStack.element();
+      ObjectId treeId = root.buildTree(inserter);
+      log.debug("Create tree {} for commit.", treeId.name());
+
+      final CommitBuilder commitBuilder = new CommitBuilder();
+      final PersonIdent ident = createIdent(userInfo);
+      commitBuilder.setAuthor(ident);
+      commitBuilder.setCommitter(ident);
+      commitBuilder.setMessage(message);
+      final RevCommit parentCommit = revision.getGitNewCommit();
+      if (parentCommit != null) {
+        commitBuilder.setParentId(parentCommit.getId());
+      }
+      commitBuilder.setTreeId(treeId);
+      final ObjectId commitId = inserter.insert(commitBuilder);
+      inserter.flush();
+      log.info("Create commit {}: {}", commitId.name(), StringHelper.getFirstLine(message));
+
+      if (filterMigration(new RevWalk(branch.getRepository().getGit()).parseTree(treeId)) != 0) {
+        log.info("Need recreate tree after filter migration.");
+        return null;
+      }
+
+      synchronized (pushLock) {
+        log.info("Validate properties");
+        validateProperties(new RevWalk(branch.getRepository().getGit()).parseTree(treeId));
+
+        log.info("Try to push commit in branch: {}", branch);
+        if (!pusher.push(branch.getRepository().getGit(), commitId, branch.getGitBranch(), userInfo)) {
+          log.info("Non fast forward push rejected");
+          return null;
+        }
+        log.info("Commit is pushed");
+        branch.updateRevisions();
+        return branch.getRevision(commitId);
+      }
+    }
+
+    private PersonIdent createIdent(User userInfo) {
+      final String realName = userInfo.getRealName();
+      final String email = userInfo.getEmail();
+      return new PersonIdent(realName, email == null ? "" : email);
+    }
+
+    private int filterMigration(@NotNull RevTree tree) throws IOException, SVNException {
+      final GitFile root = GitFileTreeEntry.create(branch, tree, 0);
+      final GitFilterMigration validator = new GitFilterMigration(root);
+      for (VcsConsumer<CommitAction> validateAction : commitActions) {
+        validateAction.accept(validator);
+      }
+      return validator.done();
+    }
+
+    private void validateProperties(@NotNull RevTree tree) throws IOException, SVNException {
+      final GitFile root = GitFileTreeEntry.create(branch, tree, 0);
+      final GitPropertyValidator validator = new GitPropertyValidator(root);
+      for (VcsConsumer<CommitAction> validateAction : commitActions) {
+        validateAction.accept(validator);
+      }
+      validator.done();
+    }
+
+    public void checkUpToDate(@NotNull String path, int rev) throws SVNException, IOException {
+      final GitFile file = revision.getFile(path);
+      if (file == null) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, path));
+      } else if (file.getLastChange().getId() > rev) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, "Working copy is not up-to-date: " + path));
+      }
+    }
+
+    public void checkLock(@NotNull String path) throws SVNException, IOException {
+      final Iterator<LockDesc> iter = lockManager.getLocks(user, branch, path, Depth.Infinity);
+      while (iter.hasNext())
+        checkLockDesc(iter.next());
+    }
+
+    private void checkLockDesc(@Nullable LockDesc lockDesc) throws SVNException {
+      if (lockDesc != null) {
+        final String token = locks.get(lockDesc.getPath());
+        if (!lockDesc.getToken().equals(token))
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, String.format("Cannot verify lock on path '%s'; no matching lock-token available", lockDesc.getPath())));
       }
     }
   }

@@ -43,6 +43,7 @@ repositoryMapping: !giteaMapping
   #   branches:
   #     - master
   #   renameDetection: true
+  #   emptyDirs: Disabled
 
 # Tells git-as-svn to use Gitea API for user authentication
 userDB: !giteaUsers {}

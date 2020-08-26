@@ -20,5 +20,5 @@ import java.io.IOException;
  */
 public interface RepositoryMappingConfig {
   @NotNull
-  RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException;
+  RepositoryMapping<?> create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException;
 }

@@ -40,7 +40,7 @@ public final class RepositoryListMappingConfig implements RepositoryMappingConfi
 
   @NotNull
   @Override
-  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
+  public RepositoryMapping<GitRepository> create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
     final NavigableMap<String, GitRepository> repos = new TreeMap<>();
 
     final Set<Path> uniquePaths = new HashSet<>();

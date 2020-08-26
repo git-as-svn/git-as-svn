@@ -36,6 +36,7 @@ import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage;
 import svnserver.ext.web.config.WebServerConfig;
 import svnserver.repository.RepositoryMapping;
 import svnserver.repository.VcsAccess;
+import svnserver.repository.git.EmptyDirsSupport;
 import svnserver.repository.git.GitRepository;
 import svnserver.repository.git.push.GitPushEmbedded;
 import svnserver.server.SvnServer;
@@ -92,6 +93,7 @@ public final class SvnTestServer implements SvnTester {
                         @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator,
                         boolean anonymousRead,
                         @NotNull LfsMode lfsMode,
+                        @NotNull EmptyDirsSupport emptyDirs,
                         @NotNull SharedConfig... shared) throws Exception {
     SVNFileUtil.setSleepForTimestamp(false);
     this.repository = repository;
@@ -131,7 +133,7 @@ public final class SvnTestServer implements SvnTester {
     if (mappingConfigCreator != null) {
       config.setRepositoryMapping(mappingConfigCreator.apply(tempDirectory));
     } else {
-      config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix, anonymousRead));
+      config.setRepositoryMapping(new TestRepositoryConfig(repository, testBranch, prefix, anonymousRead, emptyDirs));
     }
 
     if (userDBConfig != null) {
@@ -202,27 +204,42 @@ public final class SvnTestServer implements SvnTester {
 
   @NotNull
   public static SvnTestServer createEmpty() throws Exception {
-    return createEmpty(null, false, LfsMode.Memory);
+    return createEmpty(null, false, LfsMode.Memory, EmptyDirsSupport.Disabled);
   }
 
   @NotNull
-  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
-    return createEmpty(userDBConfig, null, anonymousRead, lfsMode, shared);
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull EmptyDirsSupport emptyDirs, @NotNull SharedConfig... shared) throws Exception {
+    return createEmpty(userDBConfig, null, anonymousRead, lfsMode, emptyDirs, shared);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull EmptyDirsSupport emptyDirs, @NotNull SharedConfig... shared) throws Exception {
+    return new SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, emptyDirs, shared);
   }
 
   @NotNull
   public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, @Nullable Function<Path, RepositoryMappingConfig> mappingConfigCreator, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
-    return new SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, shared);
+    return createEmpty(userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, EmptyDirsSupport.Disabled, shared);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull LfsMode lfsMode, @NotNull SharedConfig... shared) throws Exception {
+    return createEmpty(userDBConfig, null, anonymousRead, lfsMode, EmptyDirsSupport.Disabled, shared);
+  }
+
+  @NotNull
+  public static SvnTestServer createEmpty(@NotNull EmptyDirsSupport emptyDirs) throws Exception {
+    return createEmpty(null, false, LfsMode.Memory, emptyDirs);
   }
 
   @NotNull
   public static SvnTestServer createEmpty(@Nullable UserDBConfig userDBConfig, boolean anonymousRead, @NotNull SharedConfig... shared) throws Exception {
-    return createEmpty(userDBConfig, null, anonymousRead, LfsMode.Memory, shared);
+    return createEmpty(userDBConfig, null, anonymousRead, LfsMode.Memory, EmptyDirsSupport.Disabled, shared);
   }
 
   @NotNull
   public static SvnTestServer createMasterRepository() throws Exception {
-    return new SvnTestServer(new FileRepository(TestHelper.findGitPath().toFile()), null, "", true, null, null, true, LfsMode.Memory);
+    return new SvnTestServer(new FileRepository(TestHelper.findGitPath().toFile()), null, "", true, null, null, true, LfsMode.Memory, EmptyDirsSupport.Disabled);
   }
 
   @NotNull
@@ -297,17 +314,19 @@ public final class SvnTestServer implements SvnTester {
     @NotNull
     private final String prefix;
     private final boolean anonymousRead;
+    private final EmptyDirsSupport emptyDirs;
 
-    private TestRepositoryConfig(@NotNull Repository git, @NotNull String branch, @NotNull String prefix, boolean anonymousRead) {
+    private TestRepositoryConfig(@NotNull Repository git, @NotNull String branch, @NotNull String prefix, boolean anonymousRead, @NotNull EmptyDirsSupport emptyDirs) {
       this.git = git;
       this.branch = branch;
       this.prefix = prefix;
       this.anonymousRead = anonymousRead;
+      this.emptyDirs = emptyDirs;
     }
 
     @NotNull
     @Override
-    public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
+    public RepositoryMapping<GitRepository> create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
       final LocalContext local = new LocalContext(context, "test");
       local.add(VcsAccess.class, anonymousRead ? VcsAccessEveryone.instance : VcsAccessNoAnonymous.instance);
 
@@ -317,7 +336,8 @@ public final class SvnTestServer implements SvnTester {
           git,
           new GitPushEmbedded(local, null, false),
           Collections.singleton(branch),
-          true
+          true,
+          emptyDirs
       );
 
       return () -> new TreeMap<>(Collections.singletonMap(prefix, repository));

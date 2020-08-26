@@ -56,6 +56,7 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
   private final GitPusher pusher;
   @NotNull
   private final LocalContext context;
+  private final EmptyDirsSupport emptyDirs;
   @NotNull
   private final HTreeMap<String, Boolean> binaryCache;
   @NotNull
@@ -80,8 +81,10 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
                        @NotNull Set<String> branches,
                        boolean renameDetection,
                        @NotNull LockStorage lockStorage,
-                       @NotNull GitFilters filters) throws IOException {
+                       @NotNull GitFilters filters,
+                       @NotNull EmptyDirsSupport emptyDirs) throws IOException {
     this.context = context;
+    this.emptyDirs = emptyDirs;
     final SharedContext shared = context.getShared();
     shared.getOrCreate(GitSubmodules.class, GitSubmodules::new).register(git);
     this.git = git;
@@ -96,6 +99,11 @@ public final class GitRepository implements AutoCloseable, BranchProvider {
 
     for (String branch : branches)
       this.branches.put(StringHelper.normalizeDir(branch), new GitBranch(this, branch));
+  }
+
+  @NotNull
+  public EmptyDirsSupport getEmptyDirs() {
+    return emptyDirs;
   }
 
   @NotNull

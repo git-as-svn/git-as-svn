@@ -77,7 +77,7 @@ public final class GiteaMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
+  public RepositoryMapping<?> create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
     final GiteaContext giteaContext = context.sure(GiteaContext.class);
     final ApiClient apiClient = giteaContext.connect();
     final UserApi userApi = new UserApi(apiClient);

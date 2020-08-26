@@ -70,7 +70,7 @@ public final class GitLabMappingConfig implements RepositoryMappingConfig {
 
   @NotNull
   @Override
-  public RepositoryMapping create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
+  public RepositoryMapping<?> create(@NotNull SharedContext context, boolean canUseParallelIndexing) throws IOException {
     final GitLabContext gitlab = context.sure(GitLabContext.class);
     final GitlabAPI api = gitlab.connect();
     // Get repositories.

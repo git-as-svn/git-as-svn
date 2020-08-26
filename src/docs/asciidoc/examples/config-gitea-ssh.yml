@@ -43,6 +43,7 @@ repositoryMapping: !giteaMapping
   #   branches:
   #     - master
   #   renameDetection: true
+  #   emptyDirs: Disabled
 
 userDB:
   !sshKeyUsers
