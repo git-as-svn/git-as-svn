@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Experimental empty dirs support. https://github.com/bozaro/git-as-svn/issues/126[#126]
+
 == 1.27.0
 
 * Fix compatibility with GitLab 13.1+. https://github.com/bozaro/git-as-svn/issues/355[#355]

@@ -1,0 +1,59 @@
+[[_emptydirs]]
+= Empty directories
+
+:filename: _emptydirs.adoc
+include::_feedback.adoc[]
+
+WARNING: This feature is not fully SVN-compatible.
+Please, make sure you understand possible consequences of enabling it.
+
+Unlike Subversion, Git doesn't directly support empty directories.
+However, this is an often-requested feature, so git-as-svn provides somewhat working emulation.
+
+It has three modes of operation:
+
+`emptyDirs: Disabled`:: Default, the safest mode.
+git-as-svn rejects commits that try to create empty directories.
+
+`emptyDirs: AutoCreateKeepFile`:: When user tries to commit empty directory, git-as-svn automatically creates `.keep` file in it.
++
+Note that if user makes a commit from a working copy, `.keep` file will not appear in it.
+This limitation originates from Subversion commit protocol. It expects that items will be put in the repository exactly in the same state as user sent them.
+So, if user commits empty directory, they expect the directory to be also empty on the server.
++
+The only safe way to commit empty directories is when user doesn't have a working copy but instead operates on remote repository URL directly.
++
+.Safe
+[source]
+----
+$ svn mkdir svn://server/repo/dir
+----
++
+.Also safe
+[source]
+----
+$ svn co svn://server/repo
+$ cd repo
+$ svn svn://server/repo/dir
+$ svn up # User gets directory and .keep file from server
+----
++
+.Unsafe
+[source]
+----
+$ svn co svn://server/repo
+$ cd repo
+$ mkdir dir
+$ svn add dir
+$ svn commit # Now user doesn't have .keep file but server does
+$ svn up # User still doesn't have .keep file
+----
++
+This discrepancy only affects the user who commits empty directory.
+Other users will happily receive both directory and `.keep` file when they do `svn up`.
+
+`emptyDirs: AutoCreateAndDeleteKeepFile`::  Same as `emptyDirs: AutoCreateKeepFile` plus git-as-svn will automatically delete `.keep` file whenever directory becomes non-empty.
++
+This mode allows even more scenarios that would lead to discrepancy between client and server understanding of repository structure.
+
+So. You was warned. If your working copy becomes corrupt up to the point when you have to re-checkout it from the server due to messing with empty directories, you chose this.

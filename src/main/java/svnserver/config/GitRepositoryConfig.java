@@ -17,6 +17,7 @@ import svnserver.Loggers;
 import svnserver.context.LocalContext;
 import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.LfsStorageFactory;
+import svnserver.repository.git.EmptyDirsSupport;
 import svnserver.repository.git.GitCreateMode;
 import svnserver.repository.git.GitLocation;
 import svnserver.repository.git.GitRepository;
@@ -44,14 +45,16 @@ public final class GitRepositoryConfig {
   @NotNull
   private static final Logger log = Loggers.git;
   @NotNull
-  private Set<String> branches = new TreeSet<>();
+  private final Set<String> branches = new TreeSet<>();
   @NotNull
-  private String path = ".git";
+  private final String path = ".git";
   @NotNull
-  private GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
+  private final GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
   @NotNull
-  private GitCreateMode createMode;
-  private boolean renameDetection = true;
+  private final GitCreateMode createMode;
+  private final boolean renameDetection = true;
+  @NotNull
+  private final EmptyDirsSupport emptyDirs = EmptyDirsSupport.Disabled;
 
   public GitRepositoryConfig() {
     this(GitCreateMode.ERROR);
@@ -88,7 +91,7 @@ public final class GitRepositoryConfig {
     final LfsStorage lfsStorage = LfsStorageFactory.tryCreateStorage(context);
     final Repository git = createGit(context, fullPath);
 
-    return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection);
+    return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection, emptyDirs);
   }
 
   @NotNull
@@ -102,7 +105,13 @@ public final class GitRepositoryConfig {
   }
 
   @NotNull
-  public static GitRepository createRepository(@NotNull LocalContext context, @Nullable LfsStorage lfsStorage, @NotNull Repository git, @NotNull GitPusher pusher, @NotNull Set<String> branches, boolean renameDetection) throws IOException {
+  public static GitRepository createRepository(@NotNull LocalContext context,
+                                               @Nullable LfsStorage lfsStorage,
+                                               @NotNull Repository git,
+                                               @NotNull GitPusher pusher,
+                                               @NotNull Set<String> branches,
+                                               boolean renameDetection,
+                                               @NotNull EmptyDirsSupport emptyDirs) throws IOException {
     final LockStorage lockStorage;
     if (lfsStorage != null) {
       context.add(LfsStorage.class, lfsStorage);
@@ -112,6 +121,7 @@ public final class GitRepositoryConfig {
     }
 
     final GitFilters filters = new GitFilters(context, lfsStorage);
-    return new GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters);
+    return new GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters, emptyDirs);
   }
+
 }

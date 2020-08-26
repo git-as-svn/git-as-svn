@@ -32,6 +32,8 @@ include::_authz.adoc[leveloffset=+1]
 
 include::_props.adoc[leveloffset=+1]
 
+include::_emptydirs.adoc[leveloffset+=1]
+
 include::_alternatives.adoc[leveloffset=+1]
 
 include::_ssh.adoc[leveloffset=+1]
