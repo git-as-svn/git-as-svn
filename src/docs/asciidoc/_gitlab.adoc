@@ -24,6 +24,8 @@ If you're installing both git-as-svn and Gitlab from Debian packages, no additio
 
 IMPORTANT: git-as-svn requires sudo https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[access token permission].
 
+. Copy `gitaly_token` value from `/etc/gitlab/gitlab.rb` to `GITALY_TOKEN` in `/etc/default/git-as-svn`
+
 . Change `userDB` to `!gitlabUsers`.
 This will tell git-as-svn to authenticate users against GitLab server:
 +
