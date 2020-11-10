@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 1.28.1
+
+* Fix regression bug introduced in 1.28.0 that made git-as-svn to ignore some configuration options
+
 == 1.28.0
 
 * Experimental empty dirs support. https://github.com/bozaro/git-as-svn/issues/126[#126]

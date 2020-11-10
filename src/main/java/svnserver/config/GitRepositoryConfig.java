@@ -45,16 +45,16 @@ public final class GitRepositoryConfig {
   @NotNull
   private static final Logger log = Loggers.git;
   @NotNull
-  private final Set<String> branches = new TreeSet<>();
+  private Set<String> branches = new TreeSet<>();
   @NotNull
-  private final String path = ".git";
+  private String path = ".git";
   @NotNull
-  private final GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
+  private GitPusherConfig pusher = GitPushEmbeddedConfig.instance;
   @NotNull
-  private final GitCreateMode createMode;
-  private final boolean renameDetection = true;
+  private GitCreateMode createMode;
+  private boolean renameDetection = true;
   @NotNull
-  private final EmptyDirsSupport emptyDirs = EmptyDirsSupport.Disabled;
+  private EmptyDirsSupport emptyDirs = EmptyDirsSupport.Disabled;
 
   public GitRepositoryConfig() {
     this(GitCreateMode.ERROR);
