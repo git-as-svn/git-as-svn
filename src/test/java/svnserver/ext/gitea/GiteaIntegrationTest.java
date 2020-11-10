@@ -12,6 +12,7 @@ import io.gitea.api.RepositoryApi;
 import io.gitea.api.UserApi;
 import io.gitea.auth.ApiKeyAuth;
 import io.gitea.model.*;
+import org.eclipse.jetty.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage;
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest;
 import svnserver.repository.git.GitCreateMode;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Function;
 
@@ -102,16 +104,7 @@ public final class GiteaIntegrationTest {
 
     gitea.start();
 
-    ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
-    boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
-    String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
-    {
-      ExecResult result = gitea.execInContainer("gitea", "admin", "create-user", "--name", administrator,
-          "--password", administratorPassword, "--email", "administrator@example.com", "--admin",
-          mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
-      System.out.println(result.getStdout());
-      System.err.println(result.getStderr());
-    }
+    doCreateUser(administrator, "administrator@example.com", administratorPassword, "--admin");
 
     ApiClient apiClient = new ApiClient();
     apiClient.setBasePath(giteaApiUrl);
@@ -139,6 +132,20 @@ public final class GiteaIntegrationTest {
     Assert.assertNotNull(testPrivateRepository);
   }
 
+  private void doCreateUser(@NotNull String username, @NotNull String email, @NotNull String password, @NotNull String... extraArgs) throws IOException, InterruptedException {
+    final String[] args = ArrayUtil.add(
+        new String[]{"--username", username, "--password", password, "--email", email, "--must-change-password=false", "-c", "/data/gitea/conf/app.ini"},
+        extraArgs
+    );
+
+    ExecResult execResult = gitea.execInContainer(ArrayUtil.add(new String[]{"gitea", "admin", "user", "create"}, args));
+    if (execResult.getExitCode() == 3) {
+      execResult = gitea.execInContainer(ArrayUtil.add(new String[]{"gitea", "admin", "create-user"}, args));
+    }
+
+    Assert.assertEquals(execResult.getExitCode(), 0);
+  }
+
   @NotNull
   private User createUser(@NotNull String username, @NotNull String password) throws Exception {
     return createUser(username, username + "@example.com", password);
@@ -159,13 +166,7 @@ public final class GiteaIntegrationTest {
 
   @NotNull
   private User createUser(@NotNull String username, @NotNull String email, @NotNull String password) throws Exception {
-    // Need to create user using command line because users now default to requiring to change password
-    ExecResult createUserHelpResult = gitea.execInContainer("gitea", "admin", "create-user", "--help", "-c", "/data/gitea/conf/app.ini");
-    boolean mustChangePassword = createUserHelpResult.getStdout().contains("--must-change-password");
-    String mustChangePasswordString = mustChangePassword ? "--must-change-password=false" : "";
-    gitea.execInContainer("gitea", "admin", "create-user", "--name", username,
-        "--password", password, "--email", email,
-        mustChangePasswordString, "-c", "/data/gitea/conf/app.ini");
+    doCreateUser(username, email, password);
     ApiClient apiClient = GiteaContext.connect(giteaApiUrl, administratorToken);
     UserApi userApi = new UserApi(sudo(apiClient, username));
 
