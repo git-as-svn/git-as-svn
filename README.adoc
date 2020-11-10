@@ -1,8 +1,13 @@
 = git-as-svn
+:project-handle: git-as-svn
+:slug: bozaro/{project-handle}
+:uri-project: https://github.com/{slug}
+:uri-ci: {uri-project}/actions?query=branch%3Amaster
+:uri-gem: https://rubygems.org/gems/{project-handle}
 
-image:https://travis-ci.org/bozaro/git-as-svn.svg?branch=master[Build Status,link="https://travis-ci.org/bozaro/git-as-svn"]
-image:https://img.shields.io/github/release/bozaro/git-as-svn.svg[Download,link="https://github.com/bozaro/git-as-svn/releases/latest"]
-image:https://badges.gitter.im/Join%20Chat.svg[Gitter chat,link="https://gitter.im/bozaro/git-as-svn?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
+image:{uri-project}/workflows/CI/badge.svg?branch=master[Build Status,link={uri-ci}]
+image:https://img.shields.io/github/release/{slug}.svg[Download,link="{uri-project}/releases/latest"]
+image:https://badges.gitter.im/Join%20Chat.svg[Gitter chat,link="https://gitter.im/{slug}?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
 
 == What is it?
 
@@ -25,7 +30,7 @@ From the root of the source tree, run:
 ./gradlew assembleDist
 ----
 
-Distribution files will be created in `build/distributions` directory.
+Distribution files will be created in `build/dist` directory.
 
 == Running from source
 

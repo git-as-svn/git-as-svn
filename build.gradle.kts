@@ -195,7 +195,7 @@ tasks.processResources {
 
         expand(mapOf(
                 "revision" to Grgit.open(mapOf("dir" to projectDir)).head().id,
-                "tag" to (System.getenv("TRAVIS_TAG") ?: "")
+                "tag" to (System.getenv("GITHUB_REF")?.substringAfter("refs/tags/") ?: System.getenv("TRAVIS_TAG") ?: "")
         ))
     }
 }
@@ -230,7 +230,7 @@ val distDeb by tasks.registering(Copy::class) {
     from("$buildDir/debPackage") {
         include("*.deb")
     }
-    into("$buildDir/distributions")
+    into("$buildDir/dist/debian_debian")
 }
 
 tasks.assembleDist {

@@ -205,7 +205,7 @@ public final class SvnTestHelper {
   }
 
   public static void skipTestIfRunningOnCI() {
-    if (System.getenv("TRAVIS") != null)
+    if (System.getenv("CI") != null || System.getenv("TRAVIS") != null)
       throw new SkipException("Test is skipped because running on CI");
   }
 }
