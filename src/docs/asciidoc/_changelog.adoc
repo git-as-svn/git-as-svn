@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Update dependencies
+
 == 1.28.1
 
 * Fix regression bug introduced in 1.28.0 that made git-as-svn to ignore some configuration options
