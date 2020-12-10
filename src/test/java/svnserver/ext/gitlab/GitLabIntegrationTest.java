@@ -227,7 +227,7 @@ public final class GitLabIntegrationTest {
       retryUntilSuccess((int) startupTimeout.getSeconds(), TimeUnit.SECONDS, () -> {
         getRateLimiter().doWhenReady(() -> {
           try {
-            final Container.ExecResult execResult = waitStrategyTarget.execInContainer("grep", "-R", "Chef Run complete", "/var/log/gitlab/reconfigure/");
+            final Container.ExecResult execResult = waitStrategyTarget.execInContainer("grep", "-R", "-E", "Chef.* Run complete", "/var/log/gitlab/reconfigure/");
             if (execResult.getExitCode() != 0) {
               throw new RuntimeException("Not ready");
             }
