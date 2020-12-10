@@ -13,9 +13,10 @@ import org.gitlab.api.models.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testcontainers.DockerClientFactory;
+import org.testcontainers.containers.Container;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -45,7 +46,10 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import static org.rnorth.ducttape.unreliables.Unreliables.retryUntilSuccess;
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
@@ -96,7 +100,7 @@ public final class GitLabIntegrationTest {
         .withExposedPorts(containerPort)
         .withEnv("GITLAB_OMNIBUS_CONFIG", String.format("external_url '%s'", gitlabUrl))
         .withEnv("GITLAB_ROOT_PASSWORD", rootPassword)
-        .waitingFor(Wait.forHttp("/users/sign_in")
+        .waitingFor(new WaitForChefComplete()
             .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
 
     gitlab.start();
@@ -214,6 +218,25 @@ public final class GitLabIntegrationTest {
 
     try (SvnTestServer server = createServer(userToken, dir -> new GitLabMappingConfig(dir, GitCreateMode.EMPTY))) {
       openSvnRepository(server, gitlabProject, root, rootPassword).getLatestRevision();
+    }
+  }
+
+  private static class WaitForChefComplete extends AbstractWaitStrategy {
+    @Override
+    protected void waitUntilReady() {
+      retryUntilSuccess((int) startupTimeout.getSeconds(), TimeUnit.SECONDS, () -> {
+        getRateLimiter().doWhenReady(() -> {
+          try {
+            final Container.ExecResult execResult = waitStrategyTarget.execInContainer("grep", "-R", "Chef Run complete", "/var/log/gitlab/reconfigure/");
+            if (execResult.getExitCode() != 0) {
+              throw new RuntimeException("Not ready");
+            }
+          } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        });
+        return true;
+      });
     }
   }
 }
