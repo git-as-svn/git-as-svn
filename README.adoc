@@ -3,7 +3,6 @@
 :slug: bozaro/{project-handle}
 :uri-project: https://github.com/{slug}
 :uri-ci: {uri-project}/actions?query=branch%3Amaster
-:uri-gem: https://rubygems.org/gems/{project-handle}
 
 image:{uri-project}/workflows/CI/badge.svg?branch=master[Build Status,link={uri-ci}]
 image:https://img.shields.io/github/release/{slug}.svg[Download,link="{uri-project}/releases/latest"]
