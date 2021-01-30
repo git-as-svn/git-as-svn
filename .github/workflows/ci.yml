@@ -37,6 +37,8 @@ jobs:
           - java: 8
             env: 'GITLAB_VERSION=latest'
           - java: 8
+            env: 'GITLAB_VERSION=13.7.5-ce.0' # Gitlab >= 13.7 enables chunked upload
+          - java: 8
             env: 'GITLAB_VERSION=11.0.3-ce.0' # Gitlab >= 11.0 no longer has API v3 (issue #176)
           - java: 8
             env: 'GITLAB_VERSION=10.2.5-ce.0' # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
