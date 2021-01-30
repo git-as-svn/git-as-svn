@@ -85,7 +85,7 @@ dependencies {
     implementation("com.github.zeripath:java-gitea-api:1.7.4")
 
 
-    val gitLfsJava = "0.16.0"
+    val gitLfsJava = "0.17.0"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
