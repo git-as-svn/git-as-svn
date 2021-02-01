@@ -104,9 +104,9 @@ jobs:
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v1
         with:
-          files:
-            - build/distributions/debian_debian/git-as-svn*
-            - build/distributions/git-as-svn*
+          files: |
+            build/distributions/debian_debian/git-as-svn*
+            build/distributions/git-as-svn*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish to Bintray
