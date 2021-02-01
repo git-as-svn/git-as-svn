@@ -230,7 +230,7 @@ val distDeb by tasks.registering(Copy::class) {
     from("$buildDir/debPackage") {
         include("*.deb")
     }
-    into("$buildDir/dist/debian_debian")
+    into("$buildDir/distributions/debian_debian")
 }
 
 tasks.assembleDist {

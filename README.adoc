@@ -29,7 +29,7 @@ From the root of the source tree, run:
 ./gradlew assembleDist
 ----
 
-Distribution files will be created in `build/dist` directory.
+Distribution files will be created in `build/distributions` directory.
 
 == Running from source
 

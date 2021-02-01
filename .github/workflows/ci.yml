@@ -26,7 +26,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: package
-          path: build/dist/debian_debian/git-as-svn*
+          path: build/distributions
   test:
     name: Test
     if: "!startsWith(github.ref, 'refs/tags/')"
@@ -100,17 +100,19 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: package
-          path: build/dist/debian_debian
+          path: build/distributions
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v1
         with:
-          files: build/dist/debian_debian/git-as-svn*
+          files:
+            - build/distributions/debian_debian/git-as-svn*
+            - build/distributions/git-as-svn*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish to Bintray
         uses: wanduow/action-bintray-upload-debian-packages@v1
         with:
-          path: build/dist
+          path: build/distributions
           repo: ${{ github.repository }}
           license: GPL-2.0
           username: ${{ github.repository_owner }}
