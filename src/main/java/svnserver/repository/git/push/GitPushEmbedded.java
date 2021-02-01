@@ -153,9 +153,11 @@ public final class GitPushEmbedded implements GitPusher {
         .redirectErrorStream(true);
 
     processBuilder.environment().put("LANG", "en_US.utf8");
-    userInfo.updateEnvironment(processBuilder.environment());
-    context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
-    context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
+    try {
+      context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment(), userInfo);
+    } catch (IOException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_WRITE_ERROR, e));
+    }
 
     Process process = null;
     try {

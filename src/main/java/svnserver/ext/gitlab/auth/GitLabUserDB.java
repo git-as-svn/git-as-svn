@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * GitLab user authentiation.
@@ -40,7 +39,7 @@ public final class GitLabUserDB implements UserDB {
   @NotNull
   private static final Logger log = Loggers.gitlab;
   @NotNull
-  private static final String PREFIX_USER = "user-";
+  public static final String PREFIX_USER = "user-";
   @NotNull
   private static final String PREFIX_KEY = "key-";
 
@@ -122,14 +121,6 @@ public final class GitLabUserDB implements UserDB {
       }
     }
     return null;
-  }
-
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
-    final String externalId = userInfo.getExternalId();
-    if (externalId != null) {
-      env.put("GL_ID", PREFIX_USER + externalId);
-    }
   }
 
   @Nullable

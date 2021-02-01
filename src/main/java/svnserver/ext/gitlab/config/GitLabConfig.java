@@ -41,6 +41,12 @@ public final class GitLabConfig implements SharedConfig {
   private String hookPath = "_hooks/gitlab";
   @Nullable
   private LfsMode lfsMode = HttpLfsMode.instance;
+  @NotNull
+  private String gitalyBinDir = "/opt/gitlab/embedded/bin";
+  @NotNull
+  private String gitalySocket = "/var/opt/gitlab/gitaly/gitaly.socket";
+  @NotNull
+  private String gitalyToken = "secret token";
 
   public GitLabConfig() {
     this("http://localhost/", TokenType.PRIVATE_TOKEN, "");
@@ -64,6 +70,21 @@ public final class GitLabConfig implements SharedConfig {
   @NotNull
   String getHookPath() {
     return hookPath;
+  }
+
+  @NotNull
+  public String getGitalyBinDir() {
+    return gitalyBinDir;
+  }
+
+  @NotNull
+  public String getGitalyToken() {
+    return gitalyToken;
+  }
+
+  @NotNull
+  public String getGitalySocket() {
+    return gitalySocket;
   }
 
   @Override

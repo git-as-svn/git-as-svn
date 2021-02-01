@@ -111,7 +111,7 @@ final class GitLabMapping implements RepositoryMapping<GitLabProject> {
       repoPath = basePath.resolve(relativeRepoPath);
     }
     final LocalContext local = new LocalContext(context, project.getPathWithNamespace());
-    local.add(VcsAccess.class, new GitLabAccess(local, config, project, relativeRepoPath));
+    local.add(VcsAccess.class, new GitLabAccess(local, config, project, relativeRepoPath, gitLabContext));
     final GitRepository repository = config.getTemplate().create(local, repoPath, branches);
     final GitLabProject newProject = new GitLabProject(local, repository, project.getId());
     if (mapping.compute(projectKey, (key, value) -> value != null && value.getProjectId() == project.getId() ? value : newProject) == newProject) {

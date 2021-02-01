@@ -27,7 +27,6 @@ import svnserver.ext.gitea.config.GiteaContext;
 import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * Gitea user authentiation.
@@ -135,16 +134,6 @@ public final class GiteaUserDB implements UserDB {
     }
     log.info("Unable to match {}", external);
     return null;
-  }
-
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> env, @NotNull User userInfo) {
-    final String externalId = userInfo.getExternalId();
-    env.put("SSH_ORIGINAL_COMMAND", "git");
-    env.put("GITEA_PUSHER_EMAIL", userInfo.getEmail());
-    if (externalId != null) {
-      env.put("GITEA_PUSHER_ID", userInfo.getExternalId());
-    }
   }
 
   @Nullable

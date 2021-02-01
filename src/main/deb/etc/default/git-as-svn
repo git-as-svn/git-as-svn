@@ -15,18 +15,8 @@ JAVA_OPTS="-Xmx256m -Dlog4j.configurationFile=/etc/git-as-svn/log4j2.xml"
 # additional arguments to pass to git-as-svn
 GAS_ARGS=""
 
-# These are required for GitLab hooks
-# See:
-# https://github.com/bozaro/git-as-svn/issues/271
-# https://github.com/bozaro/git-as-svn/issues/337
-# https://github.com/bozaro/git-as-svn/issues/347
-# https://github.com/bozaro/git-as-svn/issues/355
-PATH=/bin:/usr/bin:/opt/gitlab/embedded/bin
-GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
 GITALY_GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
-GITALY_BIN_DIR=/opt/gitlab/embedded/bin
-GITALY_RUBY_DIR=/opt/gitlab/embedded/service/gitaly-ruby
 GITALY_LOG_DIR=/var/log/gitlab/gitaly
-GITALY_SOCKET=/var/opt/gitlab/gitaly/gitaly.socket
-# This must match gitaly_token in /etc/gitlab/gitlab.rb
-GITALY_TOKEN=secret token
+GITALY_RUBY_DIR=/opt/gitlab/embedded/service/gitaly-ruby
+GITLAB_SHELL_DIR=/opt/gitlab/embedded/service/gitlab-shell
+PATH=/bin:/usr/bin:/opt/gitlab/embedded/bin

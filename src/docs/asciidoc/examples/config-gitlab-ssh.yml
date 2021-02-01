@@ -108,10 +108,31 @@ shared:
     # Tells git-as-svn to use GitLab for LFS objects and file locking
     # Default: !httpLfs {}
     #
-    # lfsMode: !httpLfs {}
+    lfsMode: !fileLfs
+      # Directory where GitLab stores LFS ojects
+      path: /var/opt/gitlab/gitlab-rails/shared/lfs-objects
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>
+
+    # Path to Gitaly socket file
+    # You normally do not need to change it
+    # Default: /var/opt/gitlab/gitaly/gitaly.socket
+    #
+    # gitalySocket: /var/opt/gitlab/gitaly/gitaly.socket
+
+    # Gitaly secret token
+    # This must match gitaly_token in /etc/gitlab/gitlab.rb
+    # You normally do not need to change it
+    # Default: secret token
+    #
+    # gitalyToken: secret token
+
+    # Path to Gitaly binaries dir
+    # You normally do not need to change it
+    # Default: /opt/gitlab/embedded/bin
+    #
+    # gitalyBinDir: /opt/gitlab/embedded/bin
 
   # Manage authorized_keys if your Gitlab instance creates this file
   - !sshKeys

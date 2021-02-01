@@ -35,6 +35,7 @@ repositoryMapping: !gitlabMapping
 
   # Filesystem location where GitLab stores repositories
   # Note that git-as-svn requires write access
+  # You normally do not need to change it
   # Default: /var/opt/gitlab/git-data/repositories/
   #
   # path: /var/opt/gitlab/git-data/repositories/
@@ -105,5 +106,25 @@ shared:
       # Directory where GitLab stores LFS ojects
       path: /var/opt/gitlab/gitlab-rails/shared/lfs-objects
 
-    # GitLab access token. Note that git-as-svn requires sudo access.
+    # GitLab access token
+    # Note that git-as-svn requires sudo access
     token: <GitLab Access Token>
+
+    # Path to Gitaly socket file
+    # You normally do not need to change it
+    # Default: /var/opt/gitlab/gitaly/gitaly.socket
+    #
+    # gitalySocket: /var/opt/gitlab/gitaly/gitaly.socket
+
+    # Gitaly secret token
+    # This must match gitaly_token in /etc/gitlab/gitlab.rb
+    # You normally do not need to change it
+    # Default: secret token
+    #
+    # gitalyToken: secret token
+
+    # Path to Gitaly binaries dir
+    # You normally do not need to change it
+    # Default: /opt/gitlab/embedded/bin
+    #
+    # gitalyBinDir: /opt/gitlab/embedded/bin

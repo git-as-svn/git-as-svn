@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Pass `GITALY_HOOKS_PAYLOAD` environment variable to GitLab hooks to fix compatibility with GitLab 13.7+. https://github.com/bozaro/git-as-svn/issues/367[#367]
+
 == 1.30.0
 
 * Fix compatibility with GitLab 13.7+ LFS. https://github.com/bozaro/git-as-svn/issues/365[#365]
