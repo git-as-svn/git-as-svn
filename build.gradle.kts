@@ -21,7 +21,7 @@ plugins {
     application
 }
 
-version = "1.30.0"
+version = "1.30.1"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
@@ -63,7 +63,7 @@ tasks.withType<Test> {
 }
 
 application {
-    mainClassName = "svnserver.server.Main"
+    mainClass.set("svnserver.server.Main")
 }
 
 tasks.getByName<JavaExec>("run") {
