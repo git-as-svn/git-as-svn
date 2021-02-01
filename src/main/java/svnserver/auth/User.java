@@ -75,19 +75,6 @@ public final class User {
     return type;
   }
 
-  /**
-   * Set user information to environment variables
-   *
-   * @param env Environment variables
-   */
-  public void updateEnvironment(@NotNull Map<String, String> env) {
-    if (getEmail() != null) {
-      env.put("GAS_EMAIL", getEmail());
-    }
-    env.put("GAS_NAME", getRealName());
-    env.put("GAS_LOGIN", getUsername());
-  }
-
   @Nullable
   public String getEmail() {
     return email;

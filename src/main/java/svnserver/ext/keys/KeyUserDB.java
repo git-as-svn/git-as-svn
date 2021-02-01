@@ -17,7 +17,6 @@ import svnserver.auth.UserDB;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 public final class KeyUserDB implements UserDB {
 
@@ -27,11 +26,6 @@ public final class KeyUserDB implements UserDB {
   public KeyUserDB(UserDB internal, String secretToken) {
     this.internal = internal;
     this.keyAuthenticator = new KeyAuthenticator(internal, secretToken);
-  }
-
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
-    internal.updateEnvironment(environment, userInfo);
   }
 
   @Override

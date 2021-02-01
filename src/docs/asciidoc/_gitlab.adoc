@@ -25,8 +25,6 @@ If you're installing both git-as-svn and Gitlab from Debian packages, no additio
 . Create GitLab https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html[Personal Access token] for git-as-svn.
 Token needs to have following scopes: `api`, `sudo`, `read_repository`, `read_user`, `write_repository`. Do *not* add `read_api` scope to token.
 
-. Copy `gitaly_token` value from `/etc/gitlab/gitlab.rb` to `GITALY_TOKEN` in `/etc/default/git-as-svn`
-
 . Change `userDB` to `!gitlabUsers`.
 This will tell git-as-svn to authenticate users against GitLab server:
 +
@@ -74,7 +72,7 @@ shared:
         # forwarded: false
 ----
 
-. Configure GitLab address and token:
+. Configure GitLab URL and token:
 +
 [source,yaml]
 ----
@@ -84,12 +82,7 @@ shared:
     # GitLab base URL. This must match GitLab EXTERNAL_URL.
     # Default: http://localhost/
     #
-    # url: http://localhost/
-
-    # Tells git-as-svn to use GitLab for LFS objects and file locking
-    # Default: !httpLfs {}
-    #
-    # lfsMode: !httpLfs {}
+    url: <GitLab URL>
 
     # GitLab access token. Note that git-as-svn requires sudo access.
     token: <GitLab Access Token>
@@ -105,7 +98,7 @@ repositoryMapping: !gitlabMapping
   # Note that git-as-svn requires write access
   # Default: /var/opt/gitlab/git-data/repositories/
   #
-  path: /var/opt/gitlab/git-data/repositories/
+  # path: /var/opt/gitlab/git-data/repositories/
 
   # Common settings for all repositories exposed to svn://
   #

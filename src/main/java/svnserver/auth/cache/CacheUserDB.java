@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -67,11 +66,6 @@ public final class CacheUserDB implements UserDB {
   @Override
   public User lookupByExternal(@NotNull String external) throws SVNException {
     return cached("e." + external, db -> db.lookupByExternal(external));
-  }
-
-  @Override
-  public void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
-    userDB.updateEnvironment(environment, userInfo);
   }
 
   @Nullable

@@ -54,9 +54,7 @@ final class GitPushNative implements GitPusher {
           .redirectErrorStream(true);
 
       processBuilder.environment().put("LANG", "en_US.utf8");
-      userInfo.updateEnvironment(processBuilder.environment());
-      context.getShared().sure(UserDB.class).updateEnvironment(processBuilder.environment(), userInfo);
-      context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment());
+      context.sure(VcsAccess.class).updateEnvironment(processBuilder.environment(), userInfo);
 
       final Process process = processBuilder.start();
       final StringBuilder resultBuilder = new StringBuilder();

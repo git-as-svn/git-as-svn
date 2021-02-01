@@ -32,7 +32,4 @@ public interface UserDB extends Shared {
 
   @Nullable
   User lookupByExternal(@NotNull String external) throws SVNException;
-
-  default void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User userInfo) {
-  }
 }

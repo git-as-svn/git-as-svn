@@ -95,4 +95,9 @@ public final class GitLabContext implements Shared {
   public String getHookPath() {
     return config.getHookPath();
   }
+
+  @NotNull
+  public GitLabConfig getConfig() {
+    return config;
+  }
 }

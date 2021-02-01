@@ -23,7 +23,6 @@ import svnserver.repository.VcsAccess;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,15 +38,11 @@ final class GiteaAccess implements VcsAccess {
   @NotNull
   private final LoadingCache<String, Repository> cache;
   @NotNull
-  private final HashMap<String, String> environment;
+  private final Repository repository;
 
-  GiteaAccess(@NotNull LocalContext local, @NotNull GiteaMappingConfig config, Repository repository) {
+  GiteaAccess(@NotNull LocalContext local, @NotNull GiteaMappingConfig config, @NotNull Repository repository) {
+    this.repository = repository;
     final long projectId = repository.getId();
-    this.environment = new HashMap<>();
-    this.environment.put("GITEA_REPO_ID", "" + repository.getId());
-    this.environment.put("GITEA_REPO_IS_WIKI", "false");
-    this.environment.put("GITEA_REPO_NAME", repository.getName());
-    this.environment.put("GITEA_REPO_USER", repository.getOwner().getLogin());
 
     final GiteaContext context = GiteaContext.sure(local.getShared());
 
@@ -121,8 +116,18 @@ final class GiteaAccess implements VcsAccess {
   }
 
   @Override
-  public void updateEnvironment(@NotNull Map<String, String> environment) {
-    environment.putAll(this.environment);
+  public void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User user) {
+    environment.put("GITEA_REPO_ID", "" + repository.getId());
+    environment.put("GITEA_REPO_IS_WIKI", "false");
+    environment.put("GITEA_REPO_NAME", repository.getName());
+    environment.put("GITEA_REPO_USER", repository.getOwner().getLogin());
+
+    final String externalId = user.getExternalId();
+    environment.put("SSH_ORIGINAL_COMMAND", "git");
+    environment.put("GITEA_PUSHER_EMAIL", user.getEmail());
+    if (externalId != null) {
+      environment.put("GITEA_PUSHER_ID", user.getExternalId());
+    }
   }
 
   @NotNull

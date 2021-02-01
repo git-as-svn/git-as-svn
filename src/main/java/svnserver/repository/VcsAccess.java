@@ -42,6 +42,6 @@ public interface VcsAccess extends Local {
 
   boolean canWrite(@NotNull User user, @NotNull String branch, @NotNull String path) throws IOException;
 
-  default void updateEnvironment(@NotNull Map<String, String> environment) {
+  default void updateEnvironment(@NotNull Map<String, String> environment, @NotNull User user) throws IOException {
   }
 }
