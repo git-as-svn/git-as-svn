@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "6.7"
+    gradleVersion = "6.8.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -71,17 +71,17 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.67")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.68")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r")
     implementation("org.tmatesoft.svnkit:svnkit:1.10.1")
     implementation("org.yaml:snakeyaml:1.27")
     implementation("com.beust:jcommander:1.78")
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
-    implementation("com.unboundid:unboundid-ldapsdk:5.1.1")
-    implementation("org.eclipse.jetty:jetty-servlet:9.4.34.v20201102")
+    implementation("com.unboundid:unboundid-ldapsdk:5.1.3")
+    implementation("org.eclipse.jetty:jetty-servlet:9.4.36.v20210114")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
-    implementation("org.bitbucket.b_c:jose4j:0.7.2")
+    implementation("org.bitbucket.b_c:jose4j:0.7.6")
     implementation("com.github.zeripath:java-gitea-api:1.7.4")
 
 
@@ -90,8 +90,8 @@ dependencies {
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    implementation("com.google.oauth-client:google-oauth-client:1.31.2")
-    implementation("com.google.http-client:google-http-client-jackson2:1.38.0")
+    implementation("com.google.oauth-client:google-oauth-client:1.31.4")
+    implementation("com.google.http-client:google-http-client-jackson2:1.38.1")
     implementation("org.jetbrains:annotations:20.1.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
