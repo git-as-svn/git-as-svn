@@ -40,7 +40,7 @@ java {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 license {
