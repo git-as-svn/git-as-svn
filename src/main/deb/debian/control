@@ -9,7 +9,7 @@ Vcs-Git: https://github.com/bozaro/git-as-svn.git
 
 Package: git-as-svn
 Architecture: all
-Depends: adduser, java8-runtime-headless
+Depends: adduser, java11-runtime-headless
 Suggests: ufw
 Description: git-as-svn emulates Subversion repository on top of Git repository
  It allows you to work with a git repository using console svn, TortoiseSVN,

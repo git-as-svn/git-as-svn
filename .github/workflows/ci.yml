@@ -10,7 +10,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v1
         with:
-          java-version: 8 # Oldest supported version
+          java-version: 11 # Oldest supported version
       - name: Install dependencies
         run: sudo apt-get install build-essential debhelper fakeroot gnome-doc-utils
       - name: Build
@@ -34,28 +34,27 @@ jobs:
       matrix:
         include:
           # Gitlab
-          - java: 8
+          - java: 11
             # TODO: add latest back after fixing https://github.com/bozaro/git-as-svn/issues/384
             env: 'GITLAB_VERSION=13.8.4-ce.0'
-          - java: 8
+          - java: 11
             env: 'GITLAB_VERSION=13.7.5-ce.0' # Gitlab >= 13.7 enables chunked upload
-          - java: 8
+          - java: 11
             env: 'GITLAB_VERSION=11.0.3-ce.0' # Gitlab >= 11.0 no longer has API v3 (issue #176)
-          - java: 8
+          - java: 11
             env: 'GITLAB_VERSION=10.2.5-ce.0' # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
-          - java: 8
+          - java: 11
             env: 'GITLAB_VERSION=9.5.10-ce.0' # Last 9.x build, actually nothing special about it
-          - java: 8
+          - java: 11
             env: 'GITLAB_VERSION=9.3.3-ce.0' # We use this in production
 
           # Gitea
-          - java: 8
+          - java: 11
             env: 'GITEA_VERSION=latest'
-          - java: 8
+          - java: 11
             env: 'GITEA_VERSION=1.9.0' # The earliest supported Gitea version
 
           # Different JDKs
-          - java: 11
           - java: 15
     runs-on: ubuntu-latest
     steps:

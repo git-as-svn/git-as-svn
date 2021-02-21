@@ -1,6 +1,7 @@
 import org.ajoberstar.grgit.Grgit
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -17,13 +18,14 @@ plugins {
     id("org.asciidoctor.jvm.convert") version "3.3.2"
     id("org.asciidoctor.jvm.pdf") version "3.3.2"
     id("org.asciidoctor.jvm.epub") version "3.3.2"
+    id("org.jetbrains.kotlin.jvm") version "1.4.30"
     idea
     application
 }
 
 version = "1.30.1"
 
-val javaVersion = JavaVersion.VERSION_1_8
+val javaVersion = JavaVersion.VERSION_11
 
 idea {
     project.jdkName = javaVersion.name
@@ -51,6 +53,10 @@ license {
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = javaVersion.toString()
 }
 
 tasks.withType<Test> {
@@ -92,12 +98,7 @@ dependencies {
 
     implementation("com.google.oauth-client:google-oauth-client:1.31.4")
     implementation("com.google.http-client:google-http-client-jackson2:1.38.1")
-    implementation("org.jetbrains:annotations:20.1.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
-
-    val classindex = "org.atteo.classindex:classindex:3.10"
-    implementation(classindex)
-    annotationProcessor(classindex)
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.14.0")
 
