@@ -14,7 +14,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.36.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("org.ajoberstar.grgit") version "4.1.0"
-    id("org.asciidoctor.jvm.convert") version "3.3.1"
+    id("org.asciidoctor.jvm.convert") version "3.3.2"
     id("org.asciidoctor.jvm.pdf") version "3.3.1"
     id("org.asciidoctor.jvm.epub") version "3.3.1"
     idea
