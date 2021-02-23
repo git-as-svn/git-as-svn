@@ -189,7 +189,7 @@ internal class GitLabMapping(private val context: SharedContext, private val con
         private val log = Loggers.gitlab
         private const val HASHED_PATH = "@hashed"
         private fun getBranchesToExpose(project: GitlabProject): Set<String> {
-            val result: MutableSet<String> = TreeSet()
+            val result = TreeSet<String>()
             for (tag in project.tagList) {
                 if (!tag.startsWith(tagPrefix)) continue
                 val branch = tag.substring(tagPrefix.length)

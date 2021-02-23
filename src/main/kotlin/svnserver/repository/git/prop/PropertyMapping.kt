@@ -13,7 +13,7 @@ import java.util.*
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 object PropertyMapping {
-    private val parserByFile: MutableMap<String, GitPropertyFactory> = TreeMap()
+    private val parserByFile = TreeMap<String, GitPropertyFactory>()
     fun getFactory(fileName: String): GitPropertyFactory? {
         return parserByFile[fileName]
     }

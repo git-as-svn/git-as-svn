@@ -116,7 +116,7 @@ class ShutdownTest {
                     val threads = arrayOfNulls<Thread>(count)
                     val size = Thread.enumerate(threads)
                     if (size < threads.size) {
-                        val result: MutableMap<String, Thread> = TreeMap()
+                        val result = TreeMap<String, Thread>()
                         for (i in 0 until size) {
                             val thread = threads[i]
                             result[thread!!.id.toString() + "#" + thread.name] = thread

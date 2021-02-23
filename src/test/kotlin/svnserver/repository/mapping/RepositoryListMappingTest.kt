@@ -77,7 +77,7 @@ class RepositoryListMappingTest {
     }
 
     class Builder {
-        private val mapping: MutableMap<String, String> = TreeMap()
+        private val mapping = TreeMap<String, String>()
         fun add(prefix: String): Builder {
             mapping[prefix] = prefix
             return this

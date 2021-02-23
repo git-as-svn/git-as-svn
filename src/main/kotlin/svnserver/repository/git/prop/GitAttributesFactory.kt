@@ -35,7 +35,7 @@ class GitAttributesFactory : GitPropertyFactory {
     override fun create(stream: InputStream): Array<GitProperty> {
         val r = AttributesNode()
         r.parse(stream)
-        val properties: MutableList<GitProperty> = ArrayList()
+        val properties = ArrayList<GitProperty>()
         for (rule: AttributesRule in r.rules) {
             val wildcard: Wildcard
             try {

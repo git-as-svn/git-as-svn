@@ -181,7 +181,7 @@ class LfsHttpStorageTest {
                 @Throws(IOException::class)
                 override fun getAuthUncached(operation: Operation): Link {
                     val post = HttpPost(authUrl)
-                    val params: MutableList<NameValuePair> = ArrayList()
+                    val params = ArrayList<NameValuePair>()
                     addParameter(params, "secretToken", "t0ken")
                     if (lfsUser.isAnonymous) {
                         addParameter(params, "mode", "anonymous")

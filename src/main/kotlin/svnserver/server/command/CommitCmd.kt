@@ -102,8 +102,8 @@ class CommitCmd : BaseCmd<Params>() {
         val entry: GitEntry, // Old source entry (source)
         val source: GitFile?, val head: Boolean
     ) {
-        val props: MutableMap<String, String> = if (source == null) HashMap() else HashMap(source.properties)
-        val changes: MutableList<VcsConsumer<GitCommitBuilder>> = ArrayList()
+        val props = if (source != null) HashMap(source.properties) else HashMap()
+        val changes = ArrayList<VcsConsumer<GitCommitBuilder>>()
 
         @Throws(IOException::class, SVNException::class)
         fun getEntry(name: String): GitFile {
@@ -117,9 +117,9 @@ class CommitCmd : BaseCmd<Params>() {
 
     private class EditorPipeline(context: SessionContext, params: Params) : Closeable {
         private val rootEntry: EntryUpdater
-        private val commands: MutableMap<String, BaseCmd<*>>
-        private val exitCommands: MutableMap<String, BaseCmd<*>>
-        private val message: String = params.message
+        private val commands: Map<String, BaseCmd<*>>
+        private val exitCommands: Map<String, BaseCmd<*>>
+        private val message = params.message
         private val paths: MutableMap<String, EntryUpdater>
         private val files: MutableMap<String, FileUpdater>
         private val locks: Map<String, String>
@@ -457,23 +457,25 @@ class CommitCmd : BaseCmd<Params>() {
             paths = HashMap()
             files = HashMap()
             locks = getLocks(context, params.locks)
-            commands = HashMap()
-            commands["add-dir"] = LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addDir(sessionContext, args) }
-            commands["add-file"] = LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addFile(sessionContext, args) }
-            commands["change-dir-prop"] = LambdaCmd(ChangePropParams::class.java) { _: SessionContext, args: ChangePropParams -> changeDirProp(args) }
-            commands["change-file-prop"] = LambdaCmd(ChangePropParams::class.java) { _: SessionContext, args: ChangePropParams -> changeFileProp(args) }
-            commands["delete-entry"] = LambdaCmd(DeleteParams::class.java) { sessionContext: SessionContext, args: DeleteParams -> deleteEntry(sessionContext, args) }
-            commands["open-root"] = LambdaCmd(OpenRootParams::class.java) { sessionContext: SessionContext, args: OpenRootParams -> openRoot(sessionContext, args) }
-            commands["open-dir"] = LambdaCmd(OpenParams::class.java) { sessionContext: SessionContext, args: OpenParams -> openDir(sessionContext, args) }
-            commands["open-file"] = LambdaCmd(OpenParams::class.java) { sessionContext: SessionContext, args: OpenParams -> openFile(sessionContext, args) }
-            commands["close-dir"] = LambdaCmd(TokenParams::class.java) { _: SessionContext, args: TokenParams -> closeDir(args) }
-            commands["close-file"] = LambdaCmd(ChecksumParams::class.java) { _: SessionContext, args: ChecksumParams -> closeFile(args) }
-            commands["textdelta-chunk"] = LambdaCmd(DeltaChunkParams::class.java) { _: SessionContext, args: DeltaChunkParams -> deltaChunk(args) }
-            commands["textdelta-end"] = LambdaCmd(TokenParams::class.java) { _: SessionContext, args: TokenParams -> deltaEnd(args) }
-            commands["apply-textdelta"] = LambdaCmd(ChecksumParams::class.java) { _: SessionContext, args: ChecksumParams -> deltaApply(args) }
-            exitCommands = HashMap()
-            exitCommands["close-edit"] = LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> closeEdit(sessionContext) }
-            exitCommands["abort-edit"] = LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> abortEdit(sessionContext) }
+            commands = mapOf(
+                "add-dir" to LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addDir(sessionContext, args) },
+                "add-file" to LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addFile(sessionContext, args) },
+                "change-dir-prop" to LambdaCmd(ChangePropParams::class.java) { _: SessionContext, args: ChangePropParams -> changeDirProp(args) },
+                "change-file-prop" to LambdaCmd(ChangePropParams::class.java) { _: SessionContext, args: ChangePropParams -> changeFileProp(args) },
+                "delete-entry" to LambdaCmd(DeleteParams::class.java) { sessionContext: SessionContext, args: DeleteParams -> deleteEntry(sessionContext, args) },
+                "open-root" to LambdaCmd(OpenRootParams::class.java) { sessionContext: SessionContext, args: OpenRootParams -> openRoot(sessionContext, args) },
+                "open-dir" to LambdaCmd(OpenParams::class.java) { sessionContext: SessionContext, args: OpenParams -> openDir(sessionContext, args) },
+                "open-file" to LambdaCmd(OpenParams::class.java) { sessionContext: SessionContext, args: OpenParams -> openFile(sessionContext, args) },
+                "close-dir" to LambdaCmd(TokenParams::class.java) { _: SessionContext, args: TokenParams -> closeDir(args) },
+                "close-file" to LambdaCmd(ChecksumParams::class.java) { _: SessionContext, args: ChecksumParams -> closeFile(args) },
+                "textdelta-chunk" to LambdaCmd(DeltaChunkParams::class.java) { _: SessionContext, args: DeltaChunkParams -> deltaChunk(args) },
+                "textdelta-end" to LambdaCmd(TokenParams::class.java) { _: SessionContext, args: TokenParams -> deltaEnd(args) },
+                "apply-textdelta" to LambdaCmd(ChecksumParams::class.java) { _: SessionContext, args: ChecksumParams -> deltaApply(args) },
+            )
+            exitCommands = mapOf(
+                "close-edit" to LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> closeEdit(sessionContext) },
+                "abort-edit" to LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> abortEdit(sessionContext) },
+            )
         }
     }
 

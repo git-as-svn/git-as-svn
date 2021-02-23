@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlfs.server
 
-import com.google.common.collect.ImmutableMap
 import ru.bozaro.gitlfs.server.ContentManager
 import ru.bozaro.gitlfs.server.ContentServlet
 import ru.bozaro.gitlfs.server.LocksServlet
@@ -18,7 +17,6 @@ import svnserver.context.Shared
 import svnserver.ext.gitlfs.LocalLfsConfig
 import svnserver.ext.gitlfs.storage.LfsStorage
 import svnserver.ext.web.server.WebServer
-import javax.servlet.Servlet
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,12 +35,12 @@ class LfsServer(private val secretToken: String, tokenExpireSec: Long, tokenEnsu
         val pointerManager: ContentManager = LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureTime)
         val contentManager = LfsContentManager(localContext, storage, tokenExpireSec, 0.0f)
         val servletsInfo = webServer.addServlets(
-            ImmutableMap.builder<String, Servlet>()
-                .put(pathSpec + SERVLET_AUTH, LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, secretToken, tokenExpireSec, tokenEnsureTime))
-                .put("$pathSpec$SERVLET_POINTER/*", PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT))
-                .put("$pathSpec$SERVLET_CONTENT/*", ContentServlet(contentManager))
-                .put(pathSpec + SERVLET_BASE + "locks/*", LocksServlet(LfsLockManager(contentManager)))
-                .build()
+            mapOf(
+                pathSpec + SERVLET_AUTH to LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, secretToken, tokenExpireSec, tokenEnsureTime),
+                "$pathSpec$SERVLET_POINTER/*" to PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT),
+                "$pathSpec$SERVLET_CONTENT/*" to ContentServlet(contentManager),
+                pathSpec + SERVLET_BASE + "locks/*" to LocksServlet(LfsLockManager(contentManager)),
+            )
         )
         localContext.add(LfsServerHolder::class.java, LfsServerHolder(webServer, servletsInfo))
     }

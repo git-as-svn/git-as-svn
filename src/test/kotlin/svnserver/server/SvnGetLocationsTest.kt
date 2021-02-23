@@ -114,7 +114,7 @@ class SvnGetLocationsTest {
 
     @Throws(SVNException::class)
     private fun checkGetSegments(repo: SVNRepository, path: String, pegRev: Long, startRev: Long, endRev: Long, vararg expected: String) {
-        val actual: MutableList<String> = ArrayList()
+        val actual = ArrayList<String>()
         val handler = ISVNLocationSegmentHandler { locationEntry: SVNLocationSegment -> actual.add(locationEntry.path + "@" + locationEntry.startRevision + ":" + locationEntry.endRevision) }
         repo.getLocationSegments(path, pegRev, startRev, endRev, handler)
         Assert.assertEquals(actual.toTypedArray(), expected)
@@ -179,7 +179,7 @@ class SvnGetLocationsTest {
 
     @Throws(SVNException::class)
     private fun checkGetLocations(repo: SVNRepository, path: String, pegRev: Long, targetRev: Long, expectedPath: String?) {
-        val paths: MutableList<String> = ArrayList()
+        val paths = ArrayList<String>()
         repo.getLocations(path, pegRev, longArrayOf(targetRev)) { locationEntry: SVNLocationEntry ->
             Assert.assertEquals(locationEntry.revision, targetRev)
             paths.add(locationEntry.path)

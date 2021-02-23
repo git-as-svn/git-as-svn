@@ -86,7 +86,7 @@ class SvnFilterTest {
             SvnTestHelper.createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", SvnFilePropertyTest.propsEolNative)
             // After commit .gitattributes file data.z must change property svn:mime-type and content automagically.
             run {
-                val changed: MutableSet<String> = HashSet()
+                val changed = HashSet<String>()
                 repo.log(arrayOf(""), repo.latestRevision, repo.latestRevision, true, false) { logEntry: SVNLogEntry -> changed.addAll(logEntry.changedPaths.keys) }
                 Assert.assertTrue(changed.contains("/.gitattributes"))
                 Assert.assertTrue(changed.contains("/data.z"))
@@ -101,7 +101,7 @@ class SvnFilterTest {
             modifyFile(repo, "/.gitattributes", "*.x\t\t\tfilter=gzip\n", repo.latestRevision)
             // After commit .gitattributes file data.z must change property svn:mime-type and content automagically.
             run {
-                val changed: MutableSet<String> = HashSet()
+                val changed = HashSet<String>()
                 repo.log(arrayOf(""), repo.latestRevision, repo.latestRevision, true, false) { logEntry: SVNLogEntry -> changed.addAll(logEntry.changedPaths.keys) }
                 Assert.assertTrue(changed.contains("/.gitattributes"))
                 Assert.assertTrue(changed.contains("/data.z"))

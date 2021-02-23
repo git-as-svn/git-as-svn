@@ -41,13 +41,13 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
      * Lock for prevent concurrent pushes.
      */
     private val pushLock: Any = Any()
-    private val revisions: MutableList<GitRevision> = ArrayList()
-    private val revisionByDate: TreeMap<Long, GitRevision> = TreeMap()
-    private val revisionByHash: MutableMap<ObjectId, GitRevision> = HashMap()
+    private val revisions = ArrayList<GitRevision>()
+    private val revisionByDate = TreeMap<Long, GitRevision>()
+    private val revisionByHash = HashMap<ObjectId, GitRevision>()
     private val revisionCache: HTreeMap<ObjectId, CacheRevision>
-    private val lastUpdatesLock: ReadWriteLock = ReentrantReadWriteLock()
-    private val lastUpdates: MutableMap<String, IntArray> = HashMap()
-    private val lock: ReadWriteLock = ReentrantReadWriteLock()
+    private val lastUpdatesLock = ReentrantReadWriteLock()
+    private val lastUpdates = HashMap<String, IntArray>()
+    private val lock = ReentrantReadWriteLock()
 
     @Throws(SVNException::class)
     fun getRevisionInfo(revision: Int): GitRevision {
@@ -175,10 +175,10 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
         lock.writeLock().lock()
         try {
             repository.git.newObjectInserter().use { inserter ->
-                val master: Ref = repository.git.exactRef(gitBranch)
-                val newRevs: MutableList<RevCommit> = ArrayList()
+                val master = repository.git.exactRef(gitBranch)
+                val newRevs = ArrayList<RevCommit>()
                 val revWalk = RevWalk(repository.git)
-                var objectId: ObjectId = master.objectId
+                var objectId = master.objectId
                 while (true) {
                     if (revisionByHash.containsKey(objectId)) {
                         break
@@ -310,8 +310,8 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
         tw.addTree(newTreeId.`object`)
         val rd = RenameDetector(repository.git)
         rd.addAll(DiffEntry.scan(tw))
-        val result: MutableMap<String, String> = HashMap()
-        for (diff: DiffEntry in rd.compute(tw.objectReader, null)) {
+        val result = HashMap<String, String>()
+        for (diff in rd.compute(tw.objectReader, null)) {
             if (diff.score >= rd.renameScore) {
                 result[StringHelper.normalize(diff.newPath)] = StringHelper.normalize(diff.oldPath)
             }

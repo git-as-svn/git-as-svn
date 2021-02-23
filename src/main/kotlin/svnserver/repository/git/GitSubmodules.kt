@@ -28,11 +28,11 @@ import java.util.concurrent.CopyOnWriteArraySet
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class GitSubmodules : Shared {
-    private val repositories: MutableSet<Repository> = CopyOnWriteArraySet()
+    private val repositories = CopyOnWriteArraySet<Repository>()
 
     internal constructor()
     constructor(basePath: Path, paths: Collection<String>) {
-        for (path: String in paths) {
+        for (path in paths) {
             val file: Path = ConfigHelper.joinPath(basePath, path)
             if (!Files.exists(file)) throw FileNotFoundException(file.toString())
             log.info("Linked repository path: {}", file)
@@ -42,7 +42,9 @@ class GitSubmodules : Shared {
 
     @Throws(IOException::class)
     fun findCommit(objectId: ObjectId): GitObject<RevCommit>? {
-        for (repo: Repository in repositories) if (repo.objectDatabase.has(objectId)) return GitObject(repo, RevWalk(repo).parseCommit(objectId))
+        for (repo: Repository in repositories) {
+            if (repo.objectDatabase.has(objectId)) return GitObject(repo, RevWalk(repo).parseCommit(objectId))
+        }
         return null
     }
 

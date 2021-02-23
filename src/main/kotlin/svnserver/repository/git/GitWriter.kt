@@ -102,8 +102,8 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
     }
 
     private class GitPropertyValidator(root: GitFile) : CommitAction(root) {
-        private val propertyMismatch: MutableMap<String, MutableSet<String>> = TreeMap()
-        private var errorCount: Int = 0
+        private val propertyMismatch = TreeMap<String, MutableSet<String>>()
+        private var errorCount = 0
 
         @Throws(IOException::class)
         override fun checkProperties(name: String?, props: Map<String, String>, deltaConsumer: GitDeltaConsumer?) {
@@ -131,7 +131,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                     for (entry in props.entries) {
                         delta.append("  ").append(entry.key).append(" = \"").append(entry.value).append("\"\n")
                     }
-                    propertyMismatch.compute(delta.toString()) { _: String, _value: MutableSet<String>? ->
+                    propertyMismatch.compute(delta.toString()) { _, _value ->
                         var value = _value
                         if (value == null) {
                             value = TreeSet()
@@ -178,7 +178,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
     inner class GitCommitBuilder internal constructor(private val lockManager: LockStorage, private val locks: Map<String, String>) {
         private val treeStack: Deque<GitTreeUpdate>
         private val revision = branch.latestRevision
-        private val commitActions: MutableList<VcsConsumer<CommitAction>> = ArrayList()
+        private val commitActions = ArrayList<VcsConsumer<CommitAction>>()
 
         @get:Throws(IOException::class)
         private val originalTree: Iterable<GitTreeEntry>

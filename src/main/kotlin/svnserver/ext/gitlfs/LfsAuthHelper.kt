@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlfs
 
-import com.google.common.collect.ImmutableMap
 import org.jose4j.jwt.NumericDate
 import org.tmatesoft.svn.core.SVNException
 import ru.bozaro.gitlfs.common.Constants
@@ -86,9 +85,7 @@ object LfsAuthHelper {
     ): Map<String, String> {
         val webServer = context.sure(WebServer::class.java)
         val accessToken = TokenHelper.createToken(webServer.createEncryption(), user, expireAt)
-        return ImmutableMap.builder<String, String>()
-            .put(Constants.HEADER_AUTHORIZATION, WebServer.AUTH_TOKEN + accessToken)
-            .build()
+        return mapOf(Constants.HEADER_AUTHORIZATION to WebServer.AUTH_TOKEN + accessToken)
     }
 
     fun getExpire(tokenExpireSec: Long): NumericDate {

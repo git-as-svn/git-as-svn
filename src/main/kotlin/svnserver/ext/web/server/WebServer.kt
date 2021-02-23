@@ -46,7 +46,7 @@ import javax.servlet.http.HttpServletResponse
 class WebServer(private val context: SharedContext, private val server: Server, baseUrl: URL?, tokenFactory: EncryptionFactory) : Shared {
     private val handler: ServletHandler?
     private val tokenFactory: EncryptionFactory
-    private val servlets: MutableList<Holder> = CopyOnWriteArrayList()
+    private val servlets = CopyOnWriteArrayList<Holder>()
     private var baseUrl: URI?
 
     @Throws(IOException::class)
@@ -96,7 +96,7 @@ class WebServer(private val context: SharedContext, private val server: Server, 
     }
 
     fun addServlets(servletMap: Map<String, Servlet>): Collection<Holder> {
-        val servletInfos: MutableList<Holder> = ArrayList()
+        val servletInfos = ArrayList<Holder>()
         for ((key, value) in servletMap) {
             log.info("Registered servlet for path: {}", key)
             val servletInfo = Holder(key, value)
@@ -200,12 +200,10 @@ class WebServer(private val context: SharedContext, private val server: Server, 
     }
 
     inner class Holder constructor(val path: String, servlet: Servlet) {
-        val holder: ServletHolder
-        val mapping: ServletMapping
+        val holder: ServletHolder = ServletHolder(servlet)
+        val mapping: ServletMapping = ServletMapping()
 
         init {
-            holder = ServletHolder(servlet)
-            mapping = ServletMapping()
             mapping.servletName = holder.name
             mapping.setPathSpec(path)
         }

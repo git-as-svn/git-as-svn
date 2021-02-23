@@ -45,7 +45,7 @@ class SvnLockTest {
     private fun lock(repo: SVNRepository, path: String, revision: Long, force: Boolean, errorCode: SVNErrorCode?): SVNLock? {
         val pathsToRevisions = HashMap<String, Long>()
         pathsToRevisions[path] = revision
-        val locks: MutableList<SVNLock> = ArrayList()
+        val locks = ArrayList<SVNLock>()
         return try {
             repo.lock(pathsToRevisions, null, force, object : ISVNLockHandler {
                 @Throws(SVNException::class)
@@ -438,7 +438,7 @@ class SvnLockTest {
     }
 
     private fun compareLocks(actual: Array<SVNLock>, vararg expected: SVNLock) {
-        val actualLocks: MutableMap<String, SVNLock> = HashMap()
+        val actualLocks = HashMap<String, SVNLock>()
         for (lock in actual) {
             actualLocks[lock.path] = lock
         }

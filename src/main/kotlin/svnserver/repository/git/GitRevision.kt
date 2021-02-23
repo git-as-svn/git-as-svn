@@ -34,7 +34,7 @@ class GitRevision internal constructor(
 ) {
     val date: Long = TimeUnit.SECONDS.toMillis(commitTimeSec.toLong())
     fun getProperties(includeInternalProps: Boolean): Map<String, String> {
-        val props: MutableMap<String, String> = HashMap()
+        val props = HashMap<String, String>()
         if (includeInternalProps) {
             putProperty(props, SVNRevisionProperty.AUTHOR, author)
             putProperty(props, SVNRevisionProperty.LOG, log)

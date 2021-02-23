@@ -98,7 +98,7 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
                 if (!Files.exists(metaPath) && metaTemp != null) {
                     try {
                         Files.newOutputStream(metaTemp).use { stream ->
-                            val map: MutableMap<String, String> = HashMap()
+                            val map = HashMap<String, String>()
                             map[Constants.SIZE] = size.toString()
                             map[Constants.OID] = oid
                             map[LfsLocalStorage.HASH_MD5] = Hex.encodeHexString(md5)

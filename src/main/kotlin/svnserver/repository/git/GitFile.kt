@@ -59,15 +59,15 @@ interface GitFile : GitEntry {
     @get:Throws(IOException::class)
     val allProperties: Map<String, String>
         get() {
-            val props: MutableMap<String, String> = HashMap()
+            val props = HashMap<String, String>()
             props.putAll(revProperties)
             props.putAll(properties)
             return props
         }
     val revProperties: Map<String, String>
         get() {
-            val props: MutableMap<String, String> = HashMap()
-            val last: GitRevision = lastChange
+            val props = HashMap<String, String>()
+            val last = lastChange
             props[SVNProperty.UUID] = branch.uuid
             props[SVNProperty.COMMITTED_REVISION] = last.id.toString()
             putProperty(props, SVNProperty.COMMITTED_DATE, last.dateString)
@@ -89,8 +89,8 @@ interface GitFile : GitEntry {
     val branch: GitBranch
     val upstreamProperties: Map<String, String>
         get() {
-            val result: MutableMap<String, String> = HashMap()
-            for (prop: GitProperty in rawProperties) {
+            val result = HashMap<String, String>()
+            for (prop in rawProperties) {
                 prop.apply(result)
             }
             return result

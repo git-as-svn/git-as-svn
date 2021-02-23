@@ -7,7 +7,6 @@
  */
 package svnserver.server
 
-import com.google.common.collect.ImmutableMap
 import org.testng.Assert
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNException
@@ -196,7 +195,7 @@ class SvnFilePropertyTest {
             SvnTestHelper.checkDirProp(repo, "/", propsAutoProps)
             // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
             run {
-                val changed: MutableSet<String> = HashSet()
+                val changed = HashSet<String>()
                 repo.log(arrayOf(""), repo.latestRevision, repo.latestRevision, true, false) { logEntry: SVNLogEntry -> changed.addAll(logEntry.changedPaths.keys) }
                 Assert.assertTrue(changed.contains("/"))
                 Assert.assertTrue(changed.contains("/.gitattributes"))
@@ -240,7 +239,7 @@ class SvnFilePropertyTest {
             SvnTestHelper.checkDirProp(repo, "/foo", propsAutoProps)
             // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
             run {
-                val changed: MutableSet<String> = HashSet()
+                val changed = HashSet<String>()
                 repo.log(arrayOf(""), repo.latestRevision, repo.latestRevision, true, false) { logEntry: SVNLogEntry -> changed.addAll(logEntry.changedPaths.keys) }
                 Assert.assertTrue(changed.contains("/foo"))
                 Assert.assertTrue(changed.contains("/foo/.gitattributes"))
@@ -458,28 +457,18 @@ class SvnFilePropertyTest {
     }
 
     companion object {
-        val propsBinary = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
-            .build()
-        val propsEolNative = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-            .build()
-        private val propsEolLf = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF)
-            .build()
-        private val propsExecutable = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.EXECUTABLE, "*")
-            .put(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
-            .build()
-        private val propsSymlink = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.SPECIAL, "*")
-            .build()
-        private val propsAutoProps = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.INHERITABLE_AUTO_PROPS, "*.txt = svn:eol-style=LF\n")
-            .build()
-        private val propsNeedsLock = ImmutableMap.builder<String, String>()
-            .put(SVNProperty.NEEDS_LOCK, "*")
-            .put(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE)
-            .build()
+        val propsBinary = mapOf(SVNProperty.MIME_TYPE to SVNFileUtil.BINARY_MIME_TYPE)
+        val propsEolNative = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_NATIVE)
+        val propsEolLf = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_LF)
+        val propsExecutable = mapOf(
+            SVNProperty.EXECUTABLE to "*",
+            SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_NATIVE,
+        )
+        val propsSymlink = mapOf(SVNProperty.SPECIAL to "*")
+        val propsAutoProps = mapOf(SVNProperty.INHERITABLE_AUTO_PROPS to "*.txt = svn:eol-style=LF\n")
+        val propsNeedsLock = mapOf(
+            SVNProperty.NEEDS_LOCK to "*",
+            SVNProperty.MIME_TYPE to SVNFileUtil.BINARY_MIME_TYPE
+        )
     }
 }

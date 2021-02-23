@@ -91,7 +91,7 @@ class SvnCheckoutTest {
                 val logEntry = svnLog.run()
                 log.info("Update to revision #{}: {}", revision, getFirstLine(logEntry.message))
                 val paths = TreeMap(logEntry.changedPaths)
-                val targets: MutableList<String> = ArrayList()
+                val targets = ArrayList<String>()
                 val update = factory.createUpdate()
                 var lastAdded: String? = null
                 for ((path, value) in paths) {

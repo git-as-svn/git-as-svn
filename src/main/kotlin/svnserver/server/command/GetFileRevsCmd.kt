@@ -66,14 +66,14 @@ class GetFileRevsCmd : BaseCmd<GetFileRevsCmd.Params>() {
             val branch: GitBranch = context.branch
             val rev: Int = branch.getLastChange(fullPath, endRev) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "$fullPath not found in revision $endRev"))
             val head: GitFile = branch.getRevisionInfo(rev).getFile(fullPath) ?: throw IllegalStateException()
-            val history: MutableList<GitFile> = ArrayList()
+            val history = ArrayList<GitFile>()
             walkFileHistory(context, head, startRev) { e: GitFile -> history.add(e) }
             if (reverse) history.reverse()
             val compression: SVNDeltaCompression = context.compression
             for (index in history.indices.reversed()) {
-                val oldFile: GitFile? = if (index <= history.size - 2) history[index + 1] else null
-                val newFile: GitFile = history[index]
-                val propsDiff: Map<String, String?> = DeltaCmd.getPropertiesDiff(oldFile, newFile)
+                val oldFile = if (index <= history.size - 2) history[index + 1] else null
+                val newFile = history[index]
+                val propsDiff = DeltaCmd.getPropertiesDiff(oldFile, newFile)
                 writer
                     .listBegin()
                     .string(newFile.fullPath)

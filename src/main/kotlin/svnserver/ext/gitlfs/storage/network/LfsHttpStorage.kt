@@ -80,7 +80,7 @@ abstract class LfsHttpStorage : LfsStorage {
         val pathNorm = StringHelper.normalize(path ?: "/")
         val ref = if (branch == null) null else Ref(branch.shortBranchName)
         val locks = lfsClient(user).listLocks(null, lockId, ref)
-        val result: MutableList<LockDesc> = ArrayList()
+        val result = ArrayList<LockDesc>()
         for (lock in locks) {
             val lockDesc: LockDesc = LockDesc.toLockDesc(lock)
             if (!StringHelper.isParentPath(pathNorm, lockDesc.path)) continue
@@ -101,11 +101,11 @@ abstract class LfsHttpStorage : LfsStorage {
         val client = lfsClient(user)
 
         // TODO: this is not atomic :( Waiting for batch LFS locking API
-        val result: MutableList<LockDesc> = ArrayList()
+        val result = ArrayList<LockDesc>()
         for (target in targets) {
             val lockId: String = if (target.token == null) {
                 val locks = getLocks(user, branch, target.path, null as String?)
-                if (locks.size > 0 && locks[0].path == target.path) locks[0].token else continue
+                if (locks.isNotEmpty() && locks[0].path == target.path) locks[0].token else continue
             } else {
                 target.token
             }
@@ -121,7 +121,7 @@ abstract class LfsHttpStorage : LfsStorage {
         val client = lfsClient(user)
 
         // TODO: this is not atomic :( Waiting for batch LFS locking API
-        val result: MutableList<LockDesc> = ArrayList()
+        val result = ArrayList<LockDesc>()
         for (target in targets) {
             var lock: Lock
             val path: String = LockDesc.toLfsPath(target.path)

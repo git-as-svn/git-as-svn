@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlfs.server
 
-import com.google.common.collect.ImmutableMap
 import org.apache.commons.io.IOUtils
 import org.tmatesoft.svn.core.SVNException
 import ru.bozaro.gitlfs.common.Constants
@@ -67,9 +66,7 @@ class LfsContentManager internal constructor(private val context: LocalContext, 
     private fun createHeader(request: HttpServletRequest, user: User): Map<String, String> {
         val auth = request.getHeader(Constants.HEADER_AUTHORIZATION) ?: return emptyMap()
         return if (auth.startsWith(WebServer.AUTH_TOKEN)) {
-            ImmutableMap.builder<String, String>()
-                .put(Constants.HEADER_AUTHORIZATION, auth)
-                .build()
+            mapOf(Constants.HEADER_AUTHORIZATION to auth)
         } else {
             LfsAuthHelper.createTokenHeader(context.shared, user, LfsAuthHelper.getExpire(tokenExpireSec))
         }

@@ -35,7 +35,7 @@ import java.util.*
  * @author a.navrotskiy
  */
 class GitRepositoryConfig private constructor(private val createMode: GitCreateMode, branches: Array<String>) {
-    private var branches: MutableSet<String> = TreeSet()
+    private var branches = TreeSet<String>()
     var path: String = ".git"
     private var pusher: GitPusherConfig = GitPushEmbeddedConfig.instance
     private var renameDetection: Boolean = true

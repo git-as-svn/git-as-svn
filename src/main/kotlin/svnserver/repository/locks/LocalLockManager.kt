@@ -42,9 +42,9 @@ open class LocalLockManager constructor(val locks: SortedMap<String, LockDesc>) 
     @Throws(LockConflictException::class)
     override fun unlock(user: User, branch: GitBranch?, breakLock: Boolean, lockId: String): LockDesc? {
         var result: LockDesc? = null
-        val it: MutableIterator<Map.Entry<String, LockDesc>> = locks.entries.iterator()
+        val it = locks.entries.iterator()
         while (it.hasNext()) {
-            val lock: Map.Entry<String, LockDesc> = it.next()
+            val lock = it.next()
             if (lockId != lock.value.token) {
                 continue
             }
@@ -58,9 +58,8 @@ open class LocalLockManager constructor(val locks: SortedMap<String, LockDesc>) 
 
     override fun getLocks(user: User, branch: GitBranch?, path: String?, lockId: String?): Array<LockDesc> {
         val pathNormalized = StringHelper.normalize(path ?: "/")
-        val result: MutableList<LockDesc> = ArrayList()
-        for (entry: Map.Entry<String, LockDesc> in locks.entries) {
-            val lockDesc: LockDesc = entry.value
+        val result = ArrayList<LockDesc>()
+        for ((_, lockDesc) in locks) {
             if ((branch != null) && (lockDesc.branch != null) && branch.shortBranchName != lockDesc.branch) continue
             if (!StringHelper.isParentPath(pathNormalized, lockDesc.path)) continue
             if (!Strings.isNullOrEmpty(lockId) && lockDesc.token != lockId) continue
@@ -70,8 +69,8 @@ open class LocalLockManager constructor(val locks: SortedMap<String, LockDesc>) 
     }
 
     override fun verifyLocks(user: User, branch: GitBranch?): VerifyLocksResult {
-        val ourLocks: MutableList<Lock> = ArrayList()
-        val theirLocks: MutableList<Lock> = ArrayList()
+        val ourLocks = ArrayList<Lock>()
+        val theirLocks = ArrayList<Lock>()
         for (lock: LockDesc in getLocks(user, branch, null, null as String?)) {
             val list = if (user.username == lock.owner) ourLocks else theirLocks
             list.add(LockDesc.toLock(lock))
@@ -114,11 +113,11 @@ open class LocalLockManager constructor(val locks: SortedMap<String, LockDesc>) 
     override fun cleanupInvalidLocks(branch: GitBranch): Boolean {
         var changed = false
         val revision: GitRevision = branch.latestRevision
-        val iter: MutableIterator<Map.Entry<String, LockDesc>> = locks.entries.iterator()
+        val iter = locks.entries.iterator()
         while (iter.hasNext()) {
             val item: LockDesc = iter.next().value
             if (branch.shortBranchName != item.branch) continue
-            val file: GitFile? = revision.getFile(item.path)
+            val file = revision.getFile(item.path)
             if ((file == null) || file.isDirectory || file.contentHash != item.hash) {
                 iter.remove()
                 changed = true

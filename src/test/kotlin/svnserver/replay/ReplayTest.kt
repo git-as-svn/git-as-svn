@@ -134,7 +134,7 @@ class ReplayTest {
 
     @Throws(SVNException::class)
     private fun replayRangeRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long, checkDelete: Boolean) {
-        val copyFroms: MutableMap<Long, CopyFromSVNEditor> = TreeMap()
+        val copyFroms = TreeMap<Long, CopyFromSVNEditor>()
         srcRepo.replayRange(revision, revision, 0, true, object : ISVNReplayHandler {
             @Throws(SVNException::class)
             override fun handleStartRevision(revision: Long, revisionProperties: SVNProperties): ISVNEditor {
@@ -183,7 +183,7 @@ class ReplayTest {
 
     @Throws(SVNException::class)
     private fun checkCopyFrom(repo: SVNRepository, editor: CopyFromSVNEditor, revision: Long) {
-        val copyFrom: MutableMap<String, String> = TreeMap()
+        val copyFrom = TreeMap<String, String>()
         repo.log(arrayOf(""), revision, revision, true, true) { logEntry: SVNLogEntry ->
             for (entry in logEntry.changedPaths.values) {
                 if (entry.copyPath != null) {

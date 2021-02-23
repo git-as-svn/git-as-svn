@@ -56,13 +56,13 @@ class GitRepository constructor(
     val pusher: GitPusher
     private val binaryCache: HTreeMap<String, Boolean>
     private val gitFilters: GitFilters
-    private val directoryPropertyCache: MutableMap<ObjectId, Array<GitProperty>> = ConcurrentHashMap()
-    private val filePropertyCache: MutableMap<ObjectId, Array<GitProperty>> = ConcurrentHashMap()
+    private val directoryPropertyCache = ConcurrentHashMap<ObjectId, Array<GitProperty>>()
+    private val filePropertyCache = ConcurrentHashMap<ObjectId, Array<GitProperty>>()
     private val renameDetection: Boolean
-    private val lockManagerRwLock: ReadWriteLock = ReentrantReadWriteLock()
+    private val lockManagerRwLock = ReentrantReadWriteLock()
     private val lockStorage: LockStorage
     private val db: DB
-    override val branches: NavigableMap<String, GitBranch> = TreeMap()
+    override val branches = TreeMap<String, GitBranch>()
     fun hasRenameDetection(): Boolean {
         return renameDetection
     }
@@ -91,12 +91,12 @@ class GitRepository constructor(
     @Throws(IOException::class)
     fun collectProperties(treeEntry: GitTreeEntry, entryProvider: VcsSupplier<Iterable<GitTreeEntry>>): Array<GitProperty> {
         if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) return emptyArray()
-        var props: Array<GitProperty>? = directoryPropertyCache[treeEntry.objectId.`object`]
+        var props = directoryPropertyCache[treeEntry.objectId.`object`]
         if (props == null) {
-            val propList: MutableList<GitProperty> = ArrayList()
+            val propList = ArrayList<GitProperty>()
             try {
-                for (entry: GitTreeEntry in entryProvider.get()) {
-                    val parseProps: Array<GitProperty> = parseGitProperty(entry.fileName, entry.objectId)
+                for (entry in entryProvider.get()) {
+                    val parseProps = parseGitProperty(entry.fileName, entry.objectId)
                     if (parseProps.isNotEmpty()) {
                         propList.addAll(parseProps)
                     }
@@ -150,10 +150,10 @@ class GitRepository constructor(
 
     @Throws(IOException::class)
     fun loadTree(tree: GitTreeEntry?): Iterable<GitTreeEntry> {
-        val treeId: GitObject<ObjectId> = getTreeObject(tree) ?: return emptyList()
+        val treeId = getTreeObject(tree) ?: return emptyList()
         // Loading tree.
-        val result: MutableList<GitTreeEntry> = ArrayList()
-        val repo: Repository = treeId.repo
+        val result = ArrayList<GitTreeEntry>()
+        val repo = treeId.repo
         val treeParser = CanonicalTreeParser(emptyBytes, repo.newObjectReader(), treeId.`object`)
         while (!treeParser.eof()) {
             result.add(

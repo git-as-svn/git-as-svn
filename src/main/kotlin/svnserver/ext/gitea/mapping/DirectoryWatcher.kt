@@ -99,7 +99,7 @@ internal class DirectoryWatcher(path: String, mapping: DirectoryMapping) : Threa
                 addRepositories(newPath)
             } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                 // Remove key relating to old path name
-                val it: MutableIterator<Map.Entry<WatchKey, Path>> = map.entries.iterator()
+                val it = map.entries.iterator()
                 while (it.hasNext()) {
                     val e = it.next()
                     val eKey = e.key
@@ -124,7 +124,7 @@ internal class DirectoryWatcher(path: String, mapping: DirectoryMapping) : Threa
     private fun handleFailToReset(key: WatchKey): Boolean {
         val path = key.watchable() as Path
         key.cancel()
-        val it: MutableIterator<Map.Entry<WatchKey, Path>> = map.entries.iterator()
+        val it = map.entries.iterator()
         while (it.hasNext()) {
             val e = it.next()
             val eKey = e.key

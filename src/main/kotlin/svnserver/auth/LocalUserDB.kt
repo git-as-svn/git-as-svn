@@ -16,8 +16,8 @@ import java.util.*
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class LocalUserDB : UserDB {
-    private val users: MutableMap<String, UserWithPassword> = HashMap()
-    private val authenticators: Collection<Authenticator> = setOf(CramMD5Authenticator { key: String -> users[key] })
+    private val users = HashMap<String, UserWithPassword>()
+    private val authenticators = setOf(CramMD5Authenticator { key: String -> users[key] })
     fun add(username: String, password: String, realName: String, email: String?): User? {
         if (users.containsKey(username)) {
             return null

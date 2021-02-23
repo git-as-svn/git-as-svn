@@ -120,15 +120,15 @@ class DeltaCmd constructor(override val arguments: Class<out DeltaParams>) : Bas
 
     internal class ReportPipeline constructor(private val params: DeltaParams) {
         private val commands: MutableMap<String, BaseCmd<*>>
-        private val forcedPaths: MutableMap<String, MutableSet<String>> = HashMap()
-        private val deletedPaths: MutableSet<String> = HashSet()
-        private val paths: MutableMap<String, SetPathParams> = HashMap()
-        private val pathStack: Deque<HeaderEntry> = ArrayDeque()
-        private var lastTokenId: Int = 0
+        private val forcedPaths = HashMap<String, MutableSet<String>>()
+        private val deletedPaths = HashSet<String>()
+        private val paths = HashMap<String, SetPathParams>()
+        private val pathStack = ArrayDeque<HeaderEntry>()
+        private var lastTokenId = 0
 
         @Throws(IOException::class, SVNException::class)
         private fun getWriter(context: SessionContext): SvnServerWriter {
-            for (entry: HeaderEntry in pathStack) {
+            for (entry in pathStack) {
                 entry.write()
             }
             return context.writer
@@ -220,9 +220,9 @@ class DeltaCmd constructor(override val arguments: Class<out DeltaParams>) : Bas
             when (val clientStatus: String = parser.readText()) {
                 "failure" -> {
                     parser.readToken(ListBeginToken::class.java)
-                    val failures: MutableList<FailureInfo> = ArrayList()
+                    val failures = ArrayList<FailureInfo>()
                     while (true) {
-                        val failure: FailureInfo = FailureInfo.read(parser) ?: break
+                        val failure = FailureInfo.read(parser) ?: break
                         if (failure.errorFile.isEmpty()) {
                             log.warn("Received client error: {} {}", failure.errorCode, failure.errorMessage)
                         } else {
@@ -339,13 +339,13 @@ class DeltaCmd constructor(override val arguments: Class<out DeltaParams>) : Bas
             wcDepth: Depth,
             requestedDepth: Depth
         ) {
-            val dirAction: Depth.Action = wcDepth.determineAction(requestedDepth, true)
-            val fileAction: Depth.Action = wcDepth.determineAction(requestedDepth, false)
-            val newEntries: MutableMap<String, GitFile> = TreeMap()
+            val dirAction = wcDepth.determineAction(requestedDepth, true)
+            val fileAction = wcDepth.determineAction(requestedDepth, false)
+            val newEntries = TreeMap<String, GitFile>()
             for (entry in newFile.entries) {
                 newEntries[entry.fileName] = entry
             }
-            val forced: MutableSet<String> = HashSet(forcedPaths.getOrDefault(wcPath, emptySet()))
+            val forced = HashSet(forcedPaths.getOrDefault(wcPath, emptySet()))
             val oldEntries: Map<String, GitFile>
             if (oldFile != null) {
                 oldEntries = TreeMap()

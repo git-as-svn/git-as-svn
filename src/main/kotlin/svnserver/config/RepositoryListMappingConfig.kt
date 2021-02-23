@@ -28,17 +28,17 @@ import java.util.function.Consumer
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class RepositoryListMappingConfig : RepositoryMappingConfig {
-    private var repositories: Map<String, Entry> = TreeMap()
-    private var groups: Map<String, Array<String>> = HashMap()
+    private var repositories = TreeMap<String, Entry>()
+    private var groups = HashMap<String, Array<String>>()
 
     @Throws(IOException::class)
     override fun create(context: SharedContext, canUseParallelIndexing: Boolean): RepositoryMapping<GitRepository> {
         val repos: NavigableMap<String, GitRepository> = TreeMap()
-        val uniquePaths: MutableSet<Path> = HashSet()
+        val uniquePaths = HashSet<Path>()
         repositories.values.stream().map { entry: Entry -> entry.repository.path }.forEach { s: String ->
             if (!uniquePaths.add(Paths.get(s).toAbsolutePath())) throw IllegalStateException("Duplicate repositories in config: $s")
         }
-        for (entry: Map.Entry<String, Entry> in repositories.entries) {
+        for (entry in repositories.entries) {
             val local = LocalContext(context, entry.key)
             local.add(VcsAccess::class.java, ACL(local.name, groups, entry.value.access))
             repos[StringHelper.normalizeDir(entry.key)] = entry.value.repository.create(local)

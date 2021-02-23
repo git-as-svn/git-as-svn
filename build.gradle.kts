@@ -90,7 +90,6 @@ dependencies {
     implementation("org.bitbucket.b_c:jose4j:0.7.6")
     implementation("com.github.zeripath:java-gitea-api:1.7.4")
 
-
     val gitLfsJava = "0.17.0"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
@@ -119,8 +118,8 @@ tasks.jar {
     archiveFileName.set("${project.name}.jar")
     manifest {
         attributes(
-                "Main-Class" to "svnserver.server.Main",
-                "Class-Path" to createLauncherClassPath()
+            "Main-Class" to "svnserver.server.Main",
+            "Class-Path" to createLauncherClassPath()
         )
     }
 }
@@ -170,11 +169,13 @@ fun AbstractAsciidoctorTask.configure() {
     baseDirFollowsSourceDir()
 
     val commitDateTime = getCommitDateTime()
-    attributes(mapOf(
+    attributes(
+        mapOf(
             "source-highlighter" to "coderay",
             "docdate" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE),
             "doctime" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_TIME)
-    ))
+        )
+    )
 }
 
 distributions {
@@ -194,10 +195,12 @@ tasks.processResources {
     from(sourceSets.main.get().resources.srcDirs) {
         include("**/VersionInfo.properties")
 
-        expand(mapOf(
+        expand(
+            mapOf(
                 "revision" to Grgit.open(mapOf("dir" to projectDir)).head().id,
                 "tag" to (System.getenv("GITHUB_REF")?.substringAfter("refs/tags/") ?: System.getenv("TRAVIS_TAG") ?: "")
-        ))
+            )
+        )
     }
 }
 
@@ -208,10 +211,12 @@ val debianControl by tasks.registering(Copy::class) {
     from("$projectDir/src/main/deb") {
         include("**/changelog")
 
-        expand(mapOf(
+        expand(
+            mapOf(
                 "version" to project.version,
                 "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(getCommitDateTime())
-        ))
+            )
+        )
     }
     into(file("$buildDir/debPackage/package"))
 }

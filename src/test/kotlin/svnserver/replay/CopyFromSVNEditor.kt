@@ -17,7 +17,7 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class CopyFromSVNEditor(editor: ISVNEditor?, private val basePath: String, checkDelete: Boolean) : SVNEditorWrapper(editor, checkDelete) {
-    private val copyFrom: MutableMap<String, String> = TreeMap()
+    private val copyFrom = TreeMap<String, String>()
     @Throws(SVNException::class)
     override fun addDir(path: String, copyFromPath: String?, copyFromRevision: Long) {
         if (copyFromPath != null) copyFrom[basePath + path] = "$copyFromPath@$copyFromRevision"

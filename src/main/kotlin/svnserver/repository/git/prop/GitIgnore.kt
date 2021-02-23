@@ -48,11 +48,11 @@ internal class GitIgnore : GitProperty {
      * @param reader Original file content.
      */
     constructor(reader: BufferedReader) {
-        val localList: MutableList<String> = ArrayList()
-        val globalList: MutableList<String> = ArrayList()
+        val localList = ArrayList<String>()
+        val globalList = ArrayList<String>()
         matchers = ArrayList()
         for (txt in reader.lines()) {
-            val line: String = trimLine(txt)
+            val line = trimLine(txt)
             if (line.isEmpty()) continue
             try {
                 val wildcard = Wildcard(line)
@@ -163,13 +163,13 @@ internal class GitIgnore : GitProperty {
         }
 
         private fun addIgnore(oldValue: String?, ignores: Array<String>): String {
-            val contains: MutableSet<String> = HashSet()
-            val result: StringBuilder = StringBuilder()
+            val contains = HashSet<String>()
+            val result = StringBuilder()
             if (oldValue != null) {
                 result.append(oldValue)
                 contains.addAll(oldValue.split("\n"))
             }
-            for (ignore: String in ignores) {
+            for (ignore in ignores) {
                 if (contains.add(ignore)) {
                     result.append(ignore).append('\n')
                 }

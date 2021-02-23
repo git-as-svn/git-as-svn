@@ -29,7 +29,7 @@ class GitEolTest {
     }
 
     class Params internal constructor(private val attr: Array<GitProperty>, private val path: String) {
-        private val expected: MutableMap<String, String> = TreeMap()
+        private val expected = TreeMap<String, String>()
         fun prop(key: String, value: String): Params {
             expected[key] = value
             return this

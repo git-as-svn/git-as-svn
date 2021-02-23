@@ -136,24 +136,24 @@ class LogCmd : BaseCmd<LogCmd.Params>() {
      */
     @Throws(SVNException::class)
     private fun getLog(context: SessionContext, args: Params, endRev: Int, startRev: Int, limit: Int): MutableList<GitRevision> {
-        val targetPaths: MutableList<VcsCopyFrom> = ArrayList()
-        var revision: Int = -1
-        for (target: String in args.targetPath) {
-            val fullTargetPath: String = context.getRepositoryPath(target)
-            val lastChange: Int? = context.branch.getLastChange(fullTargetPath, endRev)
+        val targetPaths = ArrayList<VcsCopyFrom>()
+        var revision = -1
+        for (target in args.targetPath) {
+            val fullTargetPath = context.getRepositoryPath(target)
+            val lastChange = context.branch.getLastChange(fullTargetPath, endRev)
             if (lastChange != null && lastChange >= startRev) {
                 targetPaths.add(VcsCopyFrom(lastChange, fullTargetPath))
                 revision = max(revision, lastChange)
             }
         }
-        val result: MutableList<GitRevision> = ArrayList()
+        val result = ArrayList<GitRevision>()
         var logLimit: Int = limit
         while (revision >= startRev) {
             val revisionInfo: GitRevision = context.branch.getRevisionInfo(revision)
             result.add(revisionInfo)
             if (--logLimit == 0) break
             var nextRevision: Int = -1
-            val iter: MutableListIterator<VcsCopyFrom> = targetPaths.listIterator()
+            val iter = targetPaths.listIterator()
             while (iter.hasNext()) {
                 val entry: VcsCopyFrom = iter.next()
                 if (revision == entry.revision) {

@@ -64,18 +64,21 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         val glRepository = String.format("project-%s", gitlabProject.id)
         val glProtocol = "web"
         val userId: String? = if (user.externalId == null) null else GitLabUserDB.PREFIX_USER + user.externalId
-        val gitalyRepo: MutableMap<String, Any> = HashMap()
+
+        val gitalyRepo = HashMap<String, Any>()
         gitalyRepo["storageName"] = "default"
         gitalyRepo["glRepository"] = glRepository
         gitalyRepo["relativePath"] = relativeRepoPath.toString()
         gitalyRepo["glProjectPath"] = gitlabProject.pathWithNamespace
         val gitalyRepoString = JsonHelper.mapper.writeValueAsString(gitalyRepo)
-        val receiveHooksPayload: MutableMap<String, Any> = HashMap()
+
+        val receiveHooksPayload = HashMap<String, Any>()
         if (userId != null)
             receiveHooksPayload["userid"] = userId
         receiveHooksPayload["username"] = user.username
         receiveHooksPayload["protocol"] = glProtocol
-        val hooksPayload: MutableMap<String, Any> = HashMap()
+
+        val hooksPayload = HashMap<String, Any>()
         hooksPayload["binary_directory"] = gitlabContext.config.gitalyBinDir
         hooksPayload["internal_socket"] = gitlabContext.config.gitalySocket
         hooksPayload["internal_socket_token"] = gitlabContext.config.gitalyToken

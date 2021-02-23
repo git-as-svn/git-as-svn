@@ -7,7 +7,6 @@
  */
 package svnserver.auth
 
-import com.google.common.collect.ImmutableMap
 import org.eclipse.jgit.lib.Constants
 import org.testng.Assert
 import org.testng.annotations.Test
@@ -27,10 +26,10 @@ class ACLTest {
 
     @Test
     fun groupOfGroup() {
-        val groups: Map<String, Array<String>> = ImmutableMap.builder<String, Array<String>>()
-            .put("groupOfGroup", arrayOf("@group"))
-            .put("group", arrayOf(Bob.username))
-            .build()
+        val groups = mapOf(
+            "groupOfGroup" to arrayOf("@group"),
+            "group" to arrayOf(Bob.username),
+        )
         val acl = ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroup", "r")))
         Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"))
         Assert.assertFalse(acl.canRead(User.anonymous, Constants.MASTER, "/"))
@@ -38,11 +37,11 @@ class ACLTest {
 
     @Test
     fun groupOfGroupOfGroup() {
-        val groups: Map<String, Array<String>> = ImmutableMap.builder<String, Array<String>>()
-            .put("groupOfGroupOfGroup", arrayOf("@groupOfGroup"))
-            .put("groupOfGroup", arrayOf("@group"))
-            .put("group", arrayOf(Bob.username))
-            .build()
+        val groups = mapOf(
+            "groupOfGroupOfGroup" to arrayOf("@groupOfGroup"),
+            "groupOfGroup" to arrayOf("@group"),
+            "group" to arrayOf(Bob.username),
+        )
         val acl = ACL(groups, Collections.singletonMap("/", Collections.singletonMap("@groupOfGroupOfGroup", "r")))
         Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"))
         Assert.assertFalse(acl.canRead(User.anonymous, Constants.MASTER, "/"))
@@ -50,10 +49,10 @@ class ACLTest {
 
     @Test(expectedExceptions = [IllegalStateException::class], expectedExceptionsMessageRegExp = "cyclic at groupA")
     fun groupOfGroupCycle() {
-        val groups: Map<String, Array<String>> = ImmutableMap.builder<String, Array<String>>()
-            .put("groupA", arrayOf("@groupB"))
-            .put("groupB", arrayOf("@groupA"))
-            .build()
+        val groups = mapOf(
+            "groupA" to arrayOf("@groupB"),
+            "groupB" to arrayOf("@groupA"),
+        )
         ACL(groups, Collections.singletonMap("/", emptyMap()))
     }
 
@@ -86,10 +85,10 @@ class ACLTest {
 
     @Test
     fun branchDeny() {
-        val entries = ImmutableMap.builder<String, Map<String, String>>()
-            .put("master:/", Collections.singletonMap<String, String?>(Bob.username, null))
-            .put("/", Collections.singletonMap(Bob.username, "rw"))
-            .build()
+        val entries = mapOf(
+            "master:/" to Collections.singletonMap<String, String?>(Bob.username, null),
+            "/" to Collections.singletonMap(Bob.username, "rw"),
+        )
         val acl = ACL(emptyMap(), entries)
         Assert.assertFalse(acl.canRead(Bob, "master", "/"))
         Assert.assertTrue(acl.canRead(Bob, "release", "/"))
@@ -168,10 +167,10 @@ class ACLTest {
 
     @Test
     fun deepDeny() {
-        val entries: Map<String, Map<String, String?>> = ImmutableMap.builder<String, Map<String, String?>>()
-            .put("/qwe", Collections.singletonMap<String, String?>(Bob.username, null))
-            .put("/", Collections.singletonMap(Bob.username, "rw"))
-            .build()
+        val entries = mapOf(
+            "/qwe" to Collections.singletonMap<String, String?>(Bob.username, null),
+            "/" to Collections.singletonMap(Bob.username, "rw"),
+        )
         val acl = ACL(emptyMap(), entries)
         Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/"))
         Assert.assertFalse(acl.canRead(Bob, Constants.MASTER, "/qwe"))
@@ -183,10 +182,10 @@ class ACLTest {
      */
     @Test
     fun floorEntry() {
-        val entries: Map<String, Map<String, String?>> = ImmutableMap.builder<String, Map<String, String?>>()
-            .put("/", Collections.singletonMap(Bob.username, "rw"))
-            .put("/a", Collections.singletonMap<String, String?>(Bob.username, null))
-            .build()
+        val entries = mapOf(
+            "/" to Collections.singletonMap(Bob.username, "rw"),
+            "/a" to Collections.singletonMap<String, String?>(Bob.username, null),
+        )
         val acl = ACL(emptyMap(), entries)
         Assert.assertTrue(acl.canRead(Bob, Constants.MASTER, "/b"))
     }

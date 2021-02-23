@@ -49,9 +49,9 @@ internal class GitTortoise private constructor(private val tortoiseProps: Map<St
         @Throws(IOException::class)
         fun parseConfig(stream: InputStream): GitTortoise {
             val ini = Ini(stream)
-            val result: MutableMap<String, String> = HashMap()
-            for (sectionEntry: Map.Entry<String, Profile.Section> in ini.entries) {
-                for (configEntry: Map.Entry<String, String> in sectionEntry.value.entries) {
+            val result = HashMap<String, String>()
+            for (sectionEntry in ini.entries) {
+                for (configEntry in sectionEntry.value.entries) {
                     var value: String = configEntry.value
                     if (value.startsWith("\"") && value.endsWith("\"")) {
                         value = value.substring(1, value.length - 1)

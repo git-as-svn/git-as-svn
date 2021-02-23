@@ -70,8 +70,8 @@ internal class GitFileTreeEntry private constructor(
     @get:Throws(IOException::class)
     override val properties: Map<String, String>
         get() {
-            val props: MutableMap<String, String> = upstreamProperties.toMutableMap()
-            val fileMode: FileMode = fileMode
+            val props = upstreamProperties.toMutableMap()
+            val fileMode = fileMode
             if ((fileMode == FileMode.SYMLINK)) {
                 props.remove(SVNProperty.EOL_STYLE)
                 props.remove(SVNProperty.MIME_TYPE)
@@ -101,10 +101,10 @@ internal class GitFileTreeEntry private constructor(
     override val entries: Iterable<GitFile>
         get() {
             if (treeEntriesCache == null) {
-                val result: MutableList<GitFile> = ArrayList()
-                val fullPath: String = fullPath
-                for (entry: GitTreeEntry? in entriesCache.get()) {
-                    result.add(create(branch, rawProperties, fullPath, (entry)!!, revision))
+                val result = ArrayList<GitFile>()
+                val fullPath = fullPath
+                for (entry in entriesCache.get()) {
+                    result.add(create(branch, rawProperties, fullPath, entry, revision))
                 }
                 treeEntriesCache = result
             }

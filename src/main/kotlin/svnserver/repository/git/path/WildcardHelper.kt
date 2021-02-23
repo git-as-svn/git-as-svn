@@ -81,7 +81,7 @@ internal object WildcardHelper {
      * @return Path pattern items.
      */
     fun splitPattern(pattern: String): MutableList<String> {
-        val result: MutableList<String> = ArrayList(count(pattern, PATH_SEPARATOR) + 1)
+        val result = ArrayList<String>(count(pattern, PATH_SEPARATOR) + 1)
         var start = 0
         while (true) {
             val next: Int = pattern.indexOf(PATH_SEPARATOR, start)

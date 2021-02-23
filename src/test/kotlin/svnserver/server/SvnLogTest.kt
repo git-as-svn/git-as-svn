@@ -91,7 +91,7 @@ class SvnLogTest {
 
     @Throws(SVNException::class)
     private fun checkLogLimit(repo: SVNRepository, r1: Long, r2: Long, limit: Int, path: String, vararg expecteds: LogEntry) {
-        val actual: MutableList<LogEntry> = ArrayList()
+        val actual = ArrayList<LogEntry>()
         repo.log(arrayOf(path), r1, r2, true, false, limit.toLong()) { logEntry: SVNLogEntry -> actual.add(LogEntry(logEntry)) }
         ArrayAsserts.assertArrayEquals(expecteds, actual.toTypedArray())
     }
@@ -405,7 +405,7 @@ class SvnLogTest {
 
         companion object {
             private fun convert(changedPaths: Collection<SVNLogEntryPath>): Collection<String> {
-                val result: MutableList<String> = ArrayList()
+                val result = ArrayList<String>()
                 for (logPath in changedPaths) {
                     result.add(logPath.type.toString() + " " + logPath.path)
                 }

@@ -32,7 +32,7 @@ class Wildcard constructor(pattern: String) {
 
         @Throws(InvalidPatternException::class)
         private fun createNameMatchers(pattern: String): Array<NameMatcher> {
-            val tokens: MutableList<String> = WildcardHelper.splitPattern(pattern)
+            val tokens = WildcardHelper.splitPattern(pattern)
             WildcardHelper.normalizePattern(tokens)
             return tokens.subList(1, tokens.size).map {
                 WildcardHelper.nameMatcher(it)

@@ -42,12 +42,12 @@ internal class CacheRevisionSerializer : GroupSerializerObjectArray<CacheRevisio
     @Throws(IOException::class)
     override fun deserialize(input: DataInput2, available: Int): CacheRevision {
         val objectId: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
-        val renames: MutableMap<String, String> = TreeMap()
+        val renames = TreeMap<String, String>()
         val renamesCount: Int = input.readInt()
         for (i in 0 until renamesCount) {
             renames[STRING.deserialize(input, available)] = STRING.deserialize(input, available)
         }
-        val fileChange: MutableMap<String, CacheChange> = TreeMap()
+        val fileChange = TreeMap<String, CacheChange>()
         val fileChangeCount: Int = input.readInt()
         for (i in 0 until fileChangeCount) {
             val name: String = STRING.deserialize(input, available)

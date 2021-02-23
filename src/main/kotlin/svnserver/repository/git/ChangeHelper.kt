@@ -20,12 +20,12 @@ import java.util.*
 internal object ChangeHelper {
     @Throws(IOException::class)
     fun collectChanges(oldTree: GitFile?, newTree: GitFile, fullRemoved: Boolean): Map<String, GitLogEntry> {
-        val changes: MutableMap<String, GitLogEntry> = HashMap()
+        val changes = HashMap<String, GitLogEntry>()
         val logEntry = GitLogEntry(oldTree, newTree)
         if (oldTree == null || logEntry.isModified) {
             changes["/"] = logEntry
         }
-        val queue: Queue<TreeCompareEntry> = ArrayDeque()
+        val queue = ArrayDeque<TreeCompareEntry>()
         queue.add(TreeCompareEntry("", oldTree, newTree))
         while (!queue.isEmpty()) {
             collectChanges(changes, queue, queue.remove(), fullRemoved)

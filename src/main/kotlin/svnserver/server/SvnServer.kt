@@ -48,8 +48,7 @@ import java.util.concurrent.atomic.AtomicLong
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer") {
-    private val commands: MutableMap<String, BaseCmd<*>> = HashMap()
-    private val connections: MutableMap<Long, Socket> = ConcurrentHashMap()
+    private val connections = ConcurrentHashMap<Long, Socket>()
     private val repositoryMapping: RepositoryMapping<*>
     private val config: Config
     private val serverSocket: ServerSocket
@@ -284,13 +283,49 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
         const val svndiff1Capability: String = "svndiff1"
         const val svndiff2Capability: String = "accepts-svndiff2"
 
+        // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
+        val commands = mapOf(
+            "reparent" to ReparentCmd(),
+            "get-latest-rev" to GetLatestRevCmd(),
+            "get-dated-rev" to GetDatedRevCmd(),
+            // change-rev-prop
+            // change-rev-prop-2
+            "rev-proplist" to RevPropListCmd(),
+            "rev-prop" to RevPropCmd(),
+            "commit" to CommitCmd(),
+            "get-file" to GetFileCmd(),
+            "get-dir" to GetDirCmd(),
+            "check-path" to CheckPathCmd(),
+            "stat" to StatCmd(),
+            // get-mergeinfo
+            "update" to DeltaCmd(UpdateParams::class.java),
+            "switch" to DeltaCmd(SwitchParams::class.java),
+            "status" to DeltaCmd(StatusParams::class.java),
+            "diff" to DeltaCmd(DiffParams::class.java),
+            "log" to LogCmd(),
+            "get-locations" to GetLocationsCmd(),
+            "get-location-segments" to GetLocationSegmentsCmd(),
+            "get-file-revs" to GetFileRevsCmd(),
+            "lock" to LockCmd(),
+            "lock-many" to LockManyCmd(),
+            "unlock" to UnlockCmd(),
+            "unlock-many" to UnlockManyCmd(),
+            "get-lock" to GetLockCmd(),
+            "get-locks" to GetLocksCmd(),
+            "replay" to ReplayCmd(),
+            "replay-range" to ReplayRangeCmd(),
+            // get-deleted-rev
+            "get-iprops" to GetIPropsCmd(),
+            // TODO: list (#162)
+        )
+
         /**
          * [is wrong.][SVNCapability.GET_FILE_REVS_REVERSED]
          */
         private const val fileRevsReverseCapability: String = "file-revs-reverse"
         private val log: Logger = Loggers.svn
         private val FORCE_SHUTDOWN: Long = TimeUnit.SECONDS.toMillis(5)
-        private val WARNING_CODES: Set<SVNErrorCode> = hashSetOf(
+        private val WARNING_CODES = setOf(
             SVNErrorCode.CANCELLED,
             SVNErrorCode.ENTRY_NOT_FOUND,
             SVNErrorCode.FS_NOT_FOUND,
@@ -336,39 +371,6 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
         sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared)
         sharedContext.add(UserDB::class.java, config.userDB.create(sharedContext))
 
-        // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
-        commands["reparent"] = ReparentCmd()
-        commands["get-latest-rev"] = GetLatestRevCmd()
-        commands["get-dated-rev"] = GetDatedRevCmd()
-        // change-rev-prop
-        // change-rev-prop-2
-        commands["rev-proplist"] = RevPropListCmd()
-        commands["rev-prop"] = RevPropCmd()
-        commands["commit"] = CommitCmd()
-        commands["get-file"] = GetFileCmd()
-        commands["get-dir"] = GetDirCmd()
-        commands["check-path"] = CheckPathCmd()
-        commands["stat"] = StatCmd()
-        // get-mergeinfo
-        commands["update"] = DeltaCmd(UpdateParams::class.java)
-        commands["switch"] = DeltaCmd(SwitchParams::class.java)
-        commands["status"] = DeltaCmd(StatusParams::class.java)
-        commands["diff"] = DeltaCmd(DiffParams::class.java)
-        commands["log"] = LogCmd()
-        commands["get-locations"] = GetLocationsCmd()
-        commands["get-location-segments"] = GetLocationSegmentsCmd()
-        commands["get-file-revs"] = GetFileRevsCmd()
-        commands["lock"] = LockCmd()
-        commands["lock-many"] = LockManyCmd()
-        commands["unlock"] = UnlockCmd()
-        commands["unlock-many"] = UnlockManyCmd()
-        commands["get-lock"] = GetLockCmd()
-        commands["get-locks"] = GetLocksCmd()
-        commands["replay"] = ReplayCmd()
-        commands["replay-range"] = ReplayRangeCmd()
-        // get-deleted-rev
-        commands["get-iprops"] = GetIPropsCmd()
-        // TODO: list (#162)
         repositoryMapping = config.repositoryMapping.create(sharedContext, config.parallelIndexing)
         sharedContext.add(RepositoryMapping::class.java, repositoryMapping)
         serverSocket = ServerSocket()

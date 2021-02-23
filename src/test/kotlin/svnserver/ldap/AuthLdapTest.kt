@@ -67,8 +67,8 @@ class AuthLdapTest {
             SvnTestServer.createEmpty(ldap.createUserConfig(), false).use { server ->
                 val pool = Executors.newFixedThreadPool(10)
                 val done = AtomicBoolean(false)
-                val userDB: UserDB = server.context.sure(UserDB::class.java)
-                val tasks: MutableList<Callable<Unit>> = ArrayList()
+                val userDB = server.context.sure(UserDB::class.java)
+                val tasks = ArrayList<Callable<Unit>>()
                 for (i in 0..999) {
                     tasks.add(SuccessAuth(userDB, done, EmbeddedDirectoryServer.ADMIN_USERNAME, EmbeddedDirectoryServer.ADMIN_PASSWORD))
                     tasks.add(SuccessAuth(userDB, done, "simple", "simple"))

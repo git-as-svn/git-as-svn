@@ -65,12 +65,12 @@ class SvnTestServer private constructor(
     private var testBranch: String
     private val prefix: String
     private val server: SvnServer
-    private val svnFactories: MutableList<SvnOperationFactory> = ArrayList()
+    private val svnFactories = ArrayList<SvnOperationFactory>()
     private val safeBranch: Boolean
 
     @Throws(IOException::class)
     private fun cleanupBranches(repository: Repository) {
-        val branches: MutableList<String> = ArrayList()
+        val branches = ArrayList<String>()
         for (ref in repository.refDatabase.getRefsByPrefix(Constants.R_HEADS + TEST_BRANCH_PREFIX)) {
             branches.add(ref.name.substring(Constants.R_HEADS.length))
         }

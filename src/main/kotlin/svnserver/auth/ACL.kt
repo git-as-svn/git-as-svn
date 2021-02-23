@@ -22,10 +22,10 @@ import kotlin.collections.HashSet
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPath2Member2AccessMode: Map<String, Map<String, String?>>) : VcsAccess {
-    private val user2groups: MutableMap<String, HashSet<String>> = HashMap()
-    private val anonymousGroups: MutableSet<String> = HashSet()
-    private val authenticatedGroups: MutableMap<UserType, HashSet<String>> = EnumMap(UserType::class.java)
-    private val path2branch2acl: NavigableMap<String, HashMap<String, HashMap<ACLEntry, AccessMode>>> = TreeMap()
+    private val user2groups = HashMap<String, HashSet<String>>()
+    private val anonymousGroups = HashSet<String>()
+    private val authenticatedGroups = EnumMap<UserType, HashSet<String>>(UserType::class.java)
+    private val path2branch2acl = TreeMap<String, HashMap<String, HashMap<ACLEntry, AccessMode>>>()
 
     constructor(group2users: Map<String, Array<String>>, branchPath2Member2AccessMode: Map<String, Map<String, String?>>) : this("", group2users, branchPath2Member2AccessMode)
 

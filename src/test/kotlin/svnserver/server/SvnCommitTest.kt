@@ -186,7 +186,7 @@ class SvnCommitTest {
     }
 
     private fun checkEquals(listA: Collection<SVNDirEntry>, listB: Collection<SVNDirEntry>) {
-        val entries: MutableSet<String> = HashSet()
+        val entries = HashSet<String>()
         for (entry in listA) {
             entries.add(entry.name + '\t' + entry.kind + '\t' + entry.size)
         }

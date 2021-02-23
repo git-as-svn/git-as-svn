@@ -42,15 +42,15 @@ class GetIPropsCmd : BaseCmd<GetIPropsCmd.Params>() {
         val fullPath: String = context.getRepositoryPath(args.path)
         val branch: GitBranch = context.branch
         val info: GitRevision = branch.getRevisionInfo(getRevisionOrLatest(args.rev, context))
-        val files: MutableList<GitFile> = ArrayList()
-        var index: Int = -1
+        val files = ArrayList<GitFile>()
+        var index = -1
         while (true) {
             index = fullPath.indexOf('/', index + 1)
             if (index < 0) {
                 break
             }
-            val subPath: String = fullPath.substring(0, index)
-            val fileInfo: GitFile = info.getFile(subPath) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, subPath))
+            val subPath = fullPath.substring(0, index)
+            val fileInfo = info.getFile(subPath) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, subPath))
             files.add(fileInfo)
         }
         writer

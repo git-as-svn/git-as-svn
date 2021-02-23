@@ -22,9 +22,9 @@ import java.util.*
  * @author a.navrotskiy
  */
 class ReportSVNEditor : ISVNEditor {
-    private val paths: Deque<String> = ArrayDeque()
-    private val caseChecker: MutableSet<String> = HashSet()
-    private val report: MutableSet<String> = TreeSet()
+    private val paths = ArrayDeque<String>()
+    private val caseChecker = HashSet<String>()
+    private val report = TreeSet<String>()
     private var targetRevision: Long = 0
     override fun targetRevision(revision: Long) {
         targetRevision = revision
