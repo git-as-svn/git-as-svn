@@ -35,7 +35,8 @@ jobs:
         include:
           # Gitlab
           - java: 8
-            env: 'GITLAB_VERSION=latest'
+            # TODO: add latest back after fixing https://github.com/bozaro/git-as-svn/issues/384
+            env: 'GITLAB_VERSION=13.8.4-ce.0'
           - java: 8
             env: 'GITLAB_VERSION=13.7.5-ce.0' # Gitlab >= 13.7 enables chunked upload
           - java: 8
