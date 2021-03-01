@@ -6,6 +6,13 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* git-as-svn migrated from Java to Kotlin
+* Java 8 is no longer supported.
+Minimal is Java 11 now.
+* Update dependencies.
+
 == 1.30.1
 
 * Pass `GITALY_HOOKS_PAYLOAD` environment variable to GitLab hooks to fix compatibility with GitLab 13.7+. https://github.com/bozaro/git-as-svn/issues/367[#367]
@@ -83,7 +90,7 @@ Note that this feature is an extension to standard Git behavior and is subject t
 * Drop support for nonstandard `eol=cr` in `.gitattributes` with no replacement
 * Drop support for nonstandard `eol=native` in `.gitattributes`.
 Just add `text` attribute to indicate that file has native EOLs.
-* JGit is now used to parse `.gitattributes` files
+* Use JGit to parse `.gitattributes` files.
 
 IMPORTANT: Repository data exported to SVN has changed.
 Users will need to perform re-checkout of their working copies after git-as-svn upgrade.
@@ -190,7 +197,7 @@ Broken in 1.20.4
 == 1.19.0
 
 * Add support for https://subversion.apache.org/docs/release-notes/1.10#lz4-over-the-wire[LZ4 compression].
-   `compressionEnabled=true/false` option replaced with `compressionLevel=LZ4/Zlib/None`. https://github.com/bozaro/git-as-svn/issues/163[#163]
+Replace `compressionEnabled=true/false` option with `compressionLevel=LZ4/Zlib/None`. https://github.com/bozaro/git-as-svn/issues/163[#163]
 * Fix severe performance loss on commit.
 Broken in 1.8.0
 
@@ -204,7 +211,7 @@ See <<_gitlab.adoc#_configuration,GitLab configuration>> documentation. https://
 
 * Drop ability to configure custom hook names in `!pushEmbedded` because Git doesn't have such feature.
 Instead, add `hooksPath` option that works as an override to `core.hooksPath` Git configuration option.
-* Fix uploads of already existing files to remote LFS server
+* Fix uploads of already existing files to remote LFS server.
 
 == 1.16.0
 
@@ -472,8 +479,7 @@ Fixes compatibility with GitLab >= 10.2 https://github.com/bozaro/git-as-svn/iss
 
 == 1.0.11-alpha
 
-* Fix URL in authentication result on default port (Jenkins error: `E21005: Impossibly long
-   repository root from server`).
+* Fix URL in authentication result on default port (Jenkins error: `E21005: Impossibly long repository root from server`).
 * Fix bind on already used port with flag SO_REUSEADDR (thanks for @fcharlie, https://github.com/bozaro/git-as-svn/issues/70[#70]).
 * Add support for custom certificate for ldaps authentication.
 
