@@ -99,7 +99,7 @@ dependencies {
     implementation("com.google.http-client:google-http-client-jackson2:1.39.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.14.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.14.1")
 
     testImplementation("org.testcontainers:testcontainers:1.15.2")
     testImplementation("org.testng:testng:7.4.0")
