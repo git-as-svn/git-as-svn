@@ -13,7 +13,6 @@ import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
 import org.testng.internal.junit.ArrayAsserts
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.nio.file.Files
 import java.util.*
 
@@ -25,7 +24,6 @@ import java.util.*
  */
 class TemporaryOutputStreamTest {
     @Test(dataProvider = "providerReadWrite")
-    @Throws(IOException::class)
     fun checkReadWrite(blockSize: Int, totalSize: Int) {
         val expectedStream = ByteArrayOutputStream()
         TemporaryOutputStream(MAX_MEMORY_SIZE).use { outputStream ->
@@ -81,7 +79,6 @@ class TemporaryOutputStreamTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun checkLifeTime() {
         val expectedData = ByteArray(MAX_MEMORY_SIZE * 2)
         val random = Random(0)

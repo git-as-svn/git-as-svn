@@ -26,7 +26,6 @@ import svnserver.SvnTestServer
 import svnserver.TestHelper
 import svnserver.repository.VcsConsumer
 import svnserver.tester.SvnTesterSvnKit
-import java.io.IOException
 import java.util.*
 import kotlin.math.min
 
@@ -37,7 +36,6 @@ import kotlin.math.min
  */
 class ReplayTest {
     @Test
-    @Throws(Exception::class)
     fun testReplayFileModification() {
         SvnTesterSvnKit().use { sourceRepo ->
             SvnTestServer.createEmpty().use { server ->
@@ -56,8 +54,6 @@ class ReplayTest {
             }
         }
     }
-
-    @Throws(Exception::class)
     private fun buildHistory(repo: SVNRepository): SVNCommitInfo {
         val r1 = createCommit(repo, "Add README.md file") { editor: ISVNEditor ->
             editor.openRoot(0)
@@ -131,19 +127,14 @@ class ReplayTest {
             }
         }
     }
-
-    @Throws(SVNException::class)
     private fun replayRangeRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long, checkDelete: Boolean) {
         val copyFroms = TreeMap<Long, CopyFromSVNEditor>()
         srcRepo.replayRange(revision, revision, 0, true, object : ISVNReplayHandler {
-            @Throws(SVNException::class)
             override fun handleStartRevision(revision: Long, revisionProperties: SVNProperties): ISVNEditor {
                 val editor = CopyFromSVNEditor(dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null), "/", checkDelete)
                 copyFroms[revision] = editor
                 return editor
             }
-
-            @Throws(SVNException::class)
             override fun handleEndRevision(revision: Long, revisionProperties: SVNProperties, editor: ISVNEditor) {
                 editor.closeEdit()
             }
@@ -152,8 +143,6 @@ class ReplayTest {
             checkCopyFrom(srcRepo, value, key)
         }
     }
-
-    @Throws(SVNException::class)
     private fun compareRevision(srcRepo: SVNRepository, srcRev: Long, dstRepo: SVNRepository, dstRev: Long) {
         val srcExport = ExportSVNEditor(true)
         srcRepo.diff(srcRepo.location, srcRev, srcRev - 1, null, false, SVNDepth.INFINITY, true, { reporter: ISVNReporter ->
@@ -167,8 +156,6 @@ class ReplayTest {
         }, FilterSVNEditor(dstExport, true))
         Assert.assertEquals(srcExport.toString(), dstExport.toString())
     }
-
-    @Throws(SVNException::class, IOException::class)
     private fun createCommit(repo: SVNRepository, commitMessage: String, func: VcsConsumer<ISVNEditor>): SVNCommitInfo {
         val editor = repo.getCommitEditor(commitMessage, null)
         return try {
@@ -180,8 +167,6 @@ class ReplayTest {
             editor.abortEdit()
         }
     }
-
-    @Throws(SVNException::class)
     private fun checkCopyFrom(repo: SVNRepository, editor: CopyFromSVNEditor, revision: Long) {
         val copyFrom = TreeMap<String, String>()
         repo.log(arrayOf(""), revision, revision, true, true) { logEntry: SVNLogEntry ->
@@ -196,7 +181,6 @@ class ReplayTest {
 
     @Ignore("TODO: issue #237")
     @Test
-    @Throws(Exception::class)
     fun testPartialReplay() {
         SvnTestServer.createMasterRepository().use { src ->
             SvnTestServer.createEmpty().use { dst ->
@@ -208,12 +192,9 @@ class ReplayTest {
                     0,
                     true,
                     object : ISVNReplayHandler {
-                        @Throws(SVNException::class)
                         override fun handleStartRevision(revision: Long, revisionProperties: SVNProperties): ISVNEditor {
                             return dstRepo.getCommitEditor(revisionProperties.getStringValue(SVNRevisionProperty.LOG), null)
                         }
-
-                        @Throws(SVNException::class)
                         override fun handleEndRevision(revision: Long, revisionProperties: SVNProperties, editor: ISVNEditor) {
                             editor.closeEdit()
                         }
@@ -224,12 +205,9 @@ class ReplayTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testReplaySelfWithUpdate() {
         checkReplaySelf { srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long -> updateRevision(srcRepo, dstRepo, revision) }
     }
-
-    @Throws(Exception::class)
     private fun checkReplaySelf(replayMethod: ReplayMethod) {
         SvnTestServer.createMasterRepository().use { src ->
             SvnTestServer.createEmpty().use { dst ->
@@ -253,8 +231,6 @@ class ReplayTest {
             }
         }
     }
-
-    @Throws(SVNException::class)
     private fun updateRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long) {
         val message = srcRepo.getRevisionPropertyValue(revision, "svn:log")
         val editor = CopyFromSVNEditor(dstRepo.getCommitEditor(message.string, null), "/", true)
@@ -264,26 +240,19 @@ class ReplayTest {
         }, FilterSVNEditor(editor, true))
         checkCopyFrom(srcRepo, editor, revision)
     }
-
-    @Throws(IOException::class)
     private fun compareGitRevision(srcGit: Repository, srcHash: SVNPropertyValue, dstGit: Repository, dstHash: SVNPropertyValue) {
         val srcCommit = getCommit(srcGit, srcHash)
         val dstCommit = getCommit(dstGit, dstHash)
         Assert.assertEquals(srcCommit.tree.name, dstCommit.tree.name)
     }
-
-    @Throws(IOException::class)
     private fun getCommit(git: Repository, hash: SVNPropertyValue): RevCommit {
         return RevWalk(git).parseCommit(ObjectId.fromString(String(hash.bytes)))
     }
 
     @Test
-    @Throws(Exception::class)
     fun testReplaySelfWithReplay() {
         checkReplaySelf { srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long -> replayRevision(srcRepo, dstRepo, revision) }
     }
-
-    @Throws(SVNException::class)
     private fun replayRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long) {
         val revisionProperties = srcRepo.getRevisionProperties(revision, null)
         val editor = CopyFromSVNEditor(dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null), "/", true)
@@ -293,13 +262,11 @@ class ReplayTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testReplaySelfWithReplayRange() {
         checkReplaySelf { srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long -> replayRangeRevision(srcRepo, dstRepo, revision, true) }
     }
 
     private fun interface ReplayMethod {
-        @Throws(SVNException::class)
         fun replay(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long)
     }
 

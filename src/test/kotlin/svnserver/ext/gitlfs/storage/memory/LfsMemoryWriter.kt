@@ -34,8 +34,6 @@ internal class LfsMemoryWriter(private val storage: ConcurrentHashMap<String, By
     override fun close() {
         stream = null
     }
-
-    @Throws(IOException::class)
     override fun finish(expectedOid: String?): String {
         checkNotNull(stream)
         val content = stream!!.toByteArray()

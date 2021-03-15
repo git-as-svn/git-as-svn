@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets
  */
 class SvnServerParserTest {
     @Test
-    @Throws(IOException::class)
     fun testSimpleParse() {
         ByteArrayInputStream("( word 22 10:string 1:x 1:  8:Тест ( sublist ) ) ".toByteArray(StandardCharsets.UTF_8)).use { stream ->
             val parser = SvnServerParser(stream)
@@ -46,7 +45,6 @@ class SvnServerParserTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun testSimpleParseSmallBuffer() {
         ByteArrayInputStream("( word 22 10:string 1:x 1:  8:Тест ( sublist ) ) ".toByteArray(StandardCharsets.UTF_8)).use { stream ->
             val parser = SvnServerParser(stream, 10)
@@ -69,7 +67,6 @@ class SvnServerParserTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun test2dString() {
         ByteArrayInputStream("( ( 1:a ) ( 1:b ) )".toByteArray(StandardCharsets.UTF_8)).use { stream ->
             val parser = SvnServerParser(stream)
@@ -79,7 +76,6 @@ class SvnServerParserTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun testMessageParse() {
         ByteArrayInputStream("( 2 ( edit-pipeline svndiff1 absent-entries depth mergeinfo log-revprops ) 15:svn://localhost 31:SVN/1.8.8 (x86_64-pc-linux-gnu) ( ) ) test ".toByteArray(StandardCharsets.UTF_8)).use { stream ->
             val parser = SvnServerParser(stream)
@@ -102,7 +98,6 @@ class SvnServerParserTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun testMessageParse2() {
         ByteArrayInputStream("( 2 ( edit-pipeline svndiff1 absent-entries depth mergeinfo log-revprops ) 15:svn://localhost ) test ".toByteArray(StandardCharsets.UTF_8)).use { stream ->
             val parser = SvnServerParser(stream)
@@ -125,7 +120,6 @@ class SvnServerParserTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun testBinaryData() {
         val data = ByteArray(0x100)
         for (i in data.indices) {

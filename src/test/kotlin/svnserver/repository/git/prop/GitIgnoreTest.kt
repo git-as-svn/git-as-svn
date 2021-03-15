@@ -11,7 +11,6 @@ import org.eclipse.jgit.lib.FileMode
 import org.testng.Assert
 import org.testng.annotations.Test
 import svnserver.TestHelper
-import java.io.IOException
 import java.util.*
 
 /**
@@ -21,7 +20,6 @@ import java.util.*
  */
 class GitIgnoreTest {
     @Test
-    @Throws(IOException::class)
     fun testParseAttributes() {
         val attr: GitProperty
         TestHelper.asStream(

@@ -25,7 +25,6 @@ import java.util.*
 @Listeners(SvnTesterExternalListener::class)
 class GetFileRevsTest {
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun simple(factory: SvnTesterFactory) {
         factory.create().use { tester ->
             val repository = tester.openSvnRepository()
@@ -44,8 +43,6 @@ class GetFileRevsTest {
             assertFileRevisions(repository, latestRevision - 1, latestRevision - 1, latestRevision - 1)
         }
     }
-
-    @Throws(SVNException::class)
     private fun assertFileRevisions(repository: SVNRepository, startRev: Long, endRev: Long, vararg expected: Long) {
         val fileRevisions: List<SVNFileRevision> = ArrayList()
         repository.getFileRevisions(fileName, fileRevisions, startRev, endRev)
@@ -57,8 +54,6 @@ class GetFileRevsTest {
 
     companion object {
         private const val fileName = "/file.txt"
-
-        @Throws(SVNException::class)
         private fun hasCapability(repository: SVNRepository, capability: SVNCapability): Boolean {
             try {
                 return repository.hasCapability(capability)

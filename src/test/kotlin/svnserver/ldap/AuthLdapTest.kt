@@ -33,7 +33,6 @@ class AuthLdapTest {
      * Test for #156, #242.
      */
     @Test(dataProvider = "sslModes")
-    @Throws(Exception::class)
     fun nativeClient(serverNet: DirectoryServerNet) {
         val svn = SvnTestHelper.findExecutable("svn") ?: throw SkipException("Native svn executable not found")
         EmbeddedDirectoryServer.create(serverNet).use { ldap ->
@@ -50,18 +49,14 @@ class AuthLdapTest {
     }
 
     @Test(dataProvider = "sslModes")
-    @Throws(Throwable::class)
     fun validUser(serverNet: DirectoryServerNet) {
         checkUser(EmbeddedDirectoryServer.ADMIN_USERNAME, EmbeddedDirectoryServer.ADMIN_PASSWORD, serverNet)
     }
-
-    @Throws(Exception::class)
     private fun checkUser(login: String, password: String, serverNet: DirectoryServerNet) {
         EmbeddedDirectoryServer.create(serverNet).use { ldap -> SvnTestServer.createEmpty(ldap.createUserConfig(), false).use { server -> server.openSvnRepository(login, password).latestRevision } }
     }
 
     @Test
-    @Throws(Throwable::class)
     fun validUserPooled() {
         EmbeddedDirectoryServer.create(RawDirectoryServerNet.instance).use { ldap ->
             SvnTestServer.createEmpty(ldap.createUserConfig(), false).use { server ->
@@ -98,12 +93,9 @@ class AuthLdapTest {
     }
 
     @Test(dataProvider = "sslModes")
-    @Throws(Throwable::class)
     fun anonymousUserAllowed(serverNet: DirectoryServerNet) {
         checkAnonymous(true, serverNet)
     }
-
-    @Throws(Exception::class)
     private fun checkAnonymous(anonymousRead: Boolean, serverNet: DirectoryServerNet) {
         EmbeddedDirectoryServer.create(serverNet).use { ldap -> SvnTestServer.createEmpty(ldap.createUserConfig(), anonymousRead).use { server -> server.openSvnRepository().latestRevision } }
     }
@@ -140,7 +132,6 @@ class AuthLdapTest {
     companion object {
         @JvmStatic
         @DataProvider
-        @Throws(Exception::class)
         fun sslModes(): Array<Array<out Any>> {
             val cert = Paths.get(AuthLdapTest::class.java.getResource("cert.pem").toURI())
             val key = Paths.get(AuthLdapTest::class.java.getResource("key.pem").toURI())

@@ -7,8 +7,8 @@
  */
 package svnserver.repository.mapping
 
-import org.testng.*
-import org.testng.annotations.*
+import org.testng.Assert
+import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNErrorCode
 import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNURL
@@ -23,7 +23,6 @@ import java.util.*
  */
 class RepositoryListMappingTest {
     @Test
-    @Throws(Exception::class)
     fun repoRootRelocate() {
         SvnTestServer.createEmpty().use { server ->
             val url: SVNURL = server.getUrl(false)

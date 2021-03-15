@@ -13,14 +13,14 @@ import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.testng.Assert
 import svnserver.auth.ldap.LdapUserDB
-import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.security.*
+import java.security.KeyFactory
+import java.security.KeyStore
+import java.security.PrivateKey
 import java.security.cert.Certificate
-import java.security.cert.CertificateException
 import java.security.spec.PKCS8EncodedKeySpec
 import javax.net.ssl.KeyManager
 import javax.net.ssl.KeyManagerFactory
@@ -38,7 +38,6 @@ internal class SslDirectoryServerNet(override val certificatePath: Path, keyFile
     }
 
     companion object {
-        @Throws(Exception::class)
         private fun createKeyManagers(certFile: Path, keyFile: Path): Array<KeyManager> {
             val certificate = LdapUserDB.loadCertificate(certFile)
             val key = loadKey(keyFile)
@@ -48,8 +47,6 @@ internal class SslDirectoryServerNet(override val certificatePath: Path, keyFile
             keyManagerFactory.init(keyStore, keyPassword)
             return keyManagerFactory.keyManagers
         }
-
-        @Throws(Exception::class)
         private fun loadKey(keyFile: Path): PrivateKey {
             val keyPair: PEMKeyPair
             Files.newInputStream(keyFile).use { keyStream -> InputStreamReader(keyStream, StandardCharsets.US_ASCII).use { keyReader -> PEMParser(keyReader).use { parser -> keyPair = parser.readObject() as PEMKeyPair } } }
@@ -57,8 +54,6 @@ internal class SslDirectoryServerNet(override val certificatePath: Path, keyFile
             val keySpec = PKCS8EncodedKeySpec(keyPair.privateKeyInfo.encoded)
             return KeyFactory.getInstance("RSA").generatePrivate(keySpec)
         }
-
-        @Throws(KeyStoreException::class, IOException::class, NoSuchAlgorithmException::class, CertificateException::class)
         private fun assembleKeyStore(certificate: Certificate, key: PrivateKey, keyPassword: CharArray): KeyStore {
             val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
             keyStore.load(null)

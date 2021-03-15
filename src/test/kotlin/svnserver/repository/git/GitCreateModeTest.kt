@@ -11,7 +11,6 @@ import org.eclipse.jgit.lib.Constants
 import org.testng.annotations.Test
 import svnserver.TestHelper
 import svnserver.repository.git.GitCreateMode
-import java.io.IOException
 
 /**
  * Test for GitCreateMode.
@@ -20,12 +19,9 @@ import java.io.IOException
  */
 class GitCreateModeTest {
     @Test
-    @Throws(IOException::class)
     fun testEmpty() {
         smoke(GitCreateMode.EMPTY)
     }
-
-    @Throws(IOException::class)
     private fun smoke(mode: GitCreateMode) {
         val tempDir = TestHelper.createTempDir("git-as-svn")
         try {
@@ -36,7 +32,6 @@ class GitCreateModeTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun testExample() {
         smoke(GitCreateMode.EXAMPLE)
     }

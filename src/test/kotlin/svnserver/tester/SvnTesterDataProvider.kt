@@ -34,7 +34,6 @@ class SvnTesterDataProvider {
     }
 
     class NamedFactory(private val name: String, private val factory: SvnTesterFactory) : SvnTesterFactory {
-        @Throws(Exception::class)
         override fun create(): SvnTester {
             return factory.create()
         }

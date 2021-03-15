@@ -9,7 +9,6 @@ package svnserver.ext.gitlab.mapping
 
 import org.testng.Assert
 import org.testng.annotations.Test
-import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
@@ -20,7 +19,6 @@ import java.nio.charset.StandardCharsets
  */
 class GitLabHookEventTest {
     @Test
-    @Throws(IOException::class)
     fun projectCreated() {
         InputStreamReader(javaClass.getResourceAsStream("project-created.json"), StandardCharsets.UTF_8).use { reader ->
             Assert.assertNotNull(reader)

@@ -27,7 +27,6 @@ class ShutdownTest {
      * * New connection is not accepted.
      */
     @Test
-    @Throws(Exception::class)
     fun simpleShutdown() {
         val oldThreads = allThreads
         val server: SvnTestServer = SvnTestServer.createEmpty()
@@ -75,7 +74,6 @@ class ShutdownTest {
      * * New connection is not accepted.
      */
     @Test
-    @Throws(Exception::class)
     fun timeoutShutdown() {
         val oldThreads = allThreads
         val server: SvnTestServer = SvnTestServer.createEmpty()
@@ -98,8 +96,6 @@ class ShutdownTest {
         private const val SHOWDOWN_TIME = 5000
         private const val FORCE_TIME = 1
         private const val JOIN_TIME = 100
-
-        @Throws(InterruptedException::class)
         private fun checkThreads(oldThreads: Map<String, Thread>) {
             val newThreads = allThreads
             for ((key, value) in newThreads) {

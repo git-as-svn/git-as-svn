@@ -25,7 +25,6 @@ import org.testng.annotations.AfterClass
 import org.testng.annotations.BeforeClass
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNAuthenticationException
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.*
 import svnserver.auth.User
@@ -38,7 +37,6 @@ import svnserver.ext.gitea.config.GiteaToken
 import svnserver.ext.gitea.mapping.GiteaMappingConfig
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest
 import svnserver.repository.git.GitCreateMode
-import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Function
 
@@ -54,7 +52,6 @@ class GiteaIntegrationTest {
     private var testPrivateRepository: Repository? = null
 
     @BeforeClass
-    @Throws(Exception::class)
     fun before() {
         SvnTestHelper.skipTestIfDockerUnavailable()
         var giteaVersion = System.getenv("GITEA_VERSION")
@@ -102,8 +99,6 @@ class GiteaIntegrationTest {
         testPrivateRepository = createRepository(user, "private-user-repo", "Private User Repository", true, true)
         Assert.assertNotNull(testPrivateRepository)
     }
-
-    @Throws(IOException::class, InterruptedException::class)
     private fun doCreateUser(username: String, email: String, password: String, vararg extraArgs: String) {
         val args = ArrayUtil.add(
             arrayOf("--username", username, "--password", password, "--email", email, "--must-change-password=false", "-c", "/data/gitea/conf/app.ini"),
@@ -115,13 +110,9 @@ class GiteaIntegrationTest {
         }
         Assert.assertEquals(execResult.exitCode, 0)
     }
-
-    @Throws(Exception::class)
     private fun createUser(username: String, password: String): io.gitea.model.User {
         return createUser(username, "$username@example.com", password)
     }
-
-    @Throws(Exception::class)
     private fun createRepository(username: String, name: String, description: String, _private: Boolean?, autoInit: Boolean?): Repository {
         val apiClient = sudo(GiteaContext.connect(giteaApiUrl!!, administratorToken!!), username)
         val repositoryApi = RepositoryApi(apiClient)
@@ -133,8 +124,6 @@ class GiteaIntegrationTest {
         repoOption.readme = "Default"
         return repositoryApi.createCurrentUserRepo(repoOption)
     }
-
-    @Throws(Exception::class)
     private fun createUser(username: String, email: String, password: String): io.gitea.model.User {
         doCreateUser(username, email, password)
         val apiClient: ApiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
@@ -150,7 +139,6 @@ class GiteaIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testLfs() {
         val storage = GiteaConfig.createLfsStorage(giteaUrl!!, testPublicRepository!!.fullName, administratorToken!!)
         val user = User.create(administrator, administrator, administrator, administrator, UserType.Gitea, LfsCredentials(administrator, administratorPassword))
@@ -161,7 +149,6 @@ class GiteaIntegrationTest {
 
     // Tests
     @Test
-    @Throws(Exception::class)
     fun testApiConnectPassword() {
         val apiClient = ApiClient()
         apiClient.basePath = giteaApiUrl
@@ -174,7 +161,6 @@ class GiteaIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testGiteaContextConnect() {
         val apiClient: ApiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
         val userApi = UserApi(apiClient)
@@ -184,25 +170,20 @@ class GiteaIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testCheckAdminLogin() {
         checkUser(administrator, administratorPassword)
     }
-
-    @Throws(Exception::class)
     private fun checkUser(login: String, password: String) {
         createServer(administratorToken!!, null).use { server -> server.openSvnRepository(login, password).latestRevision }
     }
 
     // SvnTest Methods
-    @Throws(Exception::class)
     private fun createServer(token: GiteaToken, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?): SvnTestServer {
         val giteaConfig = GiteaConfig(giteaApiUrl!!, token)
         return SvnTestServer.createEmpty(GiteaUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, giteaConfig)
     }
 
     @Test
-    @Throws(Exception::class)
     fun testCheckUserLogin() {
         checkUser(user, userPassword)
     }
@@ -218,7 +199,6 @@ class GiteaIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun testGiteaMapping() {
         createServer(administratorToken!!) { dir: Path? -> GiteaMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server ->
             // Test user can get own private repo
@@ -235,13 +215,9 @@ class GiteaIntegrationTest {
             openSvnRepository(server, testPrivateRepository!!, collaborator, collaboratorPassword).latestRevision
         }
     }
-
-    @Throws(SVNException::class)
     private fun openSvnRepository(server: SvnTestServer, repository: Repository, username: String, password: String): SVNRepository {
         return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(repository.fullName + "/master", false), username, password)
     }
-
-    @Throws(Exception::class)
     private fun repoAddCollaborator(owner: String, repo: String, collaborator: String) {
         val apiClient: ApiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
         val repositoryApi = RepositoryApi(apiClient)

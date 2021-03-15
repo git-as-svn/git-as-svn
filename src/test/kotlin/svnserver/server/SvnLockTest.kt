@@ -33,7 +33,6 @@ class SvnLockTest {
      * Check to take lock on absent file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun lockNotExists(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -48,7 +47,6 @@ class SvnLockTest {
         val locks = ArrayList<SVNLock>()
         return try {
             repo.lock(pathsToRevisions, null, force, object : ISVNLockHandler {
-                @Throws(SVNException::class)
                 override fun handleLock(path: String, lock: SVNLock?, error: SVNErrorMessage?) {
                     if (error != null) {
                         throw SVNException(error)
@@ -74,7 +72,6 @@ class SvnLockTest {
      * Check to take lock of out-of-date file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun lockOutOfDate(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -86,7 +83,6 @@ class SvnLockTest {
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun lockNotFile(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -108,7 +104,6 @@ class SvnLockTest {
      * Check to stealing lock.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun lockForce(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -140,7 +135,6 @@ class SvnLockTest {
      * Check to break lock.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun unlockForce(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -167,8 +161,6 @@ class SvnLockTest {
                 override fun handleLock(path: String, lock: SVNLock?, error: SVNErrorMessage?) {
                     Assert.fail()
                 }
-
-                @Throws(SVNException::class)
                 override fun handleUnlock(path: String, removedLock: SVNLock, error: SVNErrorMessage?) {
                     if (error != null) {
                         throw SVNException(error)
@@ -185,7 +177,6 @@ class SvnLockTest {
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun lockSimple(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -216,7 +207,6 @@ class SvnLockTest {
      * Check for deny modify locking file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun modifyLocked(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -239,7 +229,6 @@ class SvnLockTest {
      * Check for deny modify locking file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun modifyLockedInvalidLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -274,7 +263,6 @@ class SvnLockTest {
      * Check for commit with keep locks.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun modifyLockedRemoveLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -299,7 +287,6 @@ class SvnLockTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun lockWithDelayedAuth() {
         SvnTestServer.createEmpty(null, true).use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -313,7 +300,6 @@ class SvnLockTest {
      * Check for commit with remove locks.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun modifyLockedKeepLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -341,7 +327,6 @@ class SvnLockTest {
      * Check for deny modify locking file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun deleteLocked(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -370,7 +355,6 @@ class SvnLockTest {
      * Check for deny modify locking file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun deleteLockedDirNoLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -408,7 +392,6 @@ class SvnLockTest {
      * Check get locks.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun getLocks(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -452,7 +435,6 @@ class SvnLockTest {
      * Check for deny modify locking file.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun deleteLockedDirWithLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -485,7 +467,6 @@ class SvnLockTest {
      * Try to twice remove lock.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun unlockTwice(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
@@ -504,7 +485,6 @@ class SvnLockTest {
      * Try to remove not-owned lock.
      */
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun unlockNotOwner(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()

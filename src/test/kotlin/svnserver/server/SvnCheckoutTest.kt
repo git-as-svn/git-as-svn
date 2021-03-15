@@ -31,7 +31,6 @@ import kotlin.math.min
  */
 class SvnCheckoutTest {
     @Test
-    @Throws(Exception::class)
     fun checkoutRootRevision() {
         SvnTestServer.createEmpty().use { server ->
             val factory: SvnOperationFactory = server.createOperationFactory()
@@ -47,7 +46,6 @@ class SvnCheckoutTest {
      * Workcopy mixed version update smoke test.
      */
     @Test
-    @Throws(Exception::class)
     fun randomUpdateRoot() {
         checkUpdate("")
     }
@@ -56,12 +54,9 @@ class SvnCheckoutTest {
      * Workcopy mixed version update smoke test.
      */
     @Test
-    @Throws(Exception::class)
     fun randomUpdateChild() {
         checkUpdate("/src")
     }
-
-    @Throws(Exception::class)
     private fun checkUpdate(basePath: String) {
         SvnTestServer.createMasterRepository().use { server ->
             val factory: SvnOperationFactory = server.createOperationFactory()
@@ -120,8 +115,6 @@ class SvnCheckoutTest {
             }
         }
     }
-
-    @Throws(SVNException::class)
     private fun loadUpdateRevisions(repo: SVNRepository, path: String): List<Long> {
         val maxRevision = min(100, repo.latestRevision)
         val revisions = LinkedList<Long>()
@@ -141,7 +134,6 @@ class SvnCheckoutTest {
     </pre> *
      */
     @Test
-    @Throws(Exception::class)
     fun checkoutAndUpdate() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()

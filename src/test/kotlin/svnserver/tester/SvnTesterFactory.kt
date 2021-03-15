@@ -13,6 +13,5 @@ package svnserver.tester
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 fun interface SvnTesterFactory {
-    @Throws(Exception::class)
     fun create(): SvnTester
 }

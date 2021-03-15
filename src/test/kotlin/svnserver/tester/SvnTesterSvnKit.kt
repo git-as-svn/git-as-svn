@@ -28,13 +28,9 @@ class SvnTesterSvnKit : SvnTester {
     private var _url: SVNURL
     override val url: SVNURL
         get() = _url
-
-    @Throws(SVNException::class)
     override fun openSvnRepository(): SVNRepository {
         return SvnTestServer.openSvnRepository(url, USER_NAME, PASSWORD)
     }
-
-    @Throws(Exception::class)
     override fun close() {
         TestHelper.deleteDirectory(repoDir)
     }

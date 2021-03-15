@@ -7,8 +7,9 @@
  */
 package svnserver.server
 
-import org.testng.*
-import org.testng.annotations.*
+import org.testng.Assert
+import org.testng.annotations.Listeners
+import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNErrorCode
 import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNNodeKind
@@ -25,7 +26,6 @@ import svnserver.tester.SvnTesterFactory
 @Listeners(SvnTesterExternalListener::class)
 class CheckPathAndStatCmdTest {
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun nonexistentRev(factory: SvnTesterFactory) {
         create(factory).use { tester ->
             val repository = tester.openSvnRepository()
@@ -44,8 +44,6 @@ class CheckPathAndStatCmdTest {
             }
         }
     }
-
-    @Throws(Exception::class)
     private fun create(factory: SvnTesterFactory): SvnTester {
         val tester = factory.create()
         SvnTestHelper.createFile(tester.openSvnRepository(), "/existent", "", SvnFilePropertyTest.propsEolNative)
@@ -53,7 +51,6 @@ class CheckPathAndStatCmdTest {
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun nonexistentFileInInitialRev(factory: SvnTesterFactory) {
         create(factory).use { tester ->
             val repository = tester.openSvnRepository()
@@ -62,7 +59,6 @@ class CheckPathAndStatCmdTest {
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun nonexistentFile(factory: SvnTesterFactory) {
         create(factory).use { tester ->
             val repository = tester.openSvnRepository()
@@ -71,7 +67,6 @@ class CheckPathAndStatCmdTest {
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun root(factory: SvnTesterFactory) {
         create(factory).use { tester ->
             val repository = tester.openSvnRepository()
@@ -80,7 +75,6 @@ class CheckPathAndStatCmdTest {
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun existentFile(factory: SvnTesterFactory) {
         create(factory).use { tester ->
             val repository = tester.openSvnRepository()
@@ -89,7 +83,6 @@ class CheckPathAndStatCmdTest {
     }
 
     companion object {
-        @Throws(SVNException::class)
         private fun assertPath(repository: SVNRepository, path: String, rev: Long, expectedKind: SVNNodeKind) {
             val nodeKind = repository.checkPath(path, rev)
             Assert.assertEquals(nodeKind, expectedKind)

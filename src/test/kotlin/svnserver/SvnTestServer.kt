@@ -38,7 +38,6 @@ import svnserver.repository.git.GitRepository
 import svnserver.repository.git.push.GitPushEmbedded
 import svnserver.server.SvnServer
 import svnserver.tester.SvnTester
-import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Function
@@ -67,8 +66,6 @@ class SvnTestServer private constructor(
     private val server: SvnServer
     private val svnFactories = ArrayList<SvnOperationFactory>()
     private val safeBranch: Boolean
-
-    @Throws(IOException::class)
     private fun cleanupBranches(repository: Repository) {
         val branches = ArrayList<String>()
         for (ref in repository.refDatabase.getRefsByPrefix(Constants.R_HEADS + TEST_BRANCH_PREFIX)) {
@@ -96,23 +93,15 @@ class SvnTestServer private constructor(
     @get:Throws(SVNException::class)
     override val url: SVNURL
         get() = getUrl(true)
-
-    @Throws(SVNException::class)
     fun getUrl(withPrefix: Boolean): SVNURL {
         return SVNURL.create("svn", null, BIND_HOST, server.port, if (withPrefix) prefix else "", true)
     }
-
-    @Throws(SVNException::class)
     override fun openSvnRepository(): SVNRepository {
         return openSvnRepository(USER_NAME, PASSWORD)
     }
-
-    @Throws(SVNException::class)
     fun openSvnRepository(username: String, password: String): SVNRepository {
         return openSvnRepository(url, username, password)
     }
-
-    @Throws(Exception::class)
     override fun close() {
         shutdown(0)
         if (safeBranch) {
@@ -129,8 +118,6 @@ class SvnTestServer private constructor(
         repository.close()
         TestHelper.deleteDirectory(tempDirectory)
     }
-
-    @Throws(Exception::class)
     fun shutdown(millis: Int) {
         server.shutdown(millis.toLong())
     }
@@ -148,8 +135,6 @@ class SvnTestServer private constructor(
         svnFactories.add(factory)
         return factory
     }
-
-    @Throws(IOException::class)
     fun startShutdown() {
         server.startShutdown()
     }
@@ -159,7 +144,6 @@ class SvnTestServer private constructor(
     }
 
     private class TestRepositoryConfig(private val git: Repository, private val branch: String, private val prefix: String, private val anonymousRead: Boolean, private val emptyDirs: EmptyDirsSupport) : RepositoryMappingConfig {
-        @Throws(IOException::class)
         override fun create(context: SharedContext, canUseParallelIndexing: Boolean): RepositoryMapping<GitRepository> {
             val local = LocalContext(context, "test")
             local.add(VcsAccess::class.java, if (anonymousRead) VcsAccessEveryone.instance else VcsAccessNoAnonymous.instance)
@@ -186,50 +170,32 @@ class SvnTestServer private constructor(
         private const val REAL_NAME = "Test User"
         private const val EMAIL = "foo@bar.org"
         private const val TEST_BRANCH_PREFIX = "test_"
-
-        @Throws(SVNException::class)
         fun openSvnRepository(url: SVNURL, username: String, password: String): SVNRepository {
             val repo = SVNRepositoryFactory.create(url)
             repo.authenticationManager = BasicAuthenticationManager.newInstance(username, password.toCharArray())
             return repo
         }
-
-        @Throws(Exception::class)
         fun createEmpty(): SvnTestServer {
             return createEmpty(null, false, LfsMode.Memory, EmptyDirsSupport.Disabled)
         }
-
-        @Throws(Exception::class)
         fun createEmpty(userDBConfig: UserDBConfig?, anonymousRead: Boolean, lfsMode: LfsMode, emptyDirs: EmptyDirsSupport, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, null, anonymousRead, lfsMode, emptyDirs, *shared)
         }
-
-        @Throws(Exception::class)
         fun createEmpty(userDBConfig: UserDBConfig?, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?, anonymousRead: Boolean, lfsMode: LfsMode, emptyDirs: EmptyDirsSupport, vararg shared: SharedConfig): SvnTestServer {
             return SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, emptyDirs, *shared)
         }
-
-        @Throws(Exception::class)
         fun createEmpty(userDBConfig: UserDBConfig?, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?, anonymousRead: Boolean, lfsMode: LfsMode, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, EmptyDirsSupport.Disabled, *shared)
         }
-
-        @Throws(Exception::class)
         fun createEmpty(userDBConfig: UserDBConfig?, anonymousRead: Boolean, lfsMode: LfsMode, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, null, anonymousRead, lfsMode, EmptyDirsSupport.Disabled, *shared)
         }
-
-        @Throws(Exception::class)
         fun createEmpty(emptyDirs: EmptyDirsSupport): SvnTestServer {
             return createEmpty(null, false, LfsMode.Memory, emptyDirs)
         }
-
-        @Throws(Exception::class)
         fun createEmpty(userDBConfig: UserDBConfig?, anonymousRead: Boolean, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, null, anonymousRead, LfsMode.Memory, EmptyDirsSupport.Disabled, *shared)
         }
-
-        @Throws(Exception::class)
         fun createMasterRepository(): SvnTestServer {
             return SvnTestServer(FileRepository(TestHelper.findGitPath().toFile()), null, "", true, null, null, true, LfsMode.Memory, EmptyDirsSupport.Disabled)
         }
