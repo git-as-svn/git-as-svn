@@ -44,6 +44,7 @@ class CheckPathAndStatCmdTest {
             }
         }
     }
+
     private fun create(factory: SvnTesterFactory): SvnTester {
         val tester = factory.create()
         SvnTestHelper.createFile(tester.openSvnRepository(), "/existent", "", SvnFilePropertyTest.propsEolNative)

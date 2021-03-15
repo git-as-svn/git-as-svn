@@ -114,7 +114,6 @@ object SvnTestHelper {
         Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL)
     }
 
-    @JvmOverloads
     fun modifyFile(repo: SVNRepository, filePath: String, newData: String, fileRev: Long, locks: Map<String, String>? = null) {
         modifyFile(repo, filePath, newData.toByteArray(StandardCharsets.UTF_8), fileRev, locks)
     }

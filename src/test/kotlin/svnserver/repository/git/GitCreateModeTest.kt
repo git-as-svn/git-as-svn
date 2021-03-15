@@ -22,6 +22,7 @@ class GitCreateModeTest {
     fun testEmpty() {
         smoke(GitCreateMode.EMPTY)
     }
+
     private fun smoke(mode: GitCreateMode) {
         val tempDir = TestHelper.createTempDir("git-as-svn")
         try {

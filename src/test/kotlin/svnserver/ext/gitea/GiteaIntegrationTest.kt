@@ -99,6 +99,7 @@ class GiteaIntegrationTest {
         testPrivateRepository = createRepository(user, "private-user-repo", "Private User Repository", true, true)
         Assert.assertNotNull(testPrivateRepository)
     }
+
     private fun doCreateUser(username: String, email: String, password: String, vararg extraArgs: String) {
         val args = ArrayUtil.add(
             arrayOf("--username", username, "--password", password, "--email", email, "--must-change-password=false", "-c", "/data/gitea/conf/app.ini"),
@@ -110,9 +111,11 @@ class GiteaIntegrationTest {
         }
         Assert.assertEquals(execResult.exitCode, 0)
     }
+
     private fun createUser(username: String, password: String): io.gitea.model.User {
         return createUser(username, "$username@example.com", password)
     }
+
     private fun createRepository(username: String, name: String, description: String, _private: Boolean?, autoInit: Boolean?): Repository {
         val apiClient = sudo(GiteaContext.connect(giteaApiUrl!!, administratorToken!!), username)
         val repositoryApi = RepositoryApi(apiClient)
@@ -124,6 +127,7 @@ class GiteaIntegrationTest {
         repoOption.readme = "Default"
         return repositoryApi.createCurrentUserRepo(repoOption)
     }
+
     private fun createUser(username: String, email: String, password: String): io.gitea.model.User {
         doCreateUser(username, email, password)
         val apiClient: ApiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
@@ -173,6 +177,7 @@ class GiteaIntegrationTest {
     fun testCheckAdminLogin() {
         checkUser(administrator, administratorPassword)
     }
+
     private fun checkUser(login: String, password: String) {
         createServer(administratorToken!!, null).use { server -> server.openSvnRepository(login, password).latestRevision }
     }
@@ -215,9 +220,11 @@ class GiteaIntegrationTest {
             openSvnRepository(server, testPrivateRepository!!, collaborator, collaboratorPassword).latestRevision
         }
     }
+
     private fun openSvnRepository(server: SvnTestServer, repository: Repository, username: String, password: String): SVNRepository {
         return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(repository.fullName + "/master", false), username, password)
     }
+
     private fun repoAddCollaborator(owner: String, repo: String, collaborator: String) {
         val apiClient: ApiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
         val repositoryApi = RepositoryApi(apiClient)

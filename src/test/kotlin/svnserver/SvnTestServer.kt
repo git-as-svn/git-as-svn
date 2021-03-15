@@ -13,7 +13,6 @@ import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNURL
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression
@@ -90,18 +89,21 @@ class SvnTestServer private constructor(
     val context: SharedContext
         get() = server.sharedContext
 
-    @get:Throws(SVNException::class)
     override val url: SVNURL
         get() = getUrl(true)
+
     fun getUrl(withPrefix: Boolean): SVNURL {
         return SVNURL.create("svn", null, BIND_HOST, server.port, if (withPrefix) prefix else "", true)
     }
+
     override fun openSvnRepository(): SVNRepository {
         return openSvnRepository(USER_NAME, PASSWORD)
     }
+
     fun openSvnRepository(username: String, password: String): SVNRepository {
         return openSvnRepository(url, username, password)
     }
+
     override fun close() {
         shutdown(0)
         if (safeBranch) {
@@ -118,6 +120,7 @@ class SvnTestServer private constructor(
         repository.close()
         TestHelper.deleteDirectory(tempDirectory)
     }
+
     fun shutdown(millis: Int) {
         server.shutdown(millis.toLong())
     }
@@ -135,6 +138,7 @@ class SvnTestServer private constructor(
         svnFactories.add(factory)
         return factory
     }
+
     fun startShutdown() {
         server.startShutdown()
     }
@@ -175,27 +179,35 @@ class SvnTestServer private constructor(
             repo.authenticationManager = BasicAuthenticationManager.newInstance(username, password.toCharArray())
             return repo
         }
+
         fun createEmpty(): SvnTestServer {
             return createEmpty(null, false, LfsMode.Memory, EmptyDirsSupport.Disabled)
         }
+
         fun createEmpty(userDBConfig: UserDBConfig?, anonymousRead: Boolean, lfsMode: LfsMode, emptyDirs: EmptyDirsSupport, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, null, anonymousRead, lfsMode, emptyDirs, *shared)
         }
+
         fun createEmpty(userDBConfig: UserDBConfig?, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?, anonymousRead: Boolean, lfsMode: LfsMode, emptyDirs: EmptyDirsSupport, vararg shared: SharedConfig): SvnTestServer {
             return SvnTestServer(TestHelper.emptyRepository(), Constants.MASTER, "", false, userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, emptyDirs, *shared)
         }
+
         fun createEmpty(userDBConfig: UserDBConfig?, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?, anonymousRead: Boolean, lfsMode: LfsMode, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, mappingConfigCreator, anonymousRead, lfsMode, EmptyDirsSupport.Disabled, *shared)
         }
+
         fun createEmpty(userDBConfig: UserDBConfig?, anonymousRead: Boolean, lfsMode: LfsMode, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, null, anonymousRead, lfsMode, EmptyDirsSupport.Disabled, *shared)
         }
+
         fun createEmpty(emptyDirs: EmptyDirsSupport): SvnTestServer {
             return createEmpty(null, false, LfsMode.Memory, emptyDirs)
         }
+
         fun createEmpty(userDBConfig: UserDBConfig?, anonymousRead: Boolean, vararg shared: SharedConfig): SvnTestServer {
             return createEmpty(userDBConfig, null, anonymousRead, LfsMode.Memory, EmptyDirsSupport.Disabled, *shared)
         }
+
         fun createMasterRepository(): SvnTestServer {
             return SvnTestServer(FileRepository(TestHelper.findGitPath().toFile()), null, "", true, null, null, true, LfsMode.Memory, EmptyDirsSupport.Disabled)
         }
@@ -232,6 +244,7 @@ class SvnTestServer private constructor(
             LfsMode.Memory -> {
                 config.shared.add(SharedConfig { context: SharedContext -> context.add(LfsStorageFactory::class.java, LfsStorageFactory { LfsMemoryStorage() }) })
             }
+            LfsMode.None -> Unit
         }
         if (mappingConfigCreator != null) {
             config.repositoryMapping = mappingConfigCreator.apply(tempDirectory)

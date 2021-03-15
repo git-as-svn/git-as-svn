@@ -70,9 +70,11 @@ class SvnTesterExternalListener : ITestListener {
         private fun detectPort(): Int {
             ServerSocket(0, 0, InetAddress.getByName(HOST)).use { socket -> return socket.localPort }
         }
+
         override fun create(): SvnTester {
             return SvnTesterExternal(url, BasicAuthenticationManager.newInstance(USER_NAME, PASSWORD.toCharArray()))
         }
+
         override fun close() {
             log.info("Stopping native svn daemon.")
             daemon.destroy()

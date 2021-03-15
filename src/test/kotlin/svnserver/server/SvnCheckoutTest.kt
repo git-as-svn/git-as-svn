@@ -57,6 +57,7 @@ class SvnCheckoutTest {
     fun randomUpdateChild() {
         checkUpdate("/src")
     }
+
     private fun checkUpdate(basePath: String) {
         SvnTestServer.createMasterRepository().use { server ->
             val factory: SvnOperationFactory = server.createOperationFactory()
@@ -115,6 +116,7 @@ class SvnCheckoutTest {
             }
         }
     }
+
     private fun loadUpdateRevisions(repo: SVNRepository, path: String): List<Long> {
         val maxRevision = min(100, repo.latestRevision)
         val revisions = LinkedList<Long>()

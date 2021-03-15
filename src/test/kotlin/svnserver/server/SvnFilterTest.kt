@@ -273,6 +273,7 @@ class SvnFilterTest {
 """.toByteArray(StandardCharsets.UTF_8)
         private val CONTENT_BAR = """${Strings.repeat("Some data\n", 100)}Bar file
 """.toByteArray(StandardCharsets.UTF_8)
+
         private fun gzip(data: ByteArray): ByteArray {
             val result = ByteArrayOutputStream()
             GZIPOutputStream(result).use { stream -> stream.write(data) }

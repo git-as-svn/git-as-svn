@@ -10,10 +10,10 @@ package svnserver.ext.web.token
 import org.apache.commons.codec.binary.Hex
 import org.jose4j.jwe.JsonWebEncryption
 import org.jose4j.jwt.NumericDate
-import org.testng.*
-import org.testng.annotations.*
+import org.testng.Assert
+import org.testng.annotations.Test
 import svnserver.UserType
-import svnserver.auth.*
+import svnserver.auth.User
 import svnserver.ext.web.token.TokenHelper.createToken
 import svnserver.ext.web.token.TokenHelper.parseToken
 import svnserver.ext.web.token.TokenHelper.secretToBytes

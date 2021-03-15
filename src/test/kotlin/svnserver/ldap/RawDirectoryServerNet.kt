@@ -14,7 +14,6 @@ import java.nio.file.Path
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 internal class RawDirectoryServerNet : DirectoryServerNet {
-    @get:Throws(Exception::class)
     override val listenerConfig: InMemoryListenerConfig
         get() = InMemoryListenerConfig.createLDAPConfig(urlSchema)
     override val urlSchema: String

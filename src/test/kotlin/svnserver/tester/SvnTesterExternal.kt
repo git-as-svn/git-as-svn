@@ -24,9 +24,11 @@ class SvnTesterExternal(private val myUrl: SVNURL, private val authManager: ISVN
 
     override val url: SVNURL
         get() = myUrl.appendPath(suffix, false)
+
     override fun openSvnRepository(): SVNRepository {
         return openSvnRepository(url)
     }
+
     override fun close() {
         val repo = openSvnRepository(myUrl)
         val revision = repo.latestRevision
@@ -49,6 +51,7 @@ class SvnTesterExternal(private val myUrl: SVNURL, private val authManager: ISVN
             repo.closeSession()
         }
     }
+
     private fun openSvnRepository(url: SVNURL): SVNRepository {
         val repo = SVNRepositoryFactory.create(url)
         if (authManager != null) {

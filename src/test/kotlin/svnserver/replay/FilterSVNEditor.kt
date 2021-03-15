@@ -22,6 +22,7 @@ class FilterSVNEditor(editor: ISVNEditor, checkDelete: Boolean) : SVNEditorWrapp
             super.changeDirProperty(name, value)
         }
     }
+
     override fun changeFileProperty(path: String, propertyName: String, propertyValue: SVNPropertyValue?) {
         if (!propertyName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             super.changeFileProperty(path, propertyName, propertyValue)

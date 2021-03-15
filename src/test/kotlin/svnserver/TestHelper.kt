@@ -12,6 +12,7 @@ import org.apache.commons.io.input.CharSequenceInputStream
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository
 import org.eclipse.jgit.lib.Repository
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
@@ -25,10 +26,11 @@ import java.nio.file.Paths
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 object TestHelper {
-    val logger = LoggerFactory.getLogger("test")
+    val logger: Logger = LoggerFactory.getLogger("test")
     fun saveFile(file: Path, content: String) {
         Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
     }
+
     fun createTempDir(prefix: String): Path {
         return Files.createTempDirectory(findGitPath().parent.resolve("build/tmp"), "$prefix-").toAbsolutePath()
     }
@@ -40,9 +42,10 @@ object TestHelper {
             val repo = path.resolve(".git")
             if (Files.isDirectory(repo)) return repo
             path = path.parent
-            checkNotNull(path) { "Repository not found from directiry: $root" }
+            checkNotNull(path) { "Repository not found from directory: $root" }
         }
     }
+
     fun deleteDirectory(file: Path) {
         FileUtils.deleteDirectory(file.toFile())
     }
@@ -50,6 +53,7 @@ object TestHelper {
     fun asStream(content: String): InputStream {
         return CharSequenceInputStream(content, StandardCharsets.UTF_8)
     }
+
     fun emptyRepository(): Repository {
         val repository: Repository = InMemoryRepository(DfsRepositoryDescription(null))
         repository.create()

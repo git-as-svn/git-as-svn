@@ -26,6 +26,7 @@ class ReportSVNEditor : ISVNEditor {
     private val caseChecker = HashSet<String>()
     private val report = TreeSet<String>()
     private var targetRevision: Long = 0
+
     override fun targetRevision(revision: Long) {
         targetRevision = revision
     }

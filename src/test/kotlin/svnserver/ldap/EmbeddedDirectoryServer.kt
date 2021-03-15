@@ -23,17 +23,16 @@ import java.net.URL
  * @author Artem V. Navrotskiy (bozaro at buzzsoft.ru)
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class EmbeddedDirectoryServer private constructor(dn: String, ldifStream: URL, serverNet: DirectoryServerNet) : AutoCloseable {
+class EmbeddedDirectoryServer private constructor(dn: String, ldifStream: URL, private val serverNet: DirectoryServerNet) : AutoCloseable {
     private val server: InMemoryDirectoryServer
-    private val baseDn: DN
-    private val serverNet: DirectoryServerNet
+    private val baseDn: DN = DN(dn)
     override fun close() {
         server.shutDown(true)
     }
 
     fun createUserConfig(): UserDBConfig {
         val connectionUrl = String.format("%s://localhost:%s/%s", serverNet.urlSchema, server.listenPort, baseDn)
-        val ldapBind: LdapBind = LdapBindPLAIN("u:" + ADMIN_USERNAME, ADMIN_PASSWORD)
+        val ldapBind: LdapBind = LdapBindPLAIN("u:$ADMIN_USERNAME", ADMIN_PASSWORD)
         return LdapUserDBConfig(
             connectionUrl,
             ldapBind,
@@ -56,8 +55,6 @@ class EmbeddedDirectoryServer private constructor(dn: String, ldifStream: URL, s
     }
 
     init {
-        baseDn = DN(dn)
-        this.serverNet = serverNet
         val config = InMemoryDirectoryServerConfig(dn)
         config.setListenerConfigs(serverNet.listenerConfig)
         server = InMemoryDirectoryServer(config)

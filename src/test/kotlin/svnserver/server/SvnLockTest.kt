@@ -161,6 +161,7 @@ class SvnLockTest {
                 override fun handleLock(path: String, lock: SVNLock?, error: SVNErrorMessage?) {
                     Assert.fail()
                 }
+
                 override fun handleUnlock(path: String, removedLock: SVNLock, error: SVNErrorMessage?) {
                     if (error != null) {
                         throw SVNException(error)

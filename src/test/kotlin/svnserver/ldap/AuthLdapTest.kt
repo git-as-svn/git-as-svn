@@ -52,6 +52,7 @@ class AuthLdapTest {
     fun validUser(serverNet: DirectoryServerNet) {
         checkUser(EmbeddedDirectoryServer.ADMIN_USERNAME, EmbeddedDirectoryServer.ADMIN_PASSWORD, serverNet)
     }
+
     private fun checkUser(login: String, password: String, serverNet: DirectoryServerNet) {
         EmbeddedDirectoryServer.create(serverNet).use { ldap -> SvnTestServer.createEmpty(ldap.createUserConfig(), false).use { server -> server.openSvnRepository(login, password).latestRevision } }
     }
@@ -96,6 +97,7 @@ class AuthLdapTest {
     fun anonymousUserAllowed(serverNet: DirectoryServerNet) {
         checkAnonymous(true, serverNet)
     }
+
     private fun checkAnonymous(anonymousRead: Boolean, serverNet: DirectoryServerNet) {
         EmbeddedDirectoryServer.create(serverNet).use { ldap -> SvnTestServer.createEmpty(ldap.createUserConfig(), anonymousRead).use { server -> server.openSvnRepository().latestRevision } }
     }

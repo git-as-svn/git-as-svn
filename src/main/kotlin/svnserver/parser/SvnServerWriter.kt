@@ -59,7 +59,6 @@ class SvnServerWriter constructor(stream: OutputStream) : Closeable {
         return binary(text.toByteArray(StandardCharsets.UTF_8))
     }
 
-    @JvmOverloads
     @Throws(IOException::class)
     fun binary(data: ByteArray, offset: Int = 0, length: Int = data.size): SvnServerWriter {
         StringToken.write(stream, data, offset, length)

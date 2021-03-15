@@ -63,6 +63,7 @@ class WCDepthTest {
         update("", SVNDepth.INFINITY)
         Assert.assertTrue(Files.exists(wc!!.resolve("a/b/c/d")))
     }
+
     private fun checkout(path: String, depth: SVNDepth) {
         val checkout = factory!!.createCheckout()
         checkout.source = SvnTarget.fromURL(server!!.url.appendPath(path, true))
@@ -71,6 +72,7 @@ class WCDepthTest {
         checkout.depth = depth
         checkout.run()
     }
+
     private fun update(path: String, depth: SVNDepth?) {
         val update = factory!!.createUpdate()
         update.setSingleTarget(SvnTarget.fromFile(wc!!.resolve(path).toFile()))

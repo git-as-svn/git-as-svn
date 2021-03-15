@@ -30,7 +30,6 @@ class SvnFilePropertyTest {
      */
     @Test
     fun executable() {
-        //Map<String, String> props = new HashMap<>()["key":""];
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             SvnTestHelper.createFile(repo, "/non-exec.txt", "", propsEolNative)
@@ -60,7 +59,6 @@ class SvnFilePropertyTest {
      */
     @Test
     fun binary() {
-        //Map<String, String> props = new HashMap<>()["key":""];
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             SvnTestHelper.createFile(repo, "/data.txt", "Test file", propsEolNative)

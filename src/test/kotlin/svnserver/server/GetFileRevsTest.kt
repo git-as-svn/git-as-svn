@@ -43,6 +43,7 @@ class GetFileRevsTest {
             assertFileRevisions(repository, latestRevision - 1, latestRevision - 1, latestRevision - 1)
         }
     }
+
     private fun assertFileRevisions(repository: SVNRepository, startRev: Long, endRev: Long, vararg expected: Long) {
         val fileRevisions: List<SVNFileRevision> = ArrayList()
         repository.getFileRevisions(fileName, fileRevisions, startRev, endRev)

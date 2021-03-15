@@ -70,6 +70,7 @@ a/b/c/d - delta-end
             )
         }
     }
+
     private fun create(factory: SvnTesterFactory): SvnTester {
         val tester = factory.create()
         val repo = tester.openSvnRepository()
@@ -98,6 +99,7 @@ a/b/c/d - delta-end
         editor.closeEdit()
         return tester
     }
+
     private fun check(server: SvnTester, path: String, depth: SVNDepth?, reporterBaton: ISVNReporterBaton, expected: String) {
         val repo = server.openSvnRepository()
         val editor = ReportSVNEditor()

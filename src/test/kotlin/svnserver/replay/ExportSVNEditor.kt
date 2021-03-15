@@ -19,6 +19,7 @@ class ExportSVNEditor(checkDelete: Boolean) : SVNEditorWrapper(null, checkDelete
     private val paths = ArrayDeque<String>()
     private val files = TreeMap<String, String>()
     private val properties = HashMap<String, MutableMap<String, String?>>()
+
     override fun openRoot(revision: Long) {
         paths.push("/")
         files["/"] = "dir"

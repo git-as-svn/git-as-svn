@@ -54,6 +54,7 @@ class ReplayTest {
             }
         }
     }
+
     private fun buildHistory(repo: SVNRepository): SVNCommitInfo {
         val r1 = createCommit(repo, "Add README.md file") { editor: ISVNEditor ->
             editor.openRoot(0)
@@ -127,6 +128,7 @@ class ReplayTest {
             }
         }
     }
+
     private fun replayRangeRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long, checkDelete: Boolean) {
         val copyFroms = TreeMap<Long, CopyFromSVNEditor>()
         srcRepo.replayRange(revision, revision, 0, true, object : ISVNReplayHandler {
@@ -135,6 +137,7 @@ class ReplayTest {
                 copyFroms[revision] = editor
                 return editor
             }
+
             override fun handleEndRevision(revision: Long, revisionProperties: SVNProperties, editor: ISVNEditor) {
                 editor.closeEdit()
             }
@@ -143,6 +146,7 @@ class ReplayTest {
             checkCopyFrom(srcRepo, value, key)
         }
     }
+
     private fun compareRevision(srcRepo: SVNRepository, srcRev: Long, dstRepo: SVNRepository, dstRev: Long) {
         val srcExport = ExportSVNEditor(true)
         srcRepo.diff(srcRepo.location, srcRev, srcRev - 1, null, false, SVNDepth.INFINITY, true, { reporter: ISVNReporter ->
@@ -156,6 +160,7 @@ class ReplayTest {
         }, FilterSVNEditor(dstExport, true))
         Assert.assertEquals(srcExport.toString(), dstExport.toString())
     }
+
     private fun createCommit(repo: SVNRepository, commitMessage: String, func: VcsConsumer<ISVNEditor>): SVNCommitInfo {
         val editor = repo.getCommitEditor(commitMessage, null)
         return try {
@@ -167,6 +172,7 @@ class ReplayTest {
             editor.abortEdit()
         }
     }
+
     private fun checkCopyFrom(repo: SVNRepository, editor: CopyFromSVNEditor, revision: Long) {
         val copyFrom = TreeMap<String, String>()
         repo.log(arrayOf(""), revision, revision, true, true) { logEntry: SVNLogEntry ->
@@ -195,6 +201,7 @@ class ReplayTest {
                         override fun handleStartRevision(revision: Long, revisionProperties: SVNProperties): ISVNEditor {
                             return dstRepo.getCommitEditor(revisionProperties.getStringValue(SVNRevisionProperty.LOG), null)
                         }
+
                         override fun handleEndRevision(revision: Long, revisionProperties: SVNProperties, editor: ISVNEditor) {
                             editor.closeEdit()
                         }
@@ -208,6 +215,7 @@ class ReplayTest {
     fun testReplaySelfWithUpdate() {
         checkReplaySelf { srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long -> updateRevision(srcRepo, dstRepo, revision) }
     }
+
     private fun checkReplaySelf(replayMethod: ReplayMethod) {
         SvnTestServer.createMasterRepository().use { src ->
             SvnTestServer.createEmpty().use { dst ->
@@ -231,6 +239,7 @@ class ReplayTest {
             }
         }
     }
+
     private fun updateRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long) {
         val message = srcRepo.getRevisionPropertyValue(revision, "svn:log")
         val editor = CopyFromSVNEditor(dstRepo.getCommitEditor(message.string, null), "/", true)
@@ -240,11 +249,13 @@ class ReplayTest {
         }, FilterSVNEditor(editor, true))
         checkCopyFrom(srcRepo, editor, revision)
     }
+
     private fun compareGitRevision(srcGit: Repository, srcHash: SVNPropertyValue, dstGit: Repository, dstHash: SVNPropertyValue) {
         val srcCommit = getCommit(srcGit, srcHash)
         val dstCommit = getCommit(dstGit, dstHash)
         Assert.assertEquals(srcCommit.tree.name, dstCommit.tree.name)
     }
+
     private fun getCommit(git: Repository, hash: SVNPropertyValue): RevCommit {
         return RevWalk(git).parseCommit(ObjectId.fromString(String(hash.bytes)))
     }
@@ -253,6 +264,7 @@ class ReplayTest {
     fun testReplaySelfWithReplay() {
         checkReplaySelf { srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long -> replayRevision(srcRepo, dstRepo, revision) }
     }
+
     private fun replayRevision(srcRepo: SVNRepository, dstRepo: SVNRepository, revision: Long) {
         val revisionProperties = srcRepo.getRevisionProperties(revision, null)
         val editor = CopyFromSVNEditor(dstRepo.getCommitEditor(revisionProperties.getStringValue("svn:log"), null), "/", true)

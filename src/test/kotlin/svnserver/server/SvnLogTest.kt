@@ -85,9 +85,11 @@ class SvnLogTest {
             )
         }
     }
+
     private fun checkLog(repo: SVNRepository, r1: Long, r2: Long, path: String, vararg expecteds: LogEntry) {
         checkLogLimit(repo, r1, r2, 0, path, *expecteds)
     }
+
     private fun checkLogLimit(repo: SVNRepository, r1: Long, r2: Long, limit: Int, path: String, vararg expecteds: LogEntry) {
         val actual = ArrayList<LogEntry>()
         repo.log(arrayOf(path), r1, r2, true, false, limit.toLong()) { logEntry: SVNLogEntry -> actual.add(LogEntry(logEntry)) }

@@ -158,10 +158,12 @@ class LfsLocalStorageTest {
             }
             return data
         }
+
         fun checkLfs(storage: LfsStorage, user: User) {
             checkLfs(storage, user, bigFile())
             checkLfs(storage, user, GitRepository.emptyBytes)
         }
+
         fun checkLocks(storage: LfsStorage, user: User) {
             val locks1: Array<LockDesc> = try {
                 storage.lock(user, null, null, false, arrayOf(LockTarget("/dir/1.txt", 1)))
@@ -186,6 +188,7 @@ class LfsLocalStorageTest {
             val forceUnlockWithoutToken = storage.unlock(user, null, true, arrayOf(UnlockTarget("/2.txt", null)))
             Assert.assertEquals(forceUnlockWithoutToken, arrayOf(otherUserLock))
         }
+
         private fun checkLfs(storage: LfsStorage, user: User, expected: ByteArray) {
             val expectedOid = "sha256:" + Hashing.sha256().hashBytes(expected).toString()
             val oid: String

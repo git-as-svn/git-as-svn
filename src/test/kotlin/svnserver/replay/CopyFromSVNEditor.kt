@@ -17,10 +17,12 @@ import java.util.*
  */
 class CopyFromSVNEditor(editor: ISVNEditor?, private val basePath: String, checkDelete: Boolean) : SVNEditorWrapper(editor, checkDelete) {
     private val copyFrom = TreeMap<String, String>()
+
     override fun addDir(path: String, copyFromPath: String?, copyFromRevision: Long) {
         if (copyFromPath != null) copyFrom[basePath + path] = "$copyFromPath@$copyFromRevision"
         super.addDir(path, copyFromPath, copyFromRevision)
     }
+
     override fun addFile(path: String, copyFromPath: String?, copyFromRevision: Long) {
         if (copyFromPath != null) copyFrom[basePath + path] = "$copyFromPath@$copyFromRevision"
         super.addFile(path, copyFromPath, copyFromRevision)

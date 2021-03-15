@@ -15,6 +15,7 @@ import org.testng.internal.junit.ArrayAsserts
 import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.util.*
+import kotlin.math.min
 
 /**
  * Test for TemporaryOutputStream.
@@ -39,7 +40,7 @@ class TemporaryOutputStreamTest {
                     val data = ByteArray(blockSize)
                     random.nextBytes(data)
                     val offset = random.nextInt(blockSize - 1)
-                    val count = Math.min(random.nextInt(blockSize - offset - 1) + 1, totalSize - writeSize)
+                    val count = min(random.nextInt(blockSize - offset - 1) + 1, totalSize - writeSize)
                     outputStream.write(data, offset, count)
                     expectedStream.write(data, offset, count)
                     writeSize += count
@@ -86,8 +87,7 @@ class TemporaryOutputStreamTest {
         val outputStream = TemporaryOutputStream(MAX_MEMORY_SIZE)
         Assert.assertNull(outputStream.tempFile())
         outputStream.write(expectedData)
-        val tempFile = outputStream.tempFile()
-        Assert.assertNotNull(tempFile)
+        val tempFile = outputStream.tempFile()!!
         Assert.assertTrue(Files.exists(tempFile))
         val inputStream = outputStream.toInputStream()
         Assert.assertTrue(Files.exists(tempFile))
@@ -106,6 +106,7 @@ class TemporaryOutputStreamTest {
 
     companion object {
         private const val MAX_MEMORY_SIZE = 10240
+
         @JvmStatic
         @DataProvider
         fun providerReadWrite(): Array<Array<Any>> {

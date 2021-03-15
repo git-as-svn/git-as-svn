@@ -61,6 +61,7 @@ class SvnGetLocationsTest {
             )
         }
     }
+
     private fun initRepo(repo: SVNRepository) {
         // r1 - add single file.
         run {
@@ -107,6 +108,7 @@ class SvnGetLocationsTest {
         // r5 - modify file.
         modifyFile(repo, "/baz/test.txt", "Baz content", repo.latestRevision)
     }
+
     private fun checkGetSegments(repo: SVNRepository, path: String, pegRev: Long, startRev: Long, endRev: Long, vararg expected: String) {
         val actual = ArrayList<String>()
         val handler = ISVNLocationSegmentHandler { locationEntry: SVNLocationSegment -> actual.add(locationEntry.path + "@" + locationEntry.startRevision + ":" + locationEntry.endRevision) }
@@ -167,6 +169,7 @@ class SvnGetLocationsTest {
             checkGetLocations(repo, "/foo/test.txt", 1, 0, null)
         }
     }
+
     private fun checkGetLocations(repo: SVNRepository, path: String, pegRev: Long, targetRev: Long, expectedPath: String?) {
         val paths = ArrayList<String>()
         repo.getLocations(path, pegRev, longArrayOf(targetRev)) { locationEntry: SVNLocationEntry ->

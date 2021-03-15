@@ -14,7 +14,6 @@ import java.nio.file.Path
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 interface DirectoryServerNet {
-    @get:Throws(Exception::class)
     val listenerConfig: InMemoryListenerConfig
     val urlSchema: String
     val certificatePath: Path?

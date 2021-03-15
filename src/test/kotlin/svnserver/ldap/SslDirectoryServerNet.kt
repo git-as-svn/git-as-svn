@@ -47,6 +47,7 @@ internal class SslDirectoryServerNet(override val certificatePath: Path, keyFile
             keyManagerFactory.init(keyStore, keyPassword)
             return keyManagerFactory.keyManagers
         }
+
         private fun loadKey(keyFile: Path): PrivateKey {
             val keyPair: PEMKeyPair
             Files.newInputStream(keyFile).use { keyStream -> InputStreamReader(keyStream, StandardCharsets.US_ASCII).use { keyReader -> PEMParser(keyReader).use { parser -> keyPair = parser.readObject() as PEMKeyPair } } }
@@ -54,6 +55,7 @@ internal class SslDirectoryServerNet(override val certificatePath: Path, keyFile
             val keySpec = PKCS8EncodedKeySpec(keyPair.privateKeyInfo.encoded)
             return KeyFactory.getInstance("RSA").generatePrivate(keySpec)
         }
+
         private fun assembleKeyStore(certificate: Certificate, key: PrivateKey, keyPassword: CharArray): KeyStore {
             val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
             keyStore.load(null)
