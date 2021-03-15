@@ -17,7 +17,6 @@ import java.util.*
  */
 class GetDatedRevTest {
     @Test
-    @Throws(Exception::class)
     fun simple() {
         SvnTestServer.createEmpty().use { server -> Assert.assertEquals(server.openSvnRepository().getDatedRevision(Date(0)), 0) }
     }

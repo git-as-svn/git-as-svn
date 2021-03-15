@@ -46,7 +46,6 @@ class SvnUpdateTest {
     </pre> *
      */
     @Test
-    @Throws(Exception::class)
     fun addAndUpdate() {
         SvnTestServer.createEmpty().use { server ->
             val factory: SvnOperationFactory = server.createOperationFactory()

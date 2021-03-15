@@ -18,7 +18,6 @@ import svnserver.SvnTestServer
  */
 class StatusCmdTest {
     @Test
-    @Throws(Exception::class)
     fun simple() {
         SvnTestServer.createMasterRepository().use { server ->
             val factory: SvnOperationFactory = server.createOperationFactory()

@@ -9,7 +9,10 @@ package svnserver.server
 
 import org.testng.annotations.Test
 import org.testng.internal.junit.ArrayAsserts
-import org.tmatesoft.svn.core.*
+import org.tmatesoft.svn.core.SVNLogEntry
+import org.tmatesoft.svn.core.SVNLogEntryPath
+import org.tmatesoft.svn.core.SVNProperty
+import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.SvnTestHelper
 import svnserver.SvnTestHelper.modifyFile
@@ -26,7 +29,6 @@ class SvnLogTest {
      * Check simple svn log behaviour.
      */
     @Test
-    @Throws(Exception::class)
     fun simple() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -83,13 +85,9 @@ class SvnLogTest {
             )
         }
     }
-
-    @Throws(SVNException::class)
     private fun checkLog(repo: SVNRepository, r1: Long, r2: Long, path: String, vararg expecteds: LogEntry) {
         checkLogLimit(repo, r1, r2, 0, path, *expecteds)
     }
-
-    @Throws(SVNException::class)
     private fun checkLogLimit(repo: SVNRepository, r1: Long, r2: Long, limit: Int, path: String, vararg expecteds: LogEntry) {
         val actual = ArrayList<LogEntry>()
         repo.log(arrayOf(path), r1, r2, true, false, limit.toLong()) { logEntry: SVNLogEntry -> actual.add(LogEntry(logEntry)) }
@@ -100,7 +98,6 @@ class SvnLogTest {
      * Check file recreate log test.
      */
     @Test
-    @Throws(Exception::class)
     fun recreateFile() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -134,7 +131,6 @@ class SvnLogTest {
      * Check file recreate log test.
      */
     @Test
-    @Throws(Exception::class)
     fun recreateDirectory() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -194,7 +190,6 @@ class SvnLogTest {
      * Check file move log test.
      */
     @Test
-    @Throws(Exception::class)
     fun moveFile() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -286,7 +281,6 @@ class SvnLogTest {
      * Check file move log test.
      */
     @Test
-    @Throws(Exception::class)
     fun moveDirectory() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()

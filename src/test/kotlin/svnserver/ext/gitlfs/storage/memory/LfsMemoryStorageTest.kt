@@ -8,12 +8,10 @@
 package svnserver.ext.gitlfs.storage.memory
 
 import com.google.common.io.CharStreams
-import org.testng.*
-import org.testng.annotations.*
-import org.tmatesoft.svn.core.SVNException
-import ru.bozaro.gitlfs.common.LockConflictException
-import svnserver.auth.*
-import java.io.*
+import org.testng.Assert
+import org.testng.annotations.Test
+import svnserver.auth.User
+import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
 /**
@@ -23,7 +21,6 @@ import java.nio.charset.StandardCharsets
  */
 class LfsMemoryStorageTest {
     @Test
-    @Throws(IOException::class)
     fun simple() {
         val storage = LfsMemoryStorage()
         // Check file is not exists
@@ -42,7 +39,6 @@ class LfsMemoryStorageTest {
     }
 
     @Test
-    @Throws(SVNException::class, LockConflictException::class, IOException::class)
     fun lockUnlock() {
         val storage = LfsMemoryStorage()
         val lock = storage.lock(User.anonymous, null, "README.md")
@@ -55,7 +51,6 @@ class LfsMemoryStorageTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun alreadyAdded() {
         val storage = LfsMemoryStorage()
         // Check file is not exists

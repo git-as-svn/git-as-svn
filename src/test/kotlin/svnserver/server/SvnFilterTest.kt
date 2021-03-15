@@ -18,7 +18,6 @@ import svnserver.SvnTestHelper
 import svnserver.SvnTestHelper.modifyFile
 import svnserver.SvnTestServer
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.zip.GZIPOutputStream
@@ -33,7 +32,6 @@ class SvnFilterTest {
      * Check file read content on filter change.
      */
     @Test
-    @Throws(Exception::class)
     fun binaryRead() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -68,7 +66,6 @@ class SvnFilterTest {
      * Check file read content on filter change.
      */
     @Test
-    @Throws(Exception::class)
     fun textRead() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -120,7 +117,6 @@ class SvnFilterTest {
      * Write filtered file.
      */
     @Test
-    @Throws(Exception::class)
     fun write() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -140,7 +136,6 @@ class SvnFilterTest {
      * Write file before .gitattributes in single commit.
      */
     @Test
-    @Throws(Exception::class)
     fun writeBeforeAttributes() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -182,7 +177,6 @@ class SvnFilterTest {
      * Write file after .gitattributes in single commit.
      */
     @Test
-    @Throws(Exception::class)
     fun writeAfterAttributes() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -224,7 +218,6 @@ class SvnFilterTest {
      * Copy file with filter change.
      */
     @Test
-    @Throws(Exception::class)
     fun copy() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -252,7 +245,6 @@ class SvnFilterTest {
      * Copy file with filter change.
      */
     @Test
-    @Throws(Exception::class)
     fun copyAndModify() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -281,8 +273,6 @@ class SvnFilterTest {
 """.toByteArray(StandardCharsets.UTF_8)
         private val CONTENT_BAR = """${Strings.repeat("Some data\n", 100)}Bar file
 """.toByteArray(StandardCharsets.UTF_8)
-
-        @Throws(IOException::class)
         private fun gzip(data: ByteArray): ByteArray {
             val result = ByteArrayOutputStream()
             GZIPOutputStream(result).use { stream -> stream.write(data) }

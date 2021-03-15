@@ -11,7 +11,6 @@ import org.testng.Assert
 import org.testng.annotations.Listeners
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNDepth
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.ISVNReporter
@@ -29,7 +28,6 @@ import svnserver.tester.SvnTesterFactory
 @Listeners(SvnTesterExternalListener::class)
 class DepthTest {
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun interruptedUpdate(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -72,8 +70,6 @@ a/b/c/d - delta-end
             )
         }
     }
-
-    @Throws(Exception::class)
     private fun create(factory: SvnTesterFactory): SvnTester {
         val tester = factory.create()
         val repo = tester.openSvnRepository()
@@ -102,8 +98,6 @@ a/b/c/d - delta-end
         editor.closeEdit()
         return tester
     }
-
-    @Throws(SVNException::class)
     private fun check(server: SvnTester, path: String, depth: SVNDepth?, reporterBaton: ISVNReporterBaton, expected: String) {
         val repo = server.openSvnRepository()
         val editor = ReportSVNEditor()
@@ -112,7 +106,6 @@ a/b/c/d - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun empty(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -214,7 +207,6 @@ a/b/e - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun emptySubdir(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -280,7 +272,6 @@ a/b/e - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun emptySubdir2(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -331,7 +322,6 @@ a/b/c/d - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun infinity(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -420,7 +410,6 @@ a/b/e - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun infinitySubdir(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -477,7 +466,6 @@ a/b/e - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun files(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -543,7 +531,6 @@ a/b/c/d - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun immediates(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision
@@ -614,7 +601,6 @@ a/b/c/d - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
-    @Throws(Exception::class)
     fun complex(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision

@@ -14,7 +14,6 @@ import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil
 import svnserver.TestHelper
-import java.io.IOException
 import java.util.*
 
 /**
@@ -57,7 +56,6 @@ class GitEolTest {
     companion object {
         @JvmStatic
         @DataProvider(name = "parseAttributesData")
-        @Throws(IOException::class)
         fun parseAttributesData(): Array<Array<out Any>> {
             val attr: Array<GitProperty>
             TestHelper.asStream(

@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory
 import svnserver.SvnTestHelper
 import svnserver.TestHelper
 import java.io.FileWriter
-import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Path
@@ -68,18 +67,12 @@ class SvnTesterExternalListener : ITestListener {
         private val daemon: Process
         private val repo: Path
         private val url: SVNURL
-
-        @Throws(IOException::class)
         private fun detectPort(): Int {
             ServerSocket(0, 0, InetAddress.getByName(HOST)).use { socket -> return socket.localPort }
         }
-
-        @Throws(Exception::class)
         override fun create(): SvnTester {
             return SvnTesterExternal(url, BasicAuthenticationManager.newInstance(USER_NAME, PASSWORD.toCharArray()))
         }
-
-        @Throws(Exception::class)
         override fun close() {
             log.info("Stopping native svn daemon.")
             daemon.destroy()
@@ -88,7 +81,6 @@ class SvnTesterExternalListener : ITestListener {
         }
 
         companion object {
-            @Throws(IOException::class)
             private fun createConfigs(repo: Path): Path {
                 val config = repo.resolve("conf/server.conf")
                 val passwd = repo.resolve("conf/server.passwd")

@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git.path
 
-import org.eclipse.jgit.errors.InvalidPatternException
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
@@ -79,7 +78,6 @@ object WildcardTest {
     }
 
     @Test(dataProvider = "nameMatcherData")
-    @Throws(InvalidPatternException::class)
     fun nameMatcherTest(mask: String, recursive: Boolean, svnMask: String?) {
         val matcher = nameMatcher(mask)
         Assert.assertEquals(matcher.isRecursive, recursive)
@@ -145,7 +143,6 @@ object WildcardTest {
     }
 
     @Test(dataProvider = "pathMatcherData")
-    @Throws(InvalidPatternException::class)
     fun pathMatcherTest(pattern: String, path: String, expectedMatch: Boolean?) {
         val wildcard = Wildcard(pattern)
         var matcher: PathMatcher? = wildcard.matcher

@@ -26,7 +26,6 @@ import java.util.*
  */
 class SvnCommitTest {
     @Test
-    @Throws(Exception::class)
     fun emptyDirDisabled() {
         SvnTestServer.createEmpty(EmptyDirsSupport.Disabled).use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -45,7 +44,6 @@ class SvnCommitTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun createEmptyDir() {
         SvnTestServer.createEmpty(EmptyDirsSupport.AutoCreateKeepFile).use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -60,7 +58,6 @@ class SvnCommitTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun emptyCommit() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -73,7 +70,6 @@ class SvnCommitTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun removeAllFilesFromDir() {
         SvnTestServer.createEmpty(EmptyDirsSupport.AutoCreateKeepFile).use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -98,7 +94,6 @@ class SvnCommitTest {
     </pre> *
      */
     @Test
-    @Throws(Exception::class)
     fun copyFileFromRevisionTest() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -122,7 +117,6 @@ class SvnCommitTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun bigFile() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -141,7 +135,6 @@ class SvnCommitTest {
     </pre> *
      */
     @Test
-    @Throws(Exception::class)
     fun copyDirFromRevisionTest() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -200,7 +193,6 @@ class SvnCommitTest {
      * Check commit out-of-date.
      */
     @Test
-    @Throws(Exception::class)
     fun commitFileOufOfDateTest() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -220,7 +212,6 @@ class SvnCommitTest {
      * Check commit up-to-date.
      */
     @Test
-    @Throws(Exception::class)
     fun commitFileUpToDateTest() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -236,7 +227,6 @@ class SvnCommitTest {
      * Check commit without e-mail.
      */
     @Test
-    @Throws(Exception::class)
     fun commitWithoutEmail() {
         SvnTestServer.createEmpty().use { server ->
             val repo1: SVNRepository = server.openSvnRepository()

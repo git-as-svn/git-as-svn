@@ -20,7 +20,6 @@ import org.testng.annotations.BeforeClass
 import org.testng.annotations.Ignore
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNAuthenticationException
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.KFixedHostPortGenericContainer
 import svnserver.SvnTestHelper
@@ -55,7 +54,6 @@ class GitLabIntegrationTest {
     private var gitlabPublicProject: GitlabProject? = null
 
     @BeforeClass
-    @Throws(Exception::class)
     fun before() {
         SvnTestHelper.skipTestIfDockerUnavailable()
         var gitlabVersion = System.getenv("GITLAB_VERSION")
@@ -95,12 +93,10 @@ class GitLabIntegrationTest {
         gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC, setOf("git-as-svn:master"))
     }
 
-    @Throws(IOException::class)
     private fun createToken(username: String, password: String, sudoScope: Boolean): GitLabToken {
         return GitLabContext.obtainAccessToken(gitlabUrl!!, username, password, sudoScope)
     }
 
-    @Throws(IOException::class)
     private fun createGitlabProject(rootAPI: GitlabAPI, group: GitlabGroup, name: String, visibility: GitlabVisibility, tags: Set<String>): GitlabProject {
         // java-gitlab-api doesn't handle tag_list, so we have to do this manually
         val query = Query()
@@ -121,17 +117,14 @@ class GitLabIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun validUser() {
         checkUser(root, rootPassword)
     }
 
-    @Throws(Exception::class)
     private fun checkUser(login: String, password: String) {
         createServer(rootToken!!, null).use { server -> server.openSvnRepository(login, password).latestRevision }
     }
 
-    @Throws(Exception::class)
     private fun createServer(token: GitLabToken, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?): SvnTestServer {
         val gitLabConfig = GitLabConfig(gitlabUrl!!, token)
         return SvnTestServer.createEmpty(GitLabUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, gitLabConfig, WebServerConfig())
@@ -148,18 +141,15 @@ class GitLabIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun gitlabMappingAsRoot() {
         createServer(rootToken!!) { dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server -> openSvnRepository(server, gitlabProject!!, user, userPassword).latestRevision }
     }
 
-    @Throws(SVNException::class)
     private fun openSvnRepository(server: SvnTestServer, gitlabProject: GitlabProject, username: String, password: String): SVNRepository {
         return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(gitlabProject.pathWithNamespace + "/master", false), username, password)
     }
 
     @Test
-    @Throws(Exception::class)
     fun testLfs() {
         val storage = GitLabConfig.createLfsStorage(gitlabUrl!!, gitlabProject!!.pathWithNamespace, root, rootPassword, null)
         val user = User.create(root, root, root, root, UserType.GitLab, LfsCredentials(root, rootPassword))
@@ -169,7 +159,6 @@ class GitLabIntegrationTest {
     }
 
     @Test
-    @Throws(Throwable::class)
     fun gitlabMappingForAnonymous() {
         createServer(rootToken!!) { dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server -> openSvnRepository(server, gitlabPublicProject!!, "nobody", "nopassword").latestRevision }
     }
@@ -179,7 +168,6 @@ class GitLabIntegrationTest {
      */
     @Ignore
     @Test
-    @Throws(Exception::class)
     fun gitlabMappingAsUser() {
         val userToken = createToken(user, userPassword, false)
         createServer(userToken) { dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server -> openSvnRepository(server, gitlabProject!!, root, rootPassword).latestRevision }

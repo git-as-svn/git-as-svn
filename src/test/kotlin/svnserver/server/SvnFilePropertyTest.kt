@@ -29,7 +29,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun executable() {
         //Map<String, String> props = new HashMap<>()["key":""];
         SvnTestServer.createEmpty().use { server ->
@@ -60,7 +59,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun binary() {
         //Map<String, String> props = new HashMap<>()["key":""];
         SvnTestServer.createEmpty().use { server ->
@@ -93,7 +91,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun symlink() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -150,7 +147,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun symlinkBinary() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -166,7 +162,6 @@ class SvnFilePropertyTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun needsLock() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -181,7 +176,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitUpdatePropertiesRoot() {
         //Map<String, String> props = new HashMap<>()["key":""];
         SvnTestServer.createEmpty().use { server ->
@@ -209,7 +203,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitUpdatePropertiesSubdir() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -253,7 +246,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitDirWithProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -278,7 +270,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitDirWithoutProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -306,7 +297,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitDirUpdateWithProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -346,7 +336,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitDirUpdateWithoutProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -388,7 +377,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitRootWithProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -413,7 +401,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitRootWithoutProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -440,7 +427,6 @@ class SvnFilePropertyTest {
      * Check commit .gitattributes.
      */
     @Test
-    @Throws(Exception::class)
     fun commitFileWithProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()

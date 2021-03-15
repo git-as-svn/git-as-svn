@@ -12,7 +12,6 @@ import org.testng.annotations.AfterMethod
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNDepth
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.wc.SVNRevision
@@ -32,7 +31,6 @@ class WCDepthTest {
     private var wc: Path? = null
 
     @BeforeMethod
-    @Throws(Exception::class)
     private fun before() {
         server = SvnTestServer.createEmpty()
         val repository = server!!.openSvnRepository()
@@ -57,7 +55,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun empty() {
         checkout("", SVNDepth.EMPTY)
         Assert.assertFalse(Files.exists(wc!!.resolve("a")))
@@ -66,8 +63,6 @@ class WCDepthTest {
         update("", SVNDepth.INFINITY)
         Assert.assertTrue(Files.exists(wc!!.resolve("a/b/c/d")))
     }
-
-    @Throws(SVNException::class)
     private fun checkout(path: String, depth: SVNDepth) {
         val checkout = factory!!.createCheckout()
         checkout.source = SvnTarget.fromURL(server!!.url.appendPath(path, true))
@@ -76,8 +71,6 @@ class WCDepthTest {
         checkout.depth = depth
         checkout.run()
     }
-
-    @Throws(SVNException::class)
     private fun update(path: String, depth: SVNDepth?) {
         val update = factory!!.createUpdate()
         update.setSingleTarget(SvnTarget.fromFile(wc!!.resolve(path).toFile()))
@@ -90,7 +83,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun emptySubdir() {
         checkout("a/b", SVNDepth.EMPTY)
         Assert.assertFalse(Files.exists(wc!!.resolve("c")))
@@ -104,7 +96,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun emptySubdir2() {
         checkout("a/b/c", SVNDepth.EMPTY)
         Assert.assertFalse(Files.exists(wc!!.resolve("d")))
@@ -115,7 +106,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun infinity() {
         checkout("", SVNDepth.INFINITY)
         Assert.assertTrue(Files.exists(wc!!.resolve("a/b/c/d")))
@@ -126,7 +116,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun infinitySubdir() {
         checkout("a", SVNDepth.INFINITY)
         Assert.assertTrue(Files.exists(wc!!.resolve("b/c/d")))
@@ -137,7 +126,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun files() {
         checkout("a/b", SVNDepth.FILES)
         Assert.assertFalse(Files.exists(wc!!.resolve("c")))
@@ -150,7 +138,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun immediates() {
         checkout("a/b", SVNDepth.IMMEDIATES)
         Assert.assertTrue(Files.exists(wc!!.resolve("c")))
@@ -165,7 +152,6 @@ class WCDepthTest {
     }
 
     @Test
-    @Throws(SVNException::class)
     fun complex() {
         checkout("", SVNDepth.INFINITY)
         Assert.assertTrue(Files.exists(wc!!.resolve("a/b/c/d")))
@@ -190,7 +176,6 @@ class WCDepthTest {
     }
 
     @AfterMethod
-    @Throws(Exception::class)
     private fun after() {
         server?.close()
     }

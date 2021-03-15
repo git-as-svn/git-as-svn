@@ -7,7 +7,6 @@
  */
 package svnserver.replay
 
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.ISVNEditor
@@ -18,14 +17,11 @@ import org.tmatesoft.svn.core.io.ISVNEditor
  * @author a.navrotskiy
  */
 class FilterSVNEditor(editor: ISVNEditor, checkDelete: Boolean) : SVNEditorWrapper(editor, checkDelete) {
-    @Throws(SVNException::class)
     override fun changeDirProperty(name: String, value: SVNPropertyValue) {
         if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             super.changeDirProperty(name, value)
         }
     }
-
-    @Throws(SVNException::class)
     override fun changeFileProperty(path: String, propertyName: String, propertyValue: SVNPropertyValue?) {
         if (!propertyName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             super.changeFileProperty(path, propertyName, propertyValue)

@@ -10,7 +10,6 @@ package svnserver.repository.git.prop
 import org.testng.Assert
 import org.testng.annotations.Test
 import svnserver.TestHelper
-import java.io.IOException
 import java.util.*
 
 /**
@@ -20,7 +19,6 @@ import java.util.*
  */
 class GitTortoiseTest {
     @Test
-    @Throws(IOException::class)
     fun testParseAttributes() {
         val attr: GitProperty
         TestHelper.asStream(
@@ -38,7 +36,6 @@ class GitTortoiseTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun testTortoiseAttributes() {
         val attr: GitProperty
         TestHelper.asStream(

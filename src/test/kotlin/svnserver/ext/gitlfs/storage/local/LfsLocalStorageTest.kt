@@ -15,7 +15,6 @@ import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNErrorMessage
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNLock
 import org.tmatesoft.svn.core.io.ISVNLockHandler
 import org.tmatesoft.svn.core.io.SVNRepository
@@ -33,7 +32,6 @@ import svnserver.repository.locks.LockDesc
 import svnserver.repository.locks.LockTarget
 import svnserver.repository.locks.UnlockTarget
 import svnserver.server.SvnFilePropertyTest
-import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -48,7 +46,6 @@ import javax.servlet.http.HttpServletResponse
  */
 class LfsLocalStorageTest {
     @Test
-    @Throws(Exception::class)
     fun commitToLocalLFS() {
         SvnTestServer.createEmpty(null, false, SvnTestServer.LfsMode.Local).use { server ->
             val svnRepository: SVNRepository = server.openSvnRepository()
@@ -78,7 +75,6 @@ class LfsLocalStorageTest {
     }
 
     @Test(dataProvider = "compressProvider")
-    @Throws(Exception::class)
     fun simple(compress: Boolean) {
         val user: User = User.anonymous
         val tempDir = TestHelper.createTempDir("git-as-svn")
@@ -106,7 +102,6 @@ class LfsLocalStorageTest {
     }
 
     @Test(dataProvider = "compressProvider")
-    @Throws(IOException::class)
     fun nometa(compress: Boolean) {
         val tempDir = TestHelper.createTempDir("git-as-svn")
         try {
@@ -130,7 +125,6 @@ class LfsLocalStorageTest {
     }
 
     @Test(dataProvider = "compressProvider")
-    @Throws(IOException::class)
     fun alreadyAdded(compress: Boolean) {
         val tempDir = TestHelper.createTempDir("git-as-svn")
         try {
@@ -164,14 +158,10 @@ class LfsLocalStorageTest {
             }
             return data
         }
-
-        @Throws(Exception::class)
         fun checkLfs(storage: LfsStorage, user: User) {
             checkLfs(storage, user, bigFile())
             checkLfs(storage, user, GitRepository.emptyBytes)
         }
-
-        @Throws(LockConflictException::class, IOException::class, SVNException::class)
         fun checkLocks(storage: LfsStorage, user: User) {
             val locks1: Array<LockDesc> = try {
                 storage.lock(user, null, null, false, arrayOf(LockTarget("/dir/1.txt", 1)))
@@ -196,8 +186,6 @@ class LfsLocalStorageTest {
             val forceUnlockWithoutToken = storage.unlock(user, null, true, arrayOf(UnlockTarget("/2.txt", null)))
             Assert.assertEquals(forceUnlockWithoutToken, arrayOf(otherUserLock))
         }
-
-        @Throws(IOException::class)
         private fun checkLfs(storage: LfsStorage, user: User, expected: ByteArray) {
             val expectedOid = "sha256:" + Hashing.sha256().hashBytes(expected).toString()
             val oid: String

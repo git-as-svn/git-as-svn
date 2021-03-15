@@ -7,7 +7,6 @@
  */
 package svnserver.tester
 
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNURL
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil
@@ -25,13 +24,9 @@ class SvnTesterExternal(private val myUrl: SVNURL, private val authManager: ISVN
 
     override val url: SVNURL
         get() = myUrl.appendPath(suffix, false)
-
-    @Throws(SVNException::class)
     override fun openSvnRepository(): SVNRepository {
         return openSvnRepository(url)
     }
-
-    @Throws(Exception::class)
     override fun close() {
         val repo = openSvnRepository(myUrl)
         val revision = repo.latestRevision
@@ -54,8 +49,6 @@ class SvnTesterExternal(private val myUrl: SVNURL, private val authManager: ISVN
             repo.closeSession()
         }
     }
-
-    @Throws(SVNException::class)
     private fun openSvnRepository(url: SVNURL): SVNRepository {
         val repo = SVNRepositoryFactory.create(url)
         if (authManager != null) {

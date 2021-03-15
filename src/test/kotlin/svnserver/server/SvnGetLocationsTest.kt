@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.SvnTestHelper
 import svnserver.SvnTestHelper.modifyFile
 import svnserver.SvnTestServer
-import java.io.IOException
 import java.util.*
 
 /**
@@ -30,7 +29,6 @@ import java.util.*
  */
 class SvnGetLocationsTest {
     @Test
-    @Throws(Exception::class)
     fun segmentsSimple() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -63,8 +61,6 @@ class SvnGetLocationsTest {
             )
         }
     }
-
-    @Throws(SVNException::class, IOException::class)
     private fun initRepo(repo: SVNRepository) {
         // r1 - add single file.
         run {
@@ -111,8 +107,6 @@ class SvnGetLocationsTest {
         // r5 - modify file.
         modifyFile(repo, "/baz/test.txt", "Baz content", repo.latestRevision)
     }
-
-    @Throws(SVNException::class)
     private fun checkGetSegments(repo: SVNRepository, path: String, pegRev: Long, startRev: Long, endRev: Long, vararg expected: String) {
         val actual = ArrayList<String>()
         val handler = ISVNLocationSegmentHandler { locationEntry: SVNLocationSegment -> actual.add(locationEntry.path + "@" + locationEntry.startRevision + ":" + locationEntry.endRevision) }
@@ -121,7 +115,6 @@ class SvnGetLocationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun segmentsInvalidRange() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -137,7 +130,6 @@ class SvnGetLocationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun segmentsNotFound() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -153,7 +145,6 @@ class SvnGetLocationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun locationsSimple() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
@@ -176,8 +167,6 @@ class SvnGetLocationsTest {
             checkGetLocations(repo, "/foo/test.txt", 1, 0, null)
         }
     }
-
-    @Throws(SVNException::class)
     private fun checkGetLocations(repo: SVNRepository, path: String, pegRev: Long, targetRev: Long, expectedPath: String?) {
         val paths = ArrayList<String>()
         repo.getLocations(path, pegRev, longArrayOf(targetRev)) { locationEntry: SVNLocationEntry ->
@@ -193,7 +182,6 @@ class SvnGetLocationsTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun locationsNotFound() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()

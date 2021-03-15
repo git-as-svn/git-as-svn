@@ -50,7 +50,6 @@ import svnserver.ext.web.config.WebServerConfig
 import svnserver.ext.web.server.WebServer
 import svnserver.repository.VcsAccess
 import svnserver.server.SvnFilePropertyTest
-import java.io.IOException
 import java.net.URI
 import java.nio.file.Paths
 import java.util.*
@@ -63,7 +62,6 @@ import java.util.*
  */
 class LfsHttpStorageTest {
     @Test
-    @Throws(Exception::class)
     fun commitToRemoteLfs() {
         // Create users
         val users = LocalUserDB()
@@ -122,7 +120,6 @@ class LfsHttpStorageTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun server() {
         // Create users
         val users = LocalUserDB()
@@ -178,7 +175,6 @@ class LfsHttpStorageTest {
         override fun lfsClient(user: User): Client {
             val httpClient = createHttpClient()
             val authProvider: CachedAuthProvider = object : CachedAuthProvider() {
-                @Throws(IOException::class)
                 override fun getAuthUncached(operation: Operation): Link {
                     val post = HttpPost(authUrl)
                     val params = ArrayList<NameValuePair>()

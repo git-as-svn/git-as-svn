@@ -7,7 +7,6 @@
  */
 package svnserver.tester
 
-import org.tmatesoft.svn.core.SVNException
 import org.tmatesoft.svn.core.SVNURL
 import org.tmatesoft.svn.core.io.SVNRepository
 
@@ -21,17 +20,13 @@ interface SvnTester : AutoCloseable {
      * Get URL to root of the working copy.
      *
      * @return Working copy root.
-     * @throws SVNException Some error.
      */
-    @get:Throws(SVNException::class)
     val url: SVNURL
 
     /**
      * Open connection to subversion server.
      *
      * @return New connection.
-     * @throws SVNException Some error.
      */
-    @Throws(SVNException::class)
     fun openSvnRepository(): SVNRepository
 }

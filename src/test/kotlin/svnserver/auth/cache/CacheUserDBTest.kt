@@ -10,7 +10,6 @@ package svnserver.auth.cache
 import com.google.common.cache.CacheBuilder
 import org.testng.Assert
 import org.testng.annotations.Test
-import org.tmatesoft.svn.core.SVNException
 import svnserver.UserType
 import svnserver.auth.User
 
@@ -21,7 +20,6 @@ import svnserver.auth.User
  */
 class CacheUserDBTest {
     @Test
-    @Throws(SVNException::class)
     fun testSimple() {
         val user = User.create("foo", "Foo", "foo@bar", "f01", UserType.Local, null)
         val db = TestUserDB(user)

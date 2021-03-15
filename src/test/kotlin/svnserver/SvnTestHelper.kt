@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -29,7 +28,6 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 object SvnTestHelper {
-    @Throws(SVNException::class)
     fun checkFileProp(repo: SVNRepository, filePath: String, expected: Map<String, String>?) {
         val props = SVNProperties()
         repo.getFile(filePath, repo.latestRevision, props, null)
@@ -48,19 +46,16 @@ object SvnTestHelper {
         Assert.assertTrue(check.isEmpty())
     }
 
-    @Throws(SVNException::class)
     fun checkDirProp(repo: SVNRepository, filePath: String, expected: Map<String, String>?) {
         val props = SVNProperties()
         repo.getDir(filePath, repo.latestRevision, props, ArrayList<Any?>())
         checkProp(props, expected)
     }
 
-    @Throws(SVNException::class, IOException::class)
     fun createFile(repo: SVNRepository, filePath: String, content: String, props: Map<String, String>?) {
         createFile(repo, filePath, content.toByteArray(StandardCharsets.UTF_8), props)
     }
 
-    @Throws(SVNException::class, IOException::class)
     fun createFile(repo: SVNRepository, filePath: String, content: ByteArray?, props: Map<String, String>?) {
         val editor = repo.getCommitEditor("Create file: $filePath", null, false, null)
         editor.openRoot(-1)
@@ -87,7 +82,6 @@ object SvnTestHelper {
         Assert.assertNotEquals(editor.closeEdit(), SVNCommitInfo.NULL)
     }
 
-    @Throws(SVNException::class, IOException::class)
     fun sendDeltaAndClose(editor: ISVNEditor, filePath: String, oldData: ByteArray?, newData: ByteArray?) {
         (if (oldData == null) SVNFileUtil.DUMMY_IN else ByteArrayInputStream(oldData)).use { oldStream ->
             (if (newData == null) SVNFileUtil.DUMMY_IN else ByteArrayInputStream(newData)).use { newStream ->
@@ -99,7 +93,6 @@ object SvnTestHelper {
         }
     }
 
-    @Throws(SVNException::class)
     fun deleteFile(repo: SVNRepository, filePath: String) {
         val latestRevision = repo.latestRevision
         val editor = repo.getCommitEditor("Delete file: $filePath", null, false, null)
@@ -122,13 +115,11 @@ object SvnTestHelper {
     }
 
     @JvmOverloads
-    @Throws(SVNException::class, IOException::class)
     fun modifyFile(repo: SVNRepository, filePath: String, newData: String, fileRev: Long, locks: Map<String, String>? = null) {
         modifyFile(repo, filePath, newData.toByteArray(StandardCharsets.UTF_8), fileRev, locks)
     }
 
     @JvmOverloads
-    @Throws(SVNException::class, IOException::class)
     fun modifyFile(repo: SVNRepository, filePath: String, newData: ByteArray?, fileRev: Long, locks: Map<String, String>? = null) {
         val oldData = ByteArrayOutputStream()
         repo.getFile(filePath, fileRev, null, oldData)
@@ -156,17 +147,14 @@ object SvnTestHelper {
         }
     }
 
-    @Throws(SVNException::class, IOException::class)
     fun sendDeltaAndClose(editor: ISVNEditor, filePath: String, oldData: String?, newData: String?) {
         sendDeltaAndClose(editor, filePath, oldData?.toByteArray(StandardCharsets.UTF_8), newData?.toByteArray(StandardCharsets.UTF_8))
     }
 
-    @Throws(IOException::class, SVNException::class)
     fun checkFileContent(repo: SVNRepository, filePath: String, content: String) {
         checkFileContent(repo, filePath, content.toByteArray(StandardCharsets.UTF_8))
     }
 
-    @Throws(IOException::class, SVNException::class)
     fun checkFileContent(repo: SVNRepository, filePath: String, content: ByteArray) {
         val info = repo.info(filePath, repo.latestRevision)
         Assert.assertEquals(info.kind, SVNNodeKind.FILE)
