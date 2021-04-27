@@ -40,13 +40,15 @@ class GitLabConfig private constructor(var url: String, private var tokenType: T
         val gitLabContext = GitLabContext(this)
         context.add(GitLabContext::class.java, gitLabContext)
         if (lfsMode != null) {
-            context.add(LfsStorageFactory::class.java, LfsStorageFactory { localContext: LocalContext ->
-                createLfsStorage(
-                    url,
-                    localContext.name,
-                    "UNUSED", getToken().value,
-                    lfsMode!!.readerFactory(localContext)
-                )
+            context.add(LfsStorageFactory::class.java, object : LfsStorageFactory {
+                override fun createStorage(context: LocalContext): LfsStorage {
+                    return createLfsStorage(
+                        url,
+                        context.name,
+                        "UNUSED", getToken().value,
+                        lfsMode!!.readerFactory(context)
+                    )
+                }
             })
         }
     }
