@@ -10,6 +10,7 @@ endif::[]
 :sectnums:
 :sectlinks:
 :sectanchors:
+:source-highlighter: rouge
 :icons: font
 
 include::_about.adoc[leveloffset=+1]
