@@ -27,6 +27,7 @@ import svnserver.config.LocalUserDBConfig.UserEntry
 import svnserver.context.LocalContext
 import svnserver.context.SharedContext
 import svnserver.ext.gitlfs.LocalLfsConfig
+import svnserver.ext.gitlfs.storage.LfsStorage
 import svnserver.ext.gitlfs.storage.LfsStorageFactory
 import svnserver.ext.gitlfs.storage.memory.LfsMemoryStorage
 import svnserver.ext.web.config.WebServerConfig
@@ -242,7 +243,13 @@ class SvnTestServer private constructor(
                 config.shared.add(LocalLfsConfig(tempDirectory.resolve("lfs").toString(), false))
             }
             LfsMode.Memory -> {
-                config.shared.add(SharedConfig { context: SharedContext -> context.add(LfsStorageFactory::class.java, LfsStorageFactory { LfsMemoryStorage() }) })
+                config.shared.add(SharedConfig { context: SharedContext ->
+                    context.add(LfsStorageFactory::class.java, object : LfsStorageFactory {
+                        override fun createStorage(context: LocalContext): LfsStorage {
+                            return LfsMemoryStorage()
+                        }
+                    })
+                })
             }
             LfsMode.None -> Unit
         }
