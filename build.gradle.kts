@@ -1,5 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.ZonedDateTime
@@ -7,7 +8,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "6.8.1"
+    gradleVersion = "7.0.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -137,6 +138,7 @@ val compileDocs by tasks.registering(Copy::class) {
         include("*.adoc", "LICENSE")
     }
     into(file("$buildDir/doc"))
+    duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
 asciidoctorj {
@@ -201,6 +203,7 @@ tasks.processResources {
             )
         )
     }
+    duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
 val debianControl by tasks.registering(Copy::class) {
