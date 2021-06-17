@@ -265,6 +265,8 @@ val distDocker by tasks.registering(Exec::class) {
 
 tasks.assembleDist {
     dependsOn(distDeb)
+    dependsOn(distDocker)
+    dependsOn(tasks.distTar)
 }
 
 tasks.distZip {
