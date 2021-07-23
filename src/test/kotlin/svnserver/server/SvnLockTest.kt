@@ -10,7 +10,10 @@ package svnserver.server
 import org.testng.Assert
 import org.testng.annotations.Listeners
 import org.testng.annotations.Test
-import org.tmatesoft.svn.core.*
+import org.tmatesoft.svn.core.SVNErrorCode
+import org.tmatesoft.svn.core.SVNErrorMessage
+import org.tmatesoft.svn.core.SVNException
+import org.tmatesoft.svn.core.SVNLock
 import org.tmatesoft.svn.core.io.ISVNLockHandler
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.StringHelper.normalize
@@ -20,7 +23,6 @@ import svnserver.SvnTestServer
 import svnserver.tester.SvnTesterDataProvider
 import svnserver.tester.SvnTesterExternalListener
 import svnserver.tester.SvnTesterFactory
-import java.util.*
 
 /**
  * Check svn locking.
@@ -36,7 +38,7 @@ class SvnLockTest {
     fun lockNotExists(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             lock(repo, "example2.txt", repo.latestRevision, false, SVNErrorCode.FS_OUT_OF_DATE)
         }
     }
@@ -75,7 +77,7 @@ class SvnLockTest {
     fun lockOutOfDate(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
             modifyFile(repo, "/example.txt", "content", latestRevision)
             lock(repo, "example.txt", latestRevision, false, SVNErrorCode.FS_OUT_OF_DATE)
@@ -90,7 +92,6 @@ class SvnLockTest {
             editor.openRoot(-1)
             editor.addDir("/example", null, -1)
             editor.addFile("/example/example.txt", null, -1)
-            editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
             SvnTestHelper.sendDeltaAndClose(editor, "/example/example.txt", null, "Source content")
             editor.closeDir()
             editor.closeDir()
@@ -107,7 +108,7 @@ class SvnLockTest {
     fun lockForce(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
             val oldLock = lock(repo, "example.txt", latestRevision, false, null)
             Assert.assertNotNull(oldLock)
@@ -138,7 +139,7 @@ class SvnLockTest {
     fun unlockForce(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
             val oldLock = lock(repo, "example.txt", latestRevision, false, null)
             Assert.assertNotNull(oldLock)
@@ -181,9 +182,9 @@ class SvnLockTest {
     fun lockSimple(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
-            SvnTestHelper.createFile(repo, "/example2.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example2.txt", "", emptyMap())
             Assert.assertNull(repo.getLock("example.txt"))
 
             // New lock
@@ -211,7 +212,7 @@ class SvnLockTest {
     fun modifyLocked(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // Lock
@@ -233,7 +234,7 @@ class SvnLockTest {
     fun modifyLockedInvalidLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // Lock
@@ -267,7 +268,7 @@ class SvnLockTest {
     fun modifyLockedRemoveLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // Lock
@@ -291,7 +292,7 @@ class SvnLockTest {
     fun lockWithDelayedAuth() {
         SvnTestServer.createEmpty(null, true).use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val lock = lock(repo, "/example.txt", repo.latestRevision, false, null)
             Assert.assertNotNull(lock)
         }
@@ -304,7 +305,7 @@ class SvnLockTest {
     fun modifyLockedKeepLock(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // Lock
@@ -331,7 +332,7 @@ class SvnLockTest {
     fun deleteLocked(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // Lock
@@ -364,7 +365,6 @@ class SvnLockTest {
                 editor.openRoot(-1)
                 editor.addDir("/example", null, -1)
                 editor.addFile("/example/example.txt", null, -1)
-                editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/example/example.txt", null, "Source content")
                 editor.closeDir()
                 editor.closeDir()
@@ -401,11 +401,9 @@ class SvnLockTest {
                 editor.openRoot(-1)
                 editor.addDir("/example", null, -1)
                 editor.addFile("/example/example.txt", null, -1)
-                editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/example/example.txt", null, "Source content")
                 editor.closeDir()
                 editor.addFile("/foo.txt", null, -1)
-                editor.changeFileProperty("/foo.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/foo.txt", null, "Source content")
                 editor.closeDir()
                 editor.closeEdit()
@@ -444,7 +442,6 @@ class SvnLockTest {
                 editor.openRoot(-1)
                 editor.addDir("/example", null, -1)
                 editor.addFile("/example/example.txt", null, -1)
-                editor.changeFileProperty("/example/example.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/example/example.txt", null, "Source content")
                 editor.closeDir()
                 editor.closeDir()
@@ -471,7 +468,7 @@ class SvnLockTest {
     fun unlockTwice(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // New lock
@@ -489,7 +486,7 @@ class SvnLockTest {
     fun unlockNotOwner(factory: SvnTesterFactory) {
         factory.create().use { server ->
             val repo = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/example.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/example.txt", "", emptyMap())
             val latestRevision = repo.latestRevision
 
             // New lock

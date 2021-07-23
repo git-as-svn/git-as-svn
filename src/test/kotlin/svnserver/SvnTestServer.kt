@@ -35,6 +35,7 @@ import svnserver.repository.RepositoryMapping
 import svnserver.repository.VcsAccess
 import svnserver.repository.git.EmptyDirsSupport
 import svnserver.repository.git.GitRepository
+import svnserver.repository.git.RepositoryFormat
 import svnserver.repository.git.push.GitPushEmbedded
 import svnserver.server.SvnServer
 import svnserver.tester.SvnTester
@@ -158,7 +159,8 @@ class SvnTestServer private constructor(
                 git,
                 GitPushEmbedded(local, null, false), setOf(branch),
                 true,
-                emptyDirs
+                emptyDirs,
+                RepositoryFormat.Latest
             )
             return object : RepositoryMapping<GitRepository> {
                 override val mapping: NavigableMap<String, GitRepository>

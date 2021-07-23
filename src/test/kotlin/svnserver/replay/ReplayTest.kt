@@ -60,7 +60,6 @@ class ReplayTest {
             editor.openRoot(0)
             run {
                 editor.addFile("/README.md", null, -1)
-                editor.changeFileProperty("/README.md", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/README.md", null, "aaa")
             }
             editor.closeDir()
@@ -73,7 +72,6 @@ class ReplayTest {
                     editor.addDir("/foo/bar", null, -1)
                     run {
                         editor.addFile("/foo/bar/file.txt", null, -1)
-                        editor.changeFileProperty("/foo/bar/file.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                         SvnTestHelper.sendDeltaAndClose(editor, "/foo/bar/file.txt", null, "bbb")
                     }
                     editor.closeDir()

@@ -11,8 +11,6 @@ import org.testng.Assert
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNErrorCode
 import org.tmatesoft.svn.core.SVNException
-import org.tmatesoft.svn.core.SVNProperty
-import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler
 import org.tmatesoft.svn.core.io.SVNLocationEntry
 import org.tmatesoft.svn.core.io.SVNLocationSegment
@@ -20,7 +18,6 @@ import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.SvnTestHelper
 import svnserver.SvnTestHelper.modifyFile
 import svnserver.SvnTestServer
-import java.util.*
 
 /**
  * Check file properties.
@@ -70,7 +67,6 @@ class SvnGetLocationsTest {
             editor.addDir("/foo", null, -1)
             // Some file.
             editor.addFile("/foo/test.txt", null, -1)
-            editor.changeFileProperty("/foo/test.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
             SvnTestHelper.sendDeltaAndClose(editor, "/foo/test.txt", null, "Foo content")
             // Close dir
             editor.closeDir()

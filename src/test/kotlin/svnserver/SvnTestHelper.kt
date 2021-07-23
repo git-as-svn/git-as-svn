@@ -20,7 +20,6 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
-import java.util.*
 
 /**
  * Helper to testing svn repository.
@@ -28,17 +27,15 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 object SvnTestHelper {
-    fun checkFileProp(repo: SVNRepository, filePath: String, expected: Map<String, String>?) {
+    fun checkFileProp(repo: SVNRepository, filePath: String, expected: Map<String, String>) {
         val props = SVNProperties()
         repo.getFile(filePath, repo.latestRevision, props, null)
         checkProp(props, expected)
     }
 
-    private fun checkProp(props: SVNProperties, expected: Map<String, String>?) {
-        val check = HashMap<String, String>()
-        if (expected != null) {
-            check.putAll(expected)
-        }
+    private fun checkProp(props: SVNProperties, expected: Map<String, String>) {
+        val check = HashMap(expected)
+
         for ((key, value) in props.asMap()) {
             if (key.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) continue
             Assert.assertEquals(value.string, check.remove(key))
@@ -46,17 +43,17 @@ object SvnTestHelper {
         Assert.assertTrue(check.isEmpty())
     }
 
-    fun checkDirProp(repo: SVNRepository, filePath: String, expected: Map<String, String>?) {
+    fun checkDirProp(repo: SVNRepository, filePath: String, expected: Map<String, String>) {
         val props = SVNProperties()
         repo.getDir(filePath, repo.latestRevision, props, ArrayList<Any?>())
         checkProp(props, expected)
     }
 
-    fun createFile(repo: SVNRepository, filePath: String, content: String, props: Map<String, String>?) {
+    fun createFile(repo: SVNRepository, filePath: String, content: String, props: Map<String, String>) {
         createFile(repo, filePath, content.toByteArray(StandardCharsets.UTF_8), props)
     }
 
-    fun createFile(repo: SVNRepository, filePath: String, content: ByteArray?, props: Map<String, String>?) {
+    fun createFile(repo: SVNRepository, filePath: String, content: ByteArray?, props: Map<String, String>) {
         val editor = repo.getCommitEditor("Create file: $filePath", null, false, null)
         editor.openRoot(-1)
         var index = 0
@@ -70,10 +67,8 @@ object SvnTestHelper {
             depth++
         }
         editor.addFile(filePath, null, -1)
-        if (props != null) {
-            for ((key, value) in props) {
-                editor.changeFileProperty(filePath, key, SVNPropertyValue.create(value))
-            }
+        for ((key, value) in props) {
+            editor.changeFileProperty(filePath, key, SVNPropertyValue.create(value))
         }
         sendDeltaAndClose(editor, filePath, null, content)
         for (i in 0 until depth) {

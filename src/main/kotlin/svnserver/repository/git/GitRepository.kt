@@ -34,7 +34,6 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
@@ -42,7 +41,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitRepository constructor(
+class GitRepository(
     val context: LocalContext,
     git: Repository,
     pusher: GitPusher,
@@ -50,7 +49,8 @@ class GitRepository constructor(
     renameDetection: Boolean,
     lockStorage: LockStorage,
     filters: GitFilters,
-    val emptyDirs: EmptyDirsSupport
+    val emptyDirs: EmptyDirsSupport,
+    val format: RepositoryFormat
 ) : AutoCloseable, BranchProvider {
     val git: Repository
     val pusher: GitPusher
@@ -119,7 +119,7 @@ class GitRepository constructor(
     private fun cachedParseGitProperty(objectId: GitObject<ObjectId>, factory: GitPropertyFactory): Array<GitProperty> {
         var property: Array<GitProperty>? = filePropertyCache[objectId.`object`]
         if (property == null) {
-            objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream) } }
+            objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream, format) } }
             if (property!!.isEmpty()) property = emptyArray()
             filePropertyCache[objectId.`object`] = property!!
         }

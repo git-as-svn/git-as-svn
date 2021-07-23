@@ -85,7 +85,7 @@ internal class GitFileTreeEntry private constructor(
                 } else if (fileMode.objectType == org.eclipse.jgit.lib.Constants.OBJ_BLOB) {
                     if (branch.repository.isObjectBinary(filter, objectId)) {
                         props[SVNProperty.MIME_TYPE] = Constants.MIME_BINARY
-                    } else {
+                    } else if (branch.repository.format < RepositoryFormat.V5_REMOVE_IMPLICIT_NATIVE_EOL) {
                         props[SVNProperty.EOL_STYLE] = SVNProperty.EOL_STYLE_NATIVE
                     }
                 }
