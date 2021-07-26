@@ -11,15 +11,12 @@ import com.google.common.base.Strings
 import org.testng.Assert
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNLogEntry
-import org.tmatesoft.svn.core.SVNProperty
-import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.SvnTestHelper
 import svnserver.SvnTestHelper.modifyFile
 import svnserver.SvnTestServer
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
-import java.util.*
 import java.util.zip.GZIPOutputStream
 
 /**
@@ -46,7 +43,7 @@ class SvnFilterTest {
             SvnTestHelper.checkFileContent(repo, "/data.z", compressed)
             SvnTestHelper.checkFileContent(repo, "/data.x", compressed)
             // Add filter to file.
-            SvnTestHelper.createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", emptyMap())
             // On file read now we must have uncompressed content.
             SvnTestHelper.checkFileProp(repo, "/data.z", SvnFilePropertyTest.propsBinary)
             SvnTestHelper.checkFileProp(repo, "/data.x", SvnFilePropertyTest.propsBinary)
@@ -80,7 +77,7 @@ class SvnFilterTest {
             SvnTestHelper.checkFileContent(repo, "/data.z", compressed)
             SvnTestHelper.checkFileContent(repo, "/data.x", compressed)
             // Add filter to file.
-            SvnTestHelper.createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.z\t\t\tfilter=gzip\n", emptyMap())
             // After commit .gitattributes file data.z must change property svn:mime-type and content automagically.
             run {
                 val changed = HashSet<String>()
@@ -90,7 +87,7 @@ class SvnFilterTest {
                 Assert.assertEquals(changed.size, 2)
             }
             // On file read now we must have uncompressed content.
-            SvnTestHelper.checkFileProp(repo, "/data.z", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/data.z", emptyMap())
             SvnTestHelper.checkFileProp(repo, "/data.x", SvnFilePropertyTest.propsBinary)
             SvnTestHelper.checkFileContent(repo, "/data.z", uncompressed)
             SvnTestHelper.checkFileContent(repo, "/data.x", compressed)
@@ -107,7 +104,7 @@ class SvnFilterTest {
             }
             // Check result.
             SvnTestHelper.checkFileProp(repo, "/data.z", SvnFilePropertyTest.propsBinary)
-            SvnTestHelper.checkFileProp(repo, "/data.x", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/data.x", emptyMap())
             SvnTestHelper.checkFileContent(repo, "/data.z", compressed)
             SvnTestHelper.checkFileContent(repo, "/data.x", uncompressed)
         }
@@ -122,9 +119,9 @@ class SvnFilterTest {
             val repo: SVNRepository = server.openSvnRepository()
 
             // Add filter to file.
-            SvnTestHelper.createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", emptyMap())
             // On file read now we must have uncompressed content.
-            SvnTestHelper.createFile(repo, "/data.z", CONTENT_FOO, SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/data.z", CONTENT_FOO, emptyMap())
             SvnTestHelper.checkFileContent(repo, "/data.z", CONTENT_FOO)
             // Modify file.
             modifyFile(repo, "/data.z", CONTENT_BAR, repo.latestRevision)
@@ -145,10 +142,8 @@ class SvnFilterTest {
                 val editor = repo.getCommitEditor("Complex commit", null, false, null)
                 editor.openRoot(-1)
                 editor.addFile("data.z", null, -1)
-                editor.changeFileProperty("data.z", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "data.z", null, CONTENT_FOO)
                 editor.addFile(".gitattributes", null, -1)
-                editor.changeFileProperty(".gitattributes", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, ".gitattributes", null, "*.z\t\t\tfilter=gzip\n")
                 editor.closeDir()
                 editor.closeEdit()
@@ -186,10 +181,8 @@ class SvnFilterTest {
                 val editor = repo.getCommitEditor("Complex commit", null, false, null)
                 editor.openRoot(-1)
                 editor.addFile(".gitattributes", null, -1)
-                editor.changeFileProperty(".gitattributes", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, ".gitattributes", null, "*.z\t\t\tfilter=gzip\n")
                 editor.addFile("data.z", null, -1)
-                editor.changeFileProperty("data.z", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "data.z", null, CONTENT_FOO)
                 editor.closeDir()
                 editor.closeEdit()
@@ -223,9 +216,9 @@ class SvnFilterTest {
             val repo: SVNRepository = server.openSvnRepository()
 
             // Add filter to file.
-            SvnTestHelper.createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", emptyMap())
             // Create source file.
-            SvnTestHelper.createFile(repo, "/data.txt", CONTENT_FOO, SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/data.txt", CONTENT_FOO, emptyMap())
             // Copy source file with "raw" filter to destination with "gzip" filter.
             run {
                 val rev = repo.latestRevision
@@ -250,9 +243,9 @@ class SvnFilterTest {
             val repo: SVNRepository = server.openSvnRepository()
 
             // Add filter to file.
-            SvnTestHelper.createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "/*.z\t\t\tfilter=gzip\n", emptyMap())
             // Create source file.
-            SvnTestHelper.createFile(repo, "/data.txt", CONTENT_FOO, SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/data.txt", CONTENT_FOO, emptyMap())
             // Copy source file with "raw" filter to destination with "gzip" filter.
             run {
                 val rev = repo.latestRevision

@@ -44,6 +44,7 @@ repositoryMapping: !giteaMapping
   #     - master
   #   renameDetection: true
   #   emptyDirs: Disabled
+  #   format: Latest
 
 # Tells git-as-svn to use Gitea API for user authentication
 userDB: !giteaUsers {}

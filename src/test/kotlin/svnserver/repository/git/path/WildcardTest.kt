@@ -20,7 +20,7 @@ import svnserver.repository.git.path.WildcardHelper.tryRemoveBackslashes
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-object WildcardTest {
+class WildcardTest {
     @DataProvider
     fun splitPatternData(): Array<Array<Any>> {
         return arrayOf(arrayOf("foo", arrayOf("foo")), arrayOf("foo/", arrayOf("foo/")), arrayOf("/bar", arrayOf("/", "bar")), arrayOf("/foo/bar/**", arrayOf("/", "foo/", "bar/", "**")))

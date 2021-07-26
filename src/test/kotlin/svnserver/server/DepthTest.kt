@@ -11,7 +11,6 @@ import org.testng.Assert
 import org.testng.annotations.Listeners
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNDepth
-import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.ISVNReporter
 import org.tmatesoft.svn.core.io.ISVNReporterBaton
@@ -62,7 +61,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -78,19 +76,15 @@ a/b/c/d - delta-end
         editor.openRoot(-1)
         editor.changeDirProperty("svn:ignore", SVNPropertyValue.create("sample.txt"))
         editor.addFile("/.gitattributes", null, -1)
-        editor.changeFileProperty("/.gitattributes", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
         SvnTestHelper.sendDeltaAndClose(editor, "/.gitattributes", null, "\n")
         editor.addFile("/.gitignore", null, -1)
-        editor.changeFileProperty("/.gitignore", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
         SvnTestHelper.sendDeltaAndClose(editor, "/.gitignore", null, "/sample.txt\n")
         editor.addDir("/a", null, -1)
         editor.addDir("/a/b", null, -1)
         editor.addFile("/a/b/e", null, -1)
-        editor.changeFileProperty("/a/b/e", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
         SvnTestHelper.sendDeltaAndClose(editor, "/a/b/e", null, "e body")
         editor.addDir("/a/b/c", null, -1)
         editor.addFile("/a/b/c/d", null, -1)
-        editor.changeFileProperty("/a/b/c/d", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
         SvnTestHelper.sendDeltaAndClose(editor, "/a/b/c/d", null, "d body")
         editor.closeDir()
         editor.closeDir()
@@ -150,7 +144,6 @@ a/b/c/d - delta-end
 .gitattributes - change-file-prop: svn:entry:committed-rev
 .gitattributes - change-file-prop: svn:entry:last-author
 .gitattributes - change-file-prop: svn:entry:uuid
-.gitattributes - change-file-prop: svn:eol-style
 .gitattributes - close-file: 68b329da9893e34099c7d8ad5cb9c940
 .gitattributes - delta-chunk
 .gitattributes - delta-end
@@ -160,7 +153,6 @@ a/b/c/d - delta-end
 .gitignore - change-file-prop: svn:entry:committed-rev
 .gitignore - change-file-prop: svn:entry:last-author
 .gitignore - change-file-prop: svn:entry:uuid
-.gitignore - change-file-prop: svn:eol-style
 .gitignore - close-file: 57457451fdf67806102d334f30c062f3
 .gitignore - delta-chunk
 .gitignore - delta-end
@@ -189,7 +181,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -199,7 +190,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -254,7 +244,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -264,7 +253,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -314,7 +302,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -339,7 +326,6 @@ a/b/c/d - delta-end
 .gitattributes - change-file-prop: svn:entry:committed-rev
 .gitattributes - change-file-prop: svn:entry:last-author
 .gitattributes - change-file-prop: svn:entry:uuid
-.gitattributes - change-file-prop: svn:eol-style
 .gitattributes - close-file: 68b329da9893e34099c7d8ad5cb9c940
 .gitattributes - delta-chunk
 .gitattributes - delta-end
@@ -349,7 +335,6 @@ a/b/c/d - delta-end
 .gitignore - change-file-prop: svn:entry:committed-rev
 .gitignore - change-file-prop: svn:entry:last-author
 .gitignore - change-file-prop: svn:entry:uuid
-.gitignore - change-file-prop: svn:eol-style
 .gitignore - close-file: 57457451fdf67806102d334f30c062f3
 .gitignore - delta-chunk
 .gitignore - delta-end
@@ -379,7 +364,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -389,7 +373,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -442,7 +425,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -452,7 +434,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -488,7 +469,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -523,7 +503,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -558,7 +537,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -593,7 +571,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -618,7 +595,6 @@ a/b/c/d - delta-end
 .gitattributes - change-file-prop: svn:entry:committed-rev
 .gitattributes - change-file-prop: svn:entry:last-author
 .gitattributes - change-file-prop: svn:entry:uuid
-.gitattributes - change-file-prop: svn:eol-style
 .gitattributes - close-file: 68b329da9893e34099c7d8ad5cb9c940
 .gitattributes - delta-chunk
 .gitattributes - delta-end
@@ -628,7 +604,6 @@ a/b/c/d - delta-end
 .gitignore - change-file-prop: svn:entry:committed-rev
 .gitignore - change-file-prop: svn:entry:last-author
 .gitignore - change-file-prop: svn:entry:uuid
-.gitignore - change-file-prop: svn:eol-style
 .gitignore - close-file: 57457451fdf67806102d334f30c062f3
 .gitignore - delta-chunk
 .gitignore - delta-end
@@ -658,7 +633,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -668,7 +642,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -713,7 +686,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -758,7 +730,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end
@@ -768,7 +739,6 @@ a/b/e - change-file-prop: svn:entry:committed-date
 a/b/e - change-file-prop: svn:entry:committed-rev
 a/b/e - change-file-prop: svn:entry:last-author
 a/b/e - change-file-prop: svn:entry:uuid
-a/b/e - change-file-prop: svn:eol-style
 a/b/e - close-file: babc2f91dac8ef35815e635d89196696
 a/b/e - delta-chunk
 a/b/e - delta-end
@@ -814,7 +784,6 @@ a/b/c/d - change-file-prop: svn:entry:committed-date
 a/b/c/d - change-file-prop: svn:entry:committed-rev
 a/b/c/d - change-file-prop: svn:entry:last-author
 a/b/c/d - change-file-prop: svn:entry:uuid
-a/b/c/d - change-file-prop: svn:eol-style
 a/b/c/d - close-file: e08b5cff98d6e3f8a892fc999622d441
 a/b/c/d - delta-chunk
 a/b/c/d - delta-end

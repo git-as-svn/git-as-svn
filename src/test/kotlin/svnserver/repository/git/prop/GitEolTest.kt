@@ -7,6 +7,8 @@
  */
 package svnserver.repository.git.prop
 
+import org.eclipse.jgit.attributes.Attributes
+import org.eclipse.jgit.attributes.AttributesRule
 import org.eclipse.jgit.lib.FileMode
 import org.testng.Assert
 import org.testng.annotations.DataProvider
@@ -14,6 +16,8 @@ import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil
 import svnserver.TestHelper
+import svnserver.repository.git.RepositoryFormat
+import svnserver.repository.git.prop.GitAttributesFactory.EolType
 import java.util.*
 
 /**
@@ -22,6 +26,66 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class GitEolTest {
+    @DataProvider
+    fun eolTypeV5Data(): Array<Array<out Any>> {
+        return arrayOf(
+            arrayOf("", EolType.Autodetect),
+
+            arrayOf("crlf", EolType.Native), // Be careful here
+            arrayOf("-crlf", EolType.Binary),
+            arrayOf("crlf=input", EolType.LF),
+
+            arrayOf("eol=lf", EolType.LF),
+            arrayOf("eol=crlf", EolType.CRLF),
+
+            arrayOf("eol=lf text=auto", EolType.Autodetect),
+            arrayOf("eol=crlf text=auto", EolType.Autodetect),
+
+            arrayOf("text", EolType.Native),
+            arrayOf("-text", EolType.Binary),
+            arrayOf("text=auto", EolType.Autodetect),
+
+            // invalid values
+            arrayOf("crlf=invalid", EolType.Autodetect),
+            arrayOf("eol=invalid", EolType.Autodetect),
+            arrayOf("eol", EolType.Autodetect),
+            arrayOf("text=invalid", EolType.Autodetect),
+        )
+    }
+
+    @Test(dataProvider = "eolTypeV5Data")
+    fun eolTypeV5(rule: String, expected: EolType) {
+        val attrs = Attributes(*AttributesRule("", rule).attributes.toTypedArray())
+        val actual = GitAttributesFactory.getEolTypeV5(attrs)
+        Assert.assertEquals(actual, expected)
+    }
+
+    @DataProvider
+    fun eolTypeV4Data(): Array<Array<out Any>> {
+        return arrayOf(
+            arrayOf("", EolType.Autodetect),
+
+            arrayOf("eol=lf", EolType.LF),
+            arrayOf("eol=crlf", EolType.CRLF),
+
+            arrayOf("text", EolType.Native),
+            arrayOf("-text", EolType.Binary),
+            arrayOf("text=auto", EolType.Native),
+
+            // invalid values
+            arrayOf("eol=invalid", EolType.Autodetect),
+            arrayOf("eol", EolType.Autodetect),
+            arrayOf("text=invalid", EolType.Native),
+        )
+    }
+
+    @Test(dataProvider = "eolTypeV4Data")
+    fun eolTypeV4(rule: String, expected: EolType) {
+        val attrs = Attributes(*AttributesRule("", rule).attributes.toTypedArray())
+        val actual = GitAttributesFactory.getEolTypeV4(attrs)
+        Assert.assertEquals(actual, expected)
+    }
+
     @Test(dataProvider = "parseAttributesData")
     fun parseAttributes(params: Params) {
         params.check()
@@ -71,7 +135,7 @@ class GitEolTest {
                     2.bin text
                     
                     """.trimIndent()
-            ).use { `in` -> attr = GitAttributesFactory().create(`in`) }
+            ).use { `in` -> attr = GitAttributesFactory().create(`in`, RepositoryFormat.Latest) }
             val params = arrayOf(
                 Params(attr, "/").prop(
                     SVNProperty.INHERITABLE_AUTO_PROPS, """

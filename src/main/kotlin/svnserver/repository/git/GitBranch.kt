@@ -29,7 +29,6 @@ import svnserver.repository.locks.LockStorage
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class GitBranch constructor(val repository: GitRepository, val shortBranchName: String) {
@@ -384,7 +383,6 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
 
     companion object {
         private const val revisionCacheVersion: Int = 2
-        private const val repositoryVersion: Int = 4
         private const val REPORT_DELAY: Int = 2500
         private const val MARK_NO_FILE: Int = -1
         private val log: Logger = Loggers.git
@@ -409,10 +407,10 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
         gitBranch = Constants.R_HEADS + shortBranchName
         val repositoryId: String = loadRepositoryId(repository.git, svnBranchRef)
         uuid = UUID.nameUUIDFromBytes(
-            String.format("%s\u0000%s\u0000%s", repositoryId, gitBranch, repositoryVersion).toByteArray(StandardCharsets.UTF_8)
+            String.format("%s\u0000%s\u0000%s", repositoryId, gitBranch, repository.format.revision).toByteArray(StandardCharsets.UTF_8)
         ).toString()
         val revisionCacheName: String = String.format(
-            "cache-revision.%s.%s.%s.v%s", repository.context.name, gitBranch, if (repository.hasRenameDetection()) 1 else 0, revisionCacheVersion
+            "cache-revision.%s.%s.%s.v%s.%s", repository.context.name, gitBranch, if (repository.hasRenameDetection()) 1 else 0, revisionCacheVersion, repository.format.revision
         )
         revisionCache = repository.context.shared.cacheDB.hashMap<ObjectId, CacheRevision>(
             revisionCacheName,

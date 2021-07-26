@@ -12,8 +12,6 @@ import org.testng.annotations.AfterMethod
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNDepth
-import org.tmatesoft.svn.core.SVNProperty
-import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.wc.SVNRevision
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory
 import org.tmatesoft.svn.core.wc2.SvnTarget
@@ -41,11 +39,9 @@ class WCDepthTest {
         editor.addDir("/a", null, -1)
         editor.addDir("/a/b", null, -1)
         editor.addFile("/a/b/e", null, -1)
-        editor.changeFileProperty("/a/b/e", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
         SvnTestHelper.sendDeltaAndClose(editor, "/a/b/e", null, "e body")
         editor.addDir("/a/b/c", null, -1)
         editor.addFile("/a/b/c/d", null, -1)
-        editor.changeFileProperty("/a/b/c/d", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
         SvnTestHelper.sendDeltaAndClose(editor, "/a/b/c/d", null, "d body")
         editor.closeDir()
         editor.closeDir()

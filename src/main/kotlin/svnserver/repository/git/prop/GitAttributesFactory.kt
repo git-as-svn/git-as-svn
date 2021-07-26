@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.prop
 
+import org.eclipse.jgit.attributes.Attribute
 import org.eclipse.jgit.attributes.Attributes
 import org.eclipse.jgit.attributes.AttributesNode
 import org.eclipse.jgit.attributes.AttributesRule
@@ -14,10 +15,11 @@ import org.eclipse.jgit.errors.InvalidPatternException
 import org.slf4j.Logger
 import org.tmatesoft.svn.core.SVNProperty
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil
-import svnserver.*
+import svnserver.Loggers
+import svnserver.repository.git.RepositoryFormat
 import svnserver.repository.git.path.Wildcard
-import java.io.*
-import java.util.*
+import java.io.IOException
+import java.io.InputStream
 import java.util.regex.PatternSyntaxException
 
 /**
@@ -32,7 +34,7 @@ class GitAttributesFactory : GitPropertyFactory {
         }
 
     @Throws(IOException::class)
-    override fun create(stream: InputStream): Array<GitProperty> {
+    override fun create(stream: InputStream, format: RepositoryFormat): Array<GitProperty> {
         val r = AttributesNode()
         r.parse(stream)
         val properties = ArrayList<GitProperty>()
@@ -47,12 +49,12 @@ class GitAttributesFactory : GitPropertyFactory {
                 log.warn("Found invalid git pattern: {}", rule.pattern)
                 continue
             }
-            val attrs = Attributes(*rule.attributes.toTypedArray())
-            val eolType: EolType? = getEolType(attrs)
-            if (eolType != null) {
-                processProperty(properties, wildcard, SVNProperty.MIME_TYPE, eolType.mimeType)
-                processProperty(properties, wildcard, SVNProperty.EOL_STYLE, eolType.eolStyle)
-            }
+            val attrs = Attributes(*rule.attributes.map(::expandMacro).toTypedArray())
+
+            val eolType: EolType = if (format < RepositoryFormat.V5_REMOVE_IMPLICIT_NATIVE_EOL) getEolTypeV4(attrs) else getEolTypeV5(attrs)
+            processProperty(properties, wildcard, SVNProperty.MIME_TYPE, eolType.mimeType)
+            processProperty(properties, wildcard, SVNProperty.EOL_STYLE, eolType.eolStyle)
+
             processProperty(properties, wildcard, SVNProperty.NEEDS_LOCK, getNeedsLock(attrs))
             val filter: String? = getFilter(attrs)
             if (filter != null) properties.add(GitFilterProperty(wildcard.matcher, filter))
@@ -60,24 +62,12 @@ class GitAttributesFactory : GitPropertyFactory {
         return properties.toTypedArray()
     }
 
-    /**
-     * @see EolStreamTypeUtil
-     */
-    private fun getEolType(attrs: Attributes): EolType? {
-        if (attrs.isSet("binary") || attrs.isUnset("text")) return EolType.Binary
-        val eol: String? = attrs.getValue("eol")
-        if (eol != null) {
-            when (eol) {
-                "lf" -> return EolType.LF
-                "crlf" -> return EolType.CRLF
-            }
-        }
-        if (attrs.isUnspecified("text")) return null
-        return EolType.Native
-    }
-
-    private enum class EolType(val mimeType: String, val eolStyle: String) {
-        Binary(SVNFileUtil.BINARY_MIME_TYPE, ""), Native("", SVNProperty.EOL_STYLE_NATIVE), LF("", SVNProperty.EOL_STYLE_LF), CRLF("", SVNProperty.EOL_STYLE_CRLF);
+    enum class EolType(val mimeType: String?, val eolStyle: String?) {
+        Autodetect(null, null),
+        Binary(SVNFileUtil.BINARY_MIME_TYPE, ""),
+        Native("", SVNProperty.EOL_STYLE_NATIVE),
+        LF("", SVNProperty.EOL_STYLE_LF),
+        CRLF("", SVNProperty.EOL_STYLE_CRLF);
     }
 
     private fun getNeedsLock(attrs: Attributes): String? {
@@ -86,7 +76,73 @@ class GitAttributesFactory : GitPropertyFactory {
     }
 
     companion object {
+        /**
+         * TODO: more fully-functional macro expansion
+         * @see org.eclipse.jgit.attributes.AttributesHandler.expandMacro
+         * @see org.eclipse.jgit.attributes.AttributesHandler.BINARY_RULE_ATTRIBUTES
+         */
+        fun expandMacro(attr: Attribute): Attribute {
+            return if (attr.key == "binary" && attr.state == Attribute.State.SET) {
+                Attribute("text", Attribute.State.UNSET)
+            } else {
+                attr
+            }
+        }
+
         private val log: Logger = Loggers.git
+
+        /**
+         * @see org.eclipse.jgit.util.io.EolStreamTypeUtil.checkInStreamType
+         * @see org.eclipse.jgit.util.io.EolStreamTypeUtil.checkOutStreamType
+         */
+        fun getEolTypeV5(attrs: Attributes): EolType {
+            // "binary" or "-text" (which is included in the binary expansion)
+            if (attrs.isUnset("text"))
+                return EolType.Binary
+
+            // old git system
+            if (attrs.isSet("crlf")) {
+                return EolType.Native
+            } else if (attrs.isUnset("crlf")) {
+                return EolType.Binary
+            } else if ("input" == attrs.getValue("crlf")) {
+                return EolType.LF
+            }
+
+            // new git system
+            if ("auto" == attrs.getValue("text")) {
+                return EolType.Autodetect;
+            }
+
+            when (attrs.getValue("eol")) {
+                "lf" -> return EolType.LF
+                "crlf" -> return EolType.CRLF
+            }
+
+            if (attrs.isSet("text")) {
+                return EolType.Native
+            }
+
+            return EolType.Autodetect
+        }
+
+        fun getEolTypeV4(attrs: Attributes): EolType {
+            if (attrs.isUnset("text"))
+                return EolType.Binary
+
+            val eol: String? = attrs.getValue("eol")
+            if (eol != null) {
+                when (eol) {
+                    "lf" -> return EolType.LF
+                    "crlf" -> return EolType.CRLF
+                }
+            }
+
+            if (attrs.isUnspecified("text"))
+                return EolType.Autodetect
+
+            return EolType.Native
+        }
 
         private fun processProperty(properties: MutableList<GitProperty>, wildcard: Wildcard, property: String, value: String?) {
             if (value == null) {

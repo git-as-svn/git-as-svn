@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.SvnTestHelper
 import svnserver.SvnTestServer
-import java.util.*
 
 /**
  * Check file properties.
@@ -32,9 +31,9 @@ class SvnFilePropertyTest {
     fun executable() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/non-exec.txt", "", propsEolNative)
+            SvnTestHelper.createFile(repo, "/non-exec.txt", "", emptyMap())
             SvnTestHelper.createFile(repo, "/exec.txt", "", propsExecutable)
-            SvnTestHelper.checkFileProp(repo, "/non-exec.txt", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/non-exec.txt", emptyMap())
             SvnTestHelper.checkFileProp(repo, "/exec.txt", propsExecutable)
             run {
                 val latestRevision = repo.latestRevision
@@ -50,7 +49,7 @@ class SvnFilePropertyTest {
                 editor.closeEdit()
             }
             SvnTestHelper.checkFileProp(repo, "/non-exec.txt", propsExecutable)
-            SvnTestHelper.checkFileProp(repo, "/exec.txt", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/exec.txt", emptyMap())
         }
     }
 
@@ -61,9 +60,9 @@ class SvnFilePropertyTest {
     fun binary() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/data.txt", "Test file", propsEolNative)
+            SvnTestHelper.createFile(repo, "/data.txt", "Test file", emptyMap())
             SvnTestHelper.createFile(repo, "/data.dat", "Test data\u0000", propsBinary)
-            SvnTestHelper.checkFileProp(repo, "/data.txt", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/data.txt", emptyMap())
             SvnTestHelper.checkFileProp(repo, "/data.dat", propsBinary)
             run {
                 val latestRevision = repo.latestRevision
@@ -75,13 +74,12 @@ class SvnFilePropertyTest {
                 SvnTestHelper.sendDeltaAndClose(editor, "/data.txt", "Test file", "Test file\u0000")
                 editor.openFile("/data.dat", latestRevision)
                 editor.changeFileProperty("/data.dat", SVNProperty.MIME_TYPE, null)
-                editor.changeFileProperty("/data.dat", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/data.dat", "Test data\u0000", "Test data")
                 editor.closeDir()
                 editor.closeEdit()
             }
             SvnTestHelper.checkFileProp(repo, "/data.txt", propsBinary)
-            SvnTestHelper.checkFileProp(repo, "/data.dat", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/data.dat", emptyMap())
         }
     }
 
@@ -93,9 +91,9 @@ class SvnFilePropertyTest {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             val content = "link foo/bar.txt"
-            SvnTestHelper.createFile(repo, "/non-link", content, propsEolNative)
+            SvnTestHelper.createFile(repo, "/non-link", content, emptyMap())
             SvnTestHelper.createFile(repo, "/link", content, propsSymlink)
-            SvnTestHelper.checkFileProp(repo, "/non-link", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/non-link", emptyMap())
             SvnTestHelper.checkFileProp(repo, "/link", propsSymlink)
             SvnTestHelper.checkFileContent(repo, "/non-link", content)
             SvnTestHelper.checkFileContent(repo, "/link", content)
@@ -105,18 +103,16 @@ class SvnFilePropertyTest {
                 val editor = repo.getCommitEditor("Change symlink property", null, false, null)
                 editor.openRoot(-1)
                 editor.openFile("/non-link", latestRevision)
-                editor.changeFileProperty("/non-link", SVNProperty.EOL_STYLE, null)
                 editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"))
                 SvnTestHelper.sendDeltaAndClose(editor, "/non-link", content, content2)
                 editor.openFile("/link", latestRevision)
-                editor.changeFileProperty("/link", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 editor.changeFileProperty("/link", SVNProperty.SPECIAL, null)
                 SvnTestHelper.sendDeltaAndClose(editor, "/link", content, content2)
                 editor.closeDir()
                 editor.closeEdit()
             }
             SvnTestHelper.checkFileProp(repo, "/non-link", propsSymlink)
-            SvnTestHelper.checkFileProp(repo, "/link", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/link", emptyMap())
             SvnTestHelper.checkFileContent(repo, "/non-link", content2)
             SvnTestHelper.checkFileContent(repo, "/link", content2)
             run {
@@ -124,32 +120,49 @@ class SvnFilePropertyTest {
                 val editor = repo.getCommitEditor("Change symlink property", null, false, null)
                 editor.openRoot(-1)
                 editor.openFile("/non-link", latestRevision)
-                editor.changeFileProperty("/non-link", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 editor.changeFileProperty("/non-link", SVNProperty.SPECIAL, null)
                 editor.closeFile("/non-link", null)
                 editor.openFile("/link", latestRevision)
-                editor.changeFileProperty("/link", SVNProperty.EOL_STYLE, null)
                 editor.changeFileProperty("/link", SVNProperty.SPECIAL, SVNPropertyValue.create("*"))
                 editor.closeFile("/link", null)
                 editor.closeDir()
                 editor.closeEdit()
             }
-            SvnTestHelper.checkFileProp(repo, "/non-link", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/non-link", emptyMap())
             SvnTestHelper.checkFileProp(repo, "/link", propsSymlink)
             SvnTestHelper.checkFileContent(repo, "/non-link", content2)
             SvnTestHelper.checkFileContent(repo, "/link", content2)
         }
     }
 
-    /**
-     * Check commit .gitattributes.
-     */
+    @Test
+    fun native() {
+        SvnTestServer.createEmpty().use { server ->
+            val repo: SVNRepository = server.openSvnRepository()
+            val content = "foo"
+            SvnTestHelper.createFile(repo, "/text.txt", content, emptyMap())
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.txt text", emptyMap())
+            SvnTestHelper.checkFileProp(repo, "/text.txt", propsEolNative)
+        }
+    }
+
+    @Test
+    fun crlf() {
+        SvnTestServer.createEmpty().use { server ->
+            val repo: SVNRepository = server.openSvnRepository()
+            val content = "foo"
+            SvnTestHelper.createFile(repo, "/text.txt", content, emptyMap())
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.txt eol=crlf", emptyMap())
+            SvnTestHelper.checkFileProp(repo, "/text.txt", propsEolCrLf)
+        }
+    }
+
     @Test
     fun symlinkBinary() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             val content = "link foo/bar.txt"
-            SvnTestHelper.createFile(repo, "/.gitattributes", "*.bin binary", propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.bin binary", emptyMap())
             SvnTestHelper.createFile(repo, "/non-link.bin", content, propsBinary)
             SvnTestHelper.createFile(repo, "/link.bin", content, propsSymlink)
             SvnTestHelper.checkFileProp(repo, "/non-link.bin", propsBinary)
@@ -164,8 +177,8 @@ class SvnFilePropertyTest {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             val content = "link foo/bar.txt"
-            SvnTestHelper.createFile(repo, "/link.bin", content, propsEolNative)
-            SvnTestHelper.createFile(repo, "/.gitattributes", "*.bin -text lockable", propsEolNative)
+            SvnTestHelper.createFile(repo, "/link.bin", content, emptyMap())
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.bin lockable", emptyMap())
             SvnTestHelper.checkFileProp(repo, "/link.bin", propsNeedsLock)
         }
     }
@@ -178,9 +191,9 @@ class SvnFilePropertyTest {
         //Map<String, String> props = new HashMap<>()["key":""];
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/sample.txt", "", propsEolNative)
-            SvnTestHelper.checkFileProp(repo, "/sample.txt", propsEolNative)
-            SvnTestHelper.createFile(repo, "/.gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative)
+            SvnTestHelper.createFile(repo, "/sample.txt", "", emptyMap())
+            SvnTestHelper.checkFileProp(repo, "/sample.txt", emptyMap())
+            SvnTestHelper.createFile(repo, "/.gitattributes", "*.txt\t\t\ttext eol=lf\n", emptyMap())
             // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
             SvnTestHelper.checkFileProp(repo, "/sample.txt", propsEolLf)
             // After commit .gitattributes directory with .gitattributes must change property svn:auto-props automagically.
@@ -211,21 +224,20 @@ class SvnFilePropertyTest {
                 // Empty file.
                 val emptyFile = "/foo/.keep"
                 editor.addFile(emptyFile, null, -1)
-                editor.changeFileProperty(emptyFile, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, emptyFile, null, "")
                 // Close dir
                 editor.closeDir()
                 editor.closeDir()
                 editor.closeEdit()
             }
-            SvnTestHelper.createFile(repo, "/sample.txt", "", propsEolNative)
-            SvnTestHelper.createFile(repo, "/foo/sample.txt", "", propsEolNative)
-            SvnTestHelper.checkFileProp(repo, "/sample.txt", propsEolNative)
-            SvnTestHelper.checkFileProp(repo, "/foo/sample.txt", propsEolNative)
-            SvnTestHelper.createFile(repo, "/foo/.gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative)
+            SvnTestHelper.createFile(repo, "/sample.txt", "", emptyMap())
+            SvnTestHelper.createFile(repo, "/foo/sample.txt", "", emptyMap())
+            SvnTestHelper.checkFileProp(repo, "/sample.txt", emptyMap())
+            SvnTestHelper.checkFileProp(repo, "/foo/sample.txt", emptyMap())
+            SvnTestHelper.createFile(repo, "/foo/.gitattributes", "*.txt\t\t\ttext eol=lf\n", emptyMap())
             // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
             SvnTestHelper.checkFileProp(repo, "/foo/sample.txt", propsEolLf)
-            SvnTestHelper.checkFileProp(repo, "/sample.txt", propsEolNative)
+            SvnTestHelper.checkFileProp(repo, "/sample.txt", emptyMap())
             // After commit .gitattributes directory with .gitattributes must change property svn:auto-props automagically.
             SvnTestHelper.checkDirProp(repo, "/foo", propsAutoProps)
             // After commit .gitattributes file sample.txt must change property svn:eol-style automagically.
@@ -255,7 +267,6 @@ class SvnFilePropertyTest {
             // Empty file.
             val filePath = "/foo/.gitattributes"
             editor.addFile(filePath, null, -1)
-            editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
             SvnTestHelper.sendDeltaAndClose(editor, filePath, null, "*.txt\t\t\ttext\n")
             // Close dir
             editor.closeDir()
@@ -305,7 +316,6 @@ class SvnFilePropertyTest {
                 // Empty file.
                 val filePath = "/foo/.gitattributes"
                 editor.addFile(filePath, null, -1)
-                editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, filePath, null, "")
                 // Close dir
                 editor.closeDir()
@@ -344,7 +354,6 @@ class SvnFilePropertyTest {
                 // Empty file.
                 val filePath = "/foo/.gitattributes"
                 editor.addFile(filePath, null, -1)
-                editor.changeFileProperty(filePath, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, filePath, null, "")
                 // Close dir
                 editor.closeDir()
@@ -378,7 +387,7 @@ class SvnFilePropertyTest {
     fun commitRootWithProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/.gitattributes", "", propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "", emptyMap())
             run {
                 val latestRevision = repo.latestRevision
                 val editor = repo.getCommitEditor("Modify .gitattributes", null, false, null)
@@ -402,7 +411,7 @@ class SvnFilePropertyTest {
     fun commitRootWithoutProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "/.gitattributes", "", propsEolNative)
+            SvnTestHelper.createFile(repo, "/.gitattributes", "", emptyMap())
             try {
                 val latestRevision = repo.latestRevision
                 val editor = repo.getCommitEditor("Modify .gitattributes", null, false, null)
@@ -428,12 +437,12 @@ class SvnFilePropertyTest {
     fun commitFileWithProperties() {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
-            SvnTestHelper.createFile(repo, "sample.txt", "", propsEolNative)
-            SvnTestHelper.checkFileProp(repo, "/sample.txt", propsEolNative)
-            SvnTestHelper.createFile(repo, ".gitattributes", "*.txt\t\t\ttext eol=lf\n", propsEolNative)
+            SvnTestHelper.createFile(repo, "sample.txt", "", emptyMap())
+            SvnTestHelper.checkFileProp(repo, "/sample.txt", emptyMap())
+            SvnTestHelper.createFile(repo, ".gitattributes", "*.txt\t\t\ttext eol=lf\n", emptyMap())
             SvnTestHelper.createFile(repo, "with-props.txt", "", propsEolLf)
             try {
-                SvnTestHelper.createFile(repo, "none-props.txt", "", null)
+                SvnTestHelper.createFile(repo, "none-props.txt", "", emptyMap())
             } catch (e: SVNException) {
                 Assert.assertTrue(e.message!!.contains(SVNProperty.EOL_STYLE))
             }
@@ -444,15 +453,10 @@ class SvnFilePropertyTest {
         val propsBinary = mapOf(SVNProperty.MIME_TYPE to SVNFileUtil.BINARY_MIME_TYPE)
         val propsEolNative = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_NATIVE)
         val propsEolLf = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_LF)
-        val propsExecutable = mapOf(
-            SVNProperty.EXECUTABLE to "*",
-            SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_NATIVE,
-        )
+        val propsEolCrLf = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_CRLF)
+        val propsExecutable = mapOf(SVNProperty.EXECUTABLE to "*")
         val propsSymlink = mapOf(SVNProperty.SPECIAL to "*")
         val propsAutoProps = mapOf(SVNProperty.INHERITABLE_AUTO_PROPS to "*.txt = svn:eol-style=LF\n")
-        val propsNeedsLock = mapOf(
-            SVNProperty.NEEDS_LOCK to "*",
-            SVNProperty.MIME_TYPE to SVNFileUtil.BINARY_MIME_TYPE
-        )
+        val propsNeedsLock = mapOf(SVNProperty.NEEDS_LOCK to "*")
     }
 }

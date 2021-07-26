@@ -15,10 +15,7 @@ import svnserver.Loggers
 import svnserver.context.LocalContext
 import svnserver.ext.gitlfs.storage.LfsStorage
 import svnserver.ext.gitlfs.storage.LfsStorageFactory
-import svnserver.repository.git.EmptyDirsSupport
-import svnserver.repository.git.GitCreateMode
-import svnserver.repository.git.GitLocation
-import svnserver.repository.git.GitRepository
+import svnserver.repository.git.*
 import svnserver.repository.git.filter.GitFilters
 import svnserver.repository.git.push.GitPushEmbeddedConfig
 import svnserver.repository.git.push.GitPusher
@@ -40,20 +37,18 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
     private var pusher: GitPusherConfig = GitPushEmbeddedConfig.instance
     private var renameDetection: Boolean = true
     private var emptyDirs: EmptyDirsSupport = EmptyDirsSupport.Disabled
+    private var format = RepositoryFormat.Latest
 
     @JvmOverloads
     constructor(createMode: GitCreateMode = GitCreateMode.ERROR) : this(createMode, arrayOf(Constants.MASTER))
 
-    @JvmOverloads
-    @Throws(IOException::class)
     fun create(context: LocalContext, fullPath: Path = ConfigHelper.joinPath(context.shared.basePath, path), branches: Set<String> = this.branches): GitRepository {
         context.add(GitLocation::class.java, GitLocation(fullPath))
         val lfsStorage: LfsStorage? = LfsStorageFactory.tryCreateStorage(context)
         val git: Repository = createGit(context, fullPath)
-        return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection, emptyDirs)
+        return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection, emptyDirs, format)
     }
 
-    @Throws(IOException::class)
     private fun createGit(context: LocalContext, fullPath: Path): Repository {
         if (!Files.exists(fullPath)) {
             log.info("[{}]: storage {} not found, create mode: {}", context.name, fullPath, createMode)
@@ -74,7 +69,8 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
             pusher: GitPusher,
             branches: Set<String>,
             renameDetection: Boolean,
-            emptyDirs: EmptyDirsSupport
+            emptyDirs: EmptyDirsSupport,
+            format: RepositoryFormat
         ): GitRepository {
             val lockStorage: LockStorage = if (lfsStorage != null) {
                 context.add(LfsStorage::class.java, lfsStorage)
@@ -83,7 +79,7 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
                 LocalLockManager(LocalLockManager.getPersistentStorage(context))
             }
             val filters = GitFilters(context, lfsStorage)
-            return GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters, emptyDirs)
+            return GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters, emptyDirs, format)
         }
     }
 

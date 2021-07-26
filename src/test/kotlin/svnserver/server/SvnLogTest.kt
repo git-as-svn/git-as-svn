@@ -11,8 +11,6 @@ import org.testng.annotations.Test
 import org.testng.internal.junit.ArrayAsserts
 import org.tmatesoft.svn.core.SVNLogEntry
 import org.tmatesoft.svn.core.SVNLogEntryPath
-import org.tmatesoft.svn.core.SVNProperty
-import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.io.SVNRepository
 import svnserver.SvnTestHelper
 import svnserver.SvnTestHelper.modifyFile
@@ -33,7 +31,7 @@ class SvnLogTest {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             // r1 - add single file.
-            SvnTestHelper.createFile(repo, "/foo.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/foo.txt", "", emptyMap())
             // r2 - add file in directory.
             run {
                 val latestRevision = repo.latestRevision
@@ -41,7 +39,6 @@ class SvnLogTest {
                 editor.openRoot(latestRevision)
                 editor.addDir("/foo", null, -1)
                 editor.addFile("/foo/bar.txt", null, -1)
-                editor.changeFileProperty("/foo/bar.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/foo/bar.txt", null, "File body")
                 editor.closeDir()
                 editor.closeDir()
@@ -50,7 +47,7 @@ class SvnLogTest {
             // r3 - change file in directory.
             modifyFile(repo, "/foo/bar.txt", "New body", repo.latestRevision)
             // r4 - change file in directory.
-            SvnTestHelper.createFile(repo, "/foo/foo.txt", "New body", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/foo/foo.txt", "New body", emptyMap())
 
             // svn log from root
             val last = repo.latestRevision
@@ -104,14 +101,14 @@ class SvnLogTest {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             // r1 - add single file.
-            SvnTestHelper.createFile(repo, "/foo.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/foo.txt", "", emptyMap())
             // r2 - modify file.
             modifyFile(repo, "/foo.txt", "New content", repo.latestRevision)
             // r3 - remove file.
             SvnTestHelper.deleteFile(repo, "/foo.txt")
             val delete = repo.latestRevision
             // r4 - recreate file.
-            SvnTestHelper.createFile(repo, "/foo.txt", "", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/foo.txt", "", emptyMap())
 
             // svn log from root
             val last = repo.latestRevision
@@ -144,7 +141,6 @@ class SvnLogTest {
                 // Empty file.
                 val file = "/foo/bar.txt"
                 editor.addFile(file, null, -1)
-                editor.changeFileProperty(file, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, file, null, "")
                 // Close dir
                 editor.closeDir()
@@ -164,7 +160,6 @@ class SvnLogTest {
                 // Empty file.
                 val file = "/foo/bar.txt"
                 editor.addFile(file, null, -1)
-                editor.changeFileProperty(file, SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, file, null, "")
                 // Close dir
                 editor.closeDir()
@@ -196,7 +191,7 @@ class SvnLogTest {
         SvnTestServer.createEmpty().use { server ->
             val repo: SVNRepository = server.openSvnRepository()
             // r1 - add single file.
-            SvnTestHelper.createFile(repo, "/foo.txt", "Foo content", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repo, "/foo.txt", "Foo content", emptyMap())
             // r2 - rename file
             run {
                 val revision = repo.latestRevision
@@ -204,7 +199,6 @@ class SvnLogTest {
                 editor.openRoot(-1)
                 // Empty file.
                 editor.addFile("/bar.txt", "/foo.txt", revision)
-                editor.changeFileProperty("/bar.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 editor.closeFile("/bar.txt", null)
                 editor.deleteEntry("/foo.txt", revision)
                 // Close dir
@@ -220,7 +214,6 @@ class SvnLogTest {
                 editor.openRoot(-1)
                 // Empty file.
                 editor.addFile("/baz.txt", "/bar.txt", revision)
-                editor.changeFileProperty("/baz.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 editor.closeFile("/baz.txt", null)
                 editor.deleteEntry("/bar.txt", revision)
                 // Close dir
@@ -293,7 +286,6 @@ class SvnLogTest {
                 editor.addDir("/foo", null, -1)
                 // Some file.
                 editor.addFile("/foo/test.txt", null, -1)
-                editor.changeFileProperty("/foo/test.txt", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE))
                 SvnTestHelper.sendDeltaAndClose(editor, "/foo/test.txt", null, "Foo content")
                 // Close dir
                 editor.closeDir()

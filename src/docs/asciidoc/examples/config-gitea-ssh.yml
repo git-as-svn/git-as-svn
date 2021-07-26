@@ -44,6 +44,7 @@ repositoryMapping: !giteaMapping
   #     - master
   #   renameDetection: true
   #   emptyDirs: Disabled
+  #   format: Latest
 
 userDB:
   !sshKeyUsers

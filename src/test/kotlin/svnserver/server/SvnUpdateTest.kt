@@ -10,8 +10,6 @@ package svnserver.server
 import org.testng.Assert
 import org.testng.annotations.Test
 import org.tmatesoft.svn.core.SVNDepth
-import org.tmatesoft.svn.core.SVNProperty
-import org.tmatesoft.svn.core.SVNPropertyValue
 import org.tmatesoft.svn.core.wc.SVNClientManager
 import org.tmatesoft.svn.core.wc.SVNRevision
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory
@@ -61,8 +59,6 @@ class SvnUpdateTest {
             TestHelper.saveFile(newFile, "Bla Bla Bla")
             // add file
             client.wcClient.doAdd(newFile.toFile(), false, false, false, SVNDepth.INFINITY, false, true)
-            // set eof property
-            client.wcClient.doSetProperty(newFile.toFile(), SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE), false, SVNDepth.INFINITY, null, null)
             // commit new file
             client.commitClient.doCommit(arrayOf(newFile.toFile()), false, "Add file commit", null, null, false, false, SVNDepth.INFINITY)
             // update for checkout revision

@@ -55,6 +55,7 @@ repositoryMapping: !listMapping
           - master
         path: /var/git/repositories/example.git
         renameDetection: true
+        format: Latest
 
 shared:
   # Submodule list.

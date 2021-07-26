@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.prop
 
+import svnserver.repository.git.RepositoryFormat
 import java.io.IOException
 import java.io.InputStream
 
@@ -30,5 +31,5 @@ interface GitPropertyFactory {
      * @return Git property workers.
      */
     @Throws(IOException::class)
-    fun create(stream: InputStream): Array<GitProperty>
+    fun create(stream: InputStream, format: RepositoryFormat): Array<GitProperty>
 }

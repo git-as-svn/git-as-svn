@@ -11,7 +11,14 @@ endif::[]
 * git-as-svn migrated from Java to Kotlin
 * Java 8 is no longer supported.
 Minimal is Java 11 now.
-* Update dependencies.
+* Update dependencies
+* git-as-svn no longer implicitly sets `svn:eol-style=native` for files by default
+* Starting with this release, git-as-svn introduces versioning for backward-incompatible changes.
+You can control whether you opt-in for new features that require re-checkout of Subversion working copies via `format` repository parameter.
+By default, git-as-svn uses the latest version and thus requires re-checkout if repository was initially created with older format.
+
+IMPORTANT: Repository data exported to SVN has changed.
+Users will need to perform re-checkout of their working copies after git-as-svn upgrade unless you specify `format: V4` in `git-as-svn.conf`.
 
 == 1.30.1
 

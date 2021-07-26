@@ -20,7 +20,6 @@ import svnserver.SvnTestHelper.modifyFile
 import svnserver.tester.SvnTesterDataProvider
 import svnserver.tester.SvnTesterExternalListener
 import svnserver.tester.SvnTesterFactory
-import java.util.*
 
 @Listeners(SvnTesterExternalListener::class)
 class GetFileRevsTest {
@@ -28,7 +27,7 @@ class GetFileRevsTest {
     fun simple(factory: SvnTesterFactory) {
         factory.create().use { tester ->
             val repository = tester.openSvnRepository()
-            SvnTestHelper.createFile(repository, fileName, "a\nb\nc\n", SvnFilePropertyTest.propsEolNative)
+            SvnTestHelper.createFile(repository, fileName, "a\nb\nc\n", emptyMap())
             modifyFile(repository, fileName, "a\nd\nc\n", repository.latestRevision)
             val latestRevision = repository.latestRevision
             try {

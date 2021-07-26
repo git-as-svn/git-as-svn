@@ -1,12 +1,5 @@
 # Common settings that generally should always be used with your language specific settings
 
-# Disable automatic CRLF conversion to prevent Git from randomly breaking file contents
-*          -text
-
-#
-# The above will handle all files NOT found below
-#
-
 # Documents
 *.bibtex   text diff=bibtex
 *.doc	        diff=astextplain

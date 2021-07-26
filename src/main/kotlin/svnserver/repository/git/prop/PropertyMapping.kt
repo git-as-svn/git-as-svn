@@ -25,12 +25,11 @@ object PropertyMapping {
 
     init {
         arrayOf(
-            GitAttributesFactory::class.java,
-            GitTortoiseFactory::class.java,
-            GitIgnoreFactory::class.java
+            GitAttributesFactory(),
+            GitTortoiseFactory(),
+            GitIgnoreFactory()
         ).forEach {
-            val factory: GitPropertyFactory = it.getConstructor().newInstance()
-            val oldParser: GitPropertyFactory? = parserByFile.put(factory.fileName, factory)
+            val oldParser: GitPropertyFactory? = parserByFile.put(it.fileName, it)
             if (oldParser != null) {
                 throw RuntimeException("Found two classes mapped for same file: " + oldParser.javaClass + " and " + it)
             }
