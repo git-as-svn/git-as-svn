@@ -30,7 +30,7 @@ class GitLabProject internal constructor(val context: LocalContext, val reposito
     fun initRevisions() {
         if (!ready) {
             log.info("[{}]: initing...", context.name)
-            for (branch in repository.branches.values) branch!!.updateRevisions()
+            for (branch in repository.branches.values) branch.updateRevisions()
             ready = true
         }
     }

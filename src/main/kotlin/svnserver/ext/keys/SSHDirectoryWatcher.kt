@@ -73,7 +73,7 @@ internal class SSHDirectoryWatcher(config: KeysConfig, private val mapper: KeysM
                 }.forEach { s: String ->
                     try {
                         writer.write(s)
-                        writer.write('\n'.toInt())
+                        writer.write('\n'.code)
                     } catch (e: IOException) {
                         throw RuntimeException(e)
                     }

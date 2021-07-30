@@ -82,7 +82,7 @@ class LogCmd : BaseCmd<LogCmd.Params>() {
                 for (entry: Map.Entry<String, GitLogEntry> in changes.entries) {
                     val logEntry: GitLogEntry = entry.value
                     val change: Char = logEntry.change
-                    if (change.toInt() == 0) continue
+                    if (change.code == 0) continue
                     writer
                         .listBegin()
                         .string((entry.key)) // Path

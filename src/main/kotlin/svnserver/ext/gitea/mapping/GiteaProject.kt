@@ -32,7 +32,7 @@ class GiteaProject internal constructor(val context: LocalContext, val repositor
     fun initRevisions() {
         if (!isReady) {
             log.info("[{}]: initing...", context.name)
-            for (branch in repository.branches.values) branch!!.updateRevisions()
+            for (branch in repository.branches.values) branch.updateRevisions()
             isReady = true
         }
     }

@@ -75,7 +75,7 @@ class SvnServerWriter constructor(stream: OutputStream) : Closeable {
 
     @Throws(IOException::class)
     fun separator(): SvnServerWriter {
-        stream.write('\n'.toInt())
+        stream.write('\n'.code)
         return this
     }
 

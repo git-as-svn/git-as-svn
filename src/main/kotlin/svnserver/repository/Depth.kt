@@ -68,7 +68,7 @@ enum class Depth {
         }
     };
 
-    private val value: String = name.toLowerCase(Locale.ENGLISH)
+    private val value: String = name.lowercase()
 
     @Throws(SVNException::class)
     abstract fun <R> visit(visitor: DepthVisitor<R>): R

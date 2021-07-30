@@ -70,7 +70,7 @@ class GiteaUserDB internal constructor(context: SharedContext) : UserDB {
         if (userId != null) {
             try {
                 val userApi = UserApi(context.connect())
-                val users = userApi.userSearch(null, userId, null)
+                val users = userApi.userSearch(null, userId, null, null)
                 for (u in users.data) {
                     if (userId == u.id) {
                         log.info("Matched {} with {}", external, u.login)
