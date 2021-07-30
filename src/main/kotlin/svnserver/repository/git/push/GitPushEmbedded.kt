@@ -63,11 +63,11 @@ class GitPushEmbedded constructor(private val context: LocalContext, private val
             val process: Process = processBuilder.start()
             OutputStreamWriter(process.outputStream, StandardCharsets.UTF_8).use { stdin ->
                 stdin.write(getObjectId(refUpdate.oldObjectId))
-                stdin.write(' '.toInt())
+                stdin.write(' '.code)
                 stdin.write(getObjectId(refUpdate.newObjectId))
-                stdin.write(' '.toInt())
+                stdin.write(' '.code)
                 stdin.write(refUpdate.name)
-                stdin.write('\n'.toInt())
+                stdin.write('\n'.code)
             }
             process
         }

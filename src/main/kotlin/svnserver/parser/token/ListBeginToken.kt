@@ -28,6 +28,6 @@ class ListBeginToken private constructor() : SvnServerToken {
 
     companion object {
         val instance: ListBeginToken = ListBeginToken()
-        private val TOKEN: ByteArray = byteArrayOf('('.toByte(), ' '.toByte())
+        private val TOKEN: ByteArray = byteArrayOf('('.code.toByte(), ' '.code.toByte())
     }
 }

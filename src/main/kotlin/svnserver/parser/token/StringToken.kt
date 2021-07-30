@@ -69,9 +69,9 @@ class StringToken : TextToken {
         @Throws(IOException::class)
         fun write(stream: OutputStream, data: ByteArray, offset: Int, length: Int) {
             stream.write(length.toLong().toString(10).toByteArray(StandardCharsets.ISO_8859_1))
-            stream.write(':'.toInt())
+            stream.write(':'.code)
             stream.write(data, offset, length)
-            stream.write(' '.toInt())
+            stream.write(' '.code)
         }
 
         private fun isUtf(data: ByteArray): Boolean {

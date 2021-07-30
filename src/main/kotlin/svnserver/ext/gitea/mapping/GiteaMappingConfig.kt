@@ -43,9 +43,9 @@ class GiteaMappingConfig private constructor(var path: String, var createMode: G
         // Get repositories.
         val mapping = GiteaMapping(context, this)
         try {
-            val usersList = userApi.userSearch(null, null, null)
+            val usersList = userApi.userSearch(null, null, null, null)
             for (u in usersList.data) {
-                val repositories = userApi.userListRepos(u.login)
+                val repositories = userApi.userListRepos(u.login, null, null)
                 for (repository in repositories) {
                     mapping.addRepository(repository)
                 }

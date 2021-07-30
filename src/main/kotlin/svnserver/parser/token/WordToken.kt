@@ -48,7 +48,7 @@ class WordToken constructor(override val text: String) : TextToken {
         @Throws(IOException::class)
         fun write(stream: OutputStream, word: String) {
             stream.write(word.toByteArray(StandardCharsets.US_ASCII))
-            stream.write(' '.toInt())
+            stream.write(' '.code)
         }
     }
 }

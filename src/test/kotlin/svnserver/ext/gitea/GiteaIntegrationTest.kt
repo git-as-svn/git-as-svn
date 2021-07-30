@@ -8,13 +8,11 @@
 package svnserver.ext.gitea
 
 import io.gitea.ApiClient
+import io.gitea.api.AdminApi
 import io.gitea.api.RepositoryApi
 import io.gitea.api.UserApi
 import io.gitea.auth.ApiKeyAuth
-import io.gitea.model.AccessTokenName
-import io.gitea.model.AddCollaboratorOption
-import io.gitea.model.CreateRepoOption
-import io.gitea.model.Repository
+import io.gitea.model.*
 import org.eclipse.jetty.util.ArrayUtil
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
@@ -94,9 +92,9 @@ class GiteaIntegrationTest {
         Assert.assertNotNull(collaboratorUser)
 
         // Create a repository for the test user
-        testPublicRepository = createRepository(user, "public-user-repo", "Public User Repository", false, true)
+        testPublicRepository = createRepository(user, "public-user-repo", "Public User Repository", false)
         Assert.assertNotNull(testPublicRepository)
-        testPrivateRepository = createRepository(user, "private-user-repo", "Private User Repository", true, true)
+        testPrivateRepository = createRepository(user, "private-user-repo", "Private User Repository", true)
         Assert.assertNotNull(testPrivateRepository)
     }
 
@@ -116,23 +114,27 @@ class GiteaIntegrationTest {
         return createUser(username, "$username@example.com", password)
     }
 
-    private fun createRepository(username: String, name: String, description: String, _private: Boolean?, autoInit: Boolean?): Repository {
+    private fun createRepository(username: String, name: String, description: String, _private: Boolean): Repository {
         val apiClient = sudo(GiteaContext.connect(giteaApiUrl!!, administratorToken!!), username)
         val repositoryApi = RepositoryApi(apiClient)
         val repoOption = CreateRepoOption()
-        repoOption.name = name
-        repoOption.description = description
-        repoOption.isPrivate = _private
-        repoOption.isAutoInit = autoInit
-        repoOption.readme = "Default"
+            .name(name)
+            .description(description)
+            ._private(_private)
+            .autoInit(true)
+            .readme("Default")
         return repositoryApi.createCurrentUserRepo(repoOption)
     }
 
     private fun createUser(username: String, email: String, password: String): io.gitea.model.User {
-        doCreateUser(username, email, password)
-        val apiClient: ApiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
-        val userApi = UserApi(sudo(apiClient, username))
-        return userApi.userGetCurrent()
+        val apiClient = GiteaContext.connect(giteaApiUrl!!, administratorToken!!)
+        return AdminApi(apiClient).adminCreateUser(
+            CreateUserOption()
+                .username(username)
+                .email(email)
+                .password(password)
+                .mustChangePassword(false)
+        )
     }
 
     // Gitea API methods

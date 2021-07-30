@@ -82,11 +82,11 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
     @Throws(IOException::class)
     fun readToken(): SvnServerToken {
         val read: Byte = skipSpaces()
-        if (read == '('.toByte()) {
+        if (read == '('.code.toByte()) {
             depth++
             return ListBeginToken.instance
         }
-        if (read == ')'.toByte()) {
+        if (read == ')'.code.toByte()) {
             depth--
             if (depth < 0) {
                 throw IOException("Unexpect end of list token.")
@@ -106,13 +106,13 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
 
     @Throws(IOException::class)
     private fun readNumberToken(first: Byte): SvnServerToken {
-        var result: Int = first - '0'.toByte()
+        var result: Int = first - '0'.code.toByte()
         while (true) {
             while (offset < limit) {
                 val data: Byte = buffer[offset]
                 offset++
-                if ((data < '0'.toByte()) || (data > '9'.toByte())) {
-                    if (data == ':'.toByte()) {
+                if ((data < '0'.code.toByte()) || (data > '9'.code.toByte())) {
+                    if (data == ':'.code.toByte()) {
                         return readString(result)
                     }
                     if (isSpace(data.toInt())) {
@@ -120,7 +120,7 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
                     }
                     throw IOException("Unexpected character in stream: $data (need ' ', '\\n' or ':')")
                 }
-                result = result * 10 + (data - '0'.toByte())
+                result = result * 10 + (data - '0'.code.toByte())
             }
             if (limit < 0) {
                 throw EOFException()
@@ -186,7 +186,7 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
             if (isSpace(data.toInt())) {
                 return WordToken(String(buffer, begin, offset - begin - 1, StandardCharsets.US_ASCII))
             }
-            if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.toByte()))) {
+            if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.code.toByte()))) {
                 throw IOException("Unexpected character in stream: $data (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')")
             }
         }
@@ -205,7 +205,7 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
                 if (isSpace(data.toInt())) {
                     return WordToken(String(buffer, 0, offset - 1, StandardCharsets.US_ASCII))
                 }
-                if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.toByte()))) {
+                if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.code.toByte()))) {
                     throw IOException("Unexpected character in stream: $data (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')")
                 }
             }
@@ -233,17 +233,17 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
         // Buffer size limit for out-of-memory prevention.
         private const val MAX_BUFFER_SIZE: Int = 10 * 1024 * 1024
         private fun isSpace(data: Int): Boolean {
-            return ((data == ' '.toInt())
-                    || (data == '\n'.toInt()))
+            return ((data == ' '.code)
+                    || (data == '\n'.code))
         }
 
         private fun isDigit(data: Int): Boolean {
-            return (data >= '0'.toInt() && data <= '9'.toInt())
+            return (data >= '0'.code && data <= '9'.code)
         }
 
         private fun isAlpha(data: Int): Boolean {
-            return ((data >= 'a'.toInt() && data <= 'z'.toInt())
-                    || (data >= 'A'.toInt() && data <= 'Z'.toInt()))
+            return ((data >= 'a'.code && data <= 'z'.code)
+                    || (data >= 'A'.code && data <= 'Z'.code))
         }
     }
 }

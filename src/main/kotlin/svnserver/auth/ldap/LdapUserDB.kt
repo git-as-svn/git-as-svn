@@ -125,7 +125,7 @@ class LdapUserDB(context: SharedContext, config: LdapUserDBConfig) : UserDB {
             val ldapUri = URI.create(config.connectionUrl)
             val factory: SocketFactory?
             val defaultPort: Int
-            when (ldapUri.scheme.toLowerCase(Locale.ENGLISH)) {
+            when (ldapUri.scheme.lowercase()) {
                 "ldap" -> {
                     factory = null
                     defaultPort = 389

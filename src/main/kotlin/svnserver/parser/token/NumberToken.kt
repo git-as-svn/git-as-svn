@@ -45,8 +45,8 @@ class NumberToken constructor(val number: Int) : SvnServerToken {
     companion object {
         @Throws(IOException::class)
         fun write(stream: OutputStream, number: Long) {
-            stream.write(java.lang.Long.toString(number).toByteArray(StandardCharsets.ISO_8859_1))
-            stream.write(' '.toInt())
+            stream.write(number.toString().toByteArray(StandardCharsets.ISO_8859_1))
+            stream.write(' '.code)
         }
     }
 }

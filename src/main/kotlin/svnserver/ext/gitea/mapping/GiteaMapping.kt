@@ -35,7 +35,7 @@ internal class GiteaMapping(val context: SharedContext, private val config: Gite
         if (oldProject == null || oldProject.projectId != repository.id) {
             val basePath = ConfigHelper.joinPath(context.basePath, config.path)
             // the repository name is lowercased as per gitea cmd/serv.go:141
-            val repoPath = ConfigHelper.joinPath(basePath, repository.fullName.toLowerCase(Locale.ENGLISH) + ".git")
+            val repoPath = ConfigHelper.joinPath(basePath, repository.fullName.lowercase() + ".git")
             val local = LocalContext(context, repository.fullName)
             local.add(VcsAccess::class.java, GiteaAccess(local, config, repository))
             val vcsRepository = config.template.create(local, repoPath)

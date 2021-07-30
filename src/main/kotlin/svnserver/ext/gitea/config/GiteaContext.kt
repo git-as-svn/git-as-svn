@@ -40,11 +40,7 @@ class GiteaContext internal constructor(private val config: GiteaConfig) : Share
         get() = config.url
 
     fun connect(giteaUrl: String = this.giteaUrl, token: GiteaToken = this.token): ApiClient {
-        val apiClient = ApiClient()
-        apiClient.basePath = giteaUrl
-        apiClient.setApiKey(token.value)
-        apiClient.setApiKeyPrefix("token")
-        return apiClient
+        return Companion.connect(giteaUrl, this.token)
     }
 
     companion object {
@@ -55,8 +51,11 @@ class GiteaContext internal constructor(private val config: GiteaConfig) : Share
         fun connect(giteaUrl: String, token: GiteaToken): ApiClient {
             val apiClient = ApiClient()
             apiClient.basePath = giteaUrl
-            apiClient.setApiKey(token.value)
-            apiClient.setApiKeyPrefix("token")
+            val auth = apiClient.getAuthentication("AuthorizationHeaderToken")
+            if (auth is ApiKeyAuth) {
+                auth.apiKey = token.value
+                auth.apiKeyPrefix = "token"
+            }
             return apiClient
         }
     }
