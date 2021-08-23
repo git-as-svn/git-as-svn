@@ -79,9 +79,7 @@ class GiteaIntegrationTest {
         apiClient.setUsername(administrator)
         apiClient.setPassword(administratorPassword)
         val userApi = UserApi(apiClient)
-        val accessTokenName = AccessTokenName()
-        accessTokenName.name = "integration-test"
-        val token = userApi.userCreateToken(administrator, accessTokenName)
+        val token = userApi.userCreateToken(administrator, CreateAccessTokenOption().name("integration-test"))
         administratorToken = GiteaToken(token.sha1)
 
         // Switch to the GiteaContext approach
