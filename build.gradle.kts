@@ -19,7 +19,7 @@ plugins {
     id("org.asciidoctor.jvm.convert") version "3.3.2"
     id("org.asciidoctor.jvm.pdf") version "3.3.2"
     id("org.asciidoctor.jvm.epub") version "3.3.2"
-    id("org.jetbrains.kotlin.jvm") version "1.5.21"
+    id("org.jetbrains.kotlin.jvm") version "1.5.30"
     idea
     application
 }
