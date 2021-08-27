@@ -97,7 +97,7 @@ dependencies {
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
     implementation("com.google.oauth-client:google-oauth-client:1.32.1")
-    implementation("com.google.http-client:google-http-client-jackson2:1.39.2-sp.1")
+    implementation("com.google.http-client:google-http-client-jackson2:1.40.0")
     implementation("org.slf4j:slf4j-api:1.7.32")
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.14.1")
