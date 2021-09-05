@@ -152,8 +152,8 @@ class GitPushEmbedded constructor(private val context: LocalContext, private val
 
     private fun getHooksPath(repository: Repository): String {
         if (!Strings.isNullOrEmpty(hooksPathOverride)) return (hooksPathOverride)!!
-        val hooksPathFromConfig: String = repository.config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, "hooksPath")
-        if (!Strings.isNullOrEmpty(hooksPathFromConfig)) return hooksPathFromConfig
+        val hooksPathFromConfig: String? = repository.config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, "hooksPath")
+        if (!Strings.isNullOrEmpty(hooksPathFromConfig)) return hooksPathFromConfig!!
         return "hooks"
     }
 
