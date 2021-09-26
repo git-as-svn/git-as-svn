@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "7.0.1"
+    gradleVersion = "7.2"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -97,7 +97,7 @@ dependencies {
 
     implementation("com.google.oauth-client:google-oauth-client:1.32.1")
     implementation("com.google.http-client:google-http-client-jackson2:1.40.0")
-    implementation("org.slf4j:slf4j-api:1.7.32")
+    implementation("org.slf4j:slf4j-api:2.0.0-alpha5")
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.14.1")
 
