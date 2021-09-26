@@ -7,6 +7,9 @@
  */
 package svnserver.ext.gitlfs.server
 
+import jakarta.servlet.http.HttpServlet
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.eclipse.jgit.util.StringUtils
 import ru.bozaro.gitlfs.common.JsonHelper
 import ru.bozaro.gitlfs.common.data.Link
@@ -17,9 +20,6 @@ import svnserver.ext.gitlfs.LfsAuthHelper.AuthMode
 import svnserver.ext.web.server.WebServer
 import java.io.IOException
 import java.net.URI
-import javax.servlet.http.HttpServlet
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /**
  * LFS storage pointer servlet.

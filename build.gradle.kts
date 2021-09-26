@@ -1,6 +1,5 @@
 import org.ajoberstar.grgit.Grgit
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
-import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.ZonedDateTime
@@ -86,12 +85,12 @@ dependencies {
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
     implementation("com.unboundid:unboundid-ldapsdk:6.0.1")
-    implementation("org.eclipse.jetty:jetty-servlet:9.4.36.v20210114")
+    implementation("org.eclipse.jetty:jetty-servlet:11.0.6")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
     implementation("org.bitbucket.b_c:jose4j:0.7.9")
     implementation("com.github.zeripath:java-gitea-api:1.15.0")
 
-    val gitLfsJava = "0.17.0"
+    val gitLfsJava = "0.18.4"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
