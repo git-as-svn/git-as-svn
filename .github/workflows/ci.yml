@@ -55,7 +55,7 @@ jobs:
             env: 'GITEA_VERSION=1.9.0' # The earliest supported Gitea version
 
           # Different JDKs
-          - java: 15
+          - java: 17
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
