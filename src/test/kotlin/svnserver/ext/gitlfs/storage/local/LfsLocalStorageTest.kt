@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage.local
 
 import com.google.common.hash.Hashing
 import com.google.common.io.CharStreams
+import jakarta.servlet.http.HttpServletResponse
 import org.apache.commons.io.IOUtils
 import org.eclipse.jgit.util.Holder
 import org.testng.Assert
@@ -36,7 +37,6 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListMap
-import javax.servlet.http.HttpServletResponse
 
 /**
  * Simple test for LfsLocalStorage.

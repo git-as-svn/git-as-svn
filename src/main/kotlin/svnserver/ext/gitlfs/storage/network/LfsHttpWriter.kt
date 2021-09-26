@@ -9,6 +9,7 @@ package svnserver.ext.gitlfs.storage.network
 
 import org.apache.commons.codec.binary.Hex
 import ru.bozaro.gitlfs.client.Client
+import ru.bozaro.gitlfs.client.io.StreamProvider
 import ru.bozaro.gitlfs.common.data.BatchReq
 import ru.bozaro.gitlfs.common.data.Meta
 import ru.bozaro.gitlfs.common.data.Operation
@@ -17,6 +18,7 @@ import svnserver.TemporaryOutputStream
 import svnserver.ext.gitlfs.storage.LfsStorage
 import svnserver.ext.gitlfs.storage.LfsWriter
 import java.io.IOException
+import java.io.InputStream
 import java.security.MessageDigest
 
 /**
@@ -51,7 +53,11 @@ class LfsHttpWriter internal constructor(private val lfsClient: Client) : LfsWri
         if (batchRes.objects.isEmpty()) throw IOException(String.format("Empty batch response while uploading %s", sha))
         for (batchItem in batchRes.objects) {
             if (batchItem.error != null) throw IOException(String.format("LFS error[%s]: %s", batchItem.error!!.code, batchItem.error!!.message))
-            lfsClient.putObject({ content.toInputStream() }, batchItem, batchItem)
+            val streamProvider = object : StreamProvider {
+                override val stream: InputStream
+                    get() = content.toInputStream()
+            }
+            lfsClient.putObject(streamProvider, batchItem, batchItem)
         }
         return oid
     }

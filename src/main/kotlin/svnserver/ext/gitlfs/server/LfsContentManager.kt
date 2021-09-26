@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs.server
 
+import jakarta.servlet.http.HttpServletRequest
 import org.apache.commons.io.IOUtils
 import org.tmatesoft.svn.core.SVNException
 import ru.bozaro.gitlfs.common.Constants
@@ -26,7 +27,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
-import javax.servlet.http.HttpServletRequest
 
 /**
  * ContentManager wrapper for shared LFS server implementation.

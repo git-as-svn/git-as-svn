@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs
 
+import jakarta.servlet.http.HttpServletResponse
 import org.jose4j.jwt.NumericDate
 import org.tmatesoft.svn.core.SVNException
 import ru.bozaro.gitlfs.common.Constants
@@ -19,7 +20,6 @@ import svnserver.ext.web.server.WebServer
 import svnserver.ext.web.token.TokenHelper
 import java.net.URI
 import java.util.*
-import javax.servlet.http.HttpServletResponse
 import kotlin.math.ceil
 
 /**

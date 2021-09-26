@@ -18,7 +18,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.util.*
 import java.util.zip.GZIPInputStream
 
 /**
@@ -52,7 +51,7 @@ class LfsLocalReader private constructor(private val meta: Map<String, String>, 
     companion object {
         @Throws(IOException::class)
         fun create(layout: LfsLayout, dataRoot: Path, metaRoot: Path?, oid: String): LfsLocalReader? {
-            var meta: MutableMap<String, String>?
+            var meta: Map<String, String>?
             val dataPath: Path? = LfsLocalStorage.getPath(layout, dataRoot, oid, "")
             if (metaRoot != null) {
                 val metaPath: Path = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta") ?: return null
@@ -69,9 +68,10 @@ class LfsLocalReader private constructor(private val meta: Map<String, String>, 
                 if (gzipPath != null && Files.exists(gzipPath)) return LfsLocalReader(meta!!, gzipPath, true)
             } else {
                 if (dataPath == null || !Files.isRegularFile(dataPath)) return null
-                meta = HashMap()
-                meta!![Constants.OID] = oid
-                meta!![Constants.SIZE] = Files.size(dataPath).toString()
+                meta = mapOf(
+                    Constants.OID to oid,
+                    Constants.SIZE to Files.size(dataPath).toString()
+                )
             }
             return if (dataPath != null && Files.isRegularFile(dataPath)) LfsLocalReader(meta!!, dataPath, false) else null
         }

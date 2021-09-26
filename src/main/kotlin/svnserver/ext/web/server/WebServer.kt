@@ -7,6 +7,9 @@
  */
 package svnserver.ext.web.server
 
+import jakarta.servlet.Servlet
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.eclipse.jetty.server.*
 import org.eclipse.jetty.server.handler.ErrorHandler
 import org.eclipse.jetty.server.handler.HandlerCollection
@@ -32,11 +35,7 @@ import java.net.MalformedURLException
 import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import javax.servlet.Servlet
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /**
  * Web server component

@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlfs.server
 
+import jakarta.servlet.http.HttpServletRequest
 import org.tmatesoft.svn.core.SVNException
 import ru.bozaro.gitlfs.common.LockConflictException
 import ru.bozaro.gitlfs.common.VerifyLocksResult
@@ -22,7 +23,6 @@ import svnserver.repository.locks.LockDesc
 import java.io.IOException
 import java.util.*
 import java.util.stream.Collectors
-import javax.servlet.http.HttpServletRequest
 
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
