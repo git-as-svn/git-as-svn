@@ -25,7 +25,7 @@ plugins {
 
 version = "1.30.1"
 
-val javaVersion = JavaVersion.VERSION_14
+val javaVersion = JavaVersion.VERSION_11
 
 idea {
     project.jdkName = javaVersion.name
