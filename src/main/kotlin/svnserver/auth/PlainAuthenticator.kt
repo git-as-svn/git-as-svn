@@ -24,11 +24,11 @@ class PlainAuthenticator constructor(private val userDB: UserDB) : Authenticator
     @Throws(SVNException::class)
     override fun authenticate(context: SessionContext, token: String): User? {
         val decoded: ByteArray = Base64.getMimeDecoder().decode(token)
-        val decodedToken = String(decoded, StandardCharsets.US_ASCII)
+        val decodedToken = String(decoded, StandardCharsets.UTF_8)
         val credentials: Array<String> = decodedToken.split("\u0000").toTypedArray()
         if (credentials.size < 3) return null
-        val username: String = credentials.get(1)
-        val password: String = credentials.get(2)
+        val username: String = credentials[1]
+        val password: String = credentials[2]
         return userDB.check(username, password)
     }
 }

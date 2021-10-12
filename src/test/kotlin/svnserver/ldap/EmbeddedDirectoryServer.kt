@@ -48,7 +48,7 @@ class EmbeddedDirectoryServer private constructor(dn: String, ldifStream: URL, p
 
     companion object {
         const val ADMIN_USERNAME = "ldapadmin"
-        const val ADMIN_PASSWORD = "123456789012345678901234567890123456789012345678901234567890"
+        const val ADMIN_PASSWORD = "123456789012345678901234567890123456789012345678901234567890пароль"
         fun create(serverNet: DirectoryServerNet): EmbeddedDirectoryServer {
             return EmbeddedDirectoryServer("dc=example,dc=com", EmbeddedDirectoryServer::class.java.getResource("ldap.ldif"), serverNet)
         }
