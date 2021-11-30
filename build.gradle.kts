@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "7.2"
+    gradleVersion = "7.3"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -78,7 +78,7 @@ tasks.getByName<JavaExec>("run") {
 
 dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:6.0.0.202111291000-r")
     implementation("org.tmatesoft.svnkit:svnkit:1.10.3")
     implementation("org.yaml:snakeyaml:1.29")
     implementation("com.beust:jcommander:1.81")
@@ -101,7 +101,7 @@ dependencies {
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.14.1")
 
-    testImplementation("org.testcontainers:testcontainers:1.16.1")
+    testImplementation("org.testcontainers:testcontainers:1.16.2")
     testImplementation("org.testng:testng:7.4.0")
 
     constraints {
