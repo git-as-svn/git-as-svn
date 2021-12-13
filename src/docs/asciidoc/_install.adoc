@@ -13,7 +13,6 @@ By default, Git uses native line ending for text files and determines whether fi
 In order to fix this discrepancy, add the following to your `.gitattributes` file:
 
 ..gitattributes
-
 ----
 *   -text
 ----
@@ -23,16 +22,12 @@ See https://git-scm.com/docs/gitattributes[gitattributes documentation] for addi
 
 == Installation on Debian/Ubuntu
 
-You can install git-as-svn repository on Debian/Ubuntu using the following commands:
+You can install git-as-svn on Debian/Ubuntu using the following commands:
 
 [source,bash]
 ----
-# Add bintray GPG key
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 379CE192D401AB61
-
-# Add repository and fetch its contents
-echo "deb https://dl.bintray.com/bozaro/git-as-svn debian main" | sudo tee /etc/apt/sources.list.d/git-as-svn.list
-sudo apt-get update
+# Set up repository
+curl -1sLf 'https://dl.cloudsmith.io/public/git-as-svn/git-as-svn/setup.deb.sh' | sudo -E bash
 
 # Install git-as-svn
 sudo apt-get install git-as-svn
