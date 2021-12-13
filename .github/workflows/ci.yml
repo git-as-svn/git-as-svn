@@ -110,11 +110,9 @@ jobs:
             build/distributions/git-as-svn*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish to Bintray
-        uses: wanduow/action-bintray-upload-debian-packages@v1
-        with:
-          path: build/distributions
-          repo: ${{ github.repository }}
-          license: GPL-2.0
-          username: ${{ github.repository_owner }}
-          api_key: ${{ secrets.BINTRAY_API_KEY }}
+      - name: Install Cloudsmith CLI
+        run: pip install --upgrade --user cloudsmith-cli
+      - name: Publish to Cloudsmith
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+        run: find build/distributions -name "*.dsc" -print0 | xargs -0 -n1 cloudsmith push deb git-as-svn/git-as-svn/debian/main

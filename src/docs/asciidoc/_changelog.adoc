@@ -17,6 +17,7 @@ Minimal is Java 11 now.
 You can control whether you opt-in for new features that require re-checkout of Subversion working copies via `format` repository parameter.
 By default, git-as-svn uses the latest version and thus requires re-checkout if repository was initially created with older format.
 * Add support for non-ASCII logins and passwords
+* Deploy Debian packages to Cloudsmith. https://github.com/bozaro/git-as-svn/issues/370[#370]
 
 IMPORTANT: Repository data exported to SVN has changed.
 Users will need to perform re-checkout of their working copies after git-as-svn upgrade unless you specify `format: V4` in `git-as-svn.conf`.
