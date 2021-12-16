@@ -80,7 +80,7 @@ dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
     implementation("org.eclipse.jgit:org.eclipse.jgit:6.0.0.202111291000-r")
     implementation("org.tmatesoft.svnkit:svnkit:1.10.3")
-    implementation("org.yaml:snakeyaml:1.29")
+    implementation("org.yaml:snakeyaml:1.30")
     implementation("com.beust:jcommander:1.81")
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
