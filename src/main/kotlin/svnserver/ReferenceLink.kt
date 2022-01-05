@@ -22,6 +22,6 @@ enum class ReferenceLink(private val anchor: String) {
         }
 
     companion object {
-        const val BASE_URL: String = "https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html"
+        const val BASE_URL: String = "https://git-as-svn.github.io/git-as-svn/htmlsingle/git-as-svn.html"
     }
 }

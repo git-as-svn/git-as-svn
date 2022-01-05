@@ -17,9 +17,9 @@ It allows you to work with Git repositories using any tool compatible with Subve
 == Documentation
 
 git-as-svn user manual includes installation and configuration instructions:
-https://bozaro.github.io/git-as-svn/htmlsingle/git-as-svn.html[HTML],
-https://bozaro.github.io/git-as-svn/git-as-svn.pdf[PDF],
-https://bozaro.github.io/git-as-svn/git-as-svn.epub[EPUB]
+https://git-as-svn.github.io/git-as-svn/htmlsingle/git-as-svn.html[HTML],
+https://git-as-svn.github.io/git-as-svn/git-as-svn.pdf[PDF],
+https://git-as-svn.github.io/git-as-svn/git-as-svn.epub[EPUB]
 
 == Building from source
 
