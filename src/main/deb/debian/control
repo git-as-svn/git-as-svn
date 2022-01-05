@@ -6,6 +6,7 @@ Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.6
 Homepage: https://github.com/git-as-svn/git-as-svn
 Vcs-Git: https://github.com/git-as-svn/git-as-svn.git
+Distribution: any-version
 
 Package: git-as-svn
 Architecture: all
