@@ -115,4 +115,4 @@ jobs:
       - name: Publish to Cloudsmith
         env:
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
-        run: find build/distributions -name "*.dsc" -print0 | xargs -0 -n1 cloudsmith push deb git-as-svn/git-as-svn/debian/main
+        run: find build/distributions -name "*.deb" -print0 | xargs -0 -n1 cloudsmith push deb git-as-svn/git-as-svn/debian/main
