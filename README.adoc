@@ -1,6 +1,6 @@
 = git-as-svn
 :project-handle: git-as-svn
-:slug: bozaro/{project-handle}
+:slug: git-as-svn/{project-handle}
 :uri-project: https://github.com/{slug}
 :uri-ci: {uri-project}/actions?query=branch%3Amaster
 

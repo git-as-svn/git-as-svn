@@ -6,7 +6,7 @@ include::_feedback.adoc[]
 
 == What is it?
 
-git-as-svn (https://github.com/bozaro/git-as-svn) emulates Subversion repository on top of Git repository.
+git-as-svn (https://github.com/git-as-svn/git-as-svn) emulates Subversion repository on top of Git repository.
 
 It allows you to work with Git repositories using any tool compatible with Subversion 1.8+:
 console `svn`, TortoiseSVN, SvnKit, SmartSVN, etc.

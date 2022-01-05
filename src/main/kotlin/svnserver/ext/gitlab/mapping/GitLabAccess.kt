@@ -88,11 +88,11 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         /*
       These are required for GitLab hooks
       See:
-      https://github.com/bozaro/git-as-svn/issues/271
-      https://github.com/bozaro/git-as-svn/issues/337
-      https://github.com/bozaro/git-as-svn/issues/347
-      https://github.com/bozaro/git-as-svn/issues/355
-      https://github.com/bozaro/git-as-svn/issues/367
+      https://github.com/git-as-svn/git-as-svn/issues/271
+      https://github.com/git-as-svn/git-as-svn/issues/337
+      https://github.com/git-as-svn/git-as-svn/issues/347
+      https://github.com/git-as-svn/git-as-svn/issues/355
+      https://github.com/git-as-svn/git-as-svn/issues/367
     */environment["GITALY_BIN_DIR"] = gitlabContext.config.gitalyBinDir
         environment["GITALY_HOOKS_PAYLOAD"] = Base64.getEncoder().encodeToString(JsonHelper.mapper.writeValueAsBytes(hooksPayload))
         environment["GITALY_REPO"] = gitalyRepoString

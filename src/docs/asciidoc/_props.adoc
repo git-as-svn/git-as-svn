@@ -88,7 +88,7 @@ Example:
 ----
 [bugtraq]
     logregex = #(\\d+)
-    url = https://github.com/bozaro/git-as-svn/issues/%BUGID%
+    url = https://github.com/git-as-svn/git-as-svn/issues/%BUGID%
     warnifnoissue = false
 ----
 
@@ -100,7 +100,7 @@ Properties on '<repo>':
   bugtraq:logregex
     #(\\d+)
   bugtraq:url
-    https://github.com/bozaro/git-as-svn/issues/%BUGID%
+    https://github.com/git-as-svn/git-as-svn/issues/%BUGID%
   bugtraq:warnifnoissue
     false
 ----

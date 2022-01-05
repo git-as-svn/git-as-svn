@@ -83,7 +83,7 @@ The output should look something like this:
 [source,json]
 ----
 {
-  "href": "https://api.github.com/lfs/bozaro/git-as-svn",
+  "href": "https://api.github.com/lfs/git-as-svn/git-as-svn",
   "header": {
     "Authorization": "Bearer SOME-SECRET-TOKEN"
   },
