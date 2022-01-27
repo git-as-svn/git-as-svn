@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 2.1.0
+
+* Fix SLF4J version. https://github.com/git-as-svn/git-as-svn/issues/484[#484]
+* Update dependencies
+
 == 2.0.0
 
 * git-as-svn migrated from Java to Kotlin
