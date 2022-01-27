@@ -105,7 +105,7 @@ class GiteaIntegrationTest {
         if (execResult.exitCode == 3) {
             execResult = gitea!!.execInContainer(*ArrayUtil.add(arrayOf("gitea", "admin", "create-user"), args))
         }
-        Assert.assertEquals(execResult.exitCode, 0)
+        Assert.assertEquals(execResult.exitCode, 0, "STDOUT:\n${execResult.stdout}\n\nSTDERR:${execResult.stderr}");
     }
 
     private fun createUser(username: String, password: String): io.gitea.model.User {
