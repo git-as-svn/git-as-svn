@@ -90,14 +90,14 @@ dependencies {
     implementation("org.bitbucket.b_c:jose4j:0.7.9")
     implementation("com.github.zeripath:java-gitea-api:1.15.0")
 
-    val gitLfsJava = "0.18.4"
+    val gitLfsJava = "0.19.0"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
     implementation("com.google.oauth-client:google-oauth-client:1.32.1")
     implementation("com.google.http-client:google-http-client-jackson2:1.41.0")
-    implementation("org.slf4j:slf4j-api:2.0.0-alpha6")
+    implementation("org.slf4j:slf4j-api:1.7.35")
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.17.1")
 
