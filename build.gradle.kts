@@ -97,7 +97,11 @@ dependencies {
 
     implementation("com.google.oauth-client:google-oauth-client:1.32.1")
     implementation("com.google.http-client:google-http-client-jackson2:1.41.0")
-    implementation("org.slf4j:slf4j-api:1.7.35")
+    implementation("org.slf4j:slf4j-api") {
+        version {
+            strictly("1.8.0-beta4")
+        }
+    }
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.17.1")
 
