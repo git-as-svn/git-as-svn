@@ -19,12 +19,12 @@ jobs:
         with:
           arguments: assembleDist
       - name: Store docs
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: docs
           path: build/doc
       - name: Store package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: package
           path: build/distributions
