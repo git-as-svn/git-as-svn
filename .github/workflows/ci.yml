@@ -81,7 +81,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
       - name: Download
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: docs
           path: build/doc
@@ -98,7 +98,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: package
           path: build/distributions
