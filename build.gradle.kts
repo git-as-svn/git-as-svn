@@ -84,7 +84,7 @@ dependencies {
     implementation("com.beust:jcommander:1.82")
     implementation("org.ini4j:ini4j:0.5.4")
     implementation("org.mapdb:mapdb:3.0.8")
-    implementation("com.unboundid:unboundid-ldapsdk:6.0.4")
+    implementation("com.unboundid:unboundid-ldapsdk:6.0.5")
     implementation("org.eclipse.jetty:jetty-servlet:11.0.9")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
     implementation("org.bitbucket.b_c:jose4j:0.7.11")
