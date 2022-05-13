@@ -129,3 +129,10 @@ shared:
     # Default: /opt/gitlab/embedded/bin
     #
     # gitalyBinDir: /opt/gitlab/embedded/bin
+
+    # Value for GL_PROTOCOL hooks environment variable
+    # See https://docs.gitlab.com/ee/administration/server_hooks.html#environment-variables-available-to-server-hooks
+    # Possible values: HTTP, SSH, Web
+    # Default: Web
+    #
+    # glProtocol: Web

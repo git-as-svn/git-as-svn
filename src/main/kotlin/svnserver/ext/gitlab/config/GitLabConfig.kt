@@ -32,6 +32,7 @@ class GitLabConfig private constructor(var url: String, private var tokenType: T
     var gitalyBinDir = "/opt/gitlab/embedded/bin"
     var gitalySocket = "/var/opt/gitlab/gitaly/gitaly.socket"
     var gitalyToken = "secret token"
+    var glProtocol: GLProtocol = GLProtocol.Web
 
     constructor() : this("http://localhost/", TokenType.PRIVATE_TOKEN, "")
     constructor(url: String, token: GitLabToken) : this(url, token.type, token.value)

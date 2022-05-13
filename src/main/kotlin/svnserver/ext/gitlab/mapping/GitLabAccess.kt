@@ -62,7 +62,7 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
     @Throws(IOException::class)
     override fun updateEnvironment(environment: MutableMap<String, String>, user: User) {
         val glRepository = String.format("project-%s", gitlabProject.id)
-        val glProtocol = "web"
+        val glProtocol = gitlabContext.config.glProtocol.name.lowercase()
         val userId: String? = if (user.externalId == null) null else GitLabUserDB.PREFIX_USER + user.externalId
 
         val gitalyRepo = HashMap<String, Any>()

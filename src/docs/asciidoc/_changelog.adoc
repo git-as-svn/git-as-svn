@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Add `glProtocol` option to configure GitLab `GL_PROTOCOL` server hooks environment variable
+
 == 2.1.1
 
 * Fix startup failure when `format: Latest` is specified in config

@@ -135,6 +135,13 @@ shared:
     #
     # gitalyBinDir: /opt/gitlab/embedded/bin
 
+    # Value for GL_PROTOCOL hooks environment variable
+    # See https://docs.gitlab.com/ee/administration/server_hooks.html#environment-variables-available-to-server-hooks
+    # Possible values: HTTP, SSH, Web
+    # Default: Web
+    #
+    # glProtocol: Web
+
   # Manage authorized_keys if your Gitlab instance creates this file
   - !sshKeys
     shadowSSHDirectory: /var/opt/gitlab/ssh-shadow
