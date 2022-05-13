@@ -87,7 +87,7 @@ dependencies {
     implementation("com.unboundid:unboundid-ldapsdk:6.0.5")
     implementation("org.eclipse.jetty:jetty-servlet:11.0.9")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
-    implementation("org.bitbucket.b_c:jose4j:0.7.11")
+    implementation("org.bitbucket.b_c:jose4j:0.7.12")
     implementation("com.github.zeripath:java-gitea-api:1.15.0")
 
     val gitLfsJava = "0.19.0"
