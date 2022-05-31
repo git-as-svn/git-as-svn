@@ -14,7 +14,7 @@ import svnserver.repository.git.path.NameMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class EqualsMatcher constructor(override val svnMask: String, private val dirOnly: Boolean) : NameMatcher {
+data class EqualsMatcher constructor(override val svnMask: String, private val dirOnly: Boolean) : NameMatcher {
     override fun isMatch(name: String, isDir: Boolean): Boolean {
         return (!dirOnly || isDir) && (svnMask == name)
     }
@@ -24,21 +24,7 @@ class EqualsMatcher constructor(override val svnMask: String, private val dirOnl
             return false
         }
 
-    override fun hashCode(): Int {
-        var result: Int = svnMask.hashCode()
-        result = 31 * result + (if (dirOnly) 1 else 0)
-        return result
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: EqualsMatcher = other as EqualsMatcher
-        return ((dirOnly == that.dirOnly)
-                && (svnMask == that.svnMask))
-    }
-
     override fun toString(): String {
-        return svnMask + (if (dirOnly) "/" else "")
+        return "$svnMask${if (dirOnly) "/" else ""}"
     }
 }

@@ -9,14 +9,13 @@ package svnserver.repository.git.path.matcher.name
 
 import org.eclipse.jgit.ignore.IMatcher
 import svnserver.repository.git.path.NameMatcher
-import java.util.*
 
 /**
  * Simple matcher for regexp compare.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class ComplexMatcher constructor(private val pattern: String, private val dirOnly: Boolean, private val useSvnMask: Boolean) : NameMatcher {
+data class ComplexMatcher constructor(private val pattern: String, private val dirOnly: Boolean, private val useSvnMask: Boolean) : NameMatcher {
     private val matcher: IMatcher = IMatcher.createPathMatcher(if (dirOnly) pattern.substring(0, pattern.length - 1) else pattern, dirOnly)
 
     override fun isMatch(name: String, isDir: Boolean): Boolean {
@@ -31,21 +30,7 @@ class ComplexMatcher constructor(private val pattern: String, private val dirOnl
     override val svnMask: String?
         get() = if (useSvnMask) pattern else null
 
-    override fun hashCode(): Int {
-        var result: Int = pattern.hashCode()
-        result = 31 * result + (if (dirOnly) 1 else 0)
-        return result
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: ComplexMatcher = other as ComplexMatcher
-        return ((dirOnly == that.dirOnly)
-                && Objects.equals(pattern, that.pattern))
-    }
-
     override fun toString(): String {
-        return pattern + if (dirOnly) "/" else ""
+        return "$pattern${if (dirOnly) "/" else ""}"
     }
 }

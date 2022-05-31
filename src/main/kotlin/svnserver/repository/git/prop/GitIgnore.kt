@@ -20,7 +20,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.*
 import java.util.regex.PatternSyntaxException
 
 /**
@@ -28,69 +27,13 @@ import java.util.regex.PatternSyntaxException
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitIgnore : GitProperty {
-    private val matchers: MutableList<PathMatcher>
-
-    // svn:global-ignores
-    private val global: Array<String>
-
+internal data class GitIgnore constructor(
     // svn:ignore
-    private val local: Array<String>
-
-    /**
-     * Parse and store .gitignore data (http://git-scm.com/docs/gitignore).
-     *
-     *
-     * Important:
-     * * An optional prefix "!" which negates the pattern is not supported.
-     * * Mask trailing slash is not supported (/foo/bar/ works like /foo/bar).
-     *
-     * @param reader Original file content.
-     */
-    constructor(reader: BufferedReader) {
-        val localList = ArrayList<String>()
-        val globalList = ArrayList<String>()
-        matchers = ArrayList()
-        for (txt in reader.lines()) {
-            val line = trimLine(txt)
-            if (line.isEmpty()) continue
-            try {
-                val wildcard = Wildcard(line)
-                if (wildcard.isSvnCompatible) {
-                    processMatcher(localList, globalList, matchers, wildcard.matcher)
-                }
-            } catch (e: InvalidPatternException) {
-                log.warn("Found invalid git pattern: {}", line)
-            } catch (e: PatternSyntaxException) {
-                log.warn("Found invalid git pattern: {}", line)
-            }
-        }
-        local = localList.toTypedArray()
-        global = globalList.toTypedArray()
-    }
-
-    private fun trimLine(line: String): String {
-        if (line.isEmpty() || line.startsWith("#") || line.startsWith("!") || line.startsWith("\\!")) return ""
-        // Remove trailing spaces end escapes.
-        var end: Int = line.length
-        while (end > 0) {
-            val c: Char = line[end - 1]
-            if (c != ' ') {
-                if ((end < line.length) && (line[end - 1] == '\\')) {
-                    end++
-                }
-                break
-            }
-            end--
-        }
-        return line.substring(0, end)
-    }
-
-    private constructor(local: List<String>, global: List<String>, matchers: MutableList<PathMatcher>) {
-        this.local = local.toTypedArray()
-        this.global = global.toTypedArray()
-        this.matchers = matchers
-    }
+    private val local: Array<String>,
+    // svn:global-ignores
+    private val global: Array<String>,
+    private val matchers: Array<PathMatcher>,
+) : GitProperty {
 
     override fun apply(props: MutableMap<String, String>) {
         if (global.isNotEmpty()) {
@@ -105,8 +48,8 @@ internal class GitIgnore : GitProperty {
         if (matchers.isEmpty() || (mode.objectType == Constants.OBJ_BLOB)) {
             return null
         }
-        val localList: MutableList<String> = ArrayList()
-        val globalList: MutableList<String> = ArrayList()
+        val localList = ArrayList<String>()
+        val globalList = ArrayList<String>()
         val childMatchers: MutableList<PathMatcher> = ArrayList()
         for (matcher: PathMatcher in matchers) {
             processMatcher(localList, globalList, childMatchers, matcher.createChild(name, true))
@@ -114,7 +57,7 @@ internal class GitIgnore : GitProperty {
         if (localList.isEmpty() && globalList.isEmpty() && childMatchers.isEmpty()) {
             return null
         }
-        return GitIgnore(localList, globalList, childMatchers)
+        return GitIgnore(localList.toTypedArray(), globalList.toTypedArray(), childMatchers.toTypedArray())
     }
 
     override val filterName: String?
@@ -123,19 +66,23 @@ internal class GitIgnore : GitProperty {
         }
 
     override fun hashCode(): Int {
-        var result: Int = matchers.hashCode()
+        var result = local.contentHashCode()
         result = 31 * result + global.contentHashCode()
-        result = 31 * result + local.contentHashCode()
+        result = 31 * result + matchers.contentHashCode()
         return result
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val gitIgnore: GitIgnore = other as GitIgnore
-        return (global.contentEquals(gitIgnore.global)
-                && local.contentEquals(gitIgnore.local)
-                && (matchers == gitIgnore.matchers))
+        if (javaClass != other?.javaClass) return false
+
+        other as GitIgnore
+
+        if (!local.contentEquals(other.local)) return false
+        if (!global.contentEquals(other.global)) return false
+        if (!matchers.contentEquals(other.matchers)) return false
+
+        return true
     }
 
     companion object {
@@ -156,10 +103,56 @@ internal class GitIgnore : GitProperty {
             matchers.add(matcher)
         }
 
+        /**
+         * Parse and store .gitignore data (http://git-scm.com/docs/gitignore).
+         *
+         *
+         * Important:
+         * * An optional prefix "!" which negates the pattern is not supported.
+         * * Mask trailing slash is not supported (/foo/bar/ works like /foo/bar).
+         *
+         * @param stream Original file content.
+         */
         @Throws(IOException::class)
         fun parseConfig(stream: InputStream): GitIgnore {
             val reader = BufferedReader(InputStreamReader(stream, StandardCharsets.UTF_8))
-            return GitIgnore(reader)
+
+            val localList = ArrayList<String>()
+            val globalList = ArrayList<String>()
+            val matchers = ArrayList<PathMatcher>()
+            for (txt in reader.lines()) {
+                val line = trimLine(txt)
+                if (line.isEmpty()) continue
+                try {
+                    val wildcard = Wildcard(line)
+                    if (wildcard.isSvnCompatible) {
+                        processMatcher(localList, globalList, matchers, wildcard.matcher)
+                    }
+                } catch (e: InvalidPatternException) {
+                    log.warn("Found invalid git pattern: {}", line)
+                } catch (e: PatternSyntaxException) {
+                    log.warn("Found invalid git pattern: {}", line)
+                }
+            }
+
+            return GitIgnore(localList.toTypedArray(), globalList.toTypedArray(), matchers.toTypedArray())
+        }
+
+        private fun trimLine(line: String): String {
+            if (line.isEmpty() || line.startsWith("#") || line.startsWith("!") || line.startsWith("\\!")) return ""
+            // Remove trailing spaces end escapes.
+            var end: Int = line.length
+            while (end > 0) {
+                val c: Char = line[end - 1]
+                if (c != ' ') {
+                    if ((end < line.length) && (line[end - 1] == '\\')) {
+                        end++
+                    }
+                    break
+                }
+                end--
+            }
+            return line.substring(0, end)
         }
 
         private fun addIgnore(oldValue: String?, ignores: Array<String>): String {

@@ -70,8 +70,6 @@ internal class GitFileEmptyTree constructor(override val branch: GitBranch, pare
         }
 
     override fun toString(): String {
-        return ("GitFileEmptyTree{" +
-                "fullPath='" + fullPath + '\'' +
-                '}')
+        return "GitFileEmptyTree{fullPath='$fullPath'}"
     }
 }

@@ -17,18 +17,9 @@ import java.io.IOException
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal open class GitEntryImpl constructor(parentProps: Array<GitProperty>, private val parentPath: String, props: Array<GitProperty>, final override val fileName: String, fileMode: FileMode) : GitEntry {
-    override val rawProperties: Array<GitProperty> = GitProperty.joinProperties(parentProps, fileName, fileMode, props)
-
-    // Cache
-    private var fullPathCache: String? = null
-    override val fullPath: String
-        get() {
-            if (fullPathCache == null) {
-                fullPathCache = StringHelper.joinPath(parentPath, fileName)
-            }
-            return fullPathCache!!
-        }
+internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: String, props: Array<GitProperty>, final override val fileName: String, fileMode: FileMode) : GitEntry {
+    final override val fullPath: String = StringHelper.joinPath(parentPath, fileName)
+    final override val rawProperties: Array<GitProperty> = GitProperty.joinProperties(parentProps, fileName, fileMode, props)
 
     override fun createChild(name: String, isDir: Boolean): GitEntry {
         return GitEntryImpl(rawProperties, fullPath, emptyArray(), name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE)

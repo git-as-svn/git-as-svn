@@ -28,6 +28,18 @@ class AlwaysMatcher private constructor() : PathMatcher {
             return "*"
         }
 
+    override fun equals(other: Any?): Boolean {
+        return other is AlwaysMatcher
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
+
+    override fun toString(): String {
+        return "AlwaysMatcher()"
+    }
+
     companion object {
         val INSTANCE: AlwaysMatcher = AlwaysMatcher()
     }

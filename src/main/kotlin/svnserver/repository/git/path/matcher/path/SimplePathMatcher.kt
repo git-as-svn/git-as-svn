@@ -9,14 +9,13 @@ package svnserver.repository.git.path.matcher.path
 
 import svnserver.repository.git.path.NameMatcher
 import svnserver.repository.git.path.PathMatcher
-import java.util.*
 
 /**
  * Matcher for patterns without "**".
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SimplePathMatcher private constructor(private val nameMatchers: Array<NameMatcher>, private val index: Int) : PathMatcher {
+data class SimplePathMatcher private constructor(private val nameMatchers: Array<NameMatcher>, private val index: Int) : PathMatcher {
     constructor(nameMatchers: Array<NameMatcher>) : this(nameMatchers, 0)
 
     override fun createChild(name: String, isDir: Boolean): PathMatcher? {
@@ -43,28 +42,19 @@ class SimplePathMatcher private constructor(private val nameMatchers: Array<Name
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: SimplePathMatcher = other as SimplePathMatcher
-        if (nameMatchers.size - index != that.nameMatchers.size - that.index) return false
-        for (i in index until nameMatchers.size) {
-            if (!Objects.equals(nameMatchers[i], that.nameMatchers[i + that.index - index])) return false
-        }
+        if (javaClass != other?.javaClass) return false
+
+        other as SimplePathMatcher
+
+        if (!nameMatchers.contentEquals(other.nameMatchers)) return false
+        if (index != other.index) return false
+
         return true
     }
 
     override fun hashCode(): Int {
-        var result = 0
-        for (i in index until nameMatchers.size) {
-            result = 31 * result + nameMatchers[i].hashCode()
-        }
+        var result = nameMatchers.contentHashCode()
+        result = 31 * result + index
         return result
-    }
-
-    override fun toString(): String {
-        val sb: StringBuilder = StringBuilder()
-        for (i in index until nameMatchers.size) {
-            sb.append(nameMatchers[i].toString())
-        }
-        return sb.toString()
     }
 }

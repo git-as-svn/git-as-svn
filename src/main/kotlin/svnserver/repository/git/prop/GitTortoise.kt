@@ -9,17 +9,15 @@ package svnserver.repository.git.prop
 
 import org.eclipse.jgit.lib.FileMode
 import org.ini4j.Ini
-import org.ini4j.Profile
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
 
 /**
  * Parse and processing .tgitconfig.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitTortoise private constructor(private val tortoiseProps: Map<String, String>) : GitProperty {
+internal data class GitTortoise private constructor(private val tortoiseProps: Map<String, String>) : GitProperty {
 
     override fun apply(props: MutableMap<String, String>) {
         props.putAll(tortoiseProps)
@@ -32,17 +30,6 @@ internal class GitTortoise private constructor(private val tortoiseProps: Map<St
 
     override fun createForChild(name: String, mode: FileMode): GitProperty? {
         return null
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: GitTortoise = other as GitTortoise
-        return (tortoiseProps == that.tortoiseProps)
-    }
-
-    override fun hashCode(): Int {
-        return tortoiseProps.hashCode()
     }
 
     companion object {
