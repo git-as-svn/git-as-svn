@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 2.3.0
+
+* Update dependencies
+* Reduce memory consumption for repositories with big `.gitignore` or `.gitattributes`. https://github.com/git-as-svn/git-as-svn/issues/306[#306]
+
 == 2.2.0
 
 * Add `glProtocol` option to configure GitLab `GL_PROTOCOL` server hooks environment variable
