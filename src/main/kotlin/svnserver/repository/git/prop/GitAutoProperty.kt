@@ -11,20 +11,14 @@ import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.tmatesoft.svn.core.SVNProperty
 import svnserver.repository.git.path.PathMatcher
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Parse and processing .gitignore.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitAutoProperty
-/**
- * Set property to all matched file.
- *
- * @param matcher  File matcher.
- * @param property Property name.
- * @param value    Property value.
- */ constructor(private val matcher: PathMatcher, private val property: String, private val value: String) : GitProperty {
+internal data class GitAutoProperty private constructor(private val matcher: PathMatcher, private val property: String, private val value: String) : GitProperty {
     override fun apply(props: MutableMap<String, String>) {
         val mask: String? = matcher.svnMaskGlobal
         if (mask != null) {
@@ -70,21 +64,14 @@ internal class GitAutoProperty
         return GitAutoProperty(matcherChild, property, value)
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: GitAutoProperty = other as GitAutoProperty
-        return ((matcher == that.matcher) && (property == that.property) && (value == that.value))
-    }
-
-    override fun hashCode(): Int {
-        var result: Int = matcher.hashCode()
-        result = 31 * result + property.hashCode()
-        result = 31 * result + value.hashCode()
-        return result
-    }
-
     companion object {
         private const val MASK_SEPARATOR: String = " = "
+
+        private val cache = ConcurrentHashMap<GitAutoProperty, GitAutoProperty>()
+
+        fun create(matcher: PathMatcher, property: String, value: String): GitAutoProperty {
+            val result = GitAutoProperty(matcher, property, value)
+            return cache.computeIfAbsent(result) { result }
+        }
     }
 }

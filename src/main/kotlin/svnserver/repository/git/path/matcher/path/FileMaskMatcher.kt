@@ -15,7 +15,7 @@ import svnserver.repository.git.path.PathMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class FileMaskMatcher constructor(private val matcher: NameMatcher) : PathMatcher {
+data class FileMaskMatcher constructor(private val matcher: NameMatcher) : PathMatcher {
     override fun createChild(name: String, isDir: Boolean): PathMatcher? {
         if (matcher.isMatch(name, isDir)) {
             return AlwaysMatcher.INSTANCE
@@ -34,15 +34,4 @@ class FileMaskMatcher constructor(private val matcher: NameMatcher) : PathMatche
         get() {
             return matcher.svnMask
         }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: FileMaskMatcher = other as FileMaskMatcher
-        return (matcher == that.matcher)
-    }
-
-    override fun hashCode(): Int {
-        return matcher.hashCode()
-    }
 }

@@ -10,42 +10,37 @@ package svnserver.repository.git.prop
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import svnserver.repository.git.path.PathMatcher
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Replace file filter.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
-internal class GitFilterProperty
-/**
- * Set property to all matched file.
- *
- * @param matcher    File matcher.
- * @param myFilterName Filter name.
- */ constructor(private val matcher: PathMatcher, private val myFilterName: String) : GitProperty {
+internal data class GitFilterProperty private constructor(private val matcher: PathMatcher, private val myFilterName: String) : GitProperty {
+
     override fun apply(props: MutableMap<String, String>) {}
+
     override val filterName: String?
         get() = if (matcher.isMatch) myFilterName else null
 
     override fun createForChild(name: String, mode: FileMode): GitProperty? {
         val isDir: Boolean = mode.objectType != Constants.OBJ_BLOB
         val matcherChild: PathMatcher? = matcher.createChild(name, isDir)
-        if ((matcherChild != null) && (isDir || matcherChild.isMatch)) {
-            return GitFilterProperty(matcherChild, myFilterName)
+        if (matcherChild != null && (isDir || matcherChild.isMatch)) {
+            return create(matcherChild, myFilterName)
         }
         return null
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: GitFilterProperty = other as GitFilterProperty
-        return ((matcher == that.matcher) && (filterName == that.filterName))
-    }
+    companion object {
+        // Without this cache, we have 20 *millions* of instances on at-git.mail.msk
+        private val cache = ConcurrentHashMap<GitFilterProperty, GitFilterProperty>()
 
-    override fun hashCode(): Int {
-        var result: Int = matcher.hashCode()
-        result = 31 * result + filterName.hashCode()
-        return result
+        fun create(matcher: PathMatcher, filterName: String): GitFilterProperty {
+            val result = GitFilterProperty(matcher, filterName)
+            return cache.computeIfAbsent(result) { result }
+        }
     }
 }

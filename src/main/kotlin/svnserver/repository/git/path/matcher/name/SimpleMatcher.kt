@@ -14,7 +14,7 @@ import svnserver.repository.git.path.NameMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SimpleMatcher constructor(private val prefix: String, private val suffix: String, private val dirOnly: Boolean) : NameMatcher {
+data class SimpleMatcher constructor(private val prefix: String, private val suffix: String, private val dirOnly: Boolean) : NameMatcher {
     override fun isMatch(name: String, isDir: Boolean): Boolean {
         return (!dirOnly || isDir) && (name.length >= prefix.length + suffix.length) && name.startsWith(prefix) && name.endsWith(suffix)
     }
@@ -28,23 +28,7 @@ class SimpleMatcher constructor(private val prefix: String, private val suffix: 
             return "$prefix*$suffix"
         }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that: SimpleMatcher = other as SimpleMatcher
-        return ((dirOnly == that.dirOnly)
-                && ((prefix == that.prefix))
-                && (suffix == that.suffix))
-    }
-
-    override fun hashCode(): Int {
-        var result: Int = prefix.hashCode()
-        result = 31 * result + suffix.hashCode()
-        result = 31 * result + (if (dirOnly) 1 else 0)
-        return result
-    }
-
     override fun toString(): String {
-        return prefix + "*" + suffix + (if (dirOnly) "/" else "")
+        return "$svnMask${if (dirOnly) "/" else ""}"
     }
 }

@@ -57,7 +57,7 @@ class GitAttributesFactory : GitPropertyFactory {
 
             processProperty(properties, wildcard, SVNProperty.NEEDS_LOCK, getNeedsLock(attrs))
             val filter: String? = getFilter(attrs)
-            if (filter != null) properties.add(GitFilterProperty(wildcard.matcher, filter))
+            if (filter != null) properties.add(GitFilterProperty.create(wildcard.matcher, filter))
         }
         return properties.toTypedArray()
     }
@@ -111,7 +111,7 @@ class GitAttributesFactory : GitPropertyFactory {
 
             // new git system
             if ("auto" == attrs.getValue("text")) {
-                return EolType.Autodetect;
+                return EolType.Autodetect
             }
 
             when (attrs.getValue("eol")) {
@@ -150,11 +150,11 @@ class GitAttributesFactory : GitPropertyFactory {
             }
             if (value.isNotEmpty()) {
                 if (wildcard.isSvnCompatible) {
-                    properties.add(GitAutoProperty(wildcard.matcher, property, value))
+                    properties.add(GitAutoProperty.create(wildcard.matcher, property, value))
                 }
-                properties.add(GitFileProperty(wildcard.matcher, property, value))
+                properties.add(GitFileProperty.create(wildcard.matcher, property, value))
             } else {
-                properties.add(GitFileProperty(wildcard.matcher, property, null))
+                properties.add(GitFileProperty.create(wildcard.matcher, property, null))
             }
         }
 
