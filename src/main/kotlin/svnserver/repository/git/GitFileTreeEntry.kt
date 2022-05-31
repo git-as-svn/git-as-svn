@@ -106,7 +106,7 @@ internal class GitFileTreeEntry private constructor(
                 for (entry in entriesCache.get()) {
                     result.add(create(branch, rawProperties, fullPath, entry, revision))
                 }
-                treeEntriesCache = result
+                treeEntriesCache = result.toTypedArray().asIterable()
             }
             return treeEntriesCache!!
         }
