@@ -32,6 +32,7 @@ import java.util.*
  * SVN client session context.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
+ * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class SessionContext constructor(
     val parser: SvnServerParser,
@@ -62,27 +63,26 @@ class SessionContext constructor(
         val root: String = repositoryInfo.baseUrl.path
         val path: String = url.path
         if (!path.startsWith(root)) {
-            throw SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: " + path + " (base: " + root + ")"))
+            throw SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: $path (base: $root)"))
         }
         if (root.length == path.length) {
             return ""
         }
         val hasSlash: Boolean = root.endsWith("/")
-        if ((!hasSlash) && (path.get(root.length) != '/')) {
-            throw SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: " + path + " (base: " + root + ")"))
+        if (!hasSlash && (path[root.length] != '/')) {
+            throw SVNException(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid relative path: $path (base: $root)"))
         }
         return StringHelper.normalize(path.substring(root.length))
     }
 
     val compression: SVNDeltaCompression
         get() {
-            when (server.compressionLevel) {
-                SVNDeltaCompression.LZ4 -> {
-                    if (capabilities.contains(SvnServer.svndiff2Capability)) return SVNDeltaCompression.LZ4
-                    if (capabilities.contains(SvnServer.svndiff1Capability)) return SVNDeltaCompression.Zlib
-                }
-                SVNDeltaCompression.Zlib -> if (capabilities.contains(SvnServer.svndiff1Capability)) return SVNDeltaCompression.Zlib
-            }
+            if (server.compressionLevel >= SVNDeltaCompression.LZ4 && capabilities.contains(SvnServer.svndiff2Capability))
+                return SVNDeltaCompression.LZ4
+
+            if (server.compressionLevel >= SVNDeltaCompression.Zlib && capabilities.contains(SvnServer.svndiff1Capability))
+                return SVNDeltaCompression.Zlib
+
             return SVNDeltaCompression.None
         }
 
@@ -141,7 +141,7 @@ class SessionContext constructor(
     @Throws(IOException::class)
     fun skipUnsupportedCommand(cmd: String) {
         log.error("Unsupported command: {}", cmd)
-        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: " + cmd))
+        BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unsupported command: $cmd"))
         parser.skipItems()
     }
 

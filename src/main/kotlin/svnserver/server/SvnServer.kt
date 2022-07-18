@@ -163,16 +163,13 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
             .listBegin()
             .listEnd()
             .listBegin()
-        when (config.compressionLevel) {
-            SVNDeltaCompression.LZ4 -> {
-                writer
-                    .word(svndiff2Capability)
-                writer
-                    .word(svndiff1Capability)
-            }
-            SVNDeltaCompression.Zlib -> writer
-                .word(svndiff1Capability)
-        }
+
+        if (config.compressionLevel >= SVNDeltaCompression.LZ4)
+            writer.word(svndiff2Capability)
+
+        if (config.compressionLevel >= SVNDeltaCompression.Zlib)
+            writer.word(svndiff1Capability)
+
         writer //.word(SVNCapability.COMMIT_REVPROPS.toString())
             .word(SVNCapability.DEPTH.toString()) //.word(SVNCapability.PARTIAL_REPLAY.toString()) TODO: issue #237
             .word("edit-pipeline")
