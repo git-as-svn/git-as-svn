@@ -48,7 +48,7 @@ class GiteaUserDB internal constructor(context: SharedContext) : UserDB {
     }
 
     private fun createUser(user: User, password: String?): svnserver.auth.User {
-        return svnserver.auth.User.create(user.login, user.fullName, user.email, user.id.toString(), UserType.Gitea, if (password == null) null else LfsCredentials(user.login, password))
+        return svnserver.auth.User.create(user.login, if (user.fullName.isNullOrEmpty()) user.login else user.fullName, user.email, user.id.toString(), UserType.Gitea, if (password == null) null else LfsCredentials(user.login, password))
     }
 
     override fun lookupByUserName(username: String): svnserver.auth.User? {
