@@ -44,9 +44,7 @@ jobs:
           - java: 11
             env: 'GITLAB_VERSION=10.2.5-ce.0' # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
           - java: 11
-            env: 'GITLAB_VERSION=9.5.10-ce.0' # Last 9.x build, actually nothing special about it
-          - java: 11
-            env: 'GITLAB_VERSION=9.3.3-ce.0' # We use this in production
+            env: 'GITLAB_VERSION=9.3.3-ce.0' # Oldest supported GitLab version
 
           # Gitea
           - java: 11

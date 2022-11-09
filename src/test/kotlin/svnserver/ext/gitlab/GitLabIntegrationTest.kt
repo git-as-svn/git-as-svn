@@ -36,7 +36,6 @@ import svnserver.ext.gitlab.mapping.GitLabMappingConfig
 import svnserver.ext.gitlfs.storage.local.LfsLocalStorageTest
 import svnserver.ext.web.config.WebServerConfig
 import svnserver.repository.git.GitCreateMode
-import java.io.IOException
 import java.nio.file.Path
 import java.time.Duration
 import java.time.temporal.ChronoUnit
@@ -177,15 +176,9 @@ class GitLabIntegrationTest {
         override fun waitUntilReady() {
             Unreliables.retryUntilSuccess(startupTimeout.seconds.toInt(), TimeUnit.SECONDS) {
                 rateLimiter.doWhenReady {
-                    try {
-                        val execResult = waitStrategyTarget.execInContainer("grep", "-R", "-E", "Chef.* Run complete", "/var/log/gitlab/reconfigure/")
-                        if (execResult.exitCode != 0) {
-                            throw RuntimeException("Not ready")
-                        }
-                    } catch (e: IOException) {
-                        throw RuntimeException(e)
-                    } catch (e: InterruptedException) {
-                        throw RuntimeException(e)
+                    val execResult = waitStrategyTarget.execInContainer("grep", "-R", "-E", "(Chef|Cinc).* Run complete", "/var/log/gitlab/reconfigure/")
+                    if (execResult.exitCode != 0) {
+                        throw RuntimeException("Not ready")
                     }
                 }
                 true
