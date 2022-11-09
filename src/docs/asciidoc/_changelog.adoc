@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Update dependencies
+* Fix compatibility with Gitea >= 1.16. https://github.com/git-as-svn/git-as-svn/issues/530[#530]
+
 == 2.3.0
 
 * Update dependencies
