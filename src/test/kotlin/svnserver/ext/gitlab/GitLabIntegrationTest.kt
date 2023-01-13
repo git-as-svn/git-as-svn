@@ -190,6 +190,6 @@ class GitLabIntegrationTest {
         private const val root = "root"
         private const val rootPassword = "P6122kAYf6Wc"
         private const val user = "git-as-svn"
-        private const val userPassword = "git-as-svn"
+        private const val userPassword = "R4BS2xN6ZsO4"
     }
 }
