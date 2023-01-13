@@ -72,18 +72,19 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         gitalyRepo["glProjectPath"] = gitlabProject.pathWithNamespace
         val gitalyRepoString = JsonHelper.mapper.writeValueAsString(gitalyRepo)
 
-        val receiveHooksPayload = HashMap<String, Any>()
+        val userDetails = HashMap<String, Any>()
         if (userId != null)
-            receiveHooksPayload["userid"] = userId
-        receiveHooksPayload["username"] = user.username
-        receiveHooksPayload["protocol"] = glProtocol
+            userDetails["userid"] = userId
+        userDetails["username"] = user.username
+        userDetails["protocol"] = glProtocol
 
         val hooksPayload = HashMap<String, Any>()
         hooksPayload["binary_directory"] = gitlabContext.config.gitalyBinDir
         hooksPayload["internal_socket"] = gitlabContext.config.gitalySocket
         hooksPayload["internal_socket_token"] = gitlabContext.config.gitalyToken
-        hooksPayload["receive_hooks_payload"] = receiveHooksPayload
         hooksPayload["repository"] = gitalyRepoString
+        hooksPayload["receive_hooks_payload"] = userDetails
+        hooksPayload["user_details"] = userDetails
 
         /*
           These are required for GitLab hooks
