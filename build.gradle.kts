@@ -88,7 +88,7 @@ dependencies {
     implementation("org.eclipse.jetty:jetty-servlet:11.0.13")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
     implementation("org.bitbucket.b_c:jose4j:0.9.2")
-    implementation("com.github.zeripath:java-gitea-api:1.16.8")
+    implementation("com.github.zeripath:java-gitea-api:1.18.0")
 
     val gitLfsJava = "0.20.0"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
