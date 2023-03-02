@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 2.5.0
 
 * Update dependencies
 * Fix compatibility with GitLab >= 15.2
