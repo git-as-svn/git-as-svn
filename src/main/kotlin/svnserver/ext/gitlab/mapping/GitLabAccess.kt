@@ -24,8 +24,8 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * Access control by GitLab server.
@@ -34,29 +34,21 @@ import java.util.concurrent.TimeUnit
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, private val gitlabProject: GitlabProject, private val relativeRepoPath: Path, private val gitlabContext: GitLabContext) : VcsAccess {
-    private val cache: LoadingCache<String, GitlabProject>
+    private val cache: LoadingCache<String, Optional<GitlabProject>>
 
     @Throws(IOException::class)
     override fun canRead(user: User, branch: String, path: String): Boolean {
-        return try {
-            getProjectViaSudo(user)
-            true
-        } catch (ignored: FileNotFoundException) {
-            false
-        }
+        return getProjectViaSudo(user) != null
     }
 
     @Throws(IOException::class)
     override fun canWrite(user: User, branch: String, path: String): Boolean {
-        return if (user.isAnonymous) false else try {
-            val project = getProjectViaSudo(user)
-            if (isProjectOwner(project, user)) return true
-            val permissions = project.permissions ?: return false
-            (hasAccess(permissions.projectAccess, GitlabAccessLevel.Developer)
-                    || hasAccess(permissions.projectGroupAccess, GitlabAccessLevel.Developer))
-        } catch (ignored: FileNotFoundException) {
-            false
-        }
+        if (user.isAnonymous) return false
+        val project = getProjectViaSudo(user) ?: return false
+        if (isProjectOwner(project, user)) return true
+        val permissions = project.permissions ?: return false
+        return (hasAccess(permissions.projectAccess, GitlabAccessLevel.Developer)
+                || hasAccess(permissions.projectGroupAccess, GitlabAccessLevel.Developer))
     }
 
     @Throws(IOException::class)
@@ -122,18 +114,15 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
     }
 
     @Throws(IOException::class)
-    private fun getProjectViaSudo(user: User): GitlabProject {
-        return try {
-            if (user.isAnonymous) return cache[""]
-            val key = user.externalId ?: user.username
-            check(key.isNotEmpty()) { "Found user without identificator: $user" }
-            cache[key]
-        } catch (e: ExecutionException) {
-            if (e.cause is IOException) {
-                throw (e.cause as IOException?)!!
-            }
-            throw IllegalStateException(e)
+    private fun getProjectViaSudo(user: User): GitlabProject? {
+        val key = if (user.isAnonymous) {
+            ""
+        } else {
+            val id = user.externalId ?: user.username
+            check(id.isNotEmpty()) { "Found user without identificator: $user" }
+            id
         }
+        return cache[key].getOrNull()
     }
 
     init {
@@ -141,13 +130,20 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         cache = CacheBuilder.newBuilder()
             .maximumSize(config.cacheMaximumSize.toLong())
             .expireAfterWrite(config.cacheTimeSec.toLong(), TimeUnit.SECONDS)
-            .build(object : CacheLoader<String, GitlabProject>() {
-                @Throws(Exception::class)
-                override fun load(userId: String): GitlabProject {
-                    if (userId.isEmpty()) return GitlabAPI.connect(context.gitLabUrl, null).getProject(gitlabProject.id)
-                    val api = context.connect()
-                    val tailUrl = GitlabProject.URL + "/" + gitlabProject.id + "?sudo=" + userId
-                    return api.retrieve().to(tailUrl, GitlabProject::class.java)
+            .build(object : CacheLoader<String, Optional<GitlabProject>>() {
+                override fun load(userId: String): Optional<GitlabProject> {
+                    return try {
+                        val result = if (userId.isEmpty()) {
+                            GitlabAPI.connect(context.gitLabUrl, null).getProject(gitlabProject.id)
+                        } else {
+                            val api = context.connect()
+                            val tailUrl = GitlabProject.URL + "/" + gitlabProject.id + "?sudo=" + userId
+                            api.retrieve().to(tailUrl, GitlabProject::class.java)
+                        }
+                        Optional.of(result)
+                    } catch (e: FileNotFoundException) {
+                        Optional.empty()
+                    }
                 }
             })
     }
