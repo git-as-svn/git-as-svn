@@ -48,7 +48,7 @@ jobs:
 
           # Gitea
           - java: 11
-            env: 'GITEA_VERSION=latest'
+            env: 'GITEA_VERSION=1.18'
           - java: 11
             env: 'GITEA_VERSION=1.9.0' # The earliest supported Gitea version
 
