@@ -6,8 +6,9 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 2.6.0
 
+* Update dependencies
 * Fix git-as-svn not caching visibility of non-public GitLab projects
 
 == 2.5.0
