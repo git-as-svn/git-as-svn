@@ -51,7 +51,12 @@ repositoryMapping: !gitlabMapping
       hooksPath: /opt/gitlab/embedded/service/gitaly-ruby/git-hooks
 
 # Tells git-as-svn to authenticate users against GitLab
-userDB: !gitlabUsers {}
+userDB: !gitlabUsers {
+  # Authentication mode. Possible values: Password, AccessToken, PrivateToken.
+  # Default: Password
+  #
+  # authentication: Password
+}
 
 shared:
 

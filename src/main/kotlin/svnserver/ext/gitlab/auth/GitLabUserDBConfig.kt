@@ -7,9 +7,12 @@
  */
 package svnserver.ext.gitlab.auth
 
+import org.gitlab.api.TokenType
 import svnserver.auth.UserDB
 import svnserver.config.UserDBConfig
 import svnserver.context.SharedContext
+import svnserver.ext.gitlab.config.GitLabContext
+import svnserver.ext.gitlab.config.GitLabToken
 
 /**
  * GitLab authentication configuration.
@@ -17,7 +20,29 @@ import svnserver.context.SharedContext
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class GitLabUserDBConfig : UserDBConfig {
+    val authentication: GitlabAuthentication = GitlabAuthentication.Password
+
     override fun create(context: SharedContext): UserDB {
-        return GitLabUserDB(context)
+        return GitLabUserDB(this, context)
     }
+}
+
+enum class GitlabAuthentication {
+    Password {
+        override fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken {
+            return GitLabContext.obtainAccessToken(gitLabUrl, username, password, false)
+        }
+    },
+    AccessToken {
+        override fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken {
+            return GitLabToken(TokenType.ACCESS_TOKEN, password)
+        }
+    },
+    PrivateToken {
+        override fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken {
+            return GitLabToken(TokenType.PRIVATE_TOKEN, password)
+        }
+    };
+
+    abstract fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken
 }

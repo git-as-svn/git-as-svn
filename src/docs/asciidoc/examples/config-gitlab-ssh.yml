@@ -56,7 +56,12 @@ repositoryMapping: !gitlabMapping
 # Use GitLab user database
 userDB:
   !sshKeyUsers
-  userDB: !gitlabUsers {}
+  userDB: !gitlabUsers {
+    # Authentication mode. Possible values: Password, AccessToken, PrivateToken.
+    # Default: Password
+    #
+    # authentication: Password
+  }
   sshKeysToken: CHANGE_THIS_TO_SOMETHING_SECRET
 
 shared:

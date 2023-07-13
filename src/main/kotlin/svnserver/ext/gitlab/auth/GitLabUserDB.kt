@@ -29,7 +29,7 @@ import java.net.HttpURLConnection
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitLabUserDB internal constructor(context: SharedContext) : UserDB {
+class GitLabUserDB internal constructor(private val config: GitLabUserDBConfig, context: SharedContext) : UserDB {
     private val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
     private val context: GitLabContext = context.sure(GitLabContext::class.java)
     override fun authenticators(): Collection<Authenticator> {
@@ -38,7 +38,7 @@ class GitLabUserDB internal constructor(context: SharedContext) : UserDB {
 
     override fun check(username: String, password: String): User? {
         return try {
-            val token: GitLabToken = GitLabContext.obtainAccessToken(context.gitLabUrl, username, password, false)
+            val token: GitLabToken = config.authentication.obtainAccessToken(context.gitLabUrl, username, password)
             val api: GitlabAPI = GitLabContext.connect(context.gitLabUrl, token)
             val session = api.currentSession
             createUser(session, password)
