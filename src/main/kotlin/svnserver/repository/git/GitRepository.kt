@@ -104,7 +104,7 @@ class GitRepository(
             } catch (ignored: SvnForbiddenException) {
             }
             props = propList.toTypedArray()
-            directoryPropertyCache[treeEntry.objectId.`object`] = props
+            directoryPropertyCache[treeEntry.objectId.`object`] = if (props.isEmpty()) { GitProperty.emptyArray } else { props }
         }
         return props
     }
@@ -120,7 +120,7 @@ class GitRepository(
         var property: Array<GitProperty>? = filePropertyCache[objectId.`object`]
         if (property == null) {
             objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream, format) } }
-            if (property!!.isEmpty()) property = emptyArray()
+            if (property!!.isEmpty()) property = GitProperty.emptyArray
             filePropertyCache[objectId.`object`] = property!!
         }
         return property!!

@@ -11,6 +11,7 @@ import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import svnserver.repository.VcsCopyFrom
 import svnserver.repository.git.filter.GitFilter
+import svnserver.repository.git.prop.GitProperty
 import java.io.InputStream
 
 /**
@@ -18,7 +19,7 @@ import java.io.InputStream
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitFileEmptyTree constructor(override val branch: GitBranch, parentPath: String, override val revision: Int) : GitEntryImpl(emptyArray(), parentPath, emptyArray(), "", FileMode.TREE), GitFile {
+internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: String, override val revision: Int) : GitEntryImpl(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE), GitFile {
     override fun createChild(name: String, isDir: Boolean): GitEntry {
         return super<GitEntryImpl>.createChild(name, isDir)
     }

@@ -22,7 +22,7 @@ internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: St
     final override val rawProperties: Array<GitProperty> = GitProperty.joinProperties(parentProps, fileName, fileMode, props)
 
     override fun createChild(name: String, isDir: Boolean): GitEntry {
-        return GitEntryImpl(rawProperties, fullPath, emptyArray(), name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE)
+        return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE)
     }
 
     @Throws(IOException::class)

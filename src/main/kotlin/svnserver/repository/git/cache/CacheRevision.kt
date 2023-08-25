@@ -16,7 +16,7 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class CacheRevision constructor(commitId: ObjectId?, renames: Map<String, String>, fileChange: Map<String, CacheChange>) {
+class CacheRevision(commitId: ObjectId?, renames: Map<String, String>, fileChange: Map<String, CacheChange>) {
     val gitCommitId = commitId?.copy()
     private val renames = TreeMap<String, String>()
     private val fileChange = TreeMap<String, CacheChange>()
