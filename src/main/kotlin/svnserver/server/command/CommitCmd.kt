@@ -75,20 +75,20 @@ class CommitCmd : BaseCmd<Params>() {
         context.checkWrite(context.getRepositoryPath(""))
     }
 
-    class LockInfo constructor(val path: String, val lockToken: String)
-    class Params constructor(val message: String, val locks: Array<LockInfo>, val keepLocks: Boolean)
-    class OpenRootParams constructor(val rev: IntArray, val token: String)
-    class OpenParams constructor(val name: String, val parentToken: String, val token: String, val rev: IntArray)
-    class CopyParams constructor(copyFrom: String, val rev: Int) {
+    class LockInfo(val path: String, val lockToken: String)
+    class Params(val message: String, val locks: Array<LockInfo>, val keepLocks: Boolean)
+    class OpenRootParams(val rev: IntArray, val token: String)
+    class OpenParams(val name: String, val parentToken: String, val token: String, val rev: IntArray)
+    class CopyParams(copyFrom: String, val rev: Int) {
         val copyFrom = if (copyFrom.isEmpty()) null else SVNURL.parseURIEncoded(copyFrom)
     }
 
-    class AddParams constructor(val name: String, val parentToken: String, val token: String, val copyParams: CopyParams)
-    class DeleteParams constructor(val name: String, val rev: IntArray, val parentToken: String)
-    class TokenParams constructor(val token: String)
-    class ChangePropParams constructor(val token: String, val name: String, val value: Array<String>)
-    class ChecksumParams constructor(val token: String, val checksum: Array<String>)
-    class DeltaChunkParams constructor(val token: String, val chunk: ByteArray)
+    class AddParams(val name: String, val parentToken: String, val token: String, val copyParams: CopyParams)
+    class DeleteParams(val name: String, val rev: IntArray, val parentToken: String)
+    class TokenParams(val token: String)
+    class ChangePropParams(val token: String, val name: String, val value: Array<String>)
+    class ChecksumParams(val token: String, val checksum: Array<String>)
+    class DeltaChunkParams(val token: String, val chunk: ByteArray)
     private class FileUpdater(val deltaConsumer: GitDeltaConsumer) : Closeable {
         val reader: SVNDeltaReader = SVNDeltaReader()
 
@@ -100,7 +100,9 @@ class CommitCmd : BaseCmd<Params>() {
 
     private class EntryUpdater(// New parent entry (destination)
         val entry: GitEntry, // Old source entry (source)
-        val source: GitFile?, val head: Boolean
+        val source: GitFile?,
+        val head: Boolean,
+        val stringInterner: (String) -> String,
     ) {
         val props = if (source != null) HashMap(source.properties) else HashMap()
         val changes = ArrayList<VcsConsumer<GitCommitBuilder>>()
@@ -110,7 +112,7 @@ class CommitCmd : BaseCmd<Params>() {
             if (source == null) {
                 throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: $name"))
             }
-            return source.getEntry(name) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name + " in " + source.fullPath))
+            return source.getEntry(name, stringInterner) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name + " in " + source.fullPath))
         }
 
     }
@@ -142,7 +144,7 @@ class CommitCmd : BaseCmd<Params>() {
                 log.debug("Add dir: {}", args.name)
                 source = null
             }
-            val updater = EntryUpdater(parent.entry, source, false)
+            val updater = EntryUpdater(parent.entry, source, false, context.server.sharedContext.stringInterner)
             paths[args.token] = updater
             parent.changes.add(VcsConsumer { treeBuilder: GitCommitBuilder ->
                 treeBuilder.addDir(StringHelper.baseName(args.name), source)
@@ -201,7 +203,7 @@ class CommitCmd : BaseCmd<Params>() {
             for (i in 1 until rootPath.size) {
                 val name: String = rootPath[i]
                 val entry: GitFile = lastUpdater.getEntry(name)
-                val updater = EntryUpdater(entry, entry, true)
+                val updater = EntryUpdater(entry, entry, true, context.server.sharedContext.stringInterner)
                 lastUpdater.changes.add(VcsConsumer { treeBuilder: GitCommitBuilder ->
                     treeBuilder.openDir(name)
                     updateDir(treeBuilder, updater)
@@ -228,7 +230,7 @@ class CommitCmd : BaseCmd<Params>() {
             log.debug("Modify dir: {} (rev: {})", args.name, rev)
             val sourceDir: GitFile = parent.getEntry(StringHelper.baseName(args.name))
             context.checkRead(sourceDir.fullPath)
-            val dir = EntryUpdater(sourceDir, sourceDir, parent.head)
+            val dir = EntryUpdater(sourceDir, sourceDir, parent.head, context.server.sharedContext.stringInterner)
             if ((rev >= 0) && (parent.head)) checkUpToDate(sourceDir, rev)
             paths[args.token] = dir
             parent.changes.add(VcsConsumer { treeBuilder: GitCommitBuilder ->
@@ -453,7 +455,7 @@ class CommitCmd : BaseCmd<Params>() {
 
         init {
             val entry: GitFile = context.branch.latestRevision.getFile("") ?: throw IllegalStateException("Repository root entry not found.")
-            rootEntry = EntryUpdater(entry, entry, true)
+            rootEntry = EntryUpdater(entry, entry, true, context.server.sharedContext.stringInterner)
             paths = HashMap()
             files = HashMap()
             locks = getLocks(context, params.locks)

@@ -39,12 +39,12 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
 
     @Throws(IOException::class)
     fun createFile(parent: GitEntry, name: String): GitDeltaConsumer {
-        return GitDeltaConsumer(this, parent.createChild(name, false), null, user)
+        return GitDeltaConsumer(this, parent.createChild(name, false, branch.repository.context.shared.stringInterner), null, user)
     }
 
     @Throws(IOException::class)
     fun modifyFile(parent: GitEntry, name: String, file: GitFile): GitDeltaConsumer {
-        return GitDeltaConsumer(this, parent.createChild(name, false), file, user)
+        return GitDeltaConsumer(this, parent.createChild(name, false, branch.repository.context.shared.stringInterner), file, user)
     }
 
     @Throws(IOException::class)
@@ -56,7 +56,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         inserter.use { }
     }
 
-    private abstract class CommitAction(root: GitFile) {
+    private abstract class CommitAction(val root: GitFile) {
         private val treeStack: Deque<GitFile>
         val element: GitFile
             get() {
@@ -65,7 +65,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
 
         @Throws(IOException::class)
         fun openDir(name: String) {
-            val file: GitFile = treeStack.element().getEntry(name) ?: throw IllegalStateException("Invalid state: can't find file $name in created commit.")
+            val file: GitFile = treeStack.element().getEntry(name, root.branch.repository.context.shared.stringInterner) ?: throw IllegalStateException("Invalid state: can't find file $name in created commit.")
             treeStack.push(file)
         }
 
@@ -87,7 +87,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         @Throws(IOException::class)
         override fun checkProperties(name: String?, props: Map<String, String>, deltaConsumer: GitDeltaConsumer?) {
             val dir: GitFile = element
-            val node: GitFile = (if (name == null) dir else dir.getEntry(name)) ?: throw IllegalStateException("Invalid state: can't find entry $name in created commit.")
+            val node: GitFile = (if (name == null) dir else dir.getEntry(name, root.branch.repository.context.shared.stringInterner)) ?: throw IllegalStateException("Invalid state: can't find entry $name in created commit.")
             if (deltaConsumer != null) {
                 assert((node.filter != null))
                 if (deltaConsumer.migrateFilter(node.filter)) {
@@ -108,7 +108,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         @Throws(IOException::class)
         override fun checkProperties(name: String?, props: Map<String, String>, deltaConsumer: GitDeltaConsumer?) {
             val dir: GitFile = element
-            val node: GitFile = (if (name == null) dir else dir.getEntry(name)) ?: throw IllegalStateException("Invalid state: can't find entry $name in created commit.")
+            val node: GitFile = (if (name == null) dir else dir.getEntry(name, root.branch.repository.context.shared.stringInterner)) ?: throw IllegalStateException("Invalid state: can't find entry $name in created commit.")
             if (deltaConsumer != null) {
                 assert((node.filter != null))
                 if (node.filter!!.name != deltaConsumer.filterName) {

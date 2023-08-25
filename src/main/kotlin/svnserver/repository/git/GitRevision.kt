@@ -77,7 +77,7 @@ class GitRevision internal constructor(
             if (pathItem.isEmpty()) {
                 continue
             }
-            result = result!!.getEntry(pathItem)
+            result = result!!.getEntry(pathItem, branch.repository.context.shared.stringInterner)
             if (result == null) {
                 return null
             }
@@ -93,7 +93,7 @@ class GitRevision internal constructor(
             }
             val oldTree: GitFile = if (gitOldCommit == null) GitFileEmptyTree(branch, "", id - 1) else GitFileTreeEntry.create(branch, gitOldCommit.tree, id - 1)
             val newTree: GitFile = GitFileTreeEntry.create(branch, gitNewCommit.tree, id)
-            return ChangeHelper.collectChanges(oldTree, newTree, false)
+            return ChangeHelper.collectChanges(oldTree, newTree, false, branch.repository.context.shared.stringInterner)
         }
 
     fun getCopyFrom(fullPath: String): VcsCopyFrom? {

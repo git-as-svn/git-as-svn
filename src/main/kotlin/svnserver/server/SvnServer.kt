@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer") {
+class SvnServer(basePath: Path, config: Config) : Thread("SvnServer") {
     private val connections = ConcurrentHashMap<Long, Socket>()
     private val repositoryMapping: RepositoryMapping<*>
     private val config: Config
@@ -365,9 +365,8 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
             threadFactory,
             AbortPolicy()
         )
-        sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared)
+        sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared, if (config.stringInterning) { s: String -> s.intern() } else { s: String -> s })
         sharedContext.add(UserDB::class.java, config.userDB.create(sharedContext))
-
         repositoryMapping = config.repositoryMapping.create(sharedContext, config.parallelIndexing)
         sharedContext.add(RepositoryMapping::class.java, repositoryMapping)
         serverSocket = ServerSocket()

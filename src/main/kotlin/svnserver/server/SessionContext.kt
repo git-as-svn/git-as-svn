@@ -37,7 +37,7 @@ import java.util.*
 class SessionContext constructor(
     val parser: SvnServerParser,
     val writer: SvnServerWriter,
-    private val server: SvnServer,
+    val server: SvnServer,
     repositoryInfo: RepositoryInfo,
     clientInfo: ClientInfo
 ) {

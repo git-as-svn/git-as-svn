@@ -25,12 +25,12 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 interface GitFile : GitEntry {
-    override fun createChild(name: String, isDir: Boolean): GitEntry {
-        return GitEntryImpl(rawProperties, fullPath, emptyArray(), name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE)
+    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
+        return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE, stringInterner)
     }
 
     @Throws(IOException::class)
-    override fun getEntry(name: String): GitFile?
+    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile?
 
     /**
      * Get native repository content hash for cheap content modification check.

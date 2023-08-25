@@ -19,7 +19,7 @@ import java.util.*
  */
 internal object ChangeHelper {
     @Throws(IOException::class)
-    fun collectChanges(oldTree: GitFile?, newTree: GitFile, fullRemoved: Boolean): Map<String, GitLogEntry> {
+    fun collectChanges(oldTree: GitFile?, newTree: GitFile, fullRemoved: Boolean, stringInterner: (String) -> String): Map<String, GitLogEntry> {
         val changes = HashMap<String, GitLogEntry>()
         val logEntry = GitLogEntry(oldTree, newTree)
         if (oldTree == null || logEntry.isModified) {
@@ -28,13 +28,13 @@ internal object ChangeHelper {
         val queue = ArrayDeque<TreeCompareEntry>()
         queue.add(TreeCompareEntry("", oldTree, newTree))
         while (!queue.isEmpty()) {
-            collectChanges(changes, queue, queue.remove(), fullRemoved)
+            collectChanges(changes, queue, queue.remove(), fullRemoved, stringInterner)
         }
         return changes
     }
 
     @Throws(IOException::class)
-    private fun collectChanges(changes: MutableMap<String, GitLogEntry>, queue: Queue<TreeCompareEntry>, compareEntry: TreeCompareEntry, fullRemoved: Boolean) {
+    private fun collectChanges(changes: MutableMap<String, GitLogEntry>, queue: Queue<TreeCompareEntry>, compareEntry: TreeCompareEntry, fullRemoved: Boolean, stringInterner: (String) -> String) {
         for (pair: GitLogEntry in compareEntry) {
             val newEntry: GitFile? = pair.newEntry
             val oldEntry: GitFile? = pair.oldEntry
@@ -43,7 +43,7 @@ internal object ChangeHelper {
             }
             if (newEntry != null) {
                 if (newEntry != oldEntry) {
-                    val fullPath: String = StringHelper.joinPath(compareEntry.path, newEntry.fileName)
+                    val fullPath: String = stringInterner(StringHelper.joinPath(compareEntry.path, newEntry.fileName))
                     if (newEntry.isDirectory) {
                         val oldChange: GitLogEntry? = changes.put(fullPath, pair)
                         if (oldChange != null) {

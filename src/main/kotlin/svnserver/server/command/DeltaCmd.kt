@@ -60,7 +60,7 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class DeltaCmd constructor(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaParams>() {
+class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaParams>() {
     @Throws(IOException::class, SVNException::class)
     override fun processCommand(context: SessionContext, args: DeltaParams) {
         log.debug("Enter report mode")

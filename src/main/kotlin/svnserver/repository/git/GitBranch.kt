@@ -273,7 +273,7 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
             val oldTree: GitFile = getSubversionTree(reader, if (newCommit.parentCount > 0) newCommit.getParent(0) else null, revisionId - 1)
             val newTree: GitFile = getSubversionTree(reader, newCommit, revisionId)
             val fileChange: MutableMap<String, CacheChange> = TreeMap()
-            for (entry: Map.Entry<String, GitLogEntry> in ChangeHelper.collectChanges(oldTree, newTree, true).entries) {
+            for (entry: Map.Entry<String, GitLogEntry> in ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).entries) {
                 fileChange[entry.key] = CacheChange(entry.value)
             }
             result = CacheRevision(

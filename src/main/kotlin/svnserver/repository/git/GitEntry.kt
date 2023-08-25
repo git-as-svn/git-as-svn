@@ -19,8 +19,8 @@ interface GitEntry {
     val rawProperties: Array<GitProperty>
     val fileName: String
     val fullPath: String
-    fun createChild(name: String, isDir: Boolean): GitEntry
+    fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry
 
     @Throws(IOException::class)
-    fun getEntry(name: String): GitFile?
+    fun getEntry(name: String, stringInterner: (String) -> String): GitFile?
 }

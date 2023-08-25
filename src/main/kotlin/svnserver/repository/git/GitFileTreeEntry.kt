@@ -26,9 +26,14 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 internal class GitFileTreeEntry private constructor(
-    override val branch: GitBranch, parentProps: Array<GitProperty>, parentPath: String, override val treeEntry: GitTreeEntry, override val revision: Int, // Cache
+    override val branch: GitBranch,
+    parentProps: Array<GitProperty>,
+    parentPath: String,
+    override val treeEntry: GitTreeEntry,
+    override val revision: Int,
     private val entriesCache: EntriesCache
-) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, entriesCache), treeEntry.fileName, treeEntry.fileMode), GitFile {
+) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, entriesCache), treeEntry.fileName, treeEntry.fileMode, branch.repository.context.shared.stringInterner), GitFile {
+
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
     private var treeEntriesCache: Iterable<GitFile>? = null
@@ -37,8 +42,8 @@ internal class GitFileTreeEntry private constructor(
             return filter.getContentHash(treeEntry.objectId)
         }
 
-    override fun createChild(name: String, isDir: Boolean): GitEntry {
-        return super<GitEntryImpl>.createChild(name, isDir)
+    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
+        return super<GitEntryImpl>.createChild(name, isDir, stringInterner)
     }
 
     @get:Throws(IOException::class)
@@ -112,7 +117,7 @@ internal class GitFileTreeEntry private constructor(
         }
 
     @Throws(IOException::class)
-    override fun getEntry(name: String): GitFile? {
+    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
         for (entry: GitTreeEntry in entriesCache.get()) {
             if ((entry.fileName == name)) {
                 return create(branch, rawProperties, fullPath, (entry), revision)
@@ -156,7 +161,7 @@ internal class GitFileTreeEntry private constructor(
     companion object {
         @Throws(IOException::class)
         fun create(branch: GitBranch, tree: RevTree, revision: Int): GitFile {
-            return create(branch, emptyArray(), "", GitTreeEntry(branch.repository.git, FileMode.TREE, tree, ""), revision)
+            return create(branch, GitProperty.emptyArray, "", GitTreeEntry(branch.repository.git, FileMode.TREE, tree, ""), revision)
         }
 
         @Throws(IOException::class)

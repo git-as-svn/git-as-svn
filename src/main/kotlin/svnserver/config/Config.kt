@@ -29,6 +29,7 @@ class Config {
     var compressionLevel: SVNDeltaCompression = SVNDeltaCompression.LZ4
     var shutdownTimeout: Long = TimeUnit.SECONDS.toMillis(5)
     var parallelIndexing: Boolean = true
+    var stringInterning: Boolean = false
 
     constructor()
     constructor(host: String, port: Int) {

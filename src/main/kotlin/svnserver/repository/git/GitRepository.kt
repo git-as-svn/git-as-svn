@@ -50,7 +50,7 @@ class GitRepository(
     lockStorage: LockStorage,
     filters: GitFilters,
     val emptyDirs: EmptyDirsSupport,
-    val format: RepositoryFormat
+    val format: RepositoryFormat,
 ) : AutoCloseable, BranchProvider {
     val git: Repository
     val pusher: GitPusher
@@ -90,7 +90,7 @@ class GitRepository(
 
     @Throws(IOException::class)
     fun collectProperties(treeEntry: GitTreeEntry, entryProvider: VcsSupplier<Iterable<GitTreeEntry>>): Array<GitProperty> {
-        if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) return emptyArray()
+        if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) return GitProperty.emptyArray
         var props = directoryPropertyCache[treeEntry.objectId.`object`]
         if (props == null) {
             val propList = ArrayList<GitProperty>()
@@ -111,7 +111,7 @@ class GitRepository(
 
     @Throws(IOException::class)
     private fun parseGitProperty(fileName: String, objectId: GitObject<ObjectId>): Array<GitProperty> {
-        val factory: GitPropertyFactory = PropertyMapping.getFactory(fileName) ?: return emptyArray()
+        val factory: GitPropertyFactory = PropertyMapping.getFactory(fileName) ?: return GitProperty.emptyArray
         return cachedParseGitProperty(objectId, factory)
     }
 

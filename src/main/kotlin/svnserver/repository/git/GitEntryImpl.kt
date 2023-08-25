@@ -17,16 +17,16 @@ import java.io.IOException
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: String, props: Array<GitProperty>, final override val fileName: String, fileMode: FileMode) : GitEntry {
-    final override val fullPath: String = StringHelper.joinPath(parentPath, fileName)
+internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: String, props: Array<GitProperty>, final override val fileName: String, fileMode: FileMode, stringInterner: (String) -> String) : GitEntry {
+    final override val fullPath: String = stringInterner(StringHelper.joinPath(parentPath, fileName))
     final override val rawProperties: Array<GitProperty> = GitProperty.joinProperties(parentProps, fileName, fileMode, props)
 
-    override fun createChild(name: String, isDir: Boolean): GitEntry {
-        return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE)
+    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
+        return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE, stringInterner)
     }
 
     @Throws(IOException::class)
-    override fun getEntry(name: String): GitFile? {
+    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
         return null
     }
 }

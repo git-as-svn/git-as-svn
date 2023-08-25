@@ -19,12 +19,12 @@ import java.io.InputStream
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: String, override val revision: Int) : GitEntryImpl(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE), GitFile {
-    override fun createChild(name: String, isDir: Boolean): GitEntry {
-        return super<GitEntryImpl>.createChild(name, isDir)
+internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: String, override val revision: Int) : GitEntryImpl(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE, branch.repository.context.shared.stringInterner), GitFile {
+    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
+        return super<GitEntryImpl>.createChild(name, isDir, stringInterner)
     }
 
-    override fun getEntry(name: String): GitFile? {
+    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
         return null
     }
 
