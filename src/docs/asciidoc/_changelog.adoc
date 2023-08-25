@@ -11,6 +11,11 @@ endif::[]
 * Update dependencies
 * Add option to authenticate using GitLab access tokens
 
+== 2.8.0
+
+* Update dependencies
+* Experimental string interning  feature
+
 == 2.6.0
 
 * Update dependencies
