@@ -55,5 +55,5 @@ class GetLockCmd : BaseCmd<GetLockCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String)
+    class Params(val path: String)
 }

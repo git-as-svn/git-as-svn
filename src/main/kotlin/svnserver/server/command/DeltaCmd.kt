@@ -73,7 +73,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         defaultPermissionCheck(context)
     }
 
-    class DeleteParams constructor(val path: String)
+    class DeleteParams(val path: String)
     class SetPathParams internal constructor(val path: String, val rev: Int, val startEmpty: Boolean, private val lockToken: Array<String>, depth: String) {
         val depth: Depth = Depth.parse(depth)
         override fun toString(): String {
@@ -118,7 +118,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
     }
 
-    internal class ReportPipeline constructor(private val params: DeltaParams) {
+    internal class ReportPipeline(private val params: DeltaParams) {
         private val commands: MutableMap<String, BaseCmd<*>>
         private val forcedPaths = HashMap<String, MutableSet<String>>()
         private val deletedPaths = HashSet<String>()

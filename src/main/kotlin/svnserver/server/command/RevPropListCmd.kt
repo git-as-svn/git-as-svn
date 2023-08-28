@@ -49,5 +49,5 @@ class RevPropListCmd : BaseCmd<RevPropListCmd.Params>() {
         defaultPermissionCheck(context)
     }
 
-    class Params constructor(val revision: Int)
+    class Params(val revision: Int)
 }

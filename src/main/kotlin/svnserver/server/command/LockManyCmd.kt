@@ -78,6 +78,6 @@ class LockManyCmd : BaseCmd<LockManyCmd.Params>() {
         for (pathRev: PathRev in args.paths) context.checkWrite(context.getRepositoryPath(pathRev.path))
     }
 
-    class PathRev constructor(val path: String, val rev: IntArray)
-    class Params constructor(val comment: Array<String>, val stealLock: Boolean, val paths: Array<PathRev>)
+    class PathRev(val path: String, val rev: IntArray)
+    class Params(val comment: Array<String>, val stealLock: Boolean, val paths: Array<PathRev>)
 }

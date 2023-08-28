@@ -58,5 +58,5 @@ class UnlockCmd : BaseCmd<UnlockCmd.Params>() {
         context.checkWrite(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, val lockToken: Array<String>, val breakLock: Boolean)
+    class Params(val path: String, val lockToken: Array<String>, val breakLock: Boolean)
 }

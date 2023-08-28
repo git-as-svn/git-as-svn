@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServerWriter constructor(stream: OutputStream) : Closeable {
+class SvnServerWriter(stream: OutputStream) : Closeable {
 
     private val stream: OutputStream
     private var depth: Int = 0

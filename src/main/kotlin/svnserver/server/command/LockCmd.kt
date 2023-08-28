@@ -65,7 +65,7 @@ class LockCmd : BaseCmd<LockCmd.Params>() {
         context.checkWrite(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, val comment: Array<String>, val stealLock: Boolean, val rev: IntArray)
+    class Params(val path: String, val comment: Array<String>, val stealLock: Boolean, val rev: IntArray)
     companion object {
         @Throws(IOException::class)
         fun writeLock(writer: SvnServerWriter, lockDesc: LockDesc?) {

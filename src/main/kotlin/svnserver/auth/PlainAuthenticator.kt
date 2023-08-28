@@ -15,7 +15,7 @@ import java.util.*
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class PlainAuthenticator constructor(private val userDB: UserDB) : Authenticator {
+class PlainAuthenticator(private val userDB: UserDB) : Authenticator {
     override val methodName: String
         get() {
             return "PLAIN"

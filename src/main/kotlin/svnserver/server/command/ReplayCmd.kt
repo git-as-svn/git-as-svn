@@ -52,7 +52,7 @@ class ReplayCmd : BaseCmd<ReplayCmd.Params>() {
         defaultPermissionCheck(context)
     }
 
-    class Params constructor(val revision: Int, val lowRevision: Int, val sendDeltas: Boolean)
+    class Params(val revision: Int, val lowRevision: Int, val sendDeltas: Boolean)
     companion object {
         @Throws(IOException::class, SVNException::class)
         fun replayRevision(context: SessionContext, revision: Int, lowRevision: Int, sendDeltas: Boolean) {

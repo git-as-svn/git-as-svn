@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class GitBranch constructor(val repository: GitRepository, val shortBranchName: String) {
+class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     val uuid: String
     val gitBranch: String
     private val svnBranch: String

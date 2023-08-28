@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class NumberToken constructor(val number: Int) : SvnServerToken {
+class NumberToken(val number: Int) : SvnServerToken {
     @Throws(IOException::class)
     override fun write(stream: OutputStream) {
         write(stream, number.toLong())

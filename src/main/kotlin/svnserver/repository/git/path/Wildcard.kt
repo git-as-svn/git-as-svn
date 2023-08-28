@@ -21,7 +21,7 @@ import svnserver.repository.git.path.matcher.path.SimplePathMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class Wildcard constructor(pattern: String) {
+class Wildcard(pattern: String) {
     var matcher: PathMatcher
     var isSvnCompatible: Boolean = false
 

@@ -76,5 +76,5 @@ class GetIPropsCmd : BaseCmd<GetIPropsCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, val rev: IntArray)
+    class Params(val path: String, val rev: IntArray)
 }

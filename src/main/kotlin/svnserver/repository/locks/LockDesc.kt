@@ -16,7 +16,7 @@ import java.util.*
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class LockDesc constructor(path: String, val branch: String?, val hash: String?, val token: String, val owner: String?, val comment: String?, val created: Long) {
+class LockDesc(path: String, val branch: String?, val hash: String?, val token: String, val owner: String?, val comment: String?, val created: Long) {
     val path: String = if (path.startsWith("/")) path else "/$path"
 
     constructor(path: String, branch: GitBranch?, hash: String?, token: String, owner: String?, comment: String?, created: Long) : this(path, branch?.shortBranchName, hash, token, owner, comment, created)

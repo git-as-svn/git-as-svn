@@ -25,7 +25,7 @@ import kotlin.math.min
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitFilterLink constructor(context: LocalContext) : GitFilter {
+class GitFilterLink(context: LocalContext) : GitFilter {
     private val cacheMd5: MutableMap<String, String>
     override val name: String
         get() {

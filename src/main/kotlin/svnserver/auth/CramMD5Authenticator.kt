@@ -22,7 +22,7 @@ import javax.crypto.spec.SecretKeySpec
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-internal class CramMD5Authenticator constructor(private val lookup: Function<String, UserWithPassword?>) : Authenticator {
+internal class CramMD5Authenticator(private val lookup: Function<String, UserWithPassword?>) : Authenticator {
     override val methodName: String
         get() {
             return "CRAM-MD5"

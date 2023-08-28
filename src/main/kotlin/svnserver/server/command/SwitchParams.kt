@@ -26,7 +26,7 @@ import svnserver.repository.SendCopyFrom
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class SwitchParams constructor(
+class SwitchParams(
     rev: IntArray,
     target: String,
     recurse: Boolean,

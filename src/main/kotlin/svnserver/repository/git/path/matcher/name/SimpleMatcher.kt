@@ -14,7 +14,7 @@ import svnserver.repository.git.path.NameMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-data class SimpleMatcher constructor(private val prefix: String, private val suffix: String, private val dirOnly: Boolean) : NameMatcher {
+data class SimpleMatcher(private val prefix: String, private val suffix: String, private val dirOnly: Boolean) : NameMatcher {
     override fun isMatch(name: String, isDir: Boolean): Boolean {
         return (!dirOnly || isDir) && (name.length >= prefix.length + suffix.length) && name.startsWith(prefix) && name.endsWith(suffix)
     }

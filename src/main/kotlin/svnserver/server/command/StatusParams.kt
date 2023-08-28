@@ -23,7 +23,7 @@ import svnserver.repository.SendCopyFrom
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class StatusParams constructor(
+class StatusParams(
     target: String,
     recurse: Boolean,
     rev: IntArray,

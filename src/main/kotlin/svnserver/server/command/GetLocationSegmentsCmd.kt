@@ -89,5 +89,5 @@ class GetLocationSegmentsCmd : BaseCmd<GetLocationSegmentsCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, val pegRev: IntArray, val startRev: IntArray, val endRev: IntArray)
+    class Params(val path: String, val pegRev: IntArray, val startRev: IntArray, val endRev: IntArray)
 }

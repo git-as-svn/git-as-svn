@@ -12,4 +12,4 @@ package svnserver.repository
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class VcsCopyFrom constructor(val revision: Int, val path: String)
+class VcsCopyFrom(val revision: Int, val path: String)

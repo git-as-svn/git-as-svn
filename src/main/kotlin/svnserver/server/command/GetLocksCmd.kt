@@ -49,7 +49,7 @@ class GetLocksCmd : BaseCmd<GetLocksCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, depth: Array<String>) {
+    class Params(val path: String, depth: Array<String>) {
         val depth: Depth = if (depth.isEmpty()) Depth.Infinity else Depth.parse(depth[0])
     }
 }

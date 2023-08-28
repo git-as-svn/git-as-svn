@@ -34,7 +34,7 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class SessionContext constructor(
+class SessionContext(
     val parser: SvnServerParser,
     val writer: SvnServerWriter,
     val server: SvnServer,

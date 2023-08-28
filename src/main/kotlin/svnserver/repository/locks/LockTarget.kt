@@ -10,4 +10,4 @@ package svnserver.repository.locks
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class LockTarget constructor(val path: String, val rev: Int)
+class LockTarget(val path: String, val rev: Int)

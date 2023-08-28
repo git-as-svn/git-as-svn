@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class WordToken constructor(override val text: String) : TextToken {
+class WordToken(override val text: String) : TextToken {
     @Throws(IOException::class)
     override fun write(stream: OutputStream) {
         write(stream, text)

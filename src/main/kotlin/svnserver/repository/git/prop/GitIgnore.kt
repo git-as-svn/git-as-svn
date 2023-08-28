@@ -27,7 +27,7 @@ import java.util.regex.PatternSyntaxException
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal data class GitIgnore constructor(
+internal data class GitIgnore(
     // svn:ignore
     private val local: Array<String>,
     // svn:global-ignores

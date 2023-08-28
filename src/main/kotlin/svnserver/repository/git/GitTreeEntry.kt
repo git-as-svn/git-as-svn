@@ -17,7 +17,7 @@ import kotlin.math.min
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitTreeEntry constructor(val fileMode: FileMode, val objectId: GitObject<ObjectId>, val fileName: String) : Comparable<GitTreeEntry> {
+class GitTreeEntry(val fileMode: FileMode, val objectId: GitObject<ObjectId>, val fileName: String) : Comparable<GitTreeEntry> {
     constructor(repo: Repository, fileMode: FileMode, objectId: ObjectId, fileName: String) : this(fileMode, GitObject<ObjectId>(repo, objectId), fileName)
 
     val id: String

@@ -15,7 +15,7 @@ import svnserver.repository.git.path.NameMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-data class ComplexMatcher constructor(private val pattern: String, private val dirOnly: Boolean, private val useSvnMask: Boolean) : NameMatcher {
+data class ComplexMatcher(private val pattern: String, private val dirOnly: Boolean, private val useSvnMask: Boolean) : NameMatcher {
     private val matcher: IMatcher = IMatcher.createPathMatcher(if (dirOnly) pattern.substring(0, pattern.length - 1) else pattern, dirOnly)
 
     override fun isMatch(name: String, isDir: Boolean): Boolean {

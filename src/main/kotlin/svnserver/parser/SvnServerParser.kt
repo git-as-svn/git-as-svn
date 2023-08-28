@@ -22,7 +22,7 @@ import kotlin.math.max
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServerParser constructor(private val stream: InputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
+class SvnServerParser(private val stream: InputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     var depth: Int = 0
         private set
     private val buffer: ByteArray = ByteArray(max(1, bufferSize))

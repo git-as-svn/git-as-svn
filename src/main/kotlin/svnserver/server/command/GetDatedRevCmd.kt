@@ -55,5 +55,5 @@ class GetDatedRevCmd : BaseCmd<GetDatedRevCmd.Params>() {
         defaultPermissionCheck(context)
     }
 
-    class Params constructor(val date: String)
+    class Params(val date: String)
 }

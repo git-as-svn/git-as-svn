@@ -19,7 +19,7 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitTreeUpdate constructor(val name: String, entries: Iterable<GitTreeEntry>) {
+internal class GitTreeUpdate(val name: String, entries: Iterable<GitTreeEntry>) {
     val entries: MutableMap<String, GitTreeEntry>
 
     @Throws(IOException::class)

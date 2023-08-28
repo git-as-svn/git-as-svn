@@ -67,5 +67,5 @@ class ReplayRangeCmd : BaseCmd<ReplayRangeCmd.Params>() {
         defaultPermissionCheck(context)
     }
 
-    class Params constructor(val startRev: Int, val endRev: Int, val lowRevision: Int, val sendDeltas: Boolean)
+    class Params(val startRev: Int, val endRev: Int, val lowRevision: Int, val sendDeltas: Boolean)
 }

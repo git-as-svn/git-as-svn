@@ -88,7 +88,7 @@ class GetDirCmd : BaseCmd<GetDirCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(
+    class Params(
         val path: String,
         val rev: IntArray,
         val wantProps: Boolean,

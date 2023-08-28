@@ -15,7 +15,7 @@ import svnserver.repository.git.path.PathMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-data class FileMaskMatcher constructor(private val matcher: NameMatcher) : PathMatcher {
+data class FileMaskMatcher(private val matcher: NameMatcher) : PathMatcher {
     override fun createChild(name: String, isDir: Boolean): PathMatcher? {
         if (matcher.isMatch(name, isDir)) {
             return AlwaysMatcher.INSTANCE

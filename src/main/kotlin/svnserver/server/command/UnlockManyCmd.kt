@@ -76,6 +76,6 @@ class UnlockManyCmd : BaseCmd<UnlockManyCmd.Params>() {
         for (pathRev: PathToken in args.paths) context.checkWrite(context.getRepositoryPath(pathRev.path))
     }
 
-    class PathToken constructor(val path: String, val lockToken: Array<String>)
-    class Params constructor(val breakLock: Boolean, val paths: Array<PathToken>)
+    class PathToken(val path: String, val lockToken: Array<String>)
+    class Params(val breakLock: Boolean, val paths: Array<PathToken>)
 }

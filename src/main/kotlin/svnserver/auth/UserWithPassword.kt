@@ -12,4 +12,4 @@ package svnserver.auth
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class UserWithPassword constructor(val user: User, val password: String)
+class UserWithPassword(val user: User, val password: String)
