@@ -8,6 +8,7 @@
 package svnserver.config.serializer
 
 import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.TypeDescription
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
@@ -58,22 +59,6 @@ class ConfigSerializer {
         return yaml.loadAs(stream, Config::class.java)
     }
 
-    private class ConfigConstructor : Constructor() {
-        init {
-            for ((tag, klass) in configTypes.entries) {
-                addTypeDescription(TypeDescription(klass, tag))
-            }
-        }
-    }
-
-    private class ConfigRepresenter : Representer() {
-        init {
-            for (entry in configTypes.entries) {
-                addClassTag(entry.value, Tag(entry.key))
-            }
-        }
-    }
-
     companion object {
         private val configTypes = mapOf(
             "!cacheUsers" to CacheUserDBConfig::class.java,
@@ -113,7 +98,11 @@ class ConfigSerializer {
         val options = DumperOptions()
         options.isPrettyFlow = true
         options.defaultFlowStyle = DumperOptions.FlowStyle.BLOCK
-        yaml = Yaml(ConfigConstructor(), ConfigRepresenter(), options)
+
+        yaml = Yaml(options)
+        for ((tag, klass) in configTypes.entries) {
+            yaml.addTypeDescription(TypeDescription(klass, tag))
+        }
         yaml.setBeanAccess(BeanAccess.FIELD)
     }
 }
