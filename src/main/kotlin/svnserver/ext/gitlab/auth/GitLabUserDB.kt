@@ -41,12 +41,12 @@ class GitLabUserDB internal constructor(private val config: GitLabUserDBConfig, 
             val token: GitLabToken = config.authentication.obtainAccessToken(context.gitLabUrl, username, password)
             val api: GitlabAPI = GitLabContext.connect(context.gitLabUrl, token)
             val session = api.currentSession
-            val user = createUser(session, password)
-            return if (user.username == username) {
-                user
+            if (session.username == username) {
+                createUser(session, password)
             } else {
                 // This can happen when user authenticates using access token (so username is not used) but enters wrong username.
                 // While we properly calculate username, svn *client* thinks that their username is what user has entered.
+                log.warn("User password check error: expected username=${session.username} but got username=$username")
                 null
             }
         } catch (e: GitlabAPIException) {
