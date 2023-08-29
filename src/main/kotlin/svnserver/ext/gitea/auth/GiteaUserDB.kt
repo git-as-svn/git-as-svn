@@ -27,11 +27,9 @@ import java.net.HttpURLConnection
  * @author Andrew Thornton <zeripath@users.noreply.github.com>
  */
 class GiteaUserDB internal constructor(context: SharedContext) : UserDB {
-    private val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
     private val context: GiteaContext = context.sure(GiteaContext::class.java)
-    override fun authenticators(): Collection<Authenticator> {
-        return authenticators
-    }
+
+    override val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
 
     override fun check(username: String, password: String): svnserver.auth.User? {
         return try {

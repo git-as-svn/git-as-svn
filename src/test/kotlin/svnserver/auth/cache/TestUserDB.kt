@@ -65,7 +65,5 @@ internal class TestUserDB(vararg users: User) : UserDB {
         return report.toString()
     }
 
-    override fun authenticators(): Collection<Authenticator> {
-        return listOf(PlainAuthenticator(this))
-    }
+    override val authenticators: Collection<Authenticator> = listOf(PlainAuthenticator(this))
 }

@@ -207,7 +207,7 @@ class SvnServer(basePath: Path, config: Config) : Thread("SvnServer") {
     @Throws(IOException::class, SVNException::class)
     fun authenticate(context: SessionContext, allowAnonymous: Boolean): User {
         // Отправляем запрос на авторизацию.
-        val authenticators = ArrayList(sharedContext.sure(UserDB::class.java).authenticators())
+        val authenticators = ArrayList(sharedContext.sure(UserDB::class.java).authenticators)
         if (allowAnonymous) authenticators.add(0, AnonymousAuthenticator.get())
         context.writer
             .listBegin()
