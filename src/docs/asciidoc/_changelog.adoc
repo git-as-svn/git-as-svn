@@ -6,15 +6,20 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== 2.7.1
+== 2.8.1
 
-* Update dependencies
-* Add option to authenticate using GitLab access tokens
+* Do not authenticate users by access token if they enter wrong username
+* Update snakeyaml to 2.2
 
 == 2.8.0
 
 * Update dependencies
-* Experimental string interning  feature
+* Experimental string interning feature
+
+== 2.7.1
+
+* Update dependencies
+* Add option to authenticate using GitLab access tokens
 
 == 2.6.0
 
