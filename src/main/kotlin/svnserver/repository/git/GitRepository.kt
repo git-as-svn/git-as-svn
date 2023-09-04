@@ -160,7 +160,7 @@ class GitRepository(
                 GitTreeEntry(
                     treeParser.entryFileMode,
                     GitObject(repo, treeParser.entryObjectId),
-                    treeParser.entryPathString
+                    context.shared.stringInterner(treeParser.entryPathString)
                 )
             )
             treeParser.next()
