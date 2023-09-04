@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 2.9.0
+
+* Unsorted memory optimizations
+
 == 2.8.1
 
 * Do not authenticate users by access token if they enter wrong username
