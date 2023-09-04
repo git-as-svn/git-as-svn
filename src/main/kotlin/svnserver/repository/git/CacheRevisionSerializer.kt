@@ -23,13 +23,13 @@ internal class CacheRevisionSerializer(val stringInterner: (String) -> String) :
         val objectId: ObjectId? = value.gitCommitId
         out.writeBoolean(objectId != null)
         if (objectId != null) ObjectIdSerializer.instance.serialize(out, objectId)
-        out.writeInt(value.getRenames().size)
-        for (en: Map.Entry<String, String> in value.getRenames().entries) {
+        out.writeInt(value.renames.size)
+        for (en: Map.Entry<String, String> in value.renames.entries) {
             STRING.serialize(out, en.key)
             STRING.serialize(out, en.value)
         }
-        out.writeInt(value.getFileChange().size)
-        for (en: Map.Entry<String, CacheChange> in value.getFileChange().entries) {
+        out.writeInt(value.fileChange.size)
+        for (en: Map.Entry<String, CacheChange> in value.fileChange.entries) {
             STRING.serialize(out, en.key)
             val oldFile: ObjectId? = en.value.oldFile
             out.writeBoolean(oldFile != null)

@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== 2.9.0
+== 2.9.1
 
 * Unsorted memory optimizations
 
