@@ -30,6 +30,7 @@ class Config {
     var shutdownTimeout: Long = TimeUnit.SECONDS.toMillis(5)
     var parallelIndexing: Boolean = true
     var stringInterning: Boolean = false
+    val maxConcurrentConnections = Integer.MAX_VALUE
 
     constructor()
     constructor(host: String, port: Int) {

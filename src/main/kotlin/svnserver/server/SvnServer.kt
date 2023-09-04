@@ -77,27 +77,26 @@ class SvnServer(basePath: Path, config: Config) : Thread("SvnServer") {
             }
             val sessionId: Long = lastSessionId.incrementAndGet()
             connections[sessionId] = client
-            val task = Runnable {
-                try {
-                    client.use { clientSocket ->
-                        SvnServerWriter(clientSocket.getOutputStream()).use { writer ->
-                            log.info("New connection from: {}", client.remoteSocketAddress)
-                            serveClient(clientSocket, writer)
-                        }
-                    }
-                } catch (ignore: EOFException) {
-                    // client disconnect is not a error
-                } catch (ignore: SocketException) {
-                } catch (e: SVNException) {
-                    log.warn("Exception:", e)
-                } catch (e: IOException) {
-                    log.warn("Exception:", e)
-                } finally {
-                    shutdownConnection(sessionId)
-                }
-            }
             try {
-                threadPoolExecutor.execute(task)
+                threadPoolExecutor.execute {
+                    try {
+                        client.use { clientSocket ->
+                            SvnServerWriter(clientSocket.getOutputStream()).use { writer ->
+                                log.info("New connection from: {}", client.remoteSocketAddress)
+                                serveClient(clientSocket, writer)
+                            }
+                        }
+                    } catch (ignore: EOFException) {
+                        // client disconnect is not a error
+                    } catch (ignore: SocketException) {
+                    } catch (e: SVNException) {
+                        log.warn("Exception:", e)
+                    } catch (e: IOException) {
+                        log.warn("Exception:", e)
+                    } finally {
+                        shutdownConnection(sessionId)
+                    }
+                }
             } catch (e: RejectedExecutionException) {
                 shutdownConnection(sessionId)
             }
@@ -352,17 +351,16 @@ class SvnServer(basePath: Path, config: Config) : Thread("SvnServer") {
     init {
         isDaemon = true
         this.config = config
-        val threadFactory = ThreadFactory { r: Runnable? ->
-            val thread = Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()))
-            thread.isDaemon = true
-            thread
-        }
         threadPoolExecutor = ThreadPoolExecutor(
-            0, Int.MAX_VALUE,
+            0, config.maxConcurrentConnections,
             60,
             TimeUnit.SECONDS,
             SynchronousQueue(),
-            threadFactory,
+            { r: Runnable? ->
+                val thread = Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()))
+                thread.isDaemon = true
+                thread
+            },
             AbortPolicy()
         )
         sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared, if (config.stringInterning) { s: String -> s.intern() } else { s: String -> s })
