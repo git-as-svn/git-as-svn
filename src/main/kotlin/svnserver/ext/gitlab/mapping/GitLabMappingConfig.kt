@@ -25,8 +25,8 @@ import java.util.function.Consumer
  */
 class GitLabMappingConfig private constructor(var path: String, var createMode: GitCreateMode) : RepositoryMappingConfig {
     var template: GitRepositoryConfig = GitRepositoryConfig(createMode)
-    var cacheTimeSec = 15
-    var cacheMaximumSize = 1000
+    var cacheTimeSec = 15L
+    var cacheMaximumSize = 1000L
 
     constructor() : this("/var/opt/gitlab/git-data/repositories/", GitCreateMode.ERROR)
     constructor(path: Path, createMode: GitCreateMode) : this(path.toAbsolutePath().toString(), createMode)
