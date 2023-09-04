@@ -228,7 +228,7 @@ class SvnServerParser(private val stream: InputStream, bufferSize: Int = DEFAULT
     }
 
     companion object {
-        private const val DEFAULT_BUFFER_SIZE: Int = 32 * 1024
+        const val DEFAULT_BUFFER_SIZE: Int = 8 * 1024
 
         // Buffer size limit for out-of-memory prevention.
         private const val MAX_BUFFER_SIZE: Int = 10 * 1024 * 1024

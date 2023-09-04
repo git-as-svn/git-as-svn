@@ -81,7 +81,7 @@ class SvnServer(basePath: Path, config: Config) : Thread("SvnServer") {
                 threadPoolExecutor.execute {
                     try {
                         client.use { clientSocket ->
-                            SvnServerWriter(clientSocket.getOutputStream()).use { writer ->
+                            SvnServerWriter(clientSocket.getOutputStream(), config.writeBufferSize).use { writer ->
                                 log.info("New connection from: {}", client.remoteSocketAddress)
                                 serveClient(clientSocket, writer)
                             }
@@ -106,7 +106,7 @@ class SvnServer(basePath: Path, config: Config) : Thread("SvnServer") {
     @Throws(IOException::class, SVNException::class)
     private fun serveClient(socket: Socket, writer: SvnServerWriter) {
         socket.tcpNoDelay = true
-        val parser = SvnServerParser(socket.getInputStream())
+        val parser = SvnServerParser(socket.getInputStream(), config.readBufferSize)
         val clientInfo: ClientInfo = exchangeCapabilities(parser, writer)
         val repositoryInfo: RepositoryInfo = RepositoryMapping.findRepositoryInfo(repositoryMapping, clientInfo.url, writer) ?: return
         val context = SessionContext(parser, writer, this, repositoryInfo, clientInfo)

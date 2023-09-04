@@ -19,9 +19,9 @@ import java.nio.charset.StandardCharsets
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServerWriter(stream: OutputStream) : Closeable {
+class SvnServerWriter(stream: OutputStream, bufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE) : Closeable {
 
-    private val stream: OutputStream
+    private val stream = BufferedOutputStream(stream, bufferSize)
     private var depth: Int = 0
 
     @Throws(IOException::class)
@@ -125,9 +125,5 @@ class SvnServerWriter(stream: OutputStream) : Closeable {
     @Throws(IOException::class)
     override fun close() {
         stream.use { if (depth != 0) throw IllegalStateException("Unmatched parentheses") }
-    }
-
-    init {
-        this.stream = BufferedOutputStream(stream)
     }
 }
