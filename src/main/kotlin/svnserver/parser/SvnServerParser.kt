@@ -174,7 +174,12 @@ class SvnServerParser(private val stream: InputStream, bufferSize: Int = DEFAULT
                 position += size
             }
         }
-        return StringToken(token.copyOf(length))
+
+        return if (length == 0) {
+            StringToken.empty
+        } else {
+            StringToken(token.copyOf(length))
+        }
     }
 
     @Throws(IOException::class)
@@ -184,7 +189,11 @@ class SvnServerParser(private val stream: InputStream, bufferSize: Int = DEFAULT
             val data: Byte = buffer[offset]
             offset++
             if (isSpace(data.toInt())) {
-                return WordToken(String(buffer, begin, offset - begin - 1, StandardCharsets.US_ASCII))
+                return if (offset - begin == 1) {
+                    WordToken.empty
+                } else {
+                    WordToken(String(buffer, begin, offset - begin - 1, StandardCharsets.US_ASCII))
+                }
             }
             if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.code.toByte()))) {
                 throw IOException("Unexpected character in stream: $data (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')")
@@ -203,7 +212,11 @@ class SvnServerParser(private val stream: InputStream, bufferSize: Int = DEFAULT
                 val data: Byte = buffer[offset]
                 offset++
                 if (isSpace(data.toInt())) {
-                    return WordToken(String(buffer, 0, offset - 1, StandardCharsets.US_ASCII))
+                    return if (offset == 1) {
+                        WordToken.empty
+                    } else {
+                        WordToken(String(buffer, 0, offset - 1, StandardCharsets.US_ASCII))
+                    }
                 }
                 if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.code.toByte()))) {
                     throw IOException("Unexpected character in stream: $data (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')")

@@ -66,6 +66,8 @@ class StringToken : TextToken {
     }
 
     companion object {
+        val empty = StringToken("")
+
         @Throws(IOException::class)
         fun write(stream: OutputStream, data: ByteArray, offset: Int, length: Int) {
             stream.write(length.toLong().toString(10).toByteArray(StandardCharsets.ISO_8859_1))

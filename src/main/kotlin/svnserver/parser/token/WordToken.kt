@@ -45,6 +45,8 @@ class WordToken(override val text: String) : TextToken {
     }
 
     companion object {
+        val empty = WordToken("")
+
         @Throws(IOException::class)
         fun write(stream: OutputStream, word: String) {
             stream.write(word.toByteArray(StandardCharsets.US_ASCII))
