@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 2.9.2
+
+* Fix `svn up` protocol error
+* More memory optimizations
+
 == 2.9.1
 
 * Unsorted memory optimizations
