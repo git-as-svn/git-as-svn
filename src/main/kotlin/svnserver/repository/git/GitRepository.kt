@@ -20,7 +20,6 @@ import svnserver.StringHelper
 import svnserver.context.LocalContext
 import svnserver.context.SharedContext
 import svnserver.repository.SvnForbiddenException
-import svnserver.repository.VcsSupplier
 import svnserver.repository.git.filter.GitFilter
 import svnserver.repository.git.filter.GitFilters
 import svnserver.repository.git.prop.GitProperty
@@ -89,13 +88,13 @@ class GitRepository(
     }
 
     @Throws(IOException::class)
-    fun collectProperties(treeEntry: GitTreeEntry, entryProvider: VcsSupplier<Iterable<GitTreeEntry>>): Array<GitProperty> {
+    fun collectProperties(treeEntry: GitTreeEntry, entryProvider: Iterable<GitTreeEntry>): Array<GitProperty> {
         if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) return GitProperty.emptyArray
         var props = directoryPropertyCache[treeEntry.objectId.`object`]
         if (props == null) {
             val propList = ArrayList<GitProperty>()
             try {
-                for (entry in entryProvider.get()) {
+                for (entry in entryProvider) {
                     val parseProps = parseGitProperty(entry.fileName, entry.objectId)
                     if (parseProps.isNotEmpty()) {
                         propList.addAll(parseProps)

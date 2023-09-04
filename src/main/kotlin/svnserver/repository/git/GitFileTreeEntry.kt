@@ -13,7 +13,6 @@ import org.eclipse.jgit.revwalk.RevTree
 import org.tmatesoft.svn.core.SVNProperty
 import ru.bozaro.gitlfs.common.Constants
 import svnserver.repository.VcsCopyFrom
-import svnserver.repository.VcsSupplier
 import svnserver.repository.git.filter.GitFilter
 import svnserver.repository.git.prop.GitProperty
 import java.io.IOException
@@ -31,8 +30,10 @@ internal class GitFileTreeEntry private constructor(
     parentPath: String,
     override val treeEntry: GitTreeEntry,
     override val revision: Int,
-    private val entriesCache: EntriesCache
-) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, entriesCache), treeEntry.fileName, treeEntry.fileMode, branch.repository.context.shared.stringInterner), GitFile {
+    entries: Iterable<GitTreeEntry>,
+) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, entries), treeEntry.fileName, treeEntry.fileMode, branch.repository.context.shared.stringInterner), GitFile {
+
+    override val entries: Map<String, GitFile> = entries.associate { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
@@ -101,20 +102,9 @@ internal class GitFileTreeEntry private constructor(
             return treeEntry.fileMode
         }
 
-    @get:Throws(IOException::class)
-    override val entries: Map<String, GitFile> by lazy {
-        val fullPath = fullPath
-        entriesCache.get().associate { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
-    }
-
     @Throws(IOException::class)
     override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
-        for (entry: GitTreeEntry in entriesCache.get()) {
-            if ((entry.fileName == name)) {
-                return create(branch, rawProperties, fullPath, (entry), revision)
-            }
-        }
-        return null
+        return entries[name]
     }
 
     override fun hashCode(): Int {
@@ -137,18 +127,6 @@ internal class GitFileTreeEntry private constructor(
                 '}')
     }
 
-    private class EntriesCache(private val repo: GitRepository, private val treeEntry: GitTreeEntry) : VcsSupplier<Iterable<GitTreeEntry>> {
-        private var rawEntriesCache: Iterable<GitTreeEntry>? = null
-
-        @Throws(IOException::class)
-        override fun get(): Iterable<GitTreeEntry> {
-            if (rawEntriesCache == null) {
-                rawEntriesCache = repo.loadTree(treeEntry)
-            }
-            return rawEntriesCache!!
-        }
-    }
-
     companion object {
         @Throws(IOException::class)
         fun create(branch: GitBranch, tree: RevTree, revision: Int): GitFile {
@@ -157,7 +135,7 @@ internal class GitFileTreeEntry private constructor(
 
         @Throws(IOException::class)
         private fun create(branch: GitBranch, parentProps: Array<GitProperty>, parentPath: String, treeEntry: GitTreeEntry, revision: Int): GitFile {
-            return GitFileTreeEntry(branch, parentProps, parentPath, treeEntry, revision, EntriesCache(branch.repository, treeEntry))
+            return GitFileTreeEntry(branch, parentProps, parentPath, treeEntry, revision, branch.repository.loadTree(treeEntry))
         }
     }
 }
