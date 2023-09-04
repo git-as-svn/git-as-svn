@@ -16,7 +16,7 @@ import svnserver.repository.git.cache.CacheRevision
 import java.io.IOException
 import java.util.*
 
-internal class CacheRevisionSerializer : GroupSerializerObjectArray<CacheRevision>() {
+internal class CacheRevisionSerializer(val stringInterner: (String) -> String) : GroupSerializerObjectArray<CacheRevision>() {
     @Throws(IOException::class)
     override fun serialize(out: DataOutput2, value: CacheRevision) {
         val objectId: ObjectId? = value.gitCommitId
@@ -45,20 +45,16 @@ internal class CacheRevisionSerializer : GroupSerializerObjectArray<CacheRevisio
         val renames = TreeMap<String, String>()
         val renamesCount: Int = input.readInt()
         for (i in 0 until renamesCount) {
-            renames[STRING.deserialize(input, available)] = STRING.deserialize(input, available)
+            renames[stringInterner(STRING.deserialize(input, available))] = stringInterner(STRING.deserialize(input, available))
         }
         val fileChange = TreeMap<String, CacheChange>()
         val fileChangeCount: Int = input.readInt()
         for (i in 0 until fileChangeCount) {
-            val name: String = STRING.deserialize(input, available)
+            val name: String = stringInterner(STRING.deserialize(input, available))
             val oldFile: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
             val newFile: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
             fileChange[name] = CacheChange(oldFile, newFile)
         }
         return CacheRevision(objectId, renames, fileChange)
-    }
-
-    companion object {
-        val instance: CacheRevisionSerializer = CacheRevisionSerializer()
     }
 }

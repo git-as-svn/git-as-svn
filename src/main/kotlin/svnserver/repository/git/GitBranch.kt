@@ -415,7 +415,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         revisionCache = repository.context.shared.cacheDB.hashMap<ObjectId, CacheRevision>(
             revisionCacheName,
             ObjectIdSerializer.instance,
-            CacheRevisionSerializer.instance
+            CacheRevisionSerializer(repository.context.shared.stringInterner)
         ).createOrOpen()
     }
 }
