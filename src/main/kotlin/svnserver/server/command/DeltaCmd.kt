@@ -119,6 +119,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
     }
 
     internal class ReportPipeline(private val params: DeltaParams) {
+        private val deltaGenerator by lazy { SVNDeltaGenerator() }
         private val commands: MutableMap<String, BaseCmd<*>>
         private val forcedPaths = HashMap<String, MutableSet<String>>()
         private val deletedPaths = HashSet<String>()
@@ -249,6 +250,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                     writer
                         .listBegin()
                 }
+
                 "success" -> {
                     parser.skipItems()
                     writer
@@ -257,6 +259,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                         .listBegin().listEnd()
                         .listEnd()
                 }
+
                 else -> {
                     log.error("Unexpected client status: {}", clientStatus)
                     throw EOFException("Unexpected client status")
@@ -418,7 +421,6 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                         .listEnd()
                         .listEnd()
                     if (params.textDeltas) {
-                        val deltaGenerator = SVNDeltaGenerator()
                         (oldFile?.openStream() ?: SVNFileUtil.DUMMY_IN).use { source ->
                             newFile.openStream().use { target ->
                                 val compression: SVNDeltaCompression = context.compression
@@ -654,19 +656,19 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         }
 
         private class HeaderEntry(private val context: SessionContext, val file: GitFile?, private val beginWriter: HeaderWriter, private val endWriter: HeaderWriter, private val pathStack: Deque<HeaderEntry>) : AutoCloseable {
-            private var writed: Boolean = false
+            private var written: Boolean = false
 
             @Throws(IOException::class, SVNException::class)
             fun write() {
-                if (!writed) {
-                    writed = true
+                if (!written) {
+                    written = true
                     beginWriter.write(context.writer)
                 }
             }
 
             @Throws(IOException::class, SVNException::class)
             override fun close() {
-                if (writed) {
+                if (written) {
                     endWriter.write(context.writer)
                 }
                 pathStack.removeLast()
