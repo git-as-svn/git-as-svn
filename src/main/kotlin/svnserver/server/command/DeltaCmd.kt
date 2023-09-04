@@ -76,14 +76,14 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
     }
 
     class DeleteParams(val path: String)
-    class SetPathParams internal constructor(val path: String, val rev: Int, val startEmpty: Boolean, private val lockToken: Array<String>, depth: String) {
+
+    class SetPathParams internal constructor(val path: String, val rev: Int, val startEmpty: Boolean, depth: String) {
         val depth: Depth = Depth.parse(depth)
         override fun toString(): String {
             return ("SetPathParams{" +
                     "path='" + path + '\'' +
                     ", rev=" + rev +
                     ", startEmpty=" + startEmpty +
-                    ", lockToken=" + lockToken.contentToString() +
                     ", depth=" + depth +
                     '}')
         }
@@ -158,7 +158,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         }
 
         fun setPathReport(path: String, rev: Int, startEmpty: Boolean, depth: SVNDepth) {
-            internalSetPathReport(SetPathParams(path, rev, startEmpty, emptyArray(), depth.name), path)
+            internalSetPathReport(SetPathParams(path, rev, startEmpty, depth.name), path)
         }
 
         private fun internalSetPathReport(args: SetPathParams, path: String) {
