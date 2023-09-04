@@ -15,6 +15,7 @@ import svnserver.repository.git.cache.CacheChange
 import svnserver.repository.git.cache.CacheRevision
 import java.io.IOException
 import java.util.*
+import kotlin.collections.HashMap
 
 internal class CacheRevisionSerializer(val stringInterner: (String) -> String) : GroupSerializerObjectArray<CacheRevision>() {
     @Throws(IOException::class)
@@ -42,13 +43,13 @@ internal class CacheRevisionSerializer(val stringInterner: (String) -> String) :
     @Throws(IOException::class)
     override fun deserialize(input: DataInput2, available: Int): CacheRevision {
         val objectId: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
-        val renames = TreeMap<String, String>()
         val renamesCount: Int = input.readInt()
+        val renames = HashMap<String, String>(renamesCount)
         for (i in 0 until renamesCount) {
             renames[stringInterner(STRING.deserialize(input, available))] = stringInterner(STRING.deserialize(input, available))
         }
-        val fileChange = TreeMap<String, CacheChange>()
         val fileChangeCount: Int = input.readInt()
+        val fileChange = HashMap<String, CacheChange>(fileChangeCount)
         for (i in 0 until fileChangeCount) {
             val name: String = stringInterner(STRING.deserialize(input, available))
             val oldFile: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null

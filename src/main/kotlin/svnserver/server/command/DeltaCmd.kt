@@ -31,6 +31,8 @@ import java.io.EOFException
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 
 /**
  * Delta commands.
@@ -119,10 +121,15 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
     }
 
     internal class ReportPipeline(private val params: DeltaParams) {
+        companion object {
+            val defaultForcedPaths: Map<String, MutableSet<String>> = emptyMap()
+            val emptySet: Set<String> = emptySet()
+        }
+
         private val deltaGenerator by lazy { SVNDeltaGenerator() }
-        private val commands: MutableMap<String, BaseCmd<*>>
-        private val forcedPaths = HashMap<String, MutableSet<String>>()
-        private val deletedPaths = HashSet<String>()
+        private val commands: Map<String, BaseCmd<*>>
+        private var forcedPaths = defaultForcedPaths
+        private var deletedPaths: Set<String> = emptySet
         private val paths = HashMap<String, SetPathParams>()
         private val pathStack = ArrayDeque<HeaderEntry>()
         private var lastTokenId = 0
@@ -168,7 +175,10 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             var path: String = wcPath
             while (path.isNotEmpty()) {
                 val parent: String = StringHelper.parentDir(path)
-                val items = forcedPaths.computeIfAbsent(parent) { HashSet() }
+                if (forcedPaths == defaultForcedPaths) {
+                    forcedPaths = HashMap()
+                }
+                val items = (forcedPaths as HashMap).computeIfAbsent(parent) { HashSet() }
                 if (!items.add(path)) {
                     break
                 }
@@ -204,7 +214,10 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             context.push { sessionContext: SessionContext -> reportCommand(sessionContext) }
             val wcPath: String = wcPath(args.path)
             forcePath(wcPath)
-            deletedPaths.add(wcPath)
+            if (deletedPaths == emptySet) {
+                deletedPaths = HashSet()
+            }
+            (deletedPaths as HashSet).add(wcPath)
         }
 
         @Throws(IOException::class, SVNException::class)
@@ -344,34 +357,10 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         ) {
             val dirAction = wcDepth.determineAction(requestedDepth, true)
             val fileAction = wcDepth.determineAction(requestedDepth, false)
-            val newEntries = TreeMap<String, GitFile>()
-            for (entry in newFile.entries) {
-                newEntries[entry.fileName] = entry
-            }
             val forced = HashSet(forcedPaths.getOrDefault(wcPath, emptySet()))
-            val oldEntries: Map<String, GitFile>
-            if (oldFile != null) {
-                oldEntries = TreeMap()
-                for (oldEntry in oldFile.entries) {
-                    val entryPath: String = joinPath(wcPath, oldEntry.fileName)
-                    if (newEntries.containsKey(oldEntry.fileName)) {
-                        oldEntries.put(oldEntry.fileName, oldEntry)
-                        continue
-                    }
-                    removeEntry(context, entryPath, oldEntry.lastChange.id, tokenId)
-                    forced.remove(entryPath)
-                }
-            } else {
-                oldEntries = emptyMap()
-            }
-            for (entryPath in forced) {
-                val entryName: String? = StringHelper.getChildPath(wcPath, entryPath)
-                if ((entryName != null) && newEntries.containsKey(entryName)) {
-                    continue
-                }
-                removeEntry(context, entryPath, newFile.lastChange.id, tokenId)
-            }
-            for (newEntry in newFile.entries) {
+            val oldEntries = handleDeletedEntries(newFile, oldFile, wcPath, context, tokenId, forced)
+
+            for (newEntry in newFile.entries.values) {
                 val entryPath: String = joinPath(wcPath, newEntry.fileName)
                 val oldEntry: GitFile? = getPrevFile(context, entryPath, oldEntries[newEntry.fileName])
                 val action: Depth.Action = if (newEntry.isDirectory) dirAction else fileAction
@@ -381,6 +370,32 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                 val entryDepth: Depth = getWcDepth(entryPath, wcDepth)
                 updateEntry(context, entryPath, if (action == Depth.Action.Upgrade) null else oldEntry, newEntry, tokenId, false, entryDepth, requestedDepth.deepen())
             }
+        }
+
+        private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
+            val result: Map<String, GitFile>
+            if (oldFile != null) {
+                result = HashMap(newFile.entries.size)
+                for (oldEntry in oldFile.entries.values) {
+                    val entryPath: String = joinPath(wcPath, oldEntry.fileName)
+                    if (newFile.entries.containsKey(oldEntry.fileName)) {
+                        result.put(oldEntry.fileName, oldEntry)
+                        continue
+                    }
+                    removeEntry(context, entryPath, oldEntry.lastChange.id, tokenId)
+                    forced.remove(entryPath)
+                }
+            } else {
+                result = emptyMap()
+            }
+            for (entryPath in forced) {
+                val entryName: String? = StringHelper.getChildPath(wcPath, entryPath)
+                if ((entryName != null) && newFile.entries.containsKey(entryName)) {
+                    continue
+                }
+                removeEntry(context, entryPath, newFile.lastChange.id, tokenId)
+            }
+            return result
         }
 
         @Throws(IOException::class, SVNException::class)
@@ -680,11 +695,12 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         }
 
         init {
-            commands = HashMap()
-            commands["delete-path"] = LambdaCmd(DeleteParams::class.java) { context: SessionContext, args: DeleteParams -> deletePath(context, args) }
-            commands["set-path"] = LambdaCmd(SetPathParams::class.java) { context: SessionContext, args: SetPathParams -> this.setPathReport(context, args) }
-            commands["abort-report"] = LambdaCmd(NoParams::class.java) { context: SessionContext, _: NoParams -> abortReport(context) }
-            commands["finish-report"] = LambdaCmd(NoParams::class.java) { context: SessionContext, _: NoParams -> finishReport(context) }
+            commands = hashMapOf(
+                "delete-path" to LambdaCmd(DeleteParams::class.java) { context: SessionContext, args: DeleteParams -> deletePath(context, args) },
+                "set-path" to LambdaCmd(SetPathParams::class.java) { context: SessionContext, args: SetPathParams -> this.setPathReport(context, args) },
+                "abort-report" to LambdaCmd(NoParams::class.java) { context: SessionContext, _: NoParams -> abortReport(context) },
+                "finish-report" to LambdaCmd(NoParams::class.java) { context: SessionContext, _: NoParams -> finishReport(context) },
+            )
         }
     }
 

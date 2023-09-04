@@ -36,7 +36,6 @@ internal class GitFileTreeEntry private constructor(
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
-    private var treeEntriesCache: Iterable<GitFile>? = null
     override val contentHash: String
         get() {
             return filter.getContentHash(treeEntry.objectId)
@@ -103,18 +102,10 @@ internal class GitFileTreeEntry private constructor(
         }
 
     @get:Throws(IOException::class)
-    override val entries: Iterable<GitFile>
-        get() {
-            if (treeEntriesCache == null) {
-                val result = ArrayList<GitFile>()
-                val fullPath = fullPath
-                for (entry in entriesCache.get()) {
-                    result.add(create(branch, rawProperties, fullPath, entry, revision))
-                }
-                treeEntriesCache = result.toTypedArray().asIterable()
-            }
-            return treeEntriesCache!!
-        }
+    override val entries: Map<String, GitFile> by lazy {
+        val fullPath = fullPath
+        entriesCache.get().associate { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
+    }
 
     @Throws(IOException::class)
     override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {

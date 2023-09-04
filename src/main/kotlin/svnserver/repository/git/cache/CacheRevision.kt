@@ -16,27 +16,12 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class CacheRevision(commitId: ObjectId?, renames: Map<String, String>, fileChange: Map<String, CacheChange>) {
+class CacheRevision(commitId: ObjectId?, val renames: Map<String, String>, val fileChange: Map<String, CacheChange>) {
     val gitCommitId = commitId?.copy()
-    private val renames = TreeMap<String, String>()
-    private val fileChange = TreeMap<String, CacheChange>()
 
     constructor(
         svnCommit: RevCommit?,
         renames: Map<String, String>,
         fileChange: Map<String, CacheChange>
     ) : this(svnCommit?.copy(), renames, fileChange)
-
-    fun getRenames(): Map<String, String> {
-        return Collections.unmodifiableMap(renames)
-    }
-
-    fun getFileChange(): Map<String, CacheChange> {
-        return Collections.unmodifiableMap(fileChange)
-    }
-
-    init {
-        this.renames.putAll(renames)
-        this.fileChange.putAll(fileChange)
-    }
 }

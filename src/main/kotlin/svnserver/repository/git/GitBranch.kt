@@ -229,14 +229,14 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         val cacheRevision: CacheRevision = loadCacheRevision(reader, commit, revisions.size)
         val revisionId: Int = revisions.size
         val copyFroms: MutableMap<String, VcsCopyFrom> = HashMap()
-        for (entry: Map.Entry<String, String> in cacheRevision.getRenames().entries) {
+        for (entry: Map.Entry<String, String> in cacheRevision.renames.entries) {
             copyFroms[entry.key] = VcsCopyFrom(revisionId - 1, entry.value)
         }
         val oldCommit: RevCommit? = if (revisions.isEmpty()) null else revisions[revisions.size - 1].gitNewCommit
         val svnCommit: RevCommit? = if (cacheRevision.gitCommitId != null) RevWalk(reader).parseCommit(cacheRevision.gitCommitId) else null
         try {
             lastUpdatesLock.writeLock().lock()
-            for (entry: Map.Entry<String, CacheChange> in cacheRevision.getFileChange().entries) {
+            for (entry: Map.Entry<String, CacheChange> in cacheRevision.fileChange.entries) {
                 lastUpdates.compute(entry.key) { _, list ->
                     val markNoFile: Boolean = entry.value.newFile == null
                     val prevLen: Int = list?.size ?: 0
