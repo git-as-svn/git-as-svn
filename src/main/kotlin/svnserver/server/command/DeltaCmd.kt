@@ -365,7 +365,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
             val result = if (oldFile != null) {
-                val map = HashMap<String, GitFile>(newFile.entries.size)
+                val map = context.server.config.newStringMap<GitFile>(newFile.entries.size)
                 for (oldEntry in oldFile.entries.values) {
                     val entryPath: String = joinPath(wcPath, oldEntry.fileName)
                     if (newFile.entries.containsKey(oldEntry.fileName)) {

@@ -38,11 +38,11 @@ class Config {
     var writeBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
     private var useTrieOptimization: Boolean = true
 
-    fun <E> newStringMap(): MutableMap<String, E> {
+    fun <E> newStringMap(initialCapacity: Int = 16): MutableMap<String, E> {
         return if (useTrieOptimization) {
             PatriciaTrie()
         } else {
-            HashMap()
+            HashMap(initialCapacity)
         }
     }
 
