@@ -30,10 +30,14 @@ internal class GitFileTreeEntry private constructor(
     parentPath: String,
     override val treeEntry: GitTreeEntry,
     override val revision: Int,
-    entries: Iterable<GitTreeEntry>,
-) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, entries), treeEntry.fileName, treeEntry.fileMode, branch.repository.context.shared.stringInterner), GitFile {
+    treeEntries: Iterable<GitTreeEntry>,
+) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, treeEntries), treeEntry.fileName, treeEntry.fileMode, branch.repository.context.shared.stringInterner), GitFile {
 
-    override val entries: Map<String, GitFile> = entries.associate { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
+    override val entries: Map<String, GitFile>
+
+    init {
+        entries = treeEntries.associate { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
+    }
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
