@@ -30,6 +30,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.HashMap
 
 class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     val uuid: String
@@ -312,7 +313,12 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
                 result[StringHelper.normalize(diff.newPath)] = StringHelper.normalize(diff.oldPath)
             }
         }
-        return result
+
+        return if (result.isEmpty()) {
+            emptyMap()
+        } else {
+            result
+        }
     }
 
     fun getRevisionByDate(dateTime: Long): GitRevision {
