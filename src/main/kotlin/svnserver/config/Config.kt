@@ -7,10 +7,12 @@
  */
 package svnserver.config
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression
 import svnserver.parser.SvnServerParser
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashMap
 
 /**
  * Top configuration object.
@@ -34,6 +36,15 @@ class Config {
     val maxConcurrentConnections = Integer.MAX_VALUE
     val readBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
     var writeBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
+    private var useTrieOptimization: Boolean = true
+
+    fun <E> newStringMap(): MutableMap<String, E> {
+        return if (useTrieOptimization) {
+            PatriciaTrie()
+        } else {
+            HashMap()
+        }
+    }
 
     constructor()
     constructor(host: String, port: Int) {

@@ -57,6 +57,7 @@ class ReplayCmd : BaseCmd<ReplayCmd.Params>() {
         @Throws(IOException::class, SVNException::class)
         fun replayRevision(context: SessionContext, revision: Int, lowRevision: Int, sendDeltas: Boolean) {
             val pipeline = ReportPipeline(
+                context,
                 DeltaParams(
                     intArrayOf(revision),
                     "",

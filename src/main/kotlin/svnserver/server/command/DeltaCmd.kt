@@ -66,8 +66,8 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
     @Throws(IOException::class, SVNException::class)
     override fun processCommand(context: SessionContext, args: DeltaParams) {
         log.debug("Enter report mode")
-        val pipeline = ReportPipeline(args)
-        pipeline.reportCommand(context)
+        val pipeline = ReportPipeline(context, args)
+        pipeline.reportCommand()
     }
 
     @Throws(IOException::class, SVNException::class)
@@ -120,17 +120,14 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
     }
 
-    internal class ReportPipeline(private val params: DeltaParams) {
-        companion object {
-            val defaultForcedPaths: Map<String, MutableSet<String>> = emptyMap()
-            val emptySet: Set<String> = emptySet()
-        }
+    internal class ReportPipeline(private val context: SessionContext, private val params: DeltaParams) {
 
         private val deltaGenerator by lazy { SVNDeltaGenerator() }
         private val commands: Map<String, BaseCmd<*>>
-        private var forcedPaths = defaultForcedPaths
-        private var deletedPaths: Set<String> = emptySet
-        private val paths = HashMap<String, SetPathParams>()
+        private var forcedPaths = context.server.config.newStringMap<MutableSet<String>>()
+        private var deletedPaths = context.server.config.newStringMap<Unit>()
+        private val paths = context.server.config.newStringMap<SetPathParams>()
+
         private val pathStack = ArrayDeque<HeaderEntry>()
         private var lastTokenId = 0
 
@@ -175,10 +172,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             var path: String = wcPath
             while (path.isNotEmpty()) {
                 val parent: String = StringHelper.parentDir(path)
-                if (forcedPaths == defaultForcedPaths) {
-                    forcedPaths = HashMap()
-                }
-                val items = (forcedPaths as HashMap).computeIfAbsent(parent) { HashSet() }
+                val items = forcedPaths.computeIfAbsent(parent) { HashSet() }
                 if (!items.add(path)) {
                     break
                 }
@@ -192,12 +186,12 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         }
 
         private fun setPathReport(context: SessionContext, args: SetPathParams) {
-            context.push { sessionContext: SessionContext -> reportCommand(sessionContext) }
+            context.push { reportCommand() }
             internalSetPathReport(args, args.path)
         }
 
         @Throws(IOException::class, SVNException::class)
-        fun reportCommand(context: SessionContext) {
+        fun reportCommand() {
             val parser: SvnServerParser = context.parser
             parser.readToken(ListBeginToken::class.java)
             val cmd: String = parser.readText()
@@ -211,13 +205,10 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         }
 
         private fun deletePath(context: SessionContext, args: DeleteParams) {
-            context.push { sessionContext: SessionContext -> reportCommand(sessionContext) }
+            context.push { reportCommand() }
             val wcPath: String = wcPath(args.path)
             forcePath(wcPath)
-            if (deletedPaths == emptySet) {
-                deletedPaths = HashSet()
-            }
-            (deletedPaths as HashSet).add(wcPath)
+            deletedPaths[wcPath] = Unit
         }
 
         @Throws(IOException::class, SVNException::class)
@@ -373,20 +364,20 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         }
 
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
-            val result: Map<String, GitFile>
-            if (oldFile != null) {
-                result = HashMap(newFile.entries.size)
+            val result = if (oldFile != null) {
+                val map = HashMap<String, GitFile>(newFile.entries.size)
                 for (oldEntry in oldFile.entries.values) {
                     val entryPath: String = joinPath(wcPath, oldEntry.fileName)
                     if (newFile.entries.containsKey(oldEntry.fileName)) {
-                        result.put(oldEntry.fileName, oldEntry)
+                        map[oldEntry.fileName] = oldEntry
                         continue
                     }
                     removeEntry(context, entryPath, oldEntry.lastChange.id, tokenId)
                     forced.remove(entryPath)
                 }
+                map
             } else {
-                result = emptyMap()
+                emptyMap()
             }
             for (entryPath in forced) {
                 val entryName: String? = StringHelper.getChildPath(wcPath, entryPath)
