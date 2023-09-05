@@ -18,8 +18,12 @@ import java.io.IOException
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: String, props: Array<GitProperty>, final override val fileName: String, fileMode: FileMode, stringInterner: (String) -> String) : GitEntry {
-    final override val fullPath: String = stringInterner(StringHelper.joinPath(parentPath, fileName))
+    final override val fullPath: String
     final override val rawProperties: Array<GitProperty> = GitProperty.joinProperties(parentProps, fileName, fileMode, props)
+
+    init {
+        fullPath = stringInterner(StringHelper.joinPath(parentPath, fileName))
+    }
 
     override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
         return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE, stringInterner)
