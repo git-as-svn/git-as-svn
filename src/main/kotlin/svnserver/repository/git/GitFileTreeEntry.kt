@@ -18,6 +18,7 @@ import svnserver.repository.git.prop.GitProperty
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
+import kotlin.collections.HashMap
 
 /**
  * Git file.
@@ -36,7 +37,7 @@ internal class GitFileTreeEntry private constructor(
     override val entries: Map<String, GitFile>
 
     init {
-        entries = treeEntries.associate { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
+        entries = treeEntries.associateTo(HashMap()) { it.fileName to create(branch, rawProperties, fullPath, it, revision) }
     }
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)

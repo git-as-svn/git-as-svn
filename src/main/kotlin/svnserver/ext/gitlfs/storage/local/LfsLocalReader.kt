@@ -68,7 +68,7 @@ class LfsLocalReader private constructor(private val meta: Map<String, String>, 
                 if (gzipPath != null && Files.exists(gzipPath)) return LfsLocalReader(meta!!, gzipPath, true)
             } else {
                 if (dataPath == null || !Files.isRegularFile(dataPath)) return null
-                meta = mapOf(
+                meta = hashMapOf(
                     Constants.OID to oid,
                     Constants.SIZE to Files.size(dataPath).toString()
                 )

@@ -35,7 +35,7 @@ class LfsServer(private val secretToken: String, tokenExpireSec: Long, tokenEnsu
         val pointerManager: ContentManager = LfsContentManager(localContext, storage, tokenExpireSec, tokenEnsureTime)
         val contentManager = LfsContentManager(localContext, storage, tokenExpireSec, 0.0f)
         val servletsInfo = webServer.addServlets(
-            mapOf(
+            hashMapOf(
                 pathSpec + SERVLET_AUTH to LfsAuthServlet(localContext, pathSpec + SERVLET_BASE, secretToken, tokenExpireSec, tokenEnsureTime),
                 "$pathSpec$SERVLET_POINTER/*" to PointerServlet(pointerManager, pathSpec + SERVLET_CONTENT),
                 "$pathSpec$SERVLET_CONTENT/*" to ContentServlet(contentManager),

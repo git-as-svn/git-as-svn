@@ -450,13 +450,13 @@ class SvnFilePropertyTest {
     }
 
     companion object {
-        val propsBinary = mapOf(SVNProperty.MIME_TYPE to SVNFileUtil.BINARY_MIME_TYPE)
-        val propsEolNative = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_NATIVE)
-        val propsEolLf = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_LF)
-        val propsEolCrLf = mapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_CRLF)
-        val propsExecutable = mapOf(SVNProperty.EXECUTABLE to "*")
-        val propsSymlink = mapOf(SVNProperty.SPECIAL to "*")
-        val propsAutoProps = mapOf(SVNProperty.INHERITABLE_AUTO_PROPS to "*.txt = svn:eol-style=LF\n")
-        val propsNeedsLock = mapOf(SVNProperty.NEEDS_LOCK to "*")
+        val propsBinary = hashMapOf(SVNProperty.MIME_TYPE to SVNFileUtil.BINARY_MIME_TYPE)
+        val propsEolNative = hashMapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_NATIVE)
+        val propsEolLf = hashMapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_LF)
+        val propsEolCrLf = hashMapOf(SVNProperty.EOL_STYLE to SVNProperty.EOL_STYLE_CRLF)
+        val propsExecutable = hashMapOf(SVNProperty.EXECUTABLE to "*")
+        val propsSymlink = hashMapOf(SVNProperty.SPECIAL to "*")
+        val propsAutoProps = hashMapOf(SVNProperty.INHERITABLE_AUTO_PROPS to "*.txt = svn:eol-style=LF\n")
+        val propsNeedsLock = hashMapOf(SVNProperty.NEEDS_LOCK to "*")
     }
 }

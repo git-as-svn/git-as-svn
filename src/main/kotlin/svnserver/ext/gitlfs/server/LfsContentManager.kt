@@ -66,7 +66,7 @@ class LfsContentManager internal constructor(private val context: LocalContext, 
     private fun createHeader(request: HttpServletRequest, user: User): Map<String, String> {
         val auth = request.getHeader(Constants.HEADER_AUTHORIZATION) ?: return emptyMap()
         return if (auth.startsWith(WebServer.AUTH_TOKEN)) {
-            mapOf(Constants.HEADER_AUTHORIZATION to auth)
+            hashMapOf(Constants.HEADER_AUTHORIZATION to auth)
         } else {
             LfsAuthHelper.createTokenHeader(context.shared, user, LfsAuthHelper.getExpire(tokenExpireSec))
         }

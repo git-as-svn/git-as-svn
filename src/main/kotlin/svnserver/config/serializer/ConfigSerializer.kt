@@ -60,7 +60,7 @@ class ConfigSerializer {
     }
 
     companion object {
-        private val configTypes = mapOf(
+        private val configTypes = hashMapOf(
             "!cacheUsers" to CacheUserDBConfig::class.java,
             "!combineUsers" to CombineUserDBConfig::class.java,
             "!ANONYMOUS" to LdapBindANONYMOUS::class.java,

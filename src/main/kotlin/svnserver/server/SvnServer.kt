@@ -279,7 +279,7 @@ class SvnServer(basePath: Path, val config: Config) : Thread("SvnServer") {
         const val svndiff2Capability: String = "accepts-svndiff2"
 
         // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
-        val commands = mapOf(
+        val commands = hashMapOf(
             "reparent" to ReparentCmd(),
             "get-latest-rev" to GetLatestRevCmd(),
             "get-dated-rev" to GetDatedRevCmd(),

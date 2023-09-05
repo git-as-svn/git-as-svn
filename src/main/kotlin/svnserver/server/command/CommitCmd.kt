@@ -458,7 +458,7 @@ class CommitCmd : BaseCmd<Params>() {
             paths = HashMap()
             files = HashMap()
             locks = getLocks(context, params.locks)
-            commands = mapOf(
+            commands = hashMapOf(
                 "add-dir" to LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addDir(sessionContext, args) },
                 "add-file" to LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addFile(sessionContext, args) },
                 "change-dir-prop" to LambdaCmd(ChangePropParams::class.java) { _: SessionContext, args: ChangePropParams -> changeDirProp(args) },
@@ -473,7 +473,7 @@ class CommitCmd : BaseCmd<Params>() {
                 "textdelta-end" to LambdaCmd(TokenParams::class.java) { _: SessionContext, args: TokenParams -> deltaEnd(args) },
                 "apply-textdelta" to LambdaCmd(ChecksumParams::class.java) { _: SessionContext, args: ChecksumParams -> deltaApply(args) },
             )
-            exitCommands = mapOf(
+            exitCommands = hashMapOf(
                 "close-edit" to LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> closeEdit(sessionContext) },
                 "abort-edit" to LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> abortEdit(sessionContext) },
             )

@@ -26,7 +26,7 @@ class ACLTest {
 
     @Test
     fun groupOfGroup() {
-        val groups = mapOf(
+        val groups = hashMapOf(
             "groupOfGroup" to arrayOf("@group"),
             "group" to arrayOf(Bob.username),
         )
@@ -37,7 +37,7 @@ class ACLTest {
 
     @Test
     fun groupOfGroupOfGroup() {
-        val groups = mapOf(
+        val groups = hashMapOf(
             "groupOfGroupOfGroup" to arrayOf("@groupOfGroup"),
             "groupOfGroup" to arrayOf("@group"),
             "group" to arrayOf(Bob.username),
@@ -49,7 +49,7 @@ class ACLTest {
 
     @Test(expectedExceptions = [IllegalStateException::class], expectedExceptionsMessageRegExp = "cyclic at groupA")
     fun groupOfGroupCycle() {
-        val groups = mapOf(
+        val groups = hashMapOf(
             "groupA" to arrayOf("@groupB"),
             "groupB" to arrayOf("@groupA"),
         )
@@ -85,7 +85,7 @@ class ACLTest {
 
     @Test
     fun branchDeny() {
-        val entries = mapOf(
+        val entries = hashMapOf(
             "master:/" to Collections.singletonMap<String, String?>(Bob.username, null),
             "/" to Collections.singletonMap(Bob.username, "rw"),
         )
@@ -167,7 +167,7 @@ class ACLTest {
 
     @Test
     fun deepDeny() {
-        val entries = mapOf(
+        val entries = hashMapOf(
             "/qwe" to Collections.singletonMap<String, String?>(Bob.username, null),
             "/" to Collections.singletonMap(Bob.username, "rw"),
         )
@@ -182,7 +182,7 @@ class ACLTest {
      */
     @Test
     fun floorEntry() {
-        val entries = mapOf(
+        val entries = hashMapOf(
             "/" to Collections.singletonMap(Bob.username, "rw"),
             "/a" to Collections.singletonMap<String, String?>(Bob.username, null),
         )

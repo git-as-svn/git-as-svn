@@ -176,7 +176,7 @@ fun AbstractAsciidoctorTask.configure() {
 
     val commitDateTime = getCommitDateTime()
     attributes(
-        mapOf(
+        hashMapOf(
             "docdate" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE),
             "doctime" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_TIME)
         )
@@ -201,7 +201,7 @@ tasks.processResources {
         include("**/VersionInfo.properties")
 
         expand(
-            mapOf(
+            hashMapOf(
                 "revision" to Grgit.open(mapOf("dir" to projectDir)).head().id,
                 "tag" to (System.getenv("GITHUB_REF")?.substringAfter("refs/tags/") ?: System.getenv("TRAVIS_TAG") ?: "")
             )
@@ -218,7 +218,7 @@ val debianControl by tasks.registering(Copy::class) {
         include("**/changelog")
 
         expand(
-            mapOf(
+            hashMapOf(
                 "version" to project.version,
                 "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(getCommitDateTime())
             )
