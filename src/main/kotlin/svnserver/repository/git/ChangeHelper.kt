@@ -58,14 +58,14 @@ internal object ChangeHelper {
                     }
                 }
             } else {
-                val fullPath: String = StringHelper.joinPath(compareEntry.path, oldEntry!!.fileName)
+                val fullPath: String = stringInterner(StringHelper.joinPath(compareEntry.path, oldEntry!!.fileName))
                 val oldChange: GitLogEntry? = changes.put(fullPath, pair)
                 if (oldChange != null) {
                     changes[fullPath] = GitLogEntry(oldEntry, oldChange.newEntry)
                 }
             }
             if (fullRemoved && (oldEntry != null) && oldEntry.isDirectory) {
-                val fullPath: String = StringHelper.joinPath(compareEntry.path, oldEntry.fileName)
+                val fullPath: String = stringInterner(StringHelper.joinPath(compareEntry.path, oldEntry.fileName))
                 if (newEntry == null || (!newEntry.isDirectory)) {
                     queue.add(TreeCompareEntry(fullPath, oldEntry, null))
                 }
