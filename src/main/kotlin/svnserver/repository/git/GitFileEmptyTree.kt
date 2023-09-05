@@ -24,7 +24,7 @@ internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: Stri
         return super<GitEntryImpl>.createChild(name, isDir, stringInterner)
     }
 
-    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
+    override fun getEntry(name: String): GitFile? {
         return null
     }
 

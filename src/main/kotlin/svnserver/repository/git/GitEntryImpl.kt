@@ -30,7 +30,7 @@ internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: St
     }
 
     @Throws(IOException::class)
-    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
+    override fun getEntry(name: String): GitFile? {
         return null
     }
 }

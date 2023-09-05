@@ -102,7 +102,6 @@ class CommitCmd : BaseCmd<Params>() {
         val entry: GitEntry, // Old source entry (source)
         val source: GitFile?,
         val head: Boolean,
-        val stringInterner: (String) -> String,
     ) {
         val props = if (source != null) HashMap(source.properties) else HashMap()
         val changes = ArrayList<VcsConsumer<GitCommitBuilder>>()
@@ -112,7 +111,7 @@ class CommitCmd : BaseCmd<Params>() {
             if (source == null) {
                 throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: $name"))
             }
-            return source.getEntry(name, stringInterner) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name + " in " + source.fullPath))
+            return source.getEntry(name) ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Can't find node: " + name + " in " + source.fullPath))
         }
 
     }
@@ -144,7 +143,7 @@ class CommitCmd : BaseCmd<Params>() {
                 log.debug("Add dir: {}", args.name)
                 source = null
             }
-            val updater = EntryUpdater(parent.entry, source, false, context.server.sharedContext.stringInterner)
+            val updater = EntryUpdater(parent.entry, source, false)
             paths[args.token] = updater
             parent.changes.add(VcsConsumer { treeBuilder: GitCommitBuilder ->
                 treeBuilder.addDir(StringHelper.baseName(args.name), source)
@@ -203,7 +202,7 @@ class CommitCmd : BaseCmd<Params>() {
             for (i in 1 until rootPath.size) {
                 val name: String = rootPath[i]
                 val entry: GitFile = lastUpdater.getEntry(name)
-                val updater = EntryUpdater(entry, entry, true, context.server.sharedContext.stringInterner)
+                val updater = EntryUpdater(entry, entry, true)
                 lastUpdater.changes.add(VcsConsumer { treeBuilder: GitCommitBuilder ->
                     treeBuilder.openDir(name)
                     updateDir(treeBuilder, updater)
@@ -230,7 +229,7 @@ class CommitCmd : BaseCmd<Params>() {
             log.debug("Modify dir: {} (rev: {})", args.name, rev)
             val sourceDir: GitFile = parent.getEntry(StringHelper.baseName(args.name))
             context.checkRead(sourceDir.fullPath)
-            val dir = EntryUpdater(sourceDir, sourceDir, parent.head, context.server.sharedContext.stringInterner)
+            val dir = EntryUpdater(sourceDir, sourceDir, parent.head)
             if ((rev >= 0) && (parent.head)) checkUpToDate(sourceDir, rev)
             paths[args.token] = dir
             parent.changes.add(VcsConsumer { treeBuilder: GitCommitBuilder ->
@@ -455,7 +454,7 @@ class CommitCmd : BaseCmd<Params>() {
 
         init {
             val entry: GitFile = context.branch.latestRevision.getFile("") ?: throw IllegalStateException("Repository root entry not found.")
-            rootEntry = EntryUpdater(entry, entry, true, context.server.sharedContext.stringInterner)
+            rootEntry = EntryUpdater(entry, entry, true)
             paths = HashMap()
             files = HashMap()
             locks = getLocks(context, params.locks)

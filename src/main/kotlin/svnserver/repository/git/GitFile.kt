@@ -30,7 +30,7 @@ interface GitFile : GitEntry {
     }
 
     @Throws(IOException::class)
-    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile?
+    override fun getEntry(name: String): GitFile?
 
     /**
      * Get native repository content hash for cheap content modification check.

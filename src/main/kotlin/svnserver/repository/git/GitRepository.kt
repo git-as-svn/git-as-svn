@@ -89,9 +89,11 @@ class GitRepository(
 
     @Throws(IOException::class)
     fun collectProperties(treeEntry: GitTreeEntry, entryProvider: Iterable<GitTreeEntry>): Array<GitProperty> {
-        if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) return GitProperty.emptyArray
-        var props = directoryPropertyCache[treeEntry.objectId.`object`]
-        if (props == null) {
+        if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) {
+            return GitProperty.emptyArray
+        }
+
+        return directoryPropertyCache.computeIfAbsent(treeEntry.objectId.`object`) {
             val propList = ArrayList<GitProperty>()
             try {
                 for (entry in entryProvider) {
@@ -102,10 +104,13 @@ class GitRepository(
                 }
             } catch (ignored: SvnForbiddenException) {
             }
-            props = propList.toTypedArray()
-            directoryPropertyCache[treeEntry.objectId.`object`] = if (props.isEmpty()) { GitProperty.emptyArray } else { props }
+            val props = propList.toTypedArray()
+            if (props.isEmpty()) {
+                GitProperty.emptyArray
+            } else {
+                props
+            }
         }
-        return props
     }
 
     @Throws(IOException::class)

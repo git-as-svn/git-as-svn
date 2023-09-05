@@ -77,7 +77,7 @@ class GitRevision internal constructor(
             if (pathItem.isEmpty()) {
                 continue
             }
-            result = result!!.getEntry(pathItem, branch.repository.context.shared.stringInterner)
+            result = result!!.getEntry(pathItem)
             if (result == null) {
                 return null
             }

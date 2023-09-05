@@ -22,5 +22,5 @@ interface GitEntry {
     fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry
 
     @Throws(IOException::class)
-    fun getEntry(name: String, stringInterner: (String) -> String): GitFile?
+    fun getEntry(name: String): GitFile?
 }

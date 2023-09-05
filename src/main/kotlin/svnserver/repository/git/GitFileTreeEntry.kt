@@ -107,7 +107,7 @@ internal class GitFileTreeEntry private constructor(
         }
 
     @Throws(IOException::class)
-    override fun getEntry(name: String, stringInterner: (String) -> String): GitFile? {
+    override fun getEntry(name: String): GitFile? {
         return entries[name]
     }
 
