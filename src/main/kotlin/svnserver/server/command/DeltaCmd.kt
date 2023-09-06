@@ -519,13 +519,6 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             val tokenId: String
             val header: HeaderEntry?
             var oldFile: GitFile?
-            try {
-                // TODO: This is extremely expensive
-                newFile.entries.map { it.value }
-            } catch (ignored: SvnForbiddenException) {
-                sendAbsent(context, newFile, parentTokenId)
-                return
-            }
             if (rootDir && wcPath.isEmpty()) {
                 tokenId = parentTokenId
                 oldFile = prevFile
