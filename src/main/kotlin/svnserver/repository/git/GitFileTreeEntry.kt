@@ -18,6 +18,13 @@ import svnserver.repository.git.prop.GitProperty
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
+import java.util.function.Supplier
+
+class LazySupplier<T>(private val lazy: Lazy<T>) : Supplier<T> {
+    override fun get(): T {
+        return lazy.value
+    }
+}
 
 /**
  * Git file.
@@ -30,12 +37,28 @@ internal class GitFileTreeEntry private constructor(
     parentPath: String,
     override val treeEntry: GitTreeEntry,
     override val revision: Int,
-    private val treeEntries: Map<String, GitTreeEntry>,
+    treeEntries: Map<String, GitTreeEntry>,
 ) : GitEntryImpl(parentProps, parentPath, branch.repository.collectProperties(treeEntry, treeEntries), treeEntry.fileName, treeEntry.fileMode, branch.repository.context.shared.stringInterner), GitFile {
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
-    override val entries: Map<String, Lazy<GitFile>> = treeEntries.mapValues { lazy(mode = LazyThreadSafetyMode.NONE) { create(branch, rawProperties, fullPath, it.value, revision) } }
+    override val entries: Map<String, Supplier<GitFile>> = treeEntries.mapValues { entry ->
+        when (branch.repository.gitTreeEntryCacheStrategy) {
+            GitTreeEntryCacheStrategy.Eager -> {
+                val result = create(branch, rawProperties, fullPath, entry.value, revision)
+                Supplier<GitFile> { result }
+            }
+
+            GitTreeEntryCacheStrategy.Lazy -> {
+                val result = lazy(mode = LazyThreadSafetyMode.NONE) { create(branch, rawProperties, fullPath, entry.value, revision) }
+                Supplier<GitFile> { result.value }
+            }
+
+            GitTreeEntryCacheStrategy.NoKeep -> {
+                Supplier { create(branch, rawProperties, fullPath, entry.value, revision) }
+            }
+        }
+    }
 
     override val contentHash: String
         get() {
@@ -100,7 +123,7 @@ internal class GitFileTreeEntry private constructor(
 
     @Throws(IOException::class)
     override fun getEntry(name: String): GitFile? {
-        return entries[name]?.value
+        return entries[name]?.get()
     }
 
     override fun hashCode(): Int {

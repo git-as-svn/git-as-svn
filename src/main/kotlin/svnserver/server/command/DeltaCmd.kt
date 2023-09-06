@@ -350,7 +350,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             val forced = HashSet(forcedPaths.getOrDefault(wcPath, emptySet()))
             val oldEntries = handleDeletedEntries(newFile, oldFile, wcPath, context, tokenId, forced)
 
-            for (newEntry in newFile.entries.values.map { it.value }) {
+            for (newEntry in newFile.entries.values.map { it.get() }) {
                 val entryPath: String = joinPath(wcPath, newEntry.fileName)
                 val oldEntry: GitFile? = getPrevFile(context, entryPath, oldEntries[newEntry.fileName])
                 val action: Depth.Action = if (newEntry.isDirectory) dirAction else fileAction
@@ -365,7 +365,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
             val result = if (oldFile != null) {
                 val map = PatriciaTrie<GitFile>()
-                for (oldEntry in oldFile.entries.values.map { it.value }) {
+                for (oldEntry in oldFile.entries.values.map { it.get() }) {
                     val entryPath: String = joinPath(wcPath, oldEntry.fileName)
                     if (newFile.entries.containsKey(oldEntry.fileName)) {
                         map[oldEntry.fileName] = oldEntry

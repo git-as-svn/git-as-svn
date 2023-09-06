@@ -18,6 +18,7 @@ import svnserver.repository.git.filter.GitFilter
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
+import java.util.function.Supplier
 
 /**
  * Git file.
@@ -41,7 +42,7 @@ interface GitFile : GitEntry {
     val size: Long
 
     @get:Throws(IOException::class)
-    val entries: Map<String, Lazy<GitFile>>
+    val entries: Map<String, Supplier<GitFile>>
 
     @Throws(IOException::class)
     fun openStream(): InputStream

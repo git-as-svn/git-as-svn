@@ -13,6 +13,7 @@ import svnserver.repository.VcsCopyFrom
 import svnserver.repository.git.filter.GitFilter
 import svnserver.repository.git.prop.GitProperty
 import java.io.InputStream
+import java.util.function.Supplier
 
 /**
  * Git file.
@@ -58,7 +59,7 @@ internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: Stri
             return FileMode.TREE
         }
 
-    override val entries: Map<String, Lazy<GitFile>>
+    override val entries: Map<String, Supplier<GitFile>>
         get() {
             return emptyMap()
         }

@@ -35,6 +35,7 @@ import svnserver.repository.RepositoryMapping
 import svnserver.repository.VcsAccess
 import svnserver.repository.git.EmptyDirsSupport
 import svnserver.repository.git.GitRepository
+import svnserver.repository.git.GitTreeEntryCacheStrategy
 import svnserver.repository.git.RepositoryFormat
 import svnserver.repository.git.push.GitPushEmbedded
 import svnserver.server.SvnServer
@@ -160,7 +161,8 @@ class SvnTestServer private constructor(
                 GitPushEmbedded(local, null, false), setOf(branch),
                 true,
                 emptyDirs,
-                RepositoryFormat.Latest
+                RepositoryFormat.Latest,
+                GitTreeEntryCacheStrategy.NoKeep,
             )
             return object : RepositoryMapping<GitRepository> {
                 override val mapping: NavigableMap<String, GitRepository>
@@ -244,6 +246,7 @@ class SvnTestServer private constructor(
                 config.shared.add(WebServerConfig(0))
                 config.shared.add(LocalLfsConfig(tempDirectory.resolve("lfs").toString(), false))
             }
+
             LfsMode.Memory -> {
                 config.shared.add(SharedConfig { context: SharedContext ->
                     context.add(LfsStorageFactory::class.java, object : LfsStorageFactory {
@@ -253,6 +256,7 @@ class SvnTestServer private constructor(
                     })
                 })
             }
+
             LfsMode.None -> Unit
         }
         if (mappingConfigCreator != null) {

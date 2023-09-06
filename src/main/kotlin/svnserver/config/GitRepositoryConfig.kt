@@ -38,6 +38,7 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
     private var renameDetection: Boolean = true
     private var emptyDirs: EmptyDirsSupport = EmptyDirsSupport.Disabled
     private var format = RepositoryFormat.Latest
+    private var gitTreeEntryCacheStrategy: GitTreeEntryCacheStrategy = GitTreeEntryCacheStrategy.NoKeep
 
     @JvmOverloads
     constructor(createMode: GitCreateMode = GitCreateMode.ERROR) : this(createMode, arrayOf(Constants.MASTER))
@@ -46,7 +47,7 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
         context.add(GitLocation::class.java, GitLocation(fullPath))
         val lfsStorage: LfsStorage? = LfsStorageFactory.tryCreateStorage(context)
         val git: Repository = createGit(context, fullPath)
-        return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection, emptyDirs, format)
+        return createRepository(context, lfsStorage, git, pusher.create(context), branches, renameDetection, emptyDirs, format, gitTreeEntryCacheStrategy)
     }
 
     private fun createGit(context: LocalContext, fullPath: Path): Repository {
@@ -70,7 +71,8 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
             branches: Set<String>,
             renameDetection: Boolean,
             emptyDirs: EmptyDirsSupport,
-            format: RepositoryFormat
+            format: RepositoryFormat,
+            gitTreeEntryCacheStrategy: GitTreeEntryCacheStrategy,
         ): GitRepository {
             val lockStorage: LockStorage = if (lfsStorage != null) {
                 context.add(LfsStorage::class.java, lfsStorage)
@@ -79,7 +81,7 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
                 LocalLockManager(LocalLockManager.getPersistentStorage(context))
             }
             val filters = GitFilters(context, lfsStorage)
-            return GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters, emptyDirs, format)
+            return GitRepository(context, git, pusher, branches, renameDetection, lockStorage, filters, emptyDirs, format, gitTreeEntryCacheStrategy)
         }
     }
 

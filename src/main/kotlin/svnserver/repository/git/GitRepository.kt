@@ -51,6 +51,7 @@ class GitRepository(
     filters: GitFilters,
     val emptyDirs: EmptyDirsSupport,
     val format: RepositoryFormat,
+    val gitTreeEntryCacheStrategy: GitTreeEntryCacheStrategy,
 ) : AutoCloseable, BranchProvider {
     val git: Repository
     val pusher: GitPusher

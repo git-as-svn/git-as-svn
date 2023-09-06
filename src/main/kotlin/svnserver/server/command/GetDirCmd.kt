@@ -61,7 +61,7 @@ class GetDirCmd : BaseCmd<GetDirCmd.Params>() {
             .listBegin()
             .separator()
         if (args.wantContents) {
-            for (item in fileInfo.entries.values.map { it.value }) {
+            for (item in fileInfo.entries.values.map { it.get() }) {
                 if (!context.canRead(item.fullPath)) continue
                 val lastChange: GitRevision = item.lastChange
                 writer
