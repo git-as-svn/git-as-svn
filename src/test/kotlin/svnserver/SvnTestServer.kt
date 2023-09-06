@@ -162,7 +162,7 @@ class SvnTestServer private constructor(
                 true,
                 emptyDirs,
                 RepositoryFormat.Latest,
-                GitTreeEntryCacheStrategy.NoKeep,
+                GitTreeEntryCacheStrategy.None,
             )
             return object : RepositoryMapping<GitRepository> {
                 override val mapping: NavigableMap<String, GitRepository>

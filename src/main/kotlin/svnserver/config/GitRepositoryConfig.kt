@@ -38,7 +38,7 @@ class GitRepositoryConfig private constructor(private val createMode: GitCreateM
     private var renameDetection: Boolean = true
     private var emptyDirs: EmptyDirsSupport = EmptyDirsSupport.Disabled
     private var format = RepositoryFormat.Latest
-    private var gitTreeEntryCacheStrategy: GitTreeEntryCacheStrategy = GitTreeEntryCacheStrategy.NoKeep
+    private var gitTreeEntryCacheStrategy: GitTreeEntryCacheStrategy = GitTreeEntryCacheStrategy.None
 
     @JvmOverloads
     constructor(createMode: GitCreateMode = GitCreateMode.ERROR) : this(createMode, arrayOf(Constants.MASTER))

@@ -48,7 +48,7 @@ internal class GitFileTreeEntry private constructor(
                 Supplier { result.value }
             }
 
-            GitTreeEntryCacheStrategy.NoKeep -> {
+            GitTreeEntryCacheStrategy.None -> {
                 Supplier { create(branch, rawProperties, fullPath, entry.value, revision) }
             }
         }
