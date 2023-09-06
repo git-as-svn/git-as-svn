@@ -85,7 +85,7 @@ internal object ChangeHelper {
             @Throws(IOException::class)
             private fun getIterable(tree: GitFile?): Iterable<GitFile> {
                 return try {
-                    tree?.entries?.values ?: emptyList()
+                    tree?.entries?.values?.map { it.value } ?: emptyList()
                 } catch (e: SvnForbiddenException) {
                     // todo: Need some additional logic for missing Git objects
                     emptyList()

@@ -351,7 +351,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             val forced = HashSet(forcedPaths.getOrDefault(wcPath, emptySet()))
             val oldEntries = handleDeletedEntries(newFile, oldFile, wcPath, context, tokenId, forced)
 
-            for (newEntry in newFile.entries.values) {
+            for (newEntry in newFile.entries.values.map { it.value }) {
                 val entryPath: String = joinPath(wcPath, newEntry.fileName)
                 val oldEntry: GitFile? = getPrevFile(context, entryPath, oldEntries[newEntry.fileName])
                 val action: Depth.Action = if (newEntry.isDirectory) dirAction else fileAction
@@ -366,7 +366,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
             val result = if (oldFile != null) {
                 val map = PatriciaTrie<GitFile>()
-                for (oldEntry in oldFile.entries.values) {
+                for (oldEntry in oldFile.entries.values.map { it.value }) {
                     val entryPath: String = joinPath(wcPath, oldEntry.fileName)
                     if (newFile.entries.containsKey(oldEntry.fileName)) {
                         map[oldEntry.fileName] = oldEntry
@@ -381,7 +381,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             }
             for (entryPath in forced) {
                 val entryName: String? = StringHelper.getChildPath(wcPath, entryPath)
-                if ((entryName != null) && newFile.entries.containsKey(entryName)) {
+                if ((entryName != null) && newFile.entries.contains(entryName)) {
                     continue
                 }
                 removeEntry(context, entryPath, newFile.lastChange.id, tokenId)
@@ -520,7 +520,8 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             val header: HeaderEntry?
             var oldFile: GitFile?
             try {
-                newFile.entries
+                // TODO: This is extremely expensive
+                newFile.entries.map { it.value }
             } catch (ignored: SvnForbiddenException) {
                 sendAbsent(context, newFile, parentTokenId)
                 return

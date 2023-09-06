@@ -230,10 +230,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         val reader: ObjectReader = repository.git.newObjectReader()
         val cacheRevision: CacheRevision = loadCacheRevision(reader, commit, revisions.size)
         val revisionId: Int = revisions.size
-        val copyFroms: MutableMap<String, VcsCopyFrom> = HashMap()
-        for (entry: Map.Entry<String, String> in cacheRevision.renames.entries) {
-            copyFroms[entry.key] = VcsCopyFrom(revisionId - 1, entry.value)
-        }
+        val copyFroms = cacheRevision.renames.mapValuesTo(PatriciaTrie()) { VcsCopyFrom(revisionId - 1, it.value) }
         val oldCommit: RevCommit? = if (revisions.isEmpty()) null else revisions[revisions.size - 1].gitNewCommit
         val svnCommit: RevCommit? = if (cacheRevision.gitCommitId != null) RevWalk(reader).parseCommit(cacheRevision.gitCommitId) else null
         try {
@@ -243,7 +240,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
                     val markNoFile: Boolean = entry.value.newFile == null
                     val prevLen: Int = list?.size ?: 0
                     val newLen: Int = prevLen + 1 + (if (markNoFile) 1 else 0)
-                    val result: IntArray = if (list == null) IntArray(newLen) else Arrays.copyOf(list, newLen)
+                    val result: IntArray = list?.copyOf(newLen) ?: IntArray(newLen)
                     result[prevLen] = revisionId
                     if (markNoFile) {
                         result[prevLen + 1] = MARK_NO_FILE
@@ -268,21 +265,17 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
 
     @Throws(IOException::class)
     private fun loadCacheRevision(reader: ObjectReader, newCommit: RevCommit, revisionId: Int): CacheRevision {
-        val cacheKey: ObjectId = newCommit.copy()
-        var result: CacheRevision? = revisionCache[cacheKey]
-        if (result == null) {
+        return revisionCache.computeIfAbsent(newCommit.copy()) {
             val baseCommit: RevCommit? = LayoutHelper.loadOriginalCommit(reader, newCommit)
             val oldTree: GitFile = getSubversionTree(reader, if (newCommit.parentCount > 0) newCommit.getParent(0) else null, revisionId - 1)
             val newTree: GitFile = getSubversionTree(reader, newCommit, revisionId)
             val fileChange = ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).mapValues { CacheChange(it.value) }
-            result = CacheRevision(
+            CacheRevision(
                 baseCommit,
                 collectRename(oldTree, newTree),
                 fileChange
             )
-            revisionCache[cacheKey] = result
         }
-        return result
     }
 
     @Throws(IOException::class)

@@ -41,7 +41,7 @@ interface GitFile : GitEntry {
     val size: Long
 
     @get:Throws(IOException::class)
-    val entries: Map<String, GitFile>
+    val entries: Map<String, Lazy<GitFile>>
 
     @Throws(IOException::class)
     fun openStream(): InputStream

@@ -57,7 +57,8 @@ internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: Stri
         get() {
             return FileMode.TREE
         }
-    override val entries: Map<String, GitFile>
+
+    override val entries: Map<String, Lazy<GitFile>>
         get() {
             return emptyMap()
         }
