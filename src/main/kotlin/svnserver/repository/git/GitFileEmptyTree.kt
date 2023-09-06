@@ -20,14 +20,6 @@ import java.io.InputStream
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: String, override val revision: Int) : GitEntryImpl(GitProperty.emptyArray, parentPath, GitProperty.emptyArray, "", FileMode.TREE, branch.repository.context.shared.stringInterner), GitFile {
-    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
-        return super<GitEntryImpl>.createChild(name, isDir, stringInterner)
-    }
-
-    override fun getEntry(name: String): GitFile? {
-        return null
-    }
-
     override val contentHash: String
         get() {
             throw IllegalStateException("Can't get content hash without object.")

@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.SVNNodeKind
 import org.tmatesoft.svn.core.SVNProperty
 import svnserver.repository.VcsCopyFrom
 import svnserver.repository.git.filter.GitFilter
-import svnserver.repository.git.prop.GitProperty
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -25,13 +24,6 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 interface GitFile : GitEntry {
-    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
-        return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE, stringInterner)
-    }
-
-    @Throws(IOException::class)
-    override fun getEntry(name: String): GitFile?
-
     /**
      * Get native repository content hash for cheap content modification check.
      */

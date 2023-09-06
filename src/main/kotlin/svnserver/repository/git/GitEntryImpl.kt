@@ -25,7 +25,7 @@ internal open class GitEntryImpl(parentProps: Array<GitProperty>, parentPath: St
         fullPath = stringInterner(StringHelper.joinPath(parentPath, fileName))
     }
 
-    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
+    final override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
         return GitEntryImpl(rawProperties, fullPath, GitProperty.emptyArray, name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE, stringInterner)
     }
 

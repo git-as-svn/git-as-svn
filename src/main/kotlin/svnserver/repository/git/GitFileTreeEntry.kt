@@ -47,10 +47,6 @@ internal class GitFileTreeEntry private constructor(
             return filter.getContentHash(treeEntry.objectId)
         }
 
-    override fun createChild(name: String, isDir: Boolean, stringInterner: (String) -> String): GitEntry {
-        return super<GitEntryImpl>.createChild(name, isDir, stringInterner)
-    }
-
     @get:Throws(IOException::class)
     override val md5: String
         get() {
