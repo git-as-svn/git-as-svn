@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevTree
@@ -36,7 +37,7 @@ internal class GitFileTreeEntry private constructor(
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
-    override val entries: Map<String, Supplier<GitFile>> = treeEntries.mapValues { entry ->
+    override val entries: Map<String, Supplier<GitFile>> = treeEntries.mapValuesTo(PatriciaTrie()) { entry ->
         when (branch.repository.gitTreeEntryCacheStrategy) {
             GitTreeEntryCacheStrategy.Eager -> {
                 val result = create(branch, rawProperties, fullPath, entry.value, revision)

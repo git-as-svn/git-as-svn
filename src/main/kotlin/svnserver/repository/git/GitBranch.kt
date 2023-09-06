@@ -269,7 +269,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
             val baseCommit: RevCommit? = LayoutHelper.loadOriginalCommit(reader, newCommit)
             val oldTree: GitFile = getSubversionTree(reader, if (newCommit.parentCount > 0) newCommit.getParent(0) else null, revisionId - 1)
             val newTree: GitFile = getSubversionTree(reader, newCommit, revisionId)
-            val fileChange = ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).mapValues { CacheChange(it.value) }
+            val fileChange = ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).mapValuesTo(PatriciaTrie()) { CacheChange(it.value) }
             CacheRevision(
                 baseCommit,
                 collectRename(oldTree, newTree),
