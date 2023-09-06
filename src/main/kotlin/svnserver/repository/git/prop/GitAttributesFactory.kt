@@ -34,14 +34,14 @@ class GitAttributesFactory : GitPropertyFactory {
         }
 
     @Throws(IOException::class)
-    override fun create(stream: InputStream, format: RepositoryFormat): Array<GitProperty> {
+    override fun create(stream: InputStream, format: RepositoryFormat, stringInterner: (String) -> String): Array<GitProperty> {
         val r = AttributesNode()
         r.parse(stream)
         val properties = ArrayList<GitProperty>()
         for (rule: AttributesRule in r.rules) {
             val wildcard: Wildcard
             try {
-                wildcard = Wildcard(rule.pattern)
+                wildcard = Wildcard(rule.pattern, stringInterner)
             } catch (e: InvalidPatternException) {
                 log.warn("Found invalid git pattern: {}", rule.pattern)
                 continue

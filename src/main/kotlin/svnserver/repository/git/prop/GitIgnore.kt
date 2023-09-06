@@ -114,7 +114,7 @@ internal data class GitIgnore(
          * @param stream Original file content.
          */
         @Throws(IOException::class)
-        fun parseConfig(stream: InputStream): GitIgnore {
+        fun parseConfig(stream: InputStream, stringInterner: (String) -> String = { s -> s }): GitIgnore {
             val reader = BufferedReader(InputStreamReader(stream, StandardCharsets.UTF_8))
 
             val localList = ArrayList<String>()
@@ -124,7 +124,7 @@ internal data class GitIgnore(
                 val line = trimLine(txt)
                 if (line.isEmpty()) continue
                 try {
-                    val wildcard = Wildcard(line)
+                    val wildcard = Wildcard(line, stringInterner)
                     if (wildcard.isSvnCompatible) {
                         processMatcher(localList, globalList, matchers, wildcard.matcher)
                     }

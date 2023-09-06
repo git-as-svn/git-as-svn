@@ -18,7 +18,7 @@ class GitTortoiseFactory : GitPropertyFactory {
         }
 
     @Throws(IOException::class)
-    override fun create(stream: InputStream, format: RepositoryFormat): Array<GitProperty> {
-        return arrayOf(GitTortoise.parseConfig(stream))
+    override fun create(stream: InputStream, format: RepositoryFormat, stringInterner: (String) -> String): Array<GitProperty> {
+        return arrayOf(GitTortoise.parseConfig(stream, stringInterner))
     }
 }

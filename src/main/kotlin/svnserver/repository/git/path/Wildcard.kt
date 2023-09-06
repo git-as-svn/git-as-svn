@@ -21,7 +21,7 @@ import svnserver.repository.git.path.matcher.path.SimplePathMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class Wildcard(pattern: String) {
+class Wildcard(pattern: String, stringInterner: (String) -> String = { s -> s }) {
     var matcher: PathMatcher
     var isSvnCompatible: Boolean = false
 
@@ -31,17 +31,17 @@ class Wildcard(pattern: String) {
         }
 
         @Throws(InvalidPatternException::class)
-        private fun createNameMatchers(pattern: String): Array<NameMatcher> {
+        private fun createNameMatchers(pattern: String, stringInterner: (String) -> String): Array<NameMatcher> {
             val tokens = WildcardHelper.splitPattern(pattern)
             WildcardHelper.normalizePattern(tokens)
             return tokens.subList(1, tokens.size).map {
-                WildcardHelper.nameMatcher(it)
+                WildcardHelper.nameMatcher(it, stringInterner)
             }.toTypedArray()
         }
     }
 
     init {
-        val nameMatchers: Array<NameMatcher> = createNameMatchers(pattern)
+        val nameMatchers: Array<NameMatcher> = createNameMatchers(pattern, stringInterner)
         if (nameMatchers.isNotEmpty()) {
             matcher = if (hasRecursive(nameMatchers)) {
                 if ((nameMatchers.size == 2) && nameMatchers[0].isRecursive && !nameMatchers[1].isRecursive) {

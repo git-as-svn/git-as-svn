@@ -125,7 +125,7 @@ class GitRepository(
     private fun cachedParseGitProperty(objectId: GitObject<ObjectId>, factory: GitPropertyFactory): Array<GitProperty> {
         var property: Array<GitProperty>? = filePropertyCache[objectId.`object`]
         if (property == null) {
-            objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream, format) } }
+            objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream, format, context.shared.stringInterner) } }
             if (property!!.isEmpty()) property = GitProperty.emptyArray
             filePropertyCache[objectId.`object`] = property!!
         }

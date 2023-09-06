@@ -35,7 +35,7 @@ internal data class GitTortoise(private val tortoiseProps: Map<String, String>) 
 
     companion object {
         @Throws(IOException::class)
-        fun parseConfig(stream: InputStream): GitTortoise {
+        fun parseConfig(stream: InputStream, stringInterner: (String) -> String = { s -> s }): GitTortoise {
             val ini = Ini(stream)
             val result = PatriciaTrie<String>()
             for (sectionEntry in ini.entries) {
@@ -44,7 +44,7 @@ internal data class GitTortoise(private val tortoiseProps: Map<String, String>) 
                     if (value.startsWith("\"") && value.endsWith("\"")) {
                         value = value.substring(1, value.length - 1)
                     }
-                    result[sectionEntry.key + ":" + configEntry.key] = value
+                    result[stringInterner(sectionEntry.key + ":" + configEntry.key)] = stringInterner(value)
                 }
             }
             return GitTortoise(if (result.isEmpty()) emptyMap() else result)

@@ -26,7 +26,7 @@ internal object WildcardHelper {
     private const val PATH_SEPARATOR: Char = '/'
 
     @Throws(InvalidPatternException::class)
-    fun nameMatcher(mask: String): NameMatcher {
+    fun nameMatcher(mask: String, stringInterner: (String) -> String = { s -> s }): NameMatcher {
         if ((mask == "**/")) {
             return RecursiveMatcher.INSTANCE
         }
@@ -37,14 +37,14 @@ internal object WildcardHelper {
             if (nameMask.indexOf('?') < 0) {
                 val asterisk: Int = nameMask.indexOf('*')
                 if (asterisk < 0) {
-                    return EqualsMatcher(nameMask, dirOnly)
+                    return EqualsMatcher(stringInterner(nameMask), dirOnly)
                 } else if (mask.indexOf('*', asterisk + 1) < 0) {
-                    return SimpleMatcher(nameMask.substring(0, asterisk), nameMask.substring(asterisk + 1), dirOnly)
+                    return SimpleMatcher(stringInterner(nameMask.substring(0, asterisk)), stringInterner(nameMask.substring(asterisk + 1)), dirOnly)
                 }
             }
-            return ComplexMatcher(nameMask, dirOnly, true)
+            return ComplexMatcher(nameMask, dirOnly, true, stringInterner)
         } else {
-            return ComplexMatcher(nameMask, dirOnly, false)
+            return ComplexMatcher(nameMask, dirOnly, false, stringInterner)
         }
     }
 
@@ -68,6 +68,7 @@ internal object WildcardHelper {
                     result.append(pattern, start, next)
                     start = next + 1
                 }
+
                 else -> return pattern
             }
         }

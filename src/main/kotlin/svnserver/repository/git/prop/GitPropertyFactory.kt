@@ -31,5 +31,5 @@ interface GitPropertyFactory {
      * @return Git property workers.
      */
     @Throws(IOException::class)
-    fun create(stream: InputStream, format: RepositoryFormat): Array<GitProperty>
+    fun create(stream: InputStream, format: RepositoryFormat, stringInterner: (String) -> String = { s -> s }): Array<GitProperty>
 }
