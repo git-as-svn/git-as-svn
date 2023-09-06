@@ -35,7 +35,7 @@ internal class GitFileTreeEntry private constructor(
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
-    override val entries: Map<String, Lazy<GitFile>> = treeEntries.mapValues { lazy { create(branch, rawProperties, fullPath, it.value, revision) } }
+    override val entries: Map<String, Lazy<GitFile>> = treeEntries.mapValues { lazy(mode = LazyThreadSafetyMode.NONE) { create(branch, rawProperties, fullPath, it.value, revision) } }
 
     override val contentHash: String
         get() {

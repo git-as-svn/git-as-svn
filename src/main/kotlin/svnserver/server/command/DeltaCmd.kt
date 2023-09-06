@@ -32,7 +32,6 @@ import java.io.EOFException
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
-import kotlin.collections.HashSet
 
 /**
  * Delta commands.
@@ -122,7 +121,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
     internal class ReportPipeline(private val context: SessionContext, private val params: DeltaParams) {
 
-        private val deltaGenerator by lazy { SVNDeltaGenerator() }
+        private val deltaGenerator by lazy(mode = LazyThreadSafetyMode.NONE) { SVNDeltaGenerator() }
         private val commands: Map<String, BaseCmd<*>>
         private var forcedPaths = PatriciaTrie<MutableSet<String>>()
         private var deletedPaths = PatriciaTrie<Unit>()
