@@ -24,7 +24,7 @@ internal class GitTreeUpdate(val name: String, val entries: SortedMap<String, Gi
     @Throws(IOException::class)
     fun buildTree(inserter: ObjectInserter): ObjectId {
         val treeBuilder = TreeFormatter()
-        for (entry in entries.values) {
+        for (entry in entries.values.sorted()) {
             treeBuilder.append(entry.fileName, entry.fileMode, entry.objectId.`object`)
         }
         ObjectChecker().checkTree(treeBuilder.toByteArray())
