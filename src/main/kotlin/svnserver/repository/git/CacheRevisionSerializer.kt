@@ -16,7 +16,6 @@ import svnserver.repository.git.cache.CacheChange
 import svnserver.repository.git.cache.CacheRevision
 import java.io.IOException
 import java.util.*
-import kotlin.collections.HashMap
 
 internal class CacheRevisionSerializer(val stringInterner: (String) -> String) : GroupSerializerObjectArray<CacheRevision>() {
     @Throws(IOException::class)

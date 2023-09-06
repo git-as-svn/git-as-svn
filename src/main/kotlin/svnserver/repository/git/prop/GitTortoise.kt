@@ -18,7 +18,7 @@ import java.io.InputStream
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal data class GitTortoise private constructor(private val tortoiseProps: Map<String, String>) : GitProperty {
+internal data class GitTortoise(private val tortoiseProps: Map<String, String>) : GitProperty {
 
     override fun apply(props: MutableMap<String, String>) {
         props.putAll(tortoiseProps)

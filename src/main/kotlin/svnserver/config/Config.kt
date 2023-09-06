@@ -7,12 +7,9 @@
  */
 package svnserver.config
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression
 import svnserver.parser.SvnServerParser
-import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashMap
 
 /**
  * Top configuration object.
