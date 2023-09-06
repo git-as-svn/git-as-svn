@@ -49,7 +49,7 @@ class ACLTest {
 
     @Test(expectedExceptions = [IllegalStateException::class], expectedExceptionsMessageRegExp = "cyclic at groupA")
     fun groupOfGroupCycle() {
-        val groups = hashMapOf(
+        val groups = mapOf(
             "groupA" to arrayOf("@groupB"),
             "groupB" to arrayOf("@groupA"),
         )
