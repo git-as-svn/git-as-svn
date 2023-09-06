@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.ObjectChecker
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.ObjectInserter
@@ -19,7 +20,9 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitTreeUpdate(val name: String, val entries: SortedMap<String, GitTreeEntry>) {
+internal class GitTreeUpdate(val name: String, entries: SortedMap<String, GitTreeEntry>) {
+    // We need to make a copy
+    val entries = PatriciaTrie(entries)
 
     @Throws(IOException::class)
     fun buildTree(inserter: ObjectInserter): ObjectId {
