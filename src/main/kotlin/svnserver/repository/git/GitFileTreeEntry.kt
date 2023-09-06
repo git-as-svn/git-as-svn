@@ -20,12 +20,6 @@ import java.io.InputStream
 import java.util.*
 import java.util.function.Supplier
 
-class LazySupplier<T>(private val lazy: Lazy<T>) : Supplier<T> {
-    override fun get(): T {
-        return lazy.value
-    }
-}
-
 /**
  * Git file.
  *
@@ -46,12 +40,12 @@ internal class GitFileTreeEntry private constructor(
         when (branch.repository.gitTreeEntryCacheStrategy) {
             GitTreeEntryCacheStrategy.Eager -> {
                 val result = create(branch, rawProperties, fullPath, entry.value, revision)
-                Supplier<GitFile> { result }
+                Supplier { result }
             }
 
             GitTreeEntryCacheStrategy.Lazy -> {
                 val result = lazy(mode = LazyThreadSafetyMode.NONE) { create(branch, rawProperties, fullPath, entry.value, revision) }
-                Supplier<GitFile> { result.value }
+                Supplier { result.value }
             }
 
             GitTreeEntryCacheStrategy.NoKeep -> {
