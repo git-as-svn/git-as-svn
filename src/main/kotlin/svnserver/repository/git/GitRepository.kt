@@ -8,6 +8,7 @@
 package svnserver.repository.git
 
 import com.sun.nio.sctp.InvalidStreamException
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
@@ -88,7 +89,7 @@ class GitRepository(
     }
 
     @Throws(IOException::class)
-    fun collectProperties(treeEntry: GitTreeEntry, entryProvider: Iterable<GitTreeEntry>): Array<GitProperty> {
+    fun collectProperties(treeEntry: GitTreeEntry, entryProvider: Map<String, GitTreeEntry>): Array<GitProperty> {
         if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) {
             return GitProperty.emptyArray
         }
@@ -97,7 +98,7 @@ class GitRepository(
             val propList = ArrayList<GitProperty>()
             try {
                 for (entry in entryProvider) {
-                    val parseProps = parseGitProperty(entry.fileName, entry.objectId)
+                    val parseProps = parseGitProperty(entry.key, entry.value.objectId)
                     if (parseProps.isNotEmpty()) {
                         propList.addAll(parseProps)
                     }
@@ -153,19 +154,18 @@ class GitRepository(
     }
 
     @Throws(IOException::class)
-    fun loadTree(tree: GitTreeEntry?): Iterable<GitTreeEntry> {
-        val treeId = getTreeObject(tree) ?: return emptyList()
+    fun loadTree(tree: GitTreeEntry?): SortedMap<String, GitTreeEntry> {
+        val treeId = getTreeObject(tree) ?: return PatriciaTrie()
         // Loading tree.
-        val result = ArrayList<GitTreeEntry>()
+        val result = PatriciaTrie<GitTreeEntry>()
         val repo = treeId.repo
         val treeParser = CanonicalTreeParser(emptyBytes, repo.newObjectReader(), treeId.`object`)
         while (!treeParser.eof()) {
-            result.add(
-                GitTreeEntry(
-                    treeParser.entryFileMode,
-                    GitObject(repo, treeParser.entryObjectId),
-                    context.shared.stringInterner(treeParser.entryPathString)
-                )
+            val fileName = context.shared.stringInterner(treeParser.entryPathString)
+            result[fileName] = GitTreeEntry(
+                treeParser.entryFileMode,
+                GitObject(repo, treeParser.entryObjectId),
+                fileName,
             )
             treeParser.next()
         }

@@ -19,24 +19,15 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitTreeUpdate(val name: String, entries: Iterable<GitTreeEntry>) {
-    val entries: MutableMap<String, GitTreeEntry>
+internal class GitTreeUpdate(val name: String, val entries: SortedMap<String, GitTreeEntry>) {
 
     @Throws(IOException::class)
     fun buildTree(inserter: ObjectInserter): ObjectId {
         val treeBuilder = TreeFormatter()
-        val sortedEntries = entries.values.toMutableList().sorted()
-        for (entry in sortedEntries) {
+        for (entry in entries.values) {
             treeBuilder.append(entry.fileName, entry.fileMode, entry.objectId.`object`)
         }
         ObjectChecker().checkTree(treeBuilder.toByteArray())
         return inserter.insert(treeBuilder)
-    }
-
-    init {
-        this.entries = HashMap()
-        for (entry: GitTreeEntry in entries) {
-            this.entries[entry.fileName] = entry
-        }
     }
 }

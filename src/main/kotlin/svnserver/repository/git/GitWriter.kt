@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevTree
@@ -181,9 +182,9 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         private val commitActions = ArrayList<VcsConsumer<CommitAction>>()
 
         @get:Throws(IOException::class)
-        private val originalTree: Iterable<GitTreeEntry>
+        private val originalTree: SortedMap<String, GitTreeEntry>
             get() {
-                val commit: RevCommit = revision.gitNewCommit ?: return emptyList()
+                val commit: RevCommit = revision.gitNewCommit ?: return PatriciaTrie()
                 return branch.repository.loadTree(GitTreeEntry(branch.repository.git, FileMode.TREE, commit.tree, ""))
             }
 

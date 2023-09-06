@@ -40,6 +40,9 @@ interface GitFile : GitEntry {
     @get:Throws(IOException::class)
     val size: Long
 
+    @get:Throws(IOException::class)
+    val entries: Map<String, GitFile>
+
     @Throws(IOException::class)
     fun openStream(): InputStream
 
@@ -101,9 +104,6 @@ interface GitFile : GitEntry {
             }
         }
     val fileMode: FileMode
-
-    @get:Throws(IOException::class)
-    val entries: Map<String, GitFile>
 
     companion object {
         fun putProperty(props: MutableMap<String, String>, name: String, value: String?) {
