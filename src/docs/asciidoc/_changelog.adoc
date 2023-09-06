@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 2.9.4
+
+* Fix memory regressions
+
 == 2.9.3
 
 * More memory optimizations
