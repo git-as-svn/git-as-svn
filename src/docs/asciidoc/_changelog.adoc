@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 2.9.5
+
+* Add configurable cache policy for in-memory git entries
+
 == 2.9.4
 
 * Fix memory regressions
