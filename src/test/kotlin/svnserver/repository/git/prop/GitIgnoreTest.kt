@@ -7,11 +7,11 @@
  */
 package svnserver.repository.git.prop
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.FileMode
 import org.testng.Assert
 import org.testng.annotations.Test
 import svnserver.TestHelper
-import java.util.*
 
 /**
  * Tests for GitAttributes.
@@ -69,7 +69,7 @@ data/**/*.sample
             }
             Assert.assertNotNull(prop)
         }
-        val props = HashMap<String, String>()
+        val props = PatriciaTrie<String>()
         prop!!.apply(props)
         Assert.assertEquals(props["svn:ignore"], local)
         Assert.assertEquals(props["svn:global-ignores"], global)

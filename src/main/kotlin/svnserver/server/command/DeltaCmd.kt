@@ -7,6 +7,7 @@
  */
 package svnserver.server.command
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.slf4j.Logger
 import org.tmatesoft.svn.core.*
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression
@@ -31,7 +32,6 @@ import java.io.EOFException
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
 /**
@@ -124,9 +124,9 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         private val deltaGenerator by lazy { SVNDeltaGenerator() }
         private val commands: Map<String, BaseCmd<*>>
-        private var forcedPaths = context.server.config.newStringMap<MutableSet<String>>()
-        private var deletedPaths = context.server.config.newStringMap<Unit>()
-        private val paths = context.server.config.newStringMap<SetPathParams>()
+        private var forcedPaths = PatriciaTrie<MutableSet<String>>()
+        private var deletedPaths = PatriciaTrie<Unit>()
+        private val paths = PatriciaTrie<SetPathParams>()
 
         private val pathStack = ArrayDeque<HeaderEntry>()
         private var lastTokenId = 0
@@ -365,7 +365,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
             val result = if (oldFile != null) {
-                val map = context.server.config.newStringMap<GitFile>(newFile.entries.size)
+                val map = PatriciaTrie<GitFile>()
                 for (oldEntry in oldFile.entries.values) {
                     val entryPath: String = joinPath(wcPath, oldEntry.fileName)
                     if (newFile.entries.containsKey(oldEntry.fileName)) {

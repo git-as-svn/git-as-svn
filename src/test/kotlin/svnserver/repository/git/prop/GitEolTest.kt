@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.prop
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.attributes.Attributes
 import org.eclipse.jgit.attributes.AttributesRule
 import org.eclipse.jgit.lib.FileMode
@@ -104,7 +105,7 @@ class GitEolTest {
 
         fun check() {
             val gitProperties = createForPath(attr, path)
-            val svnProperties = HashMap<String, String>()
+            val svnProperties = PatriciaTrie<String>()
             for (prop in gitProperties) {
                 prop.apply(svnProperties)
             }

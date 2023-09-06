@@ -7,6 +7,7 @@
  */
 package svnserver.config
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.tmatesoft.svn.core.SVNException
 import svnserver.StringHelper
 import svnserver.auth.ACL
@@ -29,7 +30,7 @@ import java.util.function.Consumer
  */
 class RepositoryListMappingConfig : RepositoryMappingConfig {
     private var repositories = TreeMap<String, Entry>()
-    private var groups = HashMap<String, Array<String>>()
+    private var groups = PatriciaTrie<Array<String>>()
 
     @Throws(IOException::class)
     override fun create(context: SharedContext, canUseParallelIndexing: Boolean): RepositoryMapping<GitRepository> {

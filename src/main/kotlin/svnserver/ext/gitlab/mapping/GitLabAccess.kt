@@ -7,6 +7,7 @@
  */
 package svnserver.ext.gitlab.mapping
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.gitlab.api.GitlabAPI
 import org.gitlab.api.models.GitlabAccessLevel
 import org.gitlab.api.models.GitlabProject
@@ -71,20 +72,20 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         val glProtocol = gitlabContext.config.glProtocol.name.lowercase()
         val userId: String? = if (user.externalId == null) null else GitLabUserDB.PREFIX_USER + user.externalId
 
-        val gitalyRepo = HashMap<String, Any>()
+        val gitalyRepo = PatriciaTrie<Any>()
         gitalyRepo["storageName"] = "default"
         gitalyRepo["glRepository"] = glRepository
         gitalyRepo["relativePath"] = relativeRepoPath.toString()
         gitalyRepo["glProjectPath"] = gitlabProject.pathWithNamespace
         val gitalyRepoString = JsonHelper.mapper.writeValueAsString(gitalyRepo)
 
-        val userDetails = HashMap<String, Any>()
+        val userDetails = PatriciaTrie<Any>()
         if (userId != null)
             userDetails["userid"] = userId
         userDetails["username"] = user.username
         userDetails["protocol"] = glProtocol
 
-        val hooksPayload = HashMap<String, Any>()
+        val hooksPayload = PatriciaTrie<Any>()
         hooksPayload["binary_directory"] = gitlabContext.config.gitalyBinDir
         hooksPayload["internal_socket"] = gitlabContext.config.gitalySocket
         hooksPayload["internal_socket_token"] = gitlabContext.config.gitalyToken

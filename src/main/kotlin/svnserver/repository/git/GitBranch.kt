@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.RenameDetector
 import org.eclipse.jgit.lib.*
@@ -46,7 +47,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     private val revisionByHash = HashMap<ObjectId, GitRevision>()
     private val revisionCache: HTreeMap<ObjectId, CacheRevision>
     private val lastUpdatesLock = ReentrantReadWriteLock()
-    private val lastUpdates = HashMap<String, IntArray>()
+    private val lastUpdates = PatriciaTrie<IntArray>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(SVNException::class)
@@ -237,7 +238,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         val svnCommit: RevCommit? = if (cacheRevision.gitCommitId != null) RevWalk(reader).parseCommit(cacheRevision.gitCommitId) else null
         try {
             lastUpdatesLock.writeLock().lock()
-            for (entry: Map.Entry<String, CacheChange> in cacheRevision.fileChange.entries) {
+            for (entry in cacheRevision.fileChange.entries) {
                 lastUpdates.compute(entry.key) { _, list ->
                     val markNoFile: Boolean = entry.value.newFile == null
                     val prevLen: Int = list?.size ?: 0
@@ -307,7 +308,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         tw.addTree(newTreeId.`object`)
         val rd = RenameDetector(repository.git)
         rd.addAll(DiffEntry.scan(tw))
-        val result = HashMap<String, String>()
+        val result = PatriciaTrie<String>()
         for (diff in rd.compute(tw.objectReader, null)) {
             if (diff.score >= rd.renameScore) {
                 result[StringHelper.normalize(diff.newPath)] = StringHelper.normalize(diff.oldPath)
@@ -374,7 +375,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
 
     @Throws(SVNException::class)
     fun createWriter(user: User): GitWriter {
-        if (user.email == null || user.email.isEmpty()) {
+        if (user.email.isNullOrEmpty()) {
             throw SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Users with undefined email can't create commits"))
         }
         return GitWriter(this, repository.pusher, pushLock, user)

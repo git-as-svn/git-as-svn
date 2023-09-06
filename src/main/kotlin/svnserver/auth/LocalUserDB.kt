@@ -7,8 +7,8 @@
  */
 package svnserver.auth
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import svnserver.UserType
-import java.util.*
 
 /**
  * Simple user db with clear-text passwords.
@@ -16,7 +16,7 @@ import java.util.*
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class LocalUserDB : UserDB {
-    private val users = HashMap<String, UserWithPassword>()
+    private val users = PatriciaTrie<UserWithPassword>()
 
     override val authenticators: Collection<Authenticator> = setOf(CramMD5Authenticator { key: String -> users[key] })
 

@@ -7,6 +7,7 @@
  */
 package svnserver.repository.git.prop
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.FileMode
 import org.ini4j.Ini
 import java.io.IOException
@@ -36,7 +37,7 @@ internal data class GitTortoise private constructor(private val tortoiseProps: M
         @Throws(IOException::class)
         fun parseConfig(stream: InputStream): GitTortoise {
             val ini = Ini(stream)
-            val result = HashMap<String, String>()
+            val result = PatriciaTrie<String>()
             for (sectionEntry in ini.entries) {
                 for (configEntry in sectionEntry.value.entries) {
                     var value: String = configEntry.value

@@ -7,10 +7,10 @@
  */
 package svnserver.repository.git.prop
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.testng.Assert
 import org.testng.annotations.Test
 import svnserver.TestHelper
-import java.util.*
 
 /**
  * Tests for GitAttributes.
@@ -27,7 +27,7 @@ class GitTortoiseTest {
 	logregex = (BUG-\\d+)
 	warnifnoissue = false"""
         ).use { `in` -> attr = GitTortoise.parseConfig(`in`) }
-        val props = HashMap<String, String>()
+        val props = PatriciaTrie<String>()
         attr.apply(props)
         Assert.assertEquals(props.size, 3)
         Assert.assertEquals(props["bugtraq:url"], "http://bugtracking/browse/%BUGID%")
@@ -49,7 +49,7 @@ class GitTortoiseTest {
 	projectlanguage = 1033
 	icon = src/Resources/Tortoise.ico"""
         ).use { `in` -> attr = GitTortoise.parseConfig(`in`) }
-        val props = HashMap<String, String>()
+        val props = PatriciaTrie<String>()
         attr.apply(props)
         Assert.assertEquals(props.size, 6)
         Assert.assertEquals(props["bugtraq:url"], "https://tortoisegit.org/issue/%BUGID%")

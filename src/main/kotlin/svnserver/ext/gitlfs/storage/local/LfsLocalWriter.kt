@@ -8,6 +8,7 @@
 package svnserver.ext.gitlfs.storage.local
 
 import org.apache.commons.codec.binary.Hex
+import org.apache.commons.collections4.trie.PatriciaTrie
 import ru.bozaro.gitlfs.common.JsonHelper
 import ru.bozaro.gitlfs.pointer.Constants
 import ru.bozaro.gitlfs.pointer.Pointer
@@ -98,7 +99,7 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
                 if (!Files.exists(metaPath) && metaTemp != null) {
                     try {
                         Files.newOutputStream(metaTemp).use { stream ->
-                            val map = HashMap<String, String>()
+                            val map = PatriciaTrie<String>()
                             map[Constants.SIZE] = size.toString()
                             map[Constants.OID] = oid
                             map[LfsLocalStorage.HASH_MD5] = Hex.encodeHexString(md5)
@@ -118,7 +119,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
                                 if (!Files.isRegularFile(metaPath)) {
                                     throw e
                                 }
-                                @Suppress("RedundantUnitExpression")
                                 Unit
                             }
                         }

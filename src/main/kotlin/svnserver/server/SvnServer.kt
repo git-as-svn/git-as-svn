@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServer(basePath: Path, val config: Config) : Thread("SvnServer") {
+class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer") {
     private val connections = ConcurrentHashMap<Long, Socket>()
     private val repositoryMapping: RepositoryMapping<*>
     private val serverSocket: ServerSocket

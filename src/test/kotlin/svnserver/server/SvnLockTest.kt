@@ -7,6 +7,7 @@
  */
 package svnserver.server
 
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.testng.Assert
 import org.testng.annotations.Listeners
 import org.testng.annotations.Test
@@ -44,7 +45,7 @@ class SvnLockTest {
     }
 
     private fun lock(repo: SVNRepository, path: String, revision: Long, force: Boolean, errorCode: SVNErrorCode?): SVNLock? {
-        val pathsToRevisions = HashMap<String, Long>()
+        val pathsToRevisions = PatriciaTrie<Long>()
         pathsToRevisions[path] = revision
         val locks = ArrayList<SVNLock>()
         return try {
@@ -154,7 +155,7 @@ class SvnLockTest {
 
     private fun unlock(repo: SVNRepository, lock: SVNLock, breakLock: Boolean, errorCode: SVNErrorCode?) {
         try {
-            val pathsToTokens = HashMap<String, String>()
+            val pathsToTokens = PatriciaTrie<String>()
             val root = repo.location.path.substring(repo.getRepositoryRoot(true).path.length)
             Assert.assertTrue(lock.path.startsWith(root))
             pathsToTokens[normalize(lock.path.substring(root.length))] = lock.id
@@ -242,7 +243,7 @@ class SvnLockTest {
             Assert.assertNotNull(oldLock)
             unlock(repo, oldLock!!, false, null)
             val newLock = lock(repo, "example.txt", latestRevision, false, null)
-            val locks = HashMap<String, String>()
+            val locks = PatriciaTrie<String>()
             locks[oldLock.path] = oldLock.id
             val editor = repo.getCommitEditor("Initial state", locks, false, null)
             try {
@@ -275,7 +276,7 @@ class SvnLockTest {
             val lock = lock(repo, "example.txt", latestRevision, false, null)
             Assert.assertNotNull(lock)
             run {
-                val locks = HashMap<String, String>()
+                val locks = PatriciaTrie<String>()
                 locks["/example.txt"] = lock!!.id
                 val editor = repo.getCommitEditor("Initial state", locks, false, null)
                 editor.openRoot(-1)
@@ -312,7 +313,7 @@ class SvnLockTest {
             val lock = lock(repo, "example.txt", latestRevision, false, null)
             Assert.assertNotNull(lock)
             run {
-                val locks = HashMap<String, String>()
+                val locks = PatriciaTrie<String>()
                 locks["/example.txt"] = lock!!.id
                 val editor = repo.getCommitEditor("Initial state", locks, true, null)
                 editor.openRoot(-1)
@@ -420,7 +421,7 @@ class SvnLockTest {
     }
 
     private fun compareLocks(actual: Array<SVNLock>, vararg expected: SVNLock) {
-        val actualLocks = HashMap<String, SVNLock>()
+        val actualLocks = PatriciaTrie<SVNLock>()
         for (lock in actual) {
             actualLocks[lock.path] = lock
         }
@@ -451,7 +452,7 @@ class SvnLockTest {
             // Lock
             val lock = lock(repo, "/example/example.txt", latestRevision, false, null)
             Assert.assertNotNull(lock)
-            val locks = HashMap<String, String>()
+            val locks = PatriciaTrie<String>()
             locks[lock!!.path] = lock.id
             val editor = repo.getCommitEditor("Initial state", locks, false, null)
             editor.openRoot(-1)

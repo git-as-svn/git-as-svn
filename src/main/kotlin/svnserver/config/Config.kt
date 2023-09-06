@@ -36,15 +36,6 @@ class Config {
     val maxConcurrentConnections = Integer.MAX_VALUE
     val readBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
     var writeBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
-    private var useTrieOptimization: Boolean = true
-
-    fun <E> newStringMap(initialCapacity: Int = 16): MutableMap<String, E> {
-        return if (useTrieOptimization) {
-            PatriciaTrie()
-        } else {
-            HashMap(initialCapacity)
-        }
-    }
 
     constructor()
     constructor(host: String, port: Int) {
