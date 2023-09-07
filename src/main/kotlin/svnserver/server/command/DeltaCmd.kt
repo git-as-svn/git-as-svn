@@ -7,7 +7,6 @@
  */
 package svnserver.server.command
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.slf4j.Logger
 import org.tmatesoft.svn.core.*
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression
@@ -78,13 +77,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
     class SetPathParams internal constructor(val path: String, val rev: Int, val startEmpty: Boolean, private val lockToken: Array<String>, depth: String) {
         val depth: Depth = Depth.parse(depth)
         override fun toString(): String {
-            return ("SetPathParams{" +
-                    "path='" + path + '\'' +
-                    ", rev=" + rev +
-                    ", startEmpty=" + startEmpty +
-                    ", lockToken=" + lockToken.contentToString() +
-                    ", depth=" + depth +
-                    '}')
+            return ("SetPathParams{" + "path='" + path + '\'' + ", rev=" + rev + ", startEmpty=" + startEmpty + ", lockToken=" + lockToken.contentToString() + ", depth=" + depth + '}')
         }
 
     }
@@ -97,12 +90,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class)
         fun write(writer: SvnServerWriter) {
-            writer.listBegin()
-                .number(errorCode.toLong())
-                .string(errorMessage)
-                .string(errorFile)
-                .number(errorLine.toLong())
-                .listEnd()
+            writer.listBegin().number(errorCode.toLong()).string(errorMessage).string(errorFile).number(errorLine.toLong()).listEnd()
         }
 
         companion object {
@@ -123,9 +111,9 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         private val deltaGenerator by lazy(mode = LazyThreadSafetyMode.NONE) { SVNDeltaGenerator() }
         private val commands: Map<String, BaseCmd<*>>
-        private var forcedPaths = PatriciaTrie<MutableSet<String>>()
-        private var deletedPaths = PatriciaTrie<Unit>()
-        private val paths = PatriciaTrie<SetPathParams>()
+        private var forcedPaths = HashMap<String, MutableSet<String>>()
+        private var deletedPaths = HashSet<String>()
+        private val paths = HashMap<String, SetPathParams>()
 
         private val pathStack = ArrayDeque<HeaderEntry>()
         private var lastTokenId = 0
@@ -141,12 +129,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
         @Throws(IOException::class, SVNException::class)
         private fun abortReport(context: SessionContext) {
             val writer: SvnServerWriter = getWriter(context)
-            writer
-                .listBegin()
-                .word("success")
-                .listBegin()
-                .listEnd()
-                .listEnd()
+            writer.listBegin().word("success").listBegin().listEnd().listEnd()
         }
 
         private fun finishReport(context: SessionContext) {
@@ -207,18 +190,14 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             context.push { reportCommand() }
             val wcPath: String = wcPath(args.path)
             forcePath(wcPath)
-            deletedPaths[wcPath] = Unit
+            deletedPaths.add(wcPath)
         }
 
         @Throws(IOException::class, SVNException::class)
         private fun complete(context: SessionContext) {
             val writer: SvnServerWriter = getWriter(context)
             sendDelta(context)
-            writer
-                .listBegin()
-                .word("close-edit")
-                .listBegin().listEnd()
-                .listEnd()
+            writer.listBegin().word("close-edit").listBegin().listEnd().listEnd()
             val parser: SvnServerParser = context.parser
             parser.readToken(ListBeginToken::class.java)
             when (val clientStatus: String = parser.readText()) {
@@ -235,32 +214,18 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                         failures.add(failure)
                     }
                     parser.readToken(ListEndToken::class.java)
-                    writer
-                        .listBegin()
-                        .word("abort-edit")
-                        .listBegin().listEnd()
-                        .listEnd()
-                    writer
-                        .listBegin()
-                        .word("failure")
-                        .listBegin()
+                    writer.listBegin().word("abort-edit").listBegin().listEnd().listEnd()
+                    writer.listBegin().word("failure").listBegin()
                     for (failure: FailureInfo in failures) {
                         failure.write(writer)
                     }
-                    writer
-                        .listEnd()
-                        .listEnd()
-                    writer
-                        .listBegin()
+                    writer.listEnd().listEnd()
+                    writer.listBegin()
                 }
 
                 "success" -> {
                     parser.skipItems()
-                    writer
-                        .listBegin()
-                        .word("success")
-                        .listBegin().listEnd()
-                        .listEnd()
+                    writer.listBegin().word("success").listBegin().listEnd().listEnd()
                 }
 
                 else -> {
@@ -276,33 +241,16 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             val targetRev: Int = params.getRev(context)
             val rootParams: SetPathParams = paths[wcPath("")] ?: throw SVNException(SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA))
             val writer: SvnServerWriter = getWriter(context)
-            writer
-                .listBegin()
-                .word("target-rev")
-                .listBegin().number(targetRev.toLong()).listEnd()
-                .listEnd()
+            writer.listBegin().word("target-rev").listBegin().number(targetRev.toLong()).listEnd().listEnd()
             val tokenId: String = createTokenId()
             val rootRev: Int = rootParams.rev
-            writer
-                .listBegin()
-                .word("open-root")
-                .listBegin()
-                .listBegin()
-                .number(rootRev.toLong())
-                .listEnd()
-                .string(tokenId)
-                .listEnd()
-                .listEnd()
+            writer.listBegin().word("open-root").listBegin().listBegin().number(rootRev.toLong()).listEnd().string(tokenId).listEnd().listEnd()
             val fullPath: String = context.getRepositoryPath(path)
             val targetPath: SVNURL? = params.targetPath
             val newFile: GitFile? = if (targetPath == null) context.getFile(targetRev, fullPath) else context.getFile(targetRev, targetPath)
             val oldFile: GitFile? = getPrevFile(context, path, context.getFile(rootRev, fullPath))
             updateEntry(context, path, oldFile, newFile, tokenId, path.isEmpty(), rootParams.depth, params.depth)
-            writer
-                .listBegin()
-                .word("close-dir")
-                .listBegin().string(tokenId).listEnd()
-                .listEnd()
+            writer.listBegin().word("close-dir").listBegin().string(tokenId).listEnd().listEnd()
         }
 
         private fun createTokenId(): String {
@@ -311,14 +259,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class, SVNException::class)
         private fun updateEntry(
-            context: SessionContext,
-            wcPath: String,
-            oldFile: GitFile?,
-            newFile: GitFile?,
-            parentTokenId: String,
-            rootDir: Boolean,
-            wcDepth: Depth,
-            requestedDepth: Depth
+            context: SessionContext, wcPath: String, oldFile: GitFile?, newFile: GitFile?, parentTokenId: String, rootDir: Boolean, wcDepth: Depth, requestedDepth: Depth
         ) {
             if (oldFile != null) if (newFile == null || oldFile.kind != newFile.kind) removeEntry(context, wcPath, oldFile.lastChange.id, parentTokenId)
             if (newFile == null) return
@@ -337,13 +278,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class, SVNException::class)
         private fun updateDirEntries(
-            context: SessionContext,
-            wcPath: String,
-            oldFile: GitFile?,
-            newFile: GitFile,
-            tokenId: String,
-            wcDepth: Depth,
-            requestedDepth: Depth
+            context: SessionContext, wcPath: String, oldFile: GitFile?, newFile: GitFile, tokenId: String, wcDepth: Depth, requestedDepth: Depth
         ) {
             val dirAction = wcDepth.determineAction(requestedDepth, true)
             val fileAction = wcDepth.determineAction(requestedDepth, false)
@@ -364,7 +299,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
             val result = if (oldFile != null) {
-                val map = PatriciaTrie<GitFile>()
+                val map = HashMap<String, GitFile>()
                 for (oldEntry in oldFile.entries.values.map { it.get() }) {
                     val entryPath: String = joinPath(wcPath, oldEntry.fileName)
                     if (newFile.entries.containsKey(oldEntry.fileName)) {
@@ -402,29 +337,12 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             val tokenId: String = createTokenId()
             val md5: String = newFile.md5
             sendEntryHeader(context, wcPath, prevFile, newFile, "file", parentTokenId, tokenId) { writer: SvnServerWriter ->
-                writer
-                    .listBegin()
-                    .word("close-file")
-                    .listBegin()
-                    .string(tokenId)
-                    .listBegin()
-                    .string(md5)
-                    .listEnd()
-                    .listEnd()
-                    .listEnd()
+                writer.listBegin().word("close-file").listBegin().string(tokenId).listBegin().string(md5).listEnd().listEnd().listEnd()
             }.use { header ->
                 val oldFile: GitFile? = header.file
                 if (oldFile == null || newFile.contentHash != oldFile.contentHash) {
                     val writer: SvnServerWriter = getWriter(context)
-                    writer
-                        .listBegin()
-                        .word("apply-textdelta")
-                        .listBegin()
-                        .string(tokenId)
-                        .listBegin()
-                        .listEnd()
-                        .listEnd()
-                        .listEnd()
+                    writer.listBegin().word("apply-textdelta").listBegin().string(tokenId).listBegin().listEnd().listEnd().listEnd()
                     if (params.textDeltas) {
                         (oldFile?.openStream() ?: SVNFileUtil.DUMMY_IN).use { source ->
                             newFile.openStream().use { target ->
@@ -439,14 +357,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                                             ByteArrayOutputStream().use { stream ->
                                                 diffWindow.writeTo(stream, writeHeader, compression)
                                                 writeHeader = false
-                                                writer
-                                                    .listBegin()
-                                                    .word("textdelta-chunk")
-                                                    .listBegin()
-                                                    .string(tokenId)
-                                                    .binary(stream.toByteArray())
-                                                    .listEnd()
-                                                    .listEnd()
+                                                writer.listBegin().word("textdelta-chunk").listBegin().string(tokenId).binary(stream.toByteArray()).listEnd().listEnd()
                                             }
                                             return null
                                         } catch (e: IOException) {
@@ -462,13 +373,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                             }
                         }
                     }
-                    writer
-                        .listBegin()
-                        .word("textdelta-end")
-                        .listBegin()
-                        .string(tokenId)
-                        .listEnd()
-                        .listEnd()
+                    writer.listBegin().word("textdelta-end").listBegin().string(tokenId).listEnd().listEnd()
                 }
                 updateProps(context, "file", tokenId, oldFile, newFile)
             }
@@ -494,26 +399,12 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class, SVNException::class)
         private fun sendAbsent(context: SessionContext, newFile: GitFile, parentTokenId: String) {
-            getWriter(context)
-                .listBegin()
-                .word(if (newFile.isDirectory) "absent-dir" else "absent-file")
-                .listBegin()
-                .string(newFile.fileName)
-                .string(parentTokenId)
-                .listEnd()
-                .listEnd()
+            getWriter(context).listBegin().word(if (newFile.isDirectory) "absent-dir" else "absent-file").listBegin().string(newFile.fileName).string(parentTokenId).listEnd().listEnd()
         }
 
         @Throws(IOException::class, SVNException::class)
         private fun updateDir(
-            context: SessionContext,
-            wcPath: String,
-            prevFile: GitFile?,
-            newFile: GitFile,
-            parentTokenId: String,
-            rootDir: Boolean,
-            wcDepth: Depth,
-            requestedDepth: Depth
+            context: SessionContext, wcPath: String, prevFile: GitFile?, newFile: GitFile, parentTokenId: String, rootDir: Boolean, wcDepth: Depth, requestedDepth: Depth
         ) {
             val tokenId: String
             val header: HeaderEntry?
@@ -525,11 +416,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             } else {
                 tokenId = createTokenId()
                 header = sendEntryHeader(context, wcPath, prevFile, newFile, "dir", parentTokenId, tokenId) { writer: SvnServerWriter ->
-                    writer
-                        .listBegin()
-                        .word("close-dir")
-                        .listBegin().string(tokenId).listEnd()
-                        .listEnd()
+                    writer.listBegin().word("close-dir").listBegin().string(tokenId).listEnd().listEnd()
                 }
                 oldFile = header.file
             }
@@ -549,36 +436,16 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             if (deletedPaths.contains(wcPath)) {
                 return
             }
-            getWriter(context)
-                .listBegin()
-                .word("delete-entry")
-                .listBegin()
-                .string(wcPath)
-                .listBegin()
-                .number(rev.toLong())
-                .listEnd()
-                .string(parentTokenId)
-                .listEnd()
-                .listEnd()
+            getWriter(context).listBegin().word("delete-entry").listBegin().string(wcPath).listBegin().number(rev.toLong()).listEnd().string(parentTokenId).listEnd().listEnd()
         }
 
         @Throws(IOException::class)
         private fun sendOpenEntry(writer: SvnServerWriter, command: String, fileName: String, parentTokenId: String, tokenId: String, revision: Int?) {
-            writer
-                .listBegin()
-                .word(command)
-                .listBegin()
-                .string(fileName)
-                .string(parentTokenId)
-                .string(tokenId)
-                .listBegin()
+            writer.listBegin().word(command).listBegin().string(fileName).string(parentTokenId).string(tokenId).listBegin()
             if (revision != null) {
                 writer.number(revision.toLong())
             }
-            writer
-                .listEnd()
-                .listEnd()
-                .listEnd()
+            writer.listEnd().listEnd().listEnd()
         }
 
         @Throws(IOException::class, SVNException::class)
@@ -618,35 +485,17 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class)
         private fun sendNewEntry(writer: SvnServerWriter, command: String, fileName: String, parentTokenId: String, tokenId: String, copyFrom: VcsCopyFrom?) {
-            writer
-                .listBegin()
-                .word(command)
-                .listBegin()
-                .string(fileName)
-                .string(parentTokenId)
-                .string(tokenId)
-                .listBegin()
+            writer.listBegin().word(command).listBegin().string(fileName).string(parentTokenId).string(tokenId).listBegin()
             if (copyFrom != null) {
                 writer.string(copyFrom.path)
                 writer.number(copyFrom.revision.toLong())
             }
-            writer
-                .listEnd()
-                .listEnd()
-                .listEnd()
+            writer.listEnd().listEnd().listEnd()
         }
 
         @Throws(IOException::class)
         private fun changeProp(writer: SvnServerWriter, type: String, tokenId: String, key: String, value: String?) {
-            writer
-                .listBegin()
-                .word("change-$type-prop")
-                .listBegin()
-                .string(tokenId)
-                .string(key)
-                .stringNullable(value)
-                .listEnd()
-                .listEnd()
+            writer.listBegin().word("change-$type-prop").listBegin().string(tokenId).string(key).stringNullable(value).listEnd().listEnd()
         }
 
         private fun interface HeaderWriter {

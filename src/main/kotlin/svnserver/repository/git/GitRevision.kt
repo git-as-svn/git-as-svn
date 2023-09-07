@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
@@ -25,17 +24,11 @@ import java.util.concurrent.TimeUnit
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class GitRevision internal constructor(
-    private val branch: GitBranch,
-    val cacheCommit: ObjectId,
-    val id: Int,
-    private val renames: Map<String, VcsCopyFrom>,
-    private val gitOldCommit: RevCommit?,
-    val gitNewCommit: RevCommit?,
-    commitTimeSec: Int
+    private val branch: GitBranch, val cacheCommit: ObjectId, val id: Int, private val renames: Map<String, VcsCopyFrom>, private val gitOldCommit: RevCommit?, val gitNewCommit: RevCommit?, commitTimeSec: Int
 ) {
     val date: Long = TimeUnit.SECONDS.toMillis(commitTimeSec.toLong())
     fun getProperties(includeInternalProps: Boolean): Map<String, String> {
-        val props = PatriciaTrie<String>()
+        val props = HashMap<String, String>()
         if (includeInternalProps) {
             putProperty(props, SVNRevisionProperty.AUTHOR, author)
             putProperty(props, SVNRevisionProperty.LOG, log)

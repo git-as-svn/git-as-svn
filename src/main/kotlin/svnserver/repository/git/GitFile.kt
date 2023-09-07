@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
@@ -19,6 +18,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import java.util.function.Supplier
+import kotlin.collections.HashMap
 
 /**
  * Git file.
@@ -56,14 +56,14 @@ interface GitFile : GitEntry {
     @get:Throws(IOException::class)
     val allProperties: Map<String, String>
         get() {
-            val props = PatriciaTrie<String>()
+            val props = HashMap<String, String>(revProperties.size + properties.size)
             props.putAll(revProperties)
             props.putAll(properties)
             return props
         }
     val revProperties: Map<String, String>
         get() {
-            val props = PatriciaTrie<String>()
+            val props = HashMap<String, String>()
             val last = lastChange
             props[SVNProperty.UUID] = branch.uuid
             props[SVNProperty.COMMITTED_REVISION] = last.id.toString()
@@ -86,7 +86,7 @@ interface GitFile : GitEntry {
     val branch: GitBranch
     val upstreamProperties: Map<String, String>
         get() {
-            val result = PatriciaTrie<String>()
+            val result = HashMap<String, String>()
             rawProperties.forEach { it.apply(result) }
             return result
         }

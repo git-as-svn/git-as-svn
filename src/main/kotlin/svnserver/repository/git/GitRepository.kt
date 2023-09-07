@@ -8,7 +8,6 @@
 package svnserver.repository.git
 
 import com.sun.nio.sctp.InvalidStreamException
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
@@ -35,6 +34,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.HashMap
 
 /**
  * Implementation for Git repository.
@@ -155,10 +155,10 @@ class GitRepository(
     }
 
     @Throws(IOException::class)
-    fun loadTree(tree: GitTreeEntry?): SortedMap<String, GitTreeEntry> {
-        val treeId = getTreeObject(tree) ?: return PatriciaTrie()
+    fun loadTree(tree: GitTreeEntry?): Map<String, GitTreeEntry> {
+        val result = HashMap<String, GitTreeEntry>()
+        val treeId = getTreeObject(tree) ?: return result
         // Loading tree.
-        val result = PatriciaTrie<GitTreeEntry>()
         val repo = treeId.repo
         val treeParser = CanonicalTreeParser(emptyBytes, repo.newObjectReader(), treeId.`object`)
         while (!treeParser.eof()) {

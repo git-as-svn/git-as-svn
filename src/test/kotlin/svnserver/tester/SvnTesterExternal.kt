@@ -7,7 +7,6 @@
  */
 package svnserver.tester
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.tmatesoft.svn.core.SVNURL
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil
@@ -37,7 +36,7 @@ class SvnTesterExternal(private val myUrl: SVNURL, private val authManager: ISVN
             val locks = repo.getLocks(suffix)
             if (locks.isNotEmpty()) {
                 val root = repo.getRepositoryRoot(true)
-                val locksMap = PatriciaTrie<String>()
+                val locksMap = HashMap<String, String>()
                 for (lock in locks) {
                     val relativePath = SVNURLUtil.getRelativeURL(myUrl, root.appendPath(lock.path, false), false)
                     locksMap[relativePath] = lock.id

@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.ObjectId
 import org.mapdb.DataInput2
 import org.mapdb.DataOutput2
@@ -44,12 +43,12 @@ internal class CacheRevisionSerializer(val stringInterner: (String) -> String) :
     override fun deserialize(input: DataInput2, available: Int): CacheRevision {
         val objectId: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
         val renamesCount: Int = input.readInt()
-        val renames = PatriciaTrie<String>()
+        val renames = HashMap<String, String>(renamesCount)
         for (i in 0 until renamesCount) {
             renames[stringInterner(STRING.deserialize(input, available))] = stringInterner(STRING.deserialize(input, available))
         }
         val fileChangeCount: Int = input.readInt()
-        val fileChange = PatriciaTrie<CacheChange>()
+        val fileChange = HashMap<String, CacheChange>(fileChangeCount)
         for (i in 0 until fileChangeCount) {
             val name: String = stringInterner(STRING.deserialize(input, available))
             val oldFile: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null

@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevTree
@@ -37,7 +36,7 @@ internal class GitFileTreeEntry private constructor(
 
     override val filter: GitFilter = branch.repository.getFilter(treeEntry.fileMode, rawProperties)
 
-    override val entries: Map<String, Supplier<GitFile>> = treeEntries.mapValuesTo(PatriciaTrie()) { entry ->
+    override val entries: Map<String, Supplier<GitFile>> = treeEntries.mapValuesTo(HashMap()) { entry ->
         when (branch.repository.gitTreeEntryCacheStrategy) {
             GitTreeEntryCacheStrategy.Eager -> {
                 val result = create(branch, rawProperties, fullPath, entry.value, revision)
@@ -122,23 +121,18 @@ internal class GitFileTreeEntry private constructor(
     }
 
     override fun hashCode(): Int {
-        return (treeEntry.hashCode()
-                + rawProperties.contentHashCode() * 31)
+        return (treeEntry.hashCode() + rawProperties.contentHashCode() * 31)
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
         val that: GitFileTreeEntry = other as GitFileTreeEntry
-        return (Objects.equals(treeEntry, that.treeEntry)
-                && rawProperties.contentEquals(that.rawProperties))
+        return (Objects.equals(treeEntry, that.treeEntry) && rawProperties.contentEquals(that.rawProperties))
     }
 
     override fun toString(): String {
-        return ("GitFileInfo{" +
-                "fullPath='" + fullPath + '\'' +
-                ", objectId=" + treeEntry +
-                '}')
+        return "GitFileInfo{fullPath='$fullPath', objectId=$treeEntry}"
     }
 
     companion object {

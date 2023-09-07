@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.RenameDetector
 import org.eclipse.jgit.lib.*
@@ -31,7 +30,6 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.HashMap
 
 class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     val uuid: String
@@ -47,7 +45,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     private val revisionByHash = HashMap<ObjectId, GitRevision>()
     private val revisionCache: HTreeMap<ObjectId, CacheRevision>
     private val lastUpdatesLock = ReentrantReadWriteLock()
-    private val lastUpdates = PatriciaTrie<IntArray>()
+    private val lastUpdates = HashMap<String, IntArray>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(SVNException::class)
@@ -230,7 +228,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         val reader: ObjectReader = repository.git.newObjectReader()
         val cacheRevision: CacheRevision = loadCacheRevision(reader, commit, revisions.size)
         val revisionId: Int = revisions.size
-        val copyFroms = cacheRevision.renames.mapValuesTo(PatriciaTrie()) { VcsCopyFrom(revisionId - 1, it.value) }
+        val copyFroms = cacheRevision.renames.mapValuesTo(HashMap()) { VcsCopyFrom(revisionId - 1, it.value) }
         val oldCommit: RevCommit? = if (revisions.isEmpty()) null else revisions[revisions.size - 1].gitNewCommit
         val svnCommit: RevCommit? = if (cacheRevision.gitCommitId != null) RevWalk(reader).parseCommit(cacheRevision.gitCommitId) else null
         try {
@@ -269,11 +267,9 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
             val baseCommit: RevCommit? = LayoutHelper.loadOriginalCommit(reader, newCommit)
             val oldTree: GitFile = getSubversionTree(reader, if (newCommit.parentCount > 0) newCommit.getParent(0) else null, revisionId - 1)
             val newTree: GitFile = getSubversionTree(reader, newCommit, revisionId)
-            val fileChange = ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).mapValuesTo(PatriciaTrie()) { CacheChange(it.value) }
+            val fileChange = ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).mapValuesTo(HashMap()) { CacheChange(it.value) }
             CacheRevision(
-                baseCommit,
-                collectRename(oldTree, newTree),
-                fileChange
+                baseCommit, collectRename(oldTree, newTree), fileChange
             )
         }
     }
@@ -301,7 +297,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
         tw.addTree(newTreeId.`object`)
         val rd = RenameDetector(repository.git)
         rd.addAll(DiffEntry.scan(tw))
-        val result = PatriciaTrie<String>()
+        val result = HashMap<String, String>()
         for (diff in rd.compute(tw.objectReader, null)) {
             if (diff.score >= rd.renameScore) {
                 result[StringHelper.normalize(diff.newPath)] = StringHelper.normalize(diff.oldPath)
@@ -410,9 +406,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
             "cache-revision.%s.%s.%s.v%s.%s", repository.context.name, gitBranch, if (repository.hasRenameDetection()) 1 else 0, revisionCacheVersion, repository.format.revision
         )
         revisionCache = repository.context.shared.cacheDB.hashMap<ObjectId, CacheRevision>(
-            revisionCacheName,
-            ObjectIdSerializer.instance,
-            CacheRevisionSerializer(repository.context.shared.stringInterner)
+            revisionCacheName, ObjectIdSerializer.instance, CacheRevisionSerializer(repository.context.shared.stringInterner)
         ).createOrOpen()
     }
 }

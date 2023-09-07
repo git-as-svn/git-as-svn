@@ -7,7 +7,6 @@
  */
 package svnserver.auth
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.collections.api.block.function.primitive.BooleanFunction
 import org.eclipse.jetty.util.TopologicalSort
 import svnserver.StringHelper
@@ -15,7 +14,6 @@ import svnserver.UserType
 import svnserver.repository.RepositoryMapping
 import svnserver.repository.VcsAccess
 import java.util.*
-import kotlin.collections.HashSet
 
 /**
  * This ACL reuses SVN's authz syntax as much as possible: http://svnbook.red-bean.com/nightly/en/svn.serverconfig.pathbasedauthz.html
@@ -23,10 +21,10 @@ import kotlin.collections.HashSet
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPath2Member2AccessMode: Map<String, Map<String, String?>>) : VcsAccess {
-    private val user2groups = PatriciaTrie<HashSet<String>>()
+    private val user2groups = HashMap<String, HashSet<String>>()
     private val anonymousGroups = HashSet<String>()
     private val authenticatedGroups = EnumMap<UserType, HashSet<String>>(UserType::class.java)
-    private val path2branch2acl = TreeMap<String, PatriciaTrie<HashMap<ACLEntry, AccessMode>>>()
+    private val path2branch2acl = TreeMap<String, HashMap<String, HashMap<ACLEntry, AccessMode>>>()
 
     constructor(group2users: Map<String, Array<String>>, branchPath2Member2AccessMode: Map<String, Map<String, String?>>) : this("", group2users, branchPath2Member2AccessMode)
 
@@ -39,14 +37,16 @@ class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPa
                 val userType = UserType.valueOf(entryString.substring(AuthenticatedPrefix.length))
                 UserTypeEntry(userType)
             }
+
             entryString.startsWith(GroupPrefix) -> {
                 val group = entryString.substring(GroupPrefix.length)
                 if (!allGroups.contains(group)) throw IllegalArgumentException(String.format("[%s] ACL entry %s uses unknown group %s: ", contextName, path, group))
                 GroupACLEntry(group)
             }
+
             else -> UserACLEntry(entryString)
         }
-        require(path2branch2acl.computeIfAbsent(StringHelper.normalizeDir(path)) { PatriciaTrie<HashMap<ACLEntry, AccessMode>>() }.computeIfAbsent(branch) { HashMap() }.put(entry, accessMode) == null) { String.format("[%s] Duplicate ACL entry %s: %s", contextName, path, entryString) }
+        require(path2branch2acl.computeIfAbsent(StringHelper.normalizeDir(path)) { HashMap() }.computeIfAbsent(branch) { HashMap() }.put(entry, accessMode) == null) { String.format("[%s] Duplicate ACL entry %s: %s", contextName, path, entryString) }
     }
 
     override fun canRead(user: User, branch: String, path: String): Boolean {
@@ -60,7 +60,7 @@ class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPa
     private fun doCheck(user: User, branch: String, path: String, checker: BooleanFunction<AccessMode>): Boolean {
         var pathToCheck = path
         while (true) {
-            val pathEntry: Map.Entry<String, PatriciaTrie<HashMap<ACLEntry, AccessMode>>> = RepositoryMapping.getMapped(path2branch2acl, pathToCheck) ?: break
+            val pathEntry = RepositoryMapping.getMapped(path2branch2acl, pathToCheck) ?: break
             for (b in arrayOf(branch, NoBranch)) {
                 val branchPathEntry = pathEntry.value[b] ?: continue
                 val checkResult = check(user, checker, branchPathEntry)
@@ -214,10 +214,12 @@ class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPa
                     member == AuthenticatedMarker -> {
                         for (userType in UserType.entries) authenticatedGroups.computeIfAbsent(userType) { HashSet() }.add(groupName)
                     }
+
                     member.startsWith(AuthenticatedPrefix) -> {
                         val userType = UserType.valueOf(member.substring(AuthenticatedPrefix.length))
                         authenticatedGroups.computeIfAbsent(userType) { HashSet() }.add(groupName)
                     }
+
                     else -> user2groups.computeIfAbsent(member) { HashSet() }.add(groupName)
                 }
             }

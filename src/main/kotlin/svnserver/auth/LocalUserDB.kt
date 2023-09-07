@@ -7,7 +7,6 @@
  */
 package svnserver.auth
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import svnserver.UserType
 
 /**
@@ -16,7 +15,7 @@ import svnserver.UserType
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class LocalUserDB : UserDB {
-    private val users = PatriciaTrie<UserWithPassword>()
+    private val users = HashMap<String, UserWithPassword>()
 
     override val authenticators: Collection<Authenticator> = setOf(CramMD5Authenticator { key: String -> users[key] })
 

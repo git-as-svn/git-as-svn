@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevTree
@@ -29,6 +28,7 @@ import svnserver.repository.locks.LockDesc
 import svnserver.repository.locks.LockStorage
 import java.io.IOException
 import java.util.*
+import kotlin.collections.HashSet
 
 /**
  * Git commit writer.
@@ -114,9 +114,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                 assert((node.filter != null))
                 if (node.filter!!.name != deltaConsumer.filterName) {
                     throw IllegalStateException(
-                        ("Invalid writer filter:\n"
-                                + "Expected: " + node.filter!!.name + "\n"
-                                + "Actual: " + deltaConsumer.filterName)
+                        ("Invalid writer filter:\n" + "Expected: " + node.filter!!.name + "\n" + "Actual: " + deltaConsumer.filterName)
                     )
                 }
             }
@@ -135,7 +133,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                     propertyMismatch.compute(delta.toString()) { _, _value ->
                         var value = _value
                         if (value == null) {
-                            value = TreeSet()
+                            value = HashSet()
                         }
                         value.add(node.fullPath)
                         value
@@ -160,16 +158,13 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                     message.append(entry.key)
                 }
                 message.append(
-                    ("\n"
-                            + "----------------\n" +
-                            "Subversion properties must be consistent with Git config files:\n")
+                    ("\n" + "----------------\n" + "Subversion properties must be consistent with Git config files:\n")
                 )
                 for (configFile: String? in PropertyMapping.registeredFiles) {
                     message.append("  ").append(configFile).append('\n')
                 }
                 message.append(
-                    "\n" +
-                            "For more detailed information, see:"
+                    "\n" + "For more detailed information, see:"
                 ).append("\n").append(ReferenceLink.InvalidSvnProps.link)
                 throw SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()))
             }
@@ -182,9 +177,9 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         private val commitActions = ArrayList<VcsConsumer<CommitAction>>()
 
         @get:Throws(IOException::class)
-        private val originalTree: SortedMap<String, GitTreeEntry>
+        private val originalTree: Map<String, GitTreeEntry>
             get() {
-                val commit: RevCommit = revision.gitNewCommit ?: return PatriciaTrie()
+                val commit: RevCommit = revision.gitNewCommit ?: return TreeMap()
                 return branch.repository.loadTree(GitTreeEntry(branch.repository.git, FileMode.TREE, commit.tree, ""))
             }
 
@@ -231,10 +226,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
             if (last.entries.isEmpty()) {
                 if (branch.repository.emptyDirs.autoCreateKeepFile()) {
                     val keepFile = GitTreeEntry(
-                        branch.repository.git,
-                        FileMode.REGULAR_FILE,
-                        inserter.insert(Constants.OBJ_BLOB, keepFileContents),
-                        keepFileName
+                        branch.repository.git, FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, keepFileContents), keepFileName
                     )
                     last.entries[keepFile.fileName] = keepFile
                 } else {

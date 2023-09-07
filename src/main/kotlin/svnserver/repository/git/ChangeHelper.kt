@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import svnserver.StringHelper
 import svnserver.repository.SvnForbiddenException
 import java.io.IOException
@@ -21,7 +20,7 @@ import java.util.*
 internal object ChangeHelper {
     @Throws(IOException::class)
     fun collectChanges(oldTree: GitFile?, newTree: GitFile, fullRemoved: Boolean, stringInterner: (String) -> String): Map<String, GitLogEntry> {
-        val changes = PatriciaTrie<GitLogEntry>()
+        val changes = HashMap<String, GitLogEntry>()
         val logEntry = GitLogEntry(oldTree, newTree)
         if (oldTree == null || logEntry.isModified) {
             changes["/"] = logEntry

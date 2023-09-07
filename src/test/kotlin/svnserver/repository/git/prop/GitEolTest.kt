@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git.prop
 
-import org.apache.commons.collections4.trie.PatriciaTrie
 import org.eclipse.jgit.attributes.Attributes
 import org.eclipse.jgit.attributes.AttributesRule
 import org.eclipse.jgit.lib.FileMode
@@ -105,7 +104,7 @@ class GitEolTest {
 
         fun check() {
             val gitProperties = createForPath(attr, path)
-            val svnProperties = PatriciaTrie<String>()
+            val svnProperties = HashMap<String, String>()
             for (prop in gitProperties) {
                 prop.apply(svnProperties)
             }
@@ -149,15 +148,7 @@ class GitEolTest {
      2.bin = svn:eol-style=native
      
      """.trimIndent()
-                ),
-                Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF),
-                Params(attr, "foo.dat").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
-                Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-                Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
-                Params(attr, "1.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-                Params(attr, "2.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-                Params(attr, "3.md").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
-                Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+                ), Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF), Params(attr, "foo.dat").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE), Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE), Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE), Params(attr, "1.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE), Params(attr, "2.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE), Params(attr, "3.md").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE), Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
             )
             return params.map { arrayOf(it) }.toTypedArray()
         }
