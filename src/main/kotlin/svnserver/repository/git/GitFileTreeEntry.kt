@@ -38,11 +38,6 @@ internal class GitFileTreeEntry private constructor(
 
     override val entries: Map<String, Supplier<GitFile>> = treeEntries.mapValuesTo(HashMap()) { entry ->
         when (branch.repository.gitTreeEntryCacheStrategy) {
-            GitTreeEntryCacheStrategy.Eager -> {
-                val result = create(branch, rawProperties, fullPath, entry.value, revision)
-                Supplier { result }
-            }
-
             GitTreeEntryCacheStrategy.Lazy -> {
                 val result = lazy(mode = LazyThreadSafetyMode.NONE) { create(branch, rawProperties, fullPath, entry.value, revision) }
                 Supplier { result.value }
