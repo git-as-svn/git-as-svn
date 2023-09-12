@@ -30,7 +30,13 @@ This will tell git-as-svn to authenticate users against GitLab server:
 +
 [source,yaml]
 ----
-userDB: !gitlabUsers {}
+userDB: !gitlabUsers {
+  # Users can either authenticate using their GitLab login+password or login+access token
+  # Possible values: Password, AccessToken
+  # Default: Password
+  #
+  # authentication: Password
+}
 ----
 
 . Configure builtin git-as-svn webserver:
