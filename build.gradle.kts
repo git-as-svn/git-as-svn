@@ -105,7 +105,7 @@ dependencies {
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0")
 
-    testImplementation("org.testcontainers:testcontainers:1.19.0")
+    testImplementation("org.testcontainers:testcontainers:1.19.2")
     testImplementation("org.testng:testng:7.8.0")
 
     constraints {
