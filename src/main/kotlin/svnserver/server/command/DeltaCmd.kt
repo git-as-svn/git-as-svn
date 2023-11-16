@@ -178,12 +178,16 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             parser.readToken(ListBeginToken::class.java)
             val cmd: String = parser.readText()
             log.debug("Report command: {}", cmd)
-            val command: BaseCmd<*>? = commands[cmd]
-            if (command == null) {
-                context.skipUnsupportedCommand(cmd)
-                return
+            try {
+                val command: BaseCmd<*>? = commands[cmd]
+                if (command == null) {
+                    context.skipUnsupportedCommand(cmd)
+                    return
+                }
+                command.process(context, parser)
+            } finally {
+                log.debug("Report command complete")
             }
-            command.process(context, parser)
         }
 
         private fun deletePath(context: SessionContext, args: DeleteParams) {

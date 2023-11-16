@@ -395,28 +395,32 @@ class CommitCmd : BaseCmd<Params>() {
             parser.readToken(ListBeginToken::class.java)
             val cmd: String = parser.readText()
             log.debug("Editor command: {}", cmd)
-            var command: BaseCmd<*>? = exitCommands[cmd]
-            if (command == null) {
-                context.push { sessionContext: SessionContext -> editorCommand(sessionContext) }
-                command = commands[cmd]
-            }
-            if (command == null) {
-                context.skipUnsupportedCommand(cmd)
-                return
-            }
-            if (aborted) {
-                parser.skipItems()
-                return
-            }
             try {
-                command.process(context, parser)
-            } catch (e: SVNException) {
-                aborted = true
-                throw e
-            } catch (e: Throwable) {
-                log.warn("Exception during in cmd $cmd", e)
-                aborted = true
-                throw e
+                var command: BaseCmd<*>? = exitCommands[cmd]
+                if (command == null) {
+                    context.push { sessionContext: SessionContext -> editorCommand(sessionContext) }
+                    command = commands[cmd]
+                }
+                if (command == null) {
+                    context.skipUnsupportedCommand(cmd)
+                    return
+                }
+                if (aborted) {
+                    parser.skipItems()
+                    return
+                }
+                try {
+                    command.process(context, parser)
+                } catch (e: SVNException) {
+                    aborted = true
+                    throw e
+                } catch (e: Throwable) {
+                    log.warn("Exception during cmd $cmd", e)
+                    aborted = true
+                    throw e
+                }
+            } finally {
+                log.debug("Editor command complete")
             }
         }
 
