@@ -153,9 +153,7 @@ class LfsHttpStorageTest {
             }
 
             // Read old file.
-            val reader = storage.getReader(oid, -1)
-            Assert.assertNotNull(reader)
-            Assert.assertNull(reader!!.md5)
+            val reader = storage.getReader(oid, -1)!!
             Assert.assertEquals(reader.size, data.size.toLong())
             reader.openStream().use { stream ->
                 val actual = ByteStreams.toByteArray(stream)

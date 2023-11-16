@@ -40,7 +40,6 @@ class LfsLocalStorage(locks: SortedMap<String, LockDesc>, private val layout: Lf
     }
 
     companion object {
-        const val HASH_MD5 = "hash-md5"
         const val CREATE_TIME = "create-time"
         const val META_EMAIL = "author-email"
         const val META_USER_NAME = "author-login"

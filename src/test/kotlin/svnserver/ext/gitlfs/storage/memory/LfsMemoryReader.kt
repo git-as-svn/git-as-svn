@@ -31,8 +31,6 @@ internal class LfsMemoryReader(private val content: ByteArray) : LfsReader {
 
     override val size: Long
         get() = content.size.toLong()
-    override val md5: String
-        get() = Hex.encodeHexString(md5().digest(content))
 
     override fun getOid(hashOnly: Boolean): String {
         return if (hashOnly) {

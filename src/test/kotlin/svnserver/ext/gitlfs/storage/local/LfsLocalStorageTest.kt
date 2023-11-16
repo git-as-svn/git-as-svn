@@ -88,9 +88,8 @@ class LfsLocalStorageTest {
             }
 
             // Read old file.
-            val reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1)
+            val reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1)!!
             Assert.assertNotNull(reader)
-            Assert.assertEquals("9fe77772b085e3533101d59d33a51f19", reader!!.md5)
             Assert.assertEquals(15, reader.size)
             reader.openStream().use { stream -> Assert.assertEquals(CharStreams.toString(InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!") }
             checkLfs(storage, user)
@@ -114,9 +113,8 @@ class LfsLocalStorageTest {
             }
 
             // Read old file.
-            val reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1)
+            val reader = storage.getReader("sha256:61f27ddd5b4e533246eb76c45ed4bf4504daabce12589f97b3285e9d3cd54308", -1)!!
             Assert.assertNotNull(reader)
-            Assert.assertNull(reader!!.md5)
             Assert.assertEquals(15, reader.size)
             reader.openStream().use { stream -> Assert.assertEquals(CharStreams.toString(InputStreamReader(stream, StandardCharsets.UTF_8)), "Hello, world!!!") }
         } finally {

@@ -40,14 +40,6 @@ class LfsFilter(context: LocalContext, private val storage: LfsStorage?) : GitFi
 
     @Throws(IOException::class)
     override fun getMd5(objectId: GitObject<out ObjectId>): String {
-        val loader = objectId.openObject()
-        loader.openStream().use { stream ->
-            val meta = parseMeta(stream)
-            if (meta != null) {
-                val md5 = getReader(meta).md5
-                if (md5 != null) return md5
-            }
-        }
         return GitFilterHelper.getMd5(this, cacheMd5, null, objectId)
     }
 

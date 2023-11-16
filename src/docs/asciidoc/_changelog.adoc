@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Remove legacy code that could be a source of slowdown when working with LFS files
+
 == 2.9.6
 
 * More memory optimizations

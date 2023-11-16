@@ -34,7 +34,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
 
     private val dataTemp: Path
     private val metaTemp: Path?
-    private val digestMd5: MessageDigest
     private val digestSha: MessageDigest
     private var dataStream: OutputStream? = null
     private var size: Long
@@ -43,7 +42,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
     override fun write(b: Int) {
         checkNotNull(dataStream)
         dataStream!!.write(b)
-        digestMd5.update(b.toByte())
         digestSha.update(b.toByte())
         size += 1
     }
@@ -52,7 +50,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
     override fun write(b: ByteArray, off: Int, len: Int) {
         checkNotNull(dataStream)
         dataStream!!.write(b, off, len)
-        digestMd5.update(b, off, len)
         digestSha.update(b, off, len)
         size += len.toLong()
     }
@@ -76,7 +73,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
             dataStream!!.close()
             dataStream = null
             val sha = digestSha.digest()
-            val md5 = digestMd5.digest()
             val oid: String = LfsStorage.OID_PREFIX + Hex.encodeHexString(sha)
             if (expectedOid != null && expectedOid != oid) {
                 throw IOException("Invalid stream checksum: expected $expectedOid, but actual $oid")
@@ -101,7 +97,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
                             val map = HashMap<String, String>()
                             map[Constants.SIZE] = size.toString()
                             map[Constants.OID] = oid
-                            map[LfsLocalStorage.HASH_MD5] = Hex.encodeHexString(md5)
                             map[LfsLocalStorage.CREATE_TIME] = JsonHelper.dateFormat.format(Date())
                             if (user != null && !user.isAnonymous) {
                                 if (user.email != null) {
@@ -136,7 +131,6 @@ class LfsLocalWriter internal constructor(private val layout: LfsLayout, private
         val prefix = UUID.randomUUID().toString()
         dataTemp = Files.createDirectories(dataRoot.resolve("tmp")).resolve("$prefix.tmp")
         metaTemp = if (metaRoot == null) null else Files.createDirectories(metaRoot.resolve("tmp")).resolve("$prefix.tmp")
-        digestMd5 = HashHelper.md5()
         digestSha = HashHelper.sha256()
         size = 0
         dataStream = if (compress) {

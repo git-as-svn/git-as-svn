@@ -40,8 +40,6 @@ class LfsLocalReader private constructor(private val meta: Map<String, String>, 
 
     override val size: Long
         get() = meta[Constants.SIZE]!!.toLong()
-    override val md5: String?
-        get() = meta[LfsLocalStorage.HASH_MD5]
 
     override fun getOid(hashOnly: Boolean): String {
         val oid = meta[Constants.OID]
