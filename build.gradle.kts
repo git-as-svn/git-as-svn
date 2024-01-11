@@ -132,15 +132,15 @@ val compileDocs by tasks.registering(Copy::class) {
     group = "documentation"
     dependsOn(tasks.asciidoctor, tasks.asciidoctorEpub, tasks.asciidoctorPdf)
 
-    from("$buildDir/docs/asciidoc") {
+    from(layout.buildDirectory.dir("docs/asciidoc")) {
         into("htmlsingle")
     }
-    from("$buildDir/docs/asciidocEpub")
-    from("$buildDir/docs/asciidocPdf")
+    from(layout.buildDirectory.dir("docs/asciidocEpub"))
+    from(layout.buildDirectory.dir("docs/asciidocPdf"))
     from("$projectDir") {
         include("*.adoc", "LICENSE")
     }
-    into(file("$buildDir/doc"))
+    into(layout.buildDirectory.dir("doc"))
     duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
@@ -223,13 +223,13 @@ val debianControl by tasks.registering(Copy::class) {
             )
         )
     }
-    into(file("$buildDir/debPackage/package"))
+    into(layout.buildDirectory.dir("debPackage/package"))
 }
 
 val compileDeb by tasks.registering(Exec::class) {
     dependsOn(tasks.installDist, debianControl)
 
-    workingDir = file("$buildDir/debPackage/package")
+    workingDir = layout.buildDirectory.dir("debPackage/package").get().asFile
     executable = "dpkg-buildpackage"
     args("-uc", "-us")
 }
@@ -238,10 +238,10 @@ val distDeb by tasks.registering(Copy::class) {
     group = "distribution"
     dependsOn(compileDeb)
 
-    from("$buildDir/debPackage") {
+    from(layout.buildDirectory.dir("debPackage")) {
         include("*.deb")
     }
-    into("$buildDir/distributions/debian_debian")
+    into(layout.buildDirectory.dir("distributions/debian_debian"))
 }
 
 tasks.assembleDist {
