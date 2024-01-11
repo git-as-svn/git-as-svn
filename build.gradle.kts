@@ -83,7 +83,7 @@ dependencies {
     implementation("org.yaml:snakeyaml:2.2")
     implementation("com.beust:jcommander:1.82")
     implementation("org.ini4j:ini4j:0.5.4")
-    implementation("org.mapdb:mapdb:3.0.10")
+    implementation("org.mapdb:mapdb:3.1.0")
     implementation("com.unboundid:unboundid-ldapsdk:6.0.11")
     implementation("org.eclipse.jetty:jetty-servlet:11.0.19")
     implementation("org.gitlab:java-gitlab-api:4.1.1")
