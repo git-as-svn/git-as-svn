@@ -17,7 +17,7 @@ plugins {
     id("org.ajoberstar.grgit") version "5.2.1"
     id("org.asciidoctor.jvm.convert") version "4.0.0"
     id("org.asciidoctor.jvm.pdf") version "4.0.0"
-    id("org.asciidoctor.jvm.epub") version "4.0.0"
+    id("org.asciidoctor.jvm.epub") version "4.0.1"
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     idea
     application
