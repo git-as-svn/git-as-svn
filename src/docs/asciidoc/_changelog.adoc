@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix chaos in changed files in `svn log`
+
 == 2.9.7
 
 * Remove legacy code that could be a source of slowdown when working with LFS files

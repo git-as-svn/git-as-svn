@@ -13,6 +13,7 @@ import svnserver.repository.VcsCopyFrom
 import svnserver.repository.git.filter.GitFilter
 import svnserver.repository.git.prop.GitProperty
 import java.io.InputStream
+import java.util.*
 import java.util.function.Supplier
 
 /**
@@ -59,12 +60,16 @@ internal class GitFileEmptyTree(override val branch: GitBranch, parentPath: Stri
             return FileMode.TREE
         }
 
-    override val entries: Map<String, Supplier<GitFile>>
+    override val entries: SortedMap<String, Supplier<GitFile>>
         get() {
-            return emptyMap()
+            return emptyEntries
         }
 
     override fun toString(): String {
         return "GitFileEmptyTree{fullPath='$fullPath'}"
+    }
+
+    private companion object {
+        private val emptyEntries = Collections.unmodifiableSortedMap(TreeMap<String, Supplier<GitFile>>())
     }
 }

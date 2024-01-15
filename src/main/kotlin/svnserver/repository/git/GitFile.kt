@@ -41,8 +41,9 @@ interface GitFile : GitEntry {
     @get:Throws(IOException::class)
     val size: Long
 
+    // ChangeHelper requires entries to be sorted
     @get:Throws(IOException::class)
-    val entries: Map<String, Supplier<GitFile>>
+    val entries: SortedMap<String, Supplier<GitFile>>
 
     @Throws(IOException::class)
     fun openStream(): InputStream
