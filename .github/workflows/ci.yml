@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install build-essential debhelper fakeroot
       - name: Build
-        uses: eskatos/gradle-command-action@v2
+        uses: eskatos/gradle-command-action@v3
         with:
           arguments: assembleDist
       - name: Store docs
@@ -69,7 +69,7 @@ jobs:
         if: matrix.env != ''
         run: echo "${{ matrix.env }}" >> "${GITHUB_ENV}"
       - name: Run tests
-        uses: eskatos/gradle-command-action@v2
+        uses: eskatos/gradle-command-action@v3
         with:
           arguments: test
   docs:
