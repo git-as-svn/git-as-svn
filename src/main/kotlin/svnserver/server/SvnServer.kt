@@ -37,9 +37,7 @@ import java.net.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.ThreadPoolExecutor.AbortPolicy
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -54,7 +52,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
     private val stopped: AtomicBoolean = AtomicBoolean(false)
     private val lastSessionId: AtomicLong = AtomicLong()
     val sharedContext: SharedContext
-    private val threadPoolExecutor: ThreadPoolExecutor
+    private val executorService: ExecutorService
     val port: Int
         get() {
             return serverSocket.localPort
@@ -77,7 +75,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
             val sessionId: Long = lastSessionId.incrementAndGet()
             connections[sessionId] = client
             try {
-                threadPoolExecutor.execute {
+                executorService.execute {
                     try {
                         client.use { clientSocket ->
                             SvnServerWriter(clientSocket.getOutputStream(), config.writeBufferSize).use { writer ->
@@ -244,7 +242,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
     @Throws(Exception::class)
     fun shutdown(millis: Long) {
         startShutdown()
-        if (!threadPoolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
+        if (!executorService.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
             forceShutdown()
         }
         join(millis)
@@ -257,7 +255,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
         if (stopped.compareAndSet(false, true)) {
             log.info("Shutdown server")
             serverSocket.close()
-            threadPoolExecutor.shutdown()
+            executorService.shutdown()
         }
     }
 
@@ -266,7 +264,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
         for (socket: Socket in connections.values) {
             socket.close()
         }
-        threadPoolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS)
+        executorService.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS)
     }
 
     val compressionLevel: SVNDeltaCompression
@@ -333,7 +331,6 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
             SVNErrorCode.AUTHZ_UNREADABLE,
             SVNErrorCode.AUTHZ_UNWRITABLE
         )
-        private val threadNumber: AtomicInteger = AtomicInteger(1)
 
         @Throws(IOException::class)
         private fun sendError(writer: SvnServerWriter, msg: String) {
@@ -349,18 +346,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
 
     init {
         isDaemon = true
-        threadPoolExecutor = ThreadPoolExecutor(
-            0, config.maxConcurrentConnections,
-            60,
-            TimeUnit.SECONDS,
-            SynchronousQueue(),
-            { r: Runnable? ->
-                val thread = Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()))
-                thread.isDaemon = true
-                thread
-            },
-            AbortPolicy()
-        )
+        executorService = config.threads.createExecutor("SvnServer-thread-%s")
         sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared, if (config.stringInterning) { s: String -> s.intern() } else { s: String -> s })
         sharedContext.add(UserDB::class.java, config.userDB.create(sharedContext))
         repositoryMapping = config.repositoryMapping.create(sharedContext, config.parallelIndexing)

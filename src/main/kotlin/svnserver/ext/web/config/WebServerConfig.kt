@@ -46,6 +46,7 @@ class WebServerConfig : SharedConfig {
     }
 
     private fun createJettyServer(): Server {
+        // TODO: Make executor configurable
         val server = Server()
         for (listenConfig in listen) server.addConnector(listenConfig.createConnector(server))
         return server

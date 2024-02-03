@@ -30,7 +30,7 @@ class Config {
     var shutdownTimeout: Long = TimeUnit.SECONDS.toMillis(5)
     var parallelIndexing: Boolean = true
     var stringInterning: Boolean = true
-    val maxConcurrentConnections = Integer.MAX_VALUE
+    var threads: ThreadsConfig = VirtualThreadsConfig()
     val readBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
     var writeBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
 

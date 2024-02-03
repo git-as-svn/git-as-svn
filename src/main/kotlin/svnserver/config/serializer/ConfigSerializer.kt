@@ -91,6 +91,8 @@ class ConfigSerializer {
             "!web" to WebServerConfig::class.java,
             "!pushEmbedded" to GitPushEmbeddedConfig::class.java,
             "!pushNative" to GitPushNativeConfig::class.java,
+            "!platform" to PlatformThreadsConfig::class.java,
+            "!virtual" to VirtualThreadsConfig::class.java,
         )
     }
 

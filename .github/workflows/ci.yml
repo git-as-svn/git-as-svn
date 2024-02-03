@@ -10,8 +10,8 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
-          java-version: 11 # Oldest supported version
+          distribution: 'temurin'
+          java-version: 21 # Oldest supported version
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install build-essential debhelper fakeroot
       - name: Build
@@ -35,25 +35,15 @@ jobs:
       matrix:
         include:
           # Gitlab
-          - java: 11
-            env: 'GITLAB_VERSION=latest'
-          - java: 11
-            env: 'GITLAB_VERSION=13.7.5-ce.0' # Gitlab >= 13.7 enables chunked upload
-          - java: 11
-            env: 'GITLAB_VERSION=11.0.3-ce.0' # Gitlab >= 11.0 no longer has API v3 (issue #176)
-          - java: 11
-            env: 'GITLAB_VERSION=10.2.5-ce.0' # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
-          - java: 11
-            env: 'GITLAB_VERSION=9.3.3-ce.0' # The earliest supported GitLab version
+          - env: 'GITLAB_VERSION=latest'
+          - env: 'GITLAB_VERSION=13.7.5-ce.0' # Gitlab >= 13.7 enables chunked upload
+          - env: 'GITLAB_VERSION=11.0.3-ce.0' # Gitlab >= 11.0 no longer has API v3 (issue #176)
+          - env: 'GITLAB_VERSION=10.2.5-ce.0' # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
+          - env: 'GITLAB_VERSION=9.3.3-ce.0' # The earliest supported GitLab version
 
           # Gitea
-          - java: 11
-            env: 'GITEA_VERSION=1.18'
-          - java: 11
-            env: 'GITEA_VERSION=1.9.0' # The earliest supported Gitea version
-
-          # Different JDKs
-          - java: 17
+          - env: 'GITEA_VERSION=1.18'
+          - env: 'GITEA_VERSION=1.9.0' # The earliest supported Gitea version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -63,8 +53,8 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
-          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          java-version: 21
       - name: Set up env
         if: matrix.env != ''
         run: echo "${{ matrix.env }}" >> "${GITHUB_ENV}"
