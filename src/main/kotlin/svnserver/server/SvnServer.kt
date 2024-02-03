@@ -346,7 +346,7 @@ class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer"
 
     init {
         isDaemon = true
-        executorService = config.threads.createExecutor("SvnServer-thread-%s")
+        executorService = config.threads.createExecutor("SvnServer-thread-")
         sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared, if (config.stringInterning) { s: String -> s.intern() } else { s: String -> s })
         sharedContext.add(UserDB::class.java, config.userDB.create(sharedContext))
         repositoryMapping = config.repositoryMapping.create(sharedContext, config.parallelIndexing)
