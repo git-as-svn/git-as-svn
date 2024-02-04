@@ -28,6 +28,7 @@ import svnserver.repository.locks.LockDesc
 import svnserver.repository.locks.LockStorage
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashSet
 
 /**
@@ -35,7 +36,7 @@ import kotlin.collections.HashSet
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitWriter internal constructor(val branch: GitBranch, private val pusher: GitPusher, private val pushLock: Any, private val user: User) : AutoCloseable {
+class GitWriter internal constructor(val branch: GitBranch, private val pusher: GitPusher, private val pushLock : ReentrantLock, private val user: User) : AutoCloseable {
     val inserter: ObjectInserter = branch.repository.git.newObjectInserter()
 
     @Throws(IOException::class)
@@ -300,7 +301,9 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                 log.info("Need recreate tree after filter migration.")
                 return null
             }
-            synchronized(pushLock) {
+
+            pushLock.lock()
+            try {
                 log.info("Validate properties")
                 validateProperties(RevWalk(branch.repository.git).parseTree(treeId))
                 log.info("Try to push commit in branch: {}", branch)
@@ -311,6 +314,8 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                 log.info("Commit is pushed")
                 branch.updateRevisions()
                 return branch.getRevision(commitId)
+            } finally {
+                pushLock.unlock()
             }
         }
 

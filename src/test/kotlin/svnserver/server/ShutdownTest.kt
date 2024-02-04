@@ -115,7 +115,7 @@ class ShutdownTest {
                         val result = TreeMap<String, Thread>()
                         for (i in 0 until size) {
                             val thread = threads[i]
-                            result[thread!!.id.toString() + "#" + thread.name] = thread
+                            result[thread!!.threadId().toString() + "#" + thread.name] = thread
                         }
                         return result
                     }

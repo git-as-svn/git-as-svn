@@ -29,6 +29,7 @@ import svnserver.repository.locks.LockStorage
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class GitBranch(val repository: GitRepository, val shortBranchName: String) {
@@ -39,7 +40,7 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     /**
      * Lock for prevent concurrent pushes.
      */
-    private val pushLock: Any = Any()
+    private val pushLock = ReentrantLock()
     private val revisions = ArrayList<GitRevision>()
     private val revisionByDate = TreeMap<Long, GitRevision>()
     private val revisionByHash = HashMap<ObjectId, GitRevision>()
