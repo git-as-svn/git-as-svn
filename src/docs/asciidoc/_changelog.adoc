@@ -11,7 +11,6 @@ endif::[]
 * Use virtual threads by default
 * Require Java 21+
 
-
 == 2.9.8
 
 * Fix chaos in changed files in `svn log`
