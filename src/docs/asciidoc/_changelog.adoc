@@ -6,7 +6,7 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 3.0.0
 
 * Use virtual threads by default
 * Require Java 21+
