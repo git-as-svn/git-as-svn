@@ -39,7 +39,6 @@ jobs:
           - env: 'GITLAB_VERSION=13.7.5-ce.0' # Gitlab >= 13.7 enables chunked upload
           - env: 'GITLAB_VERSION=11.0.3-ce.0' # Gitlab >= 11.0 no longer has API v3 (issue #176)
           - env: 'GITLAB_VERSION=10.2.5-ce.0' # Gitlab >= 10.2 no longer has /session endpoint (issue #154)
-          - env: 'GITLAB_VERSION=9.3.3-ce.0' # The earliest supported GitLab version
 
           # Gitea
           - env: 'GITEA_VERSION=1.18'

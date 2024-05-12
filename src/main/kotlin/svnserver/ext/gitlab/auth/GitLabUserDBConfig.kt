@@ -7,12 +7,12 @@
  */
 package svnserver.ext.gitlab.auth
 
-import org.gitlab.api.TokenType
+import org.gitlab4j.api.Constants
+import org.gitlab4j.api.GitLabApi
 import svnserver.auth.UserDB
 import svnserver.config.UserDBConfig
 import svnserver.context.SharedContext
 import svnserver.ext.gitlab.config.GitLabContext
-import svnserver.ext.gitlab.config.GitLabToken
 
 /**
  * GitLab authentication configuration.
@@ -29,20 +29,20 @@ class GitLabUserDBConfig : UserDBConfig {
 
 enum class GitlabAuthentication {
     Password {
-        override fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken {
-            return GitLabContext.obtainAccessToken(gitLabUrl, username, password, false)
+        override fun login(gitLabUrl: String, username: String, password: String): GitLabApi {
+            return GitLabContext.login(gitLabUrl, username, password, false)
         }
     },
     AccessToken {
-        override fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken {
-            return GitLabToken(TokenType.ACCESS_TOKEN, password)
+        override fun login(gitLabUrl: String, username: String, password: String): GitLabApi {
+            return GitLabApi(gitLabUrl, Constants.TokenType.ACCESS, password)
         }
     },
     PrivateToken {
-        override fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken {
-            return GitLabToken(TokenType.PRIVATE_TOKEN, password)
+        override fun login(gitLabUrl: String, username: String, password: String): GitLabApi {
+            return GitLabApi(gitLabUrl, Constants.TokenType.PRIVATE, password)
         }
     };
 
-    abstract fun obtainAccessToken(gitLabUrl: String, username: String, password: String): GitLabToken
+    abstract fun login(gitLabUrl: String, username: String, password: String): GitLabApi
 }

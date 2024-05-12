@@ -26,7 +26,7 @@ class GitLabHookEventTest {
             Assert.assertNotNull(event)
             Assert.assertEquals(event.eventName, "project_create")
             Assert.assertEquals(event.pathWithNamespace, "jsmith/storecloud")
-            Assert.assertEquals(event.projectId, Integer.valueOf(74))
+            Assert.assertEquals(event.projectId, 74L)
         }
     }
 }
