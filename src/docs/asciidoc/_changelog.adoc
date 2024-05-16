@@ -6,10 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 4.0.0
 
 * Drop support for GitLab older than 10.2
 * Migrate from java-gitlab-api to gitlab4j-api
+* Fix compatibility with GitLab 16.9+
 
 == 3.0.0
 
