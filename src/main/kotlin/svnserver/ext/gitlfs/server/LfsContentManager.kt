@@ -8,7 +8,6 @@
 package svnserver.ext.gitlfs.server
 
 import jakarta.servlet.http.HttpServletRequest
-import org.apache.commons.io.IOUtils
 import org.tmatesoft.svn.core.SVNException
 import ru.bozaro.gitlfs.common.Constants
 import ru.bozaro.gitlfs.common.data.Meta
@@ -105,7 +104,7 @@ class LfsContentManager internal constructor(private val context: LocalContext, 
             @Throws(IOException::class)
             override fun saveObject(meta: Meta, content: InputStream) {
                 storage.getWriter(Objects.requireNonNull(user)).use { writer ->
-                    IOUtils.copy(content, writer)
+                    content.copyTo(writer)
                     writer.finish(LfsStorage.OID_PREFIX + meta.oid)
                 }
             }

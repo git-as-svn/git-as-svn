@@ -21,7 +21,7 @@ import java.util.*
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitLabProject internal constructor(val context: LocalContext, val repository: GitRepository, val projectId: Int) : AutoCloseable, BranchProvider {
+class GitLabProject internal constructor(val context: LocalContext, val repository: GitRepository, val projectId: Long) : AutoCloseable, BranchProvider {
 
     @Volatile
     private var ready = false

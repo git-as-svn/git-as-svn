@@ -7,7 +7,6 @@
  */
 package svnserver
 
-import org.apache.commons.io.IOUtils
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
@@ -91,7 +90,7 @@ class TemporaryOutputStreamTest {
         Assert.assertTrue(Files.exists(tempFile))
         val inputStream = outputStream.toInputStream()
         Assert.assertTrue(Files.exists(tempFile))
-        val actualData = IOUtils.toByteArray(inputStream)
+        val actualData = inputStream.readAllBytes()
         Assert.assertTrue(Files.exists(tempFile))
         inputStream.close()
         Assert.assertFalse(Files.exists(tempFile))

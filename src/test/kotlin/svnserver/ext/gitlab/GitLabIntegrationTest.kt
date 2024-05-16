@@ -7,9 +7,8 @@
  */
 package svnserver.ext.gitlab
 
-import org.gitlab.api.GitlabAPI
-import org.gitlab.api.http.Query
-import org.gitlab.api.models.*
+import org.gitlab4j.api.GitLabApi
+import org.gitlab4j.api.models.*
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
@@ -48,9 +47,9 @@ import java.util.function.Function
 class GitLabIntegrationTest {
     private var gitlab: GenericContainer<*>? = null
     private var gitlabUrl: String? = null
-    private var rootToken: GitLabToken? = null
-    private var gitlabProject: GitlabProject? = null
-    private var gitlabPublicProject: GitlabProject? = null
+    private var rootApi: GitLabApi? = null
+    private var gitLabProject: Project? = null
+    private var gitLabPublicProject: Project? = null
 
     @BeforeClass
     fun before() {
@@ -58,7 +57,7 @@ class GitLabIntegrationTest {
         var gitlabVersion = System.getenv("GITLAB_VERSION")
         if (gitlabVersion == null) {
             SvnTestHelper.skipTestIfRunningOnCI()
-            gitlabVersion = "9.3.3-ce.0"
+            gitlabVersion = "10.2.5-ce.0"
         }
         val hostPort = 9999
         // containerPort is supposed to be 80, but GitLab binds to port from external_url
@@ -78,33 +77,38 @@ class GitLabIntegrationTest {
                     .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES))
             )
         gitlab!!.start()
-        rootToken = createToken(root, rootPassword, true)
-        val rootAPI = GitLabContext.connect(gitlabUrl!!, rootToken!!)
-        val createUserRequest = CreateUserRequest(user, user, "git-as-svn@localhost")
-            .setPassword(userPassword)
-            .setSkipConfirmation(true)
-        val gitlabUser = rootAPI.createUser(createUserRequest)
+        rootApi = login(root, rootPassword, true)
+        val gitlabUser = rootApi!!.userApi.createUser(
+            User()
+                .withUsername(user)
+                .withName(user)
+                .withEmail("git-as-svn@localhost")
+                .withSkipConfirmation(true),
+            userPassword,
+            false)
         Assert.assertNotNull(gitlabUser)
-        val group = rootAPI.createGroup(CreateGroupRequest("testGroup").setVisibility(GitlabVisibility.PUBLIC), null)
+        val group = rootApi!!.groupApi.createGroup(
+            GroupParams()
+                .withPath("testGroup")
+                .withName("testGroup")
+                .withVisibility(Visibility.PUBLIC.toValue()))
         Assert.assertNotNull(group)
-        Assert.assertNotNull(rootAPI.addGroupMember(group.id, gitlabUser.id, GitlabAccessLevel.Developer))
-        gitlabProject = createGitlabProject(rootAPI, group, "test", GitlabVisibility.INTERNAL, setOf("git-as-svn:master"))
-        gitlabPublicProject = createGitlabProject(rootAPI, group, "publik", GitlabVisibility.PUBLIC, setOf("git-as-svn:master"))
+        Assert.assertNotNull(rootApi!!.groupApi.addMember(group.id, gitlabUser.id, AccessLevel.DEVELOPER))
+        gitLabProject = createGitLabProject(rootApi!!, group, "test", Visibility.INTERNAL, listOf("git-as-svn:master"))
+        gitLabPublicProject = createGitLabProject(rootApi!!, group, "publik", Visibility.PUBLIC, listOf("git-as-svn:master"))
     }
 
-    private fun createToken(username: String, password: String, sudoScope: Boolean): GitLabToken {
-        return GitLabContext.obtainAccessToken(gitlabUrl!!, username, password, sudoScope)
+    private fun login(username: String, password: String, sudoScope: Boolean): GitLabApi {
+        return GitLabContext.login(gitlabUrl!!, username, password, sudoScope)
     }
 
-    private fun createGitlabProject(rootAPI: GitlabAPI, group: GitlabGroup, name: String, visibility: GitlabVisibility, tags: Set<String>): GitlabProject {
-        // java-gitlab-api doesn't handle tag_list, so we have to do this manually
-        val query = Query()
-            .append("name", name)
-            .appendIf("namespace_id", group.id)
-            .appendIf("visibility", visibility.toString())
-            .appendIf("tag_list", java.lang.String.join(",", tags))
-        val tailUrl = GitlabProject.URL + query.toString()
-        return rootAPI.dispatch().to(tailUrl, GitlabProject::class.java)
+    private fun createGitLabProject(rootAPI: GitLabApi, group: Group, name: String, visibility: Visibility, topics: List<String>): Project {
+        return rootAPI.projectApi.createProject(Project()
+            .withName(name)
+            .withNamespaceId(group.id)
+            .withVisibility(visibility)
+            .withTopics(topics)
+            .withTagList(topics))
     }
 
     @AfterClass
@@ -121,11 +125,11 @@ class GitLabIntegrationTest {
     }
 
     private fun checkUser(login: String, password: String) {
-        createServer(rootToken!!, null).use { server -> server.openSvnRepository(login, password).latestRevision }
+        createServer(rootApi!!, null).use { server -> server.openSvnRepository(login, password).latestRevision }
     }
 
-    private fun createServer(token: GitLabToken, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?): SvnTestServer {
-        val gitLabConfig = GitLabConfig(gitlabUrl!!, token)
+    private fun createServer(api: GitLabApi, mappingConfigCreator: Function<Path, RepositoryMappingConfig>?): SvnTestServer {
+        val gitLabConfig = GitLabConfig(gitlabUrl!!, GitLabToken(api.tokenType, api.authToken))
         return SvnTestServer.createEmpty(GitLabUserDBConfig(), mappingConfigCreator, false, SvnTestServer.LfsMode.None, gitLabConfig, WebServerConfig())
     }
 
@@ -141,16 +145,20 @@ class GitLabIntegrationTest {
 
     @Test
     fun gitlabMappingAsRoot() {
-        createServer(rootToken!!) { dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server -> openSvnRepository(server, gitlabProject!!, user, userPassword).latestRevision }
+        createServer(rootApi!!) {
+            dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY)
+        }.use {
+            openSvnRepository(it, gitLabProject!!, user, userPassword).latestRevision
+        }
     }
 
-    private fun openSvnRepository(server: SvnTestServer, gitlabProject: GitlabProject, username: String, password: String): SVNRepository {
-        return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(gitlabProject.pathWithNamespace + "/master", false), username, password)
+    private fun openSvnRepository(server: SvnTestServer, gitLabProject: Project, username: String, password: String): SVNRepository {
+        return SvnTestServer.openSvnRepository(server.getUrl(false).appendPath(gitLabProject.pathWithNamespace + "/master", false), username, password)
     }
 
     @Test
     fun testLfs() {
-        val storage = GitLabConfig.createLfsStorage(gitlabUrl!!, gitlabProject!!.pathWithNamespace, root, rootPassword, null)
+        val storage = GitLabConfig.createLfsStorage(gitlabUrl!!, gitLabProject!!.pathWithNamespace, root, rootPassword, null)
         val user = User.create(root, root, root, root, UserType.GitLab, LfsCredentials(root, rootPassword))
         LfsLocalStorageTest.checkLfs(storage, user)
         LfsLocalStorageTest.checkLfs(storage, user)
@@ -159,7 +167,11 @@ class GitLabIntegrationTest {
 
     @Test
     fun gitlabMappingForAnonymous() {
-        createServer(rootToken!!) { dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server -> openSvnRepository(server, gitlabPublicProject!!, "nobody", "nopassword").latestRevision }
+        createServer(rootApi!!) {
+            dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY)
+        }.use {
+            openSvnRepository(it, gitLabPublicProject!!, "nobody", "nopassword").latestRevision
+        }
     }
 
     /**
@@ -168,8 +180,13 @@ class GitLabIntegrationTest {
     @Ignore
     @Test
     fun gitlabMappingAsUser() {
-        val userToken = createToken(user, userPassword, false)
-        createServer(userToken) { dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY) }.use { server -> openSvnRepository(server, gitlabProject!!, root, rootPassword).latestRevision }
+        login(user, userPassword, false).use {
+            createServer(it) {
+                    dir: Path? -> GitLabMappingConfig(dir!!, GitCreateMode.EMPTY)
+            }.use {
+                openSvnRepository(it, gitLabProject!!, root, rootPassword).latestRevision
+            }
+        }
     }
 
     private class WaitForChefComplete : AbstractWaitStrategy() {

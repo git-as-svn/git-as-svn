@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.io.IOUtils
 import org.eclipse.jetty.io.RuntimeIOException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
@@ -81,7 +80,7 @@ class GitDeltaConsumer internal constructor(private val writer: GitWriter, priva
         if (newFilter != filter) {
             val repo: Repository = writer.branch.repository.git
             TemporaryOutputStream().use { content ->
-                newFilter!!.inputStream(objectId!!).use { inputStream -> filter!!.outputStream(UncloseableOutputStream(content), user).use { outputStream -> IOUtils.copy(inputStream, outputStream) } }
+                newFilter!!.inputStream(objectId!!).use { inputStream -> filter!!.outputStream(UncloseableOutputStream(content), user).use { outputStream -> inputStream.copyTo(outputStream) } }
                 content.toInputStream().use { inputStream ->
                     objectId = GitObject(repo, writer.inserter.insert(Constants.OBJ_BLOB, content.size(), inputStream))
                     newFilter = filter

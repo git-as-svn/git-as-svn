@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlfs.storage.local
 
-import org.apache.commons.io.IOUtils
 import ru.bozaro.gitlfs.pointer.Constants
 import ru.bozaro.gitlfs.pointer.Pointer
 import svnserver.ext.gitlfs.LocalLfsConfig.LfsLayout
@@ -49,21 +48,21 @@ class LfsLocalReader private constructor(private val meta: Map<String, String>, 
     companion object {
         @Throws(IOException::class)
         fun create(layout: LfsLayout, dataRoot: Path, metaRoot: Path?, oid: String): LfsLocalReader? {
-            var meta: Map<String, String>?
+            val meta: Map<String, String>?
             val dataPath: Path? = LfsLocalStorage.getPath(layout, dataRoot, oid, "")
             if (metaRoot != null) {
                 val metaPath: Path = LfsLocalStorage.getPath(layout, metaRoot, oid, ".meta") ?: return null
                 try {
-                    Files.newInputStream(metaPath).use { stream -> meta = Pointer.parsePointer(IOUtils.toByteArray(stream)) }
+                    meta = Pointer.parsePointer(Files.readAllBytes(metaPath))
                 } catch (ignored: NoSuchFileException) {
                     return null
                 }
                 if (meta == null) throw IOException("Corrupt meta file: $metaPath")
-                if (meta!![Constants.OID] != oid) {
-                    throw IOException("Corrupt meta file: " + metaPath + " - unexpected oid:" + meta!![Constants.OID])
+                if (meta[Constants.OID] != oid) {
+                    throw IOException("Corrupt meta file: " + metaPath + " - unexpected oid:" + meta[Constants.OID])
                 }
                 val gzipPath: Path? = LfsLocalStorage.getPath(layout, dataRoot, oid, ".gz")
-                if (gzipPath != null && Files.exists(gzipPath)) return LfsLocalReader(meta!!, gzipPath, true)
+                if (gzipPath != null && Files.exists(gzipPath)) return LfsLocalReader(meta, gzipPath, true)
             } else {
                 if (dataPath == null || !Files.isRegularFile(dataPath)) return null
                 meta = hashMapOf(
@@ -71,7 +70,7 @@ class LfsLocalReader private constructor(private val meta: Map<String, String>, 
                     Constants.SIZE to Files.size(dataPath).toString()
                 )
             }
-            return if (dataPath != null && Files.isRegularFile(dataPath)) LfsLocalReader(meta!!, dataPath, false) else null
+            return if (dataPath != null && Files.isRegularFile(dataPath)) LfsLocalReader(meta, dataPath, false) else null
         }
     }
 }

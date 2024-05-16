@@ -6,6 +6,11 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Drop support for GitLab older than 10.2
+* Migrate from java-gitlab-api to gitlab4j-api
+
 == 3.0.0
 
 * Use virtual threads by default

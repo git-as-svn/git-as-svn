@@ -4,7 +4,7 @@
 :filename: _gitlab.adoc
 include::_feedback.adoc[]
 
-git-as-svn supports integration with https://gitlab.com/[GitLab] >= 9.3.3.
+git-as-svn supports integration with https://gitlab.com/[GitLab] >= 10.2.
 
 This includes:
 
