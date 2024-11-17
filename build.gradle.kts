@@ -1,13 +1,14 @@
 import org.ajoberstar.grgit.Grgit
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "8.5"
+    gradleVersion = "8.11"
     distributionType = Wrapper.DistributionType.ALL
 }
 
@@ -26,6 +27,7 @@ plugins {
 version = "4.0.0"
 
 val javaVersion = JavaVersion.VERSION_21
+val jvmTarget = JvmTarget.JVM_21
 
 idea {
     project.jdkName = javaVersion.name
@@ -56,7 +58,7 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = javaVersion.toString()
+    compilerOptions.jvmTarget = jvmTarget
 }
 
 tasks.withType<Test> {
@@ -107,15 +109,6 @@ dependencies {
 
     testImplementation("org.testcontainers:testcontainers:1.20.3")
     testImplementation("org.testng:testng:7.10.2")
-
-    constraints {
-        implementation("org.apache.httpcomponents:httpclient") {
-            version {
-                require("4.5.12")
-                because("https://issues.apache.org/jira/browse/HTTPCLIENT-2047")
-            }
-        }
-    }
 }
 
 tasks.jar {
