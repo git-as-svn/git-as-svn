@@ -40,7 +40,7 @@ IMPORTANT: Negated path masks (`!/path/`) are not supported
 
 git-as-svn transparently builds `svn:eol-style`, `svn:mime-type` and `svn:auto-props` Subversion Properties based on `.gitattributes` files in Git repository.
 
-For example:
+For example, create `.gitattributes` with the following contents:
 
 ..gitattributes
 ----
@@ -49,7 +49,7 @@ For example:
 *.bin binary
 ----
 
-Add property to the directory `svn:auto-props` with the contents:
+It will be automatically exposed to Subversion via `svn:auto-props` property:
 
 ----
 $ svn pl -v <repo>
@@ -60,7 +60,7 @@ Properties on '<repo>':
     *.bin = svn:mime-type=application/octet-stream
 ----
 
-Additionally, individual files that match `.gitattributes` entries, will get corresponding Subversion Properties:
+Additionally, individual files that match `.gitattributes` entries, will get corresponding Subversion properties:
 
 ----
 $ svn pl -v <repo>/native.txt
