@@ -50,6 +50,7 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
     private val cache = local.shared.cacheDB.hashMap("gitlab.projectAccess.${gitlabProject.id}", Serializer.STRING, Serializer.JAVA)
         .expireAfterCreate(config.cacheTimeSec, TimeUnit.SECONDS)
         .expireAfterUpdate(config.cacheTimeSec, TimeUnit.SECONDS)
+        .expireAfterGet(config.cacheTimeSec, TimeUnit.SECONDS)
         .expireMaxSize(config.cacheMaximumSize)
         .createOrOpen() as HTreeMap<String, SerializableOptional<GitlabProjectCache>>
 

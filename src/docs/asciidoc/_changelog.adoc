@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix GitLab access cache expiration
+
 == 4.0.0
 
 * Drop support for GitLab older than 10.2
