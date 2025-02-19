@@ -64,12 +64,19 @@ internal class GitLabMapping(private val context: SharedContext, private val con
         removeRepository(project.id, project.pathWithNamespace)
         val basePath = ConfigHelper.joinPath(context.basePath, config.path)
         val sha256 = Hashing.sha256().hashString(project.id.toString(), Charset.defaultCharset()).toString()
+
         var relativeRepoPath = Paths.get(HASHED_PATH, sha256.substring(0, 2), sha256.substring(2, 4), "$sha256.git")
         var repoPath = basePath.resolve(relativeRepoPath)
-        if (!Files.exists(repoPath)) {
+
+        if (Files.exists(repoPath)) {
+            log.info("Using hashed repository path: {}", repoPath)
+        } else {
             relativeRepoPath = Paths.get(project.pathWithNamespace + ".git")
-            repoPath = basePath.resolve(relativeRepoPath)
+            val repoPathUnhashed = basePath.resolve(relativeRepoPath);
+            log.info("Hashed repository path does not exist: {} , using {}", repoPath, repoPathUnhashed)
+            repoPath = repoPathUnhashed
         }
+
         val local = LocalContext(context, project.pathWithNamespace)
         local.add(VcsAccess::class.java, GitLabAccess(local, config, project, relativeRepoPath, gitLabContext))
         val repository = config.template.create(local, repoPath, branches)
