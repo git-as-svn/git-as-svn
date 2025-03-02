@@ -33,6 +33,9 @@ class GitLabConfig private constructor(var url: String, private var tokenType: C
     var gitalySocket = "/var/opt/gitlab/gitaly/gitaly.socket"
     var gitalyToken = "secret token"
     var glProtocol: GLProtocol = GLProtocol.Web
+    var gitalyLogFormat = "text"
+    var gitalyLogLevel = "info"
+    var gitalyLogFileDescriptor = 2
 
     constructor() : this("http://localhost/", Constants.TokenType.PRIVATE, "")
     constructor(url: String, token: GitLabToken) : this(url, token.type, token.value)

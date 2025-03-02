@@ -21,13 +21,13 @@ import svnserver.context.LocalContext
 import svnserver.ext.gitlab.auth.GitLabUserDB
 import svnserver.ext.gitlab.config.GitLabContext
 import svnserver.repository.VcsAccess
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.Serializable
 import java.net.HttpURLConnection
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashMap
 
 private class GitlabUserCache(user: Owner) : Serializable {
     val id: Long? = user.id
@@ -113,6 +113,17 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         */
         environment["GITALY_BIN_DIR"] = gitlabContext.config.gitalyBinDir
         environment["GITALY_HOOKS_PAYLOAD"] = Base64.getEncoder().encodeToString(JsonHelper.mapper.writeValueAsBytes(hooksPayload))
+
+        // See https://gitlab.com/gitlab-org/gitaly/-/merge_requests/7102
+        val logConfig = HashMap<String, Any>()
+        logConfig["format"] = gitlabContext.config.gitalyLogFormat
+        logConfig["level"] = gitlabContext.config.gitalyLogLevel
+
+        val gitalyLogConfiguration = HashMap<String, Any>()
+        gitalyLogConfiguration["Config"] = logConfig
+        gitalyLogConfiguration["FileDescriptor"] = gitlabContext.config.gitalyLogFileDescriptor
+        environment["GITALY_LOG_CONFIGURATION"] = JsonHelper.mapper.writeValueAsString(gitalyLogConfiguration)
+
         environment["GITALY_REPO"] = gitalyRepoString
         environment["GITALY_SOCKET"] = gitlabContext.config.gitalySocket
         environment["GITALY_TOKEN"] = gitlabContext.config.gitalyToken
