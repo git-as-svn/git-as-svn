@@ -114,9 +114,7 @@ repositoryMapping: !gitlabMapping
       hooksPath: /opt/gitlab/embedded/service/gitaly-ruby/git-hooks
 ----
 
-. {blank}
-+
-IMPORTANT: Restart git-as-svn after changing its config.
+. *Restart git-as-svn after changing its config*.
 If your OS uses Systemd, this can be done via `sudo systemctl restart git-as-svn`.
 
 . Add `git-as-svn:<branch>` topics to whatever repositories you want to add to git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
@@ -152,7 +150,10 @@ lfsMode: null
 == Full configuration file example
 
 ./etc/git-as-svn/git-as-svn.conf
+[%collapsible]
+====
 [source,yaml]
 ----
 include::examples/config-gitlab.yml[]
 ----
+====
