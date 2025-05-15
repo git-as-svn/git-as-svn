@@ -88,7 +88,7 @@ dependencies {
     implementation("org.mapdb:mapdb:3.1.0")
     implementation("com.unboundid:unboundid-ldapsdk:7.0.2")
     implementation("org.eclipse.jetty:jetty-servlet:11.0.25")
-    implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.6")
+    implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.10")
     implementation("org.bitbucket.b_c:jose4j:0.9.6")
     implementation("com.github.zeripath:java-gitea-api:1.18.0")
 
