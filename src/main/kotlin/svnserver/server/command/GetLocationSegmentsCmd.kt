@@ -24,7 +24,7 @@ import kotlin.math.min
  * Before sending response, server sends location entries, ending with "done".
  * location-entry: ( range-start:number range-end:number [ abs-path:string ] ) | done
  * response: ( )
-</pre> *
+ * </pre>
  *
  * @author a.navrotskiy
  */

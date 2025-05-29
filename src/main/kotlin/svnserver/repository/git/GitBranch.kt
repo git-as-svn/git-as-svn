@@ -340,7 +340,14 @@ class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     }
 
     fun getLastChange(nodePath: String, beforeRevision: Int): Int? {
-        if (nodePath.isEmpty()) return beforeRevision
+        if (nodePath.isEmpty()) {
+            return if (beforeRevision >= 0) {
+                beforeRevision
+            } else {
+                null
+            }
+        }
+
         try {
             lastUpdatesLock.readLock().lock()
             val revs: IntArray? = lastUpdates[nodePath]

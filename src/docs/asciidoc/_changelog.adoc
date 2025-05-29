@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix infinite loop in `get-location-segments` command
+
 == 4.2.0
 
 * Fix GitLab 17.3+ hooks compatibility
