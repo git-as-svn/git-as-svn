@@ -7,7 +7,7 @@
  */
 package svnserver.ext.gitlab.config
 
-import org.gitlab4j.api.Constants
+import org.gitlab4j.models.Constants
 import ru.bozaro.gitlfs.client.auth.AuthProvider
 import ru.bozaro.gitlfs.client.auth.BasicAuthProvider
 import svnserver.auth.User

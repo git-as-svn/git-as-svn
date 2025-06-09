@@ -12,8 +12,8 @@ import com.google.api.client.auth.oauth2.PasswordTokenRequest
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import org.gitlab4j.api.Constants
 import org.gitlab4j.api.GitLabApi
+import org.gitlab4j.models.Constants
 import svnserver.context.Shared
 import svnserver.context.SharedContext
 import java.io.IOException

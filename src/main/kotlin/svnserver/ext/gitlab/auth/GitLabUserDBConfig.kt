@@ -7,8 +7,8 @@
  */
 package svnserver.ext.gitlab.auth
 
-import org.gitlab4j.api.Constants
 import org.gitlab4j.api.GitLabApi
+import org.gitlab4j.models.Constants
 import svnserver.auth.UserDB
 import svnserver.config.UserDBConfig
 import svnserver.context.SharedContext
