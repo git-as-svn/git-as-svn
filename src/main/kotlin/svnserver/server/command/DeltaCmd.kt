@@ -74,12 +74,12 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
     }
 
     class DeleteParams(val path: String)
+
     class SetPathParams internal constructor(val path: String, val rev: Int, val startEmpty: Boolean, private val lockToken: Array<String>, depth: String) {
-        val depth: Depth = Depth.parse(depth)
+        val depth: Depth = Depth.parse(depth) ?: Depth.Empty
         override fun toString(): String {
             return ("SetPathParams{" + "path='" + path + '\'' + ", rev=" + rev + ", startEmpty=" + startEmpty + ", lockToken=" + lockToken.contentToString() + ", depth=" + depth + '}')
         }
-
     }
 
     private class FailureInfo(parser: SvnServerParser) {
@@ -263,7 +263,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class, SVNException::class)
         private fun updateEntry(
-            context: SessionContext, wcPath: String, oldFile: GitFile?, newFile: GitFile?, parentTokenId: String, rootDir: Boolean, wcDepth: Depth, requestedDepth: Depth
+            context: SessionContext, wcPath: String, oldFile: GitFile?, newFile: GitFile?, parentTokenId: String, rootDir: Boolean, wcDepth: Depth, requestedDepth: Depth?
         ) {
             if (oldFile != null) if (newFile == null || oldFile.kind != newFile.kind) removeEntry(context, wcPath, oldFile.lastChange.id, parentTokenId)
             if (newFile == null) return
@@ -271,10 +271,13 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                 sendAbsent(context, newFile, parentTokenId)
                 return
             }
-            if (newFile.isDirectory) updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir, wcDepth, requestedDepth) else {
+
+            if (newFile.isDirectory) {
+                updateDir(context, wcPath, oldFile, newFile, parentTokenId, rootDir, wcDepth, requestedDepth)
+            } else {
                 try {
                     updateFile(context, wcPath, oldFile, newFile, parentTokenId)
-                } catch (ignored: SvnForbiddenException) {
+                } catch (_: SvnForbiddenException) {
                     sendAbsent(context, newFile, parentTokenId)
                 }
             }
@@ -282,23 +285,38 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class, SVNException::class)
         private fun updateDirEntries(
-            context: SessionContext, wcPath: String, oldFile: GitFile?, newFile: GitFile, tokenId: String, wcDepth: Depth, requestedDepth: Depth
+            context: SessionContext, wcPath: String, oldFile: GitFile?, newFile: GitFile, tokenId: String, wcDepth: Depth, requestedDepth: Depth?
         ) {
-            val dirAction = wcDepth.determineAction(requestedDepth, true)
-            val fileAction = wcDepth.determineAction(requestedDepth, false)
             val forced = HashSet(forcedPaths.getOrDefault(wcPath, emptySet()))
             val oldEntries = handleDeletedEntries(newFile, oldFile, wcPath, context, tokenId, forced)
 
             for (newEntry in newFile.entries.values.map { it.get() }) {
                 val entryPath: String = joinPath(wcPath, newEntry.fileName)
-                val oldEntry: GitFile? = getPrevFile(context, entryPath, oldEntries[newEntry.fileName])
-                val action: Depth.Action = if (newEntry.isDirectory) dirAction else fileAction
-                if (!forced.remove(entryPath) && (newEntry == oldEntry) && (action == Depth.Action.Normal) && (requestedDepth === wcDepth)) // Same entry with same depth parameter.
+
+                val entryWcDepth = paths[entryPath]?.depth ?: wcDepth.deepen(newEntry.isDirectory)
+                val entryRequestedDepth = requestedDepth?.deepen(newEntry.isDirectory)
+
+                if (entryWcDepth == null && entryRequestedDepth == null)
                     continue
-                if (action == Depth.Action.Skip) continue
-                val entryDepth: Depth = getWcDepth(entryPath, wcDepth)
-                updateEntry(context, entryPath, if (action == Depth.Action.Upgrade) null else oldEntry, newEntry, tokenId, false, entryDepth, requestedDepth.deepen())
+
+                if (requestedDepth != null && entryRequestedDepth == null)
+                    continue
+
+                val oldEntry: GitFile? = if (entryWcDepth != null) getPrevFile(context, entryPath, oldEntries[newEntry.fileName]) else null
+                if (!forced.remove(entryPath) && newEntry == oldEntry && entryWcDepth == entryRequestedDepth)
+                    continue
+
+                updateEntry(
+                    context,
+                    entryPath,
+                    oldEntry,
+                    newEntry,
+                    tokenId,
+                    false,
+                    entryWcDepth ?: Depth.Empty,
+                    entryRequestedDepth)
             }
+
         }
 
         private fun handleDeletedEntries(newFile: GitFile, oldFile: GitFile?, wcPath: String, context: SessionContext, tokenId: String, forced: HashSet<String>): Map<String, GitFile> {
@@ -383,16 +401,6 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
             }
         }
 
-        private fun getWcDepth(wcPath: String, parentWcDepth: Depth): Depth {
-            val params: SetPathParams = paths[wcPath] ?: return parentWcDepth.deepen()
-            return params.depth
-        }
-
-        private fun getStartEmpty(wcPath: String): Boolean {
-            val params: SetPathParams? = paths[wcPath]
-            return params != null && params.startEmpty
-        }
-
         @Throws(IOException::class, SVNException::class)
         private fun getPrevFile(context: SessionContext, wcPath: String, oldFile: GitFile?): GitFile? {
             if (deletedPaths.contains(wcPath)) return null
@@ -408,7 +416,7 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
 
         @Throws(IOException::class, SVNException::class)
         private fun updateDir(
-            context: SessionContext, wcPath: String, prevFile: GitFile?, newFile: GitFile, parentTokenId: String, rootDir: Boolean, wcDepth: Depth, requestedDepth: Depth
+            context: SessionContext, wcPath: String, prevFile: GitFile?, newFile: GitFile, parentTokenId: String, rootDir: Boolean, wcDepth: Depth, requestedDepth: Depth?
         ) {
             val tokenId: String
             val header: HeaderEntry?
@@ -424,9 +432,11 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                 }
                 oldFile = header.file
             }
-            if (getStartEmpty(wcPath)) {
+
+            if (paths[wcPath]?.startEmpty ?: false) {
                 oldFile = null
             }
+
             if (rootDir) {
                 sendRevProps(getWriter(context), newFile, "dir", tokenId)
             }
