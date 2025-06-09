@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== Unreleased
+
+* Fix sparse checkout when directory with empty depth has nested children with non-empty depth
+
 == 4.2.1
 
 * Fix infinite loop in `get-location-segments` command

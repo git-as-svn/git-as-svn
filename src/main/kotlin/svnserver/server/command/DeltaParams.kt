@@ -23,7 +23,7 @@ open class DeltaParams internal constructor(
     val path: String,
     targetPath: String,
     val textDeltas: Boolean,
-    val depth: Depth,
+    val depth: Depth?,
     val sendCopyFrom: SendCopyFrom,  /*
        * Broken-minded SVN feature we're unlikely to support EVER.
        * <p>

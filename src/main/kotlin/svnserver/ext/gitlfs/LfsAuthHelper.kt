@@ -100,7 +100,7 @@ object LfsAuthHelper {
 
         companion object {
             fun find(value: String?): AuthMode? {
-                for (authMode in values()) if (authMode.name.lowercase() == value) return authMode
+                for (authMode in entries) if (authMode.name.lowercase() == value) return authMode
                 return null
             }
         }

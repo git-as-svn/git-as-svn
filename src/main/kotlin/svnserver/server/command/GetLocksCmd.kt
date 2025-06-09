@@ -50,6 +50,6 @@ class GetLocksCmd : BaseCmd<GetLocksCmd.Params>() {
     }
 
     class Params(val path: String, depth: Array<String>) {
-        val depth: Depth = if (depth.isEmpty()) Depth.Infinity else Depth.parse(depth[0])
+        val depth: Depth = (if (depth.isEmpty()) null else Depth.parse(depth[0])) ?: Depth.Infinity
     }
 }
