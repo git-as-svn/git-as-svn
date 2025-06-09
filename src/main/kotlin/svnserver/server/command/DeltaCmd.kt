@@ -303,7 +303,9 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                 updateEntry(
                     context,
                     entryPath,
-                    if (action == Depth.Action.Upgrade) null else oldEntry, newEntry, tokenId,
+                    if (action == Depth.Action.Upgrade) null else oldEntry,
+                    newEntry,
+                    tokenId,
                     false,
                     entryDepth ?: wcDepth.deepen(),
                     requestedDepth.deepen())
