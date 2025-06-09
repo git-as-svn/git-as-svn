@@ -24,7 +24,7 @@ plugins {
     application
 }
 
-version = "4.2.1"
+version = "4.3.0"
 
 val javaVersion = JavaVersion.VERSION_21
 val jvmTarget = JvmTarget.JVM_21

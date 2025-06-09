@@ -6,9 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
-== Unreleased
+== 4.3.0
 
 * Fix sparse checkout when directory with empty depth has nested children with non-empty depth
+* Upgrade gitlab4j-api to 6.0.0
 
 == 4.2.1
 
