@@ -78,22 +78,15 @@ enum class Depth {
     }
 
     enum class Action {
-        /**
-         * Ignore this entry (it's either below the requested depth, or
-         * if the requested depth is svn_depth_unknown, below the working
-         * copy depth)
-         */
-        Skip,
+        // Ignore this entry (it's either below the requested depth, or
+        // if the requested depth is svn_depth_unknown, below the working
+        // copy depth)
+        Skip,  // Handle the entry as if it were a newly added repository path
 
-        /**
-         * Handle the entry as if it were a newly added repository path
-         * (the client is upgrading to a deeper wc and doesn't currently
-         * have this entry, but it should be there after the upgrade, so we
-         * need to send the whole thing, not just deltas)
-         */
-        Upgrade,
-
-        /** Handle this entry normally */
+        // (the client is upgrading to a deeper wc and doesn't currently
+        // have this entry, but it should be there after the upgrade, so we
+        // need to send the whole thing, not just deltas)
+        Upgrade,  // Handle this entry normally
         Normal
     }
 
@@ -104,7 +97,7 @@ enum class Depth {
         }
 
         fun parse(value: String): Depth {
-            for (depth: Depth in entries) if ((depth.value == value)) return depth
+            for (depth: Depth in values()) if ((depth.value == value)) return depth
             return Unknown
         }
     }

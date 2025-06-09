@@ -295,18 +295,9 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                 val action: Depth.Action = if (newEntry.isDirectory) dirAction else fileAction
                 if (!forced.remove(entryPath) && (newEntry == oldEntry) && (action == Depth.Action.Normal) && (requestedDepth === wcDepth)) // Same entry with same depth parameter.
                     continue
-
-                val entryDepth: Depth? = paths[wcPath]?.depth
-                if (action == Depth.Action.Skip && entryDepth == null)
-                    continue
-
-                updateEntry(
-                    context,
-                    entryPath,
-                    if (action == Depth.Action.Upgrade) null else oldEntry, newEntry, tokenId,
-                    false,
-                    entryDepth ?: wcDepth.deepen(),
-                    requestedDepth.deepen())
+                if (action == Depth.Action.Skip) continue
+                val entryDepth: Depth = getWcDepth(entryPath, wcDepth)
+                updateEntry(context, entryPath, if (action == Depth.Action.Upgrade) null else oldEntry, newEntry, tokenId, false, entryDepth, requestedDepth.deepen())
             }
         }
 
@@ -390,6 +381,11 @@ class DeltaCmd(override val arguments: Class<out DeltaParams>) : BaseCmd<DeltaPa
                 }
                 updateProps(context, "file", tokenId, oldFile, newFile)
             }
+        }
+
+        private fun getWcDepth(wcPath: String, parentWcDepth: Depth): Depth {
+            val params: SetPathParams = paths[wcPath] ?: return parentWcDepth.deepen()
+            return params.depth
         }
 
         private fun getStartEmpty(wcPath: String): Boolean {

@@ -124,15 +124,6 @@ class WCDepthTest {
     }
 
     @Test
-    fun recursiveEmptyUpdate() {
-        checkout("", SVNDepth.EMPTY)
-        update("a", SVNDepth.INFINITY)
-        SvnTestHelper.createFile(server!!.openSvnRepository(), "/a/file", "", emptyMap())
-        update("", null)
-        Assert.assertTrue(Files.exists(wc!!.resolve("a/file")))
-    }
-
-    @Test
     fun files() {
         checkout("a/b", SVNDepth.FILES)
         Assert.assertFalse(Files.exists(wc!!.resolve("c")))
