@@ -14,10 +14,10 @@ jobs:
           java-version: 21 # Oldest supported version
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install build-essential debhelper fakeroot
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Build
-        uses: eskatos/gradle-command-action@v3
-        with:
-          arguments: assembleDist
+        run: ./gradlew assembleDist
       - name: Store docs
         uses: actions/upload-artifact@v4
         with:
@@ -57,10 +57,10 @@ jobs:
       - name: Set up env
         if: matrix.env != ''
         run: echo "${{ matrix.env }}" >> "${GITHUB_ENV}"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Run tests
-        uses: eskatos/gradle-command-action@v3
-        with:
-          arguments: test
+        run: ./gradlew test
   docs:
     name: Publish docs
     needs: [package, test]
