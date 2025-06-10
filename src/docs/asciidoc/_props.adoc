@@ -112,7 +112,7 @@ If you get "Commit failed: Invalid svn properties on file" error when trying to 
 
 . Decide if this file is text or binary
 * If *text*, go to `.gitattributes` and add `text` entry for your file extension.
-You may optionally want to specify https://git-scm.com/docs/gitattributes#_code_eol_code[EOL behavior].
+You may optionally want to specify https://git-scm.com/docs/gitattributes#_eol[EOL behavior].
 * If *binary*, go to `.gitattributes` and add `-text` entry for your file extension
 . Commit `.gitattributes`
 . `svn up` in working copy root
