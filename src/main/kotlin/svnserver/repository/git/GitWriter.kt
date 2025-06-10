@@ -127,7 +127,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                     for (entry in expected.entries) {
                         delta.append("  ").append(entry.key).append(" = \"").append(entry.value).append("\"\n")
                     }
-                    delta.append("Actual:\n")
+                    delta.append("\nActual:\n")
                     for (entry in props.entries) {
                         delta.append("  ").append(entry.key).append(" = \"").append(entry.value).append("\"\n")
                     }
@@ -148,25 +148,25 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         fun done() {
             if (propertyMismatch.isNotEmpty()) {
                 val message: StringBuilder = StringBuilder()
+
                 for (entry: Map.Entry<String, Set<String>> in propertyMismatch.entries) {
                     if (message.isNotEmpty()) {
                         message.append("\n")
                     }
                     message.append("Invalid svn properties on files:\n")
                     for (path: String? in entry.value) {
-                        message.append("  ").append(path).append("\n")
+                        message.append("  $path\n")
                     }
-                    message.append(entry.key)
+                    message.append("\n").append(entry.key)
                 }
-                message.append(
-                    ("\n" + "----------------\n" + "Subversion properties must be consistent with Git config files:\n")
-                )
+
+                message.append("\n----------------\nSubversion properties must be consistent with Git config files:\n")
+
                 for (configFile: String? in PropertyMapping.registeredFiles) {
-                    message.append("  ").append(configFile).append('\n')
+                    message.append("  $configFile\n")
                 }
-                message.append(
-                    "\n" + "For more detailed information, see:"
-                ).append("\n").append(ReferenceLink.InvalidSvnProps.link)
+
+                message.append("\n\nFor more detailed information, see:\n\n").append(">>>>> ").append(ReferenceLink.InvalidSvnProps.link).append(" <<<<<\n\n")
                 throw SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()))
             }
         }
