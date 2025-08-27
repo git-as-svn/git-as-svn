@@ -16,9 +16,9 @@ plugins {
     id("com.github.ben-manes.versions") version "0.52.0"
     id("com.github.hierynomus.license") version "0.16.1"
     id("org.ajoberstar.grgit") version "5.3.2"
-    id("org.asciidoctor.jvm.convert") version "4.0.4"
-    id("org.asciidoctor.jvm.pdf") version "4.0.4"
-    id("org.asciidoctor.jvm.epub") version "4.0.4"
+    id("org.asciidoctor.jvm.convert") version "4.0.5"
+    id("org.asciidoctor.jvm.pdf") version "4.0.5"
+    id("org.asciidoctor.jvm.epub") version "4.0.5"
     id("org.jetbrains.kotlin.jvm") version "2.2.10"
     idea
     application
