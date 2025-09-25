@@ -13,7 +13,7 @@ tasks.wrapper {
 }
 
 plugins {
-    id("com.github.ben-manes.versions") version "0.52.0"
+    id("com.github.ben-manes.versions") version "0.53.0"
     id("com.github.hierynomus.license") version "0.16.1"
     id("org.ajoberstar.grgit") version "5.3.3"
     id("org.asciidoctor.jvm.convert") version "4.0.5"
