@@ -108,7 +108,7 @@ dependencies {
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0")
 
     testImplementation("org.testcontainers:testcontainers:2.0.3")
-    testImplementation("org.testng:testng:7.11.0")
+    testImplementation("org.testng:testng:7.12.0")
 }
 
 tasks.jar {
