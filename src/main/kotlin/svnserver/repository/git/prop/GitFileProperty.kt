@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@ConsistentCopyVisibility
 internal data class GitFileProperty private constructor(private val matcher: PathMatcher, private val property: String, private val value: String?) : GitProperty {
     override fun apply(props: MutableMap<String, String>) {}
     override val filterName: String?

@@ -10,6 +10,7 @@ package svnserver.repository.git.prop
 import org.eclipse.jgit.lib.FileMode
 import java.util.concurrent.ConcurrentHashMap
 
+@ConsistentCopyVisibility
 internal data class SimpleFileProperty private constructor(private val property: String, private val value: String?) : GitProperty {
     override fun apply(props: MutableMap<String, String>) {
         if (value != null) {

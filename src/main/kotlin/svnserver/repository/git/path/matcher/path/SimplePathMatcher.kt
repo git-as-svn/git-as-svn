@@ -15,6 +15,7 @@ import svnserver.repository.git.path.PathMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
+@ConsistentCopyVisibility
 data class SimplePathMatcher private constructor(private val nameMatchers: Array<NameMatcher>, private val index: Int) : PathMatcher {
     constructor(nameMatchers: Array<NameMatcher>) : this(nameMatchers, 0)
 
