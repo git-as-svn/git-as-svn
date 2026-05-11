@@ -79,7 +79,7 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    implementation("org.bouncycastle:bcpkix-lts8on:2.73.10")
+    implementation("org.bouncycastle:bcpkix-lts8on:2.73.11")
     implementation("org.eclipse.jgit:org.eclipse.jgit:7.6.0.202603022253-r")
     implementation("org.tmatesoft.svnkit:svnkit:1.10.11")
     implementation("org.yaml:snakeyaml:2.6")
