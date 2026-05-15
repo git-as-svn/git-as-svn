@@ -14,7 +14,7 @@ import svnserver.repository.git.path.NameMatcher
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-data class EqualsMatcher constructor(override val svnMask: String, private val dirOnly: Boolean) : NameMatcher {
+data class EqualsMatcher(override val svnMask: String, private val dirOnly: Boolean) : NameMatcher {
     override fun isMatch(name: String, isDir: Boolean): Boolean {
         return (!dirOnly || isDir) && (svnMask == name)
     }

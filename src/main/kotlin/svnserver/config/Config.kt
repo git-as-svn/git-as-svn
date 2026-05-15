@@ -8,7 +8,7 @@
 package svnserver.config
 
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCompression
-import java.util.*
+import svnserver.parser.SvnServerParser
 import java.util.concurrent.TimeUnit
 
 /**
@@ -29,6 +29,10 @@ class Config {
     var compressionLevel: SVNDeltaCompression = SVNDeltaCompression.LZ4
     var shutdownTimeout: Long = TimeUnit.SECONDS.toMillis(5)
     var parallelIndexing: Boolean = true
+    var stringInterning: Boolean = true
+    var threads: ThreadsConfig = PlatformThreadsConfig()
+    val readBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
+    var writeBufferSize: Int = SvnServerParser.DEFAULT_BUFFER_SIZE
 
     constructor()
     constructor(host: String, port: Int) {

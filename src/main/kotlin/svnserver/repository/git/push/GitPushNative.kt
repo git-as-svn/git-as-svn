@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitPushNative constructor(private val context: LocalContext) : GitPusher {
+internal class GitPushNative(private val context: LocalContext) : GitPusher {
     @Throws(SVNException::class, IOException::class)
     override fun push(repository: Repository, commitId: ObjectId, branch: String, userInfo: User): Boolean {
         try {

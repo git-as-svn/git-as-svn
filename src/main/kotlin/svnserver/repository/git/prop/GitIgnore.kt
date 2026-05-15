@@ -27,7 +27,7 @@ import java.util.regex.PatternSyntaxException
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal data class GitIgnore constructor(
+internal data class GitIgnore(
     // svn:ignore
     private val local: Array<String>,
     // svn:global-ignores
@@ -114,7 +114,7 @@ internal data class GitIgnore constructor(
          * @param stream Original file content.
          */
         @Throws(IOException::class)
-        fun parseConfig(stream: InputStream): GitIgnore {
+        fun parseConfig(stream: InputStream, stringInterner: (String) -> String = { s -> s }): GitIgnore {
             val reader = BufferedReader(InputStreamReader(stream, StandardCharsets.UTF_8))
 
             val localList = ArrayList<String>()
@@ -124,7 +124,7 @@ internal data class GitIgnore constructor(
                 val line = trimLine(txt)
                 if (line.isEmpty()) continue
                 try {
-                    val wildcard = Wildcard(line)
+                    val wildcard = Wildcard(line, stringInterner)
                     if (wildcard.isSvnCompatible) {
                         processMatcher(localList, globalList, matchers, wildcard.matcher)
                     }

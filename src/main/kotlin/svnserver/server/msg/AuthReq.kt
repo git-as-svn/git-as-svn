@@ -16,7 +16,7 @@ package svnserver.server.msg
  * @author a.navrotskiy
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class AuthReq constructor(val mech: String, private val token: Array<String>) {
+class AuthReq(val mech: String, private val token: Array<String>) {
     fun getToken(): String {
         return if (token.isEmpty()) "" else token[0]
     }

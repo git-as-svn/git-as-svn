@@ -30,7 +30,7 @@ class GitLabHookEvent {
     val pathWithNamespace: String? = null
 
     @JsonProperty("project_id")
-    val projectId: Int? = null
+    val projectId: Long? = null
 
     companion object {
         private val mapper = ObjectMapper()

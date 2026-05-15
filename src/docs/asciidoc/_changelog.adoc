@@ -6,6 +6,101 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 4.4.0
+
+* Add `svn:externals` support
+
+== 4.3.0
+
+* Fix sparse checkout when directory with empty depth has nested children with non-empty depth
+* Upgrade gitlab4j-api to 6.0.0
+
+== 4.2.1
+
+* Fix infinite loop in `get-location-segments` command
+
+== 4.2.0
+
+* Fix GitLab 17.3+ hooks compatibility
+
+== 4.1.0
+
+* Fix GitLab access cache expiration
+
+== 4.0.0
+
+* Drop support for GitLab older than 10.2
+* Migrate from java-gitlab-api to gitlab4j-api
+* Fix compatibility with GitLab 16.9+
+
+== 3.0.0
+
+* Use virtual threads by default
+* Require Java 21+
+
+== 2.9.8
+
+* Fix chaos in changed files in `svn log`
+
+== 2.9.7
+
+* Remove legacy code that could be a source of slowdown when working with LFS files
+
+== 2.9.6
+
+* More memory optimizations
+
+== 2.9.5
+
+* Add configurable cache policy for in-memory git entries
+
+== 2.9.4
+
+* Fix memory regressions
+
+== 2.9.3
+
+* More memory optimizations
+
+== 2.9.2
+
+* Fix `svn up` protocol error
+* More memory optimizations
+
+== 2.9.1
+
+* Unsorted memory optimizations
+
+== 2.8.1
+
+* Do not authenticate users by access token if they enter wrong username
+* Update snakeyaml to 2.2
+
+== 2.8.0
+
+* Update dependencies
+* Experimental string interning feature
+
+== 2.7.1
+
+* Update dependencies
+* Add option to authenticate using GitLab access tokens
+
+== 2.6.0
+
+* Update dependencies
+* Fix git-as-svn not caching visibility of non-public GitLab projects
+
+== 2.5.0
+
+* Update dependencies
+* Fix compatibility with GitLab >= 15.2
+
+== 2.4.0
+
+* Update dependencies
+* Fix compatibility with Gitea >= 1.16. https://github.com/git-as-svn/git-as-svn/issues/530[#530]
+
 == 2.3.0
 
 * Update dependencies

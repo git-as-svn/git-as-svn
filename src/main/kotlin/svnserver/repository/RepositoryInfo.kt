@@ -15,4 +15,4 @@ import svnserver.repository.git.GitBranch
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class RepositoryInfo constructor(val baseUrl: SVNURL, val branch: GitBranch)
+class RepositoryInfo(val baseUrl: SVNURL, val branch: GitBranch)

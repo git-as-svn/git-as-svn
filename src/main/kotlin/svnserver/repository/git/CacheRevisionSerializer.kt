@@ -16,19 +16,19 @@ import svnserver.repository.git.cache.CacheRevision
 import java.io.IOException
 import java.util.*
 
-internal class CacheRevisionSerializer : GroupSerializerObjectArray<CacheRevision>() {
+internal class CacheRevisionSerializer(val stringInterner: (String) -> String) : GroupSerializerObjectArray<CacheRevision>() {
     @Throws(IOException::class)
     override fun serialize(out: DataOutput2, value: CacheRevision) {
         val objectId: ObjectId? = value.gitCommitId
         out.writeBoolean(objectId != null)
         if (objectId != null) ObjectIdSerializer.instance.serialize(out, objectId)
-        out.writeInt(value.getRenames().size)
-        for (en: Map.Entry<String, String> in value.getRenames().entries) {
+        out.writeInt(value.renames.size)
+        for (en: Map.Entry<String, String> in value.renames.entries) {
             STRING.serialize(out, en.key)
             STRING.serialize(out, en.value)
         }
-        out.writeInt(value.getFileChange().size)
-        for (en: Map.Entry<String, CacheChange> in value.getFileChange().entries) {
+        out.writeInt(value.fileChange.size)
+        for (en: Map.Entry<String, CacheChange> in value.fileChange.entries) {
             STRING.serialize(out, en.key)
             val oldFile: ObjectId? = en.value.oldFile
             out.writeBoolean(oldFile != null)
@@ -42,23 +42,19 @@ internal class CacheRevisionSerializer : GroupSerializerObjectArray<CacheRevisio
     @Throws(IOException::class)
     override fun deserialize(input: DataInput2, available: Int): CacheRevision {
         val objectId: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
-        val renames = TreeMap<String, String>()
         val renamesCount: Int = input.readInt()
+        val renames = HashMap<String, String>(renamesCount)
         for (i in 0 until renamesCount) {
-            renames[STRING.deserialize(input, available)] = STRING.deserialize(input, available)
+            renames[stringInterner(STRING.deserialize(input, available))] = stringInterner(STRING.deserialize(input, available))
         }
-        val fileChange = TreeMap<String, CacheChange>()
         val fileChangeCount: Int = input.readInt()
+        val fileChange = HashMap<String, CacheChange>(fileChangeCount)
         for (i in 0 until fileChangeCount) {
-            val name: String = STRING.deserialize(input, available)
+            val name: String = stringInterner(STRING.deserialize(input, available))
             val oldFile: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
             val newFile: ObjectId? = if (input.readBoolean()) ObjectIdSerializer.instance.deserialize(input, available) else null
             fileChange[name] = CacheChange(oldFile, newFile)
         }
         return CacheRevision(objectId, renames, fileChange)
-    }
-
-    companion object {
-        val instance: CacheRevisionSerializer = CacheRevisionSerializer()
     }
 }

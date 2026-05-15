@@ -24,13 +24,7 @@ import java.util.concurrent.TimeUnit
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class GitRevision internal constructor(
-    private val branch: GitBranch,
-    val cacheCommit: ObjectId,
-    val id: Int,
-    private val renames: Map<String, VcsCopyFrom>,
-    private val gitOldCommit: RevCommit?,
-    val gitNewCommit: RevCommit?,
-    commitTimeSec: Int
+    private val branch: GitBranch, val cacheCommit: ObjectId, val id: Int, private val renames: Map<String, VcsCopyFrom>, private val gitOldCommit: RevCommit?, val gitNewCommit: RevCommit?, commitTimeSec: Int
 ) {
     val date: Long = TimeUnit.SECONDS.toMillis(commitTimeSec.toLong())
     fun getProperties(includeInternalProps: Boolean): Map<String, String> {
@@ -93,7 +87,7 @@ class GitRevision internal constructor(
             }
             val oldTree: GitFile = if (gitOldCommit == null) GitFileEmptyTree(branch, "", id - 1) else GitFileTreeEntry.create(branch, gitOldCommit.tree, id - 1)
             val newTree: GitFile = GitFileTreeEntry.create(branch, gitNewCommit.tree, id)
-            return ChangeHelper.collectChanges(oldTree, newTree, false)
+            return ChangeHelper.collectChanges(oldTree, newTree, false, branch.repository.context.shared.stringInterner)
         }
 
     fun getCopyFrom(fullPath: String): VcsCopyFrom? {

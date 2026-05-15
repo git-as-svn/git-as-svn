@@ -59,14 +59,13 @@ internal class GiteaAccess(local: LocalContext, config: GiteaMappingConfig, priv
         environment["GITEA_REPO_ID"] = "" + repository.id
         environment["GITEA_REPO_IS_WIKI"] = "false"
         environment["GITEA_REPO_NAME"] = repository.name
-        environment["GITEA_REPO_USER"] = repository.owner.login
-        val externalId = user.externalId
+        environment["GITEA_REPO_USER_NAME"] = repository.owner.login
         environment["SSH_ORIGINAL_COMMAND"] = "git"
+        environment["GITEA_PUSHER_NAME"] = user.realName.ifEmpty { user.username }
         if (user.email != null)
             environment["GITEA_PUSHER_EMAIL"] = user.email
-        if (externalId != null) {
-            environment["GITEA_PUSHER_ID"] = user.externalId
-        }
+        if (user.externalId != null)
+            environment["GITEA_PUSHER_ID"] = user.externalId.toString()
     }
 
     @Throws(IOException::class)

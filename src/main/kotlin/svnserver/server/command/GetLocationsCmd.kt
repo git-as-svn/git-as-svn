@@ -88,5 +88,5 @@ class GetLocationsCmd : BaseCmd<GetLocationsCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, val pegRev: Int, val revs: IntArray)
+    class Params(val path: String, val pegRev: Int, val revs: IntArray)
 }

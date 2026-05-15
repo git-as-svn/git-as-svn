@@ -5,16 +5,15 @@
  * including this file, may be copied, modified, propagated, or distributed
  * except according to the terms contained in the LICENSE file.
  */
-package svnserver.repository
+package svnserver.config
 
-import java.io.IOException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
-/**
- * Consumer with VCS exceptions.
- *
- * @author a.navrotskiy
- */
-fun interface VcsSupplier<T> {
-    @Throws(IOException::class)
-    fun get(): T
+class VirtualThreadsConfig : ThreadsConfig {
+    override fun createExecutor(threadNamePrefix: String): ExecutorService {
+        return Executors.newThreadPerTaskExecutor(
+            Thread.ofVirtual().name(threadNamePrefix, 0).factory()
+        )
+    }
 }

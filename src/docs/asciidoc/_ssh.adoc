@@ -91,22 +91,31 @@ gitlab_shell['auth_file'] = "/var/opt/gitlab/ssh-shadow/authorized_keys"
 ----
 
 ./etc/git-as-svn/git-as-svn.conf
+[%collapsible]
+====
 [source,yaml]
 ----
 include::examples/config-gitlab-ssh.yml[]
 ----
+====
 
 ./opt/git-as-svn/bin/git-as-svn-svnserve
+[%collapsible]
+====
 [source,bash]
 ----
 include::../../../tools/git-as-svn-svnserve[]
 ----
+====
 
 ./opt/git-as-svn/bin/git-as-svn-svnserve-tunnel
+[%collapsible]
+====
 [source,bash]
 ----
 include::../../../tools/git-as-svn-svnserve-tunnel[]
 ----
+====
 
 In the second case, if we proxy the `AuthorizedKeysCommand`, and just replace the `command=""` option as above then we have a working solution.
 
@@ -118,6 +127,8 @@ The second is similar but we leave the original response alone for git, just rep
 The first option is described below.
 
 ./assets/sshd_config
+[%collapsible]
+====
 ----
 ...
 # AuthorizedKeysCommand /opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell-authorized-keys-check git %u %k
@@ -125,20 +136,26 @@ The first option is described below.
 AuthorizedKeysCommand /opt/git-as-svn/bin/git-as-svn-authorized-keys-command git %u %k
 AuthorizedKeysCommandUser git
 ...
-
 ----
+====
 
 ./opt/git-as-svn/bin/git-as-svn-authorized-keys-command
+[%collapsible]
+====
 [source,bash]
 ----
 include::../../../tools/git-as-svn-authorized-keys-command[]
 ----
+====
 
 ./etc/git-as-svn/git-as-svn.conf
+[%collapsible]
+====
 [source,yaml]
 ----
 include::examples/config-gitlab.yml[]
 ----
+====
 
 * `/opt/git-as-svn/bin/git-as-svn-svnserve` and `/opt/git-as-svn/bin/git-as-svn-svnserve-tunnel` same as above.
 
@@ -166,20 +183,26 @@ The suggested config, at least for Gitea docker, and assuming that git-as-svn ha
 ...
 SSH_ROOT_PATH=/data/git/ssh-shadow
 ...
-
 ----
 
 ./app/git-as-svn/config.yaml
+[%collapsible]
+====
 [source,yaml]
 ----
 include::examples/config-gitea-ssh.yml[]
 ----
+====
 
 ./app/git-as-svn/bin/git-as-svn-svnserve
+
+[%collapsible]
+====
 [source,bash]
 ----
 include::../../../tools/git-as-svn-svnserve[]
 ----
+====
 
 * `/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as in the gitlab case.
 
@@ -190,10 +213,13 @@ So we would need to move the original gitea from `/app/gitea/gitea` to `/app/git
 And either create `/app/gitea/gitea` as a symbolic link or just copy the below `/app/git-as-svn/bin/git-as-svn-svnserve` as it.
 
 ./app/git-as-svn/bin/git-as-svn-svnserve
+[%collapsible]
+====
 [source,bash]
 ----
 include::../../../tools/git-as-svn-svnserve[]
 ----
+====
 
 `/app/git-as-svn/bin/git-as-svn-svnserve-tunnel` should be the same as in the gitlab case.
 

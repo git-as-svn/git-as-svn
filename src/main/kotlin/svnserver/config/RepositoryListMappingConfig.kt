@@ -28,7 +28,7 @@ import java.util.function.Consumer
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class RepositoryListMappingConfig : RepositoryMappingConfig {
-    private var repositories = TreeMap<String, Entry>()
+    private var repositories = HashMap<String, Entry>()
     private var groups = HashMap<String, Array<String>>()
 
     @Throws(IOException::class)

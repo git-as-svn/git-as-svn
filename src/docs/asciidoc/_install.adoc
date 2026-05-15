@@ -98,7 +98,7 @@ This package contains the `git-lfs-authenticate` script required for <<_lfs.adoc
 
 To try git-as-svn you need:
 
-1. Install Java 11 or later;
+1. Install Java 21 or later;
 2. Download archive from site
 https://github.com/git-as-svn/git-as-svn/releases/latest;
 3. After unpacking the archive change working path to the uncompressed directory and run the command:

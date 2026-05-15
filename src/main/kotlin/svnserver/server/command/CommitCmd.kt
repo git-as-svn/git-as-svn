@@ -75,20 +75,20 @@ class CommitCmd : BaseCmd<Params>() {
         context.checkWrite(context.getRepositoryPath(""))
     }
 
-    class LockInfo constructor(val path: String, val lockToken: String)
-    class Params constructor(val message: String, val locks: Array<LockInfo>, val keepLocks: Boolean)
-    class OpenRootParams constructor(val rev: IntArray, val token: String)
-    class OpenParams constructor(val name: String, val parentToken: String, val token: String, val rev: IntArray)
-    class CopyParams constructor(copyFrom: String, val rev: Int) {
+    class LockInfo(val path: String, val lockToken: String)
+    class Params(val message: String, val locks: Array<LockInfo>, val keepLocks: Boolean)
+    class OpenRootParams(val rev: IntArray, val token: String)
+    class OpenParams(val name: String, val parentToken: String, val token: String, val rev: IntArray)
+    class CopyParams(copyFrom: String, val rev: Int) {
         val copyFrom = if (copyFrom.isEmpty()) null else SVNURL.parseURIEncoded(copyFrom)
     }
 
-    class AddParams constructor(val name: String, val parentToken: String, val token: String, val copyParams: CopyParams)
-    class DeleteParams constructor(val name: String, val rev: IntArray, val parentToken: String)
-    class TokenParams constructor(val token: String)
-    class ChangePropParams constructor(val token: String, val name: String, val value: Array<String>)
-    class ChecksumParams constructor(val token: String, val checksum: Array<String>)
-    class DeltaChunkParams constructor(val token: String, val chunk: ByteArray)
+    class AddParams(val name: String, val parentToken: String, val token: String, val copyParams: CopyParams)
+    class DeleteParams(val name: String, val rev: IntArray, val parentToken: String)
+    class TokenParams(val token: String)
+    class ChangePropParams(val token: String, val name: String, val value: Array<String>)
+    class ChecksumParams(val token: String, val checksum: Array<String>)
+    class DeltaChunkParams(val token: String, val chunk: ByteArray)
     private class FileUpdater(val deltaConsumer: GitDeltaConsumer) : Closeable {
         val reader: SVNDeltaReader = SVNDeltaReader()
 
@@ -100,7 +100,8 @@ class CommitCmd : BaseCmd<Params>() {
 
     private class EntryUpdater(// New parent entry (destination)
         val entry: GitEntry, // Old source entry (source)
-        val source: GitFile?, val head: Boolean
+        val source: GitFile?,
+        val head: Boolean,
     ) {
         val props = if (source != null) HashMap(source.properties) else HashMap()
         val changes = ArrayList<VcsConsumer<GitCommitBuilder>>()
@@ -394,28 +395,32 @@ class CommitCmd : BaseCmd<Params>() {
             parser.readToken(ListBeginToken::class.java)
             val cmd: String = parser.readText()
             log.debug("Editor command: {}", cmd)
-            var command: BaseCmd<*>? = exitCommands[cmd]
-            if (command == null) {
-                context.push { sessionContext: SessionContext -> editorCommand(sessionContext) }
-                command = commands[cmd]
-            }
-            if (command == null) {
-                context.skipUnsupportedCommand(cmd)
-                return
-            }
-            if (aborted) {
-                parser.skipItems()
-                return
-            }
             try {
-                command.process(context, parser)
-            } catch (e: SVNException) {
-                aborted = true
-                throw e
-            } catch (e: Throwable) {
-                log.warn("Exception during in cmd $cmd", e)
-                aborted = true
-                throw e
+                var command: BaseCmd<*>? = exitCommands[cmd]
+                if (command == null) {
+                    context.push { sessionContext: SessionContext -> editorCommand(sessionContext) }
+                    command = commands[cmd]
+                }
+                if (command == null) {
+                    context.skipUnsupportedCommand(cmd)
+                    return
+                }
+                if (aborted) {
+                    parser.skipItems()
+                    return
+                }
+                try {
+                    command.process(context, parser)
+                } catch (e: SVNException) {
+                    aborted = true
+                    throw e
+                } catch (e: Throwable) {
+                    log.warn("Exception during cmd $cmd", e)
+                    aborted = true
+                    throw e
+                }
+            } finally {
+                log.debug("Editor command complete")
             }
         }
 
@@ -457,7 +462,7 @@ class CommitCmd : BaseCmd<Params>() {
             paths = HashMap()
             files = HashMap()
             locks = getLocks(context, params.locks)
-            commands = mapOf(
+            commands = hashMapOf(
                 "add-dir" to LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addDir(sessionContext, args) },
                 "add-file" to LambdaCmd(AddParams::class.java) { sessionContext: SessionContext, args: AddParams -> addFile(sessionContext, args) },
                 "change-dir-prop" to LambdaCmd(ChangePropParams::class.java) { _: SessionContext, args: ChangePropParams -> changeDirProp(args) },
@@ -472,7 +477,7 @@ class CommitCmd : BaseCmd<Params>() {
                 "textdelta-end" to LambdaCmd(TokenParams::class.java) { _: SessionContext, args: TokenParams -> deltaEnd(args) },
                 "apply-textdelta" to LambdaCmd(ChecksumParams::class.java) { _: SessionContext, args: ChecksumParams -> deltaApply(args) },
             )
-            exitCommands = mapOf(
+            exitCommands = hashMapOf(
                 "close-edit" to LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> closeEdit(sessionContext) },
                 "abort-edit" to LambdaCmd(NoParams::class.java) { sessionContext: SessionContext, _: NoParams -> abortEdit(sessionContext) },
             )

@@ -25,8 +25,8 @@ import java.util.function.Consumer
  */
 class GitLabMappingConfig private constructor(var path: String, var createMode: GitCreateMode) : RepositoryMappingConfig {
     var template: GitRepositoryConfig = GitRepositoryConfig(createMode)
-    var cacheTimeSec = 15
-    var cacheMaximumSize = 1000
+    var cacheTimeSec = 15L
+    var cacheMaximumSize = 1000L
 
     constructor() : this("/var/opt/gitlab/git-data/repositories/", GitCreateMode.ERROR)
     constructor(path: Path, createMode: GitCreateMode) : this(path.toAbsolutePath().toString(), createMode)
@@ -34,10 +34,9 @@ class GitLabMappingConfig private constructor(var path: String, var createMode: 
     @Throws(IOException::class)
     override fun create(context: SharedContext, canUseParallelIndexing: Boolean): RepositoryMapping<*> {
         val gitlab = context.sure(GitLabContext::class.java)
-        val api = gitlab.connect()
         // Get repositories.
         val mapping = GitLabMapping(context, this, gitlab)
-        for (project in api.projects) mapping.updateRepository(project)
+        for (project in gitlab.api.projectApi.projects) mapping.updateRepository(project)
         val init = Consumer { repository: GitLabProject ->
             try {
                 repository.initRevisions()

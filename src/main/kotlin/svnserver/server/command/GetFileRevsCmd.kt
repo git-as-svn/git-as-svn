@@ -163,7 +163,7 @@ class GetFileRevsCmd : BaseCmd<GetFileRevsCmd.Params>() {
         fun handle(file: GitFile)
     }
 
-    class Params constructor(
+    class Params(
         val path: String, val startRev: IntArray, val endRev: IntArray,
         /**
          * TODO: issue #26.

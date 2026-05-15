@@ -1,0 +1,13 @@
+[[_externals]]
+= Externals
+
+git-as-svn has basic support for https://svnbook.red-bean.com/en/1.4/svn.advanced.externals.html[Subversion external definitions].
+
+To create an external definition:
+
+. Create `.svn-externals` file in repository directory of your choice
+. Place contents that should appear in `svn:externals` Subversion property in `.svn-externals` file.
+Refer to https://tortoisesvn.net/docs/release/TortoiseSVN_en/tsvn-dug-externals.html[TortoiseSVN docs] or https://svnbook.red-bean.com/en/1.4/svn.advanced.externals.html[svnbook] for supported syntax.
+. Commit `.svn-externals` file
+
+Now, `svn:externals` property will appear on directory and Subversion clients will handle it.

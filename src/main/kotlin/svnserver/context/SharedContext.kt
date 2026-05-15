@@ -20,7 +20,7 @@ import javax.annotation.concurrent.ThreadSafe
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-class SharedContext private constructor(val basePath: Path, val cacheDB: DB, val realm: String) : Context<Shared>(), AutoCloseable {
+class SharedContext private constructor(val basePath: Path, val cacheDB: DB, val realm: String, val stringInterner: (String) -> String) : Context<Shared>(), AutoCloseable {
     @Throws(IOException::class)
     fun ready() {
         for (item in ArrayList(values())) {
@@ -36,8 +36,8 @@ class SharedContext private constructor(val basePath: Path, val cacheDB: DB, val
 
     companion object {
         @Throws(Exception::class)
-        fun create(basePath: Path, realm: String, cacheDb: DB, shared: Collection<SharedConfig>): SharedContext {
-            val context = SharedContext(basePath, cacheDb, realm)
+        fun create(basePath: Path, realm: String, cacheDb: DB, shared: Collection<SharedConfig>, stringInterner: (String) -> String): SharedContext {
+            val context = SharedContext(basePath, cacheDb, realm, stringInterner)
             for (config in shared) {
                 config.create(context)
             }

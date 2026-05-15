@@ -148,15 +148,7 @@ class GitEolTest {
      2.bin = svn:eol-style=native
      
      """.trimIndent()
-                ),
-                Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF),
-                Params(attr, "foo.dat").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
-                Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-                Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
-                Params(attr, "1.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-                Params(attr, "2.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE),
-                Params(attr, "3.md").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE),
-                Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
+                ), Params(attr, "README.md").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_LF), Params(attr, "foo.dat").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE), Params(attr, "foo.txt").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE), Params(attr, "foo.bin").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE), Params(attr, "1.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE), Params(attr, "2.bin").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE), Params(attr, "3.md").prop(SVNProperty.MIME_TYPE, SVNFileUtil.BINARY_MIME_TYPE), Params(attr, "changelog").prop(SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_NATIVE)
             )
             return params.map { arrayOf(it) }.toTypedArray()
         }

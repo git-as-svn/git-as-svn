@@ -15,15 +15,18 @@ import svnserver.Loggers
 import svnserver.ext.gitea.mapping.DirectoryWatcher.DirectoryMapping
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 
 internal class GiteaMapper(apiClient: ApiClient, private val mapping: GiteaMapping) : Thread(), DirectoryMapping {
+    private val lock = ReentrantLock()
     private val toAdd = LinkedList<String>()
     private val toRemove = LinkedList<String>()
     private val repositoryApi: RepositoryApi = RepositoryApi(apiClient)
     override fun run() {
         try {
             while (true) {
-                synchronized(toAdd) {
+                lock.lock()
+                try {
                     run {
                         val it = toRemove.iterator()
                         while (it.hasNext()) {
@@ -50,6 +53,8 @@ internal class GiteaMapper(apiClient: ApiClient, private val mapping: GiteaMappi
                             log.error("Processing error whilst adding repository: {} / {}: {}", owner, repo, e.message)
                         }
                     }
+                } finally {
+                    lock.unlock()
                 }
                 sleep(1000)
             }
@@ -59,24 +64,35 @@ internal class GiteaMapper(apiClient: ApiClient, private val mapping: GiteaMappi
     }
 
     override fun addRepository(owner: String, repo: String) {
-        synchronized(toAdd) { toAdd.add("$owner/$repo") }
+        lock.lock()
+        try {
+            toAdd.add("$owner/$repo")
+        } finally {
+            lock.unlock()
+        }
     }
 
     override fun removeRepositories(owner: String) {
-        synchronized(toAdd) {
+        lock.lock()
+        try {
             for (project in mapping.mapping.values) {
                 if (project.owner == owner) {
                     toRemove.add(project.repositoryName)
                     toAdd.remove(project.repositoryName)
                 }
             }
+        } finally {
+            lock.unlock()
         }
     }
 
     override fun removeRepository(owner: String, repo: String) {
-        synchronized(toAdd) {
+        lock.lock()
+        try {
             toRemove.add("$owner/$repo")
             toAdd.remove("$owner/$repo")
+        } finally {
+            lock.unlock()
         }
     }
 

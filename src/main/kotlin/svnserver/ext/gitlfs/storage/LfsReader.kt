@@ -36,11 +36,6 @@ interface LfsReader {
     val size: Long
 
     /**
-     * MD5 object checksum.
-     */
-    val md5: String?
-
-    /**
      * Object id.
      */
     fun getOid(hashOnly: Boolean): String

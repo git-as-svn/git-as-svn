@@ -26,10 +26,7 @@ import java.util.concurrent.ExecutionException
  * @author Artem V. Navrotskiy
  */
 class CacheUserDB(private val userDB: UserDB, private val cache: Cache<String?, User>) : UserDB {
-    private val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
-    override fun authenticators(): Collection<Authenticator> {
-        return authenticators
-    }
+    override val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
 
     @Throws(SVNException::class)
     override fun check(username: String, password: String): User? {

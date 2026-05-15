@@ -32,8 +32,6 @@ internal class LfsHttpReader(private val lfsClient: Client, private val item: Ba
 
     override val size: Long
         get() = item.size
-    override val md5: String?
-        get() = null
 
     override fun getOid(hashOnly: Boolean): String {
         return if (hashOnly) item.oid.substring(LfsStorage.OID_PREFIX.length) else item.oid

@@ -25,7 +25,7 @@ import svnserver.repository.SendCopyFrom
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class UpdateParams constructor(
+class UpdateParams(
     rev: IntArray,
     target: String,
     recurse: Boolean,

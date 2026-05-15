@@ -18,6 +18,6 @@ import org.tmatesoft.svn.core.SVNURL
  *
  * @author a.navrotskiy
  */
-class ClientInfo constructor(val protocolVersion: Int, val capabilities: Array<String>, url: String, val raClient: String) {
+class ClientInfo(val protocolVersion: Int, val capabilities: Array<String>, url: String, val raClient: String) {
     val url: SVNURL = SVNURL.parseURIEncoded(url)
 }

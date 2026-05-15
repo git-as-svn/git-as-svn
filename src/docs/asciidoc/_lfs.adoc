@@ -4,11 +4,13 @@
 :filename: _lfs.adoc
 include::_feedback.adoc[]
 
-git-as-svn has built-in https://git-lfs.github.com/[Git Large File Storage] server
+git-as-svn has built-in https://git-lfs.github.com/[Git Large File Storage] server.
 
-== Configuration file example
+Configuration file example:
 
 ./etc/git-as-svn/git-as-svn.conf
+[%collapsible]
+====
 [source,yaml]
 ----
 shared:
@@ -56,6 +58,7 @@ shared:
     # secretToken:
     path: /var/git/lfs
 ----
+====
 
 == git-lfs-authenticate
 

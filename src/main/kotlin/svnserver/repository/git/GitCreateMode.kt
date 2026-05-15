@@ -7,7 +7,6 @@
  */
 package svnserver.repository.git
 
-import org.apache.commons.io.IOUtils
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.*
 import java.io.FileNotFoundException
@@ -84,7 +83,7 @@ enum class GitCreateMode {
                 if (stream == null) {
                     throw FileNotFoundException(resourceName)
                 }
-                return inserter.insert(Constants.OBJ_BLOB, IOUtils.toByteArray(stream))
+                return inserter.insert(Constants.OBJ_BLOB, stream.readBytes())
             }
         }
     }

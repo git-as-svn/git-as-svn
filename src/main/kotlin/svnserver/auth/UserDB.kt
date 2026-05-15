@@ -16,7 +16,7 @@ import svnserver.context.Shared
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 interface UserDB : Shared {
-    fun authenticators(): Collection<Authenticator>
+    val authenticators: Collection<Authenticator>
 
     @Throws(SVNException::class)
     fun check(username: String, password: String): User?

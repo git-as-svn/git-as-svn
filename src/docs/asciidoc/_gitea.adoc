@@ -18,10 +18,12 @@ IMPORTANT: git-as-svn requires Sudo Gitea token
 
 IMPORTANT: git-as-svn uses direct file access to Git repositories, so it needs to run from the same user as Gitea
 
-== Configuration file example
+Configuration file example:
 
 ./etc/git-as-svn/git-as-svn.conf
+====
 [source,yaml]
 ----
 include::examples/config-gitea.yml[]
 ----
+====

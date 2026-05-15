@@ -18,7 +18,7 @@ import java.io.IOException
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitObject<T : ObjectId> constructor(val repo: Repository, val `object`: T) {
+class GitObject<T : ObjectId>(val repo: Repository, val `object`: T) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false

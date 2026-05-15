@@ -87,7 +87,7 @@ class GetFileCmd : BaseCmd<GetFileCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(
+    class Params(
         val path: String, val rev: IntArray, val wantProps: Boolean, val wantContents: Boolean,
         /**
          * TODO: issue #30.

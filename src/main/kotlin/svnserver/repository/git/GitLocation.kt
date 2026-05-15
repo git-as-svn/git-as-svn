@@ -15,4 +15,4 @@ import java.nio.file.Path
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitLocation constructor(val fullPath: Path) : Local
+class GitLocation(val fullPath: Path) : Local

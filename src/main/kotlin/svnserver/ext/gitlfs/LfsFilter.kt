@@ -7,7 +7,6 @@
  */
 package svnserver.ext.gitlfs
 
-import org.apache.commons.io.IOUtils
 import org.eclipse.jgit.lib.ObjectId
 import ru.bozaro.gitlfs.common.data.Meta
 import ru.bozaro.gitlfs.pointer.Constants
@@ -34,20 +33,13 @@ import java.io.OutputStream
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class LfsFilter(context: LocalContext, private val storage: LfsStorage?) : GitFilter {
-    private val cacheMd5: MutableMap<String, String>
+    private val cacheMd5: MutableMap<String, String> = GitFilterHelper.getCacheMd5(this, context.shared.cacheDB)
+
     override val name: String
         get() = "lfs"
 
     @Throws(IOException::class)
     override fun getMd5(objectId: GitObject<out ObjectId>): String {
-        val loader = objectId.openObject()
-        loader.openStream().use { stream ->
-            val meta = parseMeta(stream)
-            if (meta != null) {
-                val md5 = getReader(meta).md5
-                if (md5 != null) return md5
-            }
-        }
         return GitFilterHelper.getMd5(this, cacheMd5, null, objectId)
     }
 
@@ -66,7 +58,7 @@ class LfsFilter(context: LocalContext, private val storage: LfsStorage?) : GitFi
         val loader = objectId.openObject()
         loader.openStream().use { stream ->
             val header = ByteArray(Constants.POINTER_MAX_SIZE)
-            val length = IOUtils.read(stream, header, 0, header.size)
+            val length = stream.readNBytes(header, 0, header.size)
             if (length < header.size) {
                 val meta = parseMeta(header, length)
                 if (meta != null) return getReader(meta).openStream()
@@ -126,7 +118,7 @@ class LfsFilter(context: LocalContext, private val storage: LfsStorage?) : GitFi
         @Throws(IOException::class)
         private fun parseMeta(stream: InputStream): Meta? {
             val header = ByteArray(Constants.POINTER_MAX_SIZE)
-            val length = IOUtils.read(stream, header, 0, header.size)
+            val length = stream.readNBytes(header, 0, header.size)
             return if (length >= header.size) null else parseMeta(header, length)
         }
 
@@ -139,7 +131,6 @@ class LfsFilter(context: LocalContext, private val storage: LfsStorage?) : GitFi
     }
 
     init {
-        cacheMd5 = GitFilterHelper.getCacheMd5(this, context.shared.cacheDB)
         val lfsServer = context.shared[LfsServer::class.java]
         if (storage != null && lfsServer != null) {
             context.add(LfsServerEntry::class.java, LfsServerEntry(lfsServer, context, storage))

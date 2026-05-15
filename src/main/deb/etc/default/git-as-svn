@@ -10,7 +10,7 @@
 MALLOC_ARENA_MAX=1
 
 # arguments to pass to java
-JAVA_OPTS="-Xmx256m -Dlog4j.configurationFile=/etc/git-as-svn/log4j2.xml"
+JAVA_OPTS="-Dlog4j.configurationFile=/etc/git-as-svn/log4j2.xml"
 
 # additional arguments to pass to git-as-svn
 GAS_ARGS=""

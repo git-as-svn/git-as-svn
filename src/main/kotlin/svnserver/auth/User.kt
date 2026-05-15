@@ -15,7 +15,7 @@ import java.util.*
  *
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class User constructor(val username: String, val realName: String, val email: String?, val externalId: String?, val isAnonymous: Boolean, val type: UserType, val lfsCredentials: LfsCredentials?) {
+class User(val username: String, val realName: String, val email: String?, val externalId: String?, val isAnonymous: Boolean, val type: UserType, val lfsCredentials: LfsCredentials?) {
     override fun hashCode(): Int {
         var result: Int = username.hashCode()
         result = 31 * result + realName.hashCode()
@@ -37,7 +37,7 @@ class User constructor(val username: String, val realName: String, val email: St
         return username
     }
 
-    class LfsCredentials constructor(val username: String, val password: String)
+    class LfsCredentials(val username: String, val password: String)
     companion object {
         val anonymous: User = User("\$anonymous", "anonymous", null, null, true, UserType.Local, null)
         fun create(username: String, realName: String, email: String?, externalId: String?, type: UserType, lfsCredentials: LfsCredentials?): User {

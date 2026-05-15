@@ -6,6 +6,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      asciidoctor:
+        patterns:
+          - "org.asciidoctor.jvm.*"
 
   - package-ecosystem: "github-actions"
     directory: "/"

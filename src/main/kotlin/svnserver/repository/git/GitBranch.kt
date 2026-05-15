@@ -29,9 +29,10 @@ import svnserver.repository.locks.LockStorage
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class GitBranch constructor(val repository: GitRepository, val shortBranchName: String) {
+class GitBranch(val repository: GitRepository, val shortBranchName: String) {
     val uuid: String
     val gitBranch: String
     private val svnBranch: String
@@ -39,7 +40,7 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
     /**
      * Lock for prevent concurrent pushes.
      */
-    private val pushLock: Any = Any()
+    private val pushLock = ReentrantLock()
     private val revisions = ArrayList<GitRevision>()
     private val revisionByDate = TreeMap<Long, GitRevision>()
     private val revisionByHash = HashMap<ObjectId, GitRevision>()
@@ -228,20 +229,17 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
         val reader: ObjectReader = repository.git.newObjectReader()
         val cacheRevision: CacheRevision = loadCacheRevision(reader, commit, revisions.size)
         val revisionId: Int = revisions.size
-        val copyFroms: MutableMap<String, VcsCopyFrom> = HashMap()
-        for (entry: Map.Entry<String, String> in cacheRevision.getRenames().entries) {
-            copyFroms[entry.key] = VcsCopyFrom(revisionId - 1, entry.value)
-        }
+        val copyFroms = cacheRevision.renames.mapValuesTo(HashMap()) { VcsCopyFrom(revisionId - 1, it.value) }
         val oldCommit: RevCommit? = if (revisions.isEmpty()) null else revisions[revisions.size - 1].gitNewCommit
         val svnCommit: RevCommit? = if (cacheRevision.gitCommitId != null) RevWalk(reader).parseCommit(cacheRevision.gitCommitId) else null
         try {
             lastUpdatesLock.writeLock().lock()
-            for (entry: Map.Entry<String, CacheChange> in cacheRevision.getFileChange().entries) {
+            for (entry in cacheRevision.fileChange.entries) {
                 lastUpdates.compute(entry.key) { _, list ->
                     val markNoFile: Boolean = entry.value.newFile == null
                     val prevLen: Int = list?.size ?: 0
                     val newLen: Int = prevLen + 1 + (if (markNoFile) 1 else 0)
-                    val result: IntArray = if (list == null) IntArray(newLen) else Arrays.copyOf(list, newLen)
+                    val result: IntArray = list?.copyOf(newLen) ?: IntArray(newLen)
                     result[prevLen] = revisionId
                     if (markNoFile) {
                         result[prevLen + 1] = MARK_NO_FILE
@@ -266,24 +264,15 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
 
     @Throws(IOException::class)
     private fun loadCacheRevision(reader: ObjectReader, newCommit: RevCommit, revisionId: Int): CacheRevision {
-        val cacheKey: ObjectId = newCommit.copy()
-        var result: CacheRevision? = revisionCache[cacheKey]
-        if (result == null) {
+        return revisionCache.computeIfAbsent(newCommit.copy()) {
             val baseCommit: RevCommit? = LayoutHelper.loadOriginalCommit(reader, newCommit)
             val oldTree: GitFile = getSubversionTree(reader, if (newCommit.parentCount > 0) newCommit.getParent(0) else null, revisionId - 1)
             val newTree: GitFile = getSubversionTree(reader, newCommit, revisionId)
-            val fileChange: MutableMap<String, CacheChange> = TreeMap()
-            for (entry: Map.Entry<String, GitLogEntry> in ChangeHelper.collectChanges(oldTree, newTree, true).entries) {
-                fileChange[entry.key] = CacheChange(entry.value)
-            }
-            result = CacheRevision(
-                baseCommit,
-                collectRename(oldTree, newTree),
-                fileChange
+            val fileChange = ChangeHelper.collectChanges(oldTree, newTree, true, repository.context.shared.stringInterner).mapValuesTo(HashMap()) { CacheChange(it.value) }
+            CacheRevision(
+                baseCommit, collectRename(oldTree, newTree), fileChange
             )
-            revisionCache[cacheKey] = result
         }
-        return result
     }
 
     @Throws(IOException::class)
@@ -315,7 +304,12 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
                 result[StringHelper.normalize(diff.newPath)] = StringHelper.normalize(diff.oldPath)
             }
         }
-        return result
+
+        return if (result.isEmpty()) {
+            emptyMap()
+        } else {
+            result
+        }
     }
 
     fun getRevisionByDate(dateTime: Long): GitRevision {
@@ -346,7 +340,14 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
     }
 
     fun getLastChange(nodePath: String, beforeRevision: Int): Int? {
-        if (nodePath.isEmpty()) return beforeRevision
+        if (nodePath.isEmpty()) {
+            return if (beforeRevision >= 0) {
+                beforeRevision
+            } else {
+                null
+            }
+        }
+
         try {
             lastUpdatesLock.readLock().lock()
             val revs: IntArray? = lastUpdates[nodePath]
@@ -371,7 +372,7 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
 
     @Throws(SVNException::class)
     fun createWriter(user: User): GitWriter {
-        if (user.email == null || user.email.isEmpty()) {
+        if (user.email.isNullOrEmpty()) {
             throw SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Users with undefined email can't create commits"))
         }
         return GitWriter(this, repository.pusher, pushLock, user)
@@ -413,9 +414,7 @@ class GitBranch constructor(val repository: GitRepository, val shortBranchName: 
             "cache-revision.%s.%s.%s.v%s.%s", repository.context.name, gitBranch, if (repository.hasRenameDetection()) 1 else 0, revisionCacheVersion, repository.format.revision
         )
         revisionCache = repository.context.shared.cacheDB.hashMap<ObjectId, CacheRevision>(
-            revisionCacheName,
-            ObjectIdSerializer.instance,
-            CacheRevisionSerializer.instance
+            revisionCacheName, ObjectIdSerializer.instance, CacheRevisionSerializer(repository.context.shared.stringInterner)
         ).createOrOpen()
     }
 }

@@ -8,7 +8,6 @@
 package svnserver.auth
 
 import svnserver.UserType
-import java.util.*
 
 /**
  * Simple user db with clear-text passwords.
@@ -17,7 +16,9 @@ import java.util.*
  */
 class LocalUserDB : UserDB {
     private val users = HashMap<String, UserWithPassword>()
-    private val authenticators = setOf(CramMD5Authenticator { key: String -> users[key] })
+
+    override val authenticators: Collection<Authenticator> = setOf(CramMD5Authenticator { key: String -> users[key] })
+
     fun add(username: String, password: String, realName: String, email: String?): User? {
         if (users.containsKey(username)) {
             return null
@@ -26,10 +27,6 @@ class LocalUserDB : UserDB {
         val userWithPassword = UserWithPassword(user, password)
         users[userWithPassword.user.username] = userWithPassword
         return userWithPassword.user
-    }
-
-    override fun authenticators(): Collection<Authenticator> {
-        return authenticators
     }
 
     override fun check(username: String, password: String): User? {

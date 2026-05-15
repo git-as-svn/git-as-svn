@@ -14,7 +14,7 @@ import svnserver.ext.gitlfs.storage.LfsStorage
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class GitFilters constructor(context: LocalContext, lfsStorage: LfsStorage?) {
+class GitFilters(context: LocalContext, lfsStorage: LfsStorage?) {
     val raw: GitFilter
     val link: GitFilter
     private val filters: Array<GitFilter>

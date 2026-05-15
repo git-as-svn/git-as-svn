@@ -67,7 +67,7 @@ class LfsHttpStorageTest {
         val users = LocalUserDB()
         val user = users.add(SvnTestServer.USER_NAME, "test", "Test User", "test@example.com")
         Assert.assertNotNull(user)
-        SharedContext.create(Paths.get("/nonexistent"), "realm", memoryDB().make(), listOf(WebServerConfig(0))).use { sharedContext ->
+        SharedContext.create(Paths.get("/nonexistent"), "realm", memoryDB().make(), listOf(WebServerConfig(0))) { s: String -> s.intern() }.use { sharedContext ->
             val webServer = sharedContext.sure(WebServer::class.java)
             sharedContext.add(LfsServer::class.java, LfsServer("t0ken", 0, 0F))
             sharedContext.add(UserDB::class.java, users)
@@ -125,7 +125,7 @@ class LfsHttpStorageTest {
         val users = LocalUserDB()
         val user = users.add("test", "test", "Test User", "test@example.com")
         Assert.assertNotNull(user)
-        SharedContext.create(Paths.get("/nonexistent"), "realm", memoryDB().make(), listOf(WebServerConfig(0))).use { sharedContext ->
+        SharedContext.create(Paths.get("/nonexistent"), "realm", memoryDB().make(), listOf(WebServerConfig(0))) { s: String -> s.intern() }.use { sharedContext ->
             val webServer = sharedContext.sure(WebServer::class.java)
             sharedContext.add(LfsServer::class.java, LfsServer("t0ken", 0, 0F))
             sharedContext.add(UserDB::class.java, users)
@@ -153,9 +153,7 @@ class LfsHttpStorageTest {
             }
 
             // Read old file.
-            val reader = storage.getReader(oid, -1)
-            Assert.assertNotNull(reader)
-            Assert.assertNull(reader!!.md5)
+            val reader = storage.getReader(oid, -1)!!
             Assert.assertEquals(reader.size, data.size.toLong())
             reader.openStream().use { stream ->
                 val actual = ByteStreams.toByteArray(stream)

@@ -23,7 +23,7 @@ import java.io.OutputStream
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitFilterRaw constructor(context: LocalContext) : GitFilter {
+class GitFilterRaw(context: LocalContext) : GitFilter {
     private val cacheMd5: MutableMap<String, String>
     override val name: String
         get() {

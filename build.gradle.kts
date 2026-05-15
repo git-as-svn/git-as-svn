@@ -1,31 +1,33 @@
 import org.ajoberstar.grgit.Grgit
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "7.3.3"
+    gradleVersion = "9.5.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 
 plugins {
-    id("com.github.ben-manes.versions") version "0.42.0"
+    id("com.github.ben-manes.versions") version "0.54.0"
     id("com.github.hierynomus.license") version "0.16.1"
-    id("org.ajoberstar.grgit") version "5.0.0"
-    id("org.asciidoctor.jvm.convert") version "3.3.2"
-    id("org.asciidoctor.jvm.pdf") version "3.3.2"
-    id("org.asciidoctor.jvm.epub") version "3.3.2"
-    id("org.jetbrains.kotlin.jvm") version "1.6.21"
+    id("org.ajoberstar.grgit") version "5.3.3"
+    id("org.asciidoctor.jvm.convert") version "4.0.5"
+    id("org.asciidoctor.jvm.pdf") version "4.0.5"
+    id("org.asciidoctor.jvm.epub") version "4.0.5"
+    id("org.jetbrains.kotlin.jvm") version "2.2.21"
     idea
     application
 }
 
-version = "2.3.0"
+version = "4.4.0"
 
-val javaVersion = JavaVersion.VERSION_11
+val javaVersion = JavaVersion.VERSION_21
+val jvmTarget = JvmTarget.JVM_21
 
 idea {
     project.jdkName = javaVersion.name
@@ -56,7 +58,7 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = javaVersion.toString()
+    compilerOptions.jvmTarget = jvmTarget
 }
 
 tasks.withType<Test> {
@@ -77,26 +79,26 @@ tasks.getByName<JavaExec>("run") {
 }
 
 dependencies {
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:6.2.0.202206071550-r")
-    implementation("org.tmatesoft.svnkit:svnkit:1.10.7")
-    implementation("org.yaml:snakeyaml:1.30")
+    implementation("org.bouncycastle:bcpkix-lts8on:2.73.11")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:7.6.0.202603022253-r")
+    implementation("org.tmatesoft.svnkit:svnkit:1.10.11")
+    implementation("org.yaml:snakeyaml:2.6")
     implementation("com.beust:jcommander:1.82")
     implementation("org.ini4j:ini4j:0.5.4")
-    implementation("org.mapdb:mapdb:3.0.8")
-    implementation("com.unboundid:unboundid-ldapsdk:6.0.5")
-    implementation("org.eclipse.jetty:jetty-servlet:11.0.11")
-    implementation("org.gitlab:java-gitlab-api:4.1.1")
-    implementation("org.bitbucket.b_c:jose4j:0.7.12")
-    implementation("com.github.zeripath:java-gitea-api:1.16.8")
+    implementation("org.mapdb:mapdb:3.1.0")
+    implementation("com.unboundid:unboundid-ldapsdk:7.0.4")
+    implementation("org.eclipse.jetty:jetty-servlet:11.0.26")
+    implementation("org.gitlab4j:gitlab4j-api:6.3.0")
+    implementation("org.bitbucket.b_c:jose4j:0.9.6")
+    implementation("com.github.zeripath:java-gitea-api:1.18.0")
 
-    val gitLfsJava = "0.19.0"
+    val gitLfsJava = "0.20.0"
     implementation("ru.bozaro.gitlfs:gitlfs-pointer:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-client:$gitLfsJava")
     implementation("ru.bozaro.gitlfs:gitlfs-server:$gitLfsJava")
 
-    implementation("com.google.oauth-client:google-oauth-client:1.34.1")
-    implementation("com.google.http-client:google-http-client-jackson2:1.42.1")
+    implementation("com.google.oauth-client:google-oauth-client:1.39.0")
+    implementation("com.google.http-client:google-http-client-jackson2:1.47.1")
     implementation("org.slf4j:slf4j-api") {
         version {
             strictly("1.8.0-beta4")
@@ -105,17 +107,8 @@ dependencies {
 
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0")
 
-    testImplementation("org.testcontainers:testcontainers:1.17.3")
-    testImplementation("org.testng:testng:7.6.1")
-
-    constraints {
-        implementation("org.apache.httpcomponents:httpclient") {
-            version {
-                require("4.5.12")
-                because("https://issues.apache.org/jira/browse/HTTPCLIENT-2047")
-            }
-        }
-    }
+    testImplementation("org.testcontainers:testcontainers:2.0.5")
+    testImplementation("org.testng:testng:7.12.0")
 }
 
 tasks.jar {
@@ -132,15 +125,15 @@ val compileDocs by tasks.registering(Copy::class) {
     group = "documentation"
     dependsOn(tasks.asciidoctor, tasks.asciidoctorEpub, tasks.asciidoctorPdf)
 
-    from("$buildDir/docs/asciidoc") {
+    from(layout.buildDirectory.dir("docs/asciidoc")) {
         into("htmlsingle")
     }
-    from("$buildDir/docs/asciidocEpub")
-    from("$buildDir/docs/asciidocPdf")
+    from(layout.buildDirectory.dir("docs/asciidocEpub"))
+    from(layout.buildDirectory.dir("docs/asciidocPdf"))
     from("$projectDir") {
         include("*.adoc", "LICENSE")
     }
-    into(file("$buildDir/doc"))
+    into(layout.buildDirectory.dir("doc"))
     duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
@@ -175,7 +168,7 @@ fun AbstractAsciidoctorTask.configure() {
 
     val commitDateTime = getCommitDateTime()
     attributes(
-        mapOf(
+        hashMapOf(
             "docdate" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE),
             "doctime" to commitDateTime.format(DateTimeFormatter.ISO_LOCAL_TIME)
         )
@@ -200,7 +193,7 @@ tasks.processResources {
         include("**/VersionInfo.properties")
 
         expand(
-            mapOf(
+            hashMapOf(
                 "revision" to Grgit.open(mapOf("dir" to projectDir)).head().id,
                 "tag" to (System.getenv("GITHUB_REF")?.substringAfter("refs/tags/") ?: System.getenv("TRAVIS_TAG") ?: "")
             )
@@ -217,19 +210,19 @@ val debianControl by tasks.registering(Copy::class) {
         include("**/changelog")
 
         expand(
-            mapOf(
+            hashMapOf(
                 "version" to project.version,
                 "date" to DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).format(getCommitDateTime())
             )
         )
     }
-    into(file("$buildDir/debPackage/package"))
+    into(layout.buildDirectory.dir("debPackage/package"))
 }
 
 val compileDeb by tasks.registering(Exec::class) {
     dependsOn(tasks.installDist, debianControl)
 
-    workingDir = file("$buildDir/debPackage/package")
+    workingDir = layout.buildDirectory.dir("debPackage/package").get().asFile
     executable = "dpkg-buildpackage"
     args("-uc", "-us")
 }
@@ -238,10 +231,10 @@ val distDeb by tasks.registering(Copy::class) {
     group = "distribution"
     dependsOn(compileDeb)
 
-    from("$buildDir/debPackage") {
+    from(layout.buildDirectory.dir("debPackage")) {
         include("*.deb")
     }
-    into("$buildDir/distributions/debian_debian")
+    into(layout.buildDirectory.dir("distributions/debian_debian"))
 }
 
 tasks.assembleDist {

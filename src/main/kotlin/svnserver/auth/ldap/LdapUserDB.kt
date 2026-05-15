@@ -40,17 +40,13 @@ import javax.net.ssl.TrustManagerFactory
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
 class LdapUserDB(context: SharedContext, config: LdapUserDBConfig) : UserDB {
-    private val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
+    override val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
     private val pool: LDAPConnectionPool
     private val config: LdapUserDBConfig
     private val baseDn: String
     private val fakeMailSuffix: String?
     override fun close() {
         pool.close()
-    }
-
-    override fun authenticators(): Collection<Authenticator> {
-        return authenticators
     }
 
     @Throws(SVNException::class)

@@ -198,7 +198,7 @@ class WebServer(private val context: SharedContext, private val server: Server, 
         }
     }
 
-    inner class Holder constructor(val path: String, servlet: Servlet) {
+    inner class Holder(val path: String, servlet: Servlet) {
         val holder: ServletHolder = ServletHolder(servlet)
         val mapping: ServletMapping = ServletMapping()
 

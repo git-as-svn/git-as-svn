@@ -22,29 +22,30 @@ import svnserver.StringHelper
 import svnserver.auth.User
 import svnserver.repository.Depth
 import svnserver.repository.VcsConsumer
-import svnserver.repository.git.prop.PropertyMapping
 import svnserver.repository.git.push.GitPusher
 import svnserver.repository.locks.LockDesc
 import svnserver.repository.locks.LockStorage
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashSet
 
 /**
  * Git commit writer.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitWriter internal constructor(val branch: GitBranch, private val pusher: GitPusher, private val pushLock: Any, private val user: User) : AutoCloseable {
+class GitWriter internal constructor(val branch: GitBranch, private val pusher: GitPusher, private val pushLock : ReentrantLock, private val user: User) : AutoCloseable {
     val inserter: ObjectInserter = branch.repository.git.newObjectInserter()
 
     @Throws(IOException::class)
     fun createFile(parent: GitEntry, name: String): GitDeltaConsumer {
-        return GitDeltaConsumer(this, parent.createChild(name, false), null, user)
+        return GitDeltaConsumer(this, parent.createChild(name, false, branch.repository.context.shared.stringInterner), null, user)
     }
 
     @Throws(IOException::class)
     fun modifyFile(parent: GitEntry, name: String, file: GitFile): GitDeltaConsumer {
-        return GitDeltaConsumer(this, parent.createChild(name, false), file, user)
+        return GitDeltaConsumer(this, parent.createChild(name, false, branch.repository.context.shared.stringInterner), file, user)
     }
 
     @Throws(IOException::class)
@@ -101,7 +102,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         }
     }
 
-    private class GitPropertyValidator(root: GitFile) : CommitAction(root) {
+    private class GitPropertyValidator(val root: GitFile) : CommitAction(root) {
         private val propertyMismatch = TreeMap<String, MutableSet<String>>()
         private var errorCount = 0
 
@@ -113,9 +114,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                 assert((node.filter != null))
                 if (node.filter!!.name != deltaConsumer.filterName) {
                     throw IllegalStateException(
-                        ("Invalid writer filter:\n"
-                                + "Expected: " + node.filter!!.name + "\n"
-                                + "Actual: " + deltaConsumer.filterName)
+                        ("Invalid writer filter:\n" + "Expected: " + node.filter!!.name + "\n" + "Actual: " + deltaConsumer.filterName)
                     )
                 }
             }
@@ -127,14 +126,14 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                     for (entry in expected.entries) {
                         delta.append("  ").append(entry.key).append(" = \"").append(entry.value).append("\"\n")
                     }
-                    delta.append("Actual:\n")
+                    delta.append("\nActual:\n")
                     for (entry in props.entries) {
                         delta.append("  ").append(entry.key).append(" = \"").append(entry.value).append("\"\n")
                     }
                     propertyMismatch.compute(delta.toString()) { _, _value ->
                         var value = _value
                         if (value == null) {
-                            value = TreeSet()
+                            value = HashSet()
                         }
                         value.add(node.fullPath)
                         value
@@ -148,28 +147,25 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         fun done() {
             if (propertyMismatch.isNotEmpty()) {
                 val message: StringBuilder = StringBuilder()
+
                 for (entry: Map.Entry<String, Set<String>> in propertyMismatch.entries) {
                     if (message.isNotEmpty()) {
                         message.append("\n")
                     }
                     message.append("Invalid svn properties on files:\n")
                     for (path: String? in entry.value) {
-                        message.append("  ").append(path).append("\n")
+                        message.append("  $path\n")
                     }
-                    message.append(entry.key)
+                    message.append("\n").append(entry.key)
                 }
-                message.append(
-                    ("\n"
-                            + "----------------\n" +
-                            "Subversion properties must be consistent with Git config files:\n")
-                )
-                for (configFile: String? in PropertyMapping.registeredFiles) {
-                    message.append("  ").append(configFile).append('\n')
+
+                message.append("\n----------------\nSubversion properties must be consistent with Git config files:\n")
+
+                for (configFile: String? in root.branch.repository.propertyMapping.registeredFiles) {
+                    message.append("  $configFile\n")
                 }
-                message.append(
-                    "\n" +
-                            "For more detailed information, see:"
-                ).append("\n").append(ReferenceLink.InvalidSvnProps.link)
+
+                message.append("\n\nFor more detailed information, see:\n\n").append(">>>>> ").append(ReferenceLink.InvalidSvnProps.link).append(" <<<<<\n\n")
                 throw SVNException(SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, message.toString()))
             }
         }
@@ -181,9 +177,9 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
         private val commitActions = ArrayList<VcsConsumer<CommitAction>>()
 
         @get:Throws(IOException::class)
-        private val originalTree: Iterable<GitTreeEntry>
+        private val originalTree: Map<String, GitTreeEntry>
             get() {
-                val commit: RevCommit = revision.gitNewCommit ?: return emptyList()
+                val commit: RevCommit = revision.gitNewCommit ?: return TreeMap()
                 return branch.repository.loadTree(GitTreeEntry(branch.repository.git, FileMode.TREE, commit.tree, ""))
             }
 
@@ -230,10 +226,7 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
             if (last.entries.isEmpty()) {
                 if (branch.repository.emptyDirs.autoCreateKeepFile()) {
                     val keepFile = GitTreeEntry(
-                        branch.repository.git,
-                        FileMode.REGULAR_FILE,
-                        inserter.insert(Constants.OBJ_BLOB, keepFileContents),
-                        keepFileName
+                        branch.repository.git, FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, keepFileContents), keepFileName
                     )
                     last.entries[keepFile.fileName] = keepFile
                 } else {
@@ -307,7 +300,9 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                 log.info("Need recreate tree after filter migration.")
                 return null
             }
-            synchronized(pushLock) {
+
+            pushLock.lock()
+            try {
                 log.info("Validate properties")
                 validateProperties(RevWalk(branch.repository.git).parseTree(treeId))
                 log.info("Try to push commit in branch: {}", branch)
@@ -318,6 +313,8 @@ class GitWriter internal constructor(val branch: GitBranch, private val pusher: 
                 log.info("Commit is pushed")
                 branch.updateRevisions()
                 return branch.getRevision(commitId)
+            } finally {
+                pushLock.unlock()
             }
         }
 

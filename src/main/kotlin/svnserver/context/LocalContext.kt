@@ -15,4 +15,4 @@ import javax.annotation.concurrent.ThreadSafe
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 @ThreadSafe
-class LocalContext constructor(val shared: SharedContext, val name: String) : Context<Local>()
+class LocalContext(val shared: SharedContext, val name: String) : Context<Local>()

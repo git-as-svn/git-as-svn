@@ -22,7 +22,7 @@ import kotlin.math.max
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServerParser constructor(private val stream: InputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
+class SvnServerParser(private val stream: InputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     var depth: Int = 0
         private set
     private val buffer: ByteArray = ByteArray(max(1, bufferSize))
@@ -174,7 +174,12 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
                 position += size
             }
         }
-        return StringToken(token.copyOf(length))
+
+        return if (length == 0) {
+            StringToken.empty
+        } else {
+            StringToken(token.copyOf(length))
+        }
     }
 
     @Throws(IOException::class)
@@ -184,7 +189,11 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
             val data: Byte = buffer[offset]
             offset++
             if (isSpace(data.toInt())) {
-                return WordToken(String(buffer, begin, offset - begin - 1, StandardCharsets.US_ASCII))
+                return if (offset - begin == 1) {
+                    WordToken.empty
+                } else {
+                    WordToken(String(buffer, begin, offset - begin - 1, StandardCharsets.US_ASCII))
+                }
             }
             if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.code.toByte()))) {
                 throw IOException("Unexpected character in stream: $data (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')")
@@ -203,7 +212,11 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
                 val data: Byte = buffer[offset]
                 offset++
                 if (isSpace(data.toInt())) {
-                    return WordToken(String(buffer, 0, offset - 1, StandardCharsets.US_ASCII))
+                    return if (offset == 1) {
+                        WordToken.empty
+                    } else {
+                        WordToken(String(buffer, 0, offset - 1, StandardCharsets.US_ASCII))
+                    }
                 }
                 if (!(isAlpha(data.toInt()) || isDigit(data.toInt()) || (data == '-'.code.toByte()))) {
                     throw IOException("Unexpected character in stream: $data (need 'a'..'z', 'A'..'Z', '0'..'9' or '-')")
@@ -228,7 +241,7 @@ class SvnServerParser constructor(private val stream: InputStream, bufferSize: I
     }
 
     companion object {
-        private const val DEFAULT_BUFFER_SIZE: Int = 32 * 1024
+        const val DEFAULT_BUFFER_SIZE: Int = 8 * 1024
 
         // Buffer size limit for out-of-memory prevention.
         private const val MAX_BUFFER_SIZE: Int = 10 * 1024 * 1024

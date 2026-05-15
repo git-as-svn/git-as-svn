@@ -18,7 +18,7 @@ import java.io.IOException
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class CheckPermissionStep constructor(private val nextStep: Step, private val checker: Checker?) : Step {
+class CheckPermissionStep(private val nextStep: Step, private val checker: Checker?) : Step {
     fun interface Checker {
         @Throws(SVNException::class, IOException::class)
         fun check(context: SessionContext)

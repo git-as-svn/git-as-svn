@@ -36,7 +36,7 @@ import java.util.stream.Collectors
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitPushEmbedded constructor(private val context: LocalContext, private val hooksPathOverride: String?, private val useHooksDir: Boolean) : GitPusher {
+class GitPushEmbedded(private val context: LocalContext, private val hooksPathOverride: String?, private val useHooksDir: Boolean) : GitPusher {
     @Throws(SVNException::class, IOException::class)
     override fun push(repository: Repository, commitId: ObjectId, branch: String, userInfo: User): Boolean {
         val refUpdate: RefUpdate = repository.updateRef(branch)

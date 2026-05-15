@@ -22,7 +22,7 @@ import java.util.zip.GZIPOutputStream
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class GitFilterGzip constructor(context: LocalContext) : GitFilter {
+class GitFilterGzip(context: LocalContext) : GitFilter {
     private val cacheMd5: MutableMap<String, String>
     private val cacheSize: MutableMap<String, Long>
     override val name: String

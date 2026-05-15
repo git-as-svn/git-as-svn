@@ -55,5 +55,5 @@ class RevPropCmd : BaseCmd<RevPropCmd.Params>() {
         defaultPermissionCheck(context)
     }
 
-    class Params constructor(val revision: Int, val propName: String)
+    class Params(val revision: Int, val propName: String)
 }

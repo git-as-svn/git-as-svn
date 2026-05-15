@@ -20,7 +20,6 @@ import svnserver.StringHelper
 import svnserver.context.LocalContext
 import svnserver.context.SharedContext
 import svnserver.repository.SvnForbiddenException
-import svnserver.repository.VcsSupplier
 import svnserver.repository.git.filter.GitFilter
 import svnserver.repository.git.filter.GitFilters
 import svnserver.repository.git.prop.GitProperty
@@ -35,6 +34,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.HashMap
 
 /**
  * Implementation for Git repository.
@@ -50,10 +50,12 @@ class GitRepository(
     lockStorage: LockStorage,
     filters: GitFilters,
     val emptyDirs: EmptyDirsSupport,
-    val format: RepositoryFormat
+    val format: RepositoryFormat,
+    val gitTreeEntryCacheStrategy: GitTreeEntryCacheStrategy,
 ) : AutoCloseable, BranchProvider {
     val git: Repository
     val pusher: GitPusher
+    val propertyMapping = PropertyMapping(format.revision >= RepositoryFormat.V6_ADD_SVN_EXTERNALS.revision)
     private val binaryCache: HTreeMap<String, Boolean>
     private val gitFilters: GitFilters
     private val directoryPropertyCache = ConcurrentHashMap<ObjectId, Array<GitProperty>>()
@@ -89,29 +91,34 @@ class GitRepository(
     }
 
     @Throws(IOException::class)
-    fun collectProperties(treeEntry: GitTreeEntry, entryProvider: VcsSupplier<Iterable<GitTreeEntry>>): Array<GitProperty> {
-        if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) return emptyArray()
-        var props = directoryPropertyCache[treeEntry.objectId.`object`]
-        if (props == null) {
+    fun collectProperties(treeEntry: GitTreeEntry, entryProvider: Map<String, GitTreeEntry>): Array<GitProperty> {
+        if (treeEntry.fileMode.objectType == Constants.OBJ_BLOB) {
+            return GitProperty.emptyArray
+        }
+
+        return directoryPropertyCache.computeIfAbsent(treeEntry.objectId.`object`) {
             val propList = ArrayList<GitProperty>()
             try {
-                for (entry in entryProvider.get()) {
-                    val parseProps = parseGitProperty(entry.fileName, entry.objectId)
+                for (entry in entryProvider) {
+                    val parseProps = parseGitProperty(entry.key, entry.value.objectId)
                     if (parseProps.isNotEmpty()) {
                         propList.addAll(parseProps)
                     }
                 }
             } catch (ignored: SvnForbiddenException) {
             }
-            props = propList.toTypedArray()
-            directoryPropertyCache[treeEntry.objectId.`object`] = props
+            val props = propList.toTypedArray()
+            if (props.isEmpty()) {
+                GitProperty.emptyArray
+            } else {
+                props
+            }
         }
-        return props
     }
 
     @Throws(IOException::class)
     private fun parseGitProperty(fileName: String, objectId: GitObject<ObjectId>): Array<GitProperty> {
-        val factory: GitPropertyFactory = PropertyMapping.getFactory(fileName) ?: return emptyArray()
+        val factory: GitPropertyFactory = propertyMapping.getFactory(fileName) ?: return GitProperty.emptyArray
         return cachedParseGitProperty(objectId, factory)
     }
 
@@ -119,8 +126,8 @@ class GitRepository(
     private fun cachedParseGitProperty(objectId: GitObject<ObjectId>, factory: GitPropertyFactory): Array<GitProperty> {
         var property: Array<GitProperty>? = filePropertyCache[objectId.`object`]
         if (property == null) {
-            objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream, format) } }
-            if (property!!.isEmpty()) property = emptyArray()
+            objectId.repo.newObjectReader().use { reader -> reader.open(objectId.`object`).openStream().use { stream -> property = factory.create(stream, format, context.shared.stringInterner) } }
+            if (property!!.isEmpty()) property = GitProperty.emptyArray
             filePropertyCache[objectId.`object`] = property!!
         }
         return property!!
@@ -149,19 +156,18 @@ class GitRepository(
     }
 
     @Throws(IOException::class)
-    fun loadTree(tree: GitTreeEntry?): Iterable<GitTreeEntry> {
-        val treeId = getTreeObject(tree) ?: return emptyList()
+    fun loadTree(tree: GitTreeEntry?): Map<String, GitTreeEntry> {
+        val result = HashMap<String, GitTreeEntry>()
+        val treeId = getTreeObject(tree) ?: return result
         // Loading tree.
-        val result = ArrayList<GitTreeEntry>()
         val repo = treeId.repo
         val treeParser = CanonicalTreeParser(emptyBytes, repo.newObjectReader(), treeId.`object`)
         while (!treeParser.eof()) {
-            result.add(
-                GitTreeEntry(
-                    treeParser.entryFileMode,
-                    GitObject(repo, treeParser.entryObjectId),
-                    treeParser.entryPathString
-                )
+            val fileName = context.shared.stringInterner(treeParser.entryPathString)
+            result[fileName] = GitTreeEntry(
+                treeParser.entryFileMode,
+                GitObject(repo, treeParser.entryObjectId),
+                fileName,
             )
             treeParser.next()
         }

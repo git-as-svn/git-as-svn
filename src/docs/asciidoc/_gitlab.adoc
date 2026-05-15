@@ -4,7 +4,7 @@
 :filename: _gitlab.adoc
 include::_feedback.adoc[]
 
-git-as-svn supports integration with https://gitlab.com/[GitLab] >= 9.3.3.
+git-as-svn supports integration with https://gitlab.com/[GitLab] >= 10.2.
 
 This includes:
 
@@ -30,7 +30,13 @@ This will tell git-as-svn to authenticate users against GitLab server:
 +
 [source,yaml]
 ----
-userDB: !gitlabUsers {}
+userDB: !gitlabUsers {
+  # Users can either authenticate using their GitLab login+password or login+access token
+  # Possible values: Password, AccessToken
+  # Default: Password
+  #
+  # authentication: Password
+}
 ----
 
 . Configure builtin git-as-svn webserver:
@@ -108,9 +114,7 @@ repositoryMapping: !gitlabMapping
       hooksPath: /opt/gitlab/embedded/service/gitaly-ruby/git-hooks
 ----
 
-. {blank}
-+
-IMPORTANT: Restart git-as-svn after changing its config.
+. *Restart git-as-svn after changing its config*.
 If your OS uses Systemd, this can be done via `sudo systemctl restart git-as-svn`.
 
 . Add `git-as-svn:<branch>` topics to whatever repositories you want to add to git-as-svn via "Settings -> General -> Topics" in GitLab project settings.
@@ -146,7 +150,10 @@ lfsMode: null
 == Full configuration file example
 
 ./etc/git-as-svn/git-as-svn.conf
+[%collapsible]
+====
 [source,yaml]
 ----
 include::examples/config-gitlab.yml[]
 ----
+====

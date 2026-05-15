@@ -31,7 +31,7 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-open class LocalLockManager constructor(val locks: SortedMap<String, LockDesc>) : LockStorage {
+open class LocalLockManager(val locks: SortedMap<String, LockDesc>) : LockStorage {
     @Throws(LockConflictException::class, IOException::class, SVNException::class)
     override fun lock(user: User, branch: GitBranch?, path: String): LockDesc {
         val lock: LockDesc = tryCreateLock(user, null, false, null, path, -1)

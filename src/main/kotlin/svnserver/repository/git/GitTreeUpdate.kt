@@ -13,30 +13,24 @@ import org.eclipse.jgit.lib.ObjectInserter
 import org.eclipse.jgit.lib.TreeFormatter
 import java.io.IOException
 import java.util.*
+import kotlin.collections.HashMap
 
 /**
  * Git tree updater.
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal class GitTreeUpdate constructor(val name: String, entries: Iterable<GitTreeEntry>) {
-    val entries: MutableMap<String, GitTreeEntry>
+internal class GitTreeUpdate(val name: String, entries: Map<String, GitTreeEntry>) {
+    // We need to make a copy
+    val entries = HashMap(entries)
 
     @Throws(IOException::class)
     fun buildTree(inserter: ObjectInserter): ObjectId {
         val treeBuilder = TreeFormatter()
-        val sortedEntries = entries.values.toMutableList().sorted()
-        for (entry in sortedEntries) {
+        for (entry in entries.values.sorted()) {
             treeBuilder.append(entry.fileName, entry.fileMode, entry.objectId.`object`)
         }
         ObjectChecker().checkTree(treeBuilder.toByteArray())
         return inserter.insert(treeBuilder)
-    }
-
-    init {
-        this.entries = HashMap()
-        for (entry: GitTreeEntry in entries) {
-            this.entries[entry.fileName] = entry
-        }
     }
 }

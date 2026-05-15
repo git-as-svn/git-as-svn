@@ -39,6 +39,8 @@ interface GitProperty {
     val filterName: String?
 
     companion object {
+        val emptyArray = emptyArray<GitProperty>()
+
         fun joinProperties(parentProps: Array<GitProperty>, entryName: String, fileMode: FileMode, entryProps: Array<GitProperty>): Array<GitProperty> {
             if (parentProps.isEmpty()) {
                 return entryProps

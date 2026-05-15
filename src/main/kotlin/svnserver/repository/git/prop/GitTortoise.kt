@@ -17,7 +17,7 @@ import java.io.InputStream
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-internal data class GitTortoise private constructor(private val tortoiseProps: Map<String, String>) : GitProperty {
+internal data class GitTortoise(private val tortoiseProps: Map<String, String>) : GitProperty {
 
     override fun apply(props: MutableMap<String, String>) {
         props.putAll(tortoiseProps)
@@ -34,7 +34,7 @@ internal data class GitTortoise private constructor(private val tortoiseProps: M
 
     companion object {
         @Throws(IOException::class)
-        fun parseConfig(stream: InputStream): GitTortoise {
+        fun parseConfig(stream: InputStream, stringInterner: (String) -> String = { s -> s }): GitTortoise {
             val ini = Ini(stream)
             val result = HashMap<String, String>()
             for (sectionEntry in ini.entries) {
@@ -43,7 +43,7 @@ internal data class GitTortoise private constructor(private val tortoiseProps: M
                     if (value.startsWith("\"") && value.endsWith("\"")) {
                         value = value.substring(1, value.length - 1)
                     }
-                    result[sectionEntry.key + ":" + configEntry.key] = value
+                    result[stringInterner(sectionEntry.key + ":" + configEntry.key)] = stringInterner(value)
                 }
             }
             return GitTortoise(if (result.isEmpty()) emptyMap() else result)

@@ -14,10 +14,11 @@ import org.tmatesoft.svn.core.SVNNodeKind
 import org.tmatesoft.svn.core.SVNProperty
 import svnserver.repository.VcsCopyFrom
 import svnserver.repository.git.filter.GitFilter
-import svnserver.repository.git.prop.GitProperty
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
+import java.util.function.Supplier
+import kotlin.collections.HashMap
 
 /**
  * Git file.
@@ -25,13 +26,6 @@ import java.util.*
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 interface GitFile : GitEntry {
-    override fun createChild(name: String, isDir: Boolean): GitEntry {
-        return GitEntryImpl(rawProperties, fullPath, emptyArray(), name, if (isDir) FileMode.TREE else FileMode.REGULAR_FILE)
-    }
-
-    @Throws(IOException::class)
-    override fun getEntry(name: String): GitFile?
-
     /**
      * Get native repository content hash for cheap content modification check.
      */
@@ -47,6 +41,10 @@ interface GitFile : GitEntry {
     @get:Throws(IOException::class)
     val size: Long
 
+    // ChangeHelper requires entries to be sorted
+    @get:Throws(IOException::class)
+    val entries: SortedMap<String, Supplier<GitFile>>
+
     @Throws(IOException::class)
     fun openStream(): InputStream
 
@@ -59,7 +57,7 @@ interface GitFile : GitEntry {
     @get:Throws(IOException::class)
     val allProperties: Map<String, String>
         get() {
-            val props = HashMap<String, String>()
+            val props = HashMap<String, String>(revProperties.size + properties.size)
             props.putAll(revProperties)
             props.putAll(properties)
             return props
@@ -90,11 +88,10 @@ interface GitFile : GitEntry {
     val upstreamProperties: Map<String, String>
         get() {
             val result = HashMap<String, String>()
-            for (prop in rawProperties) {
-                prop.apply(result)
-            }
+            rawProperties.forEach { it.apply(result) }
             return result
         }
+
     val revision: Int
     val isDirectory: Boolean
         get() {
@@ -109,9 +106,6 @@ interface GitFile : GitEntry {
             }
         }
     val fileMode: FileMode
-
-    @get:Throws(IOException::class)
-    val entries: Iterable<GitFile>
 
     companion object {
         fun putProperty(props: MutableMap<String, String>, name: String, value: String?) {

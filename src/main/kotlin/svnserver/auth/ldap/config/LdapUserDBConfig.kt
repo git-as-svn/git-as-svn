@@ -18,7 +18,7 @@ import java.nio.file.Path
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-class LdapUserDBConfig constructor(
+class LdapUserDBConfig(
     /**
      * This is a URL whose format is defined by the JNDI provider.
      * It is usually an LDAP URL that specifies the domain name of the directory server to connect to,

@@ -15,6 +15,7 @@ import io.gitea.auth.ApiKeyAuth
 import io.gitea.model.*
 import org.eclipse.jetty.util.ArrayUtil
 import org.testcontainers.DockerClientFactory
+import org.testcontainers.containers.Container
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
@@ -101,11 +102,21 @@ class GiteaIntegrationTest {
             arrayOf("--username", username, "--password", password, "--email", email, "--must-change-password=false", "-c", "/data/gitea/conf/app.ini"),
             extraArgs
         )
-        var execResult = gitea!!.execInContainer(*ArrayUtil.add(arrayOf("gitea", "admin", "user", "create"), args))
-        if (execResult.exitCode == 3) {
-            execResult = gitea!!.execInContainer(*ArrayUtil.add(arrayOf("gitea", "admin", "create-user"), args))
+
+        var execResult: Container.ExecResult? = null
+        for (sudo in arrayOf(arrayOf("su", "git", "--"), emptyArray())) {
+            execResult = gitea!!.execInContainer(*(sudo + arrayOf("gitea", "admin", "user", "create") + args))
+
+            when (execResult.exitCode) {
+                126 -> continue // No sudo support
+                3 -> {
+                    execResult = gitea!!.execInContainer(*(sudo + arrayOf("gitea", "admin", "create-user") + args))
+                }
+            }
+
+            if (execResult.exitCode == 0) break
         }
-        Assert.assertEquals(execResult.exitCode, 0, "STDOUT:\n${execResult.stdout}\n\nSTDERR:${execResult.stderr}");
+        Assert.assertEquals(execResult!!.exitCode, 0, "STDOUT:\n${execResult.stdout}\n\nSTDERR:${execResult.stderr}")
     }
 
     private fun createUser(username: String, password: String): io.gitea.model.User {

@@ -61,7 +61,7 @@ class GetDirCmd : BaseCmd<GetDirCmd.Params>() {
             .listBegin()
             .separator()
         if (args.wantContents) {
-            for (item: GitFile in fileInfo.entries) {
+            for (item in fileInfo.entries.values.map { it.get() }) {
                 if (!context.canRead(item.fullPath)) continue
                 val lastChange: GitRevision = item.lastChange
                 writer
@@ -88,7 +88,7 @@ class GetDirCmd : BaseCmd<GetDirCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(
+    class Params(
         val path: String,
         val rev: IntArray,
         val wantProps: Boolean,

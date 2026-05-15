@@ -20,12 +20,8 @@ class CacheChange {
     val oldFile: ObjectId?
     val newFile: ObjectId?
 
-    constructor() {
-        oldFile = null
-        newFile = null
-    }
-
     constructor(logPair: GitLogEntry) : this(getFileId(logPair.oldEntry), getFileId(logPair.newEntry))
+
     constructor(oldFile: ObjectId?, newFile: ObjectId?) {
         this.oldFile = oldFile?.copy()
         this.newFile = newFile?.copy()

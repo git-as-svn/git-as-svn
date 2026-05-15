@@ -7,8 +7,6 @@
  */
 package svnserver
 
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.input.CharSequenceInputStream
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository
 import org.eclipse.jgit.lib.Repository
@@ -19,6 +17,8 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 /**
  * Common test functions.
@@ -46,12 +46,13 @@ object TestHelper {
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     fun deleteDirectory(file: Path) {
-        FileUtils.deleteDirectory(file.toFile())
+        file.deleteRecursively()
     }
 
     fun asStream(content: String): InputStream {
-        return CharSequenceInputStream(content, StandardCharsets.UTF_8)
+        return content.byteInputStream(StandardCharsets.UTF_8)
     }
 
     fun emptyRepository(): Repository {

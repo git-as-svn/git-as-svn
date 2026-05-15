@@ -17,13 +17,8 @@ import java.io.InputStream
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
 class GitIgnoreFactory : GitPropertyFactory {
-    override val fileName: String
-        get() {
-            return ".gitignore"
-        }
-
     @Throws(IOException::class)
-    override fun create(stream: InputStream, format: RepositoryFormat): Array<GitProperty> {
-        return arrayOf(GitIgnore.parseConfig(stream))
+    override fun create(stream: InputStream, format: RepositoryFormat, stringInterner: (String) -> String): Array<GitProperty> {
+        return arrayOf(GitIgnore.parseConfig(stream, stringInterner))
     }
 }

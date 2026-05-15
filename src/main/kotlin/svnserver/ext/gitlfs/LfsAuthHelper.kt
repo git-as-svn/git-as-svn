@@ -85,7 +85,7 @@ object LfsAuthHelper {
     ): Map<String, String> {
         val webServer = context.sure(WebServer::class.java)
         val accessToken = TokenHelper.createToken(webServer.createEncryption(), user, expireAt)
-        return mapOf(Constants.HEADER_AUTHORIZATION to WebServer.AUTH_TOKEN + accessToken)
+        return hashMapOf(Constants.HEADER_AUTHORIZATION to WebServer.AUTH_TOKEN + accessToken)
     }
 
     fun getExpire(tokenExpireSec: Long): NumericDate {
@@ -100,7 +100,7 @@ object LfsAuthHelper {
 
         companion object {
             fun find(value: String?): AuthMode? {
-                for (authMode in values()) if (authMode.name.lowercase() == value) return authMode
+                for (authMode in entries) if (authMode.name.lowercase() == value) return authMode
                 return null
             }
         }

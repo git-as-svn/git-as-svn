@@ -15,11 +15,13 @@ import java.util.*
 
 class KeyUserDB(private val internal: UserDB, secretToken: String) : UserDB {
     private val keyAuthenticator: KeyAuthenticator = KeyAuthenticator(internal, secretToken)
-    override fun authenticators(): Collection<Authenticator> {
-        val authenticators = ArrayList(internal.authenticators())
-        authenticators.add(keyAuthenticator)
-        return Collections.unmodifiableList(authenticators)
-    }
+
+    override val authenticators: Collection<Authenticator>
+        get() {
+            val authenticators = ArrayList(internal.authenticators)
+            authenticators.add(keyAuthenticator)
+            return Collections.unmodifiableList(authenticators)
+        }
 
     @Throws(SVNException::class)
     override fun check(username: String, password: String): User? {

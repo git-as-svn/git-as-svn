@@ -20,10 +20,7 @@ import svnserver.auth.UserDB
  * @author Artem V. Navrotskiy
  */
 class CombineUserDB(private val userDBs: Array<UserDB>) : UserDB {
-    private val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
-    override fun authenticators(): Collection<Authenticator> {
-        return authenticators
-    }
+    override val authenticators: Collection<Authenticator> = setOf(PlainAuthenticator(this))
 
     @Throws(SVNException::class)
     override fun check(username: String, password: String): User? {

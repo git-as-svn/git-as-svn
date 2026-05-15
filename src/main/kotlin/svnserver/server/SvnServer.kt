@@ -37,9 +37,7 @@ import java.net.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.ThreadPoolExecutor.AbortPolicy
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -47,15 +45,14 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * @author Artem V. Navrotskiy <bozaro@users.noreply.github.com>
  */
-class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer") {
+class SvnServer(basePath: Path, private val config: Config) : Thread("SvnServer") {
     private val connections = ConcurrentHashMap<Long, Socket>()
     private val repositoryMapping: RepositoryMapping<*>
-    private val config: Config
     private val serverSocket: ServerSocket
     private val stopped: AtomicBoolean = AtomicBoolean(false)
     private val lastSessionId: AtomicLong = AtomicLong()
     val sharedContext: SharedContext
-    private val threadPoolExecutor: ThreadPoolExecutor
+    private val executorService: ExecutorService
     val port: Int
         get() {
             return serverSocket.localPort
@@ -77,27 +74,26 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
             }
             val sessionId: Long = lastSessionId.incrementAndGet()
             connections[sessionId] = client
-            val task = Runnable {
-                try {
-                    client.use { clientSocket ->
-                        SvnServerWriter(clientSocket.getOutputStream()).use { writer ->
-                            log.info("New connection from: {}", client.remoteSocketAddress)
-                            serveClient(clientSocket, writer)
-                        }
-                    }
-                } catch (ignore: EOFException) {
-                    // client disconnect is not a error
-                } catch (ignore: SocketException) {
-                } catch (e: SVNException) {
-                    log.warn("Exception:", e)
-                } catch (e: IOException) {
-                    log.warn("Exception:", e)
-                } finally {
-                    shutdownConnection(sessionId)
-                }
-            }
             try {
-                threadPoolExecutor.execute(task)
+                executorService.execute {
+                    try {
+                        client.use { clientSocket ->
+                            SvnServerWriter(clientSocket.getOutputStream(), config.writeBufferSize).use { writer ->
+                                log.info("New connection from: {}", client.remoteSocketAddress)
+                                serveClient(clientSocket, writer)
+                            }
+                        }
+                    } catch (ignore: EOFException) {
+                        // client disconnect is not a error
+                    } catch (ignore: SocketException) {
+                    } catch (e: SVNException) {
+                        log.warn("Exception:", e)
+                    } catch (e: IOException) {
+                        log.warn("Exception:", e)
+                    } finally {
+                        shutdownConnection(sessionId)
+                    }
+                }
             } catch (e: RejectedExecutionException) {
                 shutdownConnection(sessionId)
             }
@@ -107,7 +103,7 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
     @Throws(IOException::class, SVNException::class)
     private fun serveClient(socket: Socket, writer: SvnServerWriter) {
         socket.tcpNoDelay = true
-        val parser = SvnServerParser(socket.getInputStream())
+        val parser = SvnServerParser(socket.getInputStream(), config.readBufferSize)
         val clientInfo: ClientInfo = exchangeCapabilities(parser, writer)
         val repositoryInfo: RepositoryInfo = RepositoryMapping.findRepositoryInfo(repositoryMapping, clientInfo.url, writer) ?: return
         val context = SessionContext(parser, writer, this, repositoryInfo, clientInfo)
@@ -163,16 +159,13 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
             .listBegin()
             .listEnd()
             .listBegin()
-        when (config.compressionLevel) {
-            SVNDeltaCompression.LZ4 -> {
-                writer
-                    .word(svndiff2Capability)
-                writer
-                    .word(svndiff1Capability)
-            }
-            SVNDeltaCompression.Zlib -> writer
-                .word(svndiff1Capability)
-        }
+
+        if (config.compressionLevel >= SVNDeltaCompression.LZ4)
+            writer.word(svndiff2Capability)
+
+        if (config.compressionLevel >= SVNDeltaCompression.Zlib)
+            writer.word(svndiff1Capability)
+
         writer //.word(SVNCapability.COMMIT_REVPROPS.toString())
             .word(SVNCapability.DEPTH.toString()) //.word(SVNCapability.PARTIAL_REPLAY.toString()) TODO: issue #237
             .word("edit-pipeline")
@@ -210,7 +203,7 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
     @Throws(IOException::class, SVNException::class)
     fun authenticate(context: SessionContext, allowAnonymous: Boolean): User {
         // Отправляем запрос на авторизацию.
-        val authenticators = ArrayList(sharedContext.sure(UserDB::class.java).authenticators())
+        val authenticators = ArrayList(sharedContext.sure(UserDB::class.java).authenticators)
         if (allowAnonymous) authenticators.add(0, AnonymousAuthenticator.get())
         context.writer
             .listBegin()
@@ -249,7 +242,7 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
     @Throws(Exception::class)
     fun shutdown(millis: Long) {
         startShutdown()
-        if (!threadPoolExecutor.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
+        if (!executorService.awaitTermination(millis, TimeUnit.MILLISECONDS)) {
             forceShutdown()
         }
         join(millis)
@@ -262,7 +255,7 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
         if (stopped.compareAndSet(false, true)) {
             log.info("Shutdown server")
             serverSocket.close()
-            threadPoolExecutor.shutdown()
+            executorService.shutdown()
         }
     }
 
@@ -271,7 +264,7 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
         for (socket: Socket in connections.values) {
             socket.close()
         }
-        threadPoolExecutor.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS)
+        executorService.awaitTermination(FORCE_SHUTDOWN, TimeUnit.MILLISECONDS)
     }
 
     val compressionLevel: SVNDeltaCompression
@@ -284,7 +277,7 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
         const val svndiff2Capability: String = "accepts-svndiff2"
 
         // Keep order as in https://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
-        val commands = mapOf(
+        val commands = hashMapOf(
             "reparent" to ReparentCmd(),
             "get-latest-rev" to GetLatestRevCmd(),
             "get-dated-rev" to GetDatedRevCmd(),
@@ -338,7 +331,6 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
             SVNErrorCode.AUTHZ_UNREADABLE,
             SVNErrorCode.AUTHZ_UNWRITABLE
         )
-        private val threadNumber: AtomicInteger = AtomicInteger(1)
 
         @Throws(IOException::class)
         private fun sendError(writer: SvnServerWriter, msg: String) {
@@ -354,23 +346,9 @@ class SvnServer constructor(basePath: Path, config: Config) : Thread("SvnServer"
 
     init {
         isDaemon = true
-        this.config = config
-        val threadFactory = ThreadFactory { r: Runnable? ->
-            val thread = Thread(r, String.format("SvnServer-thread-%s", threadNumber.incrementAndGet()))
-            thread.isDaemon = true
-            thread
-        }
-        threadPoolExecutor = ThreadPoolExecutor(
-            0, Int.MAX_VALUE,
-            60,
-            TimeUnit.SECONDS,
-            SynchronousQueue(),
-            threadFactory,
-            AbortPolicy()
-        )
-        sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared)
+        executorService = config.threads.createExecutor("SvnServer-thread-")
+        sharedContext = SharedContext.create(basePath, config.realm, config.cacheConfig.createCache(basePath), config.shared, if (config.stringInterning) { s: String -> s.intern() } else { s: String -> s })
         sharedContext.add(UserDB::class.java, config.userDB.create(sharedContext))
-
         repositoryMapping = config.repositoryMapping.create(sharedContext, config.parallelIndexing)
         sharedContext.add(RepositoryMapping::class.java, repositoryMapping)
         serverSocket = ServerSocket()

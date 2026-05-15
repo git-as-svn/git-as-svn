@@ -45,7 +45,7 @@ interface RepositoryMapping<T : BranchProvider> : Shared {
                 BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, msg))
                 return null
             }
-            val branch: Map.Entry<String, GitBranch>? = (getMapped(branches, branchPath))!!
+            val branch: Map.Entry<String, GitBranch>? = getMapped(branches, branchPath)
             if (branch == null) {
                 BaseCmd.sendError(writer, SVNErrorMessage.create(SVNErrorCode.RA_SVN_REPOS_NOT_FOUND, "Repository branch not found: $url"))
                 return null

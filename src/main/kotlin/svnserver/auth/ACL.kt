@@ -14,7 +14,6 @@ import svnserver.UserType
 import svnserver.repository.RepositoryMapping
 import svnserver.repository.VcsAccess
 import java.util.*
-import kotlin.collections.HashSet
 
 /**
  * This ACL reuses SVN's authz syntax as much as possible: http://svnbook.red-bean.com/nightly/en/svn.serverconfig.pathbasedauthz.html
@@ -38,14 +37,16 @@ class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPa
                 val userType = UserType.valueOf(entryString.substring(AuthenticatedPrefix.length))
                 UserTypeEntry(userType)
             }
+
             entryString.startsWith(GroupPrefix) -> {
                 val group = entryString.substring(GroupPrefix.length)
                 if (!allGroups.contains(group)) throw IllegalArgumentException(String.format("[%s] ACL entry %s uses unknown group %s: ", contextName, path, group))
                 GroupACLEntry(group)
             }
+
             else -> UserACLEntry(entryString)
         }
-        require(path2branch2acl.computeIfAbsent(StringHelper.normalizeDir(path)) { HashMap<String, HashMap<ACLEntry, AccessMode>>() }.computeIfAbsent(branch) { HashMap() }.put(entry, accessMode) == null) { String.format("[%s] Duplicate ACL entry %s: %s", contextName, path, entryString) }
+        require(path2branch2acl.computeIfAbsent(StringHelper.normalizeDir(path)) { HashMap() }.computeIfAbsent(branch) { HashMap() }.put(entry, accessMode) == null) { String.format("[%s] Duplicate ACL entry %s: %s", contextName, path, entryString) }
     }
 
     override fun canRead(user: User, branch: String, path: String): Boolean {
@@ -59,7 +60,7 @@ class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPa
     private fun doCheck(user: User, branch: String, path: String, checker: BooleanFunction<AccessMode>): Boolean {
         var pathToCheck = path
         while (true) {
-            val pathEntry: Map.Entry<String, HashMap<String, HashMap<ACLEntry, AccessMode>>> = RepositoryMapping.getMapped(path2branch2acl, pathToCheck) ?: break
+            val pathEntry = RepositoryMapping.getMapped(path2branch2acl, pathToCheck) ?: break
             for (b in arrayOf(branch, NoBranch)) {
                 val branchPathEntry = pathEntry.value[b] ?: continue
                 val checkResult = check(user, checker, branchPathEntry)
@@ -211,12 +212,14 @@ class ACL(contextName: String, group2users: Map<String, Array<String>>, branchPa
                 when {
                     member == AnonymousMarker -> anonymousGroups.add(groupName)
                     member == AuthenticatedMarker -> {
-                        for (userType in UserType.values()) authenticatedGroups.computeIfAbsent(userType) { HashSet() }.add(groupName)
+                        for (userType in UserType.entries) authenticatedGroups.computeIfAbsent(userType) { HashSet() }.add(groupName)
                     }
+
                     member.startsWith(AuthenticatedPrefix) -> {
                         val userType = UserType.valueOf(member.substring(AuthenticatedPrefix.length))
                         authenticatedGroups.computeIfAbsent(userType) { HashSet() }.add(groupName)
                     }
+
                     else -> user2groups.computeIfAbsent(member) { HashSet() }.add(groupName)
                 }
             }

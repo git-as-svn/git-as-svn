@@ -24,7 +24,7 @@ import kotlin.math.min
  * Before sending response, server sends location entries, ending with "done".
  * location-entry: ( range-start:number range-end:number [ abs-path:string ] ) | done
  * response: ( )
-</pre> *
+ * </pre>
  *
  * @author a.navrotskiy
  */
@@ -89,5 +89,5 @@ class GetLocationSegmentsCmd : BaseCmd<GetLocationSegmentsCmd.Params>() {
         context.checkRead(context.getRepositoryPath(args.path))
     }
 
-    class Params constructor(val path: String, val pegRev: IntArray, val startRev: IntArray, val endRev: IntArray)
+    class Params(val path: String, val pegRev: IntArray, val startRev: IntArray, val endRev: IntArray)
 }

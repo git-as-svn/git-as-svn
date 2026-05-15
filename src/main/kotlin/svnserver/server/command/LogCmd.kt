@@ -184,7 +184,7 @@ class LogCmd : BaseCmd<LogCmd.Params>() {
         return result
     }
 
-    class Params constructor(
+    class Params(
         val targetPath: Array<String>,
         val startRev: IntArray,
         val endRev: IntArray,

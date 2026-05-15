@@ -12,8 +12,19 @@ import java.util.*
 /**
  * @author Marat Radchenko <marat@slonopotamus.org>
  */
-object PropertyMapping {
-    private val parserByFile = TreeMap<String, GitPropertyFactory>()
+class PropertyMapping(withSvnExternals: Boolean) {
+    private var parserByFile = sortedMapOf(
+        ".gitattributes" to GitAttributesFactory(),
+        ".gitignore" to GitIgnoreFactory(),
+        ".tgitconfig" to GitTortoiseFactory(),
+    )
+
+    init {
+        if (withSvnExternals) {
+            parserByFile[".svn-externals"] = SvnExternalsFactory()
+        }
+    }
+
     fun getFactory(fileName: String): GitPropertyFactory? {
         return parserByFile[fileName]
     }
@@ -22,17 +33,4 @@ object PropertyMapping {
         get() {
             return Collections.unmodifiableSet(parserByFile.keys)
         }
-
-    init {
-        arrayOf(
-            GitAttributesFactory(),
-            GitTortoiseFactory(),
-            GitIgnoreFactory()
-        ).forEach {
-            val oldParser: GitPropertyFactory? = parserByFile.put(it.fileName, it)
-            if (oldParser != null) {
-                throw RuntimeException("Found two classes mapped for same file: " + oldParser.javaClass + " and " + it)
-            }
-        }
-    }
 }

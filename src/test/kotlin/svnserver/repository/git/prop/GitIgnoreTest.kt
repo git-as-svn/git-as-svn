@@ -11,7 +11,6 @@ import org.eclipse.jgit.lib.FileMode
 import org.testng.Assert
 import org.testng.annotations.Test
 import svnserver.TestHelper
-import java.util.*
 
 /**
  * Tests for GitAttributes.

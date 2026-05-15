@@ -47,7 +47,7 @@ class ReparentCmd : BaseCmd<ReparentCmd.Params>() {
         // noop
     }
 
-    class Params constructor(url: String) {
+    class Params(url: String) {
         val url: SVNURL = SVNURL.parseURIEncoded(url)
     }
 }

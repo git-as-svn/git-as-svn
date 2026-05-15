@@ -311,6 +311,39 @@ a/b/c/d - delta-end
     }
 
     @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
+    fun infinityInEmpty(factory: SvnTesterFactory) {
+        create(factory).use { server ->
+            val initialRevision = server.openSvnRepository().latestRevision
+            SvnTestHelper.createFile(server.openSvnRepository(), "a/file", "", emptyMap())
+            check(
+                server, "", SVNDepth.UNKNOWN, { reporter: ISVNReporter ->
+                    reporter.setPath("", null, initialRevision, SVNDepth.EMPTY, false)
+                    reporter.setPath("a", null, initialRevision, SVNDepth.INFINITY, false)
+                    reporter.finishReport()
+                }, """ - open-root: r1
+/ - change-dir-prop: svn:entry:committed-date
+/ - change-dir-prop: svn:entry:committed-rev
+/ - change-dir-prop: svn:entry:last-author
+/ - change-dir-prop: svn:entry:uuid
+a - change-dir-prop: svn:entry:committed-date
+a - change-dir-prop: svn:entry:committed-rev
+a - change-dir-prop: svn:entry:last-author
+a - change-dir-prop: svn:entry:uuid
+a - open-dir: r1
+a/file - add-file
+a/file - apply-text-delta: null
+a/file - change-file-prop: svn:entry:committed-date
+a/file - change-file-prop: svn:entry:committed-rev
+a/file - change-file-prop: svn:entry:last-author
+a/file - change-file-prop: svn:entry:uuid
+a/file - close-file: d41d8cd98f00b204e9800998ecf8427e
+a/file - delta-chunk
+a/file - delta-end
+""")
+        }
+    }
+
+    @Test(dataProvider = "all", dataProviderClass = SvnTesterDataProvider::class)
     fun infinity(factory: SvnTesterFactory) {
         create(factory).use { server ->
             val revision = server.openSvnRepository().latestRevision

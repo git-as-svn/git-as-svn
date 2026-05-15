@@ -17,8 +17,8 @@ import java.util.*
  */
 class ExportSVNEditor(checkDelete: Boolean) : SVNEditorWrapper(null, checkDelete) {
     private val paths = ArrayDeque<String>()
-    private val files = TreeMap<String, String>()
-    private val properties = HashMap<String, MutableMap<String, String?>>()
+    private val files = HashMap<String, String>()
+    private val properties = HashMap<String, HashMap<String, String?>>()
 
     override fun openRoot(revision: Long) {
         paths.push("/")
@@ -36,7 +36,7 @@ class ExportSVNEditor(checkDelete: Boolean) : SVNEditorWrapper(null, checkDelete
     }
 
     override fun changeDirProperty(name: String, value: SVNPropertyValue) {
-        properties.computeIfAbsent(paths.element()) { TreeMap() }[name] = value.string
+        properties.computeIfAbsent(paths.element()) { HashMap() }[name] = value.string
     }
 
     override fun closeDir() {
@@ -44,7 +44,7 @@ class ExportSVNEditor(checkDelete: Boolean) : SVNEditorWrapper(null, checkDelete
     }
 
     override fun changeFileProperty(path: String, propertyName: String, propertyValue: SVNPropertyValue?) {
-        properties.computeIfAbsent(paths.element()) { TreeMap() }[propertyName] = propertyValue?.string
+        properties.computeIfAbsent(paths.element()) { HashMap() }[propertyName] = propertyValue?.string
     }
 
     override fun closeFile(path: String, textChecksum: String) {
@@ -56,7 +56,7 @@ class ExportSVNEditor(checkDelete: Boolean) : SVNEditorWrapper(null, checkDelete
         sb.append("Files:\n")
         for ((key, value) in files) {
             sb.append("  ").append(key).append(" (").append(value).append(")\n")
-            val props: Map<String, String?>? = properties[key]
+            val props = properties[key]
             if (props != null) {
                 for ((key1, value1) in props) {
                     sb.append("    ").append(key1).append(" = \"").append(value1).append("\"\n")
