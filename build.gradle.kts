@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 tasks.wrapper {
-    gradleVersion = "8.14.2"
+    gradleVersion = "9.5.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 
