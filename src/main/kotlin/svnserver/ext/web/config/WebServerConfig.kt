@@ -10,12 +10,14 @@ package svnserver.ext.web.config
 import com.google.common.base.Strings
 import org.apache.commons.codec.binary.Hex
 import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.util.thread.QueuedThreadPool
 import svnserver.config.SharedConfig
 import svnserver.context.SharedContext
 import svnserver.ext.web.server.WebServer
 import svnserver.ext.web.token.EncryptionFactoryAes
 import java.net.URL
 import java.security.SecureRandom
+import org.eclipse.jetty.util.thread.ThreadPool as ThreadPool1
 
 /**
  * Web server configuration.
@@ -47,7 +49,10 @@ class WebServerConfig : SharedConfig {
 
     private fun createJettyServer(): Server {
         // TODO: Make executor configurable
-        val server = Server()
+        val threadPool = QueuedThreadPool()
+        threadPool.isDaemon = true
+
+        val server = Server(threadPool)
         for (listenConfig in listen) server.addConnector(listenConfig.createConnector(server))
         return server
     }
