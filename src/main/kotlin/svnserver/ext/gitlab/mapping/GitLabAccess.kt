@@ -153,7 +153,8 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
         } else {
             val id = user.externalId ?: user.username
             check(id.isNotEmpty()) { "Found user without identificator: $user" }
-            id
+            // Prefix to avoid cache collision: "123" (ID) vs "123" (username)
+            if (user.externalId != null) "id:$id" else "name:$id"
         }
 
         return cache.computeIfAbsent(key) { userId ->
@@ -162,7 +163,14 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
                     anonymousApi.projectApi.getProject(gitlabProject.id)
                 } else {
                     gitlabContext.api.duplicate().use {
-                        it.setSudoAsId(userId.toLong())
+                        // GitLab sudo API accepts both user ID and username
+                        // For !gitlabUsers: externalId is numeric → setSudoAsId
+                        // For !ldapUsers: externalId is null → username → setSudoAsUsername
+                        // Sudo via user ID (for !gitlabUsers) or username lookup (for !ldapUsers)
+                        val sudoId = user.externalId?.toLongOrNull()
+                            ?: gitlabContext.api.userApi.getUser(user.username)?.id
+                            ?: throw IllegalArgumentException("Cannot resolve GitLab user: ${user.username}")
+                        it.setSudoAsId(sudoId)
                         it.projectApi.getProject(gitlabProject.id)
                     }
                 }
@@ -173,6 +181,8 @@ internal class GitLabAccess(local: LocalContext, config: GitLabMappingConfig, pr
                 } else {
                     throw e
                 }
+            } catch (e: NumberFormatException) {
+                throw IllegalArgumentException("Cannot resolve GitLab identity for user: ${user.username}", e)
             }
         }.value
     }
