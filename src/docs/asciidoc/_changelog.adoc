@@ -6,6 +6,10 @@ ifdef::sectnums[]
 endif::[]
 :sectnums!:
 
+== 4.4.1
+
+* Fix Jetty preventing git-as-svn from exiting
+
 == 4.4.0
 
 * Add `svn:externals` support
