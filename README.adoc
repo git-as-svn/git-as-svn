@@ -1,5 +1,4 @@
-origin: https://github.com/git-as-svn/git-as-svn // fork-maintenance CP-AL00139: канон/upstream для обновления форка; наш форк: AlexanderSemenyak/git-as-svn; зеркало: onit/devops/git-as-svn
-orig: https://github.com/git-as-svn/git-as-svn
+origin: https://github.com/bozaro/git-as-svn 
 
 = git-as-svn
 :project-handle: git-as-svn
