@@ -1,3 +1,5 @@
+origin: https://github.com/git-as-svn/git-as-svn
+
 = git-as-svn
 :project-handle: git-as-svn
 :slug: git-as-svn/{project-handle}

@@ -98,14 +98,19 @@ class LdapUserDB(context: SharedContext, config: LdapUserDBConfig) : UserDB {
         }
         val realName = getAttribute(entry, config.nameAttribute)
         var email = getAttribute(entry, config.emailAttribute)
-        if (email == null && fakeMailSuffix != null) email = login + fakeMailSuffix
+        if (email == null && fakeMailSuffix != null) {
+            email = login + fakeMailSuffix
+        } else if (email == null) {
+            throw SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_NO_PROVIDER,
+                String.format("LDAP user '%s' missing '%s' attribute", username, config.emailAttribute)))
+        }
         log.debug("LDAP authentication successful for user: {}", username)
         return User.create(login, realName ?: login, email, null, UserType.LDAP, null)
     }
 
     private fun getAttribute(entry: SearchResultEntry, name: String): String? {
         val attribute = entry.getAttribute(name)
-        return attribute.value
+        return attribute?.value
     }
 
     private fun interface LdapCheck {
