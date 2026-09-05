@@ -1,4 +1,4 @@
-origin: https://github.com/bozaro/git-as-svn 
+origin: https://github.com/git-as-svn/git-as-svn
 
 = git-as-svn
 :project-handle: git-as-svn
